@@ -2,6 +2,5 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "outputDirectory": ".next",
-  "domains": ["opengrid.info", "opengrid.energy", "www.opengrid.info"]
+  "outputDirectory": ".next"
 }
