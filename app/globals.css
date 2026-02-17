@@ -1,0 +1,82 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  color: #0b0c0f;
+  background: #f7f7f8;
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 80px 24px 120px;
+}
+
+h1 {
+  font-size: 48px;
+  margin: 0 0 12px;
+}
+
+h2 {
+  margin-top: 48px;
+  font-size: 24px;
+}
+
+p {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+.hero {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 32px;
+  border-radius: 16px;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.cta {
+  margin-top: 24px;
+  display: flex;
+  gap: 12px;
+}
+
+.cta a {
+  display: inline-block;
+  padding: 10px 14px;
+  background: #111827;
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.cta a.secondary {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.footer {
+  margin-top: 80px;
+  color: #6b7280;
+  font-size: 14px;
+}
