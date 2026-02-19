@@ -1,0 +1,799 @@
+[
+  {
+    "id": "ba-arizona-public-service",
+    "slug": "arizona-public-service",
+    "name": "Arizona Public Service",
+    "shortName": "APS",
+    "eiaCode": "AZPS",
+    "eiaId": "803",
+    "website": "https://www.aps.com",
+    "states": [
+      "AZ",
+      "NM"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-arizona-public-service",
+    "logo": "https://img.logo.dev/www.aps.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-aeci",
+    "slug": "aeci",
+    "name": "Associated Electric Cooperative",
+    "shortName": "AECI",
+    "eiaCode": "AECI",
+    "eiaId": "924",
+    "website": "https://www.aeci.org/",
+    "states": [
+      "AR",
+      "IA",
+      "MO",
+      "OK"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-aeci",
+    "logo": "https://img.logo.dev/www.aeci.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-avista",
+    "slug": "avista",
+    "name": "Avista Corporation",
+    "shortName": "Avista",
+    "eiaCode": "AVA",
+    "eiaId": "20169",
+    "website": "http://www.avistacorp.com/ContactUs/Pages/ContactUs.aspx",
+    "states": [
+      "ID",
+      "MT",
+      "WA"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-avista",
+    "logo": "https://img.logo.dev/www.avistacorp.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-banc",
+    "slug": "banc",
+    "name": "Balancing Authority of Northern California",
+    "shortName": "BANC",
+    "eiaCode": "BANC",
+    "eiaId": "65289",
+    "website": "https://www.thebanc.org",
+    "states": [
+      "CA"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-banc",
+    "logo": "https://img.logo.dev/www.thebanc.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-bonneville-power-administration",
+    "slug": "bonneville-power-administration",
+    "name": "Bonneville Power Administration",
+    "shortName": "BPA",
+    "eiaCode": "BPAT",
+    "eiaId": "1738",
+    "website": "https://www.bpa.gov/",
+    "states": [
+      "ID",
+      "MT",
+      "NV",
+      "OR",
+      "UT",
+      "WA",
+      "WY"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-bonneville-power-administration",
+    "logo": "https://img.logo.dev/www.bpa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-caiso",
+    "slug": "caiso",
+    "name": "California Independent System Operator",
+    "shortName": "CAISO",
+    "eiaCode": "CISO",
+    "eiaId": "2775",
+    "website": "http://www.caiso.com/",
+    "states": [
+      "AZ",
+      "CA",
+      "NV"
+    ],
+    "isoId": "2da5b7fc-9f3d-8188-95af-e7f039834c98",
+    "regionId": "region-ba-caiso",
+    "logo": "https://img.logo.dev/www.caiso.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-dominion-sc",
+    "slug": "dominion-sc",
+    "name": "Dominion Energy South Carolina",
+    "shortName": "Dominion SC",
+    "eiaCode": "SCEG",
+    "eiaId": "17539",
+    "website": "https://www.sceg.com/",
+    "states": [
+      "GA",
+      "SC"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-dominion-sc",
+    "logo": "https://img.logo.dev/www.sceg.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-duke-energy-carolinas",
+    "slug": "duke-energy-carolinas",
+    "name": "Duke Energy Carolinas",
+    "shortName": "DUK",
+    "eiaCode": "DUK",
+    "eiaId": "5416",
+    "website": "https://www.duke-energy.com",
+    "states": [
+      "GA",
+      "NC",
+      "SC"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-duke-energy-carolinas",
+    "logo": "https://img.logo.dev/www.duke-energy.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-duke-energy-florida",
+    "slug": "duke-energy-florida",
+    "name": "Duke Energy Florida",
+    "shortName": "DEF",
+    "eiaCode": "FPC",
+    "eiaId": "6455",
+    "website": "https://www.progress-energy.com/florida/home/index.page",
+    "states": [
+      "FL"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-duke-energy-florida",
+    "logo": "https://img.logo.dev/www.progress-energy.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-dep-east",
+    "slug": "dep-east",
+    "name": "Duke Energy Progress East",
+    "shortName": "DEP East",
+    "eiaCode": "CPLE",
+    "eiaId": "3046",
+    "website": "https://www.duke-energy.com",
+    "states": [
+      "NC",
+      "SC"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-dep-east",
+    "logo": "https://img.logo.dev/www.duke-energy.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-dep-west",
+    "slug": "dep-west",
+    "name": "Duke Energy Progress West",
+    "shortName": "DEP West",
+    "eiaCode": "CPLW",
+    "eiaId": "58786",
+    "website": "https://www.duke-energy.com",
+    "states": [
+      "NC"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-dep-west",
+    "logo": "https://img.logo.dev/www.duke-energy.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-el-paso-electric-company",
+    "slug": "el-paso-electric-company",
+    "name": "El Paso Electric Company",
+    "shortName": "EPE",
+    "eiaCode": "EPE",
+    "eiaId": "5701",
+    "website": "http://www.epelectric.com/",
+    "states": [
+      "NM",
+      "TX"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-el-paso-electric-company",
+    "logo": "https://img.logo.dev/www.epelectric.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-ercot",
+    "slug": "ercot",
+    "name": "Electric Reliability Council of Texas",
+    "shortName": "ERCOT",
+    "eiaCode": "ERCO",
+    "eiaId": "5723",
+    "website": "http://www.ercot.com/",
+    "states": [
+      "NM",
+      "TX"
+    ],
+    "isoId": "2da5b7fc-9f3d-8195-8a69-e42769f0b207",
+    "regionId": "region-ba-ercot",
+    "logo": "https://img.logo.dev/www.ercot.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-fmpp",
+    "slug": "fmpp",
+    "name": "Florida Municipal Power Pool",
+    "shortName": "FMPP",
+    "eiaCode": "FMPP",
+    "eiaId": "65277",
+    "website": "http://www.ouc.com/",
+    "states": [
+      "FL"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-fmpp",
+    "logo": "https://img.logo.dev/www.ouc.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-florida-power-and-light",
+    "slug": "florida-power-and-light",
+    "name": "Florida Power & Light",
+    "shortName": "FPL",
+    "eiaCode": "FPL",
+    "eiaId": "6452",
+    "website": "https://www.fpl.com",
+    "states": [
+      "FL"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-florida-power-and-light",
+    "logo": "https://img.logo.dev/www.fpl.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-heco",
+    "slug": "heco",
+    "name": "Hawaiian Electric",
+    "shortName": "HECO",
+    "eiaCode": "HECO",
+    "eiaId": "19547",
+    "website": "https://www.hawaiianelectric.com/",
+    "states": [
+      "HI"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-heco",
+    "logo": "https://img.logo.dev/www.hawaiianelectric.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-idaho-power",
+    "slug": "idaho-power",
+    "name": "Idaho Power",
+    "shortName": "Idaho Power",
+    "eiaCode": "IPCO",
+    "eiaId": "9191",
+    "website": "https://www.idahopower-com/aboutus/companyinformation/contactus-cfm",
+    "states": [
+      "ID",
+      "OR"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-idaho-power",
+    "logo": "https://img.logo.dev/www.idahopower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-imperial-irrigation-district",
+    "slug": "imperial-irrigation-district",
+    "name": "Imperial Irrigation District",
+    "shortName": "IID",
+    "eiaCode": "IID",
+    "eiaId": "9216",
+    "website": "http://www.iid.com/",
+    "states": [
+      "CA"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-imperial-irrigation-district",
+    "logo": "https://img.logo.dev/www.iid.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-iso-ne",
+    "slug": "iso-ne",
+    "name": "ISO New England",
+    "shortName": "ISO-NE",
+    "eiaCode": "ISNE",
+    "eiaId": "13434",
+    "website": "https://www.iso-ne.com/",
+    "states": [
+      "CT",
+      "MA",
+      "ME",
+      "NH",
+      "NY",
+      "RI",
+      "VT"
+    ],
+    "isoId": "2da5b7fc-9f3d-8149-9423-f852b4f0f494",
+    "regionId": "region-ba-iso-ne",
+    "logo": "https://img.logo.dev/www.iso-ne.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-ladwp",
+    "slug": "ladwp",
+    "name": "Los Angeles Department of Water & Power",
+    "shortName": "LADWP",
+    "eiaCode": "LDWP",
+    "eiaId": "11208",
+    "website": "https://www.ladwp.com",
+    "states": [
+      "CA",
+      "UT"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-ladwp",
+    "logo": "https://img.logo.dev/www.ladwp.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-lgande-ku",
+    "slug": "lgande-ku",
+    "name": "Louisville Gas & Electric / Kentucky Utilities",
+    "shortName": "LG&E/KU",
+    "eiaCode": "LGEE",
+    "eiaId": "11249",
+    "website": "https://lge-ku.com",
+    "states": [
+      "KY",
+      "VA"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-lgande-ku",
+    "logo": "https://img.logo.dev/lge-ku.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-miso",
+    "slug": "miso",
+    "name": "Midcontinent Independent System Operator",
+    "shortName": "MISO",
+    "eiaCode": "MISO",
+    "eiaId": "56669",
+    "website": "https://www.misoenergy.org/",
+    "states": [
+      "AR",
+      "IA",
+      "IL",
+      "IN",
+      "KS",
+      "KY",
+      "LA",
+      "MI",
+      "MN",
+      "MO",
+      "MS",
+      "ND",
+      "OK",
+      "SD",
+      "TN",
+      "TX",
+      "WI"
+    ],
+    "isoId": "2da5b7fc-9f3d-818d-b363-cd23872306ab",
+    "regionId": "region-ba-miso",
+    "logo": "https://img.logo.dev/www.misoenergy.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-nv-energy",
+    "slug": "nv-energy",
+    "name": "Nevada Power",
+    "shortName": "NV Energy",
+    "eiaCode": "NEVP",
+    "eiaId": "13407",
+    "website": "https://www.nvenergy.com/",
+    "states": [
+      "CA",
+      "NV",
+      "UT"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-nv-energy",
+    "logo": "https://img.logo.dev/www.nvenergy.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-nbso",
+    "slug": "nbso",
+    "name": "New Brunswick System Operator",
+    "shortName": "NBSO",
+    "eiaCode": "NBSO",
+    "eiaId": "1",
+    "website": "https://www.nbpower.com/",
+    "states": [
+      "ME"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-nbso",
+    "logo": "https://img.logo.dev/www.nbpower.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-nyiso",
+    "slug": "nyiso",
+    "name": "New York Independent System Operator",
+    "shortName": "NYISO",
+    "eiaCode": "NYIS",
+    "eiaId": "13501",
+    "website": "http://www.nyiso.com/",
+    "states": [
+      "NJ",
+      "NY",
+      "PA"
+    ],
+    "isoId": "2da5b7fc-9f3d-814a-8b47-ce123cd3950c",
+    "regionId": "region-ba-nyiso",
+    "logo": "https://img.logo.dev/www.nyiso.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-northwestern",
+    "slug": "northwestern",
+    "name": "NorthWestern Energy",
+    "shortName": "NorthWestern",
+    "eiaCode": "NWMT",
+    "eiaId": "12825",
+    "website": "http://www.northwesternenergy-com/contact-us",
+    "states": [
+      "ID",
+      "MT",
+      "WY"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-northwestern",
+    "logo": "https://img.logo.dev/www.northwesternenergy-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-pacificorp-east",
+    "slug": "pacificorp-east",
+    "name": "PacifiCorp East",
+    "shortName": "PacifiCorp East",
+    "eiaCode": "PACE",
+    "eiaId": "14379",
+    "website": "https://www.pacificorp.com/",
+    "states": [
+      "AZ",
+      "CO",
+      "ID",
+      "MT",
+      "NM",
+      "UT",
+      "WY"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-pacificorp-east",
+    "logo": "https://img.logo.dev/www.pacificorp.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-pacificorp-west",
+    "slug": "pacificorp-west",
+    "name": "PacifiCorp West",
+    "shortName": "PacifiCorp West",
+    "eiaCode": "PACW",
+    "eiaId": "14378",
+    "website": "https://www.pacificorp.com/",
+    "states": [
+      "CA",
+      "NV",
+      "OR",
+      "WA"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-pacificorp-west",
+    "logo": "https://img.logo.dev/www.pacificorp.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-pjm-interconnection",
+    "slug": "pjm-interconnection",
+    "name": "PJM Interconnection",
+    "shortName": "PJM",
+    "eiaCode": "PJM",
+    "eiaId": "14725",
+    "website": "http://www.pjm.com/",
+    "states": [
+      "DC",
+      "DE",
+      "IL",
+      "IN",
+      "KY",
+      "MD",
+      "MI",
+      "NC",
+      "NJ",
+      "NY",
+      "OH",
+      "PA",
+      "TN",
+      "VA",
+      "WV"
+    ],
+    "isoId": "2da5b7fc-9f3d-8181-a080-db527d98d7b0",
+    "regionId": "region-ba-pjm-interconnection",
+    "logo": "https://img.logo.dev/www.pjm.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-portland-general-electric-company",
+    "slug": "portland-general-electric-company",
+    "name": "Portland General Electric Company",
+    "shortName": "PGE",
+    "eiaCode": "PGE",
+    "eiaId": "15248",
+    "website": "https://www.portlandgeneral-com/default-aspx",
+    "states": [
+      "OR"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-portland-general-electric-company",
+    "logo": "https://img.logo.dev/www.portlandgeneral-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-xcel-co",
+    "slug": "xcel-co",
+    "name": "Public Service Company of Colorado",
+    "shortName": "Xcel CO",
+    "eiaCode": "PSCO",
+    "eiaId": "15466",
+    "website": "http://www.xcelenergy-com/",
+    "states": [
+      "AZ",
+      "CO",
+      "NM",
+      "WY"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-xcel-co",
+    "logo": "https://img.logo.dev/www.xcelenergy-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-public-service-company-of-new-mexico",
+    "slug": "public-service-company-of-new-mexico",
+    "name": "Public Service Company of New Mexico",
+    "shortName": "PNM",
+    "eiaCode": "PNM",
+    "eiaId": "15473",
+    "website": "http://www.pnmresources.com/about-us.aspx",
+    "states": [
+      "AZ",
+      "CO",
+      "NM",
+      "OK",
+      "TX"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-public-service-company-of-new-mexico",
+    "logo": "https://img.logo.dev/www.pnmresources.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-puget-sound-energy",
+    "slug": "puget-sound-energy",
+    "name": "Puget Sound Energy",
+    "shortName": "PSE",
+    "eiaCode": "PSEI",
+    "eiaId": "15500",
+    "website": "http://pse.com/Pages/default-aspx",
+    "states": [
+      "WA"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-puget-sound-energy",
+    "logo": "https://img.logo.dev/pse.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-salt-river-project",
+    "slug": "salt-river-project",
+    "name": "Salt River Project",
+    "shortName": "SRP",
+    "eiaCode": "SRP",
+    "eiaId": "16572",
+    "website": "https://www.srpnet.com",
+    "states": [
+      "AZ"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-salt-river-project",
+    "logo": "https://img.logo.dev/www.srpnet.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-seminole",
+    "slug": "seminole",
+    "name": "Seminole Electric Cooperative",
+    "shortName": "Seminole",
+    "eiaCode": "SEC",
+    "eiaId": "21554",
+    "website": "https://www.seminole-electric.com/",
+    "states": [
+      "FL"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-seminole",
+    "logo": "https://img.logo.dev/www.seminole-electric.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-santee-cooper",
+    "slug": "santee-cooper",
+    "name": "South Carolina Public Service Authority",
+    "shortName": "Santee Cooper",
+    "eiaCode": "SC",
+    "eiaId": "17543",
+    "website": "https://www.santeecooper.com",
+    "states": [
+      "SC"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-santee-cooper",
+    "logo": "https://img.logo.dev/www.santeecooper.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-sepa",
+    "slug": "sepa",
+    "name": "Southeastern Power Administration",
+    "shortName": "SEPA",
+    "eiaCode": "SEPA",
+    "eiaId": "29304",
+    "website": "https://www.energy.gov/sepa/southeastern-power-administration",
+    "states": [
+      "GA",
+      "NC",
+      "SC"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-sepa",
+    "logo": "https://img.logo.dev/www.energy.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-southern",
+    "slug": "southern",
+    "name": "Southern Company Services",
+    "shortName": "Southern",
+    "eiaCode": "SOCO",
+    "eiaId": "18195",
+    "website": "https://www.southerncompany.com/",
+    "states": [
+      "AL",
+      "FL",
+      "GA",
+      "MS"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-southern",
+    "logo": "https://img.logo.dev/www.southerncompany.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-southwest-power-pool",
+    "slug": "southwest-power-pool",
+    "name": "Southwest Power Pool",
+    "shortName": "SPP",
+    "eiaCode": "SWPP",
+    "eiaId": "59504",
+    "website": "https://www.spp.org/",
+    "states": [
+      "AR",
+      "CO",
+      "IA",
+      "KS",
+      "LA",
+      "MN",
+      "MO",
+      "MT",
+      "ND",
+      "NE",
+      "NM",
+      "OK",
+      "SD",
+      "TX"
+    ],
+    "isoId": "2da5b7fc-9f3d-81fd-8a7e-d0ae3ce3e35f",
+    "regionId": "region-ba-southwest-power-pool",
+    "logo": "https://img.logo.dev/www.spp.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-swpa",
+    "slug": "swpa",
+    "name": "Southwestern Power Administration",
+    "shortName": "SWPA",
+    "eiaCode": "SPA",
+    "eiaId": "17716",
+    "website": "https://www.swpa.gov/",
+    "states": [
+      "AR",
+      "MO",
+      "OK"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-swpa",
+    "logo": "https://img.logo.dev/www.swpa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-tennessee-valley-authority",
+    "slug": "tennessee-valley-authority",
+    "name": "Tennessee Valley Authority",
+    "shortName": "TVA",
+    "eiaCode": "TVA",
+    "eiaId": "18642",
+    "website": "https://www.tva.gov/",
+    "states": [
+      "AL",
+      "GA",
+      "KY",
+      "MS",
+      "NC",
+      "TN",
+      "VA"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-tennessee-valley-authority",
+    "logo": "https://img.logo.dev/www.tva.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-tucson-electric-power-company",
+    "slug": "tucson-electric-power-company",
+    "name": "Tucson Electric Power Company",
+    "shortName": "TEP",
+    "eiaCode": "TEPC",
+    "eiaId": "24211",
+    "website": "http://www.uns.com/",
+    "states": [
+      "AZ",
+      "NM"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-tucson-electric-power-company",
+    "logo": "https://img.logo.dev/www.uns.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-wapa-dsw",
+    "slug": "wapa-dsw",
+    "name": "Western Area Power Administration \u2014 Desert Southwest",
+    "shortName": "WAPA DSW",
+    "eiaCode": "WALC",
+    "eiaId": "25471",
+    "website": "https://www.wapa.gov/",
+    "states": [
+      "AZ",
+      "CA",
+      "NM",
+      "NV",
+      "UT"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-wapa-dsw",
+    "logo": "https://img.logo.dev/www.wapa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-wapa-rm",
+    "slug": "wapa-rm",
+    "name": "Western Area Power Administration \u2014 Rocky Mountain",
+    "shortName": "WAPA RM",
+    "eiaCode": "WACM",
+    "eiaId": "28503",
+    "website": "https://www.wapa.gov/",
+    "states": [
+      "CO",
+      "KS",
+      "MT",
+      "ND",
+      "NE",
+      "NM",
+      "SD",
+      "UT",
+      "WY"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-wapa-rm",
+    "logo": "https://img.logo.dev/www.wapa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "ba-wapa-ugp",
+    "slug": "wapa-ugp",
+    "name": "Western Area Power Administration \u2014 Upper Great Plains",
+    "shortName": "WAPA UGP",
+    "eiaCode": "WAUW",
+    "eiaId": "19610",
+    "website": "https://www.wapa.gov/",
+    "states": [
+      "MT",
+      "UT",
+      "WY"
+    ],
+    "isoId": null,
+    "regionId": "region-ba-wapa-ugp",
+    "logo": "https://img.logo.dev/www.wapa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  }
+]
