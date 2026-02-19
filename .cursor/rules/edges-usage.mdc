@@ -1,0 +1,65 @@
+---
+alwaysApply: true
+---
+
+ Usage Context for @texturehq/edges
+
+## Setup
+This project uses @texturehq/edges design system with Tailwind 4. The theme CSS file contains all design system variables that automatically become available as Tailwind classes.
+
+## Theme Import
+The theme is imported via CSS:
+```css
+@import "@texturehq/edges/theme.css";
+```
+
+## How It Works
+- CSS variables in the theme file automatically become Tailwind classes
+- `--color-brand-primary` becomes available as `bg-brand-primary`, `text-brand-primary`, `border-brand-primary`, etc.
+- `--spacing-md` becomes available as `p-md`, `m-md`, `gap-md`, etc.
+- `--text-lg` becomes available as `text-lg`
+- `--radius-lg` becomes available as `rounded-lg`
+
+## Usage Guidelines
+- **Use semantic classes over arbitrary values**
+- Prefer: `bg-brand-primary`, `text-text-body`, `p-md`, `rounded-lg`
+- Avoid: `bg-[#444ae1]`, `text-[#333333]`, `p-[1rem]`, `rounded-[0.5rem]`
+
+## Naming Conventions
+- Brand colors: `brand-primary`, `brand-light`, `brand-dark`
+- Text colors: `text-body`, `text-heading`, `text-muted`, `text-caption`
+- Background colors: `background-body`, `background-surface`, `background-muted`
+- Border colors: `border-default`, `border-focus`, `border-muted`
+- Action colors: `action-primary`, `action-secondary`, `action-destructive`
+- Feedback colors: `feedback-success`, `feedback-error`, `feedback-warning`, `feedback-info`
+- Spacing: `xs`, `sm`, `md`, `lg`, `xl`, `2xl`, `3xl`, `4xl`
+- Typography: `xs`, `sm`, `base`, `lg`, `xl`, `2xl`, `3xl`, `4xl`
+- Border radius: `xs`, `sm`, `md`, `lg`, `xl`, `2xl`, `3xl`, `4xl`
+
+## Examples
+```html
+<!-- ✅ Good - Uses semantic classes -->
+<div class="bg-brand-primary text-text-on-primary p-md rounded-lg shadow-md">
+  <h2 class="text-text-heading text-lg font-medium">Title</h2>
+  <p class="text-text-body text-base">Content</p>
+</div>
+
+<!-- ❌ Avoid - Uses arbitrary values -->
+<div class="bg-[#444ae1] text-[#ffffff] p-[1rem] rounded-[0.5rem]">
+  <h2 class="text-[#111827] text-[1.125rem] font-[500]">Title</h2>
+  <p class="text-[#333333] text-[1rem]">Content</p>
+</div>
+```
+
+## Dark Mode
+All colors automatically adapt to dark mode when `.theme-dark` class is present.
+
+## Available Variables
+All CSS variables from the theme file are automatically available. The theme includes:
+- Complete color system (brand, text, background, border, action, feedback, device states, data visualization)
+- Spacing scale
+- Typography scale  
+- Border radius scale
+- Shadow system
+- Animation definitions
+- Form control specifications
