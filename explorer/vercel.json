@@ -1,0 +1,5 @@
+{
+  "installCommand": "npm install",
+  "buildCommand": "node setup-data.mjs && next build",
+  "outputDirectory": ".next"
+}

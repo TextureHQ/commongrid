@@ -129,14 +129,17 @@ export default function Home() {
       </div>
 
       <div className="status">
-        <h2>🚧 Early Access — Coming Soon</h2>
+        <h2>🗺️ Explore the Grid</h2>
         <p>
-          We're seeding the initial dataset and building the explorer interface.
-          Star the repo, join the conversation, and be among the first to contribute.
+          Browse utility territories, ISOs, balancing authorities, and more on the interactive map.
+          3,132 utilities. 3,000+ territory boundaries. All open data.
         </p>
       </div>
 
       <div className="links">
+        <a href="https://explorer.opengrid.info" className="primary-link">
+          🗺️ Open the Explorer
+        </a>
         <a href="https://github.com/TextureHQ/opengrid" className="primary-link">
           ⭐ Star on GitHub
         </a>
