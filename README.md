@@ -1,8 +1,8 @@
 # ⚡ OpenGrid
 
-**The open dataset for US electric grid infrastructure** — utilities, grid operators, territory boundaries, and more.
+**The open dataset for the US electric grid** — utilities, grid operators, territory boundaries, and more.
 
-Built by [Texture](https://texturehq.com), maintained by the community.
+**[opengrid.info](https://opengrid.info)** · Built by [Texture](https://texturehq.com), maintained by the community.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
@@ -20,6 +20,8 @@ Built by [Texture](https://texturehq.com), maintained by the community.
 | **Territory Boundaries** | `data/territories/*.json` | 3,000+ | GeoJSON boundary files for service territories, ISOs, BAs, CCAs |
 
 All data is JSON. No database required. Clone the repo and start building.
+
+For a detailed breakdown of every field, data source, and what we're planning to add next, see the **[Data Catalog](docs/DATA_CATALOG.md)**.
 
 ## Quick Start
 
@@ -52,20 +54,19 @@ const coops = utilities.filter(u => u.segment === "DISTRIBUTION_COOPERATIVE");
 console.log(`${coops.length} distribution cooperatives`);
 ```
 
-### Want to explore the data visually?
+### Want to explore visually?
 
-The **Explorer** is an interactive map app that visualizes all the data.
+The site at **[opengrid.info](https://opengrid.info)** is an interactive map and explorer for all the data in this repo.
 
-**Live:** [opengrid.texturehq.com](https://opengrid.texturehq.com)
-
-**Run locally:**
+**Run it locally:**
 
 ```bash
-cd explorer
 npm install
 npm run dev
-# Open http://localhost:4445
+# Open http://localhost:3000
 ```
+
+> **Note:** The interactive map requires a [Mapbox](https://mapbox.com) access token. Set `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` in `.env.local`. Without it, the home page shows a static landing view — all other pages work fine.
 
 ---
 
@@ -84,7 +85,7 @@ Each utility includes identity, classification, operational data, and relationsh
   shortName: string | null;            // Abbreviated name
   logo: string | null;                 // Logo URL
   website: string | null;              // Official website
-  eiaId: string | null;                // EIA utility ID
+  eiaId: string | null;               // EIA utility ID
   segment: UtilitySegment;             // INVESTOR_OWNED_UTILITY | DISTRIBUTION_COOPERATIVE | MUNICIPAL_UTILITY | ...
   status: UtilityStatus;               // ACTIVE | MERGED | ACQUIRED | DEFUNCT | PENDING
   customerCount: number | null;        // Total retail customers
@@ -216,6 +217,8 @@ All data is sourced from publicly available, authoritative sources:
 | **CEC** | [energy.ca.gov](https://www.energy.ca.gov/) | California Community Choice Aggregator territories |
 | **EIA API** | [api.eia.gov](https://api.eia.gov/) | Balancing authority boundaries and codes |
 
+See the [Data Catalog](docs/DATA_CATALOG.md) for detailed source documentation and our roadmap for future datasets (rate structures, generation mix, interconnection queues, and more).
+
 ---
 
 ## Repository Structure
@@ -231,20 +234,15 @@ opengrid/
 │   ├── balancing-authorities.json  ← 45 BAs
 │   ├── regions.json          ← 3,000 regions
 │   └── territories/          ← 3,000+ GeoJSON boundary files
-├── explorer/                 ← Interactive Next.js map app
-│   ├── app/                  ← Pages and API routes
-│   ├── components/           ← React components
-│   ├── lib/                  ← Data loading and utilities
-│   └── types/                ← TypeScript type definitions
-├── scripts/                  ← Data sync scripts
-│   ├── sync-arcgis.ts        ← Territory boundaries from HIFLD/ArcGIS
-│   ├── sync-ba.ts            ← Balancing authority data
-│   ├── sync-cca.ts           ← CCA territory data
-│   ├── sync-eia-fields.ts    ← EIA-861 utility data
-│   └── ...
+├── app/                      ← Next.js pages (the opengrid.info site)
+│   └── (shell)/              ← Layout with nav, map, detail pages
+├── components/               ← React components (TopBar, DataSourceLink, etc.)
+├── lib/                      ← Data loading, formatting, geo utilities
+├── types/                    ← TypeScript type definitions
+├── scripts/                  ← Data sync scripts (EIA, ArcGIS, CCA, etc.)
 ├── docs/
 │   ├── CONTRIBUTING.md       ← How to contribute
-│   └── DATA_CATALOG.md       ← Detailed data catalog (coming soon)
+│   └── DATA_CATALOG.md       ← Detailed data catalog & gap analysis
 └── content/                  ← Concept and planning docs
 ```
 
@@ -257,7 +255,7 @@ We welcome contributions! See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for d
 - Reporting data issues
 - Adding or updating data
 - Contributing territory boundaries
-- Improving the explorer app
+- Improving the explorer
 - Running sync scripts
 
 ## License
