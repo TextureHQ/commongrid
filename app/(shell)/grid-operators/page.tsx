@@ -12,6 +12,7 @@ import {
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useMemo, useState } from "react";
 import { getAllBalancingAuthorities, getAllIsos, getAllRtos, getIsoById, searchEntities, sortByName } from "@/lib/data";
 import { formatStates } from "@/lib/formatting";
@@ -206,6 +207,7 @@ export default function GridOperatorsPage() {
     <PageLayout className="flex flex-col h-full overflow-hidden" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
       <div className="flex-none">
         <PageLayout.Header title="Grid Operators" sticky={true} />
+        <DataSourceLink paths={["data/isos.json", "data/rtos.json", "data/balancing-authorities.json"]} className="px-1 pb-2" />
       </div>
       <div className="flex-none">
         <DataControls

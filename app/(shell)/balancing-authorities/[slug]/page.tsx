@@ -15,6 +15,7 @@ import {
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
+import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getBalancingAuthorityBySlug, getIsoById, getUtilitiesByBalancingAuthority } from "@/lib/data";
 import { formatCustomerCount, formatStates, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
@@ -123,6 +124,13 @@ export default function BADetailPage() {
       <PageLayout.Header
         title={ba.name}
         breadcrumbs={[{ label: "Grid Operators", href: "/grid-operators" }, { label: ba.shortName }]}
+      />
+      <DataSourceLink
+        paths={[
+          "data/balancing-authorities.json",
+          ...(ba.regionId ? [`data/territories/ba-${ba.slug}.json`] : []),
+        ]}
+        className="px-6 pb-2"
       />
       <PageLayout.Content>
         <Section id="overview" navLabel="Overview" title="Overview" withDivider>

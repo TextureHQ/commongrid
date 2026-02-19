@@ -15,6 +15,7 @@ import {
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
+import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getBalancingAuthorityById,
@@ -191,6 +192,13 @@ export default function UtilityDetailPage() {
           { label: "Utilities", href: "/utilities" },
           { label: utility.slug, copyable: true, copyValue: utility.slug },
         ]}
+      />
+      <DataSourceLink
+        paths={[
+          "data/utilities.json",
+          ...(territoryFileKey ? [`data/territories/${territoryFileKey}.json`] : []),
+        ]}
+        className="px-6 pb-2"
       />
       <PageLayout.Content>
         <Section id="overview" navLabel="Overview" title="Overview" withDivider>

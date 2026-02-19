@@ -12,6 +12,7 @@ import {
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useMemo, useState } from "react";
 import { getAllUtilities, searchEntities, sortByName } from "@/lib/data";
 import {
@@ -162,6 +163,7 @@ export default function UtilitiesPage() {
     <PageLayout className="flex flex-col h-full overflow-hidden" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
       <div className="flex-none">
         <PageLayout.Header title="Utilities" sticky={true} />
+        <DataSourceLink paths={["data/utilities.json"]} className="px-1 pb-2" />
       </div>
       <div className="flex-none">
         <DataControls

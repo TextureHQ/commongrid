@@ -11,6 +11,7 @@ export default function ShellLayout({ children }: { children: ReactNode }) {
       href: "/grid-operators",
       activePatterns: ["/balancing-authorities/", "/isos/", "/rtos/"],
     },
+    { id: "about", label: "About", href: "/about" },
   ];
 
   return <ShellLayoutClient navigation={navigation}>{children}</ShellLayoutClient>;

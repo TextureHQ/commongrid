@@ -15,6 +15,7 @@ import {
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
+import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getBalancingAuthoritiesByIso, getIsoBySlug, getUtilitiesByIso } from "@/lib/data";
 import { formatCustomerCount, formatStates, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
@@ -194,6 +195,13 @@ export default function IsoDetailPage() {
       <PageLayout.Header
         title={iso.name}
         breadcrumbs={[{ label: "Grid Operators", href: "/grid-operators" }, { label: iso.shortName }]}
+      />
+      <DataSourceLink
+        paths={[
+          "data/isos.json",
+          ...(iso.shortName ? [`data/territories/iso-${iso.shortName.toLowerCase()}.json`] : []),
+        ]}
+        className="px-6 pb-2"
       />
       <PageLayout.Content>
         <Section id="overview" navLabel="Overview" title="Overview" withDivider>

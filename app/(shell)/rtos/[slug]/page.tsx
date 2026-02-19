@@ -15,6 +15,7 @@ import {
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
+import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getRtoBySlug, getUtilitiesByRto } from "@/lib/data";
 import { formatCustomerCount, formatStates, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
@@ -122,6 +123,13 @@ export default function RtoDetailPage() {
       <PageLayout.Header
         title={rto.name}
         breadcrumbs={[{ label: "Grid Operators", href: "/grid-operators" }, { label: rto.shortName }]}
+      />
+      <DataSourceLink
+        paths={[
+          "data/rtos.json",
+          ...(rto.shortName ? [`data/territories/iso-${rto.shortName.toLowerCase()}.json`] : []),
+        ]}
+        className="px-6 pb-2"
       />
       <PageLayout.Content>
         <Section id="overview" navLabel="Overview" title="Overview" withDivider>
