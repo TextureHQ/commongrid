@@ -1,5 +1,5 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "npm run build",
+  "buildCommand": "node scripts/copy-territories.mjs && next build",
   "outputDirectory": ".next"
 }
