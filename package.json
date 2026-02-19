@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.7.5",
     "@tailwindcss/postcss": "^4.1.14",
     "@texturehq/edges": "^1.28.0",
     "geojson-vt": "^3.2.1",
