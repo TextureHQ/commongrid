@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@import "@texturehq/edges/theme.css";
+@import "@texturehq/edges/styles.css";
+
+.theme-dark {
+  --color-background-surface: #141414;
+  --color-border-default: #2a2a2a;
+}
+
+@layer utilities {
+  @media (min-width: 768px) {
+    .md\:hidden {
+      display: none;
+    }
+    .md\:block {
+      display: block;
+    }
+    .md\:flex {
+      display: flex;
+    }
+  }
+}

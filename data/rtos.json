@@ -1,0 +1,131 @@
+[
+  {
+    "id": "2da5b7fc-9f3d-8188-95af-e7f039834c98",
+    "slug": "caiso",
+    "name": "California Independent System Operator",
+    "shortName": "CAISO",
+    "states": [
+      "CA"
+    ],
+    "website": "https://www.caiso.com",
+    "regionId": "region-iso-caiso",
+    "logo": "https://img.logo.dev/www.caiso.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "2da5b7fc-9f3d-8195-8a69-e42769f0b207",
+    "slug": "ercot",
+    "name": "Electric Reliability Council of Texas",
+    "shortName": "ERCOT",
+    "states": [
+      "TX"
+    ],
+    "website": "https://www.ercot.com",
+    "regionId": "region-iso-ercot",
+    "logo": "https://img.logo.dev/www.ercot.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "2da5b7fc-9f3d-8149-9423-f852b4f0f494",
+    "slug": "iso-ne",
+    "name": "ISO New England",
+    "shortName": "ISO-NE",
+    "states": [
+      "CT",
+      "MA",
+      "ME",
+      "NH",
+      "RI",
+      "VT"
+    ],
+    "website": "https://www.iso-ne.com",
+    "regionId": "region-iso-iso-ne",
+    "logo": "https://img.logo.dev/www.iso-ne.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "2da5b7fc-9f3d-818d-b363-cd23872306ab",
+    "slug": "miso",
+    "name": "Midcontinent Independent System Operator",
+    "shortName": "MISO",
+    "states": [
+      "AR",
+      "IA",
+      "IL",
+      "IN",
+      "KY",
+      "LA",
+      "MI",
+      "MN",
+      "MO",
+      "MS",
+      "MT",
+      "ND",
+      "SD",
+      "TX",
+      "WI"
+    ],
+    "website": "https://www.misoenergy.org",
+    "regionId": "region-iso-miso",
+    "logo": "https://img.logo.dev/www.misoenergy.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "2da5b7fc-9f3d-814a-8b47-ce123cd3950c",
+    "slug": "nyiso",
+    "name": "New York Independent System Operator",
+    "shortName": "NYISO",
+    "states": [
+      "NY"
+    ],
+    "website": "https://www.nyiso.com",
+    "regionId": "region-iso-nyiso",
+    "logo": "https://img.logo.dev/www.nyiso.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "2da5b7fc-9f3d-8181-a080-db527d98d7b0",
+    "slug": "pjm",
+    "name": "PJM Interconnection",
+    "shortName": "PJM",
+    "states": [
+      "DC",
+      "DE",
+      "IL",
+      "IN",
+      "KY",
+      "MD",
+      "MI",
+      "NC",
+      "NJ",
+      "OH",
+      "PA",
+      "TN",
+      "VA",
+      "WV"
+    ],
+    "website": "https://www.pjm.com",
+    "regionId": "region-iso-pjm",
+    "logo": "https://img.logo.dev/www.pjm.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  },
+  {
+    "id": "2da5b7fc-9f3d-81fd-8a7e-d0ae3ce3e35f",
+    "slug": "spp",
+    "name": "Southwest Power Pool",
+    "shortName": "SPP",
+    "states": [
+      "AR",
+      "IA",
+      "KS",
+      "LA",
+      "MN",
+      "MO",
+      "MT",
+      "ND",
+      "NE",
+      "NM",
+      "OK",
+      "SD",
+      "TX",
+      "WY"
+    ],
+    "website": "https://www.spp.org",
+    "regionId": "region-iso-spp",
+    "logo": "https://img.logo.dev/www.spp.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+  }
+]

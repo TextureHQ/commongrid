@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+  <!-- Outer dot border - top row -->
+  <circle cx="10" cy="10" r="3.5"/>
+  <circle cx="25" cy="10" r="3.5"/>
+  <circle cx="40" cy="10" r="3.5"/>
+  <circle cx="55" cy="10" r="3.5"/>
+  <circle cx="70" cy="10" r="3.5"/>
+  <circle cx="85" cy="10" r="3.5"/>
+
+  <!-- Outer dot border - bottom row -->
+  <circle cx="10" cy="90" r="3.5"/>
+  <circle cx="25" cy="90" r="3.5"/>
+  <circle cx="40" cy="90" r="3.5"/>
+  <circle cx="55" cy="90" r="3.5"/>
+  <circle cx="70" cy="90" r="3.5"/>
+  <circle cx="85" cy="90" r="3.5"/>
+
+  <!-- Outer dot border - left column (excluding corners) -->
+  <circle cx="10" cy="26" r="3.5"/>
+  <circle cx="10" cy="42" r="3.5"/>
+  <circle cx="10" cy="58" r="3.5"/>
+  <circle cx="10" cy="74" r="3.5"/>
+
+  <!-- Outer dot border - right column (excluding corners) -->
+  <circle cx="85" cy="26" r="3.5"/>
+  <circle cx="85" cy="42" r="3.5"/>
+  <circle cx="85" cy="58" r="3.5"/>
+  <circle cx="85" cy="74" r="3.5"/>
+
+  <!-- Inner icon - abstract open grid/circuit pattern -->
+  <!-- Left vertical bar -->
+  <rect x="28" y="28" width="8" height="44" rx="2"/>
+  <!-- Bottom horizontal bar -->
+  <rect x="28" y="64" width="30" height="8" rx="2"/>
+  <!-- Right vertical bar (shorter, open top-right) -->
+  <rect x="58" y="28" width="8" height="44" rx="2"/>
+  <!-- Top horizontal bar (gap on left = "open") -->
+  <rect x="44" y="28" width="22" height="8" rx="2"/>
+</svg>
