@@ -2,6 +2,10 @@
 @import "@texturehq/edges/theme.css";
 @import "@texturehq/edges/styles.css";
 
+html, body {
+  overflow-x: hidden;
+}
+
 .theme-dark {
   --color-background-surface: #141414;
   --color-border-default: #2a2a2a;

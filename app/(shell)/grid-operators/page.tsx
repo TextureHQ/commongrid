@@ -227,7 +227,7 @@ export default function GridOperatorsPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-8 rounded-md border border-border-default bg-background-surface px-2 text-sm text-text-body"
+              className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
             >
               {typeFilterOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>

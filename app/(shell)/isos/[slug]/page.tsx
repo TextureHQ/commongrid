@@ -201,7 +201,7 @@ export default function IsoDetailPage() {
           "data/isos.json",
           ...(iso.shortName ? [`data/territories/iso-${iso.shortName.toLowerCase()}.json`] : []),
         ]}
-        className="px-6 pb-2"
+        className="px-4 sm:px-6 pb-2"
       />
       <PageLayout.Content>
         <Section id="overview" navLabel="Overview" title="Overview" withDivider>
@@ -245,7 +245,7 @@ export default function IsoDetailPage() {
         {boundaryGeoJSON && boundaryViewState && (
           <Section id="boundary" navLabel="Boundary" title="ISO Boundary" withDivider>
             <Card variant="outlined" className="p-0 overflow-hidden">
-              <div className="h-[400px]">
+              <div className="h-[280px] sm:h-[400px]">
                 <InteractiveMap
                   {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
                     mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,

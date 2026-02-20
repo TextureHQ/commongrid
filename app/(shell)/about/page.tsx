@@ -48,7 +48,7 @@ export default function AboutPage() {
 
         {/* Data at a Glance */}
         <Section id="data" navLabel="Data" title="What's in OpenGrid" withDivider>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {dataHighlights.map((item) => (
               <Card key={item.label} variant="outlined">
                 <Card.Content>
@@ -79,8 +79,8 @@ export default function AboutPage() {
             <Card.Content>
               <div className="space-y-4">
                 {dataSources.map((source) => (
-                  <div key={source.name} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
-                    <div className="font-semibold text-text-heading min-w-[160px] font-mono text-sm">{source.name}</div>
+                  <div key={source.name} className="flex flex-col gap-1">
+                    <div className="font-semibold text-text-heading font-mono text-sm">{source.name}</div>
                     <div className="text-text-body text-sm">{source.description}</div>
                   </div>
                 ))}

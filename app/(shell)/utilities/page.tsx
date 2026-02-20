@@ -183,7 +183,7 @@ export default function UtilitiesPage() {
             <select
               value={segmentFilter}
               onChange={(e) => setSegmentFilter(e.target.value)}
-              className="h-8 rounded-md border border-border-default bg-background-surface px-2 text-sm text-text-body"
+              className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
             >
               {segmentFilterOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>

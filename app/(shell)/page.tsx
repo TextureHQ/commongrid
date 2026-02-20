@@ -28,7 +28,7 @@ const hasMapboxToken = !!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 function MapFallbackHero() {
   return (
     <div className="h-full w-full flex items-center justify-center bg-background-surface">
-      <div className="max-w-2xl mx-auto px-6 py-16 text-center">
+      <div className="max-w-2xl mx-auto px-6 py-8 sm:py-16 text-center">
         <div className="mb-6">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor" className="h-16 w-16 mx-auto text-text-heading opacity-80">
             <circle cx="10" cy="10" r="3.5"/><circle cx="25" cy="10" r="3.5"/><circle cx="40" cy="10" r="3.5"/><circle cx="55" cy="10" r="3.5"/><circle cx="70" cy="10" r="3.5"/><circle cx="85" cy="10" r="3.5"/>
@@ -38,29 +38,29 @@ function MapFallbackHero() {
             <rect x="28" y="28" width="8" height="44" rx="2"/><rect x="28" y="64" width="30" height="8" rx="2"/><rect x="58" y="28" width="8" height="44" rx="2"/><rect x="44" y="28" width="22" height="8" rx="2"/>
           </svg>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-text-heading mb-4 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-text-heading mb-4 tracking-tight">
           OpenGrid Explorer
         </h1>
-        <p className="text-lg text-text-muted mb-8 leading-relaxed">
+        <p className="text-base sm:text-lg text-text-muted mb-8 leading-relaxed">
           The open-source energy infrastructure dataset. Browse 3,000+ utility territories,
           grid operators, and energy data across the United States.
         </p>
         <div className="flex flex-wrap justify-center gap-3 mb-10">
           <Link
             href="/utilities"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-primary text-white font-medium text-sm hover:opacity-90 transition-opacity"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-brand-primary text-white font-medium text-sm hover:opacity-90 transition-opacity"
           >
             ⚡ Browse Utilities
           </Link>
           <Link
             href="/grid-operators"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-default text-text-body font-medium text-sm hover:bg-background-surface-hover transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-border-default text-text-body font-medium text-sm hover:bg-background-surface-hover transition-colors"
           >
             🔌 Grid Operators
           </Link>
           <Link
             href="/about"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-default text-text-body font-medium text-sm hover:bg-background-surface-hover transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-border-default text-text-body font-medium text-sm hover:bg-background-surface-hover transition-colors"
           >
             About OpenGrid
           </Link>

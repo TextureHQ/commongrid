@@ -198,7 +198,7 @@ export default function UtilityDetailPage() {
           "data/utilities.json",
           ...(territoryFileKey ? [`data/territories/${territoryFileKey}.json`] : []),
         ]}
-        className="px-6 pb-2"
+        className="px-4 sm:px-6 pb-2"
       />
       <PageLayout.Content>
         <Section id="overview" navLabel="Overview" title="Overview" withDivider>
@@ -376,7 +376,7 @@ export default function UtilityDetailPage() {
         {territoryGeoJSON && territoryViewState && (
           <Section id="service-territory" navLabel="Service Territory" title="Service Territory" withDivider>
             <Card variant="outlined" className="p-0 overflow-hidden">
-              <div className="h-[400px]">
+              <div className="h-[280px] sm:h-[400px]">
                 <InteractiveMap
                   {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
                     mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
