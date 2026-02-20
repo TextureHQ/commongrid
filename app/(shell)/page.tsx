@@ -3,7 +3,7 @@
 import { InteractiveMap, type LayerFeature, layer, Badge, Card } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useId } from "react";
 import { getSegmentLabel } from "@/lib/formatting";
 
 function getTileUrl() {
@@ -88,6 +88,7 @@ function MapFallbackHero() {
 
 export default function ExplorePage() {
   const router = useRouter();
+  const mapKey = useId();
 
   const handleClick = useCallback(
     (feature: LayerFeature) => {
@@ -104,7 +105,7 @@ export default function ExplorePage() {
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full" key={mapKey}>
       <InteractiveMap
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!}
         initialViewState={{
