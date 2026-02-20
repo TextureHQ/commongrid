@@ -7,10 +7,7 @@ import { useCallback } from "react";
 import { getSegmentLabel } from "@/lib/formatting";
 
 function getTileUrl() {
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}/api/tiles/territories/{z}/{x}/{y}?v=3`;
-  }
-  return "/api/tiles/territories/{z}/{x}/{y}?v=3";
+  return "/tiles/{z}/{x}/{y}.pbf";
 }
 
 const segmentColorMapping = {

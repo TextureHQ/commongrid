@@ -7,3 +7,6 @@ node_modules
 
 # Territory GeoJSON in public/ is copied from data/ at build time
 public/data/territories/
+
+# Pre-generated vector tiles (built by scripts/generate-tiles.mjs)
+public/tiles/
