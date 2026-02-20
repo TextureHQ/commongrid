@@ -144,7 +144,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ z: 
     headers: {
       "Content-Type": "application/vnd.mapbox-vector-tile",
       "Content-Encoding": "gzip",
-      "Cache-Control": "no-cache",
+      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
       "Access-Control-Allow-Origin": "*",
     },
   });
