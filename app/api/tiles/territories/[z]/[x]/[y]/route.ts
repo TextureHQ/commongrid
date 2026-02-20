@@ -1,12 +1,8 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { promisify } from "node:util";
-import { gzip } from "node:zlib";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import geojsonvt from "geojson-vt";
 import { fromGeojsonVt } from "vt-pbf";
-
-const gzipAsync = promisify(gzip);
 
 interface TerritoryProperties {
   name: string;
@@ -137,14 +133,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ z: 
   const layers = { territories: tile };
   const mvtBuffer = fromGeojsonVt(layers);
   const buffer = Buffer.from(mvtBuffer);
-  const compressed = await gzipAsync(buffer);
 
-  return new Response(compressed, {
+  return new Response(buffer, {
     status: 200,
     headers: {
       "Content-Type": "application/vnd.mapbox-vector-tile",
-      "Content-Encoding": "gzip",
-      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
       "Access-Control-Allow-Origin": "*",
     },
   });

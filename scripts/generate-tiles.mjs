@@ -7,12 +7,9 @@
  */
 import { readdir, readFile, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { promisify } from "node:util";
-import { gzip } from "node:zlib";
 import geojsonvt from "geojson-vt";
 import vtpbf from "vt-pbf";
 
-const gzipAsync = promisify(gzip);
 const { fromGeojsonVt } = vtpbf;
 
 const MAX_ZOOM = 10;
@@ -110,11 +107,10 @@ async function generateTiles() {
         const layers = { territories: tile };
         const mvtBuffer = fromGeojsonVt(layers);
         const buffer = Buffer.from(mvtBuffer);
-        const compressed = await gzipAsync(buffer);
 
         const dir = join(OUT_DIR, String(z), String(x));
         await mkdir(dir, { recursive: true });
-        await writeFile(join(dir, `${y}.pbf`), compressed);
+        await writeFile(join(dir, `${y}.pbf`), buffer);
         zoomTiles++;
       }
     }
