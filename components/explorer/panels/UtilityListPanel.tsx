@@ -7,20 +7,13 @@ import {
   DataControls,
   DataTable,
   EmptyState,
-  PageLayout,
-  TextCell,
 } from "@texturehq/edges";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { DataSourceLink } from "@/components/DataSourceLink";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useExplorer } from "../ExplorerContext";
 import { getAllUtilities, searchEntities, sortByName } from "@/lib/data";
 import {
-  formatCustomerCount,
   getSegmentBadgeVariant,
   getSegmentLabel,
-  getStatusBadgeVariant,
-  getStatusLabel,
 } from "@/lib/formatting";
 import { type Utility, UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
 
@@ -32,7 +25,6 @@ interface UtilityRow extends Record<string, unknown> {
   status: string;
   customerCount: number | null;
   jurisdiction: string | null;
-  isoId: string | null;
 }
 
 const sortOptions = [
@@ -49,28 +41,22 @@ const segmentFilterOptions = [
   })),
 ];
 
-export default function UtilitiesPage() {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortValue, setSortValue] = useState("name:asc");
-  const [segmentFilter, setSegmentFilter] = useState("all");
+export function UtilityListPanel() {
+  const { state, setSearch, setSegment, navigateToDetail, navigateToLanding } = useExplorer();
 
   const allUtilities = useMemo(() => getAllUtilities(), []);
 
   const filtered = useMemo(() => {
     let result: Utility[] = allUtilities;
-    if (searchQuery) {
-      result = searchEntities(result, searchQuery);
+    if (state.q) {
+      result = searchEntities(result, state.q);
     }
-    if (segmentFilter !== "all") {
-      result = result.filter((u) => u.segment === segmentFilter);
+    if (state.segment !== "all") {
+      result = result.filter((u) => u.segment === state.segment);
     }
-    const [field, direction] = sortValue.split(":");
-    if (field === "name") {
-      result = sortByName(result, direction as "asc" | "desc");
-    }
+    result = sortByName(result, "asc");
     return result;
-  }, [allUtilities, searchQuery, segmentFilter, sortValue]);
+  }, [allUtilities, state.q, state.segment]);
 
   const rows: UtilityRow[] = useMemo(
     () =>
@@ -82,16 +68,15 @@ export default function UtilitiesPage() {
         status: u.status,
         customerCount: u.customerCount,
         jurisdiction: u.jurisdiction,
-        isoId: u.isoId,
       })),
     [filtered]
   );
 
   const handleRowClick = useCallback(
     (row: UtilityRow) => {
-      router.push(`/utilities/${row.slug}`);
+      navigateToDetail("utility", row.slug);
     },
-    [router]
+    [navigateToDetail]
   );
 
   const columns: Column<UtilityRow>[] = useMemo(
@@ -101,10 +86,7 @@ export default function UtilitiesPage() {
         label: "Name",
         accessor: "name",
         render: (_value: unknown, row: UtilityRow) => (
-          <Link
-            href={`/utilities/${row.slug}`}
-            className="flex items-center gap-2 font-medium text-text-body hover:text-brand-primary"
-          >
+          <span className="flex items-center gap-2 font-medium text-text-body">
             <Avatar
               {...(row.logo ? { src: row.logo } : {})}
               fullName={row.name}
@@ -113,7 +95,7 @@ export default function UtilitiesPage() {
               variant="organization"
             />
             {row.name}
-          </Link>
+          </span>
         ),
         mobile: { priority: 1, format: "primary" },
       },
@@ -128,61 +110,40 @@ export default function UtilitiesPage() {
         ),
         mobile: { priority: 2, format: "badge" },
       },
-      {
-        id: "status",
-        label: "Status",
-        accessor: "status",
-        render: (_value: unknown, row: UtilityRow) => (
-          <Badge size="sm" shape="pill" variant={getStatusBadgeVariant(row.status)}>
-            {getStatusLabel(row.status)}
-          </Badge>
-        ),
-        mobile: false,
-      },
-      {
-        id: "customerCount",
-        label: "Customers",
-        accessor: "customerCount",
-        render: (_value: unknown, row: UtilityRow) => (
-          <span className="text-text-body">{formatCustomerCount(row.customerCount)}</span>
-        ),
-        mobile: false,
-      },
-      {
-        id: "jurisdiction",
-        label: "Jurisdiction",
-        accessor: "jurisdiction",
-        cell: TextCell,
-        mobile: { priority: 3, format: "secondary" },
-      },
     ],
     []
   );
 
   return (
-    <PageLayout className="flex flex-col h-full overflow-hidden" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
-      <div className="flex-none">
-        <PageLayout.Header title="Utilities" sticky={true} />
-        <DataSourceLink paths={["data/utilities.json"]} className="px-1 pb-2" />
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-none px-4 pt-4 pb-2">
+        <button
+          type="button"
+          onClick={navigateToLanding}
+          className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
+        >
+          &larr; Back
+        </button>
+        <h2 className="text-lg font-semibold text-text-heading">Utilities</h2>
       </div>
-      <div className="flex-none">
+      <div className="flex-none px-4">
         <DataControls
           resultsCount={{ count: filtered.length, label: "utilities" }}
           search={{
-            value: searchQuery,
-            onChange: setSearchQuery,
-            onClear: () => setSearchQuery(""),
+            value: state.q,
+            onChange: setSearch,
+            onClear: () => setSearch(""),
             placeholder: "Search utilities...",
           }}
           sort={{
-            value: sortValue,
+            value: "name:asc",
             options: sortOptions,
-            onChange: setSortValue,
+            onChange: () => {},
           }}
           customControls={
             <select
-              value={segmentFilter}
-              onChange={(e) => setSegmentFilter(e.target.value)}
+              value={state.segment}
+              onChange={(e) => setSegment(e.target.value)}
               className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
             >
               {segmentFilterOptions.map((opt) => (
@@ -200,12 +161,11 @@ export default function UtilitiesPage() {
           <EmptyState
             icon="Lightning"
             title="No utilities found"
-            description={searchQuery ? "Try adjusting your search criteria." : "No utilities in the dataset."}
+            description={state.q ? "Try adjusting your search criteria." : "No utilities in the dataset."}
             fullHeight={true}
           />
         ) : (
           <DataTable
-            className="border-r border-l"
             data={rows}
             columns={columns}
             mobileBreakpoint="md"
@@ -216,6 +176,6 @@ export default function UtilitiesPage() {
           />
         )}
       </div>
-    </PageLayout>
+    </div>
   );
 }
