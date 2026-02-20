@@ -7,6 +7,30 @@
   --color-border-default: #2a2a2a;
 }
 
+/* Mobile-first map container fixes */
+.mapboxgl-map {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.mapboxgl-canvas-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure touch events work properly on mobile */
+.mapboxgl-canvas {
+  touch-action: pan-x pan-y;
+}
+
+/* Fix navigation controls position on mobile */
+@media (max-width: 640px) {
+  .mapboxgl-ctrl-group {
+    margin-bottom: env(safe-area-inset-bottom, 10px) !important;
+    margin-right: env(safe-area-inset-right, 10px) !important;
+  }
+}
+
 @layer utilities {
   @media (min-width: 768px) {
     .md\:hidden {
