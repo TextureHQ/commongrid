@@ -1,0 +1,997 @@
+[
+  {
+    "slug": "pacificorp",
+    "oldUrl": "https://img.logo.dev/pacificorp-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pacificorp.png"
+  },
+  {
+    "slug": "public-service-co-of-colorado",
+    "oldUrl": "https://img.logo.dev/xcelenergy-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/public-service-co-of-colorado.png"
+  },
+  {
+    "slug": "portland-general-electric-or-1",
+    "oldUrl": "https://img.logo.dev/portlandgeneral-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/portland-general-electric-or-1.png"
+  },
+  {
+    "slug": "idaho-power",
+    "oldUrl": "https://img.logo.dev/idahopower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/idaho-power.png"
+  },
+  {
+    "slug": "city-of-seattle",
+    "oldUrl": "https://img.logo.dev/seattle-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-seattle.png"
+  },
+  {
+    "slug": "northwestern-energy-mt",
+    "oldUrl": "https://img.logo.dev/northwesternenergy-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/northwestern-energy-mt.png"
+  },
+  {
+    "slug": "pud-1-of-snohomish-county",
+    "oldUrl": "https://img.logo.dev/snopud-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-1-of-snohomish-county.png"
+  },
+  {
+    "slug": "city-of-colorado-springs",
+    "oldUrl": "https://img.logo.dev/csu-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-colorado-springs.png"
+  },
+  {
+    "slug": "pud-no-1-of-clark-county",
+    "oldUrl": "https://img.logo.dev/clarkpublicutilities-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-clark-county.png"
+  },
+  {
+    "slug": "intermountain-rural-electric-association",
+    "oldUrl": "https://img.logo.dev/irea-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/intermountain-rural-electric-association.png"
+  },
+  {
+    "slug": "montana-dakota-utilities",
+    "oldUrl": "https://img.logo.dev/montana-dakota-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/montana-dakota-utilities.png"
+  },
+  {
+    "slug": "united-power",
+    "oldUrl": "https://img.logo.dev/unitedpower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/united-power.png"
+  },
+  {
+    "slug": "city-of-eugene",
+    "oldUrl": "https://img.logo.dev/eweb-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-eugene.png"
+  },
+  {
+    "slug": "city-of-fort-collins",
+    "oldUrl": "https://img.logo.dev/fcgov-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-fort-collins.png"
+  },
+  {
+    "slug": "flathead-electric-co-op",
+    "oldUrl": "https://img.logo.dev/flatheadelectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/flathead-electric-co-op.png"
+  },
+  {
+    "slug": "holy-cross-electric-association",
+    "oldUrl": "https://img.logo.dev/holycross-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/holy-cross-electric-association.png"
+  },
+  {
+    "slug": "mountain-view-electric-association",
+    "oldUrl": "https://img.logo.dev/mvea-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/mountain-view-electric-association.png"
+  },
+  {
+    "slug": "pud-no-1-of-benton-county",
+    "oldUrl": "https://img.logo.dev/bentonpud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-benton-county.png"
+  },
+  {
+    "slug": "pud-no-2-of-grant-county",
+    "oldUrl": "https://img.logo.dev/grantpud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-2-of-grant-county.png"
+  },
+  {
+    "slug": "pud-no-1-of-cowlitz-county",
+    "oldUrl": "https://img.logo.dev/cowlitzpud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-cowlitz-county.png"
+  },
+  {
+    "slug": "pud-no-1-of-chelan-county",
+    "oldUrl": "https://img.logo.dev/chelanpud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-chelan-county.png"
+  },
+  {
+    "slug": "poudre-valley-rea",
+    "oldUrl": "https://img.logo.dev/pvrea-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/poudre-valley-rea.png"
+  },
+  {
+    "slug": "la-plata-electric-association",
+    "oldUrl": "https://img.logo.dev/lpea-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/la-plata-electric-association.png"
+  },
+  {
+    "slug": "inland-power-and-light",
+    "oldUrl": "https://img.logo.dev/inlandpower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/inland-power-and-light.png"
+  },
+  {
+    "slug": "pud-no-1-of-grays-harbor-county",
+    "oldUrl": "https://img.logo.dev/ghpud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-grays-harbor-county.png"
+  },
+  {
+    "slug": "cheyenne-light-fuel-and-power-d-b-a-black",
+    "oldUrl": "https://img.logo.dev/cheyennelight-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/cheyenne-light-fuel-and-power-d-b-a-black.png"
+  },
+  {
+    "slug": "city-of-longmont",
+    "oldUrl": "https://img.logo.dev/longmontcolorado-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-longmont.png"
+  },
+  {
+    "slug": "navajo-tribal-utility-authority-az-2",
+    "oldUrl": "https://img.logo.dev/ntua-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/navajo-tribal-utility-authority-az-2.png"
+  },
+  {
+    "slug": "city-of-loveland",
+    "oldUrl": "https://img.logo.dev/cityofloveland-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-loveland.png"
+  },
+  {
+    "slug": "provo-city",
+    "oldUrl": "https://img.logo.dev/provo-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/provo-city.png"
+  },
+  {
+    "slug": "central-electric-co-op-or",
+    "oldUrl": "https://img.logo.dev/cec-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/central-electric-co-op-or.png"
+  },
+  {
+    "slug": "delta-montrose-electric-association",
+    "oldUrl": "https://img.logo.dev/dmea-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/delta-montrose-electric-association.png"
+  },
+  {
+    "slug": "pud-no-3-of-mason-county",
+    "oldUrl": "https://img.logo.dev/masonpud3-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-3-of-mason-county.png"
+  },
+  {
+    "slug": "peninsula-light",
+    "oldUrl": "https://img.logo.dev/penlight-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/peninsula-light.png"
+  },
+  {
+    "slug": "pud-no-1-of-lewis-county",
+    "oldUrl": "https://img.logo.dev/lcpud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-lewis-county.png"
+  },
+  {
+    "slug": "pud-no-1-of-clallam-county",
+    "oldUrl": "https://img.logo.dev/clallampud-net?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-clallam-county.png"
+  },
+  {
+    "slug": "oregon-trail-el-cons-co-op",
+    "oldUrl": "https://img.logo.dev/otecc-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/oregon-trail-el-cons-co-op.png"
+  },
+  {
+    "slug": "city-of-idaho-falls",
+    "oldUrl": "https://img.logo.dev/idahofallsidaho-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-idaho-falls.png"
+  },
+  {
+    "slug": "lower-valley-energy",
+    "oldUrl": "https://img.logo.dev/lvenergy-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/lower-valley-energy.png"
+  },
+  {
+    "slug": "pud-no-1-of-franklin-county",
+    "oldUrl": "https://img.logo.dev/franklinpud-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-franklin-county.png"
+  },
+  {
+    "slug": "kootenai-electric-cooperative",
+    "oldUrl": "https://img.logo.dev/kec-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/kootenai-electric-cooperative.png"
+  },
+  {
+    "slug": "yampa-valley-electric-association",
+    "oldUrl": "https://img.logo.dev/yvea-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/yampa-valley-electric-association.png"
+  },
+  {
+    "slug": "city-of-richland-wa",
+    "oldUrl": "https://img.logo.dev/ci-richland-wa-us?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-richland-wa.png"
+  },
+  {
+    "slug": "dixie-power",
+    "oldUrl": "https://img.logo.dev/dixiepower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/dixie-power.png"
+  },
+  {
+    "slug": "san-isabel-electric-association",
+    "oldUrl": "https://img.logo.dev/siea-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/san-isabel-electric-association.png"
+  },
+  {
+    "slug": "lehi-city",
+    "oldUrl": "https://img.logo.dev/lehi-ut-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/lehi-city.png"
+  },
+  {
+    "slug": "consumers-power",
+    "oldUrl": "https://img.logo.dev/cpi-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/consumers-power.png"
+  },
+  {
+    "slug": "northern-lights",
+    "oldUrl": "https://img.logo.dev/nli-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/northern-lights.png"
+  },
+  {
+    "slug": "emerald-people-s-utility-district",
+    "oldUrl": "https://img.logo.dev/epud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/emerald-people-s-utility-district.png"
+  },
+  {
+    "slug": "tillamook-peoples-utility-district",
+    "oldUrl": "https://img.logo.dev/tpud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/tillamook-peoples-utility-district.png"
+  },
+  {
+    "slug": "pud-no-1-of-okanogan-county",
+    "oldUrl": "https://img.logo.dev/okanoganpud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-okanogan-county.png"
+  },
+  {
+    "slug": "mountain-parks-electric",
+    "oldUrl": "https://img.logo.dev/mpei-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/mountain-parks-electric.png"
+  },
+  {
+    "slug": "yellowstone-valley-electric-co-op",
+    "oldUrl": "https://img.logo.dev/yvec-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/yellowstone-valley-electric-co-op.png"
+  },
+  {
+    "slug": "salem-electric",
+    "oldUrl": "https://img.logo.dev/salemelectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/salem-electric.png"
+  },
+  {
+    "slug": "midstate-electric-co-op",
+    "oldUrl": "https://img.logo.dev/midstateelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/midstate-electric-co-op.png"
+  },
+  {
+    "slug": "city-of-logan",
+    "oldUrl": "https://img.logo.dev/loganutah-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-logan.png"
+  },
+  {
+    "slug": "moon-lake-electric-association",
+    "oldUrl": "https://img.logo.dev/moonlakeelectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/moon-lake-electric-association.png"
+  },
+  {
+    "slug": "city-of-murray-ut",
+    "oldUrl": "https://img.logo.dev/murray-utah-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-murray-ut.png"
+  },
+  {
+    "slug": "grand-valley-power",
+    "oldUrl": "https://img.logo.dev/gvp-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/grand-valley-power.png"
+  },
+  {
+    "slug": "coos-curry-electric-co-op",
+    "oldUrl": "https://img.logo.dev/ccec-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/coos-curry-electric-co-op.png"
+  },
+  {
+    "slug": "fall-river-rural-electric-co-op",
+    "oldUrl": "https://img.logo.dev/fallriverelectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/fall-river-rural-electric-co-op.png"
+  },
+  {
+    "slug": "pud-no-2-of-pacific-county",
+    "oldUrl": "https://img.logo.dev/pacificpud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-2-of-pacific-county.png"
+  },
+  {
+    "slug": "city-of-fountain",
+    "oldUrl": "https://img.logo.dev/fountainutilities-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-fountain.png"
+  },
+  {
+    "slug": "city-of-bountiful",
+    "oldUrl": "https://img.logo.dev/bountifulutah-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-bountiful.png"
+  },
+  {
+    "slug": "city-of-mcminnville",
+    "oldUrl": "https://img.logo.dev/ci-mcminnville-or-us?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-mcminnville.png"
+  },
+  {
+    "slug": "columbia-river-peoples-ut-district",
+    "oldUrl": "https://img.logo.dev/crpud-net?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/columbia-river-peoples-ut-district.png"
+  },
+  {
+    "slug": "empire-electric-association",
+    "oldUrl": "https://img.logo.dev/eea-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/empire-electric-association.png"
+  },
+  {
+    "slug": "pud-no-1-of-douglas-county",
+    "oldUrl": "https://img.logo.dev/douglaspud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-douglas-county.png"
+  },
+  {
+    "slug": "city-of-gillette",
+    "oldUrl": "https://img.logo.dev/gillettewy-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-gillette.png"
+  },
+  {
+    "slug": "umatilla-electric-co-op-association",
+    "oldUrl": "https://img.logo.dev/umatillaelectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/umatilla-electric-co-op-association.png"
+  },
+  {
+    "slug": "elmhurst-mutual-power-and-light",
+    "oldUrl": "https://img.logo.dev/elmhurstmutual-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/elmhurst-mutual-power-and-light.png"
+  },
+  {
+    "slug": "orcas-power-and-light-co-op",
+    "oldUrl": "https://img.logo.dev/opalco-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/orcas-power-and-light-co-op.png"
+  },
+  {
+    "slug": "garkane-energy-co-op",
+    "oldUrl": "https://img.logo.dev/garkaneenergy-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/garkane-energy-co-op.png"
+  },
+  {
+    "slug": "san-miguel-power-association",
+    "oldUrl": "https://img.logo.dev/smpa-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/san-miguel-power-association.png"
+  },
+  {
+    "slug": "pud-no-1-of-klickitat-county",
+    "oldUrl": "https://img.logo.dev/klickitatpud-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-klickitat-county.png"
+  },
+  {
+    "slug": "high-plains-power",
+    "oldUrl": "https://img.logo.dev/highplainspower-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/high-plains-power.png"
+  },
+  {
+    "slug": "spanish-fork-city",
+    "oldUrl": "https://img.logo.dev/spanishfork-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/spanish-fork-city.png"
+  },
+  {
+    "slug": "mckenzie-electric-co-op",
+    "oldUrl": "https://img.logo.dev/mckenzieelectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/mckenzie-electric-co-op.png"
+  },
+  {
+    "slug": "san-luis-valley-r-e-c",
+    "oldUrl": "https://img.logo.dev/slvrec-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/san-luis-valley-r-e-c.png"
+  },
+  {
+    "slug": "vera-irrigation-district-15",
+    "oldUrl": "https://img.logo.dev/verawaterandpower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/vera-irrigation-district-15.png"
+  },
+  {
+    "slug": "city-of-springville",
+    "oldUrl": "https://img.logo.dev/springville-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-springville.png"
+  },
+  {
+    "slug": "city-of-centralia-wa",
+    "oldUrl": "https://img.logo.dev/cityofcentralia-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-centralia-wa.png"
+  },
+  {
+    "slug": "city-of-forest-grove",
+    "oldUrl": "https://img.logo.dev/forestgrove-or-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-forest-grove.png"
+  },
+  {
+    "slug": "highline-electric-association",
+    "oldUrl": "https://img.logo.dev/hea-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/highline-electric-association.png"
+  },
+  {
+    "slug": "northern-wasco-county-pud",
+    "oldUrl": "https://img.logo.dev/nwasco-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/northern-wasco-county-pud.png"
+  },
+  {
+    "slug": "city-of-ellensburg",
+    "oldUrl": "https://img.logo.dev/ci-ellensburg-wa-us?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-ellensburg.png"
+  },
+  {
+    "slug": "pud-no-1-of-pend-oreille-county",
+    "oldUrl": "https://img.logo.dev/nwppa-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-pend-oreille-county.png"
+  },
+  {
+    "slug": "morgan-county-rural-electric-association",
+    "oldUrl": "https://img.logo.dev/mcrea-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/morgan-county-rural-electric-association.png"
+  },
+  {
+    "slug": "y-w-electric-association",
+    "oldUrl": "https://img.logo.dev/ywelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/y-w-electric-association.png"
+  },
+  {
+    "slug": "mt-wheeler-power",
+    "oldUrl": "https://img.logo.dev/mwpower-net?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/mt-wheeler-power.png"
+  },
+  {
+    "slug": "united-electric-co-op-id",
+    "oldUrl": "https://img.logo.dev/unitedelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/united-electric-co-op-id.png"
+  },
+  {
+    "slug": "k-c-electric-association",
+    "oldUrl": "https://img.logo.dev/kcelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/k-c-electric-association.png"
+  },
+  {
+    "slug": "fergus-electric-co-op",
+    "oldUrl": "https://img.logo.dev/ferguselectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/fergus-electric-co-op.png"
+  },
+  {
+    "slug": "wells-rural-electric",
+    "oldUrl": "https://img.logo.dev/wrec-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/wells-rural-electric.png"
+  },
+  {
+    "slug": "lower-yellowstone-r-e-a",
+    "oldUrl": "https://img.logo.dev/lyrec-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/lower-yellowstone-r-e-a.png"
+  },
+  {
+    "slug": "surprise-valley-electrification",
+    "oldUrl": "https://img.logo.dev/surprisevalleyelectric-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/surprise-valley-electrification.png"
+  },
+  {
+    "slug": "city-of-fort-morgan",
+    "oldUrl": "https://img.logo.dev/cityoffortmorgan-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-fort-morgan.png"
+  },
+  {
+    "slug": "columbia-rural-electric-association",
+    "oldUrl": "https://img.logo.dev/columbiarea-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/columbia-rural-electric-association.png"
+  },
+  {
+    "slug": "raft-rural-electric-co-op",
+    "oldUrl": "https://img.logo.dev/rrelectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/raft-rural-electric-co-op.png"
+  },
+  {
+    "slug": "clatskanie-peoples-utilities-district",
+    "oldUrl": "https://img.logo.dev/clatskaniepud-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/clatskanie-peoples-utilities-district.png"
+  },
+  {
+    "slug": "strawberry-electric-serv-district",
+    "oldUrl": "https://img.logo.dev/sesdofutah-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/strawberry-electric-serv-district.png"
+  },
+  {
+    "slug": "white-river-electric-association",
+    "oldUrl": "https://img.logo.dev/white-river-electric-association-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/white-river-electric-association.png"
+  },
+  {
+    "slug": "salmon-river-electric-co-op",
+    "oldUrl": "https://img.logo.dev/srec-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/salmon-river-electric-co-op.png"
+  },
+  {
+    "slug": "city-of-center",
+    "oldUrl": "https://img.logo.dev/centralcitycolorado-us?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-center.png"
+  },
+  {
+    "slug": "city-of-plummer",
+    "oldUrl": "https://img.logo.dev/cityofplummer-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-plummer.png"
+  },
+  {
+    "slug": "city-of-cascade-locks",
+    "oldUrl": "https://img.logo.dev/cascade-locks-or-us?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-cascade-locks.png"
+  },
+  {
+    "slug": "city-of-springfield-co",
+    "oldUrl": "https://img.logo.dev/springfieldcolorado-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-springfield-co.png"
+  },
+  {
+    "slug": "city-of-julesburg",
+    "oldUrl": "https://img.logo.dev/townofjulesburg-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-julesburg.png"
+  },
+  {
+    "slug": "city-of-laurens-ia",
+    "oldUrl": "https://img.logo.dev/laurens-ia.com.?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-laurens-ia.png"
+  },
+  {
+    "slug": "city-of-drain",
+    "oldUrl": "https://img.logo.dev/cityofdrain-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-drain.png"
+  },
+  {
+    "slug": "city-of-pine-bluffs",
+    "oldUrl": "https://img.logo.dev/pinebluffswy-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-pine-bluffs.png"
+  },
+  {
+    "slug": "city-of-enterprise-ut",
+    "oldUrl": "https://img.logo.dev/enterpriseutah-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-enterprise-ut.png"
+  },
+  {
+    "slug": "town-of-guernsey",
+    "oldUrl": "https://img.logo.dev/townofguernseywy-us?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/town-of-guernsey.png"
+  },
+  {
+    "slug": "town-of-oak-creek",
+    "oldUrl": "https://img.logo.dev/townofoakcreek-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/town-of-oak-creek.png"
+  },
+  {
+    "slug": "city-of-coulee-dam",
+    "oldUrl": "https://img.logo.dev/usbr-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-coulee-dam.png"
+  },
+  {
+    "slug": "riverside-electric-cooperative",
+    "oldUrl": "https://img.logo.dev/riversideca-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/riverside-electric-cooperative.png"
+  },
+  {
+    "slug": "town-of-holly",
+    "oldUrl": "https://img.logo.dev/townofholly-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/town-of-holly.png"
+  },
+  {
+    "slug": "town-of-ruston",
+    "oldUrl": "https://img.logo.dev/rustonwa-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/town-of-ruston.png"
+  },
+  {
+    "slug": "town-of-lingle",
+    "oldUrl": "https://img.logo.dev/townoflingle-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/town-of-lingle.png"
+  },
+  {
+    "slug": "farmers-electric",
+    "oldUrl": "https://img.logo.dev/farmersrec-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/farmers-electric.png"
+  },
+  {
+    "slug": "vigilante-electric-co-op",
+    "oldUrl": "https://img.logo.dev/vec-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/vigilante-electric-co-op.png"
+  },
+  {
+    "slug": "bonneville-power-administration",
+    "oldUrl": "https://img.logo.dev/nli-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/bonneville-power-administration.png"
+  },
+  {
+    "slug": "bridger-valley-electric-association",
+    "oldUrl": "https://img.logo.dev/bvea-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/bridger-valley-electric-association.png"
+  },
+  {
+    "slug": "canby-utility-board",
+    "oldUrl": "https://img.logo.dev/canbyutility-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/canby-utility-board.png"
+  },
+  {
+    "slug": "carbon-power-and-light",
+    "oldUrl": "https://img.logo.dev/carbonpower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/carbon-power-and-light.png"
+  },
+  {
+    "slug": "city-of-bonners-ferry",
+    "oldUrl": "https://img.logo.dev/bonnersferry-id-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-bonners-ferry.png"
+  },
+  {
+    "slug": "city-of-burlington-co",
+    "oldUrl": "https://img.logo.dev/burlingtoncolo-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-burlington-co.png"
+  },
+  {
+    "slug": "city-of-cheney",
+    "oldUrl": "https://img.logo.dev/cityofcheney-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-cheney.png"
+  },
+  {
+    "slug": "city-of-chewelah",
+    "oldUrl": "https://img.logo.dev/cityofchewelah-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-chewelah.png"
+  },
+  {
+    "slug": "city-of-cody",
+    "oldUrl": "https://img.logo.dev/cityofcody-wy-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-cody.png"
+  },
+  {
+    "slug": "city-of-delta",
+    "oldUrl": "https://img.logo.dev/delta-co-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-delta.png"
+  },
+  {
+    "slug": "city-of-ephraim",
+    "oldUrl": "https://img.logo.dev/ephraimcity-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-ephraim.png"
+  },
+  {
+    "slug": "city-of-glenwood-springs",
+    "oldUrl": "https://img.logo.dev/ci-glenwood-springs-co-us?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-glenwood-springs.png"
+  },
+  {
+    "slug": "city-of-gunnison",
+    "oldUrl": "https://img.logo.dev/cityofgunnison-co-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-gunnison.png"
+  },
+  {
+    "slug": "city-of-helper",
+    "oldUrl": "https://img.logo.dev/helpercity-net?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-helper.png"
+  },
+  {
+    "slug": "city-of-hermiston",
+    "oldUrl": "https://img.logo.dev/hermiston-or-us?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-hermiston.png"
+  },
+  {
+    "slug": "city-of-la-junta",
+    "oldUrl": "https://img.logo.dev/ci-la-junta-co-us?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-la-junta.png"
+  },
+  {
+    "slug": "city-of-lamar-co",
+    "oldUrl": "https://img.logo.dev/cityoflamar-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-lamar-co.png"
+  },
+  {
+    "slug": "city-of-mccleary",
+    "oldUrl": "https://img.logo.dev/cityofmccleary-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-mccleary.png"
+  },
+  {
+    "slug": "city-of-milton",
+    "oldUrl": "https://img.logo.dev/cityofmilton-net?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-milton.png"
+  },
+  {
+    "slug": "city-of-milton-freewater",
+    "oldUrl": "https://img.logo.dev/mfcity-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-milton-freewater.png"
+  },
+  {
+    "slug": "city-of-monmouth",
+    "oldUrl": "https://img.logo.dev/ci-monmouth-or-us?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-monmouth.png"
+  },
+  {
+    "slug": "city-of-monroe-ut",
+    "oldUrl": "https://img.logo.dev/littlegreenvalley-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-monroe-ut.png"
+  },
+  {
+    "slug": "city-of-mt-pleasant-ut",
+    "oldUrl": "https://img.logo.dev/mtpleasantcity-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-mt-pleasant-ut.png"
+  },
+  {
+    "slug": "city-of-powell",
+    "oldUrl": "https://img.logo.dev/cityofpowell-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-powell.png"
+  },
+  {
+    "slug": "city-of-rupert",
+    "oldUrl": "https://img.logo.dev/rupert-idaho-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-rupert.png"
+  },
+  {
+    "slug": "city-of-santa-clara-ut",
+    "oldUrl": "https://img.logo.dev/sccity-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-santa-clara-ut.png"
+  },
+  {
+    "slug": "city-of-soda-springs",
+    "oldUrl": "https://img.logo.dev/sodaspringsid-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-soda-springs.png"
+  },
+  {
+    "slug": "city-of-torrington",
+    "oldUrl": "https://img.logo.dev/city-of-torrington-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-torrington.png"
+  },
+  {
+    "slug": "city-of-troy-mt",
+    "oldUrl": "https://img.logo.dev/cityoftroymontana-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-troy-mt.png"
+  },
+  {
+    "slug": "city-of-truth-or-consequences",
+    "oldUrl": "https://img.logo.dev/cityutilities-net?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-truth-or-consequences.png"
+  },
+  {
+    "slug": "city-of-wray",
+    "oldUrl": "https://img.logo.dev/wrayco-net?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-wray.png"
+  },
+  {
+    "slug": "city-of-yuma",
+    "oldUrl": "https://img.logo.dev/yumacolo-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/city-of-yuma.png"
+  },
+  {
+    "slug": "clearwater-power",
+    "oldUrl": "https://img.logo.dev/clearwaterpower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/clearwater-power.png"
+  },
+  {
+    "slug": "columbia-basin-electric-cooperative",
+    "oldUrl": "https://img.logo.dev/cbec-cc?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/columbia-basin-electric-cooperative.png"
+  },
+  {
+    "slug": "columbia-power-co-op-association",
+    "oldUrl": "https://img.logo.dev/columbiarea-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/columbia-power-co-op-association.png"
+  },
+  {
+    "slug": "douglas-electric-co-op-or",
+    "oldUrl": "https://img.logo.dev/douglaselectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/douglas-electric-co-op-or.png"
+  },
+  {
+    "slug": "fillmore-city",
+    "oldUrl": "https://img.logo.dev/fillmorecity-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/fillmore-city.png"
+  },
+  {
+    "slug": "garland-light-and-power",
+    "oldUrl": "https://img.logo.dev/garlandpower-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/garland-light-and-power.png"
+  },
+  {
+    "slug": "glacier-electric-co-op",
+    "oldUrl": "https://img.logo.dev/glacierelectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/glacier-electric-co-op.png"
+  },
+  {
+    "slug": "gunnison-county-electric-association",
+    "oldUrl": "https://img.logo.dev/gcea-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/gunnison-county-electric-association.png"
+  },
+  {
+    "slug": "harney-electric-co-op",
+    "oldUrl": "https://img.logo.dev/harneyelectric-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/harney-electric-co-op.png"
+  },
+  {
+    "slug": "heber-light-and-power",
+    "oldUrl": "https://img.logo.dev/heberpower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/heber-light-and-power.png"
+  },
+  {
+    "slug": "hill-county-electric-co-op",
+    "oldUrl": "https://img.logo.dev/hcelectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/hill-county-electric-co-op.png"
+  },
+  {
+    "slug": "hurricane-city-power",
+    "oldUrl": "https://img.logo.dev/cityofhurricane-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/hurricane-city-power.png"
+  },
+  {
+    "slug": "idaho-county-landp-co-op-association",
+    "oldUrl": "https://img.logo.dev/iclp-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/idaho-county-landp-co-op-association.png"
+  },
+  {
+    "slug": "kaysville-city",
+    "oldUrl": "https://img.logo.dev/kaysvillecity-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/kaysville-city.png"
+  },
+  {
+    "slug": "lincoln-electric-co-op",
+    "oldUrl": "https://img.logo.dev/lincolnelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/lincoln-electric-co-op.png"
+  },
+  {
+    "slug": "lost-river-electric-co-op",
+    "oldUrl": "https://img.logo.dev/lostriverelectriccoopinc-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/lost-river-electric-co-op.png"
+  },
+  {
+    "slug": "marias-river-electric-co-op",
+    "oldUrl": "https://img.logo.dev/mariasriverec-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/marias-river-electric-co-op.png"
+  },
+  {
+    "slug": "mccone-electric-co-op",
+    "oldUrl": "https://img.logo.dev/mcconeelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/mccone-electric-co-op.png"
+  },
+  {
+    "slug": "mid-yellowstone-electric-co-op",
+    "oldUrl": "https://img.logo.dev/yvec-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/mid-yellowstone-electric-co-op.png"
+  },
+  {
+    "slug": "nespelem-valley-electric-co-op",
+    "oldUrl": "https://img.logo.dev/nvec-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/nespelem-valley-electric-co-op.png"
+  },
+  {
+    "slug": "norval-electric-cooperative",
+    "oldUrl": "https://img.logo.dev/norval-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/norval-electric-cooperative.png"
+  },
+  {
+    "slug": "okanogan-county-electric-co-op",
+    "oldUrl": "https://img.logo.dev/okanoganelectriccoop-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/okanogan-county-electric-co-op.png"
+  },
+  {
+    "slug": "park-electric-co-op",
+    "oldUrl": "https://img.logo.dev/parkelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/park-electric-co-op.png"
+  },
+  {
+    "slug": "parkland-light-and-water",
+    "oldUrl": "https://img.logo.dev/plw-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/parkland-light-and-water.png"
+  },
+  {
+    "slug": "payson-city",
+    "oldUrl": "https://img.logo.dev/paysonutah-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/payson-city.png"
+  },
+  {
+    "slug": "price-municipal",
+    "oldUrl": "https://img.logo.dev/priceutah-net?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/price-municipal.png"
+  },
+  {
+    "slug": "pud-no-1-of-kittitas-county",
+    "oldUrl": "https://img.logo.dev/kittitaspud-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-kittitas-county.png"
+  },
+  {
+    "slug": "pud-no-1-of-skamania",
+    "oldUrl": "https://img.logo.dev/skamaniapud-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-skamania.png"
+  },
+  {
+    "slug": "pud-no-1-of-wahkiakum-county",
+    "oldUrl": "https://img.logo.dev/wahkiakumpud-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/pud-no-1-of-wahkiakum-county.png"
+  },
+  {
+    "slug": "sangre-de-cristo-electric-association",
+    "oldUrl": "https://img.logo.dev/myelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/sangre-de-cristo-electric-association.png"
+  },
+  {
+    "slug": "sheridan-electric-co-op",
+    "oldUrl": "https://img.logo.dev/sheridanelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/sheridan-electric-co-op.png"
+  },
+  {
+    "slug": "sun-river-electric-co-op",
+    "oldUrl": "https://img.logo.dev/sunriverelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/sun-river-electric-co-op.png"
+  },
+  {
+    "slug": "tanner-electric-co-op",
+    "oldUrl": "https://img.logo.dev/tannerelectric-coop?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/tanner-electric-co-op.png"
+  },
+  {
+    "slug": "town-of-eatonville",
+    "oldUrl": "https://img.logo.dev/eatonville-wa-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/town-of-eatonville.png"
+  },
+  {
+    "slug": "town-of-estes-park",
+    "oldUrl": "https://img.logo.dev/colorado-gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/town-of-estes-park.png"
+  },
+  {
+    "slug": "town-of-lusk",
+    "oldUrl": "https://img.logo.dev/townoflusk-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/town-of-lusk.png"
+  },
+  {
+    "slug": "town-of-lyons",
+    "oldUrl": "https://img.logo.dev/townoflyons-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/town-of-lyons.png"
+  },
+  {
+    "slug": "town-of-steilacoom",
+    "oldUrl": "https://img.logo.dev/townofsteilacoom-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/town-of-steilacoom.png"
+  },
+  {
+    "slug": "wasco-electric-co-op",
+    "oldUrl": "https://img.logo.dev/wascoelectric-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/wasco-electric-co-op.png"
+  },
+  {
+    "slug": "west-oregon-electric-co-op",
+    "oldUrl": "https://img.logo.dev/westoregon-org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/west-oregon-electric-co-op.png"
+  },
+  {
+    "slug": "wheatland-rural-electric-association",
+    "oldUrl": "https://img.logo.dev/wheatlandrea-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/wheatland-rural-electric-association.png"
+  },
+  {
+    "slug": "bonneville-power-administration",
+    "oldUrl": "https://img.logo.dev/www.bpa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/bonneville-power-administration.png"
+  },
+  {
+    "slug": "idaho-power",
+    "oldUrl": "https://img.logo.dev/www.idahopower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/idaho-power.png"
+  },
+  {
+    "slug": "northwestern",
+    "oldUrl": "https://img.logo.dev/www.northwesternenergy-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/northwestern.png"
+  },
+  {
+    "slug": "portland-general-electric-company",
+    "oldUrl": "https://img.logo.dev/www.portlandgeneral-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/portland-general-electric-company.png"
+  },
+  {
+    "slug": "xcel-co",
+    "oldUrl": "https://img.logo.dev/www.xcelenergy-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png",
+    "newPath": "/logos/xcel-co.png"
+  }
+]

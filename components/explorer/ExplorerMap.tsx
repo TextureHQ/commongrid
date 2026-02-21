@@ -28,7 +28,7 @@ const segmentColorMapping = {
 
 const US_CENTER = { longitude: -98.58, latitude: 39.83, zoom: 4 };
 
-const hasMapboxToken = !!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+// hasMapboxToken is evaluated per-render based on the prop (see ExplorerMap component)
 
 // Distinct, high-contrast colors for operator boundaries
 const OPERATOR_PALETTE = [
@@ -127,7 +127,13 @@ function useGridOperatorBoundaries(isActive: boolean) {
   return data;
 }
 
-export function ExplorerMap() {
+interface ExplorerMapProps {
+  mapboxAccessToken?: string;
+}
+
+export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
+  const effectiveToken = mapboxAccessToken ?? process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+  const hasMapboxToken = !!effectiveToken;
   const { state, navigateToDetail } = useExplorer();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
 
@@ -415,7 +421,7 @@ export function ExplorerMap() {
     <div className="h-full w-full">
       <InteractiveMap
         ref={mapRef as React.Ref<any>}
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!}
+        mapboxAccessToken={effectiveToken!}
         initialViewState={US_CENTER}
         mapType="neutral"
         controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}

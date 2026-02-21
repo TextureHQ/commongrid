@@ -24,7 +24,11 @@ function MobileToggle({
   );
 }
 
-function ExplorerLayout() {
+interface ExplorerLayoutProps {
+  mapboxAccessToken?: string;
+}
+
+function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
   const [mobileShowMap, setMobileShowMap] = useState(false);
 
   return (
@@ -33,7 +37,7 @@ function ExplorerLayout() {
       <div className="hidden md:block h-full">
         <SplitPane asideWidth={540} resizable minAsideWidth={420} minMainWidth={400}>
           <SplitPane.Main>
-            <ExplorerMap />
+            <ExplorerMap mapboxAccessToken={mapboxAccessToken} />
           </SplitPane.Main>
           <SplitPane.Aside>
             <div className="h-full border-l border-border-default bg-background-surface">
@@ -46,7 +50,7 @@ function ExplorerLayout() {
       {/* Mobile layout */}
       <div className="md:hidden h-full relative">
         {mobileShowMap ? (
-          <ExplorerMap />
+          <ExplorerMap mapboxAccessToken={mapboxAccessToken} />
         ) : (
           <div className="h-full bg-background-surface">
             <ExplorerPanel />
@@ -61,11 +65,15 @@ function ExplorerLayout() {
   );
 }
 
-export function ExplorerShell() {
+interface ExplorerShellProps {
+  mapboxAccessToken?: string;
+}
+
+export function ExplorerShell({ mapboxAccessToken }: ExplorerShellProps = {}) {
   return (
     <Suspense>
       <ExplorerProvider>
-        <ExplorerLayout />
+        <ExplorerLayout mapboxAccessToken={mapboxAccessToken} />
       </ExplorerProvider>
     </Suspense>
   );
