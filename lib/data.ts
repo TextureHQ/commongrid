@@ -1,15 +1,18 @@
 import basData from "@/data/balancing-authorities.json";
 import isosData from "@/data/isos.json";
+import programsData from "@/data/programs.json";
 import regionsData from "@/data/regions.json";
 import rtosData from "@/data/rtos.json";
 import utilitiesData from "@/data/utilities.json";
 import type { BalancingAuthority, Iso, Region, Rto, Utility } from "@/types/entities";
+import type { Program } from "@/types/programs";
 
 const isos: Iso[] = isosData as Iso[];
 const rtos: Rto[] = rtosData as Rto[];
 const balancingAuthorities: BalancingAuthority[] = basData as BalancingAuthority[];
 const utilities: Utility[] = utilitiesData as Utility[];
 const regions: Region[] = regionsData as Region[];
+const programs: Program[] = programsData as Program[];
 
 export function getAllIsos(): Iso[] {
   return isos;
@@ -105,4 +108,12 @@ export function sortByName<T extends { name: string }>(entities: T[], direction:
     const cmp = a.name.localeCompare(b.name);
     return direction === "asc" ? cmp : -cmp;
   });
+}
+
+export function getAllPrograms(): Program[] {
+  return programs;
+}
+
+export function getProgramBySlug(slug: string): Program | undefined {
+  return programs.find((p) => p.slug === slug);
 }

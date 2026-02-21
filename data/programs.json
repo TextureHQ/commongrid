@@ -1,0 +1,192 @@
+[
+  {
+    "id": "prog-driv-ev-smart-charging-rewards",
+    "slug": "driv-ev-smart-charging-rewards",
+    "name": "DrivEV Smart Charging Rewards",
+    "description": "Earn rewards for charging your EV during off-peak hours with Poudre Valley REA's managed charging program.",
+    "organizations": [
+      { "entityId": "poudre-valley-rea", "role": "ADMINISTRATOR" }
+    ],
+    "assetTypes": ["EV_CHARGER"],
+    "marketSegments": ["RESIDENTIAL"],
+    "participationModels": ["EVENT_BASED", "SCHEDULED"],
+    "incentiveStructures": ["REBATE", "DIRECT_PAYMENT"],
+    "gridServices": ["DEMAND_RESPONSE", "LOAD_SHIFTING"],
+    "regions": ["CO"],
+    "compensationTiers": [
+      { "tier": 1, "type": "REBATE", "amount": 50, "unit": "PER_DEVICE", "description": "Enrollment rebate" },
+      { "tier": 2, "type": "MONTHLY", "amount": 2, "unit": "PER_KW", "description": "Monthly capacity payment" }
+    ],
+    "status": "ACTIVE",
+    "programWebsite": "https://pvrea.coop/energy-solutions/manage-your-energy/ev-charging-rewards/",
+    "variants": [],
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": "prog-smarttemp",
+    "slug": "smarttemp",
+    "name": "SmartTemp",
+    "description": "Southern Maryland Electric Cooperative's smart thermostat demand response program, powered by EnergyHub.",
+    "organizations": [
+      { "entityId": "southern-maryland-electric-co-op", "role": "ADMINISTRATOR" }
+    ],
+    "assetTypes": ["THERMOSTAT"],
+    "marketSegments": ["RESIDENTIAL"],
+    "participationModels": ["AUTOMATED", "EVENT_BASED"],
+    "incentiveStructures": ["REBATE", "BILL_CREDIT"],
+    "gridServices": ["DEMAND_RESPONSE", "PEAK_SHAVING"],
+    "regions": ["MD"],
+    "compensationTiers": [
+      { "tier": 1, "type": "REBATE", "amount": 100, "unit": "PER_DEVICE", "description": "Enrollment rebate" },
+      { "tier": 2, "type": "ANNUAL", "amount": 50, "unit": "PER_DEVICE", "description": "Annual participation credit" }
+    ],
+    "status": "ACTIVE",
+    "programWebsite": "https://greatergrid.com/enroll/programs/thermostats/smeco",
+    "variants": [],
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": "prog-simplesaver",
+    "slug": "simplesaver",
+    "name": "SimpleSaver",
+    "description": "South Kentucky RECC's direct load control program for smart thermostats.",
+    "organizations": [
+      { "entityId": "south-kentucky-rural-e-c-c", "role": "ADMINISTRATOR" }
+    ],
+    "assetTypes": ["THERMOSTAT"],
+    "marketSegments": ["RESIDENTIAL"],
+    "participationModels": ["DIRECT_CONTROL"],
+    "incentiveStructures": ["REBATE", "BILL_CREDIT"],
+    "gridServices": ["DEMAND_RESPONSE", "PEAK_SHAVING", "DEMAND_CHARGE_REDUCTION"],
+    "regions": ["KY"],
+    "compensationTiers": [
+      { "tier": 1, "type": "REBATE", "amount": 100, "unit": "PER_DEVICE" },
+      { "tier": 2, "type": "ANNUAL", "amount": 20, "unit": "PER_DEVICE" }
+    ],
+    "status": "ACTIVE",
+    "programWebsite": "https://www.skrecc.com/simple-saver-programs",
+    "variants": [],
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": "prog-corev",
+    "slug": "corev",
+    "name": "COREV",
+    "description": "Core Electric Cooperative's residential EV managed charging program.",
+    "organizations": [
+      { "entityId": "intermountain-rural-electric-association", "role": "ADMINISTRATOR" }
+    ],
+    "assetTypes": ["EV_CHARGER"],
+    "marketSegments": ["RESIDENTIAL"],
+    "participationModels": ["EVENT_BASED"],
+    "incentiveStructures": ["DIRECT_PAYMENT"],
+    "gridServices": ["DEMAND_RESPONSE", "PEAK_SHAVING"],
+    "regions": ["CO"],
+    "compensationTiers": [
+      { "tier": 1, "type": "ANNUAL", "amount": 15, "unit": "PER_DEVICE" }
+    ],
+    "status": "ACTIVE",
+    "programWebsite": "https://core.coop/electric-vehicles/residential-ev/",
+    "variants": [],
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": "prog-connect-to-save",
+    "slug": "connect-to-save",
+    "name": "Connect To Save",
+    "description": "North Carolina cooperative smart thermostat demand response program.",
+    "organizations": [
+      { "entityId": "surry-yadkin-electric-member", "role": "ADMINISTRATOR" }
+    ],
+    "assetTypes": ["THERMOSTAT"],
+    "marketSegments": ["RESIDENTIAL"],
+    "participationModels": ["DIRECT_CONTROL", "AUTOMATED"],
+    "incentiveStructures": ["REBATE", "BILL_CREDIT"],
+    "gridServices": ["DEMAND_RESPONSE", "DISTRIBUTION_CAPACITY_SUPPORT"],
+    "regions": ["NC"],
+    "compensationTiers": [
+      { "tier": 1, "type": "ANNUAL", "amount": 50, "unit": "PER_DEVICE" },
+      { "tier": 2, "type": "REBATE", "amount": 100, "unit": "PER_DEVICE", "description": "One-time enrollment bonus" }
+    ],
+    "status": "ACTIVE",
+    "programWebsite": "https://connecttosavenc.com/",
+    "variants": [],
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": "prog-peak-time-payback",
+    "slug": "peak-time-payback",
+    "name": "Peak Time Payback",
+    "description": "Guadalupe Valley Electric Cooperative's battery storage demand response program.",
+    "organizations": [
+      { "entityId": "guadalupe-valley-electric-co-op", "role": "ADMINISTRATOR" }
+    ],
+    "assetTypes": ["BATTERY"],
+    "marketSegments": ["RESIDENTIAL"],
+    "participationModels": ["EVENT_BASED"],
+    "incentiveStructures": ["REBATE", "CAPACITY_PAYMENT"],
+    "gridServices": ["DEMAND_RESPONSE", "PEAK_SHAVING", "ENERGY_ARBITRAGE"],
+    "regions": ["TX"],
+    "compensationTiers": [
+      { "tier": 1, "type": "REBATE", "amount": 75, "unit": "PER_KW", "description": "Enrollment rebate" },
+      { "tier": 2, "type": "MONTHLY", "amount": 75, "unit": "PER_KW", "description": "Monthly capacity payment" }
+    ],
+    "status": "ACTIVE",
+    "programWebsite": "https://www.gvec.org/peak-time-payback/",
+    "variants": [],
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": "prog-ev-managed-charging-odec",
+    "slug": "ev-managed-charging-odec",
+    "name": "EV Managed Charging",
+    "description": "Old Dominion Electric Cooperative's EV managed charging program for member cooperative customers.",
+    "organizations": [
+      { "entityId": "old-dominion-electric-co-op", "role": "ADMINISTRATOR" }
+    ],
+    "assetTypes": ["EV_CHARGER"],
+    "marketSegments": ["RESIDENTIAL"],
+    "participationModels": ["EVENT_BASED"],
+    "incentiveStructures": ["REBATE"],
+    "gridServices": ["DEMAND_RESPONSE", "LOAD_SHIFTING", "DEMAND_CHARGE_REDUCTION"],
+    "regions": ["VA", "MD"],
+    "compensationTiers": [
+      { "tier": 1, "type": "REBATE", "amount": 25, "unit": "PER_DEVICE" }
+    ],
+    "status": "ACTIVE",
+    "programWebsite": "https://www.odec.com/our-cooperative/energy-programs/electric-vehicle-managed-charging-program/",
+    "variants": [],
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": "prog-ecobee-smart-thermostat-program",
+    "slug": "ecobee-smart-thermostat-program",
+    "name": "Ecobee Smart Thermostat Program",
+    "description": "Ecobee-powered smart thermostat demand response program.",
+    "organizations": [
+      { "entityId": "butler-rural-electric-co-op", "role": "ADMINISTRATOR" }
+    ],
+    "assetTypes": ["THERMOSTAT"],
+    "marketSegments": ["RESIDENTIAL"],
+    "participationModels": ["AUTOMATED", "EVENT_BASED"],
+    "incentiveStructures": ["REBATE", "BILL_CREDIT"],
+    "gridServices": ["DEMAND_RESPONSE", "PEAK_SHAVING"],
+    "regions": ["OH"],
+    "compensationTiers": [
+      { "tier": 1, "type": "REBATE", "amount": 100, "unit": "PER_DEVICE" },
+      { "tier": 2, "type": "ANNUAL", "amount": 60, "unit": "PER_DEVICE" }
+    ],
+    "status": "ACTIVE",
+    "programWebsite": "https://www.chec.coop/ecobee",
+    "variants": [],
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-01-01T00:00:00Z"
+  }
+]
