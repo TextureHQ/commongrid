@@ -9,7 +9,7 @@
     ],
     "website": "https://www.caiso.com",
     "regionId": "region-iso-caiso",
-    "logo": "https://img.logo.dev/www.caiso.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/caiso.png"
   },
   {
     "id": "2da5b7fc-9f3d-8195-8a69-e42769f0b207",
@@ -21,7 +21,7 @@
     ],
     "website": "https://www.ercot.com",
     "regionId": "region-iso-ercot",
-    "logo": "https://img.logo.dev/www.ercot.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/ercot.png"
   },
   {
     "id": "2da5b7fc-9f3d-8149-9423-f852b4f0f494",
@@ -38,7 +38,7 @@
     ],
     "website": "https://www.iso-ne.com",
     "regionId": "region-iso-iso-ne",
-    "logo": "https://img.logo.dev/www.iso-ne.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/iso-ne.png"
   },
   {
     "id": "2da5b7fc-9f3d-818d-b363-cd23872306ab",
@@ -64,7 +64,7 @@
     ],
     "website": "https://www.misoenergy.org",
     "regionId": "region-iso-miso",
-    "logo": "https://img.logo.dev/www.misoenergy.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/miso.png"
   },
   {
     "id": "2da5b7fc-9f3d-814a-8b47-ce123cd3950c",
@@ -76,7 +76,7 @@
     ],
     "website": "https://www.nyiso.com",
     "regionId": "region-iso-nyiso",
-    "logo": "https://img.logo.dev/www.nyiso.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/nyiso.png"
   },
   {
     "id": "2da5b7fc-9f3d-8181-a080-db527d98d7b0",
@@ -101,7 +101,7 @@
     ],
     "website": "https://www.pjm.com",
     "regionId": "region-iso-pjm",
-    "logo": "https://img.logo.dev/www.pjm.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/pjm.png"
   },
   {
     "id": "2da5b7fc-9f3d-81fd-8a7e-d0ae3ce3e35f",
@@ -126,6 +126,6 @@
     ],
     "website": "https://www.spp.org",
     "regionId": "region-iso-spp",
-    "logo": "https://img.logo.dev/www.spp.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/spp.png"
   }
 ]

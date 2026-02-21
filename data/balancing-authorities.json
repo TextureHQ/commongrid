@@ -13,7 +13,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-arizona-public-service",
-    "logo": "https://img.logo.dev/www.aps.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/arizona-public-service.png"
   },
   {
     "id": "ba-aeci",
@@ -31,7 +31,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-aeci",
-    "logo": "https://img.logo.dev/www.aeci.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/aeci.png"
   },
   {
     "id": "ba-avista",
@@ -48,7 +48,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-avista",
-    "logo": "https://img.logo.dev/www.avistacorp.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/avista.png"
   },
   {
     "id": "ba-banc",
@@ -63,7 +63,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-banc",
-    "logo": "https://img.logo.dev/www.thebanc.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/banc.png"
   },
   {
     "id": "ba-bonneville-power-administration",
@@ -101,7 +101,7 @@
     ],
     "isoId": "2da5b7fc-9f3d-8188-95af-e7f039834c98",
     "regionId": "region-ba-caiso",
-    "logo": "https://img.logo.dev/www.caiso.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/caiso.png"
   },
   {
     "id": "ba-dominion-sc",
@@ -117,7 +117,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-dominion-sc",
-    "logo": "https://img.logo.dev/www.sceg.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/dominion-sc.png"
   },
   {
     "id": "ba-duke-energy-carolinas",
@@ -134,7 +134,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-duke-energy-carolinas",
-    "logo": "https://img.logo.dev/www.duke-energy.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/duke-energy-carolinas.png"
   },
   {
     "id": "ba-duke-energy-florida",
@@ -149,7 +149,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-duke-energy-florida",
-    "logo": "https://img.logo.dev/www.progress-energy.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/duke-energy-florida.png"
   },
   {
     "id": "ba-dep-east",
@@ -165,7 +165,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-dep-east",
-    "logo": "https://img.logo.dev/www.duke-energy.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/dep-east.png"
   },
   {
     "id": "ba-dep-west",
@@ -180,7 +180,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-dep-west",
-    "logo": "https://img.logo.dev/www.duke-energy.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/dep-west.png"
   },
   {
     "id": "ba-el-paso-electric-company",
@@ -196,7 +196,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-el-paso-electric-company",
-    "logo": "https://img.logo.dev/www.epelectric.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/el-paso-electric-company.png"
   },
   {
     "id": "ba-ercot",
@@ -212,7 +212,7 @@
     ],
     "isoId": "2da5b7fc-9f3d-8195-8a69-e42769f0b207",
     "regionId": "region-ba-ercot",
-    "logo": "https://img.logo.dev/www.ercot.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/ercot.png"
   },
   {
     "id": "ba-fmpp",
@@ -227,7 +227,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-fmpp",
-    "logo": "https://img.logo.dev/www.ouc.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/fmpp.png"
   },
   {
     "id": "ba-florida-power-and-light",
@@ -242,7 +242,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-florida-power-and-light",
-    "logo": "https://img.logo.dev/www.fpl.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/florida-power-and-light.png"
   },
   {
     "id": "ba-heco",
@@ -257,7 +257,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-heco",
-    "logo": "https://img.logo.dev/www.hawaiianelectric.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/heco.png"
   },
   {
     "id": "ba-idaho-power",
@@ -288,7 +288,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-imperial-irrigation-district",
-    "logo": "https://img.logo.dev/www.iid.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/imperial-irrigation-district.png"
   },
   {
     "id": "ba-iso-ne",
@@ -309,7 +309,7 @@
     ],
     "isoId": "2da5b7fc-9f3d-8149-9423-f852b4f0f494",
     "regionId": "region-ba-iso-ne",
-    "logo": "https://img.logo.dev/www.iso-ne.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/iso-ne.png"
   },
   {
     "id": "ba-ladwp",
@@ -325,7 +325,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-ladwp",
-    "logo": "https://img.logo.dev/www.ladwp.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/ladwp.png"
   },
   {
     "id": "ba-lgande-ku",
@@ -341,7 +341,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-lgande-ku",
-    "logo": "https://img.logo.dev/lge-ku.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/lgande-ku.png"
   },
   {
     "id": "ba-miso",
@@ -372,7 +372,7 @@
     ],
     "isoId": "2da5b7fc-9f3d-818d-b363-cd23872306ab",
     "regionId": "region-ba-miso",
-    "logo": "https://img.logo.dev/www.misoenergy.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/miso.png"
   },
   {
     "id": "ba-nv-energy",
@@ -389,7 +389,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-nv-energy",
-    "logo": "https://img.logo.dev/www.nvenergy.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/nv-energy.png"
   },
   {
     "id": "ba-nbso",
@@ -404,7 +404,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-nbso",
-    "logo": "https://img.logo.dev/www.nbpower.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/nbso.png"
   },
   {
     "id": "ba-nyiso",
@@ -421,7 +421,7 @@
     ],
     "isoId": "2da5b7fc-9f3d-814a-8b47-ce123cd3950c",
     "regionId": "region-ba-nyiso",
-    "logo": "https://img.logo.dev/www.nyiso.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/nyiso.png"
   },
   {
     "id": "ba-northwestern",
@@ -459,7 +459,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-pacificorp-east",
-    "logo": "https://img.logo.dev/www.pacificorp.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/pacificorp-east.png"
   },
   {
     "id": "ba-pacificorp-west",
@@ -477,7 +477,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-pacificorp-west",
-    "logo": "https://img.logo.dev/www.pacificorp.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/pacificorp-west.png"
   },
   {
     "id": "ba-pjm-interconnection",
@@ -506,7 +506,7 @@
     ],
     "isoId": "2da5b7fc-9f3d-8181-a080-db527d98d7b0",
     "regionId": "region-ba-pjm-interconnection",
-    "logo": "https://img.logo.dev/www.pjm.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/pjm-interconnection.png"
   },
   {
     "id": "ba-portland-general-electric-company",
@@ -558,7 +558,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-public-service-company-of-new-mexico",
-    "logo": "https://img.logo.dev/www.pnmresources.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/public-service-company-of-new-mexico.png"
   },
   {
     "id": "ba-puget-sound-energy",
@@ -573,7 +573,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-puget-sound-energy",
-    "logo": "https://img.logo.dev/pse.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/puget-sound-energy.png"
   },
   {
     "id": "ba-salt-river-project",
@@ -588,7 +588,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-salt-river-project",
-    "logo": "https://img.logo.dev/www.srpnet.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/salt-river-project.png"
   },
   {
     "id": "ba-seminole",
@@ -603,7 +603,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-seminole",
-    "logo": "https://img.logo.dev/www.seminole-electric.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/seminole.png"
   },
   {
     "id": "ba-santee-cooper",
@@ -618,7 +618,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-santee-cooper",
-    "logo": "https://img.logo.dev/www.santeecooper.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/santee-cooper.png"
   },
   {
     "id": "ba-sepa",
@@ -635,7 +635,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-sepa",
-    "logo": "https://img.logo.dev/www.energy.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/sepa.png"
   },
   {
     "id": "ba-southern",
@@ -653,7 +653,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-southern",
-    "logo": "https://img.logo.dev/www.southerncompany.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/southern.png"
   },
   {
     "id": "ba-southwest-power-pool",
@@ -681,7 +681,7 @@
     ],
     "isoId": "2da5b7fc-9f3d-81fd-8a7e-d0ae3ce3e35f",
     "regionId": "region-ba-southwest-power-pool",
-    "logo": "https://img.logo.dev/www.spp.org?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/southwest-power-pool.png"
   },
   {
     "id": "ba-swpa",
@@ -698,7 +698,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-swpa",
-    "logo": "https://img.logo.dev/www.swpa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/swpa.png"
   },
   {
     "id": "ba-tennessee-valley-authority",
@@ -719,7 +719,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-tennessee-valley-authority",
-    "logo": "https://img.logo.dev/www.tva.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/tennessee-valley-authority.png"
   },
   {
     "id": "ba-tucson-electric-power-company",
@@ -735,12 +735,12 @@
     ],
     "isoId": null,
     "regionId": "region-ba-tucson-electric-power-company",
-    "logo": "https://img.logo.dev/www.uns.com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/tucson-electric-power-company.png"
   },
   {
     "id": "ba-wapa-dsw",
     "slug": "wapa-dsw",
-    "name": "Western Area Power Administration \u2014 Desert Southwest",
+    "name": "Western Area Power Administration — Desert Southwest",
     "shortName": "WAPA DSW",
     "eiaCode": "WALC",
     "eiaId": "25471",
@@ -754,12 +754,12 @@
     ],
     "isoId": null,
     "regionId": "region-ba-wapa-dsw",
-    "logo": "https://img.logo.dev/www.wapa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/wapa-dsw.png"
   },
   {
     "id": "ba-wapa-rm",
     "slug": "wapa-rm",
-    "name": "Western Area Power Administration \u2014 Rocky Mountain",
+    "name": "Western Area Power Administration — Rocky Mountain",
     "shortName": "WAPA RM",
     "eiaCode": "WACM",
     "eiaId": "28503",
@@ -777,12 +777,12 @@
     ],
     "isoId": null,
     "regionId": "region-ba-wapa-rm",
-    "logo": "https://img.logo.dev/www.wapa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/wapa-rm.png"
   },
   {
     "id": "ba-wapa-ugp",
     "slug": "wapa-ugp",
-    "name": "Western Area Power Administration \u2014 Upper Great Plains",
+    "name": "Western Area Power Administration — Upper Great Plains",
     "shortName": "WAPA UGP",
     "eiaCode": "WAUW",
     "eiaId": "19610",
@@ -794,6 +794,6 @@
     ],
     "isoId": null,
     "regionId": "region-ba-wapa-ugp",
-    "logo": "https://img.logo.dev/www.wapa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/wapa-ugp.png"
   }
 ]
