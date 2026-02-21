@@ -34,6 +34,7 @@ interface UtilityRecord {
   slug: string;
   notionPageId: string;
   jurisdiction: string;
+  serviceTerritoryId?: string;
   [key: string]: unknown;
 }
 
@@ -310,8 +311,8 @@ function transformProgram(
     ? [{ entityId: utility.slug, role: "ADMINISTRATOR" }]
     : [];
 
-  // Regions
-  const regions = utility ? getStateFromJurisdiction(utility.jurisdiction) : [];
+  // Regions — use OpenGrid region ID format (e.g. "region-st-15257")
+  const regions = utility?.serviceTerritoryId ? [utility.serviceTerritoryId] : [];
 
   // Compensation tiers
   const compensationTiers: CompensationTier[] = [];

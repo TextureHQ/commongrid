@@ -27,7 +27,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "CO"
+      "region-st-15257"
     ],
     "compensationTiers": [
       {
@@ -71,7 +71,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "CO"
+      "region-st-10539"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -109,7 +109,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-20130"
     ],
     "compensationTiers": [
       {
@@ -160,7 +160,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-14178"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -197,7 +197,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-19501"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -234,7 +234,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "TX"
+      "region-st-20472"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -271,7 +271,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "FL"
+      "region-st-18449"
     ],
     "compensationTiers": [
       {
@@ -315,7 +315,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "AZ"
+      "region-st-19189"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -352,7 +352,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-1884"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -389,7 +389,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-8034"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -426,7 +426,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-6258"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -463,7 +463,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-25177"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -500,7 +500,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "AR"
+      "region-st-13676"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -537,7 +537,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40222"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -574,7 +574,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-25177"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -612,7 +612,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-10697"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -650,7 +650,7 @@
       "ENERGY_ARBITRAGE"
     ],
     "regions": [
-      "CO"
+      "region-st-7787"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -688,7 +688,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-13205"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -724,7 +724,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-2651"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -761,7 +761,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-18940"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -798,7 +798,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-13684"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -835,7 +835,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MS"
+      "region-st-276"
     ],
     "compensationTiers": [
       {
@@ -886,7 +886,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TN"
+      "region-st-4624"
     ],
     "compensationTiers": [
       {
@@ -937,7 +937,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-7891"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -974,7 +974,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "AR"
+      "region-st-13676"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1011,7 +1011,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-13704"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1048,7 +1048,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "CO"
+      "region-st-15257"
     ],
     "compensationTiers": [
       {
@@ -1092,7 +1092,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TN"
+      "region-st-6608"
     ],
     "compensationTiers": [
       {
@@ -1143,7 +1143,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "VA"
+      "region-st-13640"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1180,7 +1180,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-18498"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1218,7 +1218,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "NJ"
+      "region-st-40299"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1255,7 +1255,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "FL"
+      "region-st-3245"
     ],
     "compensationTiers": [
       {
@@ -1305,7 +1305,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-6194"
     ],
     "compensationTiers": [
       {
@@ -1355,7 +1355,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-1898"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1392,7 +1392,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-20401"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1429,7 +1429,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-25177"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1466,7 +1466,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SC"
+      "region-st-162"
     ],
     "compensationTiers": [
       {
@@ -1517,7 +1517,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-20996"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1554,7 +1554,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-9425"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1591,7 +1591,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-20401"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1628,7 +1628,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-15344"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1665,7 +1665,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "ND"
+      "region-st-12301"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1702,7 +1702,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MI"
+      "region-st-38084"
     ],
     "compensationTiers": [
       {
@@ -1746,7 +1746,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-19490"
     ],
     "compensationTiers": [
       {
@@ -1790,7 +1790,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-40304"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1827,7 +1827,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SC"
+      "region-st-2212"
     ],
     "compensationTiers": [
       {
@@ -1872,7 +1872,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "ND"
+      "region-st-3138"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1909,7 +1909,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-6442"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1947,7 +1947,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40219"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -1984,7 +1984,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KS"
+      "region-st-12524"
     ],
     "compensationTiers": [
       {
@@ -2029,7 +2029,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TN"
+      "region-st-2960"
     ],
     "compensationTiers": [
       {
@@ -2080,7 +2080,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-20996"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2117,7 +2117,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-12227"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2154,7 +2154,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OK"
+      "region-st-10599"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2191,7 +2191,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MI"
+      "region-st-12377"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2229,7 +2229,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-13853"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2266,7 +2266,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-3315"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2303,7 +2303,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IN"
+      "region-st-9778"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2340,7 +2340,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-13853"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2377,7 +2377,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-3498"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2414,7 +2414,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-9576"
     ],
     "compensationTiers": [
       {
@@ -2458,7 +2458,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-4622"
     ],
     "compensationTiers": [
       {
@@ -2508,7 +2508,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SC"
+      "region-st-14398"
     ],
     "compensationTiers": [
       {
@@ -2553,7 +2553,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-18085"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2591,7 +2591,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SC"
+      "region-st-10768"
     ],
     "compensationTiers": [
       {
@@ -2641,7 +2641,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-12546"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2678,7 +2678,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-9475"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2715,7 +2715,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-12990"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2752,7 +2752,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-7752"
     ],
     "compensationTiers": [
       {
@@ -2802,7 +2802,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-11011"
     ],
     "compensationTiers": [
       {
@@ -2846,7 +2846,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TN"
+      "region-st-5399"
     ],
     "compensationTiers": [
       {
@@ -2897,7 +2897,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-8319"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2934,7 +2934,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-16284"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -2971,7 +2971,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-3764"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3008,7 +3008,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-3764"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3045,7 +3045,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-1886"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3083,7 +3083,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-6804"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3120,7 +3120,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-13750"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3157,7 +3157,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SC"
+      "region-st-1613"
     ],
     "compensationTiers": [
       {
@@ -3208,7 +3208,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-3236"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3246,7 +3246,7 @@
       "ENERGY_ARBITRAGE"
     ],
     "regions": [
-      "TX"
+      "region-st-5078"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3283,7 +3283,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "VA"
+      "region-st-40228"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3319,7 +3319,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-9292"
     ],
     "compensationTiers": [
       {
@@ -3369,7 +3369,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-4346"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3406,7 +3406,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-3687"
     ],
     "compensationTiers": [
       {
@@ -3456,7 +3456,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IL"
+      "region-st-9750"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3493,7 +3493,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-10618"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3531,7 +3531,7 @@
       "ENERGY_ARBITRAGE"
     ],
     "regions": [
-      "CO"
+      "region-st-15257"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3569,7 +3569,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "VT"
+      "region-st-20151"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3607,7 +3607,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-20422"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3644,7 +3644,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-3701"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3681,7 +3681,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-13731"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3718,7 +3718,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "CA"
+      "region-st-694"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3755,7 +3755,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IA"
+      "region-st-4040"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3792,7 +3792,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-19159"
     ],
     "compensationTiers": [
       {
@@ -3836,7 +3836,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-12227"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3873,7 +3873,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-10618"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3910,7 +3910,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-11910"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -3947,7 +3947,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IL"
+      "region-st-20222"
     ],
     "compensationTiers": [
       {
@@ -3997,7 +3997,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-14178"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4034,7 +4034,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-10618"
     ],
     "compensationTiers": [
       {
@@ -4084,7 +4084,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-1251"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4121,7 +4121,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-11345"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4189,7 +4189,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-14468"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4226,7 +4226,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-9922"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4263,7 +4263,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SC"
+      "region-st-1613"
     ],
     "compensationTiers": [
       {
@@ -4314,7 +4314,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-9991"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4351,7 +4351,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-8574"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4388,7 +4388,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SC"
+      "region-st-10768"
     ],
     "compensationTiers": [
       {
@@ -4433,7 +4433,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-3687"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4471,7 +4471,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "AL"
+      "region-st-13669"
     ],
     "compensationTiers": [
       {
@@ -4522,7 +4522,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "FL"
+      "region-st-18304"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4559,7 +4559,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-6335"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4596,7 +4596,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NC"
+      "region-st-17572"
     ],
     "compensationTiers": [
       {
@@ -4640,7 +4640,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IA"
+      "region-st-8319"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4677,7 +4677,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "CO"
+      "region-st-8773"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4714,7 +4714,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-18019"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4751,7 +4751,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-9922"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4788,7 +4788,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-6112"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4825,7 +4825,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-26939"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4862,7 +4862,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-17044"
     ],
     "compensationTiers": [
       {
@@ -4912,7 +4912,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MO"
+      "region-st-7720"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4949,7 +4949,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-4577"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -4986,7 +4986,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-4622"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5024,7 +5024,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-13936"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5061,7 +5061,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "FL"
+      "region-st-18304"
     ],
     "compensationTiers": [
       {
@@ -5111,7 +5111,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-11345"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5148,7 +5148,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TN"
+      "region-st-19898"
     ],
     "compensationTiers": [
       {
@@ -5199,7 +5199,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-19445"
     ],
     "compensationTiers": [
       {
@@ -5249,7 +5249,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-7891"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5286,7 +5286,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MD"
+      "region-st-17637"
     ],
     "compensationTiers": [
       {
@@ -5336,7 +5336,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MT"
+      "region-st-18401"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5373,7 +5373,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40224"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5410,7 +5410,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TN"
+      "region-st-4624"
     ],
     "compensationTiers": [
       {
@@ -5461,7 +5461,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-6335"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5498,7 +5498,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-7558"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5536,7 +5536,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "ND"
+      "region-st-24949"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5573,7 +5573,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "FL"
+      "region-st-18304"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5610,7 +5610,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-3498"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5648,7 +5648,7 @@
       "ENERGY_ARBITRAGE"
     ],
     "regions": [
-      "TX"
+      "region-st-1175"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5686,7 +5686,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SC"
+      "region-st-21002"
     ],
     "compensationTiers": [
       {
@@ -5731,7 +5731,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "FL"
+      "region-st-7785"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5768,7 +5768,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-17044"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5806,7 +5806,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-8283"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5843,7 +5843,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-20422"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5880,7 +5880,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-9292"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5918,7 +5918,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "ND"
+      "region-st-2985"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5955,7 +5955,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-2652"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -5992,7 +5992,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MI"
+      "region-st-3436"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6029,7 +6029,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-13750"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6066,7 +6066,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NC"
+      "region-st-11291"
     ],
     "compensationTiers": [
       {
@@ -6110,7 +6110,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-17267"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6147,7 +6147,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "FL"
+      "region-st-19161"
     ],
     "compensationTiers": [
       {
@@ -6198,7 +6198,7 @@
       "ENERGY_ARBITRAGE"
     ],
     "regions": [
-      "AZ"
+      "region-st-21538"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6235,7 +6235,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-5417"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6272,7 +6272,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "AL"
+      "region-st-17534"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6309,7 +6309,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-15356"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6346,7 +6346,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-40304"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6383,7 +6383,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "ND"
+      "region-st-19790"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6420,7 +6420,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-36189"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6457,7 +6457,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-17564"
     ],
     "compensationTiers": [
       {
@@ -6507,7 +6507,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-16060"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6544,7 +6544,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-7559"
     ],
     "compensationTiers": [
       {
@@ -6594,7 +6594,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-13731"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6631,7 +6631,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "AZ"
+      "region-st-19189"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6668,7 +6668,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-3716"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6705,7 +6705,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "VA"
+      "region-st-12260"
     ],
     "compensationTiers": [
       {
@@ -6755,7 +6755,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-19157"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6792,7 +6792,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-16284"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6829,7 +6829,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-4796"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6866,7 +6866,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-9475"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6903,7 +6903,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-11910"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -6940,7 +6940,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OK"
+      "region-st-9246"
     ],
     "compensationTiers": [
       {
@@ -6985,7 +6985,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IA"
+      "region-st-17260"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7022,7 +7022,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-1898"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7059,7 +7059,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "ND"
+      "region-st-19790"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7096,7 +7096,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-19501"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7133,7 +7133,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-6782"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7170,7 +7170,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-17564"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7208,7 +7208,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IA"
+      "region-st-6112"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7245,7 +7245,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-20639"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7282,7 +7282,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "FL"
+      "region-st-3757"
     ],
     "compensationTiers": [
       {
@@ -7332,7 +7332,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IA"
+      "region-st-6722"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7369,7 +7369,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KS"
+      "region-st-2641"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7406,7 +7406,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KS"
+      "region-st-18962"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7443,7 +7443,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "FL"
+      "region-st-20885"
     ],
     "compensationTiers": [
       {
@@ -7487,7 +7487,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-4720"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7524,7 +7524,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-8034"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7561,7 +7561,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-36189"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7598,7 +7598,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-12546"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7635,7 +7635,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NC"
+      "region-st-24889"
     ],
     "compensationTiers": [
       {
@@ -7685,7 +7685,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-3315"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7722,7 +7722,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-16368"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7759,7 +7759,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NC"
+      "region-st-6640"
     ],
     "compensationTiers": [
       {
@@ -7803,7 +7803,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MS"
+      "region-st-13735"
     ],
     "compensationTiers": [
       {
@@ -7854,7 +7854,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-16740"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -7922,7 +7922,7 @@
       "ENERGY_ARBITRAGE"
     ],
     "regions": [
-      "CO"
+      "region-st-8773"
     ],
     "compensationTiers": [
       {
@@ -7973,7 +7973,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40292"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8010,7 +8010,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "VA"
+      "region-st-4117"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8047,7 +8047,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MS"
+      "region-st-18951"
     ],
     "compensationTiers": [
       {
@@ -8098,7 +8098,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-1367"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8135,7 +8135,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MI"
+      "region-st-38084"
     ],
     "compensationTiers": [
       {
@@ -8179,7 +8179,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-7460"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8216,7 +8216,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-6168"
     ],
     "compensationTiers": [
       {
@@ -8266,7 +8266,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SC"
+      "region-st-21002"
     ],
     "compensationTiers": [
       {
@@ -8316,7 +8316,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "AL"
+      "region-st-750"
     ],
     "compensationTiers": [
       {
@@ -8367,7 +8367,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WY"
+      "region-st-19156"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8404,7 +8404,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "TX"
+      "region-st-27369"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8441,7 +8441,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MD"
+      "region-st-17637"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8477,7 +8477,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-12452"
     ],
     "compensationTiers": [
       {
@@ -8521,7 +8521,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "AL"
+      "region-st-9739"
     ],
     "compensationTiers": [
       {
@@ -8572,7 +8572,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-3716"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8609,7 +8609,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-12546"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8647,7 +8647,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "FL"
+      "region-st-3502"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8684,7 +8684,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-329"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8722,7 +8722,7 @@
       "ENERGY_ARBITRAGE"
     ],
     "regions": [
-      "CO"
+      "region-st-10539"
     ],
     "compensationTiers": [
       {
@@ -8767,7 +8767,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "NC"
+      "region-st-15023"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8804,7 +8804,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-1175"
     ],
     "compensationTiers": [
       {
@@ -8849,7 +8849,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-14599"
     ],
     "compensationTiers": [
       {
@@ -8893,7 +8893,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "ND"
+      "region-st-19790"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -8930,7 +8930,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "GA"
+      "region-st-18956"
     ],
     "compensationTiers": [
       {
@@ -8974,7 +8974,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IN"
+      "region-st-27599"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9011,7 +9011,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NC"
+      "region-st-19108"
     ],
     "compensationTiers": [
       {
@@ -9061,7 +9061,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "FL"
+      "region-st-14606"
     ],
     "compensationTiers": [
       {
@@ -9105,7 +9105,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "VA"
+      "region-st-13762"
     ],
     "compensationTiers": [
       {
@@ -9149,7 +9149,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-3850"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9186,7 +9186,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "FL"
+      "region-st-3757"
     ],
     "compensationTiers": [
       {
@@ -9236,7 +9236,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-13684"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9273,7 +9273,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "ND"
+      "region-st-2985"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9310,7 +9310,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "FL"
+      "region-st-5964"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9347,7 +9347,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-3236"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9384,7 +9384,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-13700"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9421,7 +9421,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40220"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9458,7 +9458,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-18100"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9495,7 +9495,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IA"
+      "region-st-19437"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9532,7 +9532,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-9991"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9569,7 +9569,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-40304"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9607,7 +9607,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-13651"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9676,7 +9676,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40293"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9713,7 +9713,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "CO"
+      "region-st-19499"
     ],
     "compensationTiers": [
       {
@@ -9757,7 +9757,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SC"
+      "region-st-14398"
     ],
     "compensationTiers": [
       {
@@ -9807,7 +9807,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-6258"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9844,7 +9844,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KS"
+      "region-st-12524"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9881,7 +9881,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-1251"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9918,7 +9918,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-40304"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9955,7 +9955,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "ND"
+      "region-st-3138"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -9992,7 +9992,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "AL"
+      "region-st-11714"
     ],
     "compensationTiers": [
       {
@@ -10043,7 +10043,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-15034"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10080,7 +10080,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-1884"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10117,7 +10117,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IL"
+      "region-st-9750"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10154,7 +10154,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-4796"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10221,7 +10221,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-14251"
     ],
     "compensationTiers": [
       {
@@ -10271,7 +10271,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-1708"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10308,7 +10308,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-9999"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10345,7 +10345,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40223"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10382,7 +10382,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "ND"
+      "region-st-12301"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10419,7 +10419,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "FL"
+      "region-st-7264"
     ],
     "compensationTiers": [
       {
@@ -10469,7 +10469,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "VT"
+      "region-st-19791"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10507,7 +10507,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "CO"
+      "region-st-9336"
     ],
     "compensationTiers": [
       {
@@ -10551,7 +10551,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-1367"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10588,7 +10588,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "ND"
+      "region-st-12301"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10625,7 +10625,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-15356"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10663,7 +10663,7 @@
       "ENERGY_ARBITRAGE"
     ],
     "regions": [
-      "VT"
+      "region-st-19791"
     ],
     "compensationTiers": [
       {
@@ -10708,7 +10708,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "VA"
+      "region-st-13640"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10745,7 +10745,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-14468"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10782,7 +10782,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-13700"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10819,7 +10819,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-3076"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10856,7 +10856,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-16587"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10894,7 +10894,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-13964"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10931,7 +10931,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "CO"
+      "region-st-10539"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -10968,7 +10968,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MD"
+      "region-st-17637"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11004,7 +11004,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SC"
+      "region-st-1763"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11042,7 +11042,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-26939"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11079,7 +11079,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-11501"
     ],
     "compensationTiers": [
       {
@@ -11129,7 +11129,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-15034"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11166,7 +11166,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-40304"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11203,7 +11203,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-12515"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11240,7 +11240,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "DE"
+      "region-st-5070"
     ],
     "compensationTiers": [
       {
@@ -11284,7 +11284,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-13936"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11321,7 +11321,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TN"
+      "region-st-19898"
     ],
     "compensationTiers": [
       {
@@ -11372,7 +11372,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-12227"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11410,7 +11410,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IN"
+      "region-st-9999"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11447,7 +11447,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-6782"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11484,7 +11484,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-27599"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11522,7 +11522,7 @@
       "ENERGY_ARBITRAGE"
     ],
     "regions": [
-      "FL"
+      "region-st-18304"
     ],
     "compensationTiers": [
       {
@@ -11567,7 +11567,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-16060"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11604,7 +11604,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IN"
+      "region-st-18100"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11641,7 +11641,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-27422"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11678,7 +11678,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-26934"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11715,7 +11715,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-10632"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11752,7 +11752,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40291"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11789,7 +11789,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-13704"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11826,7 +11826,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-20951"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11863,7 +11863,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-11501"
     ],
     "compensationTiers": [
       {
@@ -11913,7 +11913,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-3850"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11950,7 +11950,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-27422"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -11987,7 +11987,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MS"
+      "region-st-2849"
     ],
     "compensationTiers": [
       {
@@ -12038,7 +12038,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NC"
+      "region-st-2982"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12075,7 +12075,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TN"
+      "region-st-727"
     ],
     "compensationTiers": [
       {
@@ -12126,7 +12126,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-15291"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12163,7 +12163,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-2651"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12200,7 +12200,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-10632"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12237,7 +12237,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "DE"
+      "region-st-5070"
     ],
     "compensationTiers": [
       {
@@ -12281,7 +12281,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "ND"
+      "region-st-4717"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12319,7 +12319,7 @@
       "ENERGY_ARBITRAGE"
     ],
     "regions": [
-      "TX"
+      "region-st-7752"
     ],
     "compensationTiers": [
       {
@@ -12370,7 +12370,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KS"
+      "region-st-2641"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12407,7 +12407,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SC"
+      "region-st-5644"
     ],
     "compensationTiers": [
       {
@@ -12457,7 +12457,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-19159"
     ],
     "compensationTiers": [
       {
@@ -12501,7 +12501,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-6782"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12538,7 +12538,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-13651"
     ],
     "compensationTiers": [
       {
@@ -12588,7 +12588,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-20603"
     ],
     "compensationTiers": [
       {
@@ -12632,7 +12632,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-20639"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12669,7 +12669,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-5078"
     ],
     "compensationTiers": [
       {
@@ -12713,7 +12713,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-7460"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12750,7 +12750,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MI"
+      "region-st-12377"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12787,7 +12787,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-19060"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12824,7 +12824,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IA"
+      "region-st-329"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12861,7 +12861,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-16060"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12898,7 +12898,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-8574"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -12935,7 +12935,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MS"
+      "region-st-18447"
     ],
     "compensationTiers": [
       {
@@ -12986,7 +12986,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-4720"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13023,7 +13023,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TN"
+      "region-st-12470"
     ],
     "compensationTiers": [
       {
@@ -13074,7 +13074,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-18085"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13112,7 +13112,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-14599"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13149,7 +13149,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "CO"
+      "region-st-19499"
     ],
     "compensationTiers": [
       {
@@ -13193,7 +13193,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-26934"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13230,7 +13230,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-7870"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13267,7 +13267,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IA"
+      "region-st-12450"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13304,7 +13304,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "IL"
+      "region-st-9750"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13341,7 +13341,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "DE"
+      "region-st-5070"
     ],
     "compensationTiers": [
       {
@@ -13385,7 +13385,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-9575"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13423,7 +13423,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-4346"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13490,7 +13490,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-25177"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13528,7 +13528,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40290"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13565,7 +13565,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-15054"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13602,7 +13602,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-17550"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13639,7 +13639,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-6442"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13676,7 +13676,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-3293"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13713,7 +13713,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "AL"
+      "region-st-16629"
     ],
     "compensationTiers": [
       {
@@ -13764,7 +13764,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-19157"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13801,7 +13801,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "VA"
+      "region-st-40228"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13837,7 +13837,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-15344"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13874,7 +13874,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "CO"
+      "region-st-7563"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -13911,7 +13911,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MD"
+      "region-st-17637"
     ],
     "compensationTiers": [
       {
@@ -13961,7 +13961,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NC"
+      "region-st-3107"
     ],
     "compensationTiers": [
       {
@@ -14005,7 +14005,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "FL"
+      "region-st-18360"
     ],
     "compensationTiers": [
       {
@@ -14055,7 +14055,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "AZ"
+      "region-st-18280"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14092,7 +14092,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "NC"
+      "region-st-16101"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14129,7 +14129,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "WI"
+      "region-st-3701"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14166,7 +14166,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "AZ"
+      "region-st-7456"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14203,7 +14203,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OK"
+      "region-st-3478"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14241,7 +14241,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-14724"
     ],
     "compensationTiers": [
       {
@@ -14292,7 +14292,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-20377"
     ],
     "compensationTiers": [
       {
@@ -14343,7 +14343,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-1251"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14380,7 +14380,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-11011"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14418,7 +14418,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "CO"
+      "region-st-9336"
     ],
     "compensationTiers": [
       {
@@ -14462,7 +14462,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MN"
+      "region-st-17550"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14499,7 +14499,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "CO"
+      "region-st-13058"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14537,7 +14537,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-27422"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14575,7 +14575,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-1529"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14612,7 +14612,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KY"
+      "region-st-16587"
     ],
     "compensationTiers": [
       {
@@ -14662,7 +14662,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SC"
+      "region-st-14557"
     ],
     "compensationTiers": [
       {
@@ -14706,7 +14706,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-12929"
     ],
     "compensationTiers": [
       {
@@ -14756,7 +14756,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NC"
+      "region-st-15023"
     ],
     "compensationTiers": [
       {
@@ -14807,7 +14807,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-5417"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14844,7 +14844,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OH"
+      "region-st-12515"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14881,7 +14881,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40289"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14918,7 +14918,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "KY"
+      "region-st-14251"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14956,7 +14956,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-19437"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -14993,7 +14993,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "CO"
+      "region-st-7787"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15030,7 +15030,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "ND"
+      "region-st-4717"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15067,7 +15067,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-19060"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15104,7 +15104,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TN"
+      "region-st-18643"
     ],
     "compensationTiers": [
       {
@@ -15155,7 +15155,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40167"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15192,7 +15192,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SC"
+      "region-st-1890"
     ],
     "compensationTiers": [
       {
@@ -15243,7 +15243,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "GA"
+      "region-st-3248"
     ],
     "compensationTiers": [
       {
@@ -15288,7 +15288,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "PA"
+      "region-st-40221"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15325,7 +15325,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "SD"
+      "region-st-7870"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15362,7 +15362,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "NY"
+      "region-st-18102"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15399,7 +15399,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-16740"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15436,7 +15436,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-17868"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15473,7 +15473,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "MD"
+      "region-st-17637"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15510,7 +15510,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-13964"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15547,7 +15547,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-19490"
     ],
     "compensationTiers": [
       {
@@ -15591,7 +15591,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NJ"
+      "region-st-40299"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15628,7 +15628,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-20472"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15665,7 +15665,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OK"
+      "region-st-4401"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15702,7 +15702,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "DE"
+      "region-st-5070"
     ],
     "compensationTiers": [
       {
@@ -15746,7 +15746,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-17260"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15783,7 +15783,7 @@
       "LOAD_SHIFTING"
     ],
     "regions": [
-      "OH"
+      "region-st-15054"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15819,7 +15819,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "MS"
+      "region-st-6641"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15855,7 +15855,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "NC"
+      "region-st-6640"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15890,7 +15890,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-6782"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15925,7 +15925,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-1367"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15960,7 +15960,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "AL"
+      "region-st-14602"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -15995,7 +15995,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "KS"
+      "region-st-12524"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16030,7 +16030,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-16284"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16065,7 +16065,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NE"
+      "region-st-12539"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16101,7 +16101,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "GA"
+      "region-st-10624"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16137,7 +16137,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-3716"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16172,7 +16172,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-18019"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16207,7 +16207,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "MI"
+      "region-st-12377"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16242,7 +16242,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "MN"
+      "region-st-10618"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16278,7 +16278,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-16060"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16313,7 +16313,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-1898"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16349,7 +16349,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-16740"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16384,7 +16384,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-16060"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16419,9 +16419,7 @@
       "DEMAND_RESPONSE",
       "DEMAND_CHARGE_REDUCTION"
     ],
-    "regions": [
-      "WI"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -16455,7 +16453,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-16606"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16490,9 +16488,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "FL"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -16526,7 +16522,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "OH"
+      "region-st-14599"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16562,7 +16558,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-3701"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16597,9 +16593,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "VA"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -16633,7 +16627,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "CO"
+      "region-st-19499"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16668,7 +16662,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-5417"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16703,7 +16697,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-11019"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16738,7 +16732,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-8574"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16773,7 +16767,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "OK"
+      "region-st-15746"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16809,7 +16803,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-27422"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16844,7 +16838,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "MS"
+      "region-st-2849"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16879,7 +16873,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OK"
+      "region-st-17603"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16914,9 +16908,7 @@
       "DEMAND_RESPONSE",
       "DEMAND_CHARGE_REDUCTION"
     ],
-    "regions": [
-      "MN"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -16950,7 +16942,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "KS"
+      "region-st-20510"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -16985,7 +16977,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "FL"
+      "region-st-20885"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17021,7 +17013,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-13684"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17056,7 +17048,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-1613"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17090,9 +17082,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "SD"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -17126,7 +17116,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "IN"
+      "region-st-1283"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17161,7 +17151,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-26939"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17195,9 +17185,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "WI"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -17232,7 +17220,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-10632"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17267,7 +17255,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "NC"
+      "region-st-3107"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17302,9 +17290,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "SC"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -17340,7 +17326,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-15356"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17375,7 +17361,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-14175"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17409,9 +17395,7 @@
       "DEMAND_RESPONSE",
       "LOAD_FLEXIBILITY"
     ],
-    "regions": [
-      "SC"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -17446,7 +17430,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-1898"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17481,7 +17465,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-329"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17516,7 +17500,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-20422"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17552,7 +17536,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-1367"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17587,9 +17571,7 @@
       "DEMAND_RESPONSE",
       "DEMAND_CHARGE_REDUCTION"
     ],
-    "regions": [
-      "SD"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -17624,9 +17606,7 @@
       "PEAK_SHAVING",
       "ENERGY_ARBITRAGE"
     ],
-    "regions": [
-      "CO"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -17661,7 +17641,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-7870"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17696,7 +17676,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-27599"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17731,7 +17711,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "KS"
+      "region-st-13799"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17766,7 +17746,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-13731"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17801,7 +17781,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "TX"
+      "region-st-19490"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17837,7 +17817,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-11910"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17873,7 +17853,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "IA"
+      "region-st-6112"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17908,7 +17888,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "TX"
+      "region-st-20472"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17943,7 +17923,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "TX"
+      "region-st-16627"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -17978,7 +17958,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-1251"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18013,9 +17993,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "MN"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -18050,7 +18028,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "TX"
+      "region-st-12268"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18085,7 +18063,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "FL"
+      "region-st-3502"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18120,7 +18098,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "OK"
+      "region-st-10012"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18155,7 +18133,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-14178"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18191,7 +18169,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "IN"
+      "region-st-9778"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18226,7 +18204,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-13853"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18261,7 +18239,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "ND"
+      "region-st-13694"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18296,7 +18274,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-3701"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18331,7 +18309,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-21002"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18367,7 +18345,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-9922"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18402,7 +18380,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "OH"
+      "region-st-6335"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18437,7 +18415,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "KS"
+      "region-st-6431"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18472,7 +18450,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "GA"
+      "region-st-3081"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18508,7 +18486,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "CO"
+      "region-st-8773"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18543,9 +18521,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "AL"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -18579,7 +18555,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-3844"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18615,7 +18591,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-20422"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18651,7 +18627,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-13750"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18686,9 +18662,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "IA"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -18723,7 +18697,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-15034"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18758,7 +18732,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-3498"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18793,7 +18767,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "OK"
+      "region-st-3478"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18828,7 +18802,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "IN"
+      "region-st-17599"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18863,7 +18837,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "NC"
+      "region-st-15023"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18898,7 +18872,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NE"
+      "region-st-17642"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18933,7 +18907,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "IA"
+      "region-st-6168"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -18968,7 +18942,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "MO"
+      "region-st-14192"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19004,7 +18978,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-11345"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19039,7 +19013,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "DE"
+      "region-st-5070"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19074,7 +19048,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "AL"
+      "region-st-4430"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19109,7 +19083,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-8786"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19144,7 +19118,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "IA"
+      "region-st-6168"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19179,7 +19153,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "VA"
+      "region-st-17066"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19214,7 +19188,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "ND"
+      "region-st-3138"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19250,7 +19224,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-14468"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19285,7 +19259,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-26934"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19320,7 +19294,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-3850"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19355,7 +19329,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "IN"
+      "region-st-9999"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19390,7 +19364,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-4720"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19425,7 +19399,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-3315"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19460,9 +19434,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "KY"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -19496,9 +19468,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "IN"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -19532,7 +19502,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "LA"
+      "region-st-5202"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19566,9 +19536,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "ND"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -19602,7 +19570,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "KS"
+      "region-st-18316"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19638,7 +19606,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "VT"
+      "region-st-19791"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19673,7 +19641,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-10768"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19708,7 +19676,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "NE"
+      "region-st-13739"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19743,7 +19711,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "ND"
+      "region-st-19790"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19778,9 +19746,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "PA"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -19814,7 +19780,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-11355"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19849,7 +19815,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-3716"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19884,7 +19850,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "CO"
+      "region-st-13058"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -19919,9 +19885,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "IN"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -19955,9 +19919,7 @@
       "DEMAND_RESPONSE",
       "DEMAND_CHARGE_REDUCTION"
     ],
-    "regions": [
-      "IN"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -19992,7 +19954,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-13700"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20027,7 +19989,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "VT"
+      "region-st-19791"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20062,9 +20024,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "SC"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -20099,7 +20059,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-4720"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20134,7 +20094,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-1763"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20170,7 +20130,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-3850"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20205,9 +20165,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "MN"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -20241,7 +20199,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "KS"
+      "region-st-2354"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20276,7 +20234,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "KY"
+      "region-st-17044"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20311,9 +20269,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "VA"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -20348,7 +20304,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "IA"
+      "region-st-329"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20383,7 +20339,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "IN"
+      "region-st-8179"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20419,7 +20375,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-19060"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20454,7 +20410,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-10632"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20490,7 +20446,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "TN"
+      "region-st-13027"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20525,7 +20481,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "VA"
+      "region-st-4117"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20561,7 +20517,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-3315"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20596,7 +20552,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IL"
+      "region-st-9750"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20661,7 +20617,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-5417"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20696,7 +20652,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "VA"
+      "region-st-40228"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20730,9 +20686,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "CO"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -20766,7 +20720,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "IA"
+      "region-st-17260"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20801,7 +20755,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "OH"
+      "region-st-18085"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20836,7 +20790,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-3764"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20872,7 +20826,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "IA"
+      "region-st-8319"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20907,7 +20861,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-17267"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20942,7 +20896,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-3236"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -20978,7 +20932,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-6782"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21013,7 +20967,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-5644"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21048,7 +21002,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "IL"
+      "region-st-5535"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21083,7 +21037,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "TX"
+      "region-st-19806"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21119,7 +21073,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "OK"
+      "region-st-14775"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21154,9 +21108,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "NC"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -21190,7 +21142,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "WI"
+      "region-st-15344"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21225,7 +21177,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-15356"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21260,9 +21212,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "SD"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -21296,7 +21246,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "MN"
+      "region-st-19157"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21332,7 +21282,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-3236"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21367,7 +21317,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-8319"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21402,7 +21352,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-11345"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21437,7 +21387,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "OK"
+      "region-st-4401"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21472,7 +21422,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-15034"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21507,7 +21457,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-14398"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21543,7 +21493,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "GA"
+      "region-st-9431"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21578,9 +21528,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "OH"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -21615,7 +21563,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-8574"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21650,9 +21598,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "OH"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -21686,9 +21632,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "KY"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -21722,7 +21666,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "OK"
+      "region-st-10599"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21757,7 +21701,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-25295"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21793,7 +21737,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-3498"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21828,7 +21772,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "AR"
+      "region-st-13676"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21863,7 +21807,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "NC"
+      "region-st-24889"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21898,7 +21842,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-19060"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21933,7 +21877,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "GA"
+      "region-st-3248"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -21968,9 +21912,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "SD"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -22004,7 +21946,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-9922"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22040,7 +21982,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-17550"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22075,7 +22017,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "PA"
+      "region-st-40224"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22110,7 +22052,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "MO"
+      "region-st-8934"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22145,7 +22087,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-162"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22181,7 +22123,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-7460"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22216,7 +22158,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "KS"
+      "region-st-2774"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22251,7 +22193,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "MN"
+      "region-st-19157"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22287,7 +22229,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-18019"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22322,7 +22264,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "WI"
+      "region-st-16740"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22358,7 +22300,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-12227"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22393,7 +22335,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IN"
+      "region-st-9999"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22429,7 +22371,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "WI"
+      "region-st-1251"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22464,9 +22406,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "ND"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -22501,7 +22441,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "IL"
+      "region-st-9750"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22536,7 +22476,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "KS"
+      "region-st-2641"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22571,9 +22511,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "IN"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -22607,9 +22545,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "ND"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -22643,9 +22579,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "WI"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -22679,7 +22613,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "NC"
+      "region-st-17572"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22714,9 +22648,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "IA"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -22750,9 +22682,7 @@
       "DEMAND_RESPONSE",
       "PEAK_SHAVING"
     ],
-    "regions": [
-      "CO"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -22788,7 +22718,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-6258"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22824,7 +22754,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-12546"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22859,7 +22789,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "NC"
+      "region-st-1889"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22895,7 +22825,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-7870"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22930,7 +22860,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "VA"
+      "region-st-84"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -22965,7 +22895,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-5929"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -23000,7 +22930,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "TX"
+      "region-st-13830"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -23035,7 +22965,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "CO"
+      "region-st-8773"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -23070,7 +23000,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "MT"
+      "region-st-12692"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -23105,7 +23035,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "SD"
+      "region-st-13750"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -23141,7 +23071,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "MN"
+      "region-st-4346"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -23176,7 +23106,7 @@
       "PEAK_SHAVING"
     ],
     "regions": [
-      "IA"
+      "region-st-6112"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -23211,7 +23141,7 @@
       "LOAD_FLEXIBILITY"
     ],
     "regions": [
-      "SC"
+      "region-st-13524"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
@@ -23246,9 +23176,7 @@
       "DEMAND_RESPONSE",
       "LOAD_SHIFTING"
     ],
-    "regions": [
-      "WI"
-    ],
+    "regions": [],
     "compensationTiers": [],
     "status": "ACTIVE",
     "variants": [],
@@ -23283,7 +23211,7 @@
       "DEMAND_CHARGE_REDUCTION"
     ],
     "regions": [
-      "SD"
+      "region-st-13853"
     ],
     "compensationTiers": [],
     "status": "ACTIVE",
