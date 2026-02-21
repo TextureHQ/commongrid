@@ -2,13 +2,14 @@
 
 import { Card } from "@texturehq/edges";
 import Link from "next/link";
-import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities } from "@/lib/data";
+import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms } from "@/lib/data";
 
 export default function LandingPage() {
   const utilityCount = getAllUtilities().length;
   const isoCount = getAllIsos().length;
   const rtoCount = getAllRtos().length;
   const baCount = getAllBalancingAuthorities().length;
+  const programCount = getAllPrograms().length;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -44,6 +45,7 @@ export default function LandingPage() {
             { label: "Territories", value: "3,000+" },
             { label: "ISOs & RTOs", value: `${isoCount + rtoCount}` },
             { label: "Balancing Authorities", value: `${baCount}` },
+            { label: "Programs", value: programCount.toLocaleString() },
           ].map((stat) => (
             <Card key={stat.label} variant="outlined">
               <Card.Content className="text-center py-4">
@@ -83,6 +85,20 @@ export default function LandingPage() {
                 </p>
                 <span className="text-sm font-medium text-brand-primary">
                   Browse grid operators &rarr;
+                </span>
+              </Card.Content>
+            </Card>
+          </Link>
+
+          <Link href="/explore?view=programs" className="block group">
+            <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
+              <Card.Content className="py-6">
+                <div className="text-lg font-semibold text-text-heading mb-1">Programs</div>
+                <p className="text-sm text-text-muted mb-3">
+                  Explore {programCount} energy programs — demand response, EV charging, smart thermostats, and more.
+                </p>
+                <span className="text-sm font-medium text-brand-primary">
+                  Browse programs &rarr;
                 </span>
               </Card.Content>
             </Card>

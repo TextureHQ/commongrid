@@ -18,8 +18,8 @@ import type { FeatureCollection } from "geojson";
 // ---------------------------------------------------------------------------
 
 export type ViewMode = "landing" | "list" | "detail";
-export type ListView = "utilities" | "grid-operators";
-export type DetailView = "utility" | "iso" | "rto" | "ba";
+export type ListView = "utilities" | "grid-operators" | "programs";
+export type DetailView = "utility" | "iso" | "rto" | "ba" | "program";
 export type EntityView = ListView | DetailView;
 
 export interface ExplorerState {
@@ -162,10 +162,10 @@ function stateToSearchParams(state: ExplorerState): string {
 
 function parseViewMode(view: string | null): { mode: ViewMode; view: EntityView | null } {
   if (!view) return { mode: "list", view: "utilities" };
-  if (view === "utilities" || view === "grid-operators") {
+  if (view === "utilities" || view === "grid-operators" || view === "programs") {
     return { mode: "list", view };
   }
-  if (view === "utility" || view === "iso" || view === "rto" || view === "ba") {
+  if (view === "utility" || view === "iso" || view === "rto" || view === "ba" || view === "program") {
     return { mode: "detail", view };
   }
   return { mode: "list", view: "utilities" };
@@ -262,7 +262,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       return;
     }
     // If previous was a list view, navigate back to list
-    if (prev.view === "utilities" || prev.view === "grid-operators") {
+    if (prev.view === "utilities" || prev.view === "grid-operators" || prev.view === "programs") {
       dispatch({ type: "NAVIGATE_LIST", view: prev.view });
     } else if (prev.slug) {
       dispatch({ type: "NAVIGATE_DETAIL", view: prev.view, slug: prev.slug });
