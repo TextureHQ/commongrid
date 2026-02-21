@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en-gb" dir="ltr">
+<head>
+  	<!-- Clarity -->
+  	<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "letnqk49zs");
+	</script>
+  <!-- End Clarity -->
+  	<!-- Matomo -->
+	<script>
+      var _paq = window._paq = window._paq || [];
+      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+      _paq.push(['trackPageView']);
+      _paq.push(['enableLinkTracking']);
+      (function() {
+        var u="//silo.sygnifi.com/";
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['setSiteId', '73']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+      })();
+	</script>
+	<!-- End Matomo Code -->
+  
+  	<!-- Google tag (gtag.js) -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-H16SHPX3GS"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());  gtag('config', 'G-H16SHPX3GS');
+      </script>
+  
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WBM8N7');</script>
+    <!-- End Google Tag Manager -->
+
+  	<!-- Google Tag Manager -->
+      <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-T7Z7H8J');</script>
+	<!-- End Google Tag Manager -->  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes"/>
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="apple-mobile-web-app-capable" content="YES"/>
+    <meta charset="utf-8">
+	<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+	<meta name="description" content="GRANT COUNTY PUBLIC UTILITY DISTRICT - Powering our way of life">
+	<meta name="generator" content="Joomla! - Open Source Content Management">
+	<title>Grant PUD - Powering our way of life</title>
+	<link href="https://www.grantpud.org/component/search/?id=43&amp;Itemid=104&amp;format=opensearch" rel="search" title="Search Grant PUD" type="application/opensearchdescription+xml">
+	<link href="/templates/galaxy/favicon.ico" rel="icon" type="image/vnd.microsoft.icon">
+<link href="/components/com_sppagebuilder/assets/css/font-awesome-6.min.css?a436bee1e5ae414f98db7ca13adfd7c0" rel="stylesheet">
+	<link href="/components/com_sppagebuilder/assets/css/font-awesome-v4-shims.css?a436bee1e5ae414f98db7ca13adfd7c0" rel="stylesheet">
+	<link href="/components/com_sppagebuilder/assets/css/animate.min.css?a436bee1e5ae414f98db7ca13adfd7c0" rel="stylesheet">
+	<link href="/components/com_sppagebuilder/assets/css/sppagebuilder.css?a436bee1e5ae414f98db7ca13adfd7c0" rel="stylesheet">
+	<link href="/components/com_sppagebuilder/assets/css/dynamic-content.css?a436bee1e5ae414f98db7ca13adfd7c0" rel="stylesheet">
+	<link href="/components/com_sppagebuilder/assets/css/magnific-popup.css" rel="stylesheet">
+	<link href="/media/com_rsform/css/front.min.css?f146f9" rel="stylesheet">
+	<link href="/media/com_sppagebuilder/css/page-43.css" rel="stylesheet">
+	<link href="/media/plg_system_jcepro/site/css/content.min.css?86aa0286b6232c4a5b58f892ce080277" rel="stylesheet">
+	<link href="/media/com_widgetkit/css/site.css" rel="stylesheet" id="widgetkit-site-css">
+	<style>@media(min-width: 1400px) {.sppb-row-container { max-width: 1320px; }}</style>
+	<style>:root {}</style>
+<script type="application/json" class="joomla-script-options new">{"system.paths":{"root":"","rootFull":"https:\/\/www.grantpud.org\/","base":"","baseFull":"https:\/\/www.grantpud.org\/"},"csrf.token":"c78c758fe163575603cdca2b0d58b27b","system.keepalive":{"interval":840000,"uri":"\/component\/ajax\/?format=json"}}</script>
+	<script src="/media/system/js/core.min.js?28c01692f1cb5e22266610e4d1c3a058"></script>
+	<script src="/media/vendor/jquery/js/jquery.min.js?3.7.1"></script>
+	<script src="/media/legacy/js/jquery-noconflict.min.js?28c01692f1cb5e22266610e4d1c3a058"></script>
+	<script src="/media/system/js/keepalive.min.js?28c01692f1cb5e22266610e4d1c3a058" type="module"></script>
+	<script src="/components/com_sppagebuilder/assets/js/common.js"></script>
+	<script src="/components/com_sppagebuilder/assets/js/dynamic-content.js?a436bee1e5ae414f98db7ca13adfd7c0"></script>
+	<script src="/components/com_sppagebuilder/assets/js/jquery.parallax.js?a436bee1e5ae414f98db7ca13adfd7c0"></script>
+	<script src="/components/com_sppagebuilder/assets/js/sppagebuilder.js?a436bee1e5ae414f98db7ca13adfd7c0" defer></script>
+	<script src="/components/com_sppagebuilder/assets/js/addons/text_block.js"></script>
+	<script src="/components/com_sppagebuilder/assets/js/jquery.magnific-popup.min.js"></script>
+	<script src="/components/com_sppagebuilder/assets/js/addons/image.js"></script>
+	<script src="/media/com_rsform/js/script.min.js?f146f9"></script>
+	<script src="https://www.google.com/recaptcha/api.js?render=explicit"></script>
+	<script src="/media/plg_system_rsfprecaptchav2/js/recaptchav2.js?f146f9"></script>
+	<script src="https://cdn.gtranslate.net/widgets/latest/dropdown.js" data-gt-orig-url="/" data-gt-orig-domain="www.grantpud.org" data-gt-widget-id="173" defer></script>
+	<script src="/media/com_widgetkit/js/maps.js" defer></script>
+	<script src="/media/com_widgetkit/lib/uikit/dist/js/uikit.min.js"></script>
+	<script src="/media/com_widgetkit/lib/uikit/dist/js/uikit-icons.min.js"></script>
+	<script>RSFormProReCAPTCHAv2.loaders.push(function(){
+	if (typeof RSFormProReCAPTCHAv2.forms[33] === 'undefined') {
+		var id = grecaptcha.render('g-recaptcha-368', {"sitekey":"6LdJp_UlAAAAAKWNPHtBZ8qz76kVAVPeKkLrffv-","theme":"light","type":"image","size":"normal"});
+		RSFormProReCAPTCHAv2.forms[33] = id;
+		
+	}
+});</script>
+	<script>RSFormPro.Ajax.URL = "\/component\/rsform\/?task=ajaxValidate&Itemid=104";</script>
+	<script>RSFormProUtils.addEvent(window, 'load', function(){
+    RSFormPro.Ajax.overrideSubmit(33, {"parent":"","field":"is-invalid"}, false);
+});</script>
+	<script>ajaxExtraValidationScript[33] = function(task, formId, data){ 
+var formComponents = {};
+formComponents[353]='your-name';formComponents[354]='your-email';formComponents[368]='Recaptcha';
+RSFormPro.Ajax.displayValidationErrors(formComponents, task, formId, data);
+};
+</script>
+	<script>
+				document.addEventListener("DOMContentLoaded", () =>{
+					window.htmlAddContent = window?.htmlAddContent || "";
+					if (window.htmlAddContent) {
+        				document.body.insertAdjacentHTML("beforeend", window.htmlAddContent);
+					}
+				});
+			</script>
+	<script>window.gtranslateSettings = window.gtranslateSettings || {};window.gtranslateSettings['173'] = {"default_language":"en","languages":["en","ru","es","uk"],"url_structure":"sub_directory","wrapper_selector":"#gt-wrapper-173","globe_size":60,"flag_size":16,"flag_style":"2d","custom_domains":null,"float_switcher_open_direction":"top","switcher_open_direction":"top","native_language_names":0,"add_new_line":1,"select_language_label":"Select Language","detect_browser_language":0,"custom_css":"","alt_flags":[],"switcher_horizontal_position":"left","switcher_vertical_position":"bottom","horizontal_position":"inline","vertical_position":"inline"};</script>
+	<meta property="article:author" content="Lindsay Thompson"/>
+	<meta property="article:published_time" content="1970-01-01 00:00:00"/>
+	<meta property="article:modified_time" content="2026-02-19 03:18:29"/>
+	<meta property="og:locale" content="en-GB" />
+	<meta property="og:title" content="Grant PUD - Powering our way of life" />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://www.grantpud.org/" />
+	<meta property="og:site_name" content="Grant PUD" />
+	<meta property="og:image" content="https://www.grantpud.org/" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content="" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content="Grant PUD - Powering our way of life" />
+	<meta name="twitter:site" content="@Grant PUD" />
+	<meta name="twitter:image" content="https://www.grantpud.org/" />
+	<style>
+strong.formRequired {
+	font-weight: bold;
+	font-style: normal;
+	margin-left: 3px;
+	color: #CF4D4D;
+}
+.formError {
+    color: #CF4D4D;
+    font-weight: bold;
+    font-size: 15px;
+}
+</style>
+	<!-- Start: Google Structured Data -->
+			
+<script type="application/ld+json" data-type="gsd">
+{
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "url": "https://www.grantpud.org/",
+    "name": "Grant PUD"
+}
+</script>
+			<!-- End: Google Structured Data -->
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet"
+          href="/templates/galaxy/css/bootstrap.min.css"
+          type="text/css"/>
+    
+
+    <!-- Custom styles for this template -->
+    <link rel="stylesheet"
+          href="/templates/galaxy/css/custom.css?1771683441"
+          type="text/css"/>
+
+
+    <!-- Responsive css for this template -->
+    <link rel="stylesheet"
+          href="/templates/galaxy/css/responsive.css"
+          type="text/css"/>
+
+    <!-- Font Awesome -->
+    <link
+        href="/templates/galaxy/fonts/font-awesome/css/fontawesome-all.min.css"
+        rel="stylesheet" type="text/css">
+
+
+    <!-- circle.css -->
+    <link rel="stylesheet"
+          href="/templates/galaxy/css/circle.css?1771683441"
+          type="text/css"/>
+    
+    <!-- styles by radley todo implement these into main style sheet -->
+    <link rel="stylesheet"
+          href="/templates/galaxy/css/rad_styles.css?1771683441"
+          type="text/css"/>
+      
+  
+  <script id="oada_ma_toolbar_script">var oada_ma_license_key="1k2qkpbigr12Ct5WMpJjK31TCthcABEzlVnBf6f7zAtq0qmRQe";var oada_ma_license_url="https://api.maxaccess.io/scripts/toolbar/1k2qkpbigr12Ct5WMpJjK31TCthcABEzlVnBf6f7zAtq0qmRQe";(function(s,o,g){a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.src=g;a.setAttribute("defer","");a.setAttribute("type","text/javascript");a.setAttribute("crossorigin","anonymous");m.parentNode.insertBefore(a,m)})(document,"script",oada_ma_license_url+oada_ma_license_key);</script>
+  
+  
+    <!--RedGooseCSS-->
+    <link rel="stylesheet"
+          href="/templates/galaxy/css/redgoosecustom.css"
+          type="text/css"/>
+
+      <!-- Global site tag (gtag.js) - Google Analytics 
+<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-35982830-1');
+</script>
+	<script>
+/**
+* Function that captures a click on an outbound link in Analytics.
+* This function takes a valid URL string as an argument, and uses that URL string
+* as the event label. Setting the transport method to 'beacon' lets the hit be sent
+* using 'navigator.sendBeacon' in browser that support it.
+*/
+var captureOutboundLink = function(url) {
+   ga('send', 'event', 'outbound', 'click', url, {
+     'transport': 'beacon',
+     'hitCallback': function(){document.location = url;}
+   });
+}
+</script>-->
+ 
+  <script type='text/javascript'>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '673028866448516', {}, {agent: 'pljoomla'});
+fbq('track', 'PageView');
+</script>
+<noscript>
+<img height="1" width="1" style="display:none" alt="fbpx"
+src="https://www.facebook.com/tr?id=673028866448516&ev=PageView&noscript=1"/>
+</noscript>
+  
+  <!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1828089511352059');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1828089511352059&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+  
+  <!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '424977367294671');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=424977367294671&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+    <!-- Custom Checkbox JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const customLabels = document.querySelectorAll('.custom-control-label');
+            if (customLabels.length) {
+                customLabels.forEach(function(label) {
+                    label.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        this.classList.toggle('checked');
+                    });
+                });
+            }
+        });
+    </script>
+  </head>
+
+<!--no conflict-->
+<script>
+var $ = jQuery;
+</script>
+
+<body id="shadow">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WBM8N7"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T7Z7H8J"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!--========== HEADER ==========-->
+<header class="s-header js__header-sticky js__header-overlay">
+    <!-- Navbar -->
+    <div class="s-header__navbar">
+        <div class="s-header__container">
+            <div class="s-header__navbar-row">
+                <div class="s-header__navbar-row-col">
+                    <!-- Trigger -->
+                    <a href="javascript:void(0);" class="s-header__trigger js__trigger"> <span
+                            class="s-header__trigger-icon"></span> <span class="s-header-menu">Menu</span>
+                    </a>
+                    <!-- End Trigger -->
+                    <!-- Logo -->
+                                            <div class="s-header__logo">
+                            <a href="/" class="s-header__logo-link">
+                                <img class="s-header__logo-img s-header__logo-img-default"
+                                     src="/images/logo.png"
+                                     alt="Logo" title="Logo" width="135" height="63"/>
+                            </a>
+                        </div>
+                                        <!-- End Logo -->
+                </div>
+                <div class="s-header__navbar-row-col ml-auto">
+                    <div class="s-header-right-col">
+                        
+<div id="mod-custom153" class="mod-custom custom">
+    <ul>
+<li class=""><a href="/support" aria-label="contact" class="btn-link"> <span class="icon-box"><i class="fa fa-user"></i></span>CONTACT</a></li>
+<li class="searchbtn"><a href="#" id="search-icon" aria-label= "search" class="btn-link"><span class="icon-box"><i class="fa fa-search"></i></span>SEARCH</a></li>
+<li class=""><a href="https://secure4.billerweb.com/gcp/inetSrv" aria-label= "login" target="_blank" rel="noopener" class="btn-link"><span class="icon-box"><i class="fa fa-sign-in"></i></span>LOGIN</a></li>
+</ul></div>
+<div class="gtranslate_wrapper" id="gt-wrapper-173"></div>
+                    </div>
+                </div>
+                <div id="search-popup" class="search-popup">
+                    <div id="search-popup"  class="search ">
+	<form action="/" method="post" class="" role="search">
+		<input name="searchword" id="mod-search-searchword302" maxlength="200"  class="inputbox search-query input-medium" type="search" placeholder="Search ..." />		<input type="hidden" name="task" value="search" />
+		<input type="hidden" name="option" value="com_search" />
+		<input type="hidden" name="Itemid" value="104" />
+	</form>
+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End Navbar -->
+
+    <!-- Overlay -->
+    <div class="s-header-bg-overlay js__bg-overlay">
+        <!-- Nav -->
+        <nav class="s-header__nav js__scrollbar">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12 col-lg-3">
+                        <div class="bg-1" id="left-col">
+                            
+<div id="mod-custom155" class="mod-custom custom">
+    <ul>
+<li><a href="https://secure4.billerweb.com/gcp/inetSrv" target="_blank" rel="noopener">Pay Your Bill</a></li>
+<li><a href="/outages">Report an Outage</a></li>
+<li><a href="/start-stop-service">Start/Stop Service</a></li>
+<li><a href="/ways-to-pay">Payment Options</a></li>
+<li><a href="/careers">Work With Us</a></li>
+<li><a href="/commission-meetings">Workshops/Meetings</a></li>
+</ul></div>
+
+                            <div class="contact-us">
+                                <p>Contact Us</p>
+                                <p class="phone-number">
+                                    
+<div id="mod-custom156" class="mod-custom custom">
+    <p>509.766.2505</p></div>
+
+                                </p>
+                            </div>
+                            
+                            <div class="socialicons">
+                                
+<div id="mod-custom181" class="mod-custom custom">
+    <a href="https://www.facebook.com/GrantCountyPUD" target="_blank" aria-label="facebook" rel="noopener"> <i class="fab fa-facebook-f"></i></a> <a href="https://twitter.com/GrantPUD" aria-label="x" target="_blank" rel="noopener"><i class="fab fa-twitter"></i></a> <a href="https://www.linkedin.com/company/grant-county-public-utility-district" aria-label="linkedin" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> </a> <a href="/blog/?feed=rss2" target="_blank" aria-label="rss" rel="noopener"> <i class="fa fa-rss"></i> </a> <a href="https://youtube.com/user/GrantCountyPUD"  aria-label = "youtube" target="_blank" rel="noopener"><i class="fab fa-youtube"></i></a> <a href="https://www.flickr.com/photos/grantpud" target="_blank" aria-label="flicker" rel="noopener"><i class="fab fa-flickr"></i></a></div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-9">
+                        <div class="row">
+                            <ul class="list-unstyled s-header__nav-menu" id="accordion">
+                                <li class="s-header__nav-menu-item has-child" id="heading-about-us">
+                                    <!--<a class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active" href="/about-us" >About Us</a>-->
+                                    <a href="javascript:void(0);" data-toggle="collapse"
+                                       data-target="#collapse-about-us" aria-expanded="true"
+                                       aria-controls="collapse-about-us" class="arrow-mob mr-auto collapsed">&nbsp;</a>
+
+                                    <!--galaxy-->
+                                    	
+<a href='/about-us' class='s-header__nav-menu-link s-header__nav-menu-link-divider -is-active' >About Us</a>
+    <ul class="list-unstyled s-header__nav-menu collapse"  id="collapse-about-us" aria-labelledby="heading-about-us" data-parent="#accordion">
+        <li class="item-114"><a href="/who-we-are" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Who We Are</a></li><li class="item-111"><a href="/what-we-do" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">What We Do</a></li><li class="item-112"><a href="/careers" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Careers</a></li><li class="item-1317"><a href="/do-business-with-us" >Do Business with Us</a></li><li class="item-1289"><a href="/future2" >Powering Our Future</a></li><li class="item-116"><a href="/the-wanapum" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">The Wanapum</a></li><li class="item-117"><a href="/community" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Community</a></li><li class="item-554"><a href="/education" >Education</a></li><li class="item-118"><a href="/environment" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Environment</a></li><li class="item-119"><a href="/electrical-safety" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Electrical Safety</a></li><li class="item-110"><a href="/news-media" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">News &amp; Media</a></li><li class="item-120"><a href="/investors" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Investors</a></li></ul>
+<!--<script src="http://code.jquery.com/jquery-1.9.1.js"></script>-->
+
+
+<script>
+    jQuery(function () {
+
+        jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+        jQuery("#collapse_mobile li.moreMenu").remove();
+        alignMenu();
+        jQuery(window).resize(function () {
+            if (jQuery(this).width() <= 750)
+            {
+                jQuery('#collapse_mobile li.moreMenu').hide();
+                return true;
+            }
+            jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+            jQuery("#collapse_mobile li.moreMenu").remove();
+            alignMenu();
+        });
+
+
+        function alignMenu() {
+
+            var w = 0;
+            var mw = jQuery("#collapse_mobile").width() - 150;
+            var i = -1;
+            var menuhtml = '';
+            jQuery.each(jQuery("#collapse_mobile").children(), function () {
+                i++;
+                w += jQuery(this).outerWidth(true);
+                if (mw < w) {
+                    menuhtml += jQuery('<div class="dropdown-menu blueBack text-right">').append(jQuery(this).clone()).html();
+                    jQuery(this).remove();
+                }
+            });
+            jQuery("#collapse_mobile").append(
+                    '<li  style="position:relative;" href="#" class="moreMenu">'
+                    + '<a href="#">More '
+                    + '<i class="fa fa-angle-down"></i>'
+                    + '</a><ul class="dropdown-menu blueBack text-right">' + menuhtml + '</ul></li>');
+            jQuery("#collapse_mobile li.moreMenu ul").css("top",
+                    jQuery("#collapse_mobile li.moreMenu").outerHeight(true) + "px");
+            jQuery("#collapse_mobile li.moreMenu").click(function () {
+                jQuery(this).children("ul").toggle();
+            });
+            if (menuhtml == '') {
+                jQuery("#collapse_mobile li.moreMenu").hide();
+            } else {
+                jQuery("#collapse_mobile li.moreMenu").show();
+            }
+        }
+    });
+
+
+</script>
+
+
+                                </li>
+                                <li class="s-header__nav-menu-item has-child" id="heading-billing-payments">
+                                    <!--<a class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active" href="/billing-payments">Billing &amp; Payments</a>-->
+                                    <a href="javascript:void(0);" data-toggle="collapse"
+                                       data-target="#collapse-billing-payments" aria-expanded="true"
+                                       aria-controls="collapse-billing-payments" class="arrow-mob mr-auto collapsed">
+                                        &nbsp;</a>
+                                    <!--galaxy-->
+                                    	
+<a href='/billing-payments' class='s-header__nav-menu-link s-header__nav-menu-link-divider -is-active' >Billing & Payments</a>
+    <ul class="list-unstyled s-header__nav-menu collapse"  id="collapse-billing-payments" aria-labelledby="heading-billing-payments" data-parent="#accordion">
+        <li class="item-121"><a href="https://secure4.billerweb.com/gcp/inetSrv" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active" target="_blank" rel="noopener noreferrer">Pay Your Bill</a></li><li class="item-122"><a href="/ways-to-pay" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Ways to Pay</a></li><li class="item-123"><a href="/rates-fees" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Rates &amp; Fees</a></li><li class="item-124"><a href="/ways-to-save" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Ways to Save</a></li><li class="item-125"><a href="/about-your-bill" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">About Your Bill</a></li><li class="item-1325"><a href="/save" >Save Money</a></li></ul>
+<!--<script src="http://code.jquery.com/jquery-1.9.1.js"></script>-->
+
+
+<script>
+    jQuery(function () {
+
+        jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+        jQuery("#collapse_mobile li.moreMenu").remove();
+        alignMenu();
+        jQuery(window).resize(function () {
+            if (jQuery(this).width() <= 750)
+            {
+                jQuery('#collapse_mobile li.moreMenu').hide();
+                return true;
+            }
+            jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+            jQuery("#collapse_mobile li.moreMenu").remove();
+            alignMenu();
+        });
+
+
+        function alignMenu() {
+
+            var w = 0;
+            var mw = jQuery("#collapse_mobile").width() - 150;
+            var i = -1;
+            var menuhtml = '';
+            jQuery.each(jQuery("#collapse_mobile").children(), function () {
+                i++;
+                w += jQuery(this).outerWidth(true);
+                if (mw < w) {
+                    menuhtml += jQuery('<div class="dropdown-menu blueBack text-right">').append(jQuery(this).clone()).html();
+                    jQuery(this).remove();
+                }
+            });
+            jQuery("#collapse_mobile").append(
+                    '<li  style="position:relative;" href="#" class="moreMenu">'
+                    + '<a href="#">More '
+                    + '<i class="fa fa-angle-down"></i>'
+                    + '</a><ul class="dropdown-menu blueBack text-right">' + menuhtml + '</ul></li>');
+            jQuery("#collapse_mobile li.moreMenu ul").css("top",
+                    jQuery("#collapse_mobile li.moreMenu").outerHeight(true) + "px");
+            jQuery("#collapse_mobile li.moreMenu").click(function () {
+                jQuery(this).children("ul").toggle();
+            });
+            if (menuhtml == '') {
+                jQuery("#collapse_mobile li.moreMenu").hide();
+            } else {
+                jQuery("#collapse_mobile li.moreMenu").show();
+            }
+        }
+    });
+
+
+</script>
+
+                                </li>
+                                <li class="s-header__nav-menu-item has-child" id="heading-support">
+                                    <!--<a class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active" href="/support">Support</a>-->
+                                    <a href="javascript:void(0);" data-toggle="collapse" data-target="#collapse-support"
+                                       aria-expanded="true" aria-controls="collapse-support"
+                                       class="arrow-mob mr-auto collapsed">&nbsp;</a>
+                                    <!--galaxy-->
+                                    	
+<a href='/contact' class='s-header__nav-menu-link s-header__nav-menu-link-divider -is-active' >Contact Us</a>
+    <ul class="list-unstyled s-header__nav-menu collapse"  id="collapse-support" aria-labelledby="heading-support" data-parent="#accordion">
+        <li class="item-126"><a href="/outages" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Outages</a></li><li class="item-128"><a href="/contact-us" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Contact Info</a></li><li class="item-611"><a href="https://www.grantpud.org/contact-us#recordsrequest" >Public Records Request</a></li><li class="item-127"><a href="/start-stop-service" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Start/Stop Service</a></li><li class="item-129"><a href="/locations" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Locations</a></li><li class="item-131"><a href="/faqs" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">FAQs</a></li></ul>
+<!--<script src="http://code.jquery.com/jquery-1.9.1.js"></script>-->
+
+
+<script>
+    jQuery(function () {
+
+        jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+        jQuery("#collapse_mobile li.moreMenu").remove();
+        alignMenu();
+        jQuery(window).resize(function () {
+            if (jQuery(this).width() <= 750)
+            {
+                jQuery('#collapse_mobile li.moreMenu').hide();
+                return true;
+            }
+            jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+            jQuery("#collapse_mobile li.moreMenu").remove();
+            alignMenu();
+        });
+
+
+        function alignMenu() {
+
+            var w = 0;
+            var mw = jQuery("#collapse_mobile").width() - 150;
+            var i = -1;
+            var menuhtml = '';
+            jQuery.each(jQuery("#collapse_mobile").children(), function () {
+                i++;
+                w += jQuery(this).outerWidth(true);
+                if (mw < w) {
+                    menuhtml += jQuery('<div class="dropdown-menu blueBack text-right">').append(jQuery(this).clone()).html();
+                    jQuery(this).remove();
+                }
+            });
+            jQuery("#collapse_mobile").append(
+                    '<li  style="position:relative;" href="#" class="moreMenu">'
+                    + '<a href="#">More '
+                    + '<i class="fa fa-angle-down"></i>'
+                    + '</a><ul class="dropdown-menu blueBack text-right">' + menuhtml + '</ul></li>');
+            jQuery("#collapse_mobile li.moreMenu ul").css("top",
+                    jQuery("#collapse_mobile li.moreMenu").outerHeight(true) + "px");
+            jQuery("#collapse_mobile li.moreMenu").click(function () {
+                jQuery(this).children("ul").toggle();
+            });
+            if (menuhtml == '') {
+                jQuery("#collapse_mobile li.moreMenu").hide();
+            } else {
+                jQuery("#collapse_mobile li.moreMenu").show();
+            }
+        }
+    });
+
+
+</script>
+
+                                </li>
+                                <li class="s-header__nav-menu-item has-child" id="heading-our-services">
+                                    <!--<a class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active" href="/our-services">Services</a>-->
+                                    <a href="javascript:void(0);" data-toggle="collapse"
+                                       data-target="#collapse-our-services" aria-expanded="true"
+                                       aria-controls="collapse-our-services" class="arrow-mob mr-auto collapsed">
+                                        &nbsp;</a>
+                                    <!--galaxy-->
+                                    	
+<a href='/our-services' class='s-header__nav-menu-link s-header__nav-menu-link-divider -is-active' >Services</a>
+    <ul class="list-unstyled s-header__nav-menu collapse"  id="collapse-our-services" aria-labelledby="heading-our-services" data-parent="#accordion">
+        <li class="item-309"><a href="/large-power-solutions-main" class="nav-link">Large Power Solutions</a></li><li class="item-108"><a href="/getfiber" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Fiber Internet</a></li><li class="item-107"><a href="/energy" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Energy</a></li><li class="item-796"><a href="/energy-services" >Energy Services</a></li><li class="item-556"><a href="/transmission-services" >Transmission Services</a></li><li class="item-109"><a href="/landlord-services" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Landlord Services</a></li><li class="item-106"><a href="/new-construction" > New Construction</a></li><li class="item-115"><a href="/surplus-auctions" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Surplus Auctions</a></li><li class="item-1130"><a href="/agricultural-service" >Agricultural Service</a></li></ul>
+<!--<script src="http://code.jquery.com/jquery-1.9.1.js"></script>-->
+
+
+<script>
+    jQuery(function () {
+
+        jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+        jQuery("#collapse_mobile li.moreMenu").remove();
+        alignMenu();
+        jQuery(window).resize(function () {
+            if (jQuery(this).width() <= 750)
+            {
+                jQuery('#collapse_mobile li.moreMenu').hide();
+                return true;
+            }
+            jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+            jQuery("#collapse_mobile li.moreMenu").remove();
+            alignMenu();
+        });
+
+
+        function alignMenu() {
+
+            var w = 0;
+            var mw = jQuery("#collapse_mobile").width() - 150;
+            var i = -1;
+            var menuhtml = '';
+            jQuery.each(jQuery("#collapse_mobile").children(), function () {
+                i++;
+                w += jQuery(this).outerWidth(true);
+                if (mw < w) {
+                    menuhtml += jQuery('<div class="dropdown-menu blueBack text-right">').append(jQuery(this).clone()).html();
+                    jQuery(this).remove();
+                }
+            });
+            jQuery("#collapse_mobile").append(
+                    '<li  style="position:relative;" href="#" class="moreMenu">'
+                    + '<a href="#">More '
+                    + '<i class="fa fa-angle-down"></i>'
+                    + '</a><ul class="dropdown-menu blueBack text-right">' + menuhtml + '</ul></li>');
+            jQuery("#collapse_mobile li.moreMenu ul").css("top",
+                    jQuery("#collapse_mobile li.moreMenu").outerHeight(true) + "px");
+            jQuery("#collapse_mobile li.moreMenu").click(function () {
+                jQuery(this).children("ul").toggle();
+            });
+            if (menuhtml == '') {
+                jQuery("#collapse_mobile li.moreMenu").hide();
+            } else {
+                jQuery("#collapse_mobile li.moreMenu").show();
+            }
+        }
+    });
+
+
+</script>
+
+                                </li>
+                                <li class="s-header__nav-menu-item has-child" id="heading-recreation">
+                                    <!--<a class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active" href="/recreation">Recreation</a>-->
+                                    <a href="javascript:void(0);" data-toggle="collapse"
+                                       data-target="#collapse-recreation" aria-expanded="true"
+                                       aria-controls="collapse-recreation" class="arrow-mob mr-auto collapsed">
+                                        &nbsp;</a>
+                                    <!--galaxy-->
+                                    	
+<a href='/recreation' class='s-header__nav-menu-link s-header__nav-menu-link-divider -is-active' >Recreation</a>
+    <ul class="list-unstyled s-header__nav-menu collapse"  id="collapse-recreation" aria-labelledby="heading-recreation" data-parent="#accordion">
+        <li class="item-133"><a href="/visit-us" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Visit Us</a></li><li class="item-134"><a href="/hunting-fishing" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Hunting &amp; Fishing</a></li><li class="item-135"><a href="/safety-restrictions" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Fire &amp; Water Safety</a></li><li class="item-136"><a href="/shoreline-protection" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Shoreline Protection</a></li><li class="item-601"><a href="/river-conditions" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">River Conditions</a></li></ul>
+<!--<script src="http://code.jquery.com/jquery-1.9.1.js"></script>-->
+
+
+<script>
+    jQuery(function () {
+
+        jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+        jQuery("#collapse_mobile li.moreMenu").remove();
+        alignMenu();
+        jQuery(window).resize(function () {
+            if (jQuery(this).width() <= 750)
+            {
+                jQuery('#collapse_mobile li.moreMenu').hide();
+                return true;
+            }
+            jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+            jQuery("#collapse_mobile li.moreMenu").remove();
+            alignMenu();
+        });
+
+
+        function alignMenu() {
+
+            var w = 0;
+            var mw = jQuery("#collapse_mobile").width() - 150;
+            var i = -1;
+            var menuhtml = '';
+            jQuery.each(jQuery("#collapse_mobile").children(), function () {
+                i++;
+                w += jQuery(this).outerWidth(true);
+                if (mw < w) {
+                    menuhtml += jQuery('<div class="dropdown-menu blueBack text-right">').append(jQuery(this).clone()).html();
+                    jQuery(this).remove();
+                }
+            });
+            jQuery("#collapse_mobile").append(
+                    '<li  style="position:relative;" href="#" class="moreMenu">'
+                    + '<a href="#">More '
+                    + '<i class="fa fa-angle-down"></i>'
+                    + '</a><ul class="dropdown-menu blueBack text-right">' + menuhtml + '</ul></li>');
+            jQuery("#collapse_mobile li.moreMenu ul").css("top",
+                    jQuery("#collapse_mobile li.moreMenu").outerHeight(true) + "px");
+            jQuery("#collapse_mobile li.moreMenu").click(function () {
+                jQuery(this).children("ul").toggle();
+            });
+            if (menuhtml == '') {
+                jQuery("#collapse_mobile li.moreMenu").hide();
+            } else {
+                jQuery("#collapse_mobile li.moreMenu").show();
+            }
+        }
+    });
+
+
+</script>
+                                </li>
+                                        <li class="s-header__nav-menu-item has-child" id="heading-fiber-internet">
+                                    <!--<a class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active" href="/getfiber">Fiber Internet</a>-->
+                                    <a href="javascript:void(0);" data-toggle="collapse"
+                                       data-target="#collapse-fiber-internet" aria-expanded="true"
+                                       aria-controls="collapse-fiber-internet" class="arrow-mob mr-auto collapsed">
+                                        &nbsp;</a>
+                                    <!--galaxy-->
+                                    	
+<a href='/getfiber' class='s-header__nav-menu-link s-header__nav-menu-link-divider -is-active' >Fiber Internet</a>
+    <ul class="list-unstyled s-header__nav-menu collapse"  id="collapse-fiber-internet" aria-labelledby="heading-fiber-internet" data-parent="#accordion">
+        <li class="item-649"><a href="/getfiber#networkavailability" >How to Sign Up</a></li><li class="item-650"><a href="/getfiber#map" >Check Availability</a></li><li class="item-651"><a href="/getfiber#expansion" >Expansion Schedule</a></li><li class="item-652"><a href="/getfiber#networkservices" >Fiber Package Options</a></li><li class="item-653"><a href="/getfiber#NetworkISPs" >Find a Service Provider</a></li><li class="item-654"><a href="/getfiber#networkfaqs" >Frequently Asked Questions</a></li></ul>
+<!--<script src="http://code.jquery.com/jquery-1.9.1.js"></script>-->
+
+
+<script>
+    jQuery(function () {
+
+        jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+        jQuery("#collapse_mobile li.moreMenu").remove();
+        alignMenu();
+        jQuery(window).resize(function () {
+            if (jQuery(this).width() <= 750)
+            {
+                jQuery('#collapse_mobile li.moreMenu').hide();
+                return true;
+            }
+            jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+            jQuery("#collapse_mobile li.moreMenu").remove();
+            alignMenu();
+        });
+
+
+        function alignMenu() {
+
+            var w = 0;
+            var mw = jQuery("#collapse_mobile").width() - 150;
+            var i = -1;
+            var menuhtml = '';
+            jQuery.each(jQuery("#collapse_mobile").children(), function () {
+                i++;
+                w += jQuery(this).outerWidth(true);
+                if (mw < w) {
+                    menuhtml += jQuery('<div class="dropdown-menu blueBack text-right">').append(jQuery(this).clone()).html();
+                    jQuery(this).remove();
+                }
+            });
+            jQuery("#collapse_mobile").append(
+                    '<li  style="position:relative;" href="#" class="moreMenu">'
+                    + '<a href="#">More '
+                    + '<i class="fa fa-angle-down"></i>'
+                    + '</a><ul class="dropdown-menu blueBack text-right">' + menuhtml + '</ul></li>');
+            jQuery("#collapse_mobile li.moreMenu ul").css("top",
+                    jQuery("#collapse_mobile li.moreMenu").outerHeight(true) + "px");
+            jQuery("#collapse_mobile li.moreMenu").click(function () {
+                jQuery(this).children("ul").toggle();
+            });
+            if (menuhtml == '') {
+                jQuery("#collapse_mobile li.moreMenu").hide();
+            } else {
+                jQuery("#collapse_mobile li.moreMenu").show();
+            }
+        }
+    });
+
+
+</script>
+                                </li>
+                                <li class="s-header__nav-menu-item has-child lang">
+                                    
+                                    <ul class="list-unstyled s-header__nav-menu">
+                                        <li>
+
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <div class="socialicons-mob">
+                                
+<div id="mod-custom182" class="mod-custom custom">
+    <a href="https://www.facebook.com/GrantCountyPUD" target="_blank" rel="noopener"><i class="fab fa-facebook-f" aria-hidden="true"></i></a> <a href="https://twitter.com/GrantPUD" target="_blank" rel="noopener"><i class="fab fa-twitter" aria-hidden="true"></i></a> <a href="https://www.linkedin.com/company/grant-county-public-utility-district" target="_blank" rel="noopener"><i class="fab fa-linkedin-in" aria-hidden="true"></i> </a> <a href="https://www.grantpud.org/blog/?feed=rss2" target="_blank" rel="noopener"> <i class="fa fa-rss" aria-hidden="true"></i> </a> <a href="https://youtube.com/user/GrantCountyPUD" target="_blank" rel="noopener"><i class="fab fa-youtube" aria-hidden="true"></i></a> <a href="https://www.flickr.com/photos/grantpud" target="_blank" rel="noopener"><i class="fab fa-flickr" aria-hidden="true"></i></a></div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <!-- End Nav -->
+
+    </div>
+    <!-- End Overlay -->
+</header>
+<!--========== END HEADER ==========-->
+
+<!--galaxy code to display page from sp page builder-->
+<div id="sp-page-builder" class="sp-page-builder  page-43 " x-data="easystoreProductList">
+
+	
+	
+
+	
+	<div class="page-content builder-container" x-data="easystoreProductDetails">
+
+				
+
+
+
+
+	
+	<div id="carouselExampleControls" class="sppb-section carousel slide carousel-primary home-carousel" ><div class="sppb-container-inner"><div class="sppb-row"><div class="sppb-col-md-12  " id="column-wrap-id-1554138045190"><div id="column-id-1554138045190" class="sppb-column  home-slider" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1554138045191" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1554138045191" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><div class="right-bar">
+<div class="list-group"><a href="https://secure4.billerweb.com/gcp/inetSrv" target="_blank" rel="noopener" class="list-group-item list-group-item-action active"><span><i class="fa fa-credit-card" aria-hidden="true"></i> <small>PAY BILL</small> </span><big> Pay Your Bill </big> </a> <a href="/outages" class="list-group-item list-group-item-action outages-blk"><span><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><small>Outages</small></span><big> Outages</big></a><a href="/start-stop-service" class="list-group-item list-group-item-action"><span><i class="fa fa-power-off" aria-hidden="true"></i><small>Service</small></span> <big> Start/Stop Service </big></a> <a href="/support" class="list-group-item list-group-item-action"><span><i class="fa fa-user" aria-hidden="true"></i><small>Contact Us</small></span><big> Contact Us</big></a></div>
+</div></div></div></div></div><div id="sppb-addon-wrapper-1604594810293" class="sppb-addon-wrapper  addon-root-carouselpro"><div id="sppb-addon-1604594810293" class="clearfix  "     ><div id="sppb-carousel-1604594810293" data-interval="5000" class="sppb-carousel sppb-carousel-pro sppb-slide carousel-caption" data-sppb-ride="sppb-carousel"><ol class="sppb-carousel-indicators"><li data-sppb-target="#sppb-carousel-1604594810293"  class="active"  data-sppb-slide-to="0"></li>
+<li data-sppb-target="#sppb-carousel-1604594810293"   data-sppb-slide-to="1"></li>
+<li data-sppb-target="#sppb-carousel-1604594810293"   data-sppb-slide-to="2"></li>
+</ol><div class="sppb-carousel-inner"><div id="sppb-item-16045948102930" class="sppb-item sppb-item-has-bg active carousel-item-1" style="background-image: url(https://www.grantpud.org//images/2026/01/13/2026-save1.png); background-repeat: no-repeat; background-position: center center; background-size: cover;"
+				><div class="sppb-carousel-item-inner"><div class="sppb-carousel-pro-inner-content"><div><div class="sppb-row"><div class="sppb-col-sm-6 sppb-col-xs-12"><div class="sppb-carousel-pro-text"><div class="sppb-carousel-pro-content"><h1 class="powered_by">save energy<br> &amp; money</h1><p>Learn about our top ways to save<a style="color: #e87200;" href="mailto:customerservice@gcpud.org"><br><br><br></a></p></div><a href="https://www.grantpud.org/save"  id="btn-16045948102930" class="sppb-btn sppb-btn-default sppb-btn-rounded">LEARN MORE</a></div></div><div class="sppb-col-sm-6 sppb-col-xs-12"><div class="sppb-text-right"></div></div></div></div></div></div></div><div id="sppb-item-16045948102931" class="sppb-item sppb-item-has-bg carousel-item-2" style="background-image: url(https://www.grantpud.org//images/2026/01/08/priestrapids-dam.jpg); background-repeat: no-repeat; background-position: center center; background-size: cover;"
+				><div class="sppb-carousel-item-inner"><div class="sppb-carousel-pro-inner-content"><div><div class="sppb-row"><div class="sppb-col-sm-6 sppb-col-xs-12"><div class="sppb-carousel-pro-text"><div class="sppb-carousel-pro-content"><h1 class="powered_by">Hydropower<br>Benefit</h1><p>Learn how our commissioners are reserving<br>our lowest-cost power for core customers<a style="color: #e87200;" href="mailto:customerservice@gcpud.org"><br><br></a></p></div><a href="https://www.youtube.com/watch?v=lePIBdrKUeg"  id="btn-16045948102931" class="sppb-btn sppb-btn-default sppb-btn-rounded">LEARN MORE</a></div></div><div class="sppb-col-sm-6 sppb-col-xs-12"><div class="sppb-text-right"></div></div></div></div></div></div></div><div id="sppb-item-16045948102932" class="sppb-item sppb-item-has-bg carousel-item-3" style="background-image: url(https://www.grantpud.org//images/2025/03/14/adobestock_1070657930.jpg); background-repeat: no-repeat; background-position: center center; background-size: cover;"
+				><div class="sppb-carousel-item-inner"><div class="sppb-carousel-pro-inner-content"><div><div class="sppb-row"><div class="sppb-col-sm-6 sppb-col-xs-12"><div class="sppb-carousel-pro-text"><div class="sppb-carousel-pro-content"><h1 class="powered_by">Give help <br />paying a <br />power bill</h1>
+<p><span style="color: #ffffff;">With community-funded Share the Light</span><a href="mailto:customerservice@gcpud.org" style="color: #e87200;"><br /><br /><br /></a></p></div><a href="https://www.grantpud.org/sharethelight"  id="btn-16045948102932" class="sppb-btn sppb-btn-default sppb-btn-rounded">LEARN MORE</a></div></div><div class="sppb-col-sm-6 sppb-col-xs-12"><div class="sppb-text-right"></div></div></div></div></div></div></div></div></div></div></div><div id="sppb-addon-wrapper-1554138045193" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1554138045193" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block right-bar right-bar-sm" ><div class="sppb-addon-content  "><div class="right-bar">
+<div class="list-group"><a href="https://secure4.billerweb.com/gcp/inetSrv" target="_blank" rel="noopener" class="list-group-item list-group-item-action active"><span><i class="fa fa-credit-card" aria-hidden="true"></i> <small>PAY BILL</small> </span> Pay Your Bill </a> <a href="/outages" class="list-group-item list-group-item-action outages-blk"><span><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><small>Outages</small></span>Outages</a><a href="/start-stop-service" class="list-group-item list-group-item-action"><span><i class="fa fa-power-off" aria-hidden="true"></i><small>Service</small></span> Start/Stop Service</a> <a href="/support" class="list-group-item list-group-item-action"><span><i class="fa fa-user" aria-hidden="true"></i><small>Contact Us</small></span> Contact Us</a></div>
+</div></div></div></div></div></div></div></div></div></div></div><div id="section-id-1525682796243" class="sppb-section carousel-footer home-page-carousel" ><div class="sppb-container-inner"><div class="sppb-row sppb-no-gutter"><div class="sppb-col-md-2 sppb-col-sm-4 sppb-col-xs-4  " id="column-wrap-id-1525682796237"><div id="column-id-1525682796237" class="sppb-column  align-items-center justify-content-center" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1525682796249" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1525682796249" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><p><a href="/careers"><span class="circle"> <img src="/templates/galaxy/images/images/work-icon.png" alt="Work toolbox" title="Work Icon" width="55" height="49" /></span> Work With Us</a></p></div></div></div></div></div></div></div><div class="sppb-col-md-2 sppb-col-sm-4 sppb-col-xs-4  " id="column-wrap-id-1525682796238"><div id="column-id-1525682796238" class="sppb-column  align-items-center justify-content-center" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1525682796254" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1525682796254" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><p><a href="/getfiber"><span class="circle"> <img src="/templates/galaxy/images/icons/highspeednetwork.png" alt="internet symbol" title="Highspeednetwork" width="86" height="60" /></span>Fiber Internet</a></p></div></div></div></div></div></div></div><div class="sppb-col-md-2 sppb-col-sm-4 sppb-col-xs-4  " id="column-wrap-id-1525682796239"><div id="column-id-1525682796239" class="sppb-column  align-items-center justify-content-center" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1525682796257" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1525682796257" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><p><a href="/commission-meetings-submenu"><span class="circle"><img src="/templates/galaxy/images/icons/meetings.png" alt="meetings" title="Meetings" width="64" height="52" /></span>Workshops and Meetings</a></p></div></div></div></div></div></div></div><div class="sppb-col-md-2 sppb-col-sm-4 sppb-col-xs-4  " id="column-wrap-id-1525682796240"><div id="column-id-1525682796240" class="sppb-column  align-items-center justify-content-center" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1525682796266" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1525682796266" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><p><a href="/recreation"><span class="circle"><img src="/templates/galaxy/images/icons/recreation.png" alt="recreation" title="Recreation" width="75" height="45" /></span>Recreation</a></p></div></div></div></div></div></div></div><div class="sppb-col-md-2 sppb-col-sm-4 sppb-col-xs-4  " id="column-wrap-id-1525682796241"><div id="column-id-1525682796241" class="sppb-column  align-items-center justify-content-center" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1525682796246" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1525682796246" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><p><a href="/new-construction" target="_blank" rel="noopener"><span class="circle"> <img src="/templates/galaxy/images/images/house-icon.png" alt="house icon" title="House Icon" width="55" height="55" /></span>New Construction</a></p></div></div></div></div></div></div></div><div class="sppb-col-md-2 sppb-col-sm-4 sppb-col-xs-4  " id="column-wrap-id-1525682796242"><div id="column-id-1525682796242" class="sppb-column  align-items-center justify-content-center" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1525682796269" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1525682796269" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><a href="/environment"><span class="circle"><img src="/templates/galaxy/images/images/environment-icon.png" alt="Environmental leaf" title="Environment Icon" width="55" height="43" /></span>Environment</a></div></div></div></div></div></div></div></div></div></div><section id="section-id-1525682796285" class="sppb-section bg-whitebox" ><div class="sppb-row-container"><div class="sppb-row"><div class="sppb-col-md-12  " id="column-wrap-id-1525682796284"><div id="column-id-1525682796284" class="sppb-column " ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1525682796288" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1525682796288" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><h5 class="h5">GRANT COUNTY PUBLIC UTILITY DISTRICT</h5>
+<h2 class="h2">Powering our way of life</h2></div></div></div></div></div></div></div></div></div></section><div id="section-id-1535834883043" class="sppb-section recrCategories visitUs contactthreecol" ><div class="sppb-container-inner"><div class="sppb-row sppb-no-gutter"><div class="sppb-col-md-4 sppb-col-sm-4  " id="column-wrap-id-1535834883044"><div id="column-id-1535834883044" class="sppb-column  pr-0  greenBakc  py-5 px-5  iconBack" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1535834883045" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1535834883045" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><p class="font-26 mb-0 invisible text-uppercase">About Us</p>
+<h3 class="h3 bordered"><a href="/who-we-are">Who We Are</a></h3>
+<p class="pt-4 invisible">We are a public utility providing power and fiber service for Grant County. We own and operate the Priest Rapids Project on the Columbia River in central Washington.</p>
+<img src="/templates/galaxy/images/images/logo-icon.png" alt="grantpud logo" title="Logo Icon" width="97" height="98" /></div></div></div></div></div></div></div><div class="sppb-col-md-4 sppb-col-sm-4  " id="column-wrap-id-1535834883046"><div id="column-id-1535834883046" class="sppb-column  pr-0 orangeBack   py-5 px-5  iconBack" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1535834883047" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1535834883047" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><p class="font-26 mb-0 invisible text-uppercase">About Us</p>
+<h3 class="h3 bordered"><a href="/what-we-do">What We Do</a></h3>
+<p class="pt-4 invisible">Customers rely on us to power their way of life. We serve customers from Electric City to Royal City and everywhere else along this stretch of the Columbia. The affordable and reliable services we offer continues to be a main driver of Grant County’s rapidly expanding economy.</p>
+<img src="/templates/galaxy/images/icons/what-we-do-icon-o.png" alt="what we do icon" title="What We Do Icon O" width="83" height="120" /></div></div></div></div></div></div></div><div class="sppb-col-md-4 sppb-col-sm-4  " id="column-wrap-id-1535834883048"><div id="column-id-1535834883048" class="sppb-column  pr-0 lightBlueBack  py-5 px-5  iconBack" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1535834883049" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1535834883049" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><p class="font-26 mb-0 invisible text-uppercase">About Us</p>
+<h3 class="h3 bordered"><a href="/news">Latest News</a></h3>
+<p class="pt-4 invisible">Lots of things happen here at Grant PUD. These stories will help you learn more about some of the key items.</p>
+<img src="/templates/galaxy/images/icons/latest-news-blue.png" alt="latest news blue" title="Latest News Blue" width="137" height="91" /></div></div></div></div></div></div></div></div></div></div><div id="section-id-1525682796349" class="sppb-section home jumbotron jumbotron-fluid jumbotron-primary sppb-section-content-center" ><div class="sppb-row-overlay"></div><div class="sppb-container-inner"><div class="sppb-row sppb-align-center"><div class="sppb-col-md-12  " id="column-wrap-id-1525682796348"><div id="column-id-1525682796348" class="sppb-column " ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1525682796352" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1525682796352" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><p>We practice stewardship, conservation and sustainability every day.</p>
+<p><a href="/environment" class="btn btn-learn-more single-button">Learn More</a></p></div></div></div></div></div></div></div></div></div></div><div id="section-id-1525682796364" class="sppb-section gallery row-eq-height column-reverse-xs" ><div class="sppb-container-inner"><div class="sppb-row sppb-no-gutter"><div class="sppb-col-md-6 sppb-col-sm-6 sppp-column-vertical-align  " id="column-wrap-id-1525682796362"><div id="column-id-1525682796362" class="sppb-column  row-eq-height  sppb-align-items-center" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1525682796367" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1525682796367" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block gallery-content  float-right-xl" ><div class="sppb-addon-content  "><h2>The Wanapum</h2>
+<p>If we know where we come from, we’re more likely to know where we’re going. That’s why Grant PUD has worked with the Wanapum band for more than 60 years to protect, preserve, and perpetuate the natural and cultural resources of the Priest Rapids Project. Through decades of collaboration and communication we’ve developed a mutual understanding of the past—and a shared commitment to preserving our region’s cultural legacy for future generations.</p>
+<p><a href="/the-wanapum-submenu" class="btn btn-primary single-button">Learn More</a></p></div></div></div></div></div></div></div><div class="sppb-col-md-6 sppb-col-sm-6 sppp-column-vertical-align  " id="column-wrap-id-1525682796363"><div id="column-id-1525682796363" class="sppb-column  left-orange-border img-right row-eq-height  sppb-align-items-center" ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1525682796370" class="sppb-addon-wrapper  addon-root-image"><div id="sppb-addon-1525682796370" class="clearfix  "     ><div class="sppb-addon sppb-addon-single-image  img-fluid sppb-addon-image-shape"><div class="sppb-addon-content"><div class="sppb-addon-single-image-container"><img class="sppb-img-responsive " src="/images/2018/07/24/wanapum_bg.jpg"  alt="Historical black and white photo of Wanapum in regalia standing with a man in a business suit." title="Wanapum Bg" width="" height="" /></div></div></div></div></div></div></div></div></div></div></div><section id="section-id-1605033358958" class="sppb-section backyardSec bottom-space" ><div class="sppb-row-container"><div class="sppb-row"><div class="sppb-col-md-12 sppb-col-sm-6  " id="column-wrap-id-1605033358988"><div id="column-id-1605033358988" class="sppb-column  backyard " ><div class="sppb-column-addons"><div id="sppb-addon-wrapper-1605033358989" class="sppb-addon-wrapper  addon-root-text-block"><div id="sppb-addon-1605033358989" class="clearfix  "     ><div class="sppb-addon sppb-addon-text-block " ><div class="sppb-addon-content  "><h3 style="text-align: left;"><span style="color: #002d74;">Sign-up for our monthly Connections newsletter:</span></h3></div></div></div></div><div id="sppb-addon-wrapper-1605033358990" class="sppb-addon-wrapper  addon-root-module"><div id="sppb-addon-1605033358990" class="clearfix  "     ><div class="sppb-addon sppb-addon-module "><div class="sppb-addon-content"><div class="rsform">
+	<form method="post"  id="userForm" action="https://www.grantpud.org/"><div id="rsform_error_33" style="display: none;"></div>
+<!-- Do not remove this ID, it is used to identify the page so that the pagination script can work correctly -->
+<div class="formContainer" id="rsform_33_page_0">
+	<div class="form-row">
+		<div class="col-md-3">
+			<div class="form-group rsform-block rsform-block-your-name rsform-type-textbox">
+
+				<label class="control-label formControlLabel" data-toggle="tooltip" title="" for="your-name">Name:<strong class="formRequired">*</strong></label>
+
+				<div class="formControls">
+					<input type="text" value="" size="20" name="form[your-name]" id="your-name" class="rsform-input-box form-control" aria-required="true" />
+					<div><span class="formValidation"><span id="component353" class="formNoError"></span></span></div>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="form-group rsform-block rsform-block-your-email rsform-type-textbox">
+
+				<label class="control-label formControlLabel" data-toggle="tooltip" title="" for="your-email">Email Address:<strong class="formRequired">*</strong></label>
+
+				<div class="formControls">
+					<input type="email" value="" size="20" name="form[your-email]" id="your-email" class="rsform-input-box form-control" aria-required="true" />
+					<div><span class="formValidation"><span id="component354" class="formNoError"></span></span></div>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-3">
+			<div class="form-group rsform-block rsform-block-recaptcha rsform-type-recaptchav2">
+
+				<div class="formControls">
+					<div id="g-recaptcha-368"></div>
+			<noscript>
+			  <div style="width: 302px; height: 352px;">
+				<div style="width: 302px; height: 352px; position: relative;">
+				  <div style="width: 302px; height: 352px; position: absolute;">
+					<iframe src="https://www.google.com/recaptcha/api/fallback?k=6LdJp_UlAAAAAKWNPHtBZ8qz76kVAVPeKkLrffv-" frameborder="0" scrolling="no" style="width: 302px; height:352px; border-style: none;"></iframe>
+				  </div>
+				  <div style="width: 250px; height: 80px; position: absolute; border-style: none; bottom: 21px; left: 25px; margin: 0px; padding: 0px; right: 25px;">
+					<textarea id="g-recaptcha-response" name="g-recaptcha-response" class="g-recaptcha-response" style="width: 250px; height: 80px; border: 1px solid #c1c1c1; margin: 0px; padding: 0px; resize: none;"></textarea>
+				  </div>
+				</div>
+			  </div>
+			</noscript>
+					<div><span class="formValidation"><span id="component368" class="formNoError">Invalid Input</span></span></div>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-2">
+			<div class="form-group rsform-block rsform-block-submit rsform-type-submitbutton">
+
+				<div class="formControls">
+					<button type="submit" name="form[Submit]" id="Submit" class="rsform-submit-button  btn btn-primary" >Sign-UP</button>
+					<div><span class="formValidation"></span></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div><input type="hidden" name="form[formId]" value="33"/><input type="hidden" name="c78c758fe163575603cdca2b0d58b27b" value="1"></form></div></div></div></div></div></div></div></div></div></div></section>
+	
+
+
+
+
+
+			</div>
+
+		
+	
+	
+	
+	
+	
+	
+	
+	
+</div>
+
+
+<!--Footer-->
+<footer>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xl-9 col-lg-8 col-md-8 footer-left">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="darkblue_menu">
+                            <ul class="nav menu" id="footer-billing-payments">
+
+                                <li class="s-header__nav-menu-item has-child">
+                                    <a href="javascript:void(0);" data-toggle="collapse"
+                                       data-target="#collapse-billing-payments-footer" aria-expanded="true"
+                                       aria-controls="collapse-billing-payments-footer"
+                                       class="arrow-mob mr-auto collapsed"> </a>
+                                    	
+<a href='/billing-payments' class='s-header__nav-menu-link s-header__nav-menu-link-divider -is-active' >Billing & Payments</a>
+    <ul class="list-unstyled s-header__nav-menu collapse"  id="collapse-billing-payments" aria-labelledby="heading-billing-payments" data-parent="#accordion">
+        <li class="item-121"><a href="https://secure4.billerweb.com/gcp/inetSrv" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active" target="_blank" rel="noopener noreferrer">Pay Your Bill</a></li><li class="item-122"><a href="/ways-to-pay" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Ways to Pay</a></li><li class="item-123"><a href="/rates-fees" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Rates &amp; Fees</a></li><li class="item-124"><a href="/ways-to-save" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Ways to Save</a></li><li class="item-125"><a href="/about-your-bill" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">About Your Bill</a></li><li class="item-1325"><a href="/save" >Save Money</a></li></ul>
+<!--<script src="http://code.jquery.com/jquery-1.9.1.js"></script>-->
+
+
+<script>
+    jQuery(function () {
+
+        jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+        jQuery("#collapse_mobile li.moreMenu").remove();
+        alignMenu();
+        jQuery(window).resize(function () {
+            if (jQuery(this).width() <= 750)
+            {
+                jQuery('#collapse_mobile li.moreMenu').hide();
+                return true;
+            }
+            jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+            jQuery("#collapse_mobile li.moreMenu").remove();
+            alignMenu();
+        });
+
+
+        function alignMenu() {
+
+            var w = 0;
+            var mw = jQuery("#collapse_mobile").width() - 150;
+            var i = -1;
+            var menuhtml = '';
+            jQuery.each(jQuery("#collapse_mobile").children(), function () {
+                i++;
+                w += jQuery(this).outerWidth(true);
+                if (mw < w) {
+                    menuhtml += jQuery('<div class="dropdown-menu blueBack text-right">').append(jQuery(this).clone()).html();
+                    jQuery(this).remove();
+                }
+            });
+            jQuery("#collapse_mobile").append(
+                    '<li  style="position:relative;" href="#" class="moreMenu">'
+                    + '<a href="#">More '
+                    + '<i class="fa fa-angle-down"></i>'
+                    + '</a><ul class="dropdown-menu blueBack text-right">' + menuhtml + '</ul></li>');
+            jQuery("#collapse_mobile li.moreMenu ul").css("top",
+                    jQuery("#collapse_mobile li.moreMenu").outerHeight(true) + "px");
+            jQuery("#collapse_mobile li.moreMenu").click(function () {
+                jQuery(this).children("ul").toggle();
+            });
+            if (menuhtml == '') {
+                jQuery("#collapse_mobile li.moreMenu").hide();
+            } else {
+                jQuery("#collapse_mobile li.moreMenu").show();
+            }
+        }
+    });
+
+
+</script>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="darkblue_menu">
+                            <ul class="nav menu" id="footer-our-services">
+                                <li class="s-header__nav-menu-item has-child">
+                                    <a href="javascript:void(0);" data-toggle="collapse"
+                                       data-target="#collapse-our-services-footer" aria-expanded="true"
+                                       aria-controls="collapse-our-services-footer" class="arrow-mob mr-auto collapsed">
+                                        &nbsp;</a>
+                                    	
+<a href='/our-services' class='s-header__nav-menu-link s-header__nav-menu-link-divider -is-active' >Services</a>
+    <ul class="list-unstyled s-header__nav-menu collapse"  id="collapse-our-services" aria-labelledby="heading-our-services" data-parent="#accordion">
+        <li class="item-309"><a href="/large-power-solutions-main" class="nav-link">Large Power Solutions</a></li><li class="item-108"><a href="/getfiber" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Fiber Internet</a></li><li class="item-107"><a href="/energy" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Energy</a></li><li class="item-796"><a href="/energy-services" >Energy Services</a></li><li class="item-556"><a href="/transmission-services" >Transmission Services</a></li><li class="item-109"><a href="/landlord-services" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Landlord Services</a></li><li class="item-106"><a href="/new-construction" > New Construction</a></li><li class="item-115"><a href="/surplus-auctions" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Surplus Auctions</a></li><li class="item-1130"><a href="/agricultural-service" >Agricultural Service</a></li></ul>
+<!--<script src="http://code.jquery.com/jquery-1.9.1.js"></script>-->
+
+
+<script>
+    jQuery(function () {
+
+        jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+        jQuery("#collapse_mobile li.moreMenu").remove();
+        alignMenu();
+        jQuery(window).resize(function () {
+            if (jQuery(this).width() <= 750)
+            {
+                jQuery('#collapse_mobile li.moreMenu').hide();
+                return true;
+            }
+            jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+            jQuery("#collapse_mobile li.moreMenu").remove();
+            alignMenu();
+        });
+
+
+        function alignMenu() {
+
+            var w = 0;
+            var mw = jQuery("#collapse_mobile").width() - 150;
+            var i = -1;
+            var menuhtml = '';
+            jQuery.each(jQuery("#collapse_mobile").children(), function () {
+                i++;
+                w += jQuery(this).outerWidth(true);
+                if (mw < w) {
+                    menuhtml += jQuery('<div class="dropdown-menu blueBack text-right">').append(jQuery(this).clone()).html();
+                    jQuery(this).remove();
+                }
+            });
+            jQuery("#collapse_mobile").append(
+                    '<li  style="position:relative;" href="#" class="moreMenu">'
+                    + '<a href="#">More '
+                    + '<i class="fa fa-angle-down"></i>'
+                    + '</a><ul class="dropdown-menu blueBack text-right">' + menuhtml + '</ul></li>');
+            jQuery("#collapse_mobile li.moreMenu ul").css("top",
+                    jQuery("#collapse_mobile li.moreMenu").outerHeight(true) + "px");
+            jQuery("#collapse_mobile li.moreMenu").click(function () {
+                jQuery(this).children("ul").toggle();
+            });
+            if (menuhtml == '') {
+                jQuery("#collapse_mobile li.moreMenu").hide();
+            } else {
+                jQuery("#collapse_mobile li.moreMenu").show();
+            }
+        }
+    });
+
+
+</script>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="darkblue_menu">
+                            <ul class="nav menu" id="footer-about-us">
+                                <li class="s-header__nav-menu-item has-child">
+                                    <a href="javascript:void(0);" data-toggle="collapse"
+                                       data-target="#collapse-about-us-footer" aria-expanded="true"
+                                       aria-controls="collapse-about-us-footer" class="arrow-mob mr-auto collapsed">
+                                        &nbsp;</a>
+                                    	
+<a href='/about-us' class='s-header__nav-menu-link s-header__nav-menu-link-divider -is-active' >About Us</a>
+    <ul class="list-unstyled s-header__nav-menu collapse"  id="collapse-about-us" aria-labelledby="heading-about-us" data-parent="#accordion">
+        <li class="item-114"><a href="/who-we-are" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Who We Are</a></li><li class="item-111"><a href="/what-we-do" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">What We Do</a></li><li class="item-112"><a href="/careers" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Careers</a></li><li class="item-1317"><a href="/do-business-with-us" >Do Business with Us</a></li><li class="item-1289"><a href="/future2" >Powering Our Future</a></li><li class="item-116"><a href="/the-wanapum" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">The Wanapum</a></li><li class="item-117"><a href="/community" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Community</a></li><li class="item-554"><a href="/education" >Education</a></li><li class="item-118"><a href="/environment" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Environment</a></li><li class="item-119"><a href="/electrical-safety" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Electrical Safety</a></li><li class="item-110"><a href="/news-media" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">News &amp; Media</a></li><li class="item-120"><a href="/investors" class="s-header__nav-menu-link s-header__nav-menu-link-divider -is-active">Investors</a></li></ul>
+<!--<script src="http://code.jquery.com/jquery-1.9.1.js"></script>-->
+
+
+<script>
+    jQuery(function () {
+
+        jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+        jQuery("#collapse_mobile li.moreMenu").remove();
+        alignMenu();
+        jQuery(window).resize(function () {
+            if (jQuery(this).width() <= 750)
+            {
+                jQuery('#collapse_mobile li.moreMenu').hide();
+                return true;
+            }
+            jQuery("#collapse_mobile").append(jQuery("#collapse_mobile li.moreMenu ul").html());
+            jQuery("#collapse_mobile li.moreMenu").remove();
+            alignMenu();
+        });
+
+
+        function alignMenu() {
+
+            var w = 0;
+            var mw = jQuery("#collapse_mobile").width() - 150;
+            var i = -1;
+            var menuhtml = '';
+            jQuery.each(jQuery("#collapse_mobile").children(), function () {
+                i++;
+                w += jQuery(this).outerWidth(true);
+                if (mw < w) {
+                    menuhtml += jQuery('<div class="dropdown-menu blueBack text-right">').append(jQuery(this).clone()).html();
+                    jQuery(this).remove();
+                }
+            });
+            jQuery("#collapse_mobile").append(
+                    '<li  style="position:relative;" href="#" class="moreMenu">'
+                    + '<a href="#">More '
+                    + '<i class="fa fa-angle-down"></i>'
+                    + '</a><ul class="dropdown-menu blueBack text-right">' + menuhtml + '</ul></li>');
+            jQuery("#collapse_mobile li.moreMenu ul").css("top",
+                    jQuery("#collapse_mobile li.moreMenu").outerHeight(true) + "px");
+            jQuery("#collapse_mobile li.moreMenu").click(function () {
+                jQuery(this).children("ul").toggle();
+            });
+            if (menuhtml == '') {
+                jQuery("#collapse_mobile li.moreMenu").hide();
+            } else {
+                jQuery("#collapse_mobile li.moreMenu").show();
+            }
+        }
+    });
+
+
+</script>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="darkblue_menu white-logo"><a href="/"> <img
+                                    src="/templates/galaxy/images/logo-white.png"
+                                    alt="Home" title="Logo White" width="135" height="63"/></a>
+                            <div class="icon-language">
+                                
+                                
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-4 col-md-4 footer-right">
+                <div class="lightblue_menu">
+                    
+<div id="mod-custom158" class="mod-custom custom">
+    <h4>REPORT AN OUTAGE</h4>
+<p class="font-bold"><span style="text-decoration: underline;"><a href="tel:800-216-5226">800.216.5226</a></span></p>
+<h4>CUSTOMER SERVICE</h4>
+<p class="font-bold"><span style="text-decoration: underline;"><a href="tel:509-766-2505">509.766.2505</a><br /></span><span style="font-size: 18.6667px;">7 days a week, 6 a.m. - 6 p.m.<br /></span></p>
+<h4>PAYMENT LOCATIONS &amp; HOURS</h4>
+<p class="font-bold"><a href="/ways-to-pay/#payment_location-scroll"><span style="font-size: 14pt;">Local Office Hours</span>&nbsp;</a></p>
+<h4>PAYMENT ADDRESS</h4>
+<p><span style="font-size: 14pt;">PO Box&nbsp;1519</span><br /><span style="font-size: 14pt;">Moses Lake, WA 98837</span></p>
+<h4>EMAIL US</h4>
+<p><span style="text-decoration: underline;"><span style="font-size: 14pt;"><a href="mailto:customerservice@gcpud.org">customerservice@gcpud.org</a></span></span></p></div>
+
+                </div>
+            </div>
+        </div>
+        <div class="row footer-bottom">
+
+            <div class="col-lg-8">
+                <div class="ml-auto">
+                    
+<div id="mod-custom157" class="mod-custom custom">
+    <p>©<script type="text/javascript">document.write(new Date().getFullYear())</script>Public Utility District No. 2 of Grant County, WA, All Rights Reserved <a href="/statement-of-privacy">Statement of Privacy</a></p>
+Powered by <a href="http://www.sygnifi.com/" class="g-powered-by" title="Sygnifi Networks">Sygnifi Networks</a></div>
+
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="social-icons">
+                    
+<div id="mod-custom183" class="mod-custom custom">
+    <a href="https://www.facebook.com/GrantCountyPUD" target="_blank" aria-label="facebook" rel="noopener"> <i class="fab fa-facebook-f"></i></a> <a href="https://twitter.com/GrantPUD" aria-label="x" target="_blank" rel="noopener"><i class="fab fa-twitter"></i></a> <a href="https://www.linkedin.com/company/grant-county-public-utility-district" aria-label="linkedin" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> </a> <a href="/blog/?feed=rss2" target="_blank" aria-label="rss" rel="noopener"> <i class="fa fa-rss"></i> </a> <a href="https://youtube.com/user/GrantCountyPUD"  aria-label = "youtube" target="_blank" rel="noopener"><i class="fab fa-youtube"></i></a> <a href="https://www.flickr.com/photos/grantpud" target="_blank" aria-label="flicker" rel="noopener"><i class="fab fa-flickr"></i></a></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<!--Footer ends-->
+
+
+<!--Scroll to top start-->
+<button onclick="topFunction()" id="myBtn" class="gototop" title="Go to top">&nbsp;</button>
+<!--Scroll to top end-->
+
+
+<!-- Bootstrap core JavaScript
+    ================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<!--no conflict-->
+<script>
+//var $ = jQuery.noConflict();
+</script>
+
+<script src="/templates/galaxy/js/vendor/popper.min.js"></script>
+<script src="/templates/galaxy/js/bootstrap.min.js"></script>
+<script type="text/javascript"
+        src="/templates/galaxy/js/global.min.js"></script>
+<script type="text/javascript"
+        src="/templates/galaxy/js/header-sticky.min.js"></script>
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+<script
+    src="/templates/galaxy/js/ie10-viewport-bug-workaround.js"></script>
+<!--Scroll to top and smooth scroll-->
+<script src="/templates/galaxy/js/smooth_scroll.js"></script>
+<!-- responsive tables by zurb -->
+<script src="/templates/galaxy/js/responsive-tables.js"></script>
+
+<!-- GA CODE -->
+<script type="text/javascript">
+
+ var _gaq = _gaq || [];
+
+ _gaq.push(['_setAccount', 'UA-35982830-1']);
+
+ _gaq.push(['_trackPageview']);
+
+ (function() {
+
+ var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+
+ ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+
+ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+
+ })();
+
+var a = document.getElementsByTagName('a');
+for(i = 0; i < a.length; i++){
+if (a[i].href.indexOf(location.host) == -1 && a[i].href.match(/^http://i)){
+a[i].onclick = function(){
+_gaq.push(['_trackEvent', 'outgoing_links', this.href.replace(/^http://i, )]);
+}
+}
+}
+</script>
+
+<!–END RECORD OUTBOUND LINKS CODE–>
+
+</body>
+</html>

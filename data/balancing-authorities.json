@@ -84,7 +84,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-bonneville-power-administration",
-    "logo": "https://img.logo.dev/www.bpa.gov?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/bonneville-power-administration.png"
   },
   {
     "id": "ba-caiso",
@@ -273,7 +273,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-idaho-power",
-    "logo": "https://img.logo.dev/www.idahopower-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/idaho-power.png"
   },
   {
     "id": "ba-imperial-irrigation-district",
@@ -438,7 +438,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-northwestern",
-    "logo": "https://img.logo.dev/www.northwesternenergy-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/northwestern.png"
   },
   {
     "id": "ba-pacificorp-east",
@@ -521,7 +521,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-portland-general-electric-company",
-    "logo": "https://img.logo.dev/www.portlandgeneral-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/portland-general-electric-company.png"
   },
   {
     "id": "ba-xcel-co",
@@ -539,7 +539,7 @@
     ],
     "isoId": null,
     "regionId": "region-ba-xcel-co",
-    "logo": "https://img.logo.dev/www.xcelenergy-com?token=pk_PrF8xyrvTfq9fjNHM94q8g&size=256&format=png"
+    "logo": "/logos/xcel-co.png"
   },
   {
     "id": "ba-public-service-company-of-new-mexico",
