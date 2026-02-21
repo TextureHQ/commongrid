@@ -1,8 +1,10 @@
 "use client";
 
 import { Badge, Card, Section } from "@texturehq/edges";
+import type { FeatureCollection } from "geojson";
+import { useEffect, useMemo } from "react";
 import { useExplorer } from "../ExplorerContext";
-import { getAllUtilities, getProgramBySlug } from "@/lib/data";
+import { getAllUtilities, getProgramBySlug, getRegionById, getUtilityBySlug } from "@/lib/data";
 import {
   AssetTypeLabel,
   CompensationTypeLabel,
@@ -16,10 +18,46 @@ import {
 import { safeHostname } from "@/lib/geo";
 
 export function ProgramDetailPanel({ slug }: { slug: string }) {
-  const { goBack, navigateToDetail } = useExplorer();
+  const { goBack, navigateToDetail, setHighlight } = useExplorer();
 
   const program = getProgramBySlug(slug);
   const utilities = getAllUtilities();
+
+  // Territory highlighting — must be before early return to satisfy hook rules
+  const adminOrg = program?.organizations.find(
+    (o) => o.role === ProgramOrganizationRole.ADMINISTRATOR
+  );
+  const adminUtility = adminOrg ? getUtilityBySlug(adminOrg.entityId) : null;
+  const region = adminUtility?.serviceTerritoryId
+    ? getRegionById(adminUtility.serviceTerritoryId)
+    : null;
+
+  const territoryFileKey = useMemo(() => {
+    if (!region) return null;
+    if (
+      region.type === "CCA_TERRITORY" ||
+      region.type === "ISO" ||
+      region.type === "CUSTOM"
+    ) {
+      return region.slug;
+    }
+    return region.eiaId;
+  }, [region]);
+
+  useEffect(() => {
+    if (!territoryFileKey) {
+      setHighlight(null);
+      return;
+    }
+    fetch(`/data/territories/${territoryFileKey}.json`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        setHighlight(data as FeatureCollection | null);
+      })
+      .catch(() => setHighlight(null));
+
+    return () => setHighlight(null);
+  }, [territoryFileKey, setHighlight]);
 
   if (!program) {
     return (
