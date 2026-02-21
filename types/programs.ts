@@ -203,7 +203,6 @@ export interface Program {
   slug: string;
   name: string;
   description?: string;
-  logoUrl?: string;
   organizations: ProgramOrganization[];
   assetTypes: AssetType[];
   marketSegments: MarketSegment[];
