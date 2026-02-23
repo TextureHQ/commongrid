@@ -15,6 +15,7 @@ const steps = [
   { script: "sync:eia", label: "EIA-861 XLSX → utility fields" },
   { script: "sync:cca", label: "CEC ArcGIS → CCA territories" },
   { script: "sync:ba", label: "HIFLD + EIA → balancing authorities" },
+  { script: "sync:power-plants", label: "EIA-860 → power plants" },
 ];
 
 console.log(`Running ${steps.length} sync steps\n`);

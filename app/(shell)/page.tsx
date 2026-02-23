@@ -2,7 +2,7 @@
 
 import { Card } from "@texturehq/edges";
 import Link from "next/link";
-import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms } from "@/lib/data";
+import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms, getAllPowerPlants } from "@/lib/data";
 
 export default function LandingPage() {
   const utilityCount = getAllUtilities().length;
@@ -10,6 +10,7 @@ export default function LandingPage() {
   const rtoCount = getAllRtos().length;
   const baCount = getAllBalancingAuthorities().length;
   const programCount = getAllPrograms().length;
+  const powerPlantCount = getAllPowerPlants().length;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -45,6 +46,7 @@ export default function LandingPage() {
             { label: "Territories", value: "3,000+" },
             { label: "ISOs & RTOs", value: `${isoCount + rtoCount}` },
             { label: "Balancing Authorities", value: `${baCount}` },
+            { label: "Power Plants", value: powerPlantCount.toLocaleString() },
             { label: "Programs", value: programCount.toLocaleString() },
           ].map((stat) => (
             <Card key={stat.label} variant="outlined">
@@ -85,6 +87,21 @@ export default function LandingPage() {
                 </p>
                 <span className="text-sm font-medium text-brand-primary">
                   Browse grid operators &rarr;
+                </span>
+              </Card.Content>
+            </Card>
+          </Link>
+
+          <Link href="/power-plants" className="block group">
+            <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
+              <Card.Content className="py-6">
+                <div className="text-lg font-semibold text-text-heading mb-1">Power Plants</div>
+                <p className="text-sm text-text-muted mb-3">
+                  Explore {powerPlantCount.toLocaleString()} power plants across the US — solar, wind,
+                  nuclear, natural gas, and more from the EIA-860 dataset.
+                </p>
+                <span className="text-sm font-medium text-brand-primary">
+                  Browse power plants &rarr;
                 </span>
               </Card.Content>
             </Card>
