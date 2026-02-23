@@ -16,7 +16,6 @@ import { useExplorer } from "../ExplorerContext";
 import {
   getBalancingAuthorityById,
   getIsoById,
-  getPowerPlantsByUtility,
   getRegionById,
   getRtoById,
   getUtilitiesByGenerationProvider,
@@ -25,6 +24,7 @@ import {
   getUtilityById,
   getUtilityBySlug,
 } from "@/lib/data";
+import { usePowerPlants, filterByUtility } from "@/lib/power-plants";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -119,7 +119,8 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     [childUtilities]
   );
 
-  const utilityPowerPlants = useMemo(() => (utility ? getPowerPlantsByUtility(utility.id) : []), [utility]);
+  const { plants: allPlants } = usePowerPlants();
+  const utilityPowerPlants = useMemo(() => (utility ? filterByUtility(allPlants, utility.id) : []), [utility, allPlants]);
 
   const handleServedRowClick = useCallback(
     (row: ServedUtilityRow) => {

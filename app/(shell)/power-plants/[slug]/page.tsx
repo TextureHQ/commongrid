@@ -5,6 +5,7 @@ import {
   Card,
   InteractiveMap,
   layer,
+  Loader,
   PageLayout,
   Section,
 } from "@texturehq/edges";
@@ -14,9 +15,9 @@ import { DataSourceLink } from "@/components/DataSourceLink";
 import { useMemo } from "react";
 import {
   getBalancingAuthorityById,
-  getPowerPlantBySlug,
   getUtilityById,
 } from "@/lib/data";
+import { usePowerPlant } from "@/lib/power-plants";
 import {
   formatCapacity,
   formatStateName,
@@ -28,7 +29,18 @@ import {
 
 export default function PowerPlantDetailPage() {
   const params = useParams<{ slug: string }>();
-  const plant = getPowerPlantBySlug(params.slug);
+  const { plant, isLoading } = usePowerPlant(params.slug);
+
+  if (isLoading) {
+    return (
+      <PageLayout>
+        <PageLayout.Header title="Power Plant" breadcrumbs={[{ label: "Power Plants", href: "/power-plants" }]} />
+        <div className="flex items-center justify-center py-24">
+          <Loader size={32} />
+        </div>
+      </PageLayout>
+    );
+  }
 
   if (!plant) {
     notFound();
@@ -37,22 +49,19 @@ export default function PowerPlantDetailPage() {
   const utility = plant.utilityId ? getUtilityById(plant.utilityId) : null;
   const ba = plant.balancingAuthorityId ? getBalancingAuthorityById(plant.balancingAuthorityId) : null;
 
-  const pointGeoJSON = useMemo(
-    () => ({
-      type: "FeatureCollection" as const,
-      features: [
-        {
-          type: "Feature" as const,
-          properties: { name: plant.name },
-          geometry: {
-            type: "Point" as const,
-            coordinates: [plant.longitude, plant.latitude],
-          },
+  const pointGeoJSON = {
+    type: "FeatureCollection" as const,
+    features: [
+      {
+        type: "Feature" as const,
+        properties: { name: plant.name },
+        geometry: {
+          type: "Point" as const,
+          coordinates: [plant.longitude, plant.latitude],
         },
-      ],
-    }),
-    [plant.name, plant.longitude, plant.latitude]
-  );
+      },
+    ],
+  };
 
   const isProposedOnly = plant.status === "proposed";
   const effectiveCapacity = isProposedOnly ? plant.proposedCapacityMw : plant.totalCapacityMw;

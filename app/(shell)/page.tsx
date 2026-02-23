@@ -2,7 +2,7 @@
 
 import { Card } from "@texturehq/edges";
 import Link from "next/link";
-import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms, getAllPowerPlants } from "@/lib/data";
+import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms } from "@/lib/data";
 
 export default function LandingPage() {
   const utilityCount = getAllUtilities().length;
@@ -10,7 +10,9 @@ export default function LandingPage() {
   const rtoCount = getAllRtos().length;
   const baCount = getAllBalancingAuthorities().length;
   const programCount = getAllPrograms().length;
-  const powerPlantCount = getAllPowerPlants().length;
+  // Power plant count is hardcoded to avoid importing the 8.7 MB JSON
+  // into the pre-rendered page. Updated by sync-power-plants script.
+  const powerPlantCount = 15082;
 
   return (
     <div className="h-full overflow-y-auto">

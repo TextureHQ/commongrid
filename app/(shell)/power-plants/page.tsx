@@ -6,6 +6,7 @@ import {
   DataControls,
   DataTable,
   EmptyState,
+  Loader,
   PageLayout,
   TextCell,
 } from "@texturehq/edges";
@@ -13,7 +14,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useMemo, useState } from "react";
-import { getAllPowerPlants, searchEntities, sortByName } from "@/lib/data";
+import { sortByName } from "@/lib/data";
+import { usePowerPlants } from "@/lib/power-plants";
 import {
   formatCapacity,
   getFuelBadgeVariant,
@@ -58,13 +60,12 @@ const statusFilterOptions = [
 
 export default function PowerPlantsPage() {
   const router = useRouter();
+  const { plants: allPlants, isLoading } = usePowerPlants();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortValue, setSortValue] = useState("capacity:desc");
   const [fuelFilter, setFuelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
-
-  const allPlants = useMemo(() => getAllPowerPlants(), []);
 
   // Get unique states for filter
   const states = useMemo(() => {
@@ -200,6 +201,19 @@ export default function PowerPlantsPage() {
     ],
     []
   );
+
+  if (isLoading) {
+    return (
+      <PageLayout className="flex flex-col h-full overflow-hidden" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
+        <div className="flex-none">
+          <PageLayout.Header title="Power Plants" sticky={true} />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <Loader size={32} />
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout className="flex flex-col h-full overflow-hidden" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">

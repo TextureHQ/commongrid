@@ -1,11 +1,10 @@
 import basData from "@/data/balancing-authorities.json";
 import isosData from "@/data/isos.json";
-import powerPlantsData from "@/data/power-plants.json";
 import programsData from "@/data/programs.json";
 import regionsData from "@/data/regions.json";
 import rtosData from "@/data/rtos.json";
 import utilitiesData from "@/data/utilities.json";
-import type { BalancingAuthority, Iso, PowerPlant, Region, Rto, Utility } from "@/types/entities";
+import type { BalancingAuthority, Iso, Region, Rto, Utility } from "@/types/entities";
 import type { Program } from "@/types/programs";
 
 const isos: Iso[] = isosData as Iso[];
@@ -14,7 +13,6 @@ const balancingAuthorities: BalancingAuthority[] = basData as BalancingAuthority
 const utilities: Utility[] = utilitiesData as Utility[];
 const regions: Region[] = regionsData as Region[];
 const programs: Program[] = programsData as Program[];
-const powerPlants: PowerPlant[] = powerPlantsData as PowerPlant[];
 
 export function getAllIsos(): Iso[] {
   return isos;
@@ -120,30 +118,5 @@ export function getProgramBySlug(slug: string): Program | undefined {
   return programs.find((p) => p.slug === slug);
 }
 
-export function getAllPowerPlants(): PowerPlant[] {
-  return powerPlants;
-}
-
-export function getPowerPlantBySlug(slug: string): PowerPlant | undefined {
-  return powerPlants.find((p) => p.slug === slug);
-}
-
-export function getPowerPlantById(id: string): PowerPlant | undefined {
-  return powerPlants.find((p) => p.id === id);
-}
-
-export function getPowerPlantsByUtility(utilityId: string): PowerPlant[] {
-  return powerPlants.filter((p) => p.utilityId === utilityId);
-}
-
-export function getPowerPlantsByBalancingAuthority(baId: string): PowerPlant[] {
-  return powerPlants.filter((p) => p.balancingAuthorityId === baId);
-}
-
-export function getPowerPlantsByState(state: string): PowerPlant[] {
-  return powerPlants.filter((p) => p.state === state);
-}
-
-export function getPowerPlantsByFuelCategory(fuelCategory: string): PowerPlant[] {
-  return powerPlants.filter((p) => p.fuelCategory === fuelCategory);
-}
+// Power plant data is loaded client-side via lib/power-plants.ts
+// to avoid bundling the 8.7 MB JSON into pre-rendered pages.

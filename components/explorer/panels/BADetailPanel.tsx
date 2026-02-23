@@ -13,7 +13,8 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo } from "react";
 import { useExplorer } from "../ExplorerContext";
-import { getBalancingAuthorityBySlug, getIsoById, getPowerPlantsByBalancingAuthority, getUtilitiesByBalancingAuthority } from "@/lib/data";
+import { getBalancingAuthorityBySlug, getIsoById, getUtilitiesByBalancingAuthority } from "@/lib/data";
+import { usePowerPlants, filterByBA } from "@/lib/power-plants";
 import { formatCapacity, formatCustomerCount, formatStates, getFuelBadgeVariant, getFuelCategoryColor, getFuelCategoryLabel, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 
@@ -45,7 +46,8 @@ export function BADetailPanel({ slug }: { slug: string }) {
   }, [ba?.slug, ba?.regionId, setHighlight]);
 
   const utilities = useMemo(() => (ba ? getUtilitiesByBalancingAuthority(ba.id) : []), [ba]);
-  const baPowerPlants = useMemo(() => (ba ? getPowerPlantsByBalancingAuthority(ba.id) : []), [ba]);
+  const { plants: allPlants } = usePowerPlants();
+  const baPowerPlants = useMemo(() => (ba ? filterByBA(allPlants, ba.id) : []), [ba, allPlants]);
 
   const utilityRows: UtilityRow[] = useMemo(
     () => utilities.map((u) => ({ slug: u.slug, name: u.name, segment: u.segment, customerCount: u.customerCount, jurisdiction: u.jurisdiction })),
