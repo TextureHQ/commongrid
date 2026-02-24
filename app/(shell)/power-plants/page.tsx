@@ -17,6 +17,7 @@ import { useCallback, useMemo, useState } from "react";
 import { sortByName } from "@/lib/data";
 import { usePowerPlants } from "@/lib/power-plants";
 import { useFuseSearch } from "@/lib/search";
+import { SearchInput } from "@/components/SearchInput";
 import {
   formatCapacity,
   getFuelBadgeVariant,
@@ -233,15 +234,19 @@ export default function PowerPlantsPage() {
         <PageLayout.Header title="Power Plants" sticky={true} />
         <DataSourceLink paths={["data/power-plants.json"]} className="px-1 pb-2" />
       </div>
+      <div className="flex-none px-1 pb-3">
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onClear={() => setSearchQuery("")}
+          placeholder="Search plants, utilities, states..."
+          resultCount={filtered.length}
+          resultLabel="power plants"
+        />
+      </div>
       <div className="flex-none">
         <DataControls
           resultsCount={{ count: filtered.length, label: "power plants" }}
-          search={{
-            value: searchQuery,
-            onChange: setSearchQuery,
-            onClear: () => setSearchQuery(""),
-            placeholder: "Search plants, utilities, states...",
-          }}
           sort={{
             value: sortValue,
             options: sortOptions,

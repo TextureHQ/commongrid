@@ -13,9 +13,10 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DataSourceLink } from "@/components/DataSourceLink";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { getAllUtilities, sortByName } from "@/lib/data";
 import { useFuseSearch } from "@/lib/search";
+import { SearchInput } from "@/components/SearchInput";
 import {
   formatCustomerCount,
   getSegmentBadgeVariant,
@@ -214,15 +215,19 @@ export default function UtilitiesPage() {
         <PageLayout.Header title="Utilities" sticky={true} />
         <DataSourceLink paths={["data/utilities.json"]} className="px-1 pb-2" />
       </div>
+      <div className="flex-none px-1 pb-3">
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onClear={() => setSearchQuery("")}
+          placeholder="Search utilities by name, state, EIA ID..."
+          resultCount={filtered.length}
+          resultLabel="utilities"
+        />
+      </div>
       <div className="flex-none">
         <DataControls
           resultsCount={{ count: filtered.length, label: "utilities" }}
-          search={{
-            value: searchQuery,
-            onChange: setSearchQuery,
-            onClear: () => setSearchQuery(""),
-            placeholder: "Search utilities by name, state, EIA ID...",
-          }}
           sort={{
             value: sortValue,
             options: sortOptions,
