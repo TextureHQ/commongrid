@@ -24,6 +24,10 @@ const nextConfig = {
       // falls through to the API route for dynamic generation.
       afterFiles: [
         {
+          source: '/tiles/power-plants/:z/:x/:y.pbf',
+          destination: '/api/tiles/power-plants/:z/:x/:y',
+        },
+        {
           source: '/tiles/:z/:x/:y.pbf',
           destination: '/api/tiles/territories/:z/:x/:y',
         },

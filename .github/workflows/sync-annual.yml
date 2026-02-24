@@ -1,0 +1,24 @@
+name: Sync Annual Data
+
+on:
+  schedule:
+    - cron: '0 12 1 10 *' # Oct 1 at noon UTC (after EIA-860 typically releases in Sept)
+  workflow_dispatch: {} # Manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/sync-power-plants.ts
+      - name: Commit & push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/power-plants.json
+          git diff --staged --quiet || (git commit -m "data: update power plants (EIA-860 annual)" && git push)

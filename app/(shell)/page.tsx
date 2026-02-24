@@ -10,6 +10,9 @@ export default function LandingPage() {
   const rtoCount = getAllRtos().length;
   const baCount = getAllBalancingAuthorities().length;
   const programCount = getAllPrograms().length;
+  // Power plant count is hardcoded to avoid importing the 8.7 MB JSON
+  // into the pre-rendered page. Updated by sync-power-plants script.
+  const powerPlantCount = 15082;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -45,6 +48,7 @@ export default function LandingPage() {
             { label: "Territories", value: "3,000+" },
             { label: "ISOs & RTOs", value: `${isoCount + rtoCount}` },
             { label: "Balancing Authorities", value: `${baCount}` },
+            { label: "Power Plants", value: powerPlantCount.toLocaleString() },
             { label: "Programs", value: programCount.toLocaleString() },
           ].map((stat) => (
             <Card key={stat.label} variant="outlined">
@@ -60,16 +64,16 @@ export default function LandingPage() {
       {/* Browse sections */}
       <section className="px-6 pb-16 sm:pb-24 max-w-3xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Link href="/explore?view=utilities" className="block group">
+          <Link href="/grid-operators" className="block group">
             <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
               <Card.Content className="py-6">
-                <div className="text-lg font-semibold text-text-heading mb-1">Utilities</div>
+                <div className="text-lg font-semibold text-text-heading mb-1">Grid Operators</div>
                 <p className="text-sm text-text-muted mb-3">
                   Browse {utilityCount.toLocaleString()} electric utilities — investor-owned, co-ops,
                   municipal, and more — with service territory boundaries.
                 </p>
                 <span className="text-sm font-medium text-brand-primary">
-                  Browse utilities &rarr;
+                  Browse grid operators &rarr;
                 </span>
               </Card.Content>
             </Card>
@@ -85,6 +89,21 @@ export default function LandingPage() {
                 </p>
                 <span className="text-sm font-medium text-brand-primary">
                   Browse grid operators &rarr;
+                </span>
+              </Card.Content>
+            </Card>
+          </Link>
+
+          <Link href="/power-plants" className="block group">
+            <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
+              <Card.Content className="py-6">
+                <div className="text-lg font-semibold text-text-heading mb-1">Power Plants</div>
+                <p className="text-sm text-text-muted mb-3">
+                  Explore {powerPlantCount.toLocaleString()} power plants across the US — solar, wind,
+                  nuclear, natural gas, and more from the EIA-860 dataset.
+                </p>
+                <span className="text-sm font-medium text-brand-primary">
+                  Browse power plants &rarr;
                 </span>
               </Card.Content>
             </Card>

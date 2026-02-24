@@ -1,4 +1,12 @@
-import { UtilitySegment, UtilitySegmentLabel, UtilityStatus, UtilityStatusLabel } from "@/types/entities";
+import {
+  type FuelCategory,
+  FuelCategoryColor,
+  FuelCategoryLabel,
+  UtilitySegment,
+  UtilitySegmentLabel,
+  UtilityStatus,
+  UtilityStatusLabel,
+} from "@/types/entities";
 
 const STATE_NAMES: Record<string, string> = {
   AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
@@ -60,4 +68,41 @@ export function formatCustomerCount(count: number | null): string {
 
 export function formatStates(states: string[]): string {
   return states.map((s) => getStateName(s) ?? s).join(", ");
+}
+
+export function getFuelCategoryLabel(fuelCategory: string): string {
+  return FuelCategoryLabel[fuelCategory as FuelCategory] ?? fuelCategory;
+}
+
+export function getFuelCategoryColor(fuelCategory: string): string {
+  return FuelCategoryColor[fuelCategory as FuelCategory] ?? "#9ca3af";
+}
+
+export function getFuelBadgeVariant(fuelCategory: string): "info" | "success" | "warning" | "default" {
+  const variants: Record<string, "info" | "success" | "warning" | "default"> = {
+    Solar: "warning",
+    "Natural Gas": "info",
+    Hydro: "info",
+    Wind: "success",
+    Coal: "default",
+    Nuclear: "warning",
+    "Battery Storage": "info",
+    Petroleum: "warning",
+    "Biomass/Other": "success",
+  };
+  return variants[fuelCategory] ?? "default";
+}
+
+export function getPlantStatusBadgeVariant(status: string): "success" | "warning" | "default" {
+  return status === "operable" ? "success" : "warning";
+}
+
+export function formatCapacity(mw: number | null): string {
+  if (mw === null || mw === 0) return "\u2014";
+  if (mw >= 1000) return `${(mw / 1000).toFixed(1)} GW`;
+  return `${mw.toLocaleString()} MW`;
+}
+
+export function formatStateName(code: string): string {
+  return getStateName(code) ?? code;
 }

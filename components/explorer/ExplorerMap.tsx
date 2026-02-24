@@ -3,6 +3,7 @@
 import { InteractiveMap, type LayerFeature, type LayerSpec, layer } from "@texturehq/edges";
 import type { FeatureCollection, Feature } from "geojson";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useExplorer } from "./ExplorerContext";
 import { getAllIsos, getAllBalancingAuthorities, getAllUtilities, searchEntities } from "@/lib/data";
 import { getSegmentLabel } from "@/lib/formatting";
@@ -27,6 +28,23 @@ const segmentColorMapping = {
 };
 
 const US_CENTER = { longitude: -98.58, latitude: 39.83, zoom: 4 };
+
+function getPowerPlantTileUrl() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/tiles/power-plants/{z}/{x}/{y}.pbf`;
+}
+
+const fuelCategoryColorMapping = {
+  Solar: { hex: "#eab308" },
+  "Natural Gas": { hex: "#3b82f6" },
+  Hydro: { hex: "#06b6d4" },
+  Wind: { hex: "#14b8a6" },
+  Coal: { hex: "#6b7280" },
+  Nuclear: { hex: "#ef4444" },
+  "Battery Storage": { hex: "#8b5cf6" },
+  Petroleum: { hex: "#f97316" },
+  "Biomass/Other": { hex: "#22c55e" },
+};
 
 // hasMapboxToken is evaluated per-render based on the prop (see ExplorerMap component)
 
@@ -135,7 +153,9 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const effectiveToken = mapboxAccessToken ?? process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
   const hasMapboxToken = !!effectiveToken;
   const { state, navigateToDetail } = useExplorer();
+  const router = useRouter();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(US_CENTER.zoom);
 
   const isGridOperatorView = state.view === "grid-operators" || state.view === "iso" || state.view === "rto" || state.view === "ba";
   const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView);
@@ -153,9 +173,14 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const hasHighlight = !!state.highlightGeoJSON;
 
   // Trigger map resize after mount (fixes blank map on client-side navigation)
+  // Also track zoom level for the "zoom in" hint
   useEffect(() => {
     const timer = setTimeout(() => {
-      mapRef.current?.getMap?.()?.resize();
+      const map = mapRef.current?.getMap?.();
+      if (!map) return;
+      map.resize();
+      const onZoom = () => setCurrentZoom(Math.floor(map.getZoom()));
+      map.on("zoomend", onZoom);
     }, 100);
     return () => clearTimeout(timer);
   }, []);
@@ -332,18 +357,28 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     const result: LayerSpec[] = [];
 
     if (!isGridOperatorView && !hasHighlight) {
-      // Utility territory tiles (hidden when a specific entity is selected)
+      // Utility territory tiles — aggressively zoom-gated for performance
+      // 2,905 polygon features with ~125K vertices total (pre-simplified)
+      //
+      // Zoom 7-8: Large utilities only (>50k customers, ~355 features), fill-only
+      // Zoom 9+:  All territories, fill-only (no borders — they double draw calls)
+      const largeFilter: any[] = [">", ["get", "customerCount"], 50000];
+      const largeFilterExpr = territoryFilter
+        ? ["all", largeFilter, ...(Array.isArray(territoryFilter) && territoryFilter[0] === "all" ? territoryFilter.slice(1) : [territoryFilter])]
+        : largeFilter;
+
       result.push(
         layer.vector({
-          id: "territories",
+          id: "territories-large",
           tileset: getTileUrl(),
           sourceLayer: "territories",
           renderAs: "fill",
+          minZoom: 7,
+          maxZoom: 8,
+          filter: largeFilterExpr,
           style: {
             color: { by: "segment", mapping: segmentColorMapping },
-            fillOpacity: 0.3,
-            borderWidth: 1,
-            borderColor: { by: "segment", mapping: segmentColorMapping },
+            fillOpacity: 0.25,
           },
           tooltip: {
             trigger: "hover",
@@ -354,24 +389,46 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
               </div>
             ),
           },
-          events: {
-            onClick: handleClick,
+          events: { onClick: handleClick },
+        })
+      );
+
+      // All territories at zoom 9+, fill only
+      result.push(
+        layer.vector({
+          id: "territories-all",
+          tileset: getTileUrl(),
+          sourceLayer: "territories",
+          renderAs: "fill",
+          minZoom: 9,
+          style: {
+            color: { by: "segment", mapping: segmentColorMapping },
+            fillOpacity: 0.3,
           },
+          tooltip: {
+            trigger: "hover",
+            content: (feature: LayerFeature) => (
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium text-sm">{feature.properties.name}</span>
+                <span className="text-xs text-gray-500">{getSegmentLabel(feature.properties.segment)}</span>
+              </div>
+            ),
+          },
+          events: { onClick: handleClick },
           ...(territoryFilter ? { filter: territoryFilter } : {}),
         })
       );
     } else if (filteredGridBoundaryData && !hasHighlight) {
-      // Grid operator boundaries (hidden when a specific entity is selected)
+      // Grid operator boundaries — zoom-gated for performance
       result.push(
         layer.geojson({
           id: "grid-boundaries",
           data: filteredGridBoundaryData.geojson,
           renderAs: "fill",
+          minZoom: 7,
           style: {
             color: { by: "colorKey", mapping: filteredGridBoundaryData.colorMapping },
             fillOpacity: 0.18,
-            borderWidth: 2,
-            borderColor: { by: "colorKey", mapping: filteredGridBoundaryData.colorMapping },
           },
           tooltip: {
             trigger: "hover",
@@ -385,6 +442,80 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         })
       );
     }
+
+    // Power plant point layers (zoom-gated)
+    // Layer 1: Major plants (>500 MW) visible at zoom 8-9
+    result.push(
+      layer.vector({
+        id: "power-plants-major",
+        tileset: getPowerPlantTileUrl(),
+        sourceLayer: "power-plants",
+        renderAs: "circle",
+        minZoom: 8,
+        maxZoom: 9,
+        filter: [">", ["get", "capacityMw"], 500],
+        style: {
+          color: { by: "fuelCategory", mapping: fuelCategoryColorMapping },
+          radius: 5,
+          borderWidth: 1,
+          borderColor: { hex: "#ffffff" },
+          fillOpacity: 0.9,
+        },
+        tooltip: {
+          trigger: "hover",
+          content: (feature: LayerFeature) => (
+            <div className="flex flex-col gap-0.5">
+              <span className="font-medium text-sm">{feature.properties.name}</span>
+              <span className="text-xs text-gray-500">
+                {feature.properties.fuelCategory} · {Math.round(feature.properties.capacityMw)} MW
+              </span>
+            </div>
+          ),
+        },
+        events: {
+          onClick: (feature: LayerFeature) => {
+            const slug = feature.properties.slug;
+            if (slug) router.push(`/power-plants/${slug}`);
+          },
+        },
+      })
+    );
+
+    // Layer 2: All plants visible at zoom 10+
+    result.push(
+      layer.vector({
+        id: "power-plants-all",
+        tileset: getPowerPlantTileUrl(),
+        sourceLayer: "power-plants",
+        renderAs: "circle",
+        minZoom: 10,
+        style: {
+          color: { by: "fuelCategory", mapping: fuelCategoryColorMapping },
+          radius: 4,
+          borderWidth: 1,
+          borderColor: { hex: "#ffffff" },
+          fillOpacity: 0.85,
+        },
+        tooltip: {
+          trigger: "hover",
+          content: (feature: LayerFeature) => (
+            <div className="flex flex-col gap-0.5">
+              <span className="font-medium text-sm">{feature.properties.name}</span>
+              <span className="text-xs text-gray-500">
+                {feature.properties.fuelCategory} · {Math.round(feature.properties.capacityMw)} MW
+                {feature.properties.status === "proposed" ? " (Proposed)" : ""}
+              </span>
+            </div>
+          ),
+        },
+        events: {
+          onClick: (feature: LayerFeature) => {
+            const slug = feature.properties.slug;
+            if (slug) router.push(`/power-plants/${slug}`);
+          },
+        },
+      })
+    );
 
     // Highlight layer for selected entity
     if (state.highlightGeoJSON) {
@@ -404,7 +535,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     }
 
     return result;
-  }, [handleClick, state.highlightGeoJSON, isGridOperatorView, filteredGridBoundaryData, hasHighlight, territoryFilter]);
+  }, [handleClick, router, state.highlightGeoJSON, isGridOperatorView, filteredGridBoundaryData, hasHighlight, territoryFilter]);
 
   if (!hasMapboxToken) {
     return (
@@ -417,8 +548,10 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     );
   }
 
+  const showZoomHint = currentZoom < 7 && !hasHighlight;
+
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full relative">
       <InteractiveMap
         ref={mapRef as React.Ref<any>}
         mapboxAccessToken={effectiveToken!}
@@ -427,6 +560,11 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
         layers={layers}
       />
+      {showZoomHint && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background-surface/90 backdrop-blur-sm border border-border-default rounded-lg px-4 py-2 text-sm text-text-muted pointer-events-none shadow-sm">
+          Zoom in to explore utility territories and power plants
+        </div>
+      )}
     </div>
   );
 }

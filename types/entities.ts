@@ -142,3 +142,78 @@ export interface BalancingAuthority {
   isoId: string | null;
   regionId: string | null;
 }
+
+export interface PowerPlant {
+  id: string;
+  slug: string;
+  name: string;
+  plantCode: string;
+  utilityId: string | null;
+  utilityName: string;
+  balancingAuthorityId: string | null;
+  baCode: string | null;
+  state: string;
+  county: string | null;
+  latitude: number;
+  longitude: number;
+  nercRegion: string | null;
+  sector: string;
+  primaryFuel: string | null;
+  fuelCategory: FuelCategory;
+  technologies: string[];
+  energySources: string[];
+  totalCapacityMw: number;
+  generatorCount: number;
+  operatingYear: number | null;
+  gridVoltageKv: number | null;
+  status: "operable" | "proposed";
+  proposedCapacityMw: number | null;
+  proposedOnlineYear: number | null;
+}
+
+export type FuelCategory =
+  | "Solar"
+  | "Natural Gas"
+  | "Hydro"
+  | "Wind"
+  | "Coal"
+  | "Nuclear"
+  | "Battery Storage"
+  | "Petroleum"
+  | "Biomass/Other";
+
+export const FuelCategoryLabel: Record<FuelCategory, string> = {
+  Solar: "Solar",
+  "Natural Gas": "Natural Gas",
+  Hydro: "Hydro",
+  Wind: "Wind",
+  Coal: "Coal",
+  Nuclear: "Nuclear",
+  "Battery Storage": "Battery Storage",
+  Petroleum: "Petroleum",
+  "Biomass/Other": "Biomass/Other",
+};
+
+export const FUEL_CATEGORIES: FuelCategory[] = [
+  "Solar",
+  "Natural Gas",
+  "Hydro",
+  "Wind",
+  "Coal",
+  "Nuclear",
+  "Battery Storage",
+  "Petroleum",
+  "Biomass/Other",
+];
+
+export const FuelCategoryColor: Record<FuelCategory, string> = {
+  Solar: "#eab308",
+  "Natural Gas": "#3b82f6",
+  Hydro: "#06b6d4",
+  Wind: "#14b8a6",
+  Coal: "#6b7280",
+  Nuclear: "#ef4444",
+  "Battery Storage": "#8b5cf6",
+  Petroleum: "#f97316",
+  "Biomass/Other": "#22c55e",
+};

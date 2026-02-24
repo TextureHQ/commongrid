@@ -117,3 +117,6 @@ export function getAllPrograms(): Program[] {
 export function getProgramBySlug(slug: string): Program | undefined {
   return programs.find((p) => p.slug === slug);
 }
+
+// Power plant data is loaded client-side via lib/power-plants.ts
+// to avoid bundling the 8.7 MB JSON into pre-rendered pages.

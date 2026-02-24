@@ -10,6 +10,7 @@ import {
   Section,
 } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useExplorer } from "../ExplorerContext";
 import {
@@ -23,8 +24,13 @@ import {
   getUtilityById,
   getUtilityBySlug,
 } from "@/lib/data";
+import { usePowerPlants, filterByUtility } from "@/lib/power-plants";
 import {
+  formatCapacity,
   formatCustomerCount,
+  getFuelBadgeVariant,
+  getFuelCategoryColor,
+  getFuelCategoryLabel,
   getSegmentBadgeVariant,
   getSegmentLabel,
   getStatusBadgeVariant,
@@ -112,6 +118,9 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
       })),
     [childUtilities]
   );
+
+  const { plants: allPlants } = usePowerPlants();
+  const utilityPowerPlants = useMemo(() => (utility ? filterByUtility(allPlants, utility.id) : []), [utility, allPlants]);
 
   const handleServedRowClick = useCallback(
     (row: ServedUtilityRow) => {
@@ -476,6 +485,44 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
                 onRowClick={handleServedRowClick}
               />
             </Card>
+          </Section>
+        )}
+
+        {/* Power Plants */}
+        {utilityPowerPlants.length > 0 && (
+          <Section id="power-plants" title="Power Plants">
+            <div className="text-sm text-text-muted mb-3">
+              {utilityPowerPlants.length} power plant{utilityPowerPlants.length !== 1 ? "s" : ""} ·{" "}
+              {formatCapacity(utilityPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0))} total capacity
+            </div>
+            <div className="space-y-2">
+              {utilityPowerPlants.slice(0, 20).map((plant) => (
+                <Link
+                  key={plant.id}
+                  href={`/power-plants/${plant.slug}`}
+                  className="flex items-center justify-between p-2 rounded-md hover:bg-background-surface-hover transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: getFuelCategoryColor(plant.fuelCategory) }}
+                    />
+                    <span className="text-sm font-medium text-text-body truncate">{plant.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                    <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(plant.fuelCategory)}>
+                      {getFuelCategoryLabel(plant.fuelCategory)}
+                    </Badge>
+                    <span className="text-xs text-text-muted">{formatCapacity(plant.totalCapacityMw)}</span>
+                  </div>
+                </Link>
+              ))}
+              {utilityPowerPlants.length > 20 && (
+                <div className="text-xs text-text-muted text-center pt-1">
+                  + {utilityPowerPlants.length - 20} more
+                </div>
+              )}
+            </div>
           </Section>
         )}
       </div>

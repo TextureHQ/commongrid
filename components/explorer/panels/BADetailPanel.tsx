@@ -10,10 +10,12 @@ import {
   Section,
 } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo } from "react";
 import { useExplorer } from "../ExplorerContext";
 import { getBalancingAuthorityBySlug, getIsoById, getUtilitiesByBalancingAuthority } from "@/lib/data";
-import { formatCustomerCount, formatStates, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
+import { usePowerPlants, filterByBA } from "@/lib/power-plants";
+import { formatCapacity, formatCustomerCount, formatStates, getFuelBadgeVariant, getFuelCategoryColor, getFuelCategoryLabel, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 
 interface UtilityRow extends Record<string, unknown> {
@@ -44,6 +46,8 @@ export function BADetailPanel({ slug }: { slug: string }) {
   }, [ba?.slug, ba?.regionId, setHighlight]);
 
   const utilities = useMemo(() => (ba ? getUtilitiesByBalancingAuthority(ba.id) : []), [ba]);
+  const { plants: allPlants } = usePowerPlants();
+  const baPowerPlants = useMemo(() => (ba ? filterByBA(allPlants, ba.id) : []), [ba, allPlants]);
 
   const utilityRows: UtilityRow[] = useMemo(
     () => utilities.map((u) => ({ slug: u.slug, name: u.name, segment: u.segment, customerCount: u.customerCount, jurisdiction: u.jurisdiction })),
@@ -166,6 +170,43 @@ export function BADetailPanel({ slug }: { slug: string }) {
             <EmptyState icon="Lightning" title="No utilities" description="No utilities are linked to this balancing authority." />
           )}
         </Section>
+
+        {baPowerPlants.length > 0 && (
+          <Section id="power-plants" title="Power Plants">
+            <div className="text-sm text-text-muted mb-3">
+              {baPowerPlants.length} power plant{baPowerPlants.length !== 1 ? "s" : ""} ·{" "}
+              {formatCapacity(baPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0))} total capacity
+            </div>
+            <div className="space-y-2">
+              {baPowerPlants.slice(0, 20).map((plant) => (
+                <Link
+                  key={plant.id}
+                  href={`/power-plants/${plant.slug}`}
+                  className="flex items-center justify-between p-2 rounded-md hover:bg-background-surface-hover transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: getFuelCategoryColor(plant.fuelCategory) }}
+                    />
+                    <span className="text-sm font-medium text-text-body truncate">{plant.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                    <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(plant.fuelCategory)}>
+                      {getFuelCategoryLabel(plant.fuelCategory)}
+                    </Badge>
+                    <span className="text-xs text-text-muted">{formatCapacity(plant.totalCapacityMw)}</span>
+                  </div>
+                </Link>
+              ))}
+              {baPowerPlants.length > 20 && (
+                <div className="text-xs text-text-muted text-center pt-1">
+                  + {baPowerPlants.length - 20} more
+                </div>
+              )}
+            </div>
+          </Section>
+        )}
       </div>
     </div>
   );
