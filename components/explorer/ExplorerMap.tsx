@@ -357,11 +357,12 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     const result: LayerSpec[] = [];
 
     if (!isGridOperatorView && !hasHighlight) {
-      // Utility territory tiles — aggressively zoom-gated for performance
-      // 2,905 polygon features with ~125K vertices total (pre-simplified)
+      // Utility territory tiles — zoom-gated for performance
+      // 2,905 polygon features. geojson-vt provides zoom-dependent simplification:
+      // rough shapes at low zoom, crisp detail at high zoom.
       //
       // Zoom 7-8: Large utilities only (>50k customers, ~355 features), fill-only
-      // Zoom 9+:  All territories, fill-only (no borders — they double draw calls)
+      // Zoom 9+:  All territories with full boundary detail, fill-only
       const largeFilter: any[] = [">", ["get", "customerCount"], 50000];
       const largeFilterExpr = territoryFilter
         ? ["all", largeFilter, ...(Array.isArray(territoryFilter) && territoryFilter[0] === "all" ? territoryFilter.slice(1) : [territoryFilter])]
@@ -443,58 +444,22 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
       );
     }
 
-    // Power plant point layers (zoom-gated)
-    // Layer 1: Major plants (>500 MW) visible at zoom 8-9
+    // Power plants — single layer at zoom 8+ (no maxZoom gap = no flashing)
+    // Points are lightweight; a single layer avoids the tile-loading race
+    // that caused plants to flash in/out during zoom transitions.
     result.push(
       layer.vector({
-        id: "power-plants-major",
+        id: "power-plants",
         tileset: getPowerPlantTileUrl(),
         sourceLayer: "power-plants",
         renderAs: "circle",
         minZoom: 8,
-        maxZoom: 9,
-        filter: [">", ["get", "capacityMw"], 500],
-        style: {
-          color: { by: "fuelCategory", mapping: fuelCategoryColorMapping },
-          radius: 5,
-          borderWidth: 1,
-          borderColor: { hex: "#ffffff" },
-          fillOpacity: 0.9,
-        },
-        tooltip: {
-          trigger: "hover",
-          content: (feature: LayerFeature) => (
-            <div className="flex flex-col gap-0.5">
-              <span className="font-medium text-sm">{feature.properties.name}</span>
-              <span className="text-xs text-gray-500">
-                {feature.properties.fuelCategory} · {Math.round(feature.properties.capacityMw)} MW
-              </span>
-            </div>
-          ),
-        },
-        events: {
-          onClick: (feature: LayerFeature) => {
-            const slug = feature.properties.slug;
-            if (slug) router.push(`/power-plants/${slug}`);
-          },
-        },
-      })
-    );
-
-    // Layer 2: All plants visible at zoom 10+
-    result.push(
-      layer.vector({
-        id: "power-plants-all",
-        tileset: getPowerPlantTileUrl(),
-        sourceLayer: "power-plants",
-        renderAs: "circle",
-        minZoom: 10,
         style: {
           color: { by: "fuelCategory", mapping: fuelCategoryColorMapping },
           radius: 4,
           borderWidth: 1,
           borderColor: { hex: "#ffffff" },
-          fillOpacity: 0.85,
+          fillOpacity: 0.9,
         },
         tooltip: {
           trigger: "hover",
