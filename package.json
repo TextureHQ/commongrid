@@ -24,6 +24,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.0",
+    "@turf/helpers": "^7.3.4",
+    "@turf/simplify": "^7.3.4",
     "@types/adm-zip": "^0.5.7",
     "@types/geojson": "^7946.0.16",
     "@types/geojson-vt": "^3.2.2",

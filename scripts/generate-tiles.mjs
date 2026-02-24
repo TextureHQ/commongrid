@@ -1,22 +1,34 @@
 /**
  * Pre-generates static vector tiles (MVT/PBF) at build time.
  *
- * Reads territory GeoJSON + regions + utilities, builds a geojson-vt index
- * (same logic as the API route), and writes gzipped .pbf tiles for zoom 0–10
- * into public/tiles/{z}/{x}/{y}.pbf.
+ * Reads territory GeoJSON + regions + utilities, pre-simplifies the geometry
+ * using @turf/simplify to reduce vertex count (~2.5M → ~100-200K), then builds
+ * a geojson-vt index and writes .pbf tiles for zoom 5–10.
  */
 import { readdir, readFile, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import geojsonvt from "geojson-vt";
 import vtpbf from "vt-pbf";
+import simplify from "@turf/simplify";
 
 const { fromGeojsonVt } = vtpbf;
 
-const MIN_ZOOM = 4;
+const MIN_ZOOM = 5;
 const MAX_ZOOM = 10;
 const DATA_DIR = join(process.cwd(), "data");
 const TERRITORIES_DIR = join(DATA_DIR, "territories");
 const OUT_DIR = join(process.cwd(), "public", "tiles");
+
+// Simplification tolerance in degrees (~0.05° ≈ 5.5km)
+// Aggressively reduces vertex count for tile rendering.
+// At zoom 5-10, territories look clean — exact boundaries aren't needed for the overview.
+// Detail panels load the original full-resolution GeoJSON when you click into a utility.
+const SIMPLIFY_TOLERANCE = 0.05;
+
+function countVertices(geometry) {
+  const coords = JSON.stringify(geometry.coordinates || []);
+  return (coords.match(/\[[\d.-]+,[\d.-]+\]/g) || []).length;
+}
 
 async function buildFeatureCollection() {
   const [regionsRaw, utilitiesRaw] = await Promise.all([
@@ -42,6 +54,8 @@ async function buildFeatureCollection() {
 
   const files = (await readdir(TERRITORIES_DIR)).filter((f) => f.endsWith(".json"));
   const allFeatures = [];
+  let totalVertsBefore = 0;
+  let totalVertsAfter = 0;
 
   for (const file of files) {
     try {
@@ -65,10 +79,30 @@ async function buildFeatureCollection() {
       };
 
       for (const feature of geojson.features) {
+        const vertsBefore = countVertices(feature.geometry);
+        totalVertsBefore += vertsBefore;
+
+        // Pre-simplify complex geometries using Douglas-Peucker
+        let geometry = feature.geometry;
+        if (vertsBefore > 50) {
+          try {
+            const simplified = simplify(
+              { type: "Feature", properties: {}, geometry },
+              { tolerance: SIMPLIFY_TOLERANCE, highQuality: true, mutate: false }
+            );
+            geometry = simplified.geometry;
+          } catch {
+            // Keep original if simplification fails
+          }
+        }
+
+        const vertsAfter = countVertices(geometry);
+        totalVertsAfter += vertsAfter;
+
         allFeatures.push({
           type: "Feature",
           properties,
-          geometry: feature.geometry,
+          geometry,
         });
       }
     } catch {
@@ -76,7 +110,9 @@ async function buildFeatureCollection() {
     }
   }
 
+  const reduction = ((1 - totalVertsAfter / totalVertsBefore) * 100).toFixed(1);
   console.log(`✅ Loaded ${allFeatures.length} features from ${files.length} territory files`);
+  console.log(`   Vertices: ${totalVertsBefore.toLocaleString()} → ${totalVertsAfter.toLocaleString()} (${reduction}% reduction)`);
 
   return {
     type: "FeatureCollection",
@@ -90,7 +126,7 @@ async function generateTiles() {
   console.log("Building geojson-vt index...");
   const index = geojsonvt(fc, {
     maxZoom: 14,
-    tolerance: 8,
+    tolerance: 3,
     extent: 4096,
     buffer: 64,
   });
