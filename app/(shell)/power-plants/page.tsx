@@ -204,7 +204,7 @@ export default function PowerPlantsPage() {
 
   if (isLoading) {
     return (
-      <PageLayout className="flex flex-col h-full overflow-hidden" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
+      <PageLayout className="flex flex-col h-full overflow-hidden bg-background-default" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
         <div className="flex-none">
           <PageLayout.Header title="Power Plants" sticky={true} />
         </div>
@@ -216,7 +216,7 @@ export default function PowerPlantsPage() {
   }
 
   return (
-    <PageLayout className="flex flex-col h-full overflow-hidden" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
+    <PageLayout className="flex flex-col h-full overflow-hidden bg-background-default" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
       <div className="flex-none">
         <PageLayout.Header title="Power Plants" sticky={true} />
         <DataSourceLink paths={["data/power-plants.json"]} className="px-1 pb-2" />
