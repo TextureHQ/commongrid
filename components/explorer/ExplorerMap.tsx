@@ -351,16 +351,50 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     const result: LayerSpec[] = [];
 
     if (!isGridOperatorView && !hasHighlight) {
-      // Utility territory tiles — zoom-gated like power plants
-      // Overview layer: zoom 4-5, fill-only (no borders) for performance
+      // Utility territory tiles — progressively revealed by zoom level
+      // Major utilities only (>100k customers) at zoom 5-6
+      const majorFilter: any[] = [">", ["get", "customerCount"], 100000];
+      const overviewFilterExpr = territoryFilter
+        ? ["all", majorFilter, ...(Array.isArray(territoryFilter) && territoryFilter[0] === "all" ? territoryFilter.slice(1) : [territoryFilter])]
+        : majorFilter;
+
       result.push(
         layer.vector({
-          id: "territories-overview",
+          id: "territories-major",
           tileset: getTileUrl(),
           sourceLayer: "territories",
           renderAs: "fill",
-          minZoom: 4,
-          maxZoom: 5,
+          minZoom: 5,
+          maxZoom: 6,
+          filter: overviewFilterExpr,
+          style: {
+            color: { by: "segment", mapping: segmentColorMapping },
+            fillOpacity: 0.2,
+          },
+          tooltip: {
+            trigger: "hover",
+            content: (feature: LayerFeature) => (
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium text-sm">{feature.properties.name}</span>
+                <span className="text-xs text-gray-500">{getSegmentLabel(feature.properties.segment)}</span>
+              </div>
+            ),
+          },
+          events: {
+            onClick: handleClick,
+          },
+        })
+      );
+
+      // All territories at zoom 7-8, fill only (no borders)
+      result.push(
+        layer.vector({
+          id: "territories-all",
+          tileset: getTileUrl(),
+          sourceLayer: "territories",
+          renderAs: "fill",
+          minZoom: 7,
+          maxZoom: 8,
           style: {
             color: { by: "segment", mapping: segmentColorMapping },
             fillOpacity: 0.25,
@@ -381,14 +415,14 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         })
       );
 
-      // Detail layer: zoom 6+, fill + borders
+      // Full detail at zoom 9+, fill + borders
       result.push(
         layer.vector({
           id: "territories-detail",
           tileset: getTileUrl(),
           sourceLayer: "territories",
           renderAs: "fill",
-          minZoom: 6,
+          minZoom: 9,
           style: {
             color: { by: "segment", mapping: segmentColorMapping },
             fillOpacity: 0.3,
@@ -417,7 +451,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
           id: "grid-boundaries",
           data: filteredGridBoundaryData.geojson,
           renderAs: "fill",
-          minZoom: 4,
+          minZoom: 5,
           style: {
             color: { by: "colorKey", mapping: filteredGridBoundaryData.colorMapping },
             fillOpacity: 0.18,

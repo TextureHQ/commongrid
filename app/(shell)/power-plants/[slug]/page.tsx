@@ -246,23 +246,31 @@ export default function PowerPlantDetailPage() {
           </Card>
         </Section>
 
-        {(utility || ba) && (
+        {(utility || plant.utilityName || ba || plant.baCode) && (
           <Section id="relationships" navLabel="Relationships" title="Grid Relationships" withDivider>
             <Card variant="outlined">
               <Card.Content>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">Utility</div>
-                    <div className="font-medium">
-                      {utility ? (
-                        <Link href={`/utilities/${utility.slug}`} className="text-brand-primary hover:underline">
-                          {utility.name}
-                        </Link>
-                      ) : (
-                        plant.utilityName || "\u2014"
-                      )}
+                  {(utility || plant.utilityName) && (
+                    <div>
+                      <div className="text-sm text-text-muted mb-1">Utility / Operator</div>
+                      <div className="font-medium">
+                        {utility ? (
+                          <Link href={`/utilities/${utility.slug}`} className="text-brand-primary hover:underline">
+                            {utility.name}
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/explore?view=utilities&q=${encodeURIComponent(plant.utilityName)}`}
+                            className="text-brand-primary hover:underline"
+                            title="Search utilities"
+                          >
+                            {plant.utilityName}
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div>
                     <div className="text-sm text-text-muted mb-1">Balancing Authority</div>
                     <div className="font-medium">

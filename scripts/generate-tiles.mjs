@@ -61,6 +61,7 @@ async function buildFeatureCollection() {
         slug: utility.slug,
         segment: utility.segment,
         state: geojson.features[0]?.properties?.state ?? null,
+        customerCount: utility.customerCount ?? 0,
       };
 
       for (const feature of geojson.features) {
@@ -89,7 +90,7 @@ async function generateTiles() {
   console.log("Building geojson-vt index...");
   const index = geojsonvt(fc, {
     maxZoom: 14,
-    tolerance: 5,
+    tolerance: 8,
     extent: 4096,
     buffer: 64,
   });
