@@ -351,13 +351,44 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     const result: LayerSpec[] = [];
 
     if (!isGridOperatorView && !hasHighlight) {
-      // Utility territory tiles (hidden when a specific entity is selected)
+      // Utility territory tiles — zoom-gated like power plants
+      // Overview layer: zoom 4-5, fill-only (no borders) for performance
       result.push(
         layer.vector({
-          id: "territories",
+          id: "territories-overview",
           tileset: getTileUrl(),
           sourceLayer: "territories",
           renderAs: "fill",
+          minZoom: 4,
+          maxZoom: 5,
+          style: {
+            color: { by: "segment", mapping: segmentColorMapping },
+            fillOpacity: 0.25,
+          },
+          tooltip: {
+            trigger: "hover",
+            content: (feature: LayerFeature) => (
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium text-sm">{feature.properties.name}</span>
+                <span className="text-xs text-gray-500">{getSegmentLabel(feature.properties.segment)}</span>
+              </div>
+            ),
+          },
+          events: {
+            onClick: handleClick,
+          },
+          ...(territoryFilter ? { filter: territoryFilter } : {}),
+        })
+      );
+
+      // Detail layer: zoom 6+, fill + borders
+      result.push(
+        layer.vector({
+          id: "territories-detail",
+          tileset: getTileUrl(),
+          sourceLayer: "territories",
+          renderAs: "fill",
+          minZoom: 6,
           style: {
             color: { by: "segment", mapping: segmentColorMapping },
             fillOpacity: 0.3,
@@ -380,12 +411,13 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         })
       );
     } else if (filteredGridBoundaryData && !hasHighlight) {
-      // Grid operator boundaries (hidden when a specific entity is selected)
+      // Grid operator boundaries — zoom-gated for performance
       result.push(
         layer.geojson({
           id: "grid-boundaries",
           data: filteredGridBoundaryData.geojson,
           renderAs: "fill",
+          minZoom: 4,
           style: {
             color: { by: "colorKey", mapping: filteredGridBoundaryData.colorMapping },
             fillOpacity: 0.18,

@@ -255,7 +255,7 @@ export default function PowerPlantDetailPage() {
                     <div className="text-sm text-text-muted mb-1">Utility</div>
                     <div className="font-medium">
                       {utility ? (
-                        <Link href={`/utilities/${utility.slug}`} className="text-brand-primary hover:underline">
+                        <Link href={`/explore?view=utility&slug=${utility.slug}`} className="text-brand-primary hover:underline">
                           {utility.name}
                         </Link>
                       ) : (
@@ -267,7 +267,7 @@ export default function PowerPlantDetailPage() {
                     <div className="text-sm text-text-muted mb-1">Balancing Authority</div>
                     <div className="font-medium">
                       {ba ? (
-                        <Link href={`/balancing-authorities/${ba.slug}`} className="text-brand-primary hover:underline">
+                        <Link href={`/explore?view=ba&slug=${ba.slug}`} className="text-brand-primary hover:underline">
                           {ba.shortName}
                         </Link>
                       ) : plant.baCode ? (

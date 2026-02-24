@@ -12,6 +12,7 @@ import vtpbf from "vt-pbf";
 
 const { fromGeojsonVt } = vtpbf;
 
+const MIN_ZOOM = 4;
 const MAX_ZOOM = 10;
 const DATA_DIR = join(process.cwd(), "data");
 const TERRITORIES_DIR = join(DATA_DIR, "territories");
@@ -88,14 +89,14 @@ async function generateTiles() {
   console.log("Building geojson-vt index...");
   const index = geojsonvt(fc, {
     maxZoom: 14,
-    tolerance: 3,
+    tolerance: 5,
     extent: 4096,
     buffer: 64,
   });
 
   let totalTiles = 0;
 
-  for (let z = 0; z <= MAX_ZOOM; z++) {
+  for (let z = MIN_ZOOM; z <= MAX_ZOOM; z++) {
     const maxCoord = 1 << z; // 2^z
     let zoomTiles = 0;
 
