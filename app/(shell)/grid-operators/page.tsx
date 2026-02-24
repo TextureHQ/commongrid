@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DataSourceLink } from "@/components/DataSourceLink";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getAllUtilities, sortByName } from "@/lib/data";
 import { useFuseSearch } from "@/lib/search";
@@ -77,7 +77,7 @@ const FUSE_OPTIONS = {
   ignoreLocation: true,
 };
 
-export default function UtilitiesPage() {
+function GridOperatorsPageInner() {
   const router = useRouter();
   const allUtilities = useMemo(() => getAllUtilities(), []);
   const searchParams = useSearchParams();
@@ -298,5 +298,13 @@ export default function UtilitiesPage() {
         )}
       </div>
     </PageLayout>
+  );
+}
+
+export default function GridOperatorsPage() {
+  return (
+    <Suspense>
+      <GridOperatorsPageInner />
+    </Suspense>
   );
 }
