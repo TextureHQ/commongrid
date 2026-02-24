@@ -1,15 +1,21 @@
 /**
  * Pre-generates static vector tiles (MVT/PBF) at build time.
  *
- * Reads territory GeoJSON + regions + utilities, pre-simplifies the geometry
- * using @turf/simplify to reduce vertex count (~2.5M → ~100-200K), then builds
- * a geojson-vt index and writes .pbf tiles for zoom 5–10.
+ * Reads territory GeoJSON + regions + utilities, builds a geojson-vt index
+ * and writes .pbf tiles for zoom 5–10.
+ *
+ * geojson-vt handles zoom-dependent simplification automatically:
+ * - Low zoom (5-6): heavy simplification → fast rendering of many polygons
+ * - High zoom (9-10): minimal simplification → crisp boundary detail
+ *
+ * No pre-simplification needed — the zoom gating in ExplorerMap.tsx ensures
+ * only ~355 large territories render at zoom 7-8, and at zoom 9+ the viewport
+ * is small enough that full-detail geometry is fine.
  */
 import { readdir, readFile, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import geojsonvt from "geojson-vt";
 import vtpbf from "vt-pbf";
-import simplify from "@turf/simplify";
 
 const { fromGeojsonVt } = vtpbf;
 
@@ -18,17 +24,6 @@ const MAX_ZOOM = 10;
 const DATA_DIR = join(process.cwd(), "data");
 const TERRITORIES_DIR = join(DATA_DIR, "territories");
 const OUT_DIR = join(process.cwd(), "public", "tiles");
-
-// Simplification tolerance in degrees (~0.05° ≈ 5.5km)
-// Aggressively reduces vertex count for tile rendering.
-// At zoom 5-10, territories look clean — exact boundaries aren't needed for the overview.
-// Detail panels load the original full-resolution GeoJSON when you click into a utility.
-const SIMPLIFY_TOLERANCE = 0.05;
-
-function countVertices(geometry) {
-  const coords = JSON.stringify(geometry.coordinates || []);
-  return (coords.match(/\[[\d.-]+,[\d.-]+\]/g) || []).length;
-}
 
 async function buildFeatureCollection() {
   const [regionsRaw, utilitiesRaw] = await Promise.all([
@@ -54,8 +49,6 @@ async function buildFeatureCollection() {
 
   const files = (await readdir(TERRITORIES_DIR)).filter((f) => f.endsWith(".json"));
   const allFeatures = [];
-  let totalVertsBefore = 0;
-  let totalVertsAfter = 0;
 
   for (const file of files) {
     try {
@@ -79,30 +72,10 @@ async function buildFeatureCollection() {
       };
 
       for (const feature of geojson.features) {
-        const vertsBefore = countVertices(feature.geometry);
-        totalVertsBefore += vertsBefore;
-
-        // Pre-simplify complex geometries using Douglas-Peucker
-        let geometry = feature.geometry;
-        if (vertsBefore > 50) {
-          try {
-            const simplified = simplify(
-              { type: "Feature", properties: {}, geometry },
-              { tolerance: SIMPLIFY_TOLERANCE, highQuality: true, mutate: false }
-            );
-            geometry = simplified.geometry;
-          } catch {
-            // Keep original if simplification fails
-          }
-        }
-
-        const vertsAfter = countVertices(geometry);
-        totalVertsAfter += vertsAfter;
-
         allFeatures.push({
           type: "Feature",
           properties,
-          geometry,
+          geometry: feature.geometry,
         });
       }
     } catch {
@@ -110,9 +83,7 @@ async function buildFeatureCollection() {
     }
   }
 
-  const reduction = ((1 - totalVertsAfter / totalVertsBefore) * 100).toFixed(1);
   console.log(`✅ Loaded ${allFeatures.length} features from ${files.length} territory files`);
-  console.log(`   Vertices: ${totalVertsBefore.toLocaleString()} → ${totalVertsAfter.toLocaleString()} (${reduction}% reduction)`);
 
   return {
     type: "FeatureCollection",
@@ -124,6 +95,10 @@ async function generateTiles() {
   const fc = await buildFeatureCollection();
 
   console.log("Building geojson-vt index...");
+  // tolerance 3 = default. geojson-vt automatically applies MORE simplification
+  // at lower zoom levels and LESS at higher zoom levels. This gives us:
+  // - Zoom 5-6: rough shapes (good — few pixels per territory)
+  // - Zoom 9-10: crisp detailed boundaries (good — few territories visible)
   const index = geojsonvt(fc, {
     maxZoom: 14,
     tolerance: 3,
@@ -134,7 +109,7 @@ async function generateTiles() {
   let totalTiles = 0;
 
   for (let z = MIN_ZOOM; z <= MAX_ZOOM; z++) {
-    const maxCoord = 1 << z; // 2^z
+    const maxCoord = 1 << z;
     let zoomTiles = 0;
 
     for (let x = 0; x < maxCoord; x++) {
