@@ -134,7 +134,7 @@ export default function UtilityDetailPage() {
         label: "Name",
         accessor: "name",
         render: (_value: unknown, row: UtilityRow) => (
-          <Link href={`/utilities/${row.slug}`} className="font-medium text-text-body hover:text-brand-primary">
+          <Link href={`/grid-operators/${row.slug}`} className="font-medium text-text-body hover:text-brand-primary">
             {row.name}
           </Link>
         ),
@@ -165,7 +165,7 @@ export default function UtilityDetailPage() {
   );
 
   const handleRowClick = useCallback((row: UtilityRow) => {
-    window.location.href = `/utilities/${row.slug}`;
+    window.location.href = `/grid-operators/${row.slug}`;
   }, []);
 
   const mapViewState = useMemo(() => {
@@ -197,7 +197,7 @@ export default function UtilityDetailPage() {
       <PageLayout.Header
         title={utility.name}
         breadcrumbs={[
-          { label: "Utilities", href: "/explore?view=utilities" },
+          { label: "Grid Operators", href: "/grid-operators" },
           { label: utility.slug, copyable: true, copyValue: utility.slug },
         ]}
       />
@@ -449,7 +449,7 @@ export default function UtilityDetailPage() {
                     <div>
                       <div className="text-sm text-text-muted mb-1">Parent</div>
                       <div className="font-medium">
-                        <Link href={`/utilities/${parent.slug}`} className="text-brand-primary hover:underline">
+                        <Link href={`/grid-operators/${parent.slug}`} className="text-brand-primary hover:underline">
                           {parent.name}
                         </Link>
                       </div>
@@ -459,7 +459,7 @@ export default function UtilityDetailPage() {
                     <div>
                       <div className="text-sm text-text-muted mb-1">Generation Provider</div>
                       <div className="font-medium">
-                        <Link href={`/utilities/${generationProvider.slug}`} className="text-brand-primary hover:underline">
+                        <Link href={`/grid-operators/${generationProvider.slug}`} className="text-brand-primary hover:underline">
                           {generationProvider.name}
                         </Link>
                       </div>
@@ -469,7 +469,7 @@ export default function UtilityDetailPage() {
                     <div>
                       <div className="text-sm text-text-muted mb-1">Transmission Provider</div>
                       <div className="font-medium">
-                        <Link href={`/utilities/${transmissionProvider.slug}`} className="text-brand-primary hover:underline">
+                        <Link href={`/grid-operators/${transmissionProvider.slug}`} className="text-brand-primary hover:underline">
                           {transmissionProvider.name}
                         </Link>
                       </div>
@@ -479,7 +479,7 @@ export default function UtilityDetailPage() {
                     <div>
                       <div className="text-sm text-text-muted mb-1">Successor</div>
                       <div className="font-medium">
-                        <Link href={`/utilities/${successor.slug}`} className="text-brand-primary hover:underline">
+                        <Link href={`/grid-operators/${successor.slug}`} className="text-brand-primary hover:underline">
                           {successor.name}
                         </Link>
                       </div>

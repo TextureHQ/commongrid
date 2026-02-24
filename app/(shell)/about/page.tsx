@@ -4,6 +4,7 @@ import { Badge, Card, PageLayout, Section } from "@texturehq/edges";
 import Link from "next/link";
 
 const dataSources = [
+  { name: "EIA-860", description: "Annual Electric Generator Report — 15,082 power plants, generator details, fuel types, and capacity data" },
   { name: "EIA-861", description: "Annual electric power industry report — utility ownership, customers, sales, and revenue data" },
   { name: "HIFLD", description: "Homeland Infrastructure Foundation-Level Data — electric service territory boundaries" },
   { name: "CEC", description: "California Energy Commission — CCA territory data and California-specific utility information" },
@@ -12,9 +13,9 @@ const dataSources = [
 ];
 
 const dataHighlights = [
-  { label: "Utility Territories", value: "3,132", icon: "⚡" },
+  { label: "Grid Operators", value: "3,132", icon: "⚡" },
+  { label: "Power Plants", value: "15,082", icon: "🏭" },
   { label: "Grid Infrastructure", value: "ISOs, RTOs, BAs", icon: "🔌" },
-  { label: "Rate Structures", value: "Growing", icon: "💰" },
   { label: "Territory Boundaries", value: "3,000+ GeoJSON", icon: "🗺️" },
 ];
 
@@ -61,11 +62,14 @@ export default function AboutPage() {
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/utilities">
-              <Badge size="lg" shape="pill" variant="info">Browse Utilities →</Badge>
-            </Link>
             <Link href="/grid-operators">
-              <Badge size="lg" shape="pill" variant="warning">Browse Grid Operators →</Badge>
+              <Badge size="lg" shape="pill" variant="info">Browse Grid Operators →</Badge>
+            </Link>
+            <Link href="/power-plants">
+              <Badge size="lg" shape="pill" variant="warning">Browse Power Plants →</Badge>
+            </Link>
+            <Link href="/explore">
+              <Badge size="lg" shape="pill" variant="success">Explore Map →</Badge>
             </Link>
             <a href="https://github.com/TextureHQ/opengrid" target="_blank" rel="noopener noreferrer">
               <Badge size="lg" shape="pill" variant="default">View on GitHub →</Badge>

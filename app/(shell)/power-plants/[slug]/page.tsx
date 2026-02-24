@@ -256,12 +256,12 @@ export default function PowerPlantDetailPage() {
                       <div className="text-sm text-text-muted mb-1">Utility / Operator</div>
                       <div className="font-medium">
                         {utility ? (
-                          <Link href={`/utilities/${utility.slug}`} className="text-brand-primary hover:underline">
+                          <Link href={`/grid-operators/${utility.slug}`} className="text-brand-primary hover:underline">
                             {utility.name}
                           </Link>
                         ) : (
                           <Link
-                            href={`/explore?view=utilities&q=${encodeURIComponent(plant.utilityName)}`}
+                            href={`/grid-operators?q=${encodeURIComponent(plant.utilityName)}`}
                             className="text-brand-primary hover:underline"
                             title="Search utilities"
                           >

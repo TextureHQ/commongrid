@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { getAllUtilities, sortByName } from "@/lib/data";
 import { useFuseSearch } from "@/lib/search";
 import { SearchInput } from "@/components/SearchInput";
@@ -79,7 +80,8 @@ const FUSE_OPTIONS = {
 export default function UtilitiesPage() {
   const router = useRouter();
   const allUtilities = useMemo(() => getAllUtilities(), []);
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
   const [sortValue, setSortValue] = useState("customers:desc");
   const [segmentFilter, setSegmentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -139,7 +141,7 @@ export default function UtilitiesPage() {
 
   const handleRowClick = useCallback(
     (row: UtilityRow) => {
-      router.push(`/utilities/${row.slug}`);
+      router.push(`/grid-operators/${row.slug}`);
     },
     [router]
   );
@@ -152,7 +154,7 @@ export default function UtilitiesPage() {
         accessor: "name",
         render: (_value: unknown, row: UtilityRow) => (
           <Link
-            href={`/utilities/${row.slug}`}
+            href={`/grid-operators/${row.slug}`}
             className="flex items-center gap-2 font-medium text-text-body hover:text-brand-primary"
           >
             <Avatar
@@ -212,7 +214,7 @@ export default function UtilitiesPage() {
   return (
     <PageLayout className="flex flex-col h-full overflow-hidden bg-background-default" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
       <div className="flex-none">
-        <PageLayout.Header title="Utilities" sticky={true} />
+        <PageLayout.Header title="Grid Operators" sticky={true} />
         <DataSourceLink paths={["data/utilities.json"]} className="px-1 pb-2" />
       </div>
       <div className="flex-none px-1 pb-3">
@@ -220,14 +222,14 @@ export default function UtilitiesPage() {
           value={searchQuery}
           onChange={setSearchQuery}
           onClear={() => setSearchQuery("")}
-          placeholder="Search utilities by name, state, EIA ID..."
+          placeholder="Search grid operators by name, state, EIA ID..."
           resultCount={filtered.length}
-          resultLabel="utilities"
+          resultLabel="grid operators"
         />
       </div>
       <div className="flex-none">
         <DataControls
-          resultsCount={{ count: filtered.length, label: "utilities" }}
+          resultsCount={{ count: filtered.length, label: "grid operators" }}
           sort={{
             value: sortValue,
             options: sortOptions,

@@ -88,7 +88,7 @@ export default function BADetailPage() {
         label: "Name",
         accessor: "name",
         render: (_value: unknown, row: UtilityRow) => (
-          <Link href={`/utilities/${row.slug}`} className="font-medium text-text-body hover:text-brand-primary">
+          <Link href={`/grid-operators/${row.slug}`} className="font-medium text-text-body hover:text-brand-primary">
             {row.name}
           </Link>
         ),
@@ -119,7 +119,7 @@ export default function BADetailPage() {
   );
 
   const handleRowClick = useCallback((row: UtilityRow) => {
-    window.location.href = `/utilities/${row.slug}`;
+    window.location.href = `/grid-operators/${row.slug}`;
   }, []);
 
   const mapViewState = useMemo(() => {

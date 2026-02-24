@@ -64,16 +64,16 @@ export default function LandingPage() {
       {/* Browse sections */}
       <section className="px-6 pb-16 sm:pb-24 max-w-3xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Link href="/explore?view=utilities" className="block group">
+          <Link href="/grid-operators" className="block group">
             <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
               <Card.Content className="py-6">
-                <div className="text-lg font-semibold text-text-heading mb-1">Utilities</div>
+                <div className="text-lg font-semibold text-text-heading mb-1">Grid Operators</div>
                 <p className="text-sm text-text-muted mb-3">
                   Browse {utilityCount.toLocaleString()} electric utilities — investor-owned, co-ops,
                   municipal, and more — with service territory boundaries.
                 </p>
                 <span className="text-sm font-medium text-brand-primary">
-                  Browse utilities &rarr;
+                  Browse grid operators &rarr;
                 </span>
               </Card.Content>
             </Card>
