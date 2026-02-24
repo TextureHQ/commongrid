@@ -16,6 +16,7 @@ import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useMemo, useState } from "react";
 import { sortByName } from "@/lib/data";
 import { usePowerPlants } from "@/lib/power-plants";
+import { useFuseSearch } from "@/lib/search";
 import {
   formatCapacity,
   getFuelBadgeVariant,
@@ -73,18 +74,26 @@ export default function PowerPlantsPage() {
     return Array.from(s).sort();
   }, [allPlants]);
 
+  // Fuse.js search options
+  const fuseOptions = useMemo(
+    () => ({
+      keys: [
+        { name: "name", weight: 0.4 },
+        { name: "utilityName", weight: 0.25 },
+        { name: "slug", weight: 0.1 },
+        { name: "state", weight: 0.15 },
+        { name: "county", weight: 0.1 },
+      ],
+      threshold: 0.3,
+      ignoreLocation: true,
+    }),
+    []
+  );
+
+  const searched = useFuseSearch(allPlants, searchQuery, fuseOptions);
+
   const filtered = useMemo(() => {
-    let result: PowerPlant[] = allPlants;
-    if (searchQuery) {
-      const lower = searchQuery.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(lower) ||
-          p.slug.toLowerCase().includes(lower) ||
-          p.utilityName.toLowerCase().includes(lower) ||
-          p.state.toLowerCase().includes(lower)
-      );
-    }
+    let result: PowerPlant[] = searched;
     if (fuelFilter !== "all") {
       result = result.filter((p) => p.fuelCategory === fuelFilter);
     }
@@ -94,18 +103,21 @@ export default function PowerPlantsPage() {
     if (stateFilter !== "all") {
       result = result.filter((p) => p.state === stateFilter);
     }
-    const [field, direction] = sortValue.split(":");
-    if (field === "name") {
-      result = sortByName(result, direction as "asc" | "desc");
-    } else if (field === "capacity") {
-      result = [...result].sort((a, b) => {
-        const capA = a.status === "operable" ? a.totalCapacityMw : (a.proposedCapacityMw ?? 0);
-        const capB = b.status === "operable" ? b.totalCapacityMw : (b.proposedCapacityMw ?? 0);
-        return direction === "desc" ? capB - capA : capA - capB;
-      });
+    // Sort only when no search query (Fuse returns relevance-ordered)
+    if (!searchQuery.trim()) {
+      const [field, direction] = sortValue.split(":");
+      if (field === "name") {
+        result = sortByName(result, direction as "asc" | "desc");
+      } else if (field === "capacity") {
+        result = [...result].sort((a, b) => {
+          const capA = a.status === "operable" ? a.totalCapacityMw : (a.proposedCapacityMw ?? 0);
+          const capB = b.status === "operable" ? b.totalCapacityMw : (b.proposedCapacityMw ?? 0);
+          return direction === "desc" ? capB - capA : capA - capB;
+        });
+      }
     }
     return result;
-  }, [allPlants, searchQuery, fuelFilter, statusFilter, stateFilter, sortValue]);
+  }, [searched, searchQuery, fuelFilter, statusFilter, stateFilter, sortValue]);
 
   const rows: PowerPlantRow[] = useMemo(
     () =>
