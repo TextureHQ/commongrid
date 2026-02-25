@@ -12,5 +12,7 @@ public/data/territories/
 # Power plants JSON in public/ is copied from data/ at build time
 public/data/power-plants.json
 
-# Pre-generated vector tiles (built by scripts/generate-tiles.mjs)
-public/tiles/
+# PMTiles archives (built by scripts/build-tiles.sh via tippecanoe)
+# Track the .pmtiles files but ignore any extracted/legacy tile directories
+public/tiles/*
+!public/tiles/*.pmtiles

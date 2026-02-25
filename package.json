@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/copy-territories.mjs && node scripts/copy-power-plants.mjs && node scripts/generate-tiles.mjs && node scripts/generate-plant-tiles.mjs",
+    "prebuild": "node scripts/copy-territories.mjs && node scripts/copy-power-plants.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -15,23 +15,20 @@
     "@tailwindcss/postcss": "^4.1.14",
     "@texturehq/edges": "^1.28.0",
     "fuse.js": "^7.1.0",
-    "geojson-vt": "^3.2.1",
     "next": "15.5.9",
+    "pmtiles": "^4.4.0",
     "postcss": "^8.5.6",
     "react": "^19.1.2",
     "react-dom": "^19.1.2",
-    "tailwindcss": "^4.1.14",
-    "vt-pbf": "^3.1.3"
+    "tailwindcss": "^4.1.14"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.0",
     "@types/adm-zip": "^0.5.7",
     "@types/geojson": "^7946.0.16",
-    "@types/geojson-vt": "^3.2.2",
     "@types/node": "^24.7.2",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
-    "@types/vt-pbf": "^3.1.0",
     "adm-zip": "^0.5.16",
     "typescript": "^5.9.2",
     "xlsx": "^0.18.5"
