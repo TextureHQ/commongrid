@@ -2,14 +2,17 @@
 
 import { Icon, useColorMode } from "@texturehq/edges";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export type NavigationItem = {
   id: string;
   label: string;
   href: string;
+  /** Pathname-prefix patterns that also trigger active state */
   activePatterns?: string[];
+  /** Search param key=value pairs that trigger active state (all must match) */
+  activeParams?: Record<string, string>;
 };
 
 interface TopBarProps {
@@ -20,6 +23,7 @@ export function TopBar({ navigation }: TopBarProps) {
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { isDarkTheme, toggleTheme } = useColorMode();
 
   useEffect(() => {
@@ -32,9 +36,20 @@ export function TopBar({ navigation }: TopBarProps) {
   }, [pathname]);
 
   const isActive = (item: NavigationItem) => {
+    // Exact href match (strip query from href for pathname comparison)
+    const [hrefPath] = item.href.split("?");
     if (pathname === item.href) return true;
-    if (item.href !== "/" && pathname.startsWith(`${item.href}/`)) return true;
-    return item.activePatterns?.some((p) => pathname.startsWith(p)) ?? false;
+    if (hrefPath !== "/" && pathname.startsWith(`${hrefPath}/`)) return true;
+    // Pathname-prefix patterns
+    if (item.activePatterns?.some((p) => pathname.startsWith(p))) return true;
+    // Query-param matching: all specified params must match current URL params
+    if (item.activeParams) {
+      const allMatch = Object.entries(item.activeParams).every(
+        ([key, value]) => searchParams.get(key) === value
+      );
+      if (allMatch) return true;
+    }
+    return false;
   };
 
   return (
