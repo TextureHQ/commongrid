@@ -7,8 +7,15 @@ import {
   DataControls,
   DataTable,
   EmptyState,
+  FilterDialog,
+  type FacetConfig,
+  type FilterState,
+  addFilterCondition,
+  createEmptyFilter,
+  getFilterFields,
+  removeFilterCondition,
 } from "@texturehq/edges";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useExplorer } from "../ExplorerContext";
 import { getAllUtilities, searchEntities, sortByName } from "@/lib/data";
 import {
@@ -32,15 +39,6 @@ const sortOptions = [
   { id: "name:desc", label: "Name Z-A", value: "name:desc" },
 ];
 
-const segmentFilterOptions = [
-  { id: "all", label: "All Segments", value: "all" },
-  ...Object.values(UtilitySegment).map((seg) => ({
-    id: seg,
-    label: UtilitySegmentLabel[seg],
-    value: seg,
-  })),
-];
-
 // All US state/territory codes present in the data
 const ALL_STATE_CODES = [
   "AK","AL","AR","AZ","CA","CO","CT","DC","DE","FL","GA","HI",
@@ -50,189 +48,84 @@ const ALL_STATE_CODES = [
   "WI","WV","WY",
 ];
 
-/** Returns all individual state codes from a comma-separated jurisdiction string */
+const FACET_CONFIGS: FacetConfig[] = [
+  {
+    field: "segment",
+    label: "Segment",
+    type: "string",
+    values: Object.values(UtilitySegment).map((seg) => ({
+      value: seg,
+      label: UtilitySegmentLabel[seg],
+    })),
+  },
+  {
+    field: "jurisdictions",
+    label: "Jurisdictions",
+    type: "string",
+    values: ALL_STATE_CODES.map((code) => ({ value: code, label: code })),
+    searchThreshold: 5,
+  },
+];
+
+/** Returns individual state codes from a comma-separated jurisdiction string */
 function parseJurisdictionStates(jurisdiction: string | null): string[] {
   if (!jurisdiction) return [];
   return jurisdiction.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
-/** True if the utility matches any of the selected jurisdictions */
-function matchesJurisdictions(utility: Utility, selected: string[]): boolean {
-  if (selected.length === 0) return true;
-  const states = parseJurisdictionStates(utility.jurisdiction);
-  return selected.some((j) => states.includes(j));
-}
-
-// ---------------------------------------------------------------------------
-// Jurisdiction multi-select dropdown
-// ---------------------------------------------------------------------------
-
-interface JurisdictionFilterProps {
-  selected: string[];
-  onChange: (jurisdictions: string[]) => void;
-}
-
-function JurisdictionFilter({ selected, onChange }: JurisdictionFilterProps) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Close on outside click
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
-    if (!ref.current?.contains(e.relatedTarget as Node)) {
-      setOpen(false);
-    }
-  }, []);
-
-  const filteredCodes = useMemo(
-    () =>
-      search
-        ? ALL_STATE_CODES.filter((code) =>
-            code.toLowerCase().includes(search.toLowerCase())
-          )
-        : ALL_STATE_CODES,
-    [search]
-  );
-
-  const toggle = useCallback(
-    (code: string) => {
-      if (selected.includes(code)) {
-        onChange(selected.filter((s) => s !== code));
-      } else {
-        onChange([...selected, code]);
+/** Extract selected string values for a field from FilterState */
+function getSelectedValues(filters: FilterState, field: string): string[] {
+  if (!filters) return [];
+  const values: string[] = [];
+  function traverse(f: FilterState) {
+    if (!f) return;
+    for (const condition of f.conditions) {
+      if ("conditions" in condition) {
+        traverse(condition);
+      } else if (condition.field === field && condition.operator === "in") {
+        if (Array.isArray(condition.value)) {
+          values.push(...condition.value.map(String));
+        }
       }
-    },
-    [selected, onChange]
-  );
-
-  const clearAll = useCallback(() => {
-    onChange([]);
-    setSearch("");
-  }, [onChange]);
-
-  const label =
-    selected.length === 0
-      ? "All Jurisdictions"
-      : selected.length === 1
-      ? selected[0]
-      : `${selected.length} States`;
-
-  return (
-    <div ref={ref} className="relative" onBlur={handleBlur}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className={`h-10 sm:h-8 inline-flex items-center gap-1.5 rounded-md border px-2 text-base sm:text-sm transition-colors ${
-          selected.length > 0
-            ? "border-brand-primary bg-brand-primary/10 text-brand-primary font-medium"
-            : "border-border-default bg-background-surface text-text-body"
-        }`}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        {label}
-        {selected.length > 0 && (
-          <span
-            role="button"
-            tabIndex={0}
-            aria-label="Clear jurisdiction filter"
-            className="ml-1 text-brand-primary hover:text-brand-primary/70 leading-none"
-            onClick={(e) => {
-              e.stopPropagation();
-              clearAll();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.stopPropagation();
-                clearAll();
-              }
-            }}
-          >
-            ×
-          </span>
-        )}
-        <svg
-          className={`w-3 h-3 ml-0.5 transition-transform ${open ? "rotate-180" : ""}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-          aria-hidden="true"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {open && (
-        <div
-          className="absolute right-0 top-full mt-1 z-50 w-52 rounded-lg border border-border-default bg-background-surface shadow-lg flex flex-col"
-          role="listbox"
-          aria-multiselectable="true"
-          aria-label="Filter by jurisdiction"
-        >
-          {/* Search */}
-          <div className="p-2 border-b border-border-default">
-            <input
-              autoFocus
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search states..."
-              className="w-full h-7 rounded-md border border-border-default bg-background-page px-2 text-sm text-text-body placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-primary"
-            />
-          </div>
-
-          {/* Options */}
-          <div className="overflow-y-auto max-h-56 py-1">
-            {filteredCodes.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-text-muted">No states found</div>
-            ) : (
-              filteredCodes.map((code) => {
-                const isChecked = selected.includes(code);
-                return (
-                  <label
-                    key={code}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-body cursor-pointer hover:bg-background-hover select-none"
-                    role="option"
-                    aria-selected={isChecked}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => toggle(code)}
-                      className="rounded border-border-default text-brand-primary focus:ring-brand-primary"
-                    />
-                    {code}
-                  </label>
-                );
-              })
-            )}
-          </div>
-
-          {/* Footer */}
-          {selected.length > 0 && (
-            <div className="px-3 py-2 border-t border-border-default">
-              <button
-                type="button"
-                onClick={clearAll}
-                className="text-xs text-text-muted hover:text-text-body transition-colors"
-              >
-                Clear all ({selected.length})
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+    }
+  }
+  traverse(filters);
+  return values;
 }
 
-// ---------------------------------------------------------------------------
-// Main panel
-// ---------------------------------------------------------------------------
+/** Converts FilterState to the `jurisdictions: string[]` the context expects */
+function filtersToJurisdictions(filters: FilterState): string[] {
+  return getSelectedValues(filters, "jurisdictions");
+}
+
+/** Converts FilterState to the `segment: string` the context expects */
+function filtersToSegment(filters: FilterState): string {
+  const values = getSelectedValues(filters, "segment");
+  return values.length === 1 ? values[0] : "all";
+}
+
+/** Build a FilterState from segment + jurisdiction arrays */
+function buildFilterState(segment: string, jurisdictions: string[]): FilterState {
+  let filters = createEmptyFilter();
+  if (segment !== "all") {
+    filters = addFilterCondition(filters, { field: "segment", operator: "in", value: [segment] });
+  }
+  if (jurisdictions.length > 0) {
+    filters = addFilterCondition(filters, { field: "jurisdictions", operator: "in", value: jurisdictions });
+  }
+  return filters;
+}
 
 export function UtilityListPanel() {
   const { state, setSearch, setSegment, setJurisdictions, navigateToDetail, navigateToLanding } = useExplorer();
+
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+
+  // Keep FilterDialog state in sync with ExplorerContext
+  const filterState = useMemo(
+    () => buildFilterState(state.segment, state.jurisdictions),
+    [state.segment, state.jurisdictions]
+  );
 
   const allUtilities = useMemo(() => getAllUtilities(), []);
 
@@ -245,7 +138,10 @@ export function UtilityListPanel() {
       result = result.filter((u) => u.segment === state.segment);
     }
     if (state.jurisdictions.length > 0) {
-      result = result.filter((u) => matchesJurisdictions(u, state.jurisdictions));
+      result = result.filter((u) => {
+        const states = parseJurisdictionStates(u.jurisdiction);
+        return state.jurisdictions.some((j) => states.includes(j));
+      });
     }
     result = sortByName(result, "asc");
     return result;
@@ -271,6 +167,52 @@ export function UtilityListPanel() {
     },
     [navigateToDetail]
   );
+
+  const handleApplyFilters = useCallback(
+    (newFilters: FilterState) => {
+      setSegment(filtersToSegment(newFilters));
+      setJurisdictions(filtersToJurisdictions(newFilters));
+    },
+    [setSegment, setJurisdictions]
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setSegment("all");
+    setJurisdictions([]);
+  }, [setSegment, setJurisdictions]);
+
+  // Active filter chips for DataControls
+  const activeFilters = useMemo(() => {
+    const chips: Array<{ id: string; label: string; value: string }> = [];
+    if (state.segment !== "all") {
+      chips.push({
+        id: "segment",
+        label: `Segment: ${UtilitySegmentLabel[state.segment as UtilitySegment] ?? state.segment}`,
+        value: state.segment,
+      });
+    }
+    if (state.jurisdictions.length > 0) {
+      chips.push({
+        id: "jurisdictions",
+        label:
+          state.jurisdictions.length === 1
+            ? `State: ${state.jurisdictions[0]}`
+            : `${state.jurisdictions.length} States`,
+        value: state.jurisdictions.join(","),
+      });
+    }
+    return chips;
+  }, [state.segment, state.jurisdictions]);
+
+  const handleRemoveFilter = useCallback(
+    (id: string) => {
+      if (id === "segment") setSegment("all");
+      if (id === "jurisdictions") setJurisdictions([]);
+    },
+    [setSegment, setJurisdictions]
+  );
+
+  const activeFilterCount = getFilterFields(filterState).length;
 
   const columns: Column<UtilityRow>[] = useMemo(
     () => [
@@ -333,25 +275,10 @@ export function UtilityListPanel() {
             options: sortOptions,
             onChange: () => {},
           }}
-          customControls={
-            <div className="flex items-center gap-2">
-              <select
-                value={state.segment}
-                onChange={(e) => setSegment(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                {segmentFilterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <JurisdictionFilter
-                selected={state.jurisdictions}
-                onChange={setJurisdictions}
-              />
-            </div>
-          }
+          filters={activeFilters}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAllFilters={handleClearFilters}
+          onManageFilters={() => setFilterDialogOpen(true)}
           sticky={true}
         />
       </div>
@@ -360,7 +287,7 @@ export function UtilityListPanel() {
           <EmptyState
             icon="Lightning"
             title="No utilities found"
-            description={state.q ? "Try adjusting your search criteria." : "No utilities match the selected filters."}
+            description={state.q || activeFilterCount > 0 ? "Try adjusting your search or filters." : "No utilities match the selected filters."}
             fullHeight={true}
           />
         ) : (
@@ -375,6 +302,17 @@ export function UtilityListPanel() {
           />
         )}
       </div>
+
+      <FilterDialog
+        isOpen={filterDialogOpen}
+        onClose={() => setFilterDialogOpen(false)}
+        facetConfigs={FACET_CONFIGS}
+        currentFilters={filterState}
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
+        title="Filter Utilities"
+        resultCount={filtered.length}
+      />
     </div>
   );
 }
