@@ -12,7 +12,7 @@
   "dependencies": {
     "@floating-ui/dom": "^1.7.5",
     "@tailwindcss/postcss": "^4.1.14",
-    "@texturehq/edges": "^1.28.0",
+    "@texturehq/edges": "^1.28.1",
     "geojson-vt": "^3.2.1",
     "next": "15.5.9",
     "postcss": "^8.5.6",
