@@ -358,7 +358,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
 
     if (!isGridOperatorView && !hasHighlight) {
       // Utility territory tiles — zoom-gated for performance
-      // 2,905 polygon features. geojson-vt provides zoom-dependent simplification:
+      // 2,905 polygon features. tippecanoe provides zoom-dependent simplification:
       // rough shapes at low zoom, crisp detail at high zoom.
       //
       // Zoom 7-8: Large utilities only (>50k customers, ~355 features), fill-only
