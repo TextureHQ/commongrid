@@ -11,7 +11,7 @@ import { computeViewStateFromGeoJSON } from "@/lib/geo";
 
 function getTileUrl() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}/tiles/{z}/{x}/{y}.pbf`;
+  return `${origin}/api/tiles/territories/{z}/{x}/{y}`;
 }
 
 const segmentColorMapping = {
@@ -31,7 +31,7 @@ const US_CENTER = { longitude: -98.58, latitude: 39.83, zoom: 4 };
 
 function getPowerPlantTileUrl() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}/tiles/power-plants/{z}/{x}/{y}.pbf`;
+  return `${origin}/api/tiles/power-plants/{z}/{x}/{y}`;
 }
 
 const fuelCategoryColorMapping = {
