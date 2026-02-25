@@ -8447,7 +8447,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.smeco.coop/services/electric-vehicles/electric-vehicle-incentives/"
   },
   {
     "id": "prog-midsouth-rewards",
@@ -10974,7 +10975,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.smeco.coop/services/electric-vehicles/electric-vehicle-incentives/"
   },
   {
     "id": "prog-smart-thermostat-program-12",
@@ -15861,7 +15863,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.fourcty.org/energy-efficiency/beat-the-peak/"
   },
   {
     "id": "prog-load-class-8",
@@ -15931,7 +15934,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.bayfieldelectric.com/load-management-0"
   },
   {
     "id": "prog-peak-times",
@@ -16036,7 +16040,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.roseauelectric.coop/products-services/load-management"
   },
   {
     "id": "prog-load-control-13",
@@ -16071,7 +16076,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.midwestecc.com/load-control"
   },
   {
     "id": "prog-load-management-57",
@@ -16355,7 +16361,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://xso.dairylandpower.coop/lm/LCstatus_xres.html"
   },
   {
     "id": "prog-load-class-8-3",
@@ -16424,7 +16431,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://dairylandpower.com/load-management"
   },
   {
     "id": "prog-beat-the-peak-5",
@@ -16564,7 +16572,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.cecoop.com/load-management-program"
   },
   {
     "id": "prog-ev-managed-charging-5",
@@ -16738,7 +16747,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://jackelec.com/load-reduction-event"
   },
   {
     "id": "prog-beat-the-peak-9",
@@ -16983,7 +16993,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.wrec.net/beat-peak"
   },
   {
     "id": "prog-load-management-61",
@@ -17190,7 +17201,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://dairylandpower.com/load-management"
   },
   {
     "id": "prog-industrial-2",
@@ -17542,7 +17554,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.bayfieldelectric.com/load-management-0"
   },
   {
     "id": "prog-indurstrial",
@@ -17647,7 +17660,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.h-delectric.coop/irrigation"
   },
   {
     "id": "prog-powershift-7",
@@ -18034,7 +18048,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.medinaec.org/LM"
   },
   {
     "id": "prog-beat-the-peak-22",
@@ -18280,7 +18295,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.cecoop.com/load-management-program"
   },
   {
     "id": "prog-beat-the-peak-23",
@@ -18386,7 +18402,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.firelandsec.com/energy-assistance-programs"
   },
   {
     "id": "prog-peak-alert-savings",
@@ -18633,7 +18650,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://northernelectric.coop/loadmanagement"
   },
   {
     "id": "prog-switch-makes-cents-8",
@@ -18703,7 +18721,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://piercepepin.coop/load-management"
   },
   {
     "id": "prog-load-class-8-10",
@@ -19265,7 +19284,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.redlakeelectric.com/products-services/load-management"
   },
   {
     "id": "prog-irrigation-6",
@@ -19821,7 +19841,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.clayunionelectric.coop/irrigation-rebates"
   },
   {
     "id": "prog-beat-the-peak-36",
@@ -19995,7 +20016,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.vermontelectric.coop/beat-the-peak"
   },
   {
     "id": "prog-smart-thermostat-program-16",
@@ -20452,7 +20474,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.mountainelectric.com/services/business/enernoc/"
   },
   {
     "id": "prog-beat-the-peak-41",
@@ -20558,7 +20581,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.jcecoop.com/load-control"
   },
   {
     "id": "prog-connect-to-save-11",
@@ -20832,7 +20856,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.heartlandpower.com/load-management-program"
   },
   {
     "id": "prog-irrigation-load-management",
@@ -20902,7 +20927,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.centralec.coop/load-management"
   },
   {
     "id": "prog-load-class-4-and-5-11",
@@ -21043,7 +21069,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.victoriaelectric.coop/content/beat-peak"
   },
   {
     "id": "prog-load-management-71",
@@ -21288,7 +21315,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.centralec.coop/load-management"
   },
   {
     "id": "prog-load-class-8-13",
@@ -21323,7 +21351,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.heartlandpower.com/load-management-program"
   },
   {
     "id": "prog-irrigation-11",
@@ -21428,7 +21457,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://piercepepin.coop/load-management"
   },
   {
     "id": "prog-beat-the-peak-47",
@@ -21499,7 +21529,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.irwinemc.com/load-management"
   },
   {
     "id": "prog-cool-returns-ac-switch-2",
@@ -21569,7 +21600,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://jackelec.com/load-reduction-event"
   },
   {
     "id": "prog-water-heater-load-management-3",
@@ -21848,7 +21880,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://traverseelectric.com/irrigation"
   },
   {
     "id": "prog-beat-the-peak-51",
@@ -22058,7 +22091,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.hoecoop.org/peakalert"
   },
   {
     "id": "prog-beat-the-peak-54",
@@ -22129,7 +22163,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://gccea.com/load-control-device"
   },
   {
     "id": "prog-load-control-21",
@@ -22164,7 +22199,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://www.cmselectric.com/load-control"
   },
   {
     "id": "prog-load-control-22",
@@ -22270,7 +22306,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "http://xso.dairylandpower.coop/lm/LCstatus_xres.html"
   },
   {
     "id": "prog-load-management-76",
@@ -22447,7 +22484,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://www.jcecoop.com/load-control"
   },
   {
     "id": "prog-peak-alerts-8",
@@ -22584,7 +22622,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://dairylandpower.com/load-management"
   },
   {
     "id": "prog-watt-watchers",
@@ -23041,7 +23080,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://northernelectric.coop/loadmanagement"
   },
   {
     "id": "prog-load-management-80",
@@ -23077,7 +23117,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://lmguide.grenergy.com/"
   },
   {
     "id": "prog-load-control-25",
@@ -23147,7 +23188,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://energysmartsc.org/peakalert/"
   },
   {
     "id": "prog-load-management-81",
@@ -23181,7 +23223,8 @@
     "status": "ACTIVE",
     "variants": [],
     "createdAt": "2026-02-21T00:00:00Z",
-    "updatedAt": "2026-02-21T00:00:00Z"
+    "updatedAt": "2026-02-21T00:00:00Z",
+    "programWebsite": "https://dairylandpower.com/load-management"
   },
   {
     "id": "prog-industrial-11",
