@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/copy-territories.mjs && node scripts/copy-power-plants.mjs && node scripts/generate-tiles.mjs && node scripts/generate-plant-tiles.mjs",
+    "prebuild": "node scripts/copy-territories.mjs && node scripts/copy-power-plants.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
