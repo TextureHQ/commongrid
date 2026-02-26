@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Icon } from "@texturehq/edges";
+import { Button, Card, Icon, TextLink } from "@texturehq/edges";
 import Link from "next/link";
 import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms } from "@/lib/data";
 
@@ -245,20 +245,12 @@ export default function LandingPage() {
 
           {/* CTAs */}
           <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Link
-              href="/explore"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity"
-            >
-              Browse the registry <span aria-hidden>→</span>
-            </Link>
-            <a
-              href="https://opengrid.texture.energy/api"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-default bg-background-surface text-sm font-medium text-text-body hover:opacity-80 transition-colors"
-            >
+            <Button variant="primary" href="/explore" icon="ArrowRight" iconPosition="right">
+              Browse the registry
+            </Button>
+            <Button variant="secondary" href="https://opengrid.texture.energy/api" target="_blank" rel="noopener noreferrer">
               View API docs
-            </a>
+            </Button>
           </div>
         </div>
       </section>
@@ -376,14 +368,9 @@ export default function LandingPage() {
                   <span className="text-sm font-semibold text-text-heading">
                     Recently updated entities
                   </span>
-                  <a
-                    href="https://github.com/TextureHQ/opengrid"
-                    className="text-xs text-brand-primary hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <TextLink href="https://github.com/TextureHQ/opengrid" external className="text-xs">
                     View all changes →
-                  </a>
+                  </TextLink>
                 </div>
                 <div>
                   {RECENT_UPDATES.map((item) => (
@@ -396,14 +383,9 @@ export default function LandingPage() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-semibold text-text-heading">Newly added</span>
-                  <a
-                    href="https://github.com/TextureHQ/opengrid"
-                    className="text-xs text-brand-primary hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <TextLink href="https://github.com/TextureHQ/opengrid" external className="text-xs">
                     View changelog →
-                  </a>
+                  </TextLink>
                 </div>
                 <div>
                   {NEWLY_ADDED.map((item) => (
