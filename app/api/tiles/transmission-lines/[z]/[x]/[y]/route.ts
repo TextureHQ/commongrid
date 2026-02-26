@@ -1,4 +1,5 @@
 import { getTile } from "@/lib/pmtiles-server";
+import { resolveOverzoom } from "@/lib/tile-utils";
 
 export async function GET(
   _request: Request,
@@ -15,7 +16,8 @@ export async function GET(
     return new Response("Invalid tile coordinates", { status: 400 });
   }
 
-  const data = await getTile("transmission-lines", zNum, xNum, yNum);
+  const resolved = resolveOverzoom(zNum, xNum, yNum);
+  const data = await getTile("transmission-lines", resolved.z, resolved.x, resolved.y);
 
   if (!data) {
     return new Response(null, { status: 204 });
