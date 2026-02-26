@@ -2,6 +2,15 @@
 @import "@texturehq/edges/theme.css";
 @import "@texturehq/edges/styles.css";
 
+/* Custom token: subtle page background (between body and surface) */
+:root {
+  --color-background-subtle: #F8F9FB;
+}
+
+.theme-dark {
+  --color-background-subtle: #1c1c1c;
+}
+
 html, body {
   overflow-x: hidden;
   background-color: var(--color-background-body);
@@ -10,6 +19,7 @@ html, body {
 .theme-dark {
   --color-background-surface: #141414;
   --color-border-default: #2a2a2a;
+  /* Dark mode brand handled by BrandProvider darkVariables in Providers.tsx (@texturehq/edges@1.28.2) */
 }
 
 @layer utilities {
