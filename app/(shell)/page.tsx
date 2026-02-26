@@ -275,14 +275,14 @@ export default function LandingPage() {
       <div className="px-6 -mt-0.5">
         <div className="max-w-2xl mx-auto">
           <div className="bg-background-surface border border-border-default rounded-xl shadow-sm py-5 px-6 -mt-px">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-2 items-start">
               {[
                 { value: utilityCount.toLocaleString(), label: "Utilities" },
-                { value: gridOperatorCount.toLocaleString(), label: "Grid Operators" },
+                { value: gridOperatorCount.toLocaleString(), label: "Operators" },
                 { value: TERRITORY_COUNT.toLocaleString(), label: "Territories" },
                 { value: programCount.toLocaleString(), label: "Programs" },
               ].map((stat) => (
-                <div key={stat.label} className="text-center">
+                <div key={stat.label} className="text-center flex flex-col">
                   <div className="text-xl sm:text-2xl font-bold text-text-heading tabular-nums">
                     {stat.value}
                   </div>
