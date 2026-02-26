@@ -19,10 +19,6 @@ import * as path from "node:path";
 
 const API_KEY = process.env.NREL_API_KEY ?? "DEMO_KEY";
 const BASE_URL = "https://developer.nrel.gov/api/alt-fuel-stations/v1.json";
-const LIMIT = 200;
-// DEMO_KEY rate limits: ~10 req/hour for IP. Be very conservative.
-// With a real NREL_API_KEY you get 1,000 req/hour — reduce this.
-const DELAY_MS = API_KEY === "DEMO_KEY" ? 8000 : 1000;
 
 function slugify(str: string): string {
   return str
@@ -64,60 +60,42 @@ interface AFDCResponse {
   fuel_stations: AFDCStation[];
 }
 
-async function fetchPage(offset: number, attempt = 0): Promise<AFDCResponse> {
+async function fetchAll(attempt = 0): Promise<AFDCResponse> {
+  // The AFDC API supports limit=all to return every station in a single request.
+  // The offset parameter is NOT supported — pagination must be done via limit=all.
   const url = new URL(BASE_URL);
   url.searchParams.set("api_key", API_KEY);
   url.searchParams.set("country", "US");
   url.searchParams.set("fuel_type", "ELEC");
-  url.searchParams.set("limit", String(LIMIT));
-  url.searchParams.set("offset", String(offset));
+  url.searchParams.set("limit", "all");
 
   const res = await fetch(url.toString());
   if (res.status === 429) {
-    const waitMs = Math.min(60000 * (attempt + 1), 300000); // 60s, 120s, 180s, max 5min
+    const waitMs = Math.min(60000 * (attempt + 1), 300000);
     console.log(`\n   [429 Rate Limited] Waiting ${waitMs / 1000}s before retry (attempt ${attempt + 1})...`);
-    await sleep(waitMs);
-    return fetchPage(offset, attempt + 1);
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+    return fetchAll(attempt + 1);
   }
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`AFDC API error at offset=${offset}: ${res.status} ${res.statusText}\n${text}`);
+    throw new Error(`AFDC API error: ${res.status} ${res.statusText}\n${text}`);
   }
   return res.json() as Promise<AFDCResponse>;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function main() {
   console.log(`Syncing EV charging stations from AFDC API (key: ${API_KEY === "DEMO_KEY" ? "DEMO_KEY" : "****"})\n`);
 
-  // ── 1. Probe total results ───────────────────────────────────────────────
-  console.log("1. Probing total results...");
-  const firstPage = await fetchPage(0);
-  const totalResults = firstPage.total_results;
-  console.log(`   Total EV stations: ${totalResults}`);
+  // ── 1. Fetch all stations in a single request ───────────────────────────
+  // The AFDC API supports limit=all to return every station at once.
+  console.log("1. Fetching all EV stations (limit=all)...");
+  const response = await fetchAll();
+  const allStations = response.fuel_stations;
+  console.log(`   Total results: ${response.total_results}`);
+  console.log(`   Stations received: ${allStations.length}`);
 
-  // ── 2. Paginate through all stations ────────────────────────────────────
-  const allStations: AFDCStation[] = [...firstPage.fuel_stations];
-  const totalPages = Math.ceil(totalResults / LIMIT);
-
-  console.log(`\n2. Fetching ${totalPages} pages (${LIMIT} stations each)...`);
-
-  for (let page = 1; page < totalPages; page++) {
-    const offset = page * LIMIT;
-    process.stdout.write(`   Page ${page + 1}/${totalPages} (offset=${offset})...`);
-    await sleep(DELAY_MS);
-    const pageData = await fetchPage(offset);
-    allStations.push(...pageData.fuel_stations);
-    process.stdout.write(` ${allStations.length} fetched so far\n`);
-  }
-
-  console.log(`\n   Total fetched: ${allStations.length} stations`);
-
-  // ── 3. Transform and normalize ───────────────────────────────────────────
-  console.log("\n3. Transforming station data...");
+  // ── 2. Transform and normalize ───────────────────────────────────────────
+  console.log("\n2. Transforming station data...");
 
   const slugsSeen = new Map<string, number>();
 
@@ -158,11 +136,11 @@ async function main() {
     console.log(`   Skipped ${skipped} stations with missing coordinates`);
   }
 
-  // ── 4. Sort by name ────────────────────────────────────────────────────
+  // ── 3. Sort by name ────────────────────────────────────────────────────
   stations.sort((a, b) => a.stationName.localeCompare(b.stationName));
 
-  // ── 5. Write output ───────────────────────────────────────────────────
-  console.log("\n4. Writing output...");
+  // ── 4. Write output ───────────────────────────────────────────────────
+  console.log("\n3. Writing output...");
   const outPath = path.join(process.cwd(), "data", "ev-charging.json");
   fs.writeFileSync(outPath, `${JSON.stringify(stations)}\n`);
   const sizeMb = (fs.statSync(outPath).size / 1024 / 1024).toFixed(1);
