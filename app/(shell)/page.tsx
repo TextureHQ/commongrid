@@ -260,7 +260,7 @@ export default function LandingPage() {
           </div>
 
           {/* CTAs */}
-          <div className="flex items-center justify-center gap-3 flex-wrap">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
             <Button variant="primary" href="/explore" icon="ArrowRight" iconPosition="right">
               Browse the registry
             </Button>
@@ -274,33 +274,27 @@ export default function LandingPage() {
       {/* ── Stats bar ────────────────────────────────────── */}
       <div className="px-6 -mt-0.5">
         <div className="max-w-2xl mx-auto">
-          <div className="bg-background-surface border border-border-default rounded-xl shadow-sm py-5 px-6 flex items-center justify-between gap-4 -mt-px">
-            {[
-              { value: utilityCount.toLocaleString(), label: "Utilities" },
-              { value: gridOperatorCount.toLocaleString(), label: "Grid Operators" },
-              { value: TERRITORY_COUNT.toLocaleString(), label: "Territories" },
-              { value: programCount.toLocaleString(), label: "Programs" },
-            ].map((stat, i) => (
-              <div key={stat.label} className="flex-1 text-center">
-                {i > 0 && (
-                  <div className="absolute left-0 top-1/4 h-1/2 w-px bg-border-default" aria-hidden />
-                )}
-                <div className="text-xl sm:text-2xl font-bold text-text-heading tabular-nums">
-                  {stat.value}
+          <div className="bg-background-surface border border-border-default rounded-xl shadow-sm py-5 px-6 -mt-px">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-2 items-start">
+              {[
+                { value: utilityCount.toLocaleString(), label: "Utilities" },
+                { value: gridOperatorCount.toLocaleString(), label: "Grid Operators" },
+                { value: TERRITORY_COUNT.toLocaleString(), label: "Territories" },
+                { value: programCount.toLocaleString(), label: "Programs" },
+              ].map((stat) => (
+                <div key={stat.label} className="text-center flex flex-col">
+                  <div className="text-xl sm:text-2xl font-bold text-text-heading tabular-nums">
+                    {stat.value}
+                  </div>
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-text-muted mt-0.5 whitespace-nowrap">
+                    {stat.label}
+                  </div>
                 </div>
-                <div className="text-[11px] font-medium uppercase tracking-widest text-text-muted mt-0.5">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-            <div className="flex-1 text-center">
-              <div className="flex items-center justify-center gap-1.5">
-                <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-sm font-semibold text-green-600">Live</span>
-              </div>
-              <div className="text-[11px] font-medium uppercase tracking-widest text-text-muted mt-0.5">
-                Updated Daily
-              </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-border-default sm:hidden">
+              <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+              <span className="text-xs font-semibold text-green-600">Live · Updated Daily</span>
             </div>
           </div>
         </div>
@@ -416,15 +410,15 @@ export default function LandingPage() {
 
       {/* ── Footer ───────────────────────────────────────── */}
       <footer className="border-t border-border-default px-6 py-6">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
-          <div className="flex items-center gap-1.5">
-            <span>OpenGrid is maintained by Texture, Inc. · Data licensed under ODbL</span>
-            <span className="inline-flex items-center gap-1 ml-1">
+        <div className="max-w-5xl mx-auto flex flex-col gap-3 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span>OpenGrid by Texture, Inc. · ODbL License</span>
+            <span className="inline-flex items-center gap-1">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
               <span className="text-green-600 font-medium">Live</span>
             </span>
           </div>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center flex-wrap gap-x-5 gap-y-2">
             {[
               { label: "GitHub", href: "https://github.com/TextureHQ/opengrid" },
               { label: "API docs", href: "https://opengrid.texture.energy/api" },
