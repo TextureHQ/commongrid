@@ -19,9 +19,7 @@ html, body {
 .theme-dark {
   --color-background-surface: #141414;
   --color-border-default: #2a2a2a;
-  /* Dark mode brand: interim override until Edges publishes BrandProvider darkVariables (mono #8322) */
-  --color-brand-primary: #60a5fa;
-  --color-brand-dark: #93c5fd;
+  /* Dark mode brand handled by BrandProvider darkVariables in Providers.tsx (@texturehq/edges@1.28.2) */
 }
 
 @layer utilities {

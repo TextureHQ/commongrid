@@ -8,12 +8,17 @@ const OPENGRID_BRAND_VARIABLES = {
   "--color-brand-dark": "#1d4ed8",
 };
 
+// #60a5fa: 7.25:1 contrast on #141414 (dark surface) — passes WCAG AA
+const OPENGRID_BRAND_DARK_VARIABLES = {
+  "--color-brand-primary": "#60a5fa",
+  "--color-brand-dark": "#93c5fd",
+};
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary level="page" title="Application Error">
       <ColorModeProvider>
-        {/* TODO: add darkVariables once Edges is published with BrandProvider darkVariables support (mono #8322) */}
-        <BrandProvider variables={OPENGRID_BRAND_VARIABLES}>
+        <BrandProvider variables={OPENGRID_BRAND_VARIABLES} darkVariables={OPENGRID_BRAND_DARK_VARIABLES}>
           <NoticeProvider>{children}</NoticeProvider>
         </BrandProvider>
       </ColorModeProvider>
