@@ -3,11 +3,8 @@ import { ShellLayoutClient } from "@/components/ShellLayoutClient";
 
 export default function ShellLayout({ children }: { children: ReactNode }) {
   const navigation = [
-    { id: "home", label: "Home", href: "/" },
     { id: "explore", label: "Explore", href: "/explore" },
-    { id: "grid-operators", label: "Grid Operators", href: "/grid-operators", activePatterns: ["/grid-operators"] },
-    { id: "transmission-lines", label: "Transmission", href: "/transmission-lines" },
-    { id: "power-plants", label: "Power Plants", href: "/power-plants" },
+    { id: "api", label: "API", href: "https://docs.opengrid.dev", external: true },
     { id: "about", label: "About", href: "/about" },
   ];
 
