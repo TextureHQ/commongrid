@@ -13,6 +13,8 @@ export default function LandingPage() {
   // Power plant count is hardcoded to avoid importing the 8.7 MB JSON
   // into the pre-rendered page. Updated by sync-power-plants script.
   const powerPlantCount = 15082;
+  // Transmission line count is hardcoded for the same reason. Updated by sync-transmission-lines script.
+  const transmissionLineCount = 52244;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -49,6 +51,7 @@ export default function LandingPage() {
             { label: "ISOs & RTOs", value: `${isoCount + rtoCount}` },
             { label: "Balancing Authorities", value: `${baCount}` },
             { label: "Power Plants", value: powerPlantCount.toLocaleString() },
+            { label: "Transmission Lines", value: transmissionLineCount.toLocaleString() },
             { label: "Programs", value: programCount.toLocaleString() },
           ].map((stat) => (
             <Card key={stat.label} variant="outlined">
@@ -104,6 +107,21 @@ export default function LandingPage() {
                 </p>
                 <span className="text-sm font-medium text-brand-primary">
                   Browse power plants &rarr;
+                </span>
+              </Card.Content>
+            </Card>
+          </Link>
+
+          <Link href="/transmission-lines" className="block group">
+            <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
+              <Card.Content className="py-6">
+                <div className="text-lg font-semibold text-text-heading mb-1">Transmission Lines</div>
+                <p className="text-sm text-text-muted mb-3">
+                  Explore {transmissionLineCount.toLocaleString()} high-voltage transmission lines (69kV–765kV)
+                  across the US from the HIFLD dataset.
+                </p>
+                <span className="text-sm font-medium text-brand-primary">
+                  Browse transmission lines &rarr;
                 </span>
               </Card.Content>
             </Card>
