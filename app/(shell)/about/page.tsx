@@ -7,7 +7,7 @@ const dataSources = [
   { name: "EIA-860", description: "Annual Electric Generator Report — 15,082 power plants, generator details, fuel types, and capacity data" },
   { name: "EIA-861", description: "Annual electric power industry report — utility ownership, customers, sales, and revenue data" },
   { name: "HIFLD", description: "Homeland Infrastructure Foundation-Level Data — electric service territory boundaries and 52,000+ transmission line segments" },
-  { name: "DOE AFDC", description: "Alternative Fuels Data Center — 70,000+ US EV charging stations with network, connector, and access data. Updated weekly." },
+  { name: "DOE AFDC", description: "Alternative Fuels Data Center — 85,000+ US EV charging stations with network, connector, and access data. Updated weekly." },
   { name: "CEC", description: "California Energy Commission — CCA territory data and California-specific utility information" },
   { name: "FERC", description: "Federal Energy Regulatory Commission — ISO/RTO boundaries and wholesale market data" },
   { name: "State PUC Records", description: "State Public Utility Commission filings — rate structures and regulatory data" },
@@ -17,7 +17,7 @@ const dataHighlights = [
   { label: "Grid Operators", value: "3,132", icon: "⚡" },
   { label: "Power Plants", value: "15,082", icon: "🏭" },
   { label: "Transmission Lines", value: "52,000+", icon: "🔌" },
-  { label: "EV Charging Stations", value: "70,000+", icon: "🔋" },
+  { label: "EV Charging Stations", value: "85,425", icon: "🔋" },
   { label: "Territory Boundaries", value: "3,000+ GeoJSON", icon: "🗺️" },
 ];
 
