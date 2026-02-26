@@ -11,6 +11,8 @@ const POWER_PLANT_COUNT = 15082;
 const TRANSMISSION_LINE_COUNT = 52244;
 // EV charging station count is hardcoded for the same reason. Updated by sync-ev-charging script.
 const EV_STATION_COUNT = 85425;
+// Pricing node count — updated by sync-pricing-nodes script.
+const pricingNodeCount = 4065;
 const RATE_SCHEDULE_COUNT = "~12k";
 const TERRITORY_COUNT = 4841;
 
@@ -110,6 +112,18 @@ const ENTITY_CARDS = [
       "85,000+ EV charging stations across the U.S. from the DOE AFDC — ChargePoint, Tesla, Electrify America, and more.",
     countKey: "evStations" as const,
     countLabel: "stations",
+  },
+  {
+    id: "pricing-nodes",
+    href: "/pricing-nodes",
+    iconBg: "bg-yellow-50",
+    iconColor: "text-yellow-600",
+    iconName: "Lightning" as const,
+    title: "Pricing Nodes",
+    description:
+      "Wholesale electricity market nodes — trading hubs, load zones, SUBLAPs, and generation pricing points across 7 ISOs/RTOs.",
+    countKey: "pricingNodes" as const,
+    countLabel: "nodes",
   },
 ];
 
@@ -235,6 +249,7 @@ export default function LandingPage() {
     powerPlants: POWER_PLANT_COUNT.toLocaleString(),
     transmissionLines: TRANSMISSION_LINE_COUNT.toLocaleString(),
     evStations: EV_STATION_COUNT.toLocaleString(),
+    pricingNodes: pricingNodeCount.toLocaleString(),
   };
 
   return (

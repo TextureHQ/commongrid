@@ -44,6 +44,22 @@ function getEvChargingTileUrl() {
   return `${origin}/api/tiles/ev-charging/{z}/{x}/{y}`;
 }
 
+function getPricingNodesTileUrl() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/api/tiles/pricing-nodes/{z}/{x}/{y}`;
+}
+
+// Pricing node ISO color mapping
+const pricingNodeIsoColorMapping: Record<string, { hex: string }> = {
+  "CAISO": { hex: "#eab308" },   // gold
+  "PJM": { hex: "#3b82f6" },     // blue
+  "ERCOT": { hex: "#ef4444" },   // red
+  "MISO": { hex: "#22c55e" },    // green
+  "NYISO": { hex: "#8b5cf6" },   // purple
+  "ISONE": { hex: "#14b8a6" },   // teal
+  "SPP": { hex: "#f97316" },     // orange
+};
+
 // Color by voltage class
 const voltageClassColorMapping = {
   "extra-high": { hex: "#ef4444" }, // 345kV+ — red
@@ -504,6 +520,49 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
           onClick: (feature: LayerFeature) => {
             const slug = feature.properties.slug;
             if (slug) router.push(`/ev-charging/${slug}`);
+          },
+        },
+      })
+    );
+
+    // Pricing nodes — hubs/zones visible from zoom 3+, gen nodes from zoom 7+.
+    // Color-coded by ISO/RTO. Hubs and zones are larger circles.
+    result.push(
+      layer.vector({
+        id: "pricing-nodes",
+        tileset: getPricingNodesTileUrl(),
+        sourceLayer: "pricing-nodes",
+        renderAs: "circle",
+        minZoom: 3,
+        style: {
+          color: { by: "iso", mapping: pricingNodeIsoColorMapping },
+          radius: 3,
+          borderWidth: 1,
+          borderColor: { hex: "#ffffff" },
+          fillOpacity: 0.8,
+        },
+        tooltip: {
+          trigger: "hover",
+          content: (feature: LayerFeature) => {
+            const nodeTypeLabels: Record<string, string> = {
+              gen: "Generation", load: "Load", hub: "Trading Hub",
+              zone: "Load Zone", sublap: "Sub-LAP", lap: "LAP", interface: "Interface", bus: "Bus",
+            };
+            return (
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium text-sm">{feature.properties.name}</span>
+                <span className="text-xs text-gray-500">
+                  {feature.properties.iso} · {nodeTypeLabels[feature.properties.nodeType] ?? feature.properties.nodeType}
+                  {feature.properties.zone ? ` · ${feature.properties.zone}` : ""}
+                </span>
+              </div>
+            );
+          },
+        },
+        events: {
+          onClick: (feature: LayerFeature) => {
+            const slug = feature.properties.slug;
+            if (slug) router.push(`/pricing-nodes/${slug}`);
           },
         },
       })
