@@ -19,6 +19,9 @@ html, body {
 .theme-dark {
   --color-background-surface: #141414;
   --color-border-default: #2a2a2a;
+  /* Blue-400 — 7.25:1 contrast on #141414, passes WCAG AA */
+  --color-brand-primary: #60a5fa;
+  --color-brand-dark: #93c5fd;
 }
 
 @layer utilities {
