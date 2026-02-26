@@ -9,6 +9,8 @@ const dataSources = [
   { name: "HIFLD", description: "Homeland Infrastructure Foundation-Level Data — electric service territory boundaries and 52,000+ transmission line segments" },
   { name: "DOE AFDC", description: "Alternative Fuels Data Center — 85,000+ US EV charging stations with network, connector, and access data. Updated weekly." },
   { name: "CEC", description: "California Energy Commission — CCA territory data and California-specific utility information" },
+  { name: "CAISO OASIS", description: "California ISO Open Access Same-time Information System — pricing node definitions and wholesale market reference data" },
+  { name: "ISO/RTO Public Data", description: "Public pricing node, zone, and hub data from CAISO, PJM, ERCOT, MISO, NYISO, ISO-NE, and SPP" },
   { name: "FERC", description: "Federal Energy Regulatory Commission — ISO/RTO boundaries and wholesale market data" },
   { name: "State PUC Records", description: "State Public Utility Commission filings — rate structures and regulatory data" },
 ];
@@ -18,6 +20,7 @@ const dataHighlights = [
   { label: "Power Plants", value: "15,082", icon: "🏭" },
   { label: "Transmission Lines", value: "52,000+", icon: "🔌" },
   { label: "EV Charging Stations", value: "85,425", icon: "🔋" },
+  { label: "Pricing Nodes", value: "4,065", icon: "💰" },
   { label: "Territory Boundaries", value: "3,000+ GeoJSON", icon: "🗺️" },
 ];
 

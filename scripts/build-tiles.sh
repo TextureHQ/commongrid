@@ -95,11 +95,37 @@ else
 fi
 
 echo ""
-echo "=== Step 9: Cleanup temp files ==="
+echo "=== Step 9: Prepare pricing nodes GeoJSON ==="
+if [ -f "$ROOT_DIR/data/pricing-nodes.json" ]; then
+  node "$SCRIPT_DIR/prepare-pricing-nodes-geojson.mjs"
+else
+  echo "⚠️  No pricing-nodes.json found — skipping pricing node tile generation."
+fi
+
+echo ""
+echo "=== Step 10: Generate pricing node tiles with tippecanoe ==="
+if [ -f "$ROOT_DIR/.tmp-pricing-nodes.geojson" ]; then
+  tippecanoe \
+    --output="$OUT_DIR/pricing-nodes.pmtiles" \
+    --force \
+    --name="OpenGrid Pricing Nodes" \
+    --layer=pricing-nodes \
+    --minimum-zoom=0 \
+    --maximum-zoom=12 \
+    --drop-densest-as-needed \
+    --extend-zooms-if-still-dropping \
+    "$ROOT_DIR/.tmp-pricing-nodes.geojson"
+else
+  echo "⚠️  No pricing node GeoJSON found — skipping tile generation."
+fi
+
+echo ""
+echo "=== Step 11: Cleanup temp files ==="
 rm -f "$ROOT_DIR/.tmp-territories.geojson" \
       "$ROOT_DIR/.tmp-power-plants.geojson" \
       "$ROOT_DIR/.tmp-transmission-lines.geojson" \
-      "$ROOT_DIR/.tmp-ev-charging.geojson"
+      "$ROOT_DIR/.tmp-ev-charging.geojson" \
+      "$ROOT_DIR/.tmp-pricing-nodes.geojson"
 
 echo ""
 echo "=== Results ==="
@@ -113,6 +139,10 @@ if [ -f "$OUT_DIR/transmission-lines.pmtiles" ]; then
 fi
 if [ -f "$OUT_DIR/ev-charging.pmtiles" ]; then
   pmtiles show "$OUT_DIR/ev-charging.pmtiles"
+  echo ""
+fi
+if [ -f "$OUT_DIR/pricing-nodes.pmtiles" ]; then
+  pmtiles show "$OUT_DIR/pricing-nodes.pmtiles"
   echo ""
 fi
 ls -lh "$OUT_DIR"/*.pmtiles

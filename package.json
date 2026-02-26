@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/copy-territories.mjs && node scripts/copy-power-plants.mjs && node scripts/copy-transmission-lines.mjs && node scripts/copy-ev-charging.mjs",
+    "prebuild": "node scripts/copy-territories.mjs && node scripts/copy-power-plants.mjs && node scripts/copy-transmission-lines.mjs && node scripts/copy-ev-charging.mjs && node scripts/copy-pricing-nodes.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "sync:power-plants": "tsx scripts/sync-power-plants.ts",
     "sync:transmission-lines": "tsx scripts/sync-transmission-lines.ts",
-    "sync:ev-charging": "tsx scripts/sync-ev-charging.ts"
+    "sync:ev-charging": "tsx scripts/sync-ev-charging.ts",
+    "sync:pricing-nodes": "tsx scripts/sync-pricing-nodes.ts"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.5",

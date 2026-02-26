@@ -100,6 +100,20 @@
 | **License** | Public domain |
 | **How We Get It** | `sync:arcgis`, `sync:cca`, `sync:ba` |
 
+### 6. Pricing Nodes
+
+| Field | Value |
+|-------|-------|
+| **Description** | Wholesale electricity market pricing nodes across all 7 US ISOs/RTOs. Includes trading hubs, load zones, SUBLAPs (CAISO), LAPs, and generation pricing nodes. Generation nodes are cross-referenced from EIA-860 power plant data for geographic coordinates. |
+| **Record Count** | ~4,065 nodes |
+| **Schema** | `id`, `slug`, `name`, `iso` (CAISO/PJM/ERCOT/MISO/NYISO/ISONE/SPP), `nodeType` (hub/zone/sublap/lap/gen/load/interface/bus), `latitude`, `longitude`, `zone`, `state`, `voltageKv`, `eiaPlantCode`, `source` |
+| **Source** | CAISO OASIS (node names, SUBLAPs, hubs), EIA-860 (generation node coordinates), ISO public reference data (zones, hubs) |
+| **Format** | JSON (`data/pricing-nodes.json`), PMTiles (`public/tiles/pricing-nodes.pmtiles`) |
+| **Coverage** | Continental US (all 7 ISOs/RTOs) |
+| **Update Frequency** | Monthly (via sync script; power plant data changes annually) |
+| **License** | Public domain (US government data) + ISO public reference data |
+| **How We Get It** | `sync:pricing-nodes` script fetches CAISO pnode data, cross-references with EIA-860 plants, and adds curated hub/zone/SUBLAP centroids |
+
 ### Data Sources Currently In Use
 
 | Source | URL | What We Use It For |
@@ -108,6 +122,8 @@
 | **HIFLD Electric Retail Service Territories** | https://hifld-geoplatform.opendata.arcgis.com/datasets/electric-retail-service-territories | Utility service territory boundary polygons |
 | **HIFLD Control Areas** | https://hifld-geoplatform.opendata.arcgis.com/datasets/electric-planning-areas | Balancing authority control area boundaries |
 | **CEC Load Serving Entities (ArcGIS)** | https://cecgis-caenergy.opendata.arcgis.com/ | California CCA territory boundaries |
+| **CAISO OASIS API** | http://oasis.caiso.com/ | Pricing node definitions, trading hubs, SUBLAPs |
+| **ISO/RTO Public Reference Data** | Various (see Grid Operations section) | Load zone and trading hub definitions for PJM, ERCOT, MISO, NYISO, ISO-NE, SPP |
 | **Notion Knowledge Base** | Internal | Curated utility/ISO metadata, logos, websites, relationships |
 
 ---
@@ -809,7 +825,7 @@ Each ISO/RTO publishes its own market and operational data. These are the author
 
 | Gap | Why It Matters | Current State | Potential Approaches |
 |-----|---------------|---------------|---------------------|
-| **Wholesale market pricing nodes / LMP maps** (static reference data) | Mapping LMP pricing nodes to geographic locations enables spatial market analysis | ISO OASIS systems have this but it's not standardized across ISOs. The underlying node geography varies by ISO. | Scrape LMP data directly from ISO OASIS portals; build node-to-geography mapping from individual ISO GIS files. CAISO, PJM, and MISO publish node location files. |
+| **Wholesale market pricing nodes / LMP maps** (static reference data) | Mapping LMP pricing nodes to geographic locations enables spatial market analysis | ✅ **Partially addressed** — `/pricing-nodes` dataset provides 4,065 nodes across all 7 ISOs, with trading hubs, load zones, SUBLAPs, and generation nodes cross-referenced with EIA-860 coordinates. Full pnode lists (e.g., CAISO's 21k+ nodes) available via OASIS but most lack individual coordinates. | Expand by scraping more ISO-specific node-to-geography mappings; PJM and MISO may publish GIS files for nodes. Match remaining CAISO pnodes to substations via HIFLD or OSM data. |
 | **Grid congestion / curtailment data** | Understanding where and when the grid is constrained affects renewable integration and investment decisions | Some ISOs publish congestion reports. CAISO publishes curtailment data. Not standardized. | Scrape ISO-specific congestion/curtailment reports. CAISO: https://www.caiso.com/informed/Pages/ManagingOversupply.aspx |
 | **Planned transmission projects** | Future grid topology affects everything from generation siting to market dynamics | FERC Form 715 has some data. Regional planning organizations publish plans. Not in a single standardized dataset. | Compile from ISO regional transmission plans (CAISO TPP, PJM RTEP, MISO MTEP, etc.). |
 | **Behind-the-meter solar/storage** (installation-level) | Significant and growing share of capacity is invisible to grid operators | LBNL Tracking the Sun covers distributed solar in ~30 states. No national comprehensive DER registry exists. EIA-861 net metering data is aggregate only. | Combine LBNL Tracking the Sun + state interconnection data (CA NEM, NY, etc.) + Census ACS data for estimation. Some states have DER registries. |
