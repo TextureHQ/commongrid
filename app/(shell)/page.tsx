@@ -210,6 +210,7 @@ export default function LandingPage() {
   const rtoCount = getAllRtos().length;
   const baCount = getAllBalancingAuthorities().length;
   const programCount = getAllPrograms().length;
+<<<<<<< HEAD
   const gridOperatorCount = isoCount + rtoCount + baCount;
 
   const counts: Record<string, string> = {
@@ -220,7 +221,17 @@ export default function LandingPage() {
     rates: RATE_SCHEDULE_COUNT,
     powerPlants: POWER_PLANT_COUNT.toLocaleString(),
     transmissionLines: TRANSMISSION_LINE_COUNT.toLocaleString(),
+    evStations: EV_STATION_COUNT.toLocaleString(),
   };
+=======
+  // Power plant count is hardcoded to avoid importing the 8.7 MB JSON
+  // into the pre-rendered page. Updated by sync-power-plants script.
+  const powerPlantCount = 15082;
+  // Transmission line count is hardcoded for the same reason. Updated by sync-transmission-lines script.
+  const transmissionLineCount = 52244;
+  // EV charging station count is hardcoded for the same reason. Updated by sync-ev-charging script.
+  const evStationCount = 70000;
+>>>>>>> 1b29d58 (feat: add AFDC EV charging infrastructure dataset)
 
   return (
     <div className="h-full overflow-y-auto bg-[var(--color-background-subtle)]">
@@ -271,6 +282,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+<<<<<<< HEAD
       {/* ── Stats bar ────────────────────────────────────── */}
       <div className="px-6 -mt-0.5">
         <div className="max-w-2xl mx-auto">
@@ -351,10 +363,32 @@ export default function LandingPage() {
                 </Card.Content>
               </Card>
             </Link>
+=======
+      {/* Stats */}
+      <section className="px-6 pb-12 sm:pb-16 max-w-3xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            { label: "Utilities", value: utilityCount.toLocaleString() },
+            { label: "Territories", value: "3,000+" },
+            { label: "ISOs & RTOs", value: `${isoCount + rtoCount}` },
+            { label: "Balancing Authorities", value: `${baCount}` },
+            { label: "Power Plants", value: powerPlantCount.toLocaleString() },
+            { label: "Transmission Lines", value: transmissionLineCount.toLocaleString() },
+            { label: "EV Charging Stations", value: `${evStationCount.toLocaleString()}+` },
+            { label: "Programs", value: programCount.toLocaleString() },
+          ].map((stat) => (
+            <Card key={stat.label} variant="outlined">
+              <Card.Content className="text-center py-4">
+                <div className="text-2xl font-bold text-text-heading">{stat.value}</div>
+                <div className="text-xs text-text-muted mt-1">{stat.label}</div>
+              </Card.Content>
+            </Card>
+>>>>>>> 1b29d58 (feat: add AFDC EV charging infrastructure dataset)
           ))}
         </div>
       </section>
 
+<<<<<<< HEAD
       {/* ── Recent Activity ──────────────────────────────── */}
       <section className="px-6 pb-20 max-w-5xl mx-auto">
         <div className="mb-8">
@@ -367,6 +401,100 @@ export default function LandingPage() {
           <p className="text-base text-text-muted max-w-lg">
             Every update is versioned, attributed, and synced from authoritative sources daily.
           </p>
+=======
+      {/* Browse sections */}
+      <section className="px-6 pb-16 sm:pb-24 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Link href="/grid-operators" className="block group">
+            <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
+              <Card.Content className="py-6">
+                <div className="text-lg font-semibold text-text-heading mb-1">Grid Operators</div>
+                <p className="text-sm text-text-muted mb-3">
+                  Browse {utilityCount.toLocaleString()} electric utilities — investor-owned, co-ops,
+                  municipal, and more — with service territory boundaries.
+                </p>
+                <span className="text-sm font-medium text-brand-primary">
+                  Browse grid operators &rarr;
+                </span>
+              </Card.Content>
+            </Card>
+          </Link>
+
+          <Link href="/explore?view=grid-operators" className="block group">
+            <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
+              <Card.Content className="py-6">
+                <div className="text-lg font-semibold text-text-heading mb-1">Grid Operators</div>
+                <p className="text-sm text-text-muted mb-3">
+                  Explore {isoCount} ISOs, {rtoCount} RTOs, and {baCount} Balancing Authorities
+                  that manage the electric grid.
+                </p>
+                <span className="text-sm font-medium text-brand-primary">
+                  Browse grid operators &rarr;
+                </span>
+              </Card.Content>
+            </Card>
+          </Link>
+
+          <Link href="/power-plants" className="block group">
+            <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
+              <Card.Content className="py-6">
+                <div className="text-lg font-semibold text-text-heading mb-1">Power Plants</div>
+                <p className="text-sm text-text-muted mb-3">
+                  Explore {powerPlantCount.toLocaleString()} power plants across the US — solar, wind,
+                  nuclear, natural gas, and more from the EIA-860 dataset.
+                </p>
+                <span className="text-sm font-medium text-brand-primary">
+                  Browse power plants &rarr;
+                </span>
+              </Card.Content>
+            </Card>
+          </Link>
+
+          <Link href="/transmission-lines" className="block group">
+            <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
+              <Card.Content className="py-6">
+                <div className="text-lg font-semibold text-text-heading mb-1">Transmission Lines</div>
+                <p className="text-sm text-text-muted mb-3">
+                  Explore {transmissionLineCount.toLocaleString()} high-voltage transmission lines (69kV–765kV)
+                  across the US from the HIFLD dataset.
+                </p>
+                <span className="text-sm font-medium text-brand-primary">
+                  Browse transmission lines &rarr;
+                </span>
+              </Card.Content>
+            </Card>
+          </Link>
+
+          <Link href="/ev-charging" className="block group">
+            <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
+              <Card.Content className="py-6">
+                <div className="text-lg font-semibold text-text-heading mb-1">EV Charging</div>
+                <p className="text-sm text-text-muted mb-3">
+                  Explore 70,000+ US EV charging stations from the DOE AFDC — ChargePoint, Tesla,
+                  Electrify America, EVgo, and more. Updated weekly.
+                </p>
+                <span className="text-sm font-medium text-brand-primary">
+                  Browse EV charging &rarr;
+                </span>
+              </Card.Content>
+            </Card>
+          </Link>
+
+          <Link href="/explore?view=programs" className="block group">
+            <Card variant="outlined" className="group-hover:border-brand-primary transition-colors h-full">
+              <Card.Content className="py-6">
+                <div className="text-lg font-semibold text-text-heading mb-1">Programs</div>
+                <p className="text-sm text-text-muted mb-3">
+                  Explore {programCount} energy programs — demand response, EV charging, smart thermostats, and more.
+                </p>
+                <span className="text-sm font-medium text-brand-primary">
+                  Browse programs &rarr;
+                </span>
+              </Card.Content>
+            </Card>
+          </Link>
+
+>>>>>>> 1b29d58 (feat: add AFDC EV charging infrastructure dataset)
         </div>
 
         <Card variant="outlined">

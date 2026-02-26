@@ -15,6 +15,9 @@ public/data/power-plants.json
 # Transmission lines JSON in public/ is copied from data/ at build time
 public/data/transmission-lines.json
 
+# EV charging JSON in public/ is copied from data/ at build time
+public/data/ev-charging.json
+
 # Transmission lines GeoJSON can be large (regenerate from sync script)
 data/transmission-lines.geojson
 
