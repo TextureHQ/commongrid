@@ -7,8 +7,15 @@ import {
   DataControls,
   DataTable,
   EmptyState,
+  FilterDialog,
+  type FacetConfig,
+  type FilterState,
+  addFilterCondition,
+  createEmptyFilter,
+  getFilterFields,
+  removeFilterCondition,
 } from "@texturehq/edges";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useExplorer } from "../ExplorerContext";
 import { getAllUtilities, searchEntities, sortByName } from "@/lib/data";
 import {
@@ -32,17 +39,93 @@ const sortOptions = [
   { id: "name:desc", label: "Name Z-A", value: "name:desc" },
 ];
 
-const segmentFilterOptions = [
-  { id: "all", label: "All Segments", value: "all" },
-  ...Object.values(UtilitySegment).map((seg) => ({
-    id: seg,
-    label: UtilitySegmentLabel[seg],
-    value: seg,
-  })),
+// All US state/territory codes present in the data
+const ALL_STATE_CODES = [
+  "AK","AL","AR","AZ","CA","CO","CT","DC","DE","FL","GA","HI",
+  "IA","ID","IL","IN","KS","KY","LA","MA","MD","ME","MI","MN",
+  "MO","MS","MT","NC","ND","NE","NH","NJ","NM","NV","NY","OH",
+  "OK","OR","PA","RI","SC","SD","TN","TX","UT","VA","VT","WA",
+  "WI","WV","WY",
 ];
 
+const FACET_CONFIGS: FacetConfig[] = [
+  {
+    field: "segment",
+    label: "Segment",
+    type: "string",
+    values: Object.values(UtilitySegment).map((seg) => ({
+      value: seg,
+      label: UtilitySegmentLabel[seg],
+    })),
+  },
+  {
+    field: "jurisdictions",
+    label: "Jurisdictions",
+    type: "string",
+    values: ALL_STATE_CODES.map((code) => ({ value: code, label: code })),
+    searchThreshold: 5,
+  },
+];
+
+/** Returns individual state codes from a comma-separated jurisdiction string */
+function parseJurisdictionStates(jurisdiction: string | null): string[] {
+  if (!jurisdiction) return [];
+  return jurisdiction.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+/** Extract selected string values for a field from FilterState */
+function getSelectedValues(filters: FilterState, field: string): string[] {
+  if (!filters) return [];
+  const values: string[] = [];
+  function traverse(f: FilterState) {
+    if (!f) return;
+    for (const condition of f.conditions) {
+      if ("conditions" in condition) {
+        traverse(condition);
+      } else if (condition.field === field && condition.operator === "in") {
+        if (Array.isArray(condition.value)) {
+          values.push(...condition.value.map(String));
+        }
+      }
+    }
+  }
+  traverse(filters);
+  return values;
+}
+
+/** Converts FilterState to the `jurisdictions: string[]` the context expects */
+function filtersToJurisdictions(filters: FilterState): string[] {
+  return getSelectedValues(filters, "jurisdictions");
+}
+
+/** Converts FilterState to the `segment: string` the context expects */
+function filtersToSegment(filters: FilterState): string {
+  const values = getSelectedValues(filters, "segment");
+  return values.length === 1 ? values[0] : "all";
+}
+
+/** Build a FilterState from segment + jurisdiction arrays */
+function buildFilterState(segment: string, jurisdictions: string[]): FilterState {
+  let filters = createEmptyFilter();
+  if (segment !== "all") {
+    filters = addFilterCondition(filters, { field: "segment", operator: "in", value: [segment] });
+  }
+  if (jurisdictions.length > 0) {
+    filters = addFilterCondition(filters, { field: "jurisdictions", operator: "in", value: jurisdictions });
+  }
+  return filters;
+}
+
 export function UtilityListPanel() {
-  const { state, setSearch, setSegment, navigateToDetail, navigateToLanding } = useExplorer();
+  const { state, setSearch, setSegment, setJurisdictions, navigateToDetail, navigateToLanding } = useExplorer();
+
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+
+  // Keep FilterDialog state in sync with ExplorerContext
+  const filterState = useMemo(
+    () => buildFilterState(state.segment, state.jurisdictions),
+    [state.segment, state.jurisdictions]
+  );
 
   const allUtilities = useMemo(() => getAllUtilities(), []);
 
@@ -54,9 +137,15 @@ export function UtilityListPanel() {
     if (state.segment !== "all") {
       result = result.filter((u) => u.segment === state.segment);
     }
+    if (state.jurisdictions.length > 0) {
+      result = result.filter((u) => {
+        const states = parseJurisdictionStates(u.jurisdiction);
+        return state.jurisdictions.some((j) => states.includes(j));
+      });
+    }
     result = sortByName(result, "asc");
     return result;
-  }, [allUtilities, state.q, state.segment]);
+  }, [allUtilities, state.q, state.segment, state.jurisdictions]);
 
   const rows: UtilityRow[] = useMemo(
     () =>
@@ -78,6 +167,52 @@ export function UtilityListPanel() {
     },
     [navigateToDetail]
   );
+
+  const handleApplyFilters = useCallback(
+    (newFilters: FilterState) => {
+      setSegment(filtersToSegment(newFilters));
+      setJurisdictions(filtersToJurisdictions(newFilters));
+    },
+    [setSegment, setJurisdictions]
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setSegment("all");
+    setJurisdictions([]);
+  }, [setSegment, setJurisdictions]);
+
+  // Active filter chips for DataControls
+  const activeFilters = useMemo(() => {
+    const chips: Array<{ id: string; label: string; value: string }> = [];
+    if (state.segment !== "all") {
+      chips.push({
+        id: "segment",
+        label: `Segment: ${UtilitySegmentLabel[state.segment as UtilitySegment] ?? state.segment}`,
+        value: state.segment,
+      });
+    }
+    if (state.jurisdictions.length > 0) {
+      chips.push({
+        id: "jurisdictions",
+        label:
+          state.jurisdictions.length === 1
+            ? `State: ${state.jurisdictions[0]}`
+            : `${state.jurisdictions.length} States`,
+        value: state.jurisdictions.join(","),
+      });
+    }
+    return chips;
+  }, [state.segment, state.jurisdictions]);
+
+  const handleRemoveFilter = useCallback(
+    (id: string) => {
+      if (id === "segment") setSegment("all");
+      if (id === "jurisdictions") setJurisdictions([]);
+    },
+    [setSegment, setJurisdictions]
+  );
+
+  const activeFilterCount = getFilterFields(filterState).length;
 
   const columns: Column<UtilityRow>[] = useMemo(
     () => [
@@ -140,19 +275,10 @@ export function UtilityListPanel() {
             options: sortOptions,
             onChange: () => {},
           }}
-          customControls={
-            <select
-              value={state.segment}
-              onChange={(e) => setSegment(e.target.value)}
-              className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-            >
-              {segmentFilterOptions.map((opt) => (
-                <option key={opt.id} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          }
+          filters={activeFilters}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAllFilters={handleClearFilters}
+          onManageFilters={() => setFilterDialogOpen(true)}
           sticky={true}
         />
       </div>
@@ -161,7 +287,7 @@ export function UtilityListPanel() {
           <EmptyState
             icon="Lightning"
             title="No utilities found"
-            description={state.q ? "Try adjusting your search criteria." : "No utilities in the dataset."}
+            description={state.q || activeFilterCount > 0 ? "Try adjusting your search or filters." : "No utilities match the selected filters."}
             fullHeight={true}
           />
         ) : (
@@ -176,6 +302,17 @@ export function UtilityListPanel() {
           />
         )}
       </div>
+
+      <FilterDialog
+        isOpen={filterDialogOpen}
+        onClose={() => setFilterDialogOpen(false)}
+        facetConfigs={FACET_CONFIGS}
+        currentFilters={filterState}
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
+        title="Filter Utilities"
+        resultCount={filtered.length}
+      />
     </div>
   );
 }

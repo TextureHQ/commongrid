@@ -30,6 +30,7 @@ export interface ExplorerState {
   q: string;
   segment: string;
   type: string;
+  jurisdictions: string[]; // selected state codes for multi-select jurisdiction filter
   // Map interaction
   highlightGeoJSON: FeatureCollection | null;
   hoveredSlug: string | null;
@@ -44,9 +45,10 @@ type ExplorerAction =
   | { type: "SET_SEARCH"; q: string }
   | { type: "SET_SEGMENT"; segment: string }
   | { type: "SET_TYPE"; typeFilter: string }
+  | { type: "SET_JURISDICTIONS"; jurisdictions: string[] }
   | { type: "SET_HIGHLIGHT"; geoJSON: FeatureCollection | null }
   | { type: "SET_HOVERED_SLUG"; slug: string | null }
-  | { type: "SYNC_FROM_URL"; mode: ViewMode; view: EntityView | null; slug: string | null; q: string; segment: string; typeFilter: string };
+  | { type: "SYNC_FROM_URL"; mode: ViewMode; view: EntityView | null; slug: string | null; q: string; segment: string; typeFilter: string; jurisdictions: string[] };
 
 interface ExplorerContextValue {
   state: ExplorerState;
@@ -56,6 +58,7 @@ interface ExplorerContextValue {
   setSearch: (q: string) => void;
   setSegment: (segment: string) => void;
   setTypeFilter: (type: string) => void;
+  setJurisdictions: (jurisdictions: string[]) => void;
   setHighlight: (geoJSON: FeatureCollection | null) => void;
   setHoveredSlug: (slug: string | null) => void;
   goBack: () => void;
@@ -72,6 +75,7 @@ const initialState: ExplorerState = {
   q: "",
   segment: "all",
   type: "all",
+  jurisdictions: [],
   highlightGeoJSON: null,
   hoveredSlug: null,
   previousView: null,
@@ -88,6 +92,7 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
         q: "",
         segment: "all",
         type: "all",
+        jurisdictions: [],
         highlightGeoJSON: null,
         hoveredSlug: null,
         previousView: null,
@@ -123,6 +128,9 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
     case "SET_TYPE":
       return { ...state, type: action.typeFilter };
 
+    case "SET_JURISDICTIONS":
+      return { ...state, jurisdictions: action.jurisdictions };
+
     case "SET_HIGHLIGHT":
       return { ...state, highlightGeoJSON: action.geoJSON };
 
@@ -138,6 +146,7 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
         q: action.q,
         segment: action.segment,
         type: action.typeFilter,
+        jurisdictions: action.jurisdictions,
       };
 
     default:
@@ -156,6 +165,7 @@ function stateToSearchParams(state: ExplorerState): string {
   if (state.q) params.set("q", state.q);
   if (state.segment && state.segment !== "all") params.set("segment", state.segment);
   if (state.type && state.type !== "all") params.set("type", state.type);
+  if (state.jurisdictions && state.jurisdictions.length > 0) params.set("jurisdictions", state.jurisdictions.join(","));
   const str = params.toString();
   return str ? `/explore?${str}` : "/explore";
 }
@@ -200,6 +210,8 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     const qParam = searchParams.get("q") ?? "";
     const segmentParam = searchParams.get("segment") ?? "all";
     const typeParam = searchParams.get("type") ?? "all";
+    const jurisdictionsParam = searchParams.get("jurisdictions");
+    const jurisdictionsFromUrl = jurisdictionsParam ? jurisdictionsParam.split(",").filter(Boolean) : [];
 
     const { mode, view } = parseViewMode(viewParam);
 
@@ -210,7 +222,8 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       slugParam !== state.slug ||
       qParam !== state.q ||
       segmentParam !== state.segment ||
-      typeParam !== state.type
+      typeParam !== state.type ||
+      JSON.stringify(jurisdictionsFromUrl) !== JSON.stringify(state.jurisdictions)
     ) {
       isUrlSync.current = true;
       dispatch({
@@ -221,6 +234,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
         q: qParam,
         segment: segmentParam,
         typeFilter: typeParam,
+        jurisdictions: jurisdictionsFromUrl,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -235,7 +249,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     const url = stateToSearchParams(state);
     router.push(url, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.mode, state.view, state.slug, state.q, state.segment, state.type]);
+  }, [state.mode, state.view, state.slug, state.q, state.segment, state.type, state.jurisdictions]);
 
   const navigateToLanding = useCallback(() => dispatch({ type: "NAVIGATE_LANDING" }), []);
   const navigateToList = useCallback((view: ListView) => dispatch({ type: "NAVIGATE_LIST", view }), []);
@@ -246,6 +260,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   const setSearch = useCallback((q: string) => dispatch({ type: "SET_SEARCH", q }), []);
   const setSegment = useCallback((segment: string) => dispatch({ type: "SET_SEGMENT", segment }), []);
   const setTypeFilter = useCallback((type: string) => dispatch({ type: "SET_TYPE", typeFilter: type }), []);
+  const setJurisdictions = useCallback((jurisdictions: string[]) => dispatch({ type: "SET_JURISDICTIONS", jurisdictions }), []);
   const setHighlight = useCallback(
     (geoJSON: FeatureCollection | null) => dispatch({ type: "SET_HIGHLIGHT", geoJSON }),
     []
@@ -280,11 +295,12 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       setSearch,
       setSegment,
       setTypeFilter,
+      setJurisdictions,
       setHighlight,
       setHoveredSlug,
       goBack,
     }),
-    [state, navigateToLanding, navigateToList, navigateToDetail, setSearch, setSegment, setTypeFilter, setHighlight, setHoveredSlug, goBack]
+    [state, navigateToLanding, navigateToList, navigateToDetail, setSearch, setSegment, setTypeFilter, setJurisdictions, setHighlight, setHoveredSlug, goBack]
   );
 
   return <ExplorerCtx.Provider value={value}>{children}</ExplorerCtx.Provider>;

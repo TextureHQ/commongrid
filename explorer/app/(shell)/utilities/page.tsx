@@ -7,8 +7,15 @@ import {
   DataControls,
   DataTable,
   EmptyState,
+  FilterDialog,
   PageLayout,
   TextCell,
+  type FacetConfig,
+  type FilterState,
+  addFilterCondition,
+  createEmptyFilter,
+  getFilterFields,
+  removeFilterCondition,
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,20 +46,84 @@ const sortOptions = [
   { id: "name:desc", label: "Name Z-A", value: "name:desc" },
 ];
 
-const segmentFilterOptions = [
-  { id: "all", label: "All Segments", value: "all" },
-  ...Object.values(UtilitySegment).map((seg) => ({
-    id: seg,
-    label: UtilitySegmentLabel[seg],
-    value: seg,
-  })),
+// All US state/territory codes present in the data
+const ALL_STATE_CODES = [
+  "AK","AL","AR","AZ","CA","CO","CT","DC","DE","FL","GA","HI",
+  "IA","ID","IL","IN","KS","KY","LA","MA","MD","ME","MI","MN",
+  "MO","MS","MT","NC","ND","NE","NH","NJ","NM","NV","NY","OH",
+  "OK","OR","PA","RI","SC","SD","TN","TX","UT","VA","VT","WA",
+  "WI","WV","WY",
 ];
+
+const FACET_CONFIGS: FacetConfig[] = [
+  {
+    field: "segment",
+    label: "Segment",
+    type: "string",
+    values: Object.values(UtilitySegment).map((seg) => ({
+      value: seg,
+      label: UtilitySegmentLabel[seg],
+    })),
+  },
+  {
+    field: "jurisdictions",
+    label: "Jurisdictions",
+    type: "string",
+    values: ALL_STATE_CODES.map((code) => ({ value: code, label: code })),
+    searchThreshold: 5,
+  },
+];
+
+/** Returns individual state codes from a comma-separated jurisdiction string */
+function parseJurisdictionStates(jurisdiction: string | null): string[] {
+  if (!jurisdiction) return [];
+  return jurisdiction.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+/** Extract selected string values for a field from FilterState */
+function getSelectedValues(filters: FilterState, field: string): string[] {
+  if (!filters) return [];
+  const values: string[] = [];
+  function traverse(f: FilterState) {
+    if (!f) return;
+    for (const condition of f.conditions) {
+      if ("conditions" in condition) {
+        traverse(condition);
+      } else if (condition.field === field && condition.operator === "in") {
+        if (Array.isArray(condition.value)) {
+          values.push(...condition.value.map(String));
+        }
+      }
+    }
+  }
+  traverse(filters);
+  return values;
+}
+
+/** Build a FilterState from segment + jurisdiction arrays */
+function buildFilterState(segment: string, jurisdictions: string[]): FilterState {
+  let filters = createEmptyFilter();
+  if (segment !== "all") {
+    filters = addFilterCondition(filters, { field: "segment", operator: "in", value: [segment] });
+  }
+  if (jurisdictions.length > 0) {
+    filters = addFilterCondition(filters, { field: "jurisdictions", operator: "in", value: jurisdictions });
+  }
+  return filters;
+}
 
 export default function UtilitiesPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortValue, setSortValue] = useState("name:asc");
   const [segmentFilter, setSegmentFilter] = useState("all");
+  const [jurisdictions, setJurisdictions] = useState<string[]>([]);
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+
+  const filterState = useMemo(
+    () => buildFilterState(segmentFilter, jurisdictions),
+    [segmentFilter, jurisdictions]
+  );
 
   const allUtilities = useMemo(() => getAllUtilities(), []);
 
@@ -64,12 +135,18 @@ export default function UtilitiesPage() {
     if (segmentFilter !== "all") {
       result = result.filter((u) => u.segment === segmentFilter);
     }
+    if (jurisdictions.length > 0) {
+      result = result.filter((u) => {
+        const states = parseJurisdictionStates(u.jurisdiction);
+        return jurisdictions.some((j) => states.includes(j));
+      });
+    }
     const [field, direction] = sortValue.split(":");
     if (field === "name") {
       result = sortByName(result, direction as "asc" | "desc");
     }
     return result;
-  }, [allUtilities, searchQuery, segmentFilter, sortValue]);
+  }, [allUtilities, searchQuery, segmentFilter, jurisdictions, sortValue]);
 
   const rows: UtilityRow[] = useMemo(
     () =>
@@ -92,6 +169,44 @@ export default function UtilitiesPage() {
     },
     [router]
   );
+
+  const handleApplyFilters = useCallback((newFilters: FilterState) => {
+    const segmentValues = getSelectedValues(newFilters, "segment");
+    setSegmentFilter(segmentValues.length === 1 ? segmentValues[0] : "all");
+    setJurisdictions(getSelectedValues(newFilters, "jurisdictions"));
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setSegmentFilter("all");
+    setJurisdictions([]);
+  }, []);
+
+  // Active filter chips
+  const activeFilters = useMemo(() => {
+    const chips: Array<{ id: string; label: string; value: string }> = [];
+    if (segmentFilter !== "all") {
+      chips.push({
+        id: "segment",
+        label: `Segment: ${UtilitySegmentLabel[segmentFilter as UtilitySegment] ?? segmentFilter}`,
+        value: segmentFilter,
+      });
+    }
+    if (jurisdictions.length > 0) {
+      chips.push({
+        id: "jurisdictions",
+        label: jurisdictions.length === 1 ? `State: ${jurisdictions[0]}` : `${jurisdictions.length} States`,
+        value: jurisdictions.join(","),
+      });
+    }
+    return chips;
+  }, [segmentFilter, jurisdictions]);
+
+  const handleRemoveFilter = useCallback((id: string) => {
+    if (id === "segment") setSegmentFilter("all");
+    if (id === "jurisdictions") setJurisdictions([]);
+  }, []);
+
+  const activeFilterCount = getFilterFields(filterState).length;
 
   const columns: Column<UtilityRow>[] = useMemo(
     () => [
@@ -177,19 +292,10 @@ export default function UtilitiesPage() {
             options: sortOptions,
             onChange: setSortValue,
           }}
-          customControls={
-            <select
-              value={segmentFilter}
-              onChange={(e) => setSegmentFilter(e.target.value)}
-              className="h-8 rounded-md border border-border-default bg-background-surface px-2 text-sm text-text-body"
-            >
-              {segmentFilterOptions.map((opt) => (
-                <option key={opt.id} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          }
+          filters={activeFilters}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAllFilters={handleClearFilters}
+          onManageFilters={() => setFilterDialogOpen(true)}
           sticky={true}
         />
       </div>
@@ -198,7 +304,7 @@ export default function UtilitiesPage() {
           <EmptyState
             icon="Lightning"
             title="No utilities found"
-            description={searchQuery ? "Try adjusting your search criteria." : "No utilities in the dataset."}
+            description={searchQuery || activeFilterCount > 0 ? "Try adjusting your filters." : "No utilities in the dataset."}
             fullHeight={true}
           />
         ) : (
@@ -214,6 +320,17 @@ export default function UtilitiesPage() {
           />
         )}
       </div>
+
+      <FilterDialog
+        isOpen={filterDialogOpen}
+        onClose={() => setFilterDialogOpen(false)}
+        facetConfigs={FACET_CONFIGS}
+        currentFilters={filterState}
+        onApply={handleApplyFilters}
+        onClear={handleClearFilters}
+        title="Filter Utilities"
+        resultCount={filtered.length}
+      />
     </PageLayout>
   );
 }

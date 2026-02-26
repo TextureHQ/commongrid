@@ -16,9 +16,17 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx tsx scripts/sync-power-plants.ts
+      - name: Install tippecanoe
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libsqlite3-dev zlib1g-dev
+          git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
+          cd /tmp/tippecanoe && make -j$(nproc) && sudo make install
+      - name: Rebuild tiles
+        run: bash scripts/build-tiles.sh
       - name: Commit & push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/power-plants.json
+          git add data/power-plants.json public/tiles/*.pmtiles
           git diff --staged --quiet || (git commit -m "data: update power plants (EIA-860 annual)" && git push)

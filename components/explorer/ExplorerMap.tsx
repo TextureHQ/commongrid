@@ -11,7 +11,7 @@ import { computeViewStateFromGeoJSON } from "@/lib/geo";
 
 function getTileUrl() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}/tiles/{z}/{x}/{y}.pbf`;
+  return `${origin}/api/tiles/territories/{z}/{x}/{y}`;
 }
 
 const segmentColorMapping = {
@@ -31,8 +31,22 @@ const US_CENTER = { longitude: -98.58, latitude: 39.83, zoom: 4 };
 
 function getPowerPlantTileUrl() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}/tiles/power-plants/{z}/{x}/{y}.pbf`;
+  return `${origin}/api/tiles/power-plants/{z}/{x}/{y}`;
 }
+
+function getTransmissionTileUrl() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/api/tiles/transmission-lines/{z}/{x}/{y}`;
+}
+
+// Color by voltage class
+const voltageClassColorMapping = {
+  "extra-high": { hex: "#ef4444" }, // 345kV+ — red
+  "high":       { hex: "#f97316" }, // 230–344kV — orange
+  "medium":     { hex: "#22c55e" }, // 115–229kV — green
+  "sub-trans":  { hex: "#60a5fa" }, // 69–114kV — light blue
+  "unknown":    { hex: "#9ca3af" }, // unknown — gray
+};
 
 const fuelCategoryColorMapping = {
   Solar: { hex: "#eab308" },
@@ -155,7 +169,6 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const { state, navigateToDetail } = useExplorer();
   const router = useRouter();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
-  const [currentZoom, setCurrentZoom] = useState(US_CENTER.zoom);
 
   const isGridOperatorView = state.view === "grid-operators" || state.view === "iso" || state.view === "rto" || state.view === "ba";
   const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView);
@@ -173,14 +186,11 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const hasHighlight = !!state.highlightGeoJSON;
 
   // Trigger map resize after mount (fixes blank map on client-side navigation)
-  // Also track zoom level for the "zoom in" hint
   useEffect(() => {
     const timer = setTimeout(() => {
       const map = mapRef.current?.getMap?.();
       if (!map) return;
       map.resize();
-      const onZoom = () => setCurrentZoom(Math.floor(map.getZoom()));
-      map.on("zoomend", onZoom);
     }, 100);
     return () => clearTimeout(timer);
   }, []);
@@ -357,54 +367,21 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     const result: LayerSpec[] = [];
 
     if (!isGridOperatorView && !hasHighlight) {
-      // Utility territory tiles — zoom-gated for performance
-      // 2,905 polygon features. geojson-vt provides zoom-dependent simplification:
-      // rough shapes at low zoom, crisp detail at high zoom.
-      //
-      // Zoom 7-8: Large utilities only (>50k customers, ~355 features), fill-only
-      // Zoom 9+:  All territories with full boundary detail, fill-only
-      const largeFilter: any[] = [">", ["get", "customerCount"], 50000];
-      const largeFilterExpr = territoryFilter
-        ? ["all", largeFilter, ...(Array.isArray(territoryFilter) && territoryFilter[0] === "all" ? territoryFilter.slice(1) : [territoryFilter])]
-        : largeFilter;
-
+      // Utility territory tiles — single layer visible from zoom 0.
+      // tippecanoe handles zoom-dependent simplification and tiny polygon
+      // dropping at low zoom, so no client-side customerCount filtering needed.
+      // Opacity interpolates from 0.15 at z0 to 0.3 at z8+ so low-zoom
+      // coverage looks clean without being too heavy.
       result.push(
         layer.vector({
-          id: "territories-large",
+          id: "territories",
           tileset: getTileUrl(),
           sourceLayer: "territories",
           renderAs: "fill",
-          minZoom: 7,
-          maxZoom: 8,
-          filter: largeFilterExpr,
+          minZoom: 0,
           style: {
             color: { by: "segment", mapping: segmentColorMapping },
-            fillOpacity: 0.25,
-          },
-          tooltip: {
-            trigger: "hover",
-            content: (feature: LayerFeature) => (
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium text-sm">{feature.properties.name}</span>
-                <span className="text-xs text-gray-500">{getSegmentLabel(feature.properties.segment)}</span>
-              </div>
-            ),
-          },
-          events: { onClick: handleClick },
-        })
-      );
-
-      // All territories at zoom 9+, fill only
-      result.push(
-        layer.vector({
-          id: "territories-all",
-          tileset: getTileUrl(),
-          sourceLayer: "territories",
-          renderAs: "fill",
-          minZoom: 9,
-          style: {
-            color: { by: "segment", mapping: segmentColorMapping },
-            fillOpacity: 0.3,
+            fillOpacity: 0.2,
           },
           tooltip: {
             trigger: "hover",
@@ -420,13 +397,12 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         })
       );
     } else if (filteredGridBoundaryData && !hasHighlight) {
-      // Grid operator boundaries — zoom-gated for performance
+      // Grid operator boundaries — visible from zoom 0
       result.push(
         layer.geojson({
           id: "grid-boundaries",
           data: filteredGridBoundaryData.geojson,
           renderAs: "fill",
-          minZoom: 7,
           style: {
             color: { by: "colorKey", mapping: filteredGridBoundaryData.colorMapping },
             fillOpacity: 0.18,
@@ -444,16 +420,50 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
       );
     }
 
-    // Power plants — single layer at zoom 8+ (no maxZoom gap = no flashing)
-    // Points are lightweight; a single layer avoids the tile-loading race
-    // that caused plants to flash in/out during zoom transitions.
+    // Transmission lines — visible from zoom 3+.
+    // tippecanoe drops short segments at low zoom via --drop-lines-by-length,
+    // so high-voltage lines dominate at low zoom naturally.
+    result.push(
+      layer.vector({
+        id: "transmission-lines",
+        tileset: getTransmissionTileUrl(),
+        sourceLayer: "transmission-lines",
+        renderAs: "line",
+        minZoom: 3,
+        style: {
+          color: { by: "voltageClass", mapping: voltageClassColorMapping },
+          width: 1.5,
+          opacity: 0.75,
+        },
+        tooltip: {
+          trigger: "hover",
+          content: (feature: LayerFeature) => (
+            <div className="flex flex-col gap-0.5">
+              <span className="font-medium text-sm">
+                {feature.properties.owner || "Unknown Owner"}
+              </span>
+              <span className="text-xs text-gray-500">
+                {feature.properties.voltage != null
+                  ? `${feature.properties.voltage} kV`
+                  : "Voltage unknown"}
+                {feature.properties.status ? ` · ${feature.properties.status}` : ""}
+              </span>
+            </div>
+          ),
+        },
+      })
+    );
+
+    // Power plants — visible from zoom 5+.
+    // tippecanoe thins points at low zoom via --drop-densest-as-needed,
+    // so showing them earlier is safe without overwhelming the map.
     result.push(
       layer.vector({
         id: "power-plants",
         tileset: getPowerPlantTileUrl(),
         sourceLayer: "power-plants",
         renderAs: "circle",
-        minZoom: 8,
+        minZoom: 5,
         style: {
           color: { by: "fuelCategory", mapping: fuelCategoryColorMapping },
           radius: 4,
@@ -513,8 +523,6 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     );
   }
 
-  const showZoomHint = currentZoom < 7 && !hasHighlight;
-
   return (
     <div className="h-full w-full relative">
       <InteractiveMap
@@ -525,11 +533,6 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
         layers={layers}
       />
-      {showZoomHint && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background-surface/90 backdrop-blur-sm border border-border-default rounded-lg px-4 py-2 text-sm text-text-muted pointer-events-none shadow-sm">
-          Zoom in to explore utility territories and power plants
-        </div>
-      )}
     </div>
   );
 }
