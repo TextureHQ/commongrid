@@ -5,7 +5,10 @@ import Link from "next/link";
 import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms } from "@/lib/data";
 
 // Power plant count is hardcoded to avoid importing the 8.7 MB JSON into the pre-rendered page.
+// Updated by sync-power-plants script.
 const POWER_PLANT_COUNT = 15082;
+// Transmission line count is hardcoded for the same reason. Updated by sync-transmission-lines script.
+const TRANSMISSION_LINE_COUNT = 52244;
 const RATE_SCHEDULE_COUNT = "~12k";
 const TERRITORY_COUNT = 4841;
 
@@ -71,16 +74,28 @@ const ENTITY_CARDS = [
     countLabel: "rate schedules",
   },
   {
-    id: "infrastructure",
+    id: "power-plants",
     href: "/power-plants",
     iconBg: "bg-teal-50",
     iconColor: "text-teal-500",
     iconName: "Factory" as const,
-    title: "Infrastructure & Assets",
+    title: "Power Plants",
     description:
-      "Generation plants, substations, and transmission infrastructure. EIA Form 860 data, normalized and connected.",
+      "Solar, wind, nuclear, natural gas, and more — EIA Form 860 data normalized and connected to utilities and territories.",
     countKey: "powerPlants" as const,
-    countLabel: "facilities",
+    countLabel: "plants",
+  },
+  {
+    id: "transmission-lines",
+    href: "/transmission-lines",
+    iconBg: "bg-sky-50",
+    iconColor: "text-sky-500",
+    iconName: "CellTower" as const,
+    title: "Transmission Lines",
+    description:
+      "High-voltage transmission infrastructure (69kV–765kV) across the U.S. — HIFLD dataset, spatially queryable.",
+    countKey: "transmissionLines" as const,
+    countLabel: "lines",
   },
 ];
 
@@ -203,7 +218,8 @@ export default function LandingPage() {
     gridOperators: gridOperatorCount.toLocaleString(),
     programs: programCount.toLocaleString(),
     rates: RATE_SCHEDULE_COUNT,
-    powerPlants: `~${(POWER_PLANT_COUNT / 1000).toFixed(0)}k`,
+    powerPlants: POWER_PLANT_COUNT.toLocaleString(),
+    transmissionLines: TRANSMISSION_LINE_COUNT.toLocaleString(),
   };
 
   return (
