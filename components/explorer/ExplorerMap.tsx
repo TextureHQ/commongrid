@@ -39,6 +39,11 @@ function getTransmissionTileUrl() {
   return `${origin}/api/tiles/transmission-lines/{z}/{x}/{y}`;
 }
 
+function getEvChargingTileUrl() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/api/tiles/ev-charging/{z}/{x}/{y}`;
+}
+
 // Color by voltage class
 const voltageClassColorMapping = {
   "extra-high": { hex: "#ef4444" }, // 345kV+ — red
@@ -58,6 +63,16 @@ const fuelCategoryColorMapping = {
   "Battery Storage": { hex: "#8b5cf6" },
   Petroleum: { hex: "#f97316" },
   "Biomass/Other": { hex: "#22c55e" },
+};
+
+// EV network color mapping (top networks get distinct colors, rest gray)
+const evNetworkColorMapping: Record<string, { hex: string }> = {
+  "Tesla": { hex: "#cc0000" },
+  "ChargePoint Network": { hex: "#0070f3" },
+  "Electrify America": { hex: "#00a550" },
+  "EVgo Network": { hex: "#f97316" },
+  "Blink Network": { hex: "#8b5cf6" },
+  "Non-Networked": { hex: "#9ca3af" },
 };
 
 // hasMapboxToken is evaluated per-render based on the prop (see ExplorerMap component)
@@ -450,6 +465,46 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
               </span>
             </div>
           ),
+        },
+      })
+    );
+
+    // EV charging stations — visible from zoom 5+.
+    // tippecanoe thins points at low zoom via --drop-densest-as-needed.
+    // Colored by network; click navigates to station detail page.
+    result.push(
+      layer.vector({
+        id: "ev-charging",
+        tileset: getEvChargingTileUrl(),
+        sourceLayer: "ev-charging",
+        renderAs: "circle",
+        minZoom: 5,
+        style: {
+          color: { by: "network", mapping: evNetworkColorMapping },
+          radius: 4,
+          borderWidth: 1,
+          borderColor: { hex: "#ffffff" },
+          fillOpacity: 0.85,
+        },
+        tooltip: {
+          trigger: "hover",
+          content: (feature: LayerFeature) => (
+            <div className="flex flex-col gap-0.5">
+              <span className="font-medium text-sm">{feature.properties.name}</span>
+              <span className="text-xs text-gray-500">
+                {feature.properties.network || "Non-Networked"}
+                {feature.properties.dcFastCount > 0 ? ` · ${feature.properties.dcFastCount} DC Fast` : ""}
+                {feature.properties.level2Count > 0 ? ` · ${feature.properties.level2Count} L2` : ""}
+              </span>
+              <span className="text-xs text-gray-400 capitalize">{feature.properties.accessCode}</span>
+            </div>
+          ),
+        },
+        events: {
+          onClick: (feature: LayerFeature) => {
+            const slug = feature.properties.slug;
+            if (slug) router.push(`/ev-charging/${slug}`);
+          },
         },
       })
     );

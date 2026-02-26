@@ -9,6 +9,8 @@ import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, ge
 const POWER_PLANT_COUNT = 15082;
 // Transmission line count is hardcoded for the same reason. Updated by sync-transmission-lines script.
 const TRANSMISSION_LINE_COUNT = 52244;
+// EV charging station count is hardcoded for the same reason. Updated by sync-ev-charging script.
+const EV_STATION_COUNT = 85425;
 const RATE_SCHEDULE_COUNT = "~12k";
 const TERRITORY_COUNT = 4841;
 
@@ -96,6 +98,18 @@ const ENTITY_CARDS = [
       "High-voltage transmission infrastructure (69kV–765kV) across the U.S. — HIFLD dataset, spatially queryable.",
     countKey: "transmissionLines" as const,
     countLabel: "lines",
+  },
+  {
+    id: "ev-charging",
+    href: "/ev-charging",
+    iconBg: "bg-green-50",
+    iconColor: "text-green-500",
+    iconName: "Lightning" as const,
+    title: "EV Charging",
+    description:
+      "85,000+ EV charging stations across the U.S. from the DOE AFDC — ChargePoint, Tesla, Electrify America, and more.",
+    countKey: "evStations" as const,
+    countLabel: "stations",
   },
 ];
 
@@ -220,6 +234,7 @@ export default function LandingPage() {
     rates: RATE_SCHEDULE_COUNT,
     powerPlants: POWER_PLANT_COUNT.toLocaleString(),
     transmissionLines: TRANSMISSION_LINE_COUNT.toLocaleString(),
+    evStations: EV_STATION_COUNT.toLocaleString(),
   };
 
   return (

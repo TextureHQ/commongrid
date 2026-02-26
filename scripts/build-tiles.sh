@@ -65,16 +65,41 @@ if [ -f "$ROOT_DIR/.tmp-transmission-lines.geojson" ]; then
     --drop-smallest-as-needed \
     --extend-zooms-if-still-dropping \
     "$ROOT_DIR/.tmp-transmission-lines.geojson"
-
-  echo ""
-  echo "=== Step 7: Cleanup temp files ==="
-  rm -f "$ROOT_DIR/.tmp-territories.geojson" "$ROOT_DIR/.tmp-power-plants.geojson" "$ROOT_DIR/.tmp-transmission-lines.geojson"
 else
   echo "⚠️  No transmission line GeoJSON found — skipping tile generation."
-  echo ""
-  echo "=== Step 7: Cleanup temp files ==="
-  rm -f "$ROOT_DIR/.tmp-territories.geojson" "$ROOT_DIR/.tmp-power-plants.geojson"
 fi
+
+echo ""
+echo "=== Step 7: Prepare EV charging GeoJSON ==="
+if [ -f "$ROOT_DIR/data/ev-charging.json" ]; then
+  node "$SCRIPT_DIR/prepare-ev-charging-geojson.mjs"
+else
+  echo "⚠️  No ev-charging.json found — skipping EV charging tile generation."
+fi
+
+echo ""
+echo "=== Step 8: Generate EV charging tiles with tippecanoe ==="
+if [ -f "$ROOT_DIR/.tmp-ev-charging.geojson" ]; then
+  tippecanoe \
+    --output="$OUT_DIR/ev-charging.pmtiles" \
+    --force \
+    --name="OpenGrid EV Charging" \
+    --layer=ev-charging \
+    --minimum-zoom=0 \
+    --maximum-zoom=12 \
+    --drop-densest-as-needed \
+    --extend-zooms-if-still-dropping \
+    "$ROOT_DIR/.tmp-ev-charging.geojson"
+else
+  echo "⚠️  No EV charging GeoJSON found — skipping tile generation."
+fi
+
+echo ""
+echo "=== Step 9: Cleanup temp files ==="
+rm -f "$ROOT_DIR/.tmp-territories.geojson" \
+      "$ROOT_DIR/.tmp-power-plants.geojson" \
+      "$ROOT_DIR/.tmp-transmission-lines.geojson" \
+      "$ROOT_DIR/.tmp-ev-charging.geojson"
 
 echo ""
 echo "=== Results ==="
@@ -84,6 +109,10 @@ pmtiles show "$OUT_DIR/power-plants.pmtiles"
 echo ""
 if [ -f "$OUT_DIR/transmission-lines.pmtiles" ]; then
   pmtiles show "$OUT_DIR/transmission-lines.pmtiles"
+  echo ""
+fi
+if [ -f "$OUT_DIR/ev-charging.pmtiles" ]; then
+  pmtiles show "$OUT_DIR/ev-charging.pmtiles"
   echo ""
 fi
 ls -lh "$OUT_DIR"/*.pmtiles
