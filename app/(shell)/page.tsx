@@ -207,10 +207,10 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-[#F8F9FB]">
+    <div className="h-full overflow-y-auto bg-[var(--color-background-subtle)]">
 
       {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="border-b border-border-default px-6 pt-16 pb-14 sm:pt-20 sm:pb-16 text-center">
+      <section className="px-6 pt-16 pb-14 sm:pt-20 sm:pb-16 text-center">
         <div className="max-w-3xl mx-auto">
           {/* Badge */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-surface border border-border-default text-xs font-medium tracking-widest uppercase text-text-muted mb-8 shadow-sm">
@@ -237,7 +237,7 @@ export default function LandingPage() {
               <span className="flex-1 text-sm text-text-muted text-left">
                 Search utilities, programs, ISOs, territories...
               </span>
-              <kbd className="flex-none hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-border-default bg-[#F8F9FB] text-text-muted text-xs font-mono">
+              <kbd className="flex-none hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-xs font-mono">
                 ⌘K
               </kbd>
             </div>
