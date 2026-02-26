@@ -207,13 +207,13 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-background-body">
+    <div className="h-full overflow-y-auto bg-[#F8F9FB]">
 
       {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="bg-[#F8F9FB] border-b border-border-default px-6 pt-16 pb-14 sm:pt-20 sm:pb-16 text-center">
+      <section className="border-b border-border-default px-6 pt-16 pb-14 sm:pt-20 sm:pb-16 text-center">
         <div className="max-w-3xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-border-default text-xs font-medium tracking-widest uppercase text-text-muted mb-8 shadow-sm">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-surface border border-border-default text-xs font-medium tracking-widest uppercase text-text-muted mb-8 shadow-sm">
             <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
             Open Data Project · Updated Daily
           </div>
@@ -232,7 +232,7 @@ export default function LandingPage() {
 
           {/* Search */}
           <div className="max-w-lg mx-auto mb-7">
-            <div className="flex items-center gap-3 px-4 h-12 rounded-xl border border-border-default bg-white shadow-sm">
+            <div className="flex items-center gap-3 px-4 h-12 rounded-xl border border-border-default bg-background-surface shadow-sm">
               <Icon name="MagnifyingGlass" size={18} className="text-text-muted flex-none" />
               <span className="flex-1 text-sm text-text-muted text-left">
                 Search utilities, programs, ISOs, territories...
@@ -255,7 +255,7 @@ export default function LandingPage() {
               href="https://opengrid.texture.energy/api"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-default bg-white text-sm font-medium text-text-body hover:bg-[#F8F9FB] transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-default bg-background-surface text-sm font-medium text-text-body hover:opacity-80 transition-colors"
             >
               View API docs
             </a>

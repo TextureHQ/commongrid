@@ -38,7 +38,7 @@ export function TopBar({ navigation }: TopBarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-background-surface/95 backdrop-blur-sm border-b border-border-default">
+    <header className="sticky top-0 z-30 bg-[#F8F9FB]/95 backdrop-blur-sm border-b border-border-default">
       <div className="flex items-center justify-between h-16 px-5">
         <Link href="/" className="flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor" className="h-7 w-7 text-text-heading">
