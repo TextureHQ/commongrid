@@ -363,7 +363,7 @@ export default function LandingPage() {
             What's been updated
           </h2>
           <p className="text-base text-text-muted max-w-lg">
-            Changes are proposed, reviewed, and merged — every update is versioned and attributed.
+            Every update is versioned, attributed, and synced from authoritative sources daily.
           </p>
         </div>
 
