@@ -48,8 +48,33 @@ tippecanoe \
   "$ROOT_DIR/.tmp-power-plants.geojson"
 
 echo ""
-echo "=== Step 5: Cleanup temp files ==="
-rm -f "$ROOT_DIR/.tmp-territories.geojson" "$ROOT_DIR/.tmp-power-plants.geojson"
+echo "=== Step 5: Prepare transmission line GeoJSON ==="
+node "$SCRIPT_DIR/prepare-transmission-lines-geojson.mjs"
+
+echo ""
+echo "=== Step 6: Generate transmission line tiles with tippecanoe ==="
+if [ -f "$ROOT_DIR/.tmp-transmission-lines.geojson" ]; then
+  tippecanoe \
+    --output="$OUT_DIR/transmission-lines.pmtiles" \
+    --force \
+    --name="OpenGrid Transmission Lines" \
+    --layer=transmission-lines \
+    --minimum-zoom=0 \
+    --maximum-zoom=12 \
+    --simplify-only-low-zooms \
+    --drop-smallest-as-needed \
+    --extend-zooms-if-still-dropping \
+    "$ROOT_DIR/.tmp-transmission-lines.geojson"
+
+  echo ""
+  echo "=== Step 7: Cleanup temp files ==="
+  rm -f "$ROOT_DIR/.tmp-territories.geojson" "$ROOT_DIR/.tmp-power-plants.geojson" "$ROOT_DIR/.tmp-transmission-lines.geojson"
+else
+  echo "⚠️  No transmission line GeoJSON found — skipping tile generation."
+  echo ""
+  echo "=== Step 7: Cleanup temp files ==="
+  rm -f "$ROOT_DIR/.tmp-territories.geojson" "$ROOT_DIR/.tmp-power-plants.geojson"
+fi
 
 echo ""
 echo "=== Results ==="
@@ -57,6 +82,10 @@ pmtiles show "$OUT_DIR/territories.pmtiles"
 echo ""
 pmtiles show "$OUT_DIR/power-plants.pmtiles"
 echo ""
+if [ -f "$OUT_DIR/transmission-lines.pmtiles" ]; then
+  pmtiles show "$OUT_DIR/transmission-lines.pmtiles"
+  echo ""
+fi
 ls -lh "$OUT_DIR"/*.pmtiles
 echo ""
 echo "✅ Tile generation complete!"

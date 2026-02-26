@@ -6,7 +6,7 @@ import Link from "next/link";
 const dataSources = [
   { name: "EIA-860", description: "Annual Electric Generator Report — 15,082 power plants, generator details, fuel types, and capacity data" },
   { name: "EIA-861", description: "Annual electric power industry report — utility ownership, customers, sales, and revenue data" },
-  { name: "HIFLD", description: "Homeland Infrastructure Foundation-Level Data — electric service territory boundaries" },
+  { name: "HIFLD", description: "Homeland Infrastructure Foundation-Level Data — electric service territory boundaries and 52,000+ transmission line segments" },
   { name: "CEC", description: "California Energy Commission — CCA territory data and California-specific utility information" },
   { name: "FERC", description: "Federal Energy Regulatory Commission — ISO/RTO boundaries and wholesale market data" },
   { name: "State PUC Records", description: "State Public Utility Commission filings — rate structures and regulatory data" },
@@ -15,7 +15,7 @@ const dataSources = [
 const dataHighlights = [
   { label: "Grid Operators", value: "3,132", icon: "⚡" },
   { label: "Power Plants", value: "15,082", icon: "🏭" },
-  { label: "Grid Infrastructure", value: "ISOs, RTOs, BAs", icon: "🔌" },
+  { label: "Transmission Lines", value: "52,000+", icon: "🔌" },
   { label: "Territory Boundaries", value: "3,000+ GeoJSON", icon: "🗺️" },
 ];
 
@@ -64,6 +64,9 @@ export default function AboutPage() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/grid-operators">
               <Badge size="lg" shape="pill" variant="info">Browse Grid Operators →</Badge>
+            </Link>
+            <Link href="/transmission-lines">
+              <Badge size="lg" shape="pill" variant="error">Browse Transmission Lines →</Badge>
             </Link>
             <Link href="/power-plants">
               <Badge size="lg" shape="pill" variant="warning">Browse Power Plants →</Badge>

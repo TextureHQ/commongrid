@@ -12,6 +12,12 @@ public/data/territories/
 # Power plants JSON in public/ is copied from data/ at build time
 public/data/power-plants.json
 
+# Transmission lines JSON in public/ is copied from data/ at build time
+public/data/transmission-lines.json
+
+# Transmission lines GeoJSON can be large (regenerate from sync script)
+data/transmission-lines.geojson
+
 # PMTiles archives (built by scripts/build-tiles.sh via tippecanoe)
 # Track the .pmtiles files but ignore any extracted/legacy tile directories
 public/tiles/*

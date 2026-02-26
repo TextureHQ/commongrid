@@ -34,6 +34,20 @@ function getPowerPlantTileUrl() {
   return `${origin}/api/tiles/power-plants/{z}/{x}/{y}`;
 }
 
+function getTransmissionTileUrl() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/api/tiles/transmission-lines/{z}/{x}/{y}`;
+}
+
+// Color by voltage class
+const voltageClassColorMapping = {
+  "extra-high": { hex: "#ef4444" }, // 345kV+ — red
+  "high":       { hex: "#f97316" }, // 230–344kV — orange
+  "medium":     { hex: "#22c55e" }, // 115–229kV — green
+  "sub-trans":  { hex: "#60a5fa" }, // 69–114kV — light blue
+  "unknown":    { hex: "#9ca3af" }, // unknown — gray
+};
+
 const fuelCategoryColorMapping = {
   Solar: { hex: "#eab308" },
   "Natural Gas": { hex: "#3b82f6" },
@@ -405,6 +419,40 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         })
       );
     }
+
+    // Transmission lines — visible from zoom 3+.
+    // tippecanoe drops short segments at low zoom via --drop-lines-by-length,
+    // so high-voltage lines dominate at low zoom naturally.
+    result.push(
+      layer.vector({
+        id: "transmission-lines",
+        tileset: getTransmissionTileUrl(),
+        sourceLayer: "transmission-lines",
+        renderAs: "line",
+        minZoom: 3,
+        style: {
+          color: { by: "voltageClass", mapping: voltageClassColorMapping },
+          width: 1.5,
+          opacity: 0.75,
+        },
+        tooltip: {
+          trigger: "hover",
+          content: (feature: LayerFeature) => (
+            <div className="flex flex-col gap-0.5">
+              <span className="font-medium text-sm">
+                {feature.properties.owner || "Unknown Owner"}
+              </span>
+              <span className="text-xs text-gray-500">
+                {feature.properties.voltage != null
+                  ? `${feature.properties.voltage} kV`
+                  : "Voltage unknown"}
+                {feature.properties.status ? ` · ${feature.properties.status}` : ""}
+              </span>
+            </div>
+          ),
+        },
+      })
+    );
 
     // Power plants — visible from zoom 5+.
     // tippecanoe thins points at low zoom via --drop-densest-as-needed,
