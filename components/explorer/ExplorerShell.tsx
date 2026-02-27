@@ -45,14 +45,14 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
               minAsideWidth={420}
               minMainWidth={400}
             >
-              <SplitPane.Main>
-                <ExplorerMap mapboxAccessToken={mapboxAccessToken} />
-              </SplitPane.Main>
               <SplitPane.Aside>
-                <div className="h-full border-l border-border-default bg-background-surface">
+                <div className="h-full border-r border-border-default bg-background-surface">
                   <ExplorerPanel />
                 </div>
               </SplitPane.Aside>
+              <SplitPane.Main>
+                <ExplorerMap mapboxAccessToken={mapboxAccessToken} />
+              </SplitPane.Main>
             </SplitPane>
           )}
           {layout === "list" && (
