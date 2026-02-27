@@ -4,7 +4,7 @@ import { InteractiveMap, type LayerFeature, type LayerSpec, layer } from "@textu
 import type { FeatureCollection, Feature } from "geojson";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useExplorer } from "./ExplorerContext";
+import { useExplorer, type EntityTab } from "./ExplorerContext";
 import { getAllIsos, getAllBalancingAuthorities, getAllUtilities, searchEntities } from "@/lib/data";
 import { getSegmentLabel } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
@@ -90,8 +90,6 @@ const evNetworkColorMapping: Record<string, { hex: string }> = {
   "Blink Network": { hex: "#8b5cf6" },
   "Non-Networked": { hex: "#9ca3af" },
 };
-
-// hasMapboxToken is evaluated per-render based on the prop (see ExplorerMap component)
 
 // Distinct, high-contrast colors for operator boundaries
 const OPERATOR_PALETTE = [
@@ -190,14 +188,31 @@ function useGridOperatorBoundaries(isActive: boolean) {
   return data;
 }
 
-// Layers that can be toggled via the layers control
-// Key = layer id, value = whether it's currently visible
-const DEFAULT_TOGGLEABLE_LAYER_VISIBILITY: Record<string, boolean> = {
-  "transmission-lines": true,
-  "power-plants": true,
-  "ev-charging": false,
-  "pricing-nodes": false,
-};
+// ---------------------------------------------------------------------------
+// Tab-aware default layer visibility
+//
+// Rules:
+// - transmission-lines tab: transmission lines always rendered (not toggleable),
+//   power plants OFF by default
+// - power-plants tab: power plants always rendered (not toggleable),
+//   transmission lines OFF by default
+// - utilities tab: utility territory layer always rendered (not toggleable),
+//   transmission lines OFF, power plants OFF
+// - grid-operators tab: grid boundary always rendered (not toggleable),
+//   transmission lines OFF, power plants OFF
+// - programs tab: territories toggleable, transmission lines OFF, power plants OFF
+// ---------------------------------------------------------------------------
+
+function getDefaultLayerVisibilityForTab(tab: EntityTab): Record<string, boolean> {
+  return {
+    "transmission-lines": tab === "transmission-lines",
+    "power-plants": tab === "power-plants",
+    "ev-charging": false,
+    "pricing-nodes": false,
+    // utility-territories is only in the layers control on non-utilities, non-grid-operators tabs
+    "utility-territories": true,
+  };
+}
 
 interface ExplorerMapProps {
   mapboxAccessToken?: string;
@@ -209,9 +224,20 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const { state, navigateToDetail } = useExplorer();
   const router = useRouter();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
+
+  // Layer visibility — resets to tab defaults when tab changes
   const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>(
-    DEFAULT_TOGGLEABLE_LAYER_VISIBILITY
+    () => getDefaultLayerVisibilityForTab(state.tab)
   );
+  const prevTabRef = useRef<EntityTab>(state.tab);
+
+  useEffect(() => {
+    if (prevTabRef.current !== state.tab) {
+      prevTabRef.current = state.tab;
+      setLayerVisibility(getDefaultLayerVisibilityForTab(state.tab));
+    }
+  }, [state.tab]);
+
   const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
 
   const handleLayerToggle = useCallback((layerId: string) => {
@@ -414,13 +440,22 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const layers = useMemo(() => {
     const visible = layerVisibility;
     const result: LayerSpec[] = [];
+    const tab = state.tab;
+
+    // ---------------------------------------------------------------------------
+    // Base entity layer (territories or grid boundaries)
+    // ---------------------------------------------------------------------------
 
     if (!isGridOperatorView && !hasHighlight) {
-      // Utility territory tiles — single layer visible from zoom 0.
-      // tippecanoe handles zoom-dependent simplification and tiny polygon
-      // dropping at low zoom, so no client-side customerCount filtering needed.
-      // Opacity interpolates from 0.15 at z0 to 0.3 at z8+ so low-zoom
-      // coverage looks clean without being too heavy.
+      // On the utilities tab: territory layer is the primary data layer —
+      // always visible, NOT in the layers control (no toggle).
+      // On all other non-grid-operator tabs: territory layer is a background
+      // reference — always on but shown as a toggleable overlay.
+      const showTerritoriesAlwaysOn = tab === "utilities";
+      const territoriesVisible = showTerritoriesAlwaysOn
+        ? true
+        : visible["utility-territories"] !== false;
+
       result.push(
         layer.vector({
           id: "territories",
@@ -428,6 +463,17 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
           sourceLayer: "territories",
           renderAs: "fill",
           minZoom: 0,
+          visible: territoriesVisible,
+          ...(showTerritoriesAlwaysOn
+            ? {}
+            : {
+                legend: {
+                  label: "Utility Territories",
+                  swatch: "polygon",
+                  color: "#3b82f6",
+                  group: "Overlays",
+                },
+              }),
           style: {
             color: { by: "segment", mapping: segmentColorMapping },
             fillOpacity: 0.2,
@@ -446,7 +492,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         })
       );
     } else if (filteredGridBoundaryData && !hasHighlight) {
-      // Grid operator boundaries — visible from zoom 0
+      // Grid operator boundaries — always on, not in layers control
       result.push(
         layer.geojson({
           id: "grid-boundaries",
@@ -469,9 +515,16 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
       );
     }
 
-    // Transmission lines — visible from zoom 3+.
-    // tippecanoe drops short segments at low zoom via --drop-lines-by-length,
-    // so high-voltage lines dominate at low zoom naturally.
+    // ---------------------------------------------------------------------------
+    // Transmission lines
+    //
+    // - transmission-lines tab: always rendered, NOT in layers control
+    // - all other tabs: optional toggle, defaults OFF
+    // ---------------------------------------------------------------------------
+
+    const isTransmissionTab = tab === "transmission-lines";
+    const transmissionVisible = isTransmissionTab ? true : visible["transmission-lines"] === true;
+
     result.push(
       layer.vector({
         id: "transmission-lines",
@@ -479,13 +532,17 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         sourceLayer: "transmission-lines",
         renderAs: "line",
         minZoom: 3,
-        visible: visible["transmission-lines"] !== false,
-        legend: {
-          label: "Transmission Lines",
-          swatch: "line",
-          color: "#ef4444",
-          group: "Overlays",
-        },
+        visible: transmissionVisible,
+        ...(isTransmissionTab
+          ? {}
+          : {
+              legend: {
+                label: "Transmission Lines",
+                swatch: "line",
+                color: "#ef4444",
+                group: "Overlays",
+              },
+            }),
         style: {
           color: { by: "voltageClass", mapping: voltageClassColorMapping },
           width: 1.5,
@@ -510,9 +567,10 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
       })
     );
 
-    // EV charging stations — visible from zoom 5+.
-    // tippecanoe thins points at low zoom via --drop-densest-as-needed.
-    // Colored by network; click navigates to station detail page.
+    // ---------------------------------------------------------------------------
+    // EV charging stations — always optional toggle, defaults OFF
+    // ---------------------------------------------------------------------------
+
     result.push(
       layer.vector({
         id: "ev-charging",
@@ -557,8 +615,10 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
       })
     );
 
-    // Pricing nodes — hubs/zones visible from zoom 3+, gen nodes from zoom 7+.
-    // Color-coded by ISO/RTO. Hubs and zones are larger circles.
+    // ---------------------------------------------------------------------------
+    // Pricing nodes — always optional toggle, defaults OFF
+    // ---------------------------------------------------------------------------
+
     result.push(
       layer.vector({
         id: "pricing-nodes",
@@ -607,9 +667,16 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
       })
     );
 
-    // Power plants — visible from zoom 5+.
-    // tippecanoe thins points at low zoom via --drop-densest-as-needed,
-    // so showing them earlier is safe without overwhelming the map.
+    // ---------------------------------------------------------------------------
+    // Power plants
+    //
+    // - power-plants tab: always rendered, NOT in layers control
+    // - all other tabs: optional toggle, defaults OFF
+    // ---------------------------------------------------------------------------
+
+    const isPowerPlantsTab = tab === "power-plants";
+    const powerPlantsVisible = isPowerPlantsTab ? true : visible["power-plants"] === true;
+
     result.push(
       layer.vector({
         id: "power-plants",
@@ -617,13 +684,17 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         sourceLayer: "power-plants",
         renderAs: "circle",
         minZoom: 5,
-        visible: visible["power-plants"] !== false,
-        legend: {
-          label: "Power Plants",
-          swatch: "dot",
-          color: "#eab308",
-          group: "Overlays",
-        },
+        visible: powerPlantsVisible,
+        ...(isPowerPlantsTab
+          ? {}
+          : {
+              legend: {
+                label: "Power Plants",
+                swatch: "dot",
+                color: "#eab308",
+                group: "Overlays",
+              },
+            }),
         style: {
           color: { by: "fuelCategory", mapping: fuelCategoryColorMapping },
           radius: 4,
@@ -652,7 +723,10 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
       })
     );
 
+    // ---------------------------------------------------------------------------
     // Highlight layer for selected entity
+    // ---------------------------------------------------------------------------
+
     if (state.highlightGeoJSON) {
       result.push(
         layer.geojson({
@@ -670,7 +744,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     }
 
     return result;
-  }, [handleClick, router, state.highlightGeoJSON, isGridOperatorView, filteredGridBoundaryData, hasHighlight, territoryFilter, layerVisibility]);
+  }, [handleClick, router, state.highlightGeoJSON, state.tab, isGridOperatorView, filteredGridBoundaryData, hasHighlight, territoryFilter, layerVisibility]);
 
   if (!hasMapboxToken) {
     return (

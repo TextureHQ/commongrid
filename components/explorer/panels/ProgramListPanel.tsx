@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, DataControls, DataTable, EmptyState, type Column } from "@texturehq/edges";
+import { Badge, DataControls, DataTable, EmptyState, type Column, useTableExport } from "@texturehq/edges";
 import { useCallback, useMemo } from "react";
 import { useExplorer } from "../ExplorerContext";
 import { getAllPrograms, getAllUtilities, searchEntities, sortByName } from "@/lib/data";
@@ -76,6 +76,24 @@ export function ProgramListPanel() {
     },
     [navigateToDetail]
   );
+
+  const exportColumns: Column<ProgramRow>[] = useMemo(
+    () => [
+      { id: "name", label: "Program", accessor: "name" },
+      { id: "utilityName", label: "Utility", accessor: "utilityName" },
+      { id: "assetTypes", label: "Asset Types", accessor: "assetTypes" },
+      { id: "status", label: "Status", accessor: "status" },
+      { id: "compensationSummary", label: "Compensation", accessor: "compensationSummary" },
+      { id: "slug", label: "Slug", accessor: "slug" },
+    ],
+    []
+  );
+
+  const { exportCSV, canExport } = useTableExport({
+    columns: exportColumns,
+    data: filtered,
+    metadata: { filename: "opengrid-programs" },
+  });
 
   const columns: Column<ProgramRow>[] = useMemo(
     () => [
@@ -175,6 +193,18 @@ export function ProgramListPanel() {
               ))}
             </select>
           }
+          actions={{
+            items: [
+              {
+                id: "export-csv",
+                label: "Export CSV",
+                icon: "Export",
+                onClick: exportCSV,
+                disabled: !canExport,
+              },
+            ],
+            menuLabel: "Actions",
+          }}
           sticky={true}
         />
       </div>

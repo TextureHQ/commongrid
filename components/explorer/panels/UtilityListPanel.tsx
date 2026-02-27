@@ -14,6 +14,7 @@ import {
   createEmptyFilter,
   getFilterFields,
   removeFilterCondition,
+  useTableExport,
 } from "@texturehq/edges";
 import { useCallback, useMemo, useState } from "react";
 import { useExplorer } from "../ExplorerContext";
@@ -214,6 +215,24 @@ export function UtilityListPanel() {
 
   const activeFilterCount = getFilterFields(filterState).length;
 
+  const exportColumns: Column<UtilityRow>[] = useMemo(
+    () => [
+      { id: "name", label: "Name", accessor: "name" },
+      { id: "segment", label: "Segment", accessor: "segment" },
+      { id: "customerCount", label: "Customer Count", accessor: "customerCount" },
+      { id: "jurisdiction", label: "Jurisdiction", accessor: "jurisdiction" },
+      { id: "status", label: "Status", accessor: "status" },
+      { id: "slug", label: "Slug", accessor: "slug" },
+    ],
+    []
+  );
+
+  const { exportCSV, canExport } = useTableExport({
+    columns: exportColumns,
+    data: rows,
+    metadata: { filename: "opengrid-utilities" },
+  });
+
   const columns: Column<UtilityRow>[] = useMemo(
     () => [
       {
@@ -269,6 +288,18 @@ export function UtilityListPanel() {
           onRemoveFilter={handleRemoveFilter}
           onClearAllFilters={handleClearFilters}
           onManageFilters={() => setFilterDialogOpen(true)}
+          actions={{
+            items: [
+              {
+                id: "export-csv",
+                label: "Export CSV",
+                icon: "Export",
+                onClick: exportCSV,
+                disabled: !canExport,
+              },
+            ],
+            menuLabel: "Actions",
+          }}
           sticky={true}
         />
       </div>

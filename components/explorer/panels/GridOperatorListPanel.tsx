@@ -7,6 +7,7 @@ import {
   DataControls,
   DataTable,
   EmptyState,
+  useTableExport,
 } from "@texturehq/edges";
 import { useCallback, useMemo } from "react";
 import { useExplorer, type DetailView } from "../ExplorerContext";
@@ -117,6 +118,24 @@ export function GridOperatorListPanel() {
     [navigateToDetail]
   );
 
+  const exportColumns: Column<GridOperatorRow>[] = useMemo(
+    () => [
+      { id: "name", label: "Name", accessor: "name" },
+      { id: "shortName", label: "Short Name", accessor: "shortName" },
+      { id: "type", label: "Type", accessor: "type" },
+      { id: "states", label: "States", accessor: "states" },
+      { id: "website", label: "Website", accessor: "website" },
+      { id: "slug", label: "Slug", accessor: "slug" },
+    ],
+    []
+  );
+
+  const { exportCSV, canExport } = useTableExport({
+    columns: exportColumns,
+    data: filtered,
+    metadata: { filename: "opengrid-grid-operators" },
+  });
+
   const columns: Column<GridOperatorRow>[] = useMemo(
     () => [
       {
@@ -176,6 +195,18 @@ export function GridOperatorListPanel() {
               ))}
             </select>
           }
+          actions={{
+            items: [
+              {
+                id: "export-csv",
+                label: "Export CSV",
+                icon: "Export",
+                onClick: exportCSV,
+                disabled: !canExport,
+              },
+            ],
+            menuLabel: "Actions",
+          }}
           sticky={true}
         />
       </div>

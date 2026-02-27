@@ -7,6 +7,7 @@ import {
   DataTable,
   EmptyState,
   Loader,
+  useTableExport,
 } from "@texturehq/edges";
 import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -156,6 +157,25 @@ export function PowerPlantListPanel() {
     []
   );
 
+  const exportColumns: Column<PowerPlantRow>[] = useMemo(
+    () => [
+      { id: "name", label: "Name", accessor: "name" },
+      { id: "fuelCategory", label: "Fuel Category", accessor: "fuelCategory" },
+      { id: "totalCapacityMw", label: "Capacity (MW)", accessor: "totalCapacityMw" },
+      { id: "state", label: "State", accessor: "state" },
+      { id: "utilityName", label: "Utility", accessor: "utilityName" },
+      { id: "status", label: "Status", accessor: "status" },
+      { id: "slug", label: "Slug", accessor: "slug" },
+    ],
+    []
+  );
+
+  const { exportCSV, canExport } = useTableExport({
+    columns: exportColumns,
+    data: rows,
+    metadata: { filename: "opengrid-power-plants" },
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -188,6 +208,18 @@ export function PowerPlantListPanel() {
               ))}
             </select>
           }
+          actions={{
+            items: [
+              {
+                id: "export-csv",
+                label: "Export CSV",
+                icon: "Export",
+                onClick: exportCSV,
+                disabled: !canExport,
+              },
+            ],
+            menuLabel: "Actions",
+          }}
           sticky={true}
         />
       </div>

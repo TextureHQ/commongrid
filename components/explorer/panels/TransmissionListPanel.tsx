@@ -7,6 +7,7 @@ import {
   DataTable,
   EmptyState,
   Loader,
+  useTableExport,
 } from "@texturehq/edges";
 import { useMemo } from "react";
 import { useExplorer } from "../ExplorerContext";
@@ -184,6 +185,26 @@ export function TransmissionListPanel() {
     []
   );
 
+  const exportColumns: Column<TransmissionLineRow>[] = useMemo(
+    () => [
+      { id: "owner", label: "Owner", accessor: "owner" },
+      { id: "voltageClass", label: "Voltage Class", accessor: "voltageClass" },
+      { id: "voltage", label: "Voltage (kV)", accessor: "voltage" },
+      { id: "lengthMiles", label: "Length (mi)", accessor: "lengthMiles" },
+      { id: "status", label: "Status", accessor: "status" },
+      { id: "sub1", label: "Substation 1", accessor: "sub1" },
+      { id: "sub2", label: "Substation 2", accessor: "sub2" },
+      { id: "id", label: "ID", accessor: "id" },
+    ],
+    []
+  );
+
+  const { exportCSV, canExport } = useTableExport({
+    columns: exportColumns,
+    data: rows,
+    metadata: { filename: "opengrid-transmission-lines" },
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -216,6 +237,18 @@ export function TransmissionListPanel() {
               ))}
             </select>
           }
+          actions={{
+            items: [
+              {
+                id: "export-csv",
+                label: "Export CSV",
+                icon: "Export",
+                onClick: exportCSV,
+                disabled: !canExport,
+              },
+            ],
+            menuLabel: "Actions",
+          }}
           sticky={true}
         />
       </div>
