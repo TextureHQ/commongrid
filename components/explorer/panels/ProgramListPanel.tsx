@@ -37,7 +37,7 @@ function getPrimaryCompensationSummary(program: Program): string {
 }
 
 export function ProgramListPanel() {
-  const { state, setSearch, setTypeFilter, navigateToDetail, navigateToLanding } = useExplorer();
+  const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
 
   const utilities = useMemo(() => getAllUtilities(), []);
 
@@ -153,15 +153,8 @@ export function ProgramListPanel() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-none px-4 pt-4 pb-2">
-        <button
-          type="button"
-          onClick={navigateToLanding}
-          className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
-        >
-          &larr; Back
-        </button>
-        <h2 className="text-lg font-semibold text-text-heading">Programs</h2>
+      <div className="flex-none px-4 pt-3 pb-2">
+        <h2 className="text-base font-semibold text-text-heading">Programs</h2>
       </div>
       <div className="flex-none px-4">
         <DataControls

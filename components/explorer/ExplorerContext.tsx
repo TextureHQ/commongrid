@@ -17,14 +17,17 @@ import type { FeatureCollection } from "geojson";
 // Types
 // ---------------------------------------------------------------------------
 
+export type LayoutMode = "hybrid" | "list" | "map";
+export type EntityTab = "utilities" | "grid-operators" | "power-plants" | "programs" | "transmission-lines";
 export type ViewMode = "landing" | "list" | "detail";
-export type ListView = "utilities" | "grid-operators" | "programs";
 export type DetailView = "utility" | "iso" | "rto" | "ba" | "program";
-export type EntityView = ListView | DetailView;
+export type ListView = EntityTab;
+export type EntityView = EntityTab | DetailView;
 
 export interface ExplorerState {
+  layout: LayoutMode;
+  tab: EntityTab;
   mode: ViewMode;
-  view: EntityView | null;
   slug: string | null;
   // List filters (persisted in URL)
   q: string;
@@ -35,26 +38,35 @@ export interface ExplorerState {
   highlightGeoJSON: FeatureCollection | null;
   hoveredSlug: string | null;
   // Navigation history for back button
-  previousView: { view: EntityView | null; slug: string | null } | null;
+  previousView: { tab: EntityTab; slug: string | null } | null;
 }
 
 type ExplorerAction =
-  | { type: "NAVIGATE_LANDING" }
-  | { type: "NAVIGATE_LIST"; view: ListView }
+  | { type: "NAVIGATE_TAB"; tab: EntityTab }
   | { type: "NAVIGATE_DETAIL"; view: DetailView; slug: string }
+  | { type: "SET_LAYOUT"; layout: LayoutMode }
   | { type: "SET_SEARCH"; q: string }
   | { type: "SET_SEGMENT"; segment: string }
   | { type: "SET_TYPE"; typeFilter: string }
   | { type: "SET_JURISDICTIONS"; jurisdictions: string[] }
   | { type: "SET_HIGHLIGHT"; geoJSON: FeatureCollection | null }
   | { type: "SET_HOVERED_SLUG"; slug: string | null }
-  | { type: "SYNC_FROM_URL"; mode: ViewMode; view: EntityView | null; slug: string | null; q: string; segment: string; typeFilter: string; jurisdictions: string[] };
+  | {
+      type: "SYNC_FROM_URL";
+      layout: LayoutMode;
+      tab: EntityTab;
+      slug: string | null;
+      q: string;
+      segment: string;
+      typeFilter: string;
+      jurisdictions: string[];
+    };
 
 interface ExplorerContextValue {
   state: ExplorerState;
-  navigateToLanding: () => void;
-  navigateToList: (view: ListView) => void;
+  navigateToTab: (tab: EntityTab) => void;
   navigateToDetail: (view: DetailView, slug: string) => void;
+  setLayout: (layout: LayoutMode) => void;
   setSearch: (q: string) => void;
   setSegment: (segment: string) => void;
   setTypeFilter: (type: string) => void;
@@ -69,8 +81,9 @@ interface ExplorerContextValue {
 // ---------------------------------------------------------------------------
 
 const initialState: ExplorerState = {
+  layout: "hybrid",
+  tab: "utilities",
   mode: "list",
-  view: "utilities",
   slug: null,
   q: "",
   segment: "all",
@@ -83,11 +96,11 @@ const initialState: ExplorerState = {
 
 function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
   switch (action.type) {
-    case "NAVIGATE_LANDING":
+    case "NAVIGATE_TAB":
       return {
         ...state,
+        tab: action.tab,
         mode: "list",
-        view: "utilities",
         slug: null,
         q: "",
         segment: "all",
@@ -98,26 +111,17 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
         previousView: null,
       };
 
-    case "NAVIGATE_LIST":
-      return {
-        ...state,
-        mode: "list",
-        view: action.view,
-        slug: null,
-        highlightGeoJSON: null,
-        hoveredSlug: null,
-        previousView: { view: state.view, slug: state.slug },
-      };
-
     case "NAVIGATE_DETAIL":
       return {
         ...state,
         mode: "detail",
-        view: action.view,
         slug: action.slug,
         hoveredSlug: null,
-        previousView: { view: state.view, slug: state.slug },
+        previousView: { tab: state.tab, slug: state.slug },
       };
+
+    case "SET_LAYOUT":
+      return { ...state, layout: action.layout };
 
     case "SET_SEARCH":
       return { ...state, q: action.q };
@@ -140,13 +144,14 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
     case "SYNC_FROM_URL":
       return {
         ...state,
-        mode: action.mode,
-        view: action.view,
+        layout: action.layout,
+        tab: action.tab,
         slug: action.slug,
         q: action.q,
         segment: action.segment,
         type: action.typeFilter,
         jurisdictions: action.jurisdictions,
+        mode: action.slug ? "detail" : "list",
       };
 
     default:
@@ -160,25 +165,35 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
 
 function stateToSearchParams(state: ExplorerState): string {
   const params = new URLSearchParams();
-  if (state.view) params.set("view", state.view);
+  params.set("tab", state.tab);
+  if (state.layout !== "hybrid") params.set("layout", state.layout);
   if (state.slug) params.set("slug", state.slug);
   if (state.q) params.set("q", state.q);
   if (state.segment && state.segment !== "all") params.set("segment", state.segment);
   if (state.type && state.type !== "all") params.set("type", state.type);
-  if (state.jurisdictions && state.jurisdictions.length > 0) params.set("jurisdictions", state.jurisdictions.join(","));
+  if (state.jurisdictions && state.jurisdictions.length > 0)
+    params.set("jurisdictions", state.jurisdictions.join(","));
   const str = params.toString();
   return str ? `/explore?${str}` : "/explore";
 }
 
-function parseViewMode(view: string | null): { mode: ViewMode; view: EntityView | null } {
-  if (!view) return { mode: "list", view: "utilities" };
-  if (view === "utilities" || view === "grid-operators" || view === "programs") {
-    return { mode: "list", view };
-  }
-  if (view === "utility" || view === "iso" || view === "rto" || view === "ba" || view === "program") {
-    return { mode: "detail", view };
-  }
-  return { mode: "list", view: "utilities" };
+function parseTab(value: string | null): EntityTab {
+  const valid: EntityTab[] = [
+    "utilities",
+    "grid-operators",
+    "power-plants",
+    "programs",
+    "transmission-lines",
+  ];
+  // backwards-compat: old "view" param values that were list views
+  if (value === "grid-operators" || value === "programs") return value;
+  if (valid.includes(value as EntityTab)) return value as EntityTab;
+  return "utilities";
+}
+
+function parseLayout(value: string | null): LayoutMode {
+  if (value === "list" || value === "map" || value === "hybrid") return value;
+  return "hybrid";
 }
 
 // ---------------------------------------------------------------------------
@@ -205,20 +220,24 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
 
   // Sync state FROM URL on mount and on popstate (browser back/forward)
   useEffect(() => {
-    const viewParam = searchParams.get("view");
+    // Support old ?view= param for backwards compat
+    const tabParam = searchParams.get("tab") ?? searchParams.get("view");
     const slugParam = searchParams.get("slug");
+    const layoutParam = searchParams.get("layout");
     const qParam = searchParams.get("q") ?? "";
     const segmentParam = searchParams.get("segment") ?? "all";
     const typeParam = searchParams.get("type") ?? "all";
     const jurisdictionsParam = searchParams.get("jurisdictions");
-    const jurisdictionsFromUrl = jurisdictionsParam ? jurisdictionsParam.split(",").filter(Boolean) : [];
+    const jurisdictionsFromUrl = jurisdictionsParam
+      ? jurisdictionsParam.split(",").filter(Boolean)
+      : [];
 
-    const { mode, view } = parseViewMode(viewParam);
+    const tab = parseTab(tabParam);
+    const layout = parseLayout(layoutParam);
 
-    // Only sync if URL differs from current state
     if (
-      mode !== state.mode ||
-      view !== state.view ||
+      layout !== state.layout ||
+      tab !== state.tab ||
       slugParam !== state.slug ||
       qParam !== state.q ||
       segmentParam !== state.segment ||
@@ -228,8 +247,8 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       isUrlSync.current = true;
       dispatch({
         type: "SYNC_FROM_URL",
-        mode,
-        view,
+        layout,
+        tab,
         slug: slugParam,
         q: qParam,
         segment: segmentParam,
@@ -249,18 +268,33 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     const url = stateToSearchParams(state);
     router.push(url, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.mode, state.view, state.slug, state.q, state.segment, state.type, state.jurisdictions]);
+  }, [state.layout, state.tab, state.slug, state.q, state.segment, state.type, state.jurisdictions]);
 
-  const navigateToLanding = useCallback(() => dispatch({ type: "NAVIGATE_LANDING" }), []);
-  const navigateToList = useCallback((view: ListView) => dispatch({ type: "NAVIGATE_LIST", view }), []);
+  const navigateToTab = useCallback(
+    (tab: EntityTab) => dispatch({ type: "NAVIGATE_TAB", tab }),
+    []
+  );
   const navigateToDetail = useCallback(
     (view: DetailView, slug: string) => dispatch({ type: "NAVIGATE_DETAIL", view, slug }),
     []
   );
+  const setLayout = useCallback(
+    (layout: LayoutMode) => dispatch({ type: "SET_LAYOUT", layout }),
+    []
+  );
   const setSearch = useCallback((q: string) => dispatch({ type: "SET_SEARCH", q }), []);
-  const setSegment = useCallback((segment: string) => dispatch({ type: "SET_SEGMENT", segment }), []);
-  const setTypeFilter = useCallback((type: string) => dispatch({ type: "SET_TYPE", typeFilter: type }), []);
-  const setJurisdictions = useCallback((jurisdictions: string[]) => dispatch({ type: "SET_JURISDICTIONS", jurisdictions }), []);
+  const setSegment = useCallback(
+    (segment: string) => dispatch({ type: "SET_SEGMENT", segment }),
+    []
+  );
+  const setTypeFilter = useCallback(
+    (type: string) => dispatch({ type: "SET_TYPE", typeFilter: type }),
+    []
+  );
+  const setJurisdictions = useCallback(
+    (jurisdictions: string[]) => dispatch({ type: "SET_JURISDICTIONS", jurisdictions }),
+    []
+  );
   const setHighlight = useCallback(
     (geoJSON: FeatureCollection | null) => dispatch({ type: "SET_HIGHLIGHT", geoJSON }),
     []
@@ -272,26 +306,19 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
 
   const goBack = useCallback(() => {
     const prev = state.previousView;
-    if (!prev || !prev.view) {
-      dispatch({ type: "NAVIGATE_LANDING" });
+    if (!prev) {
+      dispatch({ type: "NAVIGATE_TAB", tab: state.tab });
       return;
     }
-    // If previous was a list view, navigate back to list
-    if (prev.view === "utilities" || prev.view === "grid-operators" || prev.view === "programs") {
-      dispatch({ type: "NAVIGATE_LIST", view: prev.view });
-    } else if (prev.slug) {
-      dispatch({ type: "NAVIGATE_DETAIL", view: prev.view, slug: prev.slug });
-    } else {
-      dispatch({ type: "NAVIGATE_LANDING" });
-    }
-  }, [state.previousView]);
+    dispatch({ type: "NAVIGATE_TAB", tab: prev.tab });
+  }, [state.previousView, state.tab]);
 
   const value = useMemo<ExplorerContextValue>(
     () => ({
       state,
-      navigateToLanding,
-      navigateToList,
+      navigateToTab,
       navigateToDetail,
+      setLayout,
       setSearch,
       setSegment,
       setTypeFilter,
@@ -300,7 +327,19 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       setHoveredSlug,
       goBack,
     }),
-    [state, navigateToLanding, navigateToList, navigateToDetail, setSearch, setSegment, setTypeFilter, setJurisdictions, setHighlight, setHoveredSlug, goBack]
+    [
+      state,
+      navigateToTab,
+      navigateToDetail,
+      setLayout,
+      setSearch,
+      setSegment,
+      setTypeFilter,
+      setJurisdictions,
+      setHighlight,
+      setHoveredSlug,
+      goBack,
+    ]
   );
 
   return <ExplorerCtx.Provider value={value}>{children}</ExplorerCtx.Provider>;

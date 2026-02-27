@@ -201,7 +201,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const router = useRouter();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
 
-  const isGridOperatorView = state.view === "grid-operators" || state.view === "iso" || state.view === "rto" || state.view === "ba";
+  const isGridOperatorView = state.tab === "grid-operators";
   const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView);
 
   const handleClick = useCallback(
