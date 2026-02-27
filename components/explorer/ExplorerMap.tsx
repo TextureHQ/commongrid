@@ -190,6 +190,15 @@ function useGridOperatorBoundaries(isActive: boolean) {
   return data;
 }
 
+// Layers that can be toggled via the layers control
+// Key = layer id, value = whether it's currently visible
+const DEFAULT_TOGGLEABLE_LAYER_VISIBILITY: Record<string, boolean> = {
+  "transmission-lines": true,
+  "power-plants": true,
+  "ev-charging": false,
+  "pricing-nodes": false,
+};
+
 interface ExplorerMapProps {
   mapboxAccessToken?: string;
 }
@@ -200,6 +209,14 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const { state, navigateToDetail } = useExplorer();
   const router = useRouter();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
+  const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>(
+    DEFAULT_TOGGLEABLE_LAYER_VISIBILITY
+  );
+  const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
+
+  const handleLayerToggle = useCallback((layerId: string) => {
+    setLayerVisibility((prev) => ({ ...prev, [layerId]: !prev[layerId] }));
+  }, []);
 
   const isGridOperatorView = state.tab === "grid-operators";
   const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView);
@@ -395,6 +412,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   }, [state.type, state.q, isGridOperatorView, hasHighlight, filteredGridBoundaryData]);
 
   const layers = useMemo(() => {
+    const visible = layerVisibility;
     const result: LayerSpec[] = [];
 
     if (!isGridOperatorView && !hasHighlight) {
@@ -461,6 +479,13 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         sourceLayer: "transmission-lines",
         renderAs: "line",
         minZoom: 3,
+        visible: visible["transmission-lines"] !== false,
+        legend: {
+          label: "Transmission Lines",
+          swatch: "line",
+          color: "#ef4444",
+          group: "Overlays",
+        },
         style: {
           color: { by: "voltageClass", mapping: voltageClassColorMapping },
           width: 1.5,
@@ -495,6 +520,13 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         sourceLayer: "ev-charging",
         renderAs: "circle",
         minZoom: 5,
+        visible: visible["ev-charging"] === true,
+        legend: {
+          label: "EV Charging",
+          swatch: "dot",
+          color: "#0070f3",
+          group: "Overlays",
+        },
         style: {
           color: { by: "network", mapping: evNetworkColorMapping },
           radius: 4,
@@ -534,6 +566,13 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         sourceLayer: "pricing-nodes",
         renderAs: "circle",
         minZoom: 3,
+        visible: visible["pricing-nodes"] === true,
+        legend: {
+          label: "Pricing Nodes",
+          swatch: "dot",
+          color: "#eab308",
+          group: "Overlays",
+        },
         style: {
           color: { by: "iso", mapping: pricingNodeIsoColorMapping },
           radius: 3,
@@ -578,6 +617,13 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         sourceLayer: "power-plants",
         renderAs: "circle",
         minZoom: 5,
+        visible: visible["power-plants"] !== false,
+        legend: {
+          label: "Power Plants",
+          swatch: "dot",
+          color: "#eab308",
+          group: "Overlays",
+        },
         style: {
           color: { by: "fuelCategory", mapping: fuelCategoryColorMapping },
           radius: 4,
@@ -624,7 +670,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     }
 
     return result;
-  }, [handleClick, router, state.highlightGeoJSON, isGridOperatorView, filteredGridBoundaryData, hasHighlight, territoryFilter]);
+  }, [handleClick, router, state.highlightGeoJSON, isGridOperatorView, filteredGridBoundaryData, hasHighlight, territoryFilter, layerVisibility]);
 
   if (!hasMapboxToken) {
     return (
@@ -643,8 +689,18 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         ref={mapRef as React.Ref<any>}
         mapboxAccessToken={effectiveToken!}
         initialViewState={US_CENTER}
-        mapType="neutral"
-        controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+        mapType={mapType}
+        controls={[
+          { type: "navigation", position: "bottom-right", showResetZoom: true },
+          {
+            type: "layers",
+            position: "bottom-right",
+            currentMapType: mapType,
+            onMapTypeChange: setMapType,
+            layers,
+            onLayerToggle: handleLayerToggle,
+          },
+        ]}
         layers={layers}
       />
     </div>
