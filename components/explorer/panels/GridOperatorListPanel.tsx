@@ -52,7 +52,7 @@ const typeToDetailView: Record<GridOperatorType, DetailView> = {
 };
 
 export function GridOperatorListPanel() {
-  const { state, setSearch, setTypeFilter, navigateToDetail, navigateToLanding } = useExplorer();
+  const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
 
   const allOperators = useMemo(() => {
     const seen = new Set<string>();
@@ -154,16 +154,6 @@ export function GridOperatorListPanel() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-none px-4 pt-4 pb-2">
-        <button
-          type="button"
-          onClick={navigateToLanding}
-          className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
-        >
-          &larr; Back
-        </button>
-        <h2 className="text-lg font-semibold text-text-heading">Grid Operators</h2>
-      </div>
       <div className="flex-none px-4">
         <DataControls
           resultsCount={{ count: filtered.length, label: "grid operators" }}

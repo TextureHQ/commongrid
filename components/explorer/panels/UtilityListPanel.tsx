@@ -117,7 +117,7 @@ function buildFilterState(segment: string, jurisdictions: string[]): FilterState
 }
 
 export function UtilityListPanel() {
-  const { state, setSearch, setSegment, setJurisdictions, navigateToDetail, navigateToLanding } = useExplorer();
+  const { state, setSearch, setSegment, setJurisdictions, navigateToDetail } = useExplorer();
 
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
 
@@ -251,16 +251,6 @@ export function UtilityListPanel() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-none px-4 pt-4 pb-2">
-        <button
-          type="button"
-          onClick={navigateToLanding}
-          className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
-        >
-          &larr; Back
-        </button>
-        <h2 className="text-lg font-semibold text-text-heading">Utilities</h2>
-      </div>
       <div className="flex-none px-4">
         <DataControls
           resultsCount={{ count: filtered.length, label: "utilities" }}
