@@ -209,8 +209,8 @@ function getDefaultLayerVisibilityForTab(tab: EntityTab): Record<string, boolean
     "power-plants": tab === "power-plants",
     "ev-charging": false,
     "pricing-nodes": false,
-    // utility-territories is only in the layers control on non-utilities, non-grid-operators tabs
-    "utility-territories": true,
+    // utility-territories toggle only applies on non-utilities/non-grid-operators tabs — default OFF
+    "utility-territories": false,
   };
 }
 
@@ -480,12 +480,26 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
           },
           tooltip: {
             trigger: "hover",
-            content: (feature: LayerFeature) => (
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium text-sm">{feature.properties.name}</span>
-                <span className="text-xs text-gray-500">{getSegmentLabel(feature.properties.segment)}</span>
-              </div>
-            ),
+            content: (feature: LayerFeature) => {
+              const p = feature.properties;
+              return (
+                <div className="flex flex-col gap-1 min-w-[160px]">
+                  <span className="font-semibold text-sm leading-snug">{p.name}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-gray-400">{getSegmentLabel(p.segment)}</span>
+                  </div>
+                  {p.jurisdiction && (
+                    <span className="text-xs text-gray-400">{p.jurisdiction}</span>
+                  )}
+                  {p.customerCount > 0 && (
+                    <span className="text-xs text-gray-400">
+                      {Number(p.customerCount).toLocaleString()} customers
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-300 mt-0.5">Click to explore →</span>
+                </div>
+              );
+            },
           },
           events: { onClick: handleClick },
           ...(territoryFilter ? { filter: territoryFilter } : {}),
@@ -504,12 +518,20 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
           },
           tooltip: {
             trigger: "hover",
-            content: (feature: LayerFeature) => (
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium text-sm">{feature.properties.operatorName}</span>
-                <span className="text-xs text-gray-500">{feature.properties.operatorType}</span>
-              </div>
-            ),
+            content: (feature: LayerFeature) => {
+              const p = feature.properties;
+              const typeLabel = p.operatorType === "ISO"
+                ? "Independent System Operator"
+                : p.operatorType === "BA"
+                ? "Balancing Authority"
+                : p.operatorType;
+              return (
+                <div className="flex flex-col gap-1 min-w-[160px]">
+                  <span className="font-semibold text-sm leading-snug">{p.operatorName}</span>
+                  <span className="text-xs text-gray-400">{typeLabel}</span>
+                </div>
+              );
+            },
           },
         })
       );
@@ -550,19 +572,34 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         },
         tooltip: {
           trigger: "hover",
-          content: (feature: LayerFeature) => (
-            <div className="flex flex-col gap-0.5">
-              <span className="font-medium text-sm">
-                {feature.properties.owner || "Unknown Owner"}
-              </span>
-              <span className="text-xs text-gray-500">
-                {feature.properties.voltage != null
-                  ? `${feature.properties.voltage} kV`
-                  : "Voltage unknown"}
-                {feature.properties.status ? ` · ${feature.properties.status}` : ""}
-              </span>
-            </div>
-          ),
+          content: (feature: LayerFeature) => {
+            const p = feature.properties;
+            const vcLabels: Record<string, string> = {
+              "extra-high": "Extra High Voltage (345kV+)",
+              "high": "High Voltage (230–344kV)",
+              "medium": "Medium Voltage (115–229kV)",
+              "sub-trans": "Sub-Transmission (69–114kV)",
+            };
+            return (
+              <div className="flex flex-col gap-1 min-w-[160px]">
+                <span className="font-semibold text-sm leading-snug">
+                  {p.owner || "Unknown Owner"}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {vcLabels[p.voltageClass] ?? "Unknown voltage"}
+                </span>
+                {p.voltage != null && p.voltage > 0 && (
+                  <span className="text-xs text-gray-400">{p.voltage} kV</span>
+                )}
+                {p.lengthMiles > 0 && (
+                  <span className="text-xs text-gray-400">{p.lengthMiles.toFixed(1)} mi</span>
+                )}
+                {p.status && (
+                  <span className="text-xs text-gray-400 capitalize">{p.status}</span>
+                )}
+              </div>
+            );
+          },
         },
       })
     );
@@ -704,15 +741,25 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
         },
         tooltip: {
           trigger: "hover",
-          content: (feature: LayerFeature) => (
-            <div className="flex flex-col gap-0.5">
-              <span className="font-medium text-sm">{feature.properties.name}</span>
-              <span className="text-xs text-gray-500">
-                {feature.properties.fuelCategory} · {Math.round(feature.properties.capacityMw)} MW
-                {feature.properties.status === "proposed" ? " (Proposed)" : ""}
-              </span>
-            </div>
-          ),
+          content: (feature: LayerFeature) => {
+            const p = feature.properties;
+            const isProposed = p.status === "proposed";
+            const capacity = Math.round(p.capacityMw);
+            return (
+              <div className="flex flex-col gap-1 min-w-[160px]">
+                <span className="font-semibold text-sm leading-snug">{p.name}</span>
+                <span className="text-xs text-gray-400">{p.fuelCategory}</span>
+                <span className="text-xs text-gray-400">
+                  {capacity > 0 ? `${capacity.toLocaleString()} MW` : "Capacity unknown"}
+                  {isProposed ? " · Proposed" : ""}
+                </span>
+                {p.state && (
+                  <span className="text-xs text-gray-400">{p.state}</span>
+                )}
+                <span className="text-xs text-gray-300 mt-0.5">Click to explore →</span>
+              </div>
+            );
+          },
         },
         events: {
           onClick: (feature: LayerFeature) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { Tab, TabList, Tabs } from "@texturehq/edges";
 import { useExplorer, type EntityTab } from "./ExplorerContext";
 
 interface TabDef {
@@ -62,30 +63,25 @@ export function ExplorerTabBar() {
   const { state, navigateToTab } = useExplorer();
 
   return (
-    <div className="flex items-center gap-0 overflow-x-auto scrollbar-hide px-2 md:px-4">
-      {TABS.map((tab) => {
-        const isActive = state.tab === tab.id;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => navigateToTab(tab.id)}
-            className={`
-              flex items-center gap-1.5 px-3 py-3.5 text-sm font-medium whitespace-nowrap
-              border-b-2 transition-colors flex-shrink-0
-              ${
-                isActive
-                  ? "border-brand-primary text-brand-primary"
-                  : "border-transparent text-text-muted hover:text-text-body hover:border-border-default"
-              }
-            `}
-          >
-            <span className={isActive ? "text-brand-primary" : "text-text-muted"}>{tab.icon}</span>
-            <span className="hidden sm:inline">{tab.label}</span>
-            <span className="sm:hidden">{tab.shortLabel}</span>
-          </button>
-        );
-      })}
-    </div>
+    <Tabs
+      selectedKey={state.tab}
+      onSelectionChange={(key) => navigateToTab(key as EntityTab)}
+      className="w-full"
+    >
+      <TabList
+        aria-label="Entity type"
+        className="overflow-x-auto scrollbar-hide px-2 md:px-4"
+      >
+        {TABS.map((tab) => (
+          <Tab key={tab.id} id={tab.id}>
+            <span className="flex items-center gap-1.5">
+              {tab.icon}
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">{tab.shortLabel}</span>
+            </span>
+          </Tab>
+        ))}
+      </TabList>
+    </Tabs>
   );
 }
