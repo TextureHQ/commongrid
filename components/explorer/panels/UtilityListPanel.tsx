@@ -251,9 +251,6 @@ export function UtilityListPanel() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-
-
-      </div>
       <div className="flex-none px-4">
         <DataControls
           resultsCount={{ count: filtered.length, label: "utilities" }}

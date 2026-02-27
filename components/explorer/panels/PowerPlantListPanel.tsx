@@ -166,9 +166,6 @@ export function PowerPlantListPanel() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-
-
-      </div>
       <div className="flex-none px-4">
         <DataControls
           resultsCount={{ count: filtered.length, label: "power plants" }}
