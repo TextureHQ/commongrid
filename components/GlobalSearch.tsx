@@ -586,179 +586,203 @@ export function GlobalSearchModal() {
   ];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4 sm:px-6"
-      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) close();
-      }}
-    >
+    <>
+      {/* Backdrop — tap outside to close on mobile */}
       <div
-        className="w-full max-w-2xl flex flex-col overflow-hidden"
-        style={{
-          maxHeight: "72vh",
-          borderRadius: "16px",
-          background: "var(--color-background-surface)",
-          boxShadow: "0 32px 64px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.08)",
-        }}
+        className="fixed inset-0 z-50"
+        style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
+        onMouseDown={close}
+        onTouchStart={close}
+        aria-hidden="true"
+      />
+
+      {/* Modal — full-width sheet pinned to top on mobile, floating centered on desktop */}
+      <div
+        className="fixed z-50 inset-x-0 top-0 sm:inset-x-auto sm:top-auto sm:left-1/2 sm:-translate-x-1/2 sm:mt-[12vh] sm:w-full sm:max-w-2xl sm:px-4"
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        {/* Search input */}
-        <div className="flex items-center gap-3 px-5 border-b border-border-default flex-none" style={{ height: 56 }}>
-          <Icon name="MagnifyingGlass" size={19} className="text-text-muted flex-none" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Search utilities, ISOs, power plants, programs..."
-            className="flex-1 bg-transparent text-[15px] text-text-body placeholder:text-text-muted outline-none font-normal"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-          />
-          <div className="flex items-center gap-2 flex-none">
-            {loadingAsync && (
-              <div className="w-3.5 h-3.5 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
-            )}
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="w-5 h-5 rounded-full bg-[var(--color-background-subtle)] flex items-center justify-center hover:bg-border-default transition-colors"
-                aria-label="Clear search"
-              >
-                <Icon name="X" size={11} className="text-text-muted" />
-              </button>
-            )}
-            <kbd
-              onClick={close}
-              className="hidden sm:flex items-center px-2 py-1 rounded-md border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[11px] font-mono cursor-pointer hover:bg-border-default transition-colors select-none"
-            >
-              esc
-            </kbd>
+        <div
+          className="w-full flex flex-col overflow-hidden sm:rounded-2xl"
+          style={{
+            maxHeight: "calc(60vh)",
+            background: "var(--color-background-surface)",
+            boxShadow: "0 32px 64px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.08)",
+            // On mobile: flat bottom corners, rounded top corners after iOS drag handle area
+            borderRadius: "0 0 0 0",
+          }}
+          // Override border-radius on mobile only via className
+        >
+          {/* Mobile drag handle */}
+          <div className="flex sm:hidden justify-center pt-2.5 pb-1 flex-none">
+            <div className="w-9 h-1 rounded-full bg-border-default opacity-60" />
           </div>
-        </div>
 
-        {/* Results / Empty state */}
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          {/* Empty state with quick links */}
-          {query.trim() === "" && (
-            <div className="px-3 py-3">
-              <div className="px-2 py-1.5 mb-1">
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">Browse</span>
-              </div>
-              {QUICK_LINKS.map((link) => (
+          {/* Search input */}
+          <div className="flex items-center gap-3 px-4 sm:px-5 border-b border-border-default flex-none" style={{ height: 52 }}>
+            <Icon name="MagnifyingGlass" size={18} className="text-text-muted flex-none" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Search utilities, ISOs, power plants..."
+              className="flex-1 bg-transparent text-[15px] text-text-body placeholder:text-text-muted outline-none font-normal min-w-0"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+            />
+            <div className="flex items-center gap-2 flex-none">
+              {loadingAsync && (
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
+              )}
+              {query ? (
                 <button
-                  key={link.href}
                   type="button"
-                  onClick={() => { router.push(link.href); close(); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-[var(--color-background-subtle)] transition-colors group"
+                  onClick={() => setQuery("")}
+                  className="w-6 h-6 rounded-full bg-[var(--color-background-subtle)] flex items-center justify-center hover:bg-border-default transition-colors"
+                  aria-label="Clear search"
                 >
-                  <span className={`flex-none w-7 h-7 rounded-md flex items-center justify-center ${KIND_DOT_COLOR[link.kind].replace("bg-", "bg-").replace("-400", "-100")}`}>
-                    <span className={`w-2 h-2 rounded-full ${KIND_DOT_COLOR[link.kind]}`} />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-text-heading">{link.label}</div>
-                    <div className="text-xs text-text-muted">{link.subtitle}</div>
-                  </div>
-                  <Icon name="ArrowRight" size={14} className="flex-none text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Icon name="X" size={11} className="text-text-muted" />
                 </button>
-              ))}
-              <div className="mt-3 mx-2 pt-3 border-t border-border-default flex items-center gap-2">
-                <span className="text-xs text-text-muted">Tip:</span>
-                <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[10px] font-mono">⌘K</kbd>
-                <span className="text-xs text-text-muted">opens search from anywhere</span>
-              </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={close}
+                  className="sm:hidden flex items-center px-2 py-1 rounded-md border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[12px] font-medium"
+                >
+                  Cancel
+                </button>
+              )}
+              <kbd
+                onClick={close}
+                className="hidden sm:flex items-center px-2 py-1 rounded-md border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[11px] font-mono cursor-pointer hover:bg-border-default transition-colors select-none"
+              >
+                esc
+              </kbd>
             </div>
-          )}
-
-          {/* No results */}
-          {query.trim() !== "" && results.length === 0 && !loadingAsync && (
-            <div className="flex flex-col items-center justify-center py-14 gap-2 text-text-muted">
-              <div className="w-10 h-10 rounded-full bg-[var(--color-background-subtle)] flex items-center justify-center mb-1">
-                <Icon name="MagnifyingGlass" size={18} className="opacity-40" />
-              </div>
-              <p className="text-sm font-medium text-text-body">No results for &ldquo;{query}&rdquo;</p>
-              <p className="text-xs opacity-60">Try searching by state, segment, or EIA ID</p>
-            </div>
-          )}
-
-          {/* Results grouped by entity type */}
-          {grouped.length > 0 && (
-            <div className="px-3 py-2">
-              {grouped.map((group) => (
-                <div key={group.kind} className="mb-1">
-                  {/* Section label */}
-                  <div className="px-2 py-1.5">
-                    <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">{group.label}</span>
-                  </div>
-                  {group.items.map((result) => {
-                    const idx = flatIndex++;
-                    const isActive = idx === activeIndex;
-                    return (
-                      <button
-                        key={`${result.kind}-${result.slug}`}
-                        type="button"
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${
-                          isActive
-                            ? "bg-[var(--color-background-subtle)]"
-                            : "hover:bg-[var(--color-background-subtle)]"
-                        }`}
-                        onMouseEnter={() => setActiveIndex(idx)}
-                        onClick={() => navigateTo(result)}
-                      >
-                        <span className={`flex-none w-7 h-7 rounded-md flex items-center justify-center ${KIND_DOT_COLOR[result.kind].replace("-400", "-100")}`}>
-                          <span className={`w-2 h-2 rounded-full ${result.dotColor}`} />
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-text-heading truncate leading-snug">
-                            {result.name}
-                          </div>
-                          {result.subtitle && (
-                            <div className="text-xs text-text-muted truncate mt-0.5 leading-snug">
-                              {result.subtitle}
-                            </div>
-                          )}
-                        </div>
-                        <Icon
-                          name="ArrowRight"
-                          size={14}
-                          className={`flex-none text-text-muted transition-opacity ${isActive ? "opacity-60" : "opacity-0 group-hover:opacity-40"}`}
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer — keyboard hints */}
-        <div className="flex-none px-5 py-2.5 border-t border-border-default flex items-center justify-between bg-[var(--color-background-subtle)]">
-          <div className="flex items-center gap-3 text-[11px] text-text-muted">
-            <span className="flex items-center gap-1.5">
-              <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">↑↓</kbd>
-              navigate
-            </span>
-            <span className="flex items-center gap-1.5">
-              <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">↵</kbd>
-              open
-            </span>
-            <span className="flex items-center gap-1.5">
-              <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">esc</kbd>
-              close
-            </span>
           </div>
-          {results.length > 0 && (
-            <span className="text-[11px] text-text-muted tabular-nums">
-              {results.length} result{results.length !== 1 ? "s" : ""}
-            </span>
-          )}
+
+          {/* Results / Empty state */}
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            {/* Empty state with quick links */}
+            {query.trim() === "" && (
+              <div className="px-3 py-3">
+                <div className="px-2 py-1.5 mb-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">Browse</span>
+                </div>
+                {QUICK_LINKS.map((link) => (
+                  <button
+                    key={link.href}
+                    type="button"
+                    onClick={() => { router.push(link.href); close(); }}
+                    className="w-full flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-lg text-left hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)] transition-colors group"
+                  >
+                    <span className={`flex-none w-8 h-8 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${KIND_DOT_COLOR[link.kind].replace("-400", "-100")}`}>
+                      <span className={`w-2 h-2 rounded-full ${KIND_DOT_COLOR[link.kind]}`} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-text-heading">{link.label}</div>
+                      <div className="text-xs text-text-muted">{link.subtitle}</div>
+                    </div>
+                    <Icon name="ArrowRight" size={14} className="flex-none text-text-muted opacity-30 group-hover:opacity-70 transition-opacity" />
+                  </button>
+                ))}
+                {/* Tip — desktop only */}
+                <div className="hidden sm:flex mt-3 mx-2 pt-3 border-t border-border-default items-center gap-2">
+                  <span className="text-xs text-text-muted">Tip:</span>
+                  <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[10px] font-mono">⌘K</kbd>
+                  <span className="text-xs text-text-muted">opens search from anywhere</span>
+                </div>
+              </div>
+            )}
+
+            {/* No results */}
+            {query.trim() !== "" && results.length === 0 && !loadingAsync && (
+              <div className="flex flex-col items-center justify-center py-12 gap-2 text-text-muted">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-background-subtle)] flex items-center justify-center mb-1">
+                  <Icon name="MagnifyingGlass" size={18} className="opacity-40" />
+                </div>
+                <p className="text-sm font-medium text-text-body">No results for &ldquo;{query}&rdquo;</p>
+                <p className="text-xs opacity-60">Try a different search term</p>
+              </div>
+            )}
+
+            {/* Results grouped by entity type */}
+            {grouped.length > 0 && (
+              <div className="px-3 py-2">
+                {grouped.map((group) => (
+                  <div key={group.kind} className="mb-1">
+                    <div className="px-2 py-1.5">
+                      <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">{group.label}</span>
+                    </div>
+                    {group.items.map((result) => {
+                      const idx = flatIndex++;
+                      const isActive = idx === activeIndex;
+                      return (
+                        <button
+                          key={`${result.kind}-${result.slug}`}
+                          type="button"
+                          className={`w-full flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-lg text-left transition-colors group ${
+                            isActive
+                              ? "bg-[var(--color-background-subtle)]"
+                              : "hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)]"
+                          }`}
+                          onMouseEnter={() => setActiveIndex(idx)}
+                          onClick={() => navigateTo(result)}
+                        >
+                          <span className={`flex-none w-8 h-8 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${KIND_DOT_COLOR[result.kind].replace("-400", "-100")}`}>
+                            <span className={`w-2 h-2 rounded-full ${result.dotColor}`} />
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-text-heading truncate leading-snug">
+                              {result.name}
+                            </div>
+                            {result.subtitle && (
+                              <div className="text-xs text-text-muted truncate mt-0.5 leading-snug">
+                                {result.subtitle}
+                              </div>
+                            )}
+                          </div>
+                          <Icon
+                            name="ArrowRight"
+                            size={14}
+                            className={`flex-none text-text-muted transition-opacity ${isActive ? "opacity-60" : "opacity-0 group-hover:opacity-40"}`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer — keyboard hints (desktop only) */}
+          <div className="hidden sm:flex flex-none px-5 py-2.5 border-t border-border-default items-center justify-between bg-[var(--color-background-subtle)]">
+            <div className="flex items-center gap-3 text-[11px] text-text-muted">
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">↑↓</kbd>
+                navigate
+              </span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">↵</kbd>
+                open
+              </span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">esc</kbd>
+                close
+              </span>
+            </div>
+            {results.length > 0 && (
+              <span className="text-[11px] text-text-muted tabular-nums">
+                {results.length} result{results.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
