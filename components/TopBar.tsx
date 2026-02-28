@@ -45,7 +45,7 @@ export function TopBar({ navigation }: TopBarProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 bg-[var(--color-background-subtle)] border-b border-border-default">
+    <header className="fixed top-0 left-0 right-0 z-60 bg-[var(--color-background-subtle)] border-b border-border-default">
       <div className="flex items-center h-14 px-5">
         {/* Left: logo + nav */}
         <div className="flex items-center gap-6">
