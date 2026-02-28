@@ -596,26 +596,20 @@ export function GlobalSearchModal() {
         aria-hidden="true"
       />
 
-      {/* Modal — full-width sheet pinned to top on mobile, floating centered on desktop */}
+      {/* Modal — full-screen below nav on mobile, floating centered on desktop */}
       <div
-        className="fixed z-50 inset-x-0 top-0 sm:inset-x-auto sm:top-auto sm:left-1/2 sm:-translate-x-1/2 sm:mt-[12vh] sm:w-full sm:max-w-2xl sm:px-4"
+        className="fixed z-50 inset-x-0 top-14 sm:inset-x-auto sm:top-auto sm:left-1/2 sm:-translate-x-1/2 sm:mt-[10vh] sm:w-full sm:max-w-2xl sm:px-4"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div
-          className="w-full flex flex-col overflow-hidden sm:rounded-2xl"
+          className="og-search-panel w-full flex flex-col overflow-hidden sm:rounded-2xl"
           style={{
-            maxHeight: "calc(60vh)",
+            height: "calc(100dvh - 3.5rem)",
             background: "var(--color-background-surface)",
             boxShadow: "0 32px 64px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.08)",
-            // On mobile: flat bottom corners, rounded top corners after iOS drag handle area
-            borderRadius: "0 0 0 0",
           }}
-          // Override border-radius on mobile only via className
         >
-          {/* Mobile drag handle */}
-          <div className="flex sm:hidden justify-center pt-2.5 pb-1 flex-none">
-            <div className="w-9 h-1 rounded-full bg-border-default opacity-60" />
-          </div>
+          <style>{`@media (min-width: 640px) { .og-search-panel { height: auto !important; max-height: 65vh; } }`}</style>
 
           {/* Search input */}
           <div className="flex items-center gap-3 px-4 sm:px-5 border-b border-border-default flex-none" style={{ height: 52 }}>

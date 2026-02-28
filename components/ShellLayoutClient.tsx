@@ -31,7 +31,7 @@ function ShellInner({ children, navigation }: ShellLayoutClientProps) {
   return (
     <div className="flex flex-col h-dvh">
       <TopBar navigation={navigation} />
-      <main className="flex-1 min-h-0">{children}</main>
+      <main className="flex-1 min-h-0 pt-14">{children}</main>
       <GlobalSearchModal />
     </div>
   );
