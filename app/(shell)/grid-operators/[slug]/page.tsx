@@ -12,6 +12,8 @@ import {
   Loader,
   PageLayout,
   Section,
+  StatList,
+  type StatItem,
 } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
@@ -192,8 +194,101 @@ export default function UtilityDetailPage() {
   const hasGridRelationships = iso || rto || ba;
   const hasUtilityRelationships = parent || generationProvider || transmissionProvider || successor;
 
+  const overviewItems: StatItem[] = [
+    {
+      id: "segment",
+      label: "Segment",
+      value: (
+        <Badge variant={getSegmentBadgeVariant(utility.segment)}>
+          {getSegmentLabel(utility.segment)}
+        </Badge>
+      ),
+    },
+    {
+      id: "status",
+      label: "Status",
+      value: (
+        <Badge variant={getStatusBadgeVariant(utility.status)}>
+          {getStatusLabel(utility.status)}
+        </Badge>
+      ),
+    },
+    {
+      id: "customers",
+      label: "Customers",
+      value: utility.customerCount ? formatCustomerCount(utility.customerCount) : null,
+    },
+    {
+      id: "jurisdiction",
+      label: "Jurisdiction",
+      value: utility.jurisdiction ?? null,
+    },
+    {
+      id: "eiaId",
+      label: "EIA ID",
+      value: utility.eiaId ?? null,
+      copyable: true,
+    },
+    {
+      id: "website",
+      label: "Website",
+      value: utility.website ? safeHostname(utility.website) : null,
+      href: utility.website ?? undefined,
+    },
+  ];
+
+  const operationsItems: StatItem[] = [
+    ...(utility.peakDemandMw !== null
+      ? [{ id: "summerPeak", label: "Summer Peak", value: `${utility.peakDemandMw.toLocaleString()} MW` }]
+      : []),
+    ...(utility.winterPeakDemandMw !== null
+      ? [{ id: "winterPeak", label: "Winter Peak", value: `${utility.winterPeakDemandMw.toLocaleString()} MW` }]
+      : []),
+    ...(utility.totalRevenueDollars !== null
+      ? [
+          {
+            id: "revenue",
+            label: "Revenue",
+            value:
+              utility.totalRevenueDollars >= 1_000_000_000
+                ? `$${(utility.totalRevenueDollars / 1_000_000_000).toFixed(1)}B`
+                : utility.totalRevenueDollars >= 1_000_000
+                  ? `$${(utility.totalRevenueDollars / 1_000_000).toFixed(1)}M`
+                  : `$${utility.totalRevenueDollars.toLocaleString()}`,
+          },
+        ]
+      : []),
+    ...(utility.totalSalesMwh !== null
+      ? [
+          {
+            id: "sales",
+            label: "Sales",
+            value:
+              utility.totalSalesMwh >= 1_000_000
+                ? `${(utility.totalSalesMwh / 1_000_000).toFixed(1)}M MWh`
+                : `${utility.totalSalesMwh.toLocaleString()} MWh`,
+          },
+        ]
+      : []),
+    ...(utility.totalMeterCount !== null
+      ? [{ id: "meters", label: "Meters", value: utility.totalMeterCount.toLocaleString() }]
+      : []),
+    ...(utility.amiMeterCount !== null
+      ? [
+          {
+            id: "amiMeters",
+            label: "AMI Meters",
+            value: `${utility.amiMeterCount.toLocaleString()}${utility.totalMeterCount ? ` (${Math.round((utility.amiMeterCount / utility.totalMeterCount) * 100)}%)` : ""}`,
+          },
+        ]
+      : []),
+    ...(utility.nercRegion !== null
+      ? [{ id: "nercRegion", label: "NERC Region", value: utility.nercRegion }]
+      : []),
+  ];
+
   return (
-    <PageLayout>
+    <PageLayout maxWidth={896}>
       <PageLayout.Header
         title={utility.name}
         breadcrumbs={[
@@ -202,67 +297,33 @@ export default function UtilityDetailPage() {
         ]}
       />
       <DataSourceLink paths={["data/utilities.json"]} className="px-4 sm:px-6 pb-2" />
+
+      {/* Entity header */}
+      <div className="flex items-center gap-4 px-4 sm:px-6 py-5 border-b border-border-default bg-background-surface">
+        <Avatar
+          {...(utility.logo ? { src: utility.logo } : {})}
+          fullName={utility.name}
+          size="xl"
+          shape="square"
+          variant="organization"
+        />
+        <div>
+          <div className="text-xl font-semibold text-text-heading">{utility.name}</div>
+          {utility.shortName && <div className="text-sm text-text-muted">{utility.shortName}</div>}
+          {utility.website && (
+            <a href={utility.website} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-primary hover:underline">
+              {safeHostname(utility.website)}
+            </a>
+          )}
+        </div>
+      </div>
+
       <PageLayout.Content>
         {/* Overview */}
         <Section id="overview" navLabel="Overview" title="Overview" withDivider>
           <Card variant="outlined">
             <Card.Content>
-              <div className="flex items-center gap-3 mb-6">
-                <Avatar
-                  {...(utility.logo ? { src: utility.logo } : {})}
-                  fullName={utility.name}
-                  size="xl"
-                  shape="square"
-                  variant="organization"
-                />
-                <div>
-                  <div className="text-lg font-semibold">{utility.name}</div>
-                  {utility.shortName && <div className="text-sm text-text-muted">{utility.shortName}</div>}
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Segment</div>
-                  <Badge variant={getSegmentBadgeVariant(utility.segment)}>
-                    {getSegmentLabel(utility.segment)}
-                  </Badge>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Status</div>
-                  <Badge variant={getStatusBadgeVariant(utility.status)}>
-                    {getStatusLabel(utility.status)}
-                  </Badge>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Customers</div>
-                  <div className="font-medium">{formatCustomerCount(utility.customerCount)}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Jurisdiction</div>
-                  <div className="font-medium">{utility.jurisdiction || "\u2014"}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">EIA ID</div>
-                  <div className="font-medium font-mono">{utility.eiaId ?? "\u2014"}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Website</div>
-                  <div className="font-medium">
-                    {utility.website ? (
-                      <a
-                        href={utility.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-brand-primary hover:underline"
-                      >
-                        {safeHostname(utility.website)}
-                      </a>
-                    ) : (
-                      "\u2014"
-                    )}
-                  </div>
-                </div>
-              </div>
+              <StatList layout="two-column" showDividers items={overviewItems} />
             </Card.Content>
           </Card>
         </Section>
@@ -272,78 +333,20 @@ export default function UtilityDetailPage() {
           <Section id="operations" navLabel="Operations" title="Operations" withDivider>
             <Card variant="outlined">
               <Card.Content>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {utility.peakDemandMw !== null && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Summer Peak</div>
-                      <div className="font-medium">{utility.peakDemandMw.toLocaleString()} MW</div>
+                <StatList layout="two-column" showDividers items={operationsItems} />
+                {utility.hasGeneration !== null && (
+                  <div className="mt-4">
+                    <div className="text-sm text-text-muted mb-2">Activities</div>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {utility.hasGeneration && <Badge size="sm" shape="pill" variant="info">Generation</Badge>}
+                      {utility.hasTransmission && <Badge size="sm" shape="pill" variant="info">Transmission</Badge>}
+                      {utility.hasDistribution && <Badge size="sm" shape="pill" variant="info">Distribution</Badge>}
+                      {!utility.hasGeneration && !utility.hasTransmission && !utility.hasDistribution && (
+                        <span className="text-text-muted">{"\u2014"}</span>
+                      )}
                     </div>
-                  )}
-                  {utility.winterPeakDemandMw !== null && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Winter Peak</div>
-                      <div className="font-medium">{utility.winterPeakDemandMw.toLocaleString()} MW</div>
-                    </div>
-                  )}
-                  {utility.totalRevenueDollars !== null && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Revenue</div>
-                      <div className="font-medium">
-                        {utility.totalRevenueDollars >= 1_000_000_000
-                          ? `$${(utility.totalRevenueDollars / 1_000_000_000).toFixed(1)}B`
-                          : utility.totalRevenueDollars >= 1_000_000
-                            ? `$${(utility.totalRevenueDollars / 1_000_000).toFixed(1)}M`
-                            : `$${utility.totalRevenueDollars.toLocaleString()}`}
-                      </div>
-                    </div>
-                  )}
-                  {utility.totalSalesMwh !== null && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Sales</div>
-                      <div className="font-medium">
-                        {utility.totalSalesMwh >= 1_000_000
-                          ? `${(utility.totalSalesMwh / 1_000_000).toFixed(1)}M MWh`
-                          : `${utility.totalSalesMwh.toLocaleString()} MWh`}
-                      </div>
-                    </div>
-                  )}
-                  {utility.totalMeterCount !== null && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Meters</div>
-                      <div className="font-medium">{utility.totalMeterCount.toLocaleString()}</div>
-                    </div>
-                  )}
-                  {utility.amiMeterCount !== null && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">AMI Meters</div>
-                      <div className="font-medium">
-                        {utility.amiMeterCount.toLocaleString()}
-                        {utility.totalMeterCount
-                          ? ` (${Math.round((utility.amiMeterCount / utility.totalMeterCount) * 100)}%)`
-                          : ""}
-                      </div>
-                    </div>
-                  )}
-                  {utility.nercRegion !== null && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">NERC Region</div>
-                      <div className="font-medium font-mono">{utility.nercRegion}</div>
-                    </div>
-                  )}
-                  {utility.hasGeneration !== null && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Activities</div>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {utility.hasGeneration && <Badge size="sm" shape="pill" variant="info">Generation</Badge>}
-                        {utility.hasTransmission && <Badge size="sm" shape="pill" variant="info">Transmission</Badge>}
-                        {utility.hasDistribution && <Badge size="sm" shape="pill" variant="info">Distribution</Badge>}
-                        {!utility.hasGeneration && !utility.hasTransmission && !utility.hasDistribution && (
-                          <span className="text-text-muted">{"\u2014"}</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </Card.Content>
             </Card>
           </Section>
@@ -393,47 +396,41 @@ export default function UtilityDetailPage() {
           <Section id="grid" navLabel="Grid" title="Grid Relationships" withDivider>
             <Card variant="outlined">
               <Card.Content>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {iso && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">ISO</div>
-                      <div className="font-medium">
-                        <Link
-                          href={`/explore?view=iso&slug=${iso.slug}`}
-                          className="text-brand-primary hover:underline"
-                        >
-                          {iso.shortName}
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                  {rto && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">RTO</div>
-                      <div className="font-medium">
-                        <Link
-                          href={`/explore?view=rto&slug=${rto.slug}`}
-                          className="text-brand-primary hover:underline"
-                        >
-                          {rto.shortName}
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                  {ba && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Balancing Authority</div>
-                      <div className="font-medium">
-                        <Link
-                          href={`/balancing-authorities/${ba.slug}`}
-                          className="text-brand-primary hover:underline"
-                        >
-                          {ba.shortName}
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <StatList
+                  showDividers
+                  items={[
+                    ...(iso
+                      ? [
+                          {
+                            id: "iso",
+                            label: "ISO",
+                            value: iso.shortName,
+                            href: `/explore?view=iso&slug=${iso.slug}`,
+                          },
+                        ]
+                      : []),
+                    ...(rto
+                      ? [
+                          {
+                            id: "rto",
+                            label: "RTO",
+                            value: rto.shortName,
+                            href: `/explore?view=rto&slug=${rto.slug}`,
+                          },
+                        ]
+                      : []),
+                    ...(ba
+                      ? [
+                          {
+                            id: "ba",
+                            label: "Balancing Authority",
+                            value: ba.shortName,
+                            href: `/balancing-authorities/${ba.slug}`,
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
               </Card.Content>
             </Card>
           </Section>
@@ -444,48 +441,23 @@ export default function UtilityDetailPage() {
           <Section id="relationships" navLabel="Relationships" title="Utility Relationships" withDivider>
             <Card variant="outlined">
               <Card.Content>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {parent && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Parent</div>
-                      <div className="font-medium">
-                        <Link href={`/grid-operators/${parent.slug}`} className="text-brand-primary hover:underline">
-                          {parent.name}
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                  {generationProvider && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Generation Provider</div>
-                      <div className="font-medium">
-                        <Link href={`/grid-operators/${generationProvider.slug}`} className="text-brand-primary hover:underline">
-                          {generationProvider.name}
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                  {transmissionProvider && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Transmission Provider</div>
-                      <div className="font-medium">
-                        <Link href={`/grid-operators/${transmissionProvider.slug}`} className="text-brand-primary hover:underline">
-                          {transmissionProvider.name}
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                  {successor && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Successor</div>
-                      <div className="font-medium">
-                        <Link href={`/grid-operators/${successor.slug}`} className="text-brand-primary hover:underline">
-                          {successor.name}
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <StatList
+                  showDividers
+                  items={[
+                    ...(parent
+                      ? [{ id: "parent", label: "Parent", value: parent.name, href: `/grid-operators/${parent.slug}` }]
+                      : []),
+                    ...(generationProvider
+                      ? [{ id: "genProvider", label: "Generation Provider", value: generationProvider.name, href: `/grid-operators/${generationProvider.slug}` }]
+                      : []),
+                    ...(transmissionProvider
+                      ? [{ id: "txProvider", label: "Transmission Provider", value: transmissionProvider.name, href: `/grid-operators/${transmissionProvider.slug}` }]
+                      : []),
+                    ...(successor
+                      ? [{ id: "successor", label: "Successor", value: successor.name, href: `/grid-operators/${successor.slug}` }]
+                      : []),
+                  ]}
+                />
               </Card.Content>
             </Card>
           </Section>

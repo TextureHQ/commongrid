@@ -8,6 +8,8 @@ import {
   Loader,
   PageLayout,
   Section,
+  StatList,
+  type StatItem,
 } from "@texturehq/edges";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
@@ -33,7 +35,7 @@ export default function PowerPlantDetailPage() {
 
   if (isLoading) {
     return (
-      <PageLayout>
+      <PageLayout maxWidth={896}>
         <PageLayout.Header title="Power Plant" breadcrumbs={[{ label: "Power Plants", href: "/power-plants" }]} />
         <div className="flex items-center justify-center py-24">
           <Loader size={32} />
@@ -66,8 +68,64 @@ export default function PowerPlantDetailPage() {
   const isProposedOnly = plant.status === "proposed";
   const effectiveCapacity = isProposedOnly ? plant.proposedCapacityMw : plant.totalCapacityMw;
 
+  const overviewItems: StatItem[] = [
+    { id: "plantCode", label: "Plant Code", value: plant.plantCode, copyable: true },
+    {
+      id: "fuelType",
+      label: "Fuel Type",
+      value: (
+        <Badge variant={getFuelBadgeVariant(plant.fuelCategory)}>
+          {getFuelCategoryLabel(plant.fuelCategory)}
+        </Badge>
+      ),
+    },
+    {
+      id: "status",
+      label: "Status",
+      value: (
+        <Badge variant={getPlantStatusBadgeVariant(plant.status)}>
+          {plant.status === "operable" ? "Operable" : "Proposed"}
+        </Badge>
+      ),
+    },
+    {
+      id: "capacity",
+      label: isProposedOnly ? "Proposed Capacity" : "Nameplate Capacity",
+      value: formatCapacity(effectiveCapacity),
+    },
+    ...(!isProposedOnly
+      ? [
+          { id: "generators", label: "Generators", value: plant.generatorCount },
+          { id: "operatingSince", label: "Operating Since", value: plant.operatingYear ?? null },
+        ]
+      : []),
+    ...(isProposedOnly && plant.proposedOnlineYear
+      ? [{ id: "expectedOnline", label: "Expected Online", value: plant.proposedOnlineYear }]
+      : []),
+    ...(!isProposedOnly && plant.proposedCapacityMw !== null && plant.proposedCapacityMw > 0
+      ? [
+          { id: "additionalProposed", label: "Additional Proposed", value: formatCapacity(plant.proposedCapacityMw) },
+          ...(plant.proposedOnlineYear
+            ? [{ id: "proposedOnlineYear", label: "Proposed Online Year", value: plant.proposedOnlineYear }]
+            : []),
+        ]
+      : []),
+    { id: "state", label: "State", value: formatStateName(plant.state) },
+    ...(plant.county ? [{ id: "county", label: "County", value: plant.county }] : []),
+    { id: "sector", label: "Sector", value: plant.sector ?? null },
+    ...(plant.gridVoltageKv !== null
+      ? [{ id: "gridVoltage", label: "Grid Voltage", value: `${plant.gridVoltageKv} kV` }]
+      : []),
+    ...(plant.nercRegion ? [{ id: "nercRegion", label: "NERC Region", value: plant.nercRegion }] : []),
+    {
+      id: "coordinates",
+      label: "Coordinates",
+      value: `${plant.latitude.toFixed(4)}, ${plant.longitude.toFixed(4)}`,
+    },
+  ];
+
   return (
-    <PageLayout>
+    <PageLayout maxWidth={896}>
       <PageLayout.Header
         title={plant.name}
         breadcrumbs={[
@@ -90,98 +148,7 @@ export default function PowerPlantDetailPage() {
                   <div className="text-sm text-text-muted">{plant.utilityName}</div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Plant Code</div>
-                  <div className="font-medium font-mono">{plant.plantCode}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Fuel Type</div>
-                  <div>
-                    <Badge variant={getFuelBadgeVariant(plant.fuelCategory)}>
-                      {getFuelCategoryLabel(plant.fuelCategory)}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Status</div>
-                  <div>
-                    <Badge variant={getPlantStatusBadgeVariant(plant.status)}>
-                      {plant.status === "operable" ? "Operable" : "Proposed"}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">
-                    {isProposedOnly ? "Proposed Capacity" : "Nameplate Capacity"}
-                  </div>
-                  <div className="font-medium">{formatCapacity(effectiveCapacity)}</div>
-                </div>
-                {!isProposedOnly && (
-                  <>
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Generators</div>
-                      <div className="font-medium">{plant.generatorCount}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Operating Since</div>
-                      <div className="font-medium">{plant.operatingYear ?? "\u2014"}</div>
-                    </div>
-                  </>
-                )}
-                {isProposedOnly && plant.proposedOnlineYear && (
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">Expected Online</div>
-                    <div className="font-medium">{plant.proposedOnlineYear}</div>
-                  </div>
-                )}
-                {!isProposedOnly && plant.proposedCapacityMw !== null && plant.proposedCapacityMw > 0 && (
-                  <>
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Additional Proposed</div>
-                      <div className="font-medium">{formatCapacity(plant.proposedCapacityMw)}</div>
-                    </div>
-                    {plant.proposedOnlineYear && (
-                      <div>
-                        <div className="text-sm text-text-muted mb-1">Proposed Online Year</div>
-                        <div className="font-medium">{plant.proposedOnlineYear}</div>
-                      </div>
-                    )}
-                  </>
-                )}
-                <div>
-                  <div className="text-sm text-text-muted mb-1">State</div>
-                  <div className="font-medium">{formatStateName(plant.state)}</div>
-                </div>
-                {plant.county && (
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">County</div>
-                    <div className="font-medium">{plant.county}</div>
-                  </div>
-                )}
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Sector</div>
-                  <div className="font-medium">{plant.sector || "\u2014"}</div>
-                </div>
-                {plant.gridVoltageKv !== null && (
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">Grid Voltage</div>
-                    <div className="font-medium">{plant.gridVoltageKv} kV</div>
-                  </div>
-                )}
-                {plant.nercRegion && (
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">NERC Region</div>
-                    <div className="font-medium font-mono">{plant.nercRegion}</div>
-                  </div>
-                )}
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Coordinates</div>
-                  <div className="font-medium font-mono text-sm">
-                    {plant.latitude.toFixed(4)}, {plant.longitude.toFixed(4)}
-                  </div>
-                </div>
-              </div>
+              <StatList layout="two-column" showDividers items={overviewItems} />
             </Card.Content>
           </Card>
         </Section>
@@ -250,42 +217,29 @@ export default function PowerPlantDetailPage() {
           <Section id="relationships" navLabel="Relationships" title="Grid Relationships" withDivider>
             <Card variant="outlined">
               <Card.Content>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {(utility || plant.utilityName) && (
-                    <div>
-                      <div className="text-sm text-text-muted mb-1">Utility / Operator</div>
-                      <div className="font-medium">
-                        {utility ? (
-                          <Link href={`/grid-operators/${utility.slug}`} className="text-brand-primary hover:underline">
-                            {utility.name}
-                          </Link>
-                        ) : (
-                          <Link
-                            href={`/grid-operators?q=${encodeURIComponent(plant.utilityName)}`}
-                            className="text-brand-primary hover:underline"
-                            title="Search utilities"
-                          >
-                            {plant.utilityName}
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">Balancing Authority</div>
-                    <div className="font-medium">
-                      {ba ? (
-                        <Link href={`/balancing-authorities/${ba.slug}`} className="text-brand-primary hover:underline">
-                          {ba.shortName}
-                        </Link>
-                      ) : plant.baCode ? (
-                        plant.baCode
-                      ) : (
-                        "\u2014"
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <StatList
+                  showDividers
+                  items={[
+                    ...(utility || plant.utilityName
+                      ? [
+                          {
+                            id: "utility",
+                            label: "Utility / Operator",
+                            value: utility ? utility.name : plant.utilityName,
+                            href: utility
+                              ? `/grid-operators/${utility.slug}`
+                              : `/grid-operators?q=${encodeURIComponent(plant.utilityName)}`,
+                          },
+                        ]
+                      : []),
+                    {
+                      id: "ba",
+                      label: "Balancing Authority",
+                      value: ba ? ba.shortName : (plant.baCode ?? null),
+                      ...(ba ? { href: `/balancing-authorities/${ba.slug}` } : {}),
+                    },
+                  ]}
+                />
               </Card.Content>
             </Card>
           </Section>
