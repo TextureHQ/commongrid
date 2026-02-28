@@ -8,6 +8,8 @@ import {
   Loader,
   PageLayout,
   Section,
+  StatList,
+  type StatItem,
 } from "@texturehq/edges";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
@@ -48,7 +50,7 @@ export default function EVStationDetailPage() {
 
   if (isLoading) {
     return (
-      <PageLayout>
+      <PageLayout maxWidth={896}>
         <PageLayout.Header
           title="EV Charging Station"
           breadcrumbs={[{ label: "EV Charging", href: "/ev-charging" }]}
@@ -85,8 +87,42 @@ export default function EVStationDetailPage() {
     `${station.streetAddress}, ${station.city}, ${station.state} ${station.zip}`
   )}`;
 
+  const overviewItems: StatItem[] = [
+    { id: "network", label: "Network", value: getNetworkShortName(station.evNetwork) },
+    {
+      id: "status",
+      label: "Status",
+      value: (
+        <Badge size="sm" shape="pill" variant={getStatusBadgeVariant(station.statusCode)}>
+          {getStatusLabel(station.statusCode)}
+        </Badge>
+      ),
+    },
+    { id: "access", label: "Access", value: getAccessLabel(station.accessCode) },
+    { id: "connectors", label: "Total Connectors", value: totalConnectors },
+  ];
+
+  const detailItems: StatItem[] = [
+    {
+      id: "address",
+      label: "Address",
+      value: `${station.streetAddress}, ${station.city}, ${station.state} ${station.zip}`,
+    },
+    ...(station.facilityType
+      ? [{ id: "facilityType", label: "Facility Type", value: station.facilityType.replace(/_/g, " ") }]
+      : []),
+    { id: "ownerType", label: "Owner Type", value: getOwnerTypeLabel(station.ownerTypeCode) },
+    ...(station.openDate ? [{ id: "openDate", label: "Opened", value: station.openDate }] : []),
+    {
+      id: "coordinates",
+      label: "Coordinates",
+      value: `${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}`,
+    },
+    { id: "stationId", label: "Station ID", value: station.id, copyable: true },
+  ];
+
   return (
-    <PageLayout>
+    <PageLayout maxWidth={896}>
       <PageLayout.Header
         title={station.stationName}
         breadcrumbs={[
@@ -112,26 +148,7 @@ export default function EVStationDetailPage() {
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Network</div>
-                  <div className="font-medium">{getNetworkShortName(station.evNetwork)}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Status</div>
-                  <Badge size="sm" shape="pill" variant={getStatusBadgeVariant(station.statusCode)}>
-                    {getStatusLabel(station.statusCode)}
-                  </Badge>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Access</div>
-                  <div className="font-medium capitalize">{getAccessLabel(station.accessCode)}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Total Connectors</div>
-                  <div className="font-medium">{totalConnectors}</div>
-                </div>
-              </div>
+              <StatList layout="two-column" showDividers items={overviewItems} />
             </Card.Content>
           </Card>
         </Section>
@@ -191,43 +208,7 @@ export default function EVStationDetailPage() {
         <Section id="details" navLabel="Details" title="Station Details" withDivider>
           <Card variant="outlined">
             <Card.Content>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Address</div>
-                  <div className="font-medium">
-                    {station.streetAddress}
-                    <br />
-                    {station.city}, {station.state} {station.zip}
-                  </div>
-                </div>
-                {station.facilityType && (
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">Facility Type</div>
-                    <div className="font-medium">{station.facilityType.replace(/_/g, " ")}</div>
-                  </div>
-                )}
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Owner Type</div>
-                  <div className="font-medium">{getOwnerTypeLabel(station.ownerTypeCode)}</div>
-                </div>
-                {station.openDate && (
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">Opened</div>
-                    <div className="font-medium">{station.openDate}</div>
-                  </div>
-                )}
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Coordinates</div>
-                  <div className="font-medium font-mono text-sm">
-                    {station.latitude.toFixed(4)}, {station.longitude.toFixed(4)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Station ID</div>
-                  <div className="font-medium font-mono">{station.id}</div>
-                </div>
-              </div>
-
+              <StatList layout="two-column" showDividers items={detailItems} />
               <div className="mt-6">
                 <a
                   href={googleMapsUrl}
