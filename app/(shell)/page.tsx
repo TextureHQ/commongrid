@@ -361,7 +361,7 @@ export default function LandingPage() {
                   <span className="text-sm font-semibold text-text-heading">
                     Recently updated entities
                   </span>
-                  <TextLink href="https://github.com/TextureHQ/opengrid" external className="text-xs">
+                  <TextLink href="/changelog" className="text-xs">
                     View all changes →
                   </TextLink>
                 </div>
@@ -386,7 +386,7 @@ export default function LandingPage() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-semibold text-text-heading">Newly added</span>
-                  <TextLink href="https://github.com/TextureHQ/opengrid" external className="text-xs">
+                  <TextLink href="/changelog" className="text-xs">
                     View changelog →
                   </TextLink>
                 </div>
