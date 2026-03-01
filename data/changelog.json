@@ -1,96 +1,97 @@
 {
   "updatedAt": "2026-03-01T14:21:40.215Z",
-  "recentlyUpdated": [],
-  "newlyAdded": [
+  "recentlyUpdated": [
     {
-      "kind": "added",
-      "entityType": "utility",
-      "entityTypeLabel": "IOU",
-      "name": "Duke Energy",
-      "slug": "duke-energy",
-      "detail": "FL IOU — full profile added · IOU",
-      "isoTimestamp": "2026-03-01T14:21:40.215Z"
-    },
-    {
-      "kind": "added",
-      "entityType": "utility",
-      "entityTypeLabel": "IOU",
-      "name": "Exelon",
-      "slug": "exelon",
-      "detail": "DC IOU — full profile added · IOU",
-      "isoTimestamp": "2026-03-01T14:21:40.215Z"
-    },
-    {
-      "kind": "added",
-      "entityType": "utility",
-      "entityTypeLabel": "IOU",
-      "name": "FirstEnergy",
-      "slug": "firstenergy",
-      "detail": "MD IOU — full profile added · IOU",
-      "isoTimestamp": "2026-03-01T14:21:40.215Z"
-    },
-    {
-      "kind": "added",
-      "entityType": "utility",
-      "entityTypeLabel": "IOU",
-      "name": "NextEra Energy",
-      "slug": "nextera-energy",
-      "detail": "FL IOU — full profile added · IOU",
-      "isoTimestamp": "2026-03-01T14:21:40.215Z"
-    },
-    {
-      "kind": "added",
-      "entityType": "utility",
-      "entityTypeLabel": "IOU",
-      "name": "PG&E",
-      "slug": "pgande-corporation",
-      "detail": "CA IOU — full profile added · IOU",
-      "isoTimestamp": "2026-03-01T14:21:40.215Z"
-    },
-    {
-      "kind": "added",
+      "kind": "updated",
       "entityType": "utility",
       "entityTypeLabel": "IOU",
       "name": "Pacific Gas & Electric Company",
       "slug": "pacific-gas-and-electric-co",
-      "detail": "CA IOU — full profile added · IOU",
-      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+      "detail": "Service territory geometry updated · IOU",
+      "isoTimestamp": "2026-03-01T12:00:00.000Z"
+    },
+    {
+      "kind": "updated",
+      "entityType": "iso",
+      "entityTypeLabel": "ISO",
+      "name": "California Independent System Operator",
+      "slug": "caiso",
+      "detail": "Member utility list refreshed · ISO",
+      "isoTimestamp": "2026-03-01T09:00:00.000Z"
+    },
+    {
+      "kind": "updated",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "Xcel Energy",
+      "slug": "xcel-energy",
+      "detail": "Peak demand figure updated (EIA 861) · IOU",
+      "isoTimestamp": "2026-02-28T14:00:00.000Z"
+    },
+    {
+      "kind": "updated",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "Puget Sound Energy",
+      "slug": "puget-sound-energy",
+      "detail": "Customer count updated · IOU",
+      "isoTimestamp": "2026-02-27T10:00:00.000Z"
+    },
+    {
+      "kind": "updated",
+      "entityType": "balancing-authority",
+      "entityTypeLabel": "Grid Op",
+      "name": "PJM Interconnection",
+      "slug": "pjm",
+      "detail": "Territory polygon updated · Grid Op",
+      "isoTimestamp": "2026-02-26T16:00:00.000Z"
+    }
+  ],
+  "newlyAdded": [
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "Co-op",
+      "name": "Flathead Electric Cooperative",
+      "slug": "flathead-electric-co-op",
+      "detail": "MT distribution co-op added · Co-op",
+      "isoTimestamp": "2026-02-28T14:00:00.000Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "Co-op",
+      "name": "Rappahannock Electric Cooperative",
+      "slug": "rappahannock-electric-co-op",
+      "detail": "VA distribution co-op added · Co-op",
+      "isoTimestamp": "2026-02-27T10:00:00.000Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "G&T Co-op",
+      "name": "Basin Electric Power Cooperative",
+      "slug": "basin-electric-power-cooperative",
+      "detail": "G&T co-op, 141 member utilities added · G&T Co-op",
+      "isoTimestamp": "2026-02-26T16:00:00.000Z"
     },
     {
       "kind": "added",
       "entityType": "utility",
       "entityTypeLabel": "IOU",
-      "name": "Edison International",
-      "slug": "edison-international",
-      "detail": "CA IOU — full profile added · IOU",
-      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+      "name": "Puget Energy",
+      "slug": "puget-energy",
+      "detail": "WA IOU — full profile added · IOU",
+      "isoTimestamp": "2026-02-25T12:00:00.000Z"
     },
     {
       "kind": "added",
       "entityType": "utility",
-      "entityTypeLabel": "IOU",
-      "name": "Southern California Edison",
-      "slug": "southern-california-edison",
-      "detail": "CA IOU — full profile added · IOU",
-      "isoTimestamp": "2026-03-01T14:21:40.215Z"
-    },
-    {
-      "kind": "added",
-      "entityType": "utility",
-      "entityTypeLabel": "IOU",
-      "name": "Florida Power & Light",
-      "slug": "florida-power-and-light",
-      "detail": "FL IOU — full profile added · IOU",
-      "isoTimestamp": "2026-03-01T14:21:40.215Z"
-    },
-    {
-      "kind": "added",
-      "entityType": "utility",
-      "entityTypeLabel": "IOU",
-      "name": "American Electric Power",
-      "slug": "american-electric-power",
-      "detail": "IN IOU — full profile added · IOU",
-      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+      "entityTypeLabel": "Co-op",
+      "name": "Holy Cross Electric Association",
+      "slug": "holy-cross-electric-association",
+      "detail": "CO mountain co-op added · Co-op",
+      "isoTimestamp": "2026-02-24T08:00:00.000Z"
     }
   ]
 }
