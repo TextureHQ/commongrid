@@ -2,7 +2,8 @@
 
 import { Button, Card, Icon, TextLink } from "@texturehq/edges";
 import Link from "next/link";
-import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms } from "@/lib/data";
+import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms, getChangelog } from "@/lib/data";
+import type { ChangelogEntry } from "@/types/changelog";
 import { useGlobalSearch } from "@/components/GlobalSearch";
 
 // Power plant count is hardcoded to avoid importing the 8.7 MB JSON into the pre-rendered page.
@@ -128,95 +129,46 @@ const ENTITY_CARDS = [
   },
 ];
 
-const RECENT_UPDATES = [
-  {
-    name: "Pacific Gas & Electric",
-    detail: "Service territory geometry updated · Utility",
-    time: "2h ago",
-    color: "bg-orange-100 text-orange-600",
-    initial: "P",
-  },
-  {
-    name: "CAISO",
-    detail: "Member utility list refreshed · Grid Operator",
-    time: "5h ago",
-    color: "bg-purple-100 text-purple-600",
-    initial: "C",
-  },
-  {
-    name: "Xcel Energy — Colorado",
-    detail: "Peak demand figure updated (EIA 861) · Utility",
-    time: "1d ago",
-    color: "bg-blue-100 text-blue-600",
-    initial: "X",
-  },
-  {
-    name: "Tennessee Valley Authority",
-    detail: "Operating segment corrected · Utility",
-    time: "2d ago",
-    color: "bg-teal-100 text-teal-600",
-    initial: "T",
-  },
-  {
-    name: "PJM Interconnection",
-    detail: "Territory polygon updated · Grid Operator",
-    time: "3d ago",
-    color: "bg-sky-100 text-sky-600",
-    initial: "P",
-  },
-];
+/** Derive a stable avatar color class from entity name initial */
+const AVATAR_COLORS = [
+  "bg-blue-100 text-blue-600",
+  "bg-purple-100 text-purple-600",
+  "bg-teal-100 text-teal-600",
+  "bg-orange-100 text-orange-600",
+  "bg-sky-100 text-sky-600",
+  "bg-green-100 text-green-600",
+  "bg-rose-100 text-rose-600",
+  "bg-amber-100 text-amber-600",
+  "bg-indigo-100 text-indigo-600",
+  "bg-emerald-100 text-emerald-600",
+  "bg-lime-100 text-lime-600",
+  "bg-cyan-100 text-cyan-600",
+  "bg-violet-100 text-violet-600",
+] as const;
 
-const NEWLY_ADDED = [
-  {
-    name: "Flathead Electric Co-op",
-    detail: "Montana distribution co-op added · Utility",
-    time: "1d ago",
-    color: "bg-green-100 text-green-600",
-    initial: "F",
-  },
-  {
-    name: "Rappahannock Electric Co-op",
-    detail: "Virginia distribution co-op added · Utility",
-    time: "2d ago",
-    color: "bg-emerald-100 text-emerald-600",
-    initial: "R",
-  },
-  {
-    name: "Basin Electric Power Co-op",
-    detail: "G&T co-op, 141 member utilities · Grid Op",
-    time: "3d ago",
-    color: "bg-lime-100 text-lime-600",
-    initial: "B",
-  },
-  {
-    name: "Puget Sound Energy",
-    detail: "Washington IOU — full profile added · Utility",
-    time: "4d ago",
-    color: "bg-cyan-100 text-cyan-600",
-    initial: "P",
-  },
-  {
-    name: "Holy Cross Energy",
-    detail: "Colorado mountain co-op added · Utility",
-    time: "5d ago",
-    color: "bg-violet-100 text-violet-600",
-    initial: "H",
-  },
-];
+function avatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
 
-function ActivityRow({
-  name,
-  detail,
-  time,
-  color,
-  initial,
-}: {
-  name: string;
-  detail: string;
-  time: string;
-  color: string;
-  initial: string;
-}) {
+function formatRelativeTime(isoTimestamp: string): string {
+  const diffMs = Date.now() - new Date(isoTimestamp).getTime();
+  const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay}d ago`;
+}
+
+function ActivityRow({ entry }: { entry: ChangelogEntry }) {
+  const color = avatarColor(entry.name);
+  const initial = entry.name.charAt(0).toUpperCase();
+  const time = formatRelativeTime(entry.isoTimestamp);
+
   return (
     <div className="flex items-center gap-3 py-3 border-b border-border-default last:border-0">
       <div
@@ -225,8 +177,8 @@ function ActivityRow({
         {initial}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-text-heading truncate">{name}</div>
-        <div className="text-xs text-text-muted truncate">{detail}</div>
+        <div className="text-sm font-medium text-text-heading truncate">{entry.name}</div>
+        <div className="text-xs text-text-muted truncate">{entry.detail}</div>
       </div>
       <div className="flex-none text-xs text-text-muted tabular-nums">{time}</div>
     </div>
@@ -241,6 +193,7 @@ export default function LandingPage() {
   const baCount = getAllBalancingAuthorities().length;
   const programCount = getAllPrograms().length;
   const gridOperatorCount = isoCount + rtoCount + baCount;
+  const changelog = getChangelog();
 
   const counts: Record<string, string> = {
     territories: TERRITORY_COUNT.toLocaleString(),
@@ -414,14 +367,24 @@ export default function LandingPage() {
                   <span className="text-sm font-semibold text-text-heading">
                     Recently updated entities
                   </span>
-                  <TextLink href="https://github.com/TextureHQ/opengrid" external className="text-xs">
+                  <TextLink href="/changelog" className="text-xs">
                     View all changes →
                   </TextLink>
                 </div>
                 <div>
-                  {RECENT_UPDATES.map((item) => (
-                    <ActivityRow key={item.name} {...item} />
-                  ))}
+                  {changelog.recentlyUpdated.length > 0 ? (
+                    changelog.recentlyUpdated.slice(0, 5).map((entry) => (
+                      <ActivityRow key={`${entry.entityType}:${entry.slug}`} entry={entry} />
+                    ))
+                  ) : (
+                    <p className="text-sm text-text-muted py-4">
+                      No updates recorded yet. Run{" "}
+                      <code className="text-xs bg-background-subtle px-1 py-0.5 rounded">
+                        yarn generate:changelog
+                      </code>{" "}
+                      after a sync to populate this feed.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -429,14 +392,18 @@ export default function LandingPage() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-semibold text-text-heading">Newly added</span>
-                  <TextLink href="https://github.com/TextureHQ/opengrid" external className="text-xs">
+                  <TextLink href="/changelog" className="text-xs">
                     View changelog →
                   </TextLink>
                 </div>
                 <div>
-                  {NEWLY_ADDED.map((item) => (
-                    <ActivityRow key={item.name} {...item} />
-                  ))}
+                  {changelog.newlyAdded.length > 0 ? (
+                    changelog.newlyAdded.slice(0, 5).map((entry) => (
+                      <ActivityRow key={`${entry.entityType}:${entry.slug}`} entry={entry} />
+                    ))
+                  ) : (
+                    <p className="text-sm text-text-muted py-4">No new entities added yet.</p>
+                  )}
                 </div>
               </div>
             </div>

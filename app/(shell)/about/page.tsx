@@ -26,7 +26,7 @@ const dataHighlights = [
 
 export default function AboutPage() {
   return (
-    <PageLayout>
+    <PageLayout maxWidth={900}>
       <PageLayout.Header title="About OpenGrid" />
       <PageLayout.Content>
         {/* Hero */}

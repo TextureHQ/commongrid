@@ -25,3 +25,7 @@ data/transmission-lines.geojson
 # Track the .pmtiles files but ignore any extracted/legacy tile directories
 public/tiles/*
 !public/tiles/*.pmtiles
+
+# Changelog snapshot — large JSON used only for diffing during sync
+# changelog.json itself is tracked; only the snapshot dir is ignored
+data/.snapshot/

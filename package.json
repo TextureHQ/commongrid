@@ -11,7 +11,9 @@
     "sync:power-plants": "tsx scripts/sync-power-plants.ts",
     "sync:transmission-lines": "tsx scripts/sync-transmission-lines.ts",
     "sync:ev-charging": "tsx scripts/sync-ev-charging.ts",
-    "sync:pricing-nodes": "tsx scripts/sync-pricing-nodes.ts"
+    "sync:pricing-nodes": "tsx scripts/sync-pricing-nodes.ts",
+    "generate:changelog": "npx tsx scripts/generate-changelog.ts",
+    "sync:all": "npx tsx scripts/sync-all.ts"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.5",
