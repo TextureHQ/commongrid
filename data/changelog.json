@@ -1,0 +1,96 @@
+{
+  "updatedAt": "2026-03-01T14:21:40.215Z",
+  "recentlyUpdated": [],
+  "newlyAdded": [
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "Duke Energy",
+      "slug": "duke-energy",
+      "detail": "FL IOU — full profile added · IOU",
+      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "Exelon",
+      "slug": "exelon",
+      "detail": "DC IOU — full profile added · IOU",
+      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "FirstEnergy",
+      "slug": "firstenergy",
+      "detail": "MD IOU — full profile added · IOU",
+      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "NextEra Energy",
+      "slug": "nextera-energy",
+      "detail": "FL IOU — full profile added · IOU",
+      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "PG&E",
+      "slug": "pgande-corporation",
+      "detail": "CA IOU — full profile added · IOU",
+      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "Pacific Gas & Electric Company",
+      "slug": "pacific-gas-and-electric-co",
+      "detail": "CA IOU — full profile added · IOU",
+      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "Edison International",
+      "slug": "edison-international",
+      "detail": "CA IOU — full profile added · IOU",
+      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "Southern California Edison",
+      "slug": "southern-california-edison",
+      "detail": "CA IOU — full profile added · IOU",
+      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "Florida Power & Light",
+      "slug": "florida-power-and-light",
+      "detail": "FL IOU — full profile added · IOU",
+      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+    },
+    {
+      "kind": "added",
+      "entityType": "utility",
+      "entityTypeLabel": "IOU",
+      "name": "American Electric Power",
+      "slug": "american-electric-power",
+      "detail": "IN IOU — full profile added · IOU",
+      "isoTimestamp": "2026-03-01T14:21:40.215Z"
+    }
+  ]
+}
