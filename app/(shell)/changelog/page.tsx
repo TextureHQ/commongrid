@@ -137,7 +137,7 @@ export default function ChangelogPage() {
     : null;
 
   return (
-    <PageLayout>
+    <PageLayout maxWidth={900}>
       <PageLayout.Header
         title="Changelog"
         description="Every update to the OpenGrid dataset — new entities added and existing records updated from authoritative sources."

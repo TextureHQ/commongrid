@@ -33,7 +33,7 @@ export default function PowerPlantDetailPage() {
 
   if (isLoading) {
     return (
-      <PageLayout>
+      <PageLayout maxWidth={1200}>
         <PageLayout.Header title="Power Plant" breadcrumbs={[{ label: "Power Plants", href: "/power-plants" }]} />
         <div className="flex items-center justify-center py-24">
           <Loader size={32} />
@@ -67,7 +67,7 @@ export default function PowerPlantDetailPage() {
   const effectiveCapacity = isProposedOnly ? plant.proposedCapacityMw : plant.totalCapacityMw;
 
   return (
-    <PageLayout>
+    <PageLayout maxWidth={1200}>
       <PageLayout.Header
         title={plant.name}
         breadcrumbs={[

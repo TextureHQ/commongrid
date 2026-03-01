@@ -193,7 +193,7 @@ export default function UtilityDetailPage() {
   const hasUtilityRelationships = parent || generationProvider || transmissionProvider || successor;
 
   return (
-    <PageLayout>
+    <PageLayout maxWidth={1200}>
       <PageLayout.Header
         title={utility.name}
         breadcrumbs={[

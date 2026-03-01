@@ -48,7 +48,7 @@ export default function EVStationDetailPage() {
 
   if (isLoading) {
     return (
-      <PageLayout>
+      <PageLayout maxWidth={1200}>
         <PageLayout.Header
           title="EV Charging Station"
           breadcrumbs={[{ label: "EV Charging", href: "/ev-charging" }]}
@@ -86,7 +86,7 @@ export default function EVStationDetailPage() {
   )}`;
 
   return (
-    <PageLayout>
+    <PageLayout maxWidth={1200}>
       <PageLayout.Header
         title={station.stationName}
         breadcrumbs={[

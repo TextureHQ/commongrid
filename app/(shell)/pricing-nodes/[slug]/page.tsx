@@ -41,7 +41,7 @@ export default function PricingNodeDetailPage() {
 
   if (isLoading) {
     return (
-      <PageLayout>
+      <PageLayout maxWidth={1200}>
         <PageLayout.Header
           title="Pricing Node"
           breadcrumbs={[{ label: "Pricing Nodes", href: "/pricing-nodes" }]}
@@ -76,7 +76,7 @@ export default function PricingNodeDetailPage() {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
   return (
-    <PageLayout>
+    <PageLayout maxWidth={1200}>
       <PageLayout.Header
         title={node.name}
         breadcrumbs={[

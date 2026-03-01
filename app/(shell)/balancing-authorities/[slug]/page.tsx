@@ -134,7 +134,7 @@ export default function BADetailPage() {
   }
 
   return (
-    <PageLayout>
+    <PageLayout maxWidth={1200}>
       <PageLayout.Header
         title={ba.name}
         breadcrumbs={[
