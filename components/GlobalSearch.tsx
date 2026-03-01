@@ -596,20 +596,45 @@ export function GlobalSearchModal() {
         aria-hidden="true"
       />
 
+      {/* Modal positioning styles — mobile: full-screen below nav; desktop: centered float */}
+      <style>{`
+        @media (min-width: 640px) {
+          .og-search-modal-wrapper {
+            top: 0 !important;
+            left: 50% !important;
+            right: auto !important;
+            transform: translateX(-50%);
+            margin-top: 10vh;
+            width: 100%;
+            max-width: 42rem;
+            padding: 0 1rem;
+          }
+          .og-search-panel {
+            height: auto !important;
+            max-height: 65vh;
+            border-radius: 1rem;
+          }
+        }
+      `}</style>
+
       {/* Modal — full-screen below nav on mobile, floating centered on desktop */}
       <div
-        className="fixed z-50 inset-x-0 top-14 sm:inset-x-auto sm:top-auto sm:left-1/2 sm:-translate-x-1/2 sm:mt-[10vh] sm:w-full sm:max-w-2xl sm:px-4"
+        className="og-search-modal-wrapper fixed z-50"
+        style={{
+          top: "3.5rem",
+          left: 0,
+          right: 0,
+        }}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div
-          className="og-search-panel w-full flex flex-col overflow-hidden sm:rounded-2xl"
+          className="og-search-panel w-full flex flex-col overflow-hidden"
           style={{
             height: "calc(100dvh - 3.5rem)",
             background: "var(--color-background-surface)",
             boxShadow: "0 32px 64px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}
         >
-          <style>{`@media (min-width: 640px) { .og-search-panel { height: auto !important; max-height: 65vh; } }`}</style>
 
           {/* Search input */}
           <div className="flex items-center gap-3 px-4 sm:px-5 border-b border-border-default flex-none" style={{ height: 52 }}>
