@@ -12,6 +12,8 @@ import {
   Loader,
   PageLayout,
   Section,
+  StatList,
+  type StatItem,
 } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
@@ -133,8 +135,23 @@ export default function BADetailPage() {
     notFound();
   }
 
+  const overviewItems: StatItem[] = [
+    { id: "shortName", label: "Short Name", value: ba.shortName },
+    { id: "eiaCode", label: "EIA Code", value: ba.eiaCode ?? null, copyable: true },
+    { id: "states", label: "States", value: formatStates(ba.states) },
+    ...(iso
+      ? [{ id: "iso", label: "ISO", value: iso.shortName, href: `/explore?view=iso&slug=${iso.slug}` }]
+      : []),
+    {
+      id: "website",
+      label: "Website",
+      value: ba.website ? safeHostname(ba.website) : null,
+      href: ba.website ?? undefined,
+    },
+  ];
+
   return (
-    <PageLayout maxWidth={1200}>
+    <PageLayout maxWidth={896}>
       <PageLayout.Header
         title={ba.name}
         breadcrumbs={[
@@ -152,50 +169,7 @@ export default function BADetailPage() {
                 <div className="text-lg font-semibold">{ba.name}</div>
                 <div className="text-sm text-text-muted">{ba.shortName}</div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Short Name</div>
-                  <div className="font-medium">{ba.shortName}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">EIA Code</div>
-                  <div className="font-medium font-mono">{ba.eiaCode ?? "\u2014"}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">States</div>
-                  <div className="font-medium">{formatStates(ba.states)}</div>
-                </div>
-                {iso && (
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">ISO</div>
-                    <div className="font-medium">
-                      <Link
-                        href={`/explore?view=iso&slug=${iso.slug}`}
-                        className="text-brand-primary hover:underline"
-                      >
-                        {iso.shortName}
-                      </Link>
-                    </div>
-                  </div>
-                )}
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Website</div>
-                  <div className="font-medium">
-                    {ba.website ? (
-                      <a
-                        href={ba.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-brand-primary hover:underline"
-                      >
-                        {safeHostname(ba.website)}
-                      </a>
-                    ) : (
-                      "\u2014"
-                    )}
-                  </div>
-                </div>
-              </div>
+              <StatList showDividers items={overviewItems} />
             </Card.Content>
           </Card>
         </Section>

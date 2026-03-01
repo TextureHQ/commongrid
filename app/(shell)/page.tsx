@@ -4,6 +4,7 @@ import { Button, Card, Icon, TextLink } from "@texturehq/edges";
 import Link from "next/link";
 import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms, getChangelog } from "@/lib/data";
 import type { ChangelogEntry } from "@/types/changelog";
+import { useGlobalSearch } from "@/components/GlobalSearch";
 
 // Power plant count is hardcoded to avoid importing the 8.7 MB JSON into the pre-rendered page.
 // Updated by sync-power-plants script.
@@ -185,6 +186,7 @@ function ActivityRow({ entry }: { entry: ChangelogEntry }) {
 }
 
 export default function LandingPage() {
+  const { open: openSearch } = useGlobalSearch();
   const utilityCount = getAllUtilities().length;
   const isoCount = getAllIsos().length;
   const rtoCount = getAllRtos().length;
@@ -231,15 +233,19 @@ export default function LandingPage() {
 
           {/* Search */}
           <div className="max-w-lg mx-auto mb-7">
-            <div className="flex items-center gap-3 px-4 h-12 rounded-xl border border-border-default bg-background-surface shadow-sm">
+            <button
+              type="button"
+              onClick={openSearch}
+              className="w-full flex items-center gap-3 px-4 h-12 rounded-xl border border-border-default bg-background-surface shadow-sm hover:border-brand-primary/50 hover:shadow-md transition-all cursor-text text-left"
+            >
               <Icon name="MagnifyingGlass" size={18} className="text-text-muted flex-none" />
-              <span className="flex-1 text-sm text-text-muted text-left">
+              <span className="flex-1 text-sm text-text-muted">
                 Search utilities, programs, ISOs, territories...
               </span>
               <kbd className="flex-none hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-xs font-mono">
                 ⌘K
               </kbd>
-            </div>
+            </button>
           </div>
 
           {/* CTAs */}

@@ -8,6 +8,8 @@ import {
   Loader,
   PageLayout,
   Section,
+  StatList,
+  type StatItem,
 } from "@texturehq/edges";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
@@ -41,7 +43,7 @@ export default function PricingNodeDetailPage() {
 
   if (isLoading) {
     return (
-      <PageLayout maxWidth={1200}>
+      <PageLayout maxWidth={896}>
         <PageLayout.Header
           title="Pricing Node"
           breadcrumbs={[{ label: "Pricing Nodes", href: "/pricing-nodes" }]}
@@ -75,8 +77,41 @@ export default function PricingNodeDetailPage() {
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
+  const overviewItems: StatItem[] = [
+    { id: "iso", label: "ISO/RTO", value: ISO_FULL_NAMES[node.iso] },
+    {
+      id: "nodeType",
+      label: "Node Type",
+      value: (
+        <Badge size="sm" shape="pill" variant={getNodeTypeBadgeVariant(node.nodeType)}>
+          {NODE_TYPE_LABELS[node.nodeType]}
+        </Badge>
+      ),
+    },
+    { id: "zone", label: "Zone", value: node.zone ?? null },
+    { id: "state", label: "State", value: node.state ?? null },
+  ];
+
+  const locationItems: StatItem[] = [
+    { id: "latitude", label: "Latitude", value: node.latitude.toFixed(4) },
+    { id: "longitude", label: "Longitude", value: node.longitude.toFixed(4) },
+    ...(node.voltageKv ? [{ id: "voltage", label: "Voltage", value: `${node.voltageKv} kV` }] : []),
+    ...(node.eiaPlantCode
+      ? [
+          {
+            id: "eiaPlantCode",
+            label: "EIA Plant Code",
+            value: node.eiaPlantCode,
+            href: `/power-plants/${node.eiaPlantCode}`,
+          },
+        ]
+      : []),
+    { id: "source", label: "Data Source", value: node.source },
+    { id: "nodeId", label: "Node ID", value: node.id, copyable: true },
+  ];
+
   return (
-    <PageLayout maxWidth={1200}>
+    <PageLayout maxWidth={896}>
       <PageLayout.Header
         title={node.name}
         breadcrumbs={[
@@ -102,26 +137,7 @@ export default function PricingNodeDetailPage() {
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div>
-                  <div className="text-sm text-text-muted mb-1">ISO/RTO</div>
-                  <div className="font-medium">{ISO_FULL_NAMES[node.iso]}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Node Type</div>
-                  <Badge size="sm" shape="pill" variant={getNodeTypeBadgeVariant(node.nodeType)}>
-                    {NODE_TYPE_LABELS[node.nodeType]}
-                  </Badge>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Zone</div>
-                  <div className="font-medium">{node.zone ?? "—"}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">State</div>
-                  <div className="font-medium">{node.state ?? "—"}</div>
-                </div>
-              </div>
+              <StatList layout="two-column" showDividers items={overviewItems} />
             </Card.Content>
           </Card>
         </Section>
@@ -130,45 +146,7 @@ export default function PricingNodeDetailPage() {
         <Section id="location" navLabel="Location" title="Location" withDivider>
           <Card variant="outlined">
             <Card.Content>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Latitude</div>
-                  <div className="font-medium font-mono text-sm">{node.latitude.toFixed(4)}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Longitude</div>
-                  <div className="font-medium font-mono text-sm">{node.longitude.toFixed(4)}</div>
-                </div>
-                {node.voltageKv && (
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">Voltage</div>
-                    <div className="font-medium">{node.voltageKv} kV</div>
-                  </div>
-                )}
-                {node.eiaPlantCode && (
-                  <div>
-                    <div className="text-sm text-text-muted mb-1">EIA Plant Code</div>
-                    <div className="font-medium font-mono text-sm">
-                      <Link
-                        href={`/power-plants/${node.eiaPlantCode}`}
-                        className="text-brand-primary hover:underline"
-                      >
-                        {node.eiaPlantCode}
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Data Source</div>
-                  <div className="font-medium">{node.source}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-text-muted mb-1">Node ID</div>
-                  <div className="font-medium font-mono text-sm">{node.id}</div>
-                </div>
-              </div>
+              <StatList layout="two-column" showDividers items={locationItems} />
             </Card.Content>
           </Card>
         </Section>
