@@ -9,7 +9,7 @@
  *   - Advanced_Meters_2024.xlsx  → amiMeterCount, totalMeterCount
  *
  * Usage:
- *   cd apps/opengrid
+ *   cd apps/commongrid
  *   yarn sync:eia
  *
  * Prerequisites:

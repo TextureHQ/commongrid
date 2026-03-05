@@ -4,8 +4,8 @@ import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s - OpenGrid",
-    default: "OpenGrid",
+    template: "%s - CommonGrid",
+    default: "CommonGrid",
   },
   description: "Community-maintained energy knowledge base",
 };

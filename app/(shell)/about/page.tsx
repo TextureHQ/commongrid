@@ -27,7 +27,7 @@ const dataHighlights = [
 export default function AboutPage() {
   return (
     <PageLayout maxWidth={900}>
-      <PageLayout.Header title="About OpenGrid" />
+      <PageLayout.Header title="About CommonGrid" />
       <PageLayout.Content>
         {/* Hero */}
         <Section id="mission" navLabel="Mission" title="The open-source energy infrastructure dataset" withDivider>
@@ -35,7 +35,7 @@ export default function AboutPage() {
             <Card.Content>
               <div className="space-y-4 text-text-body leading-relaxed">
                 <p className="text-lg">
-                  <strong className="text-text-heading">OpenGrid</strong> is the open-source energy infrastructure dataset built by{" "}
+                  <strong className="text-text-heading">CommonGrid</strong> is the open-source energy infrastructure dataset built by{" "}
                   <a href="https://texturehq.com" target="_blank" rel="noopener noreferrer" className="text-brand-primary hover:underline">
                     Texture
                   </a>
@@ -53,7 +53,7 @@ export default function AboutPage() {
         </Section>
 
         {/* Data at a Glance */}
-        <Section id="data" navLabel="Data" title="What's in OpenGrid" withDivider>
+        <Section id="data" navLabel="Data" title="What's in CommonGrid" withDivider>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {dataHighlights.map((item) => (
               <Card key={item.label} variant="outlined">
@@ -82,7 +82,7 @@ export default function AboutPage() {
             <Link href="/explore">
               <Badge size="lg" shape="pill" variant="success">Explore Map →</Badge>
             </Link>
-            <a href="https://github.com/TextureHQ/opengrid" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/TextureHQ/commongrid" target="_blank" rel="noopener noreferrer">
               <Badge size="lg" shape="pill" variant="default">View on GitHub →</Badge>
             </a>
           </div>
@@ -114,11 +114,11 @@ export default function AboutPage() {
                   <span className="text-text-muted text-sm">Actively growing</span>
                 </div>
                 <p>
-                  OpenGrid is under active development. We&rsquo;re continuously adding new data sources, improving data quality, and expanding coverage. Contributions are welcome — whether that&rsquo;s reporting data issues, adding new sources, or improving the explorer.
+                  CommonGrid is under active development. We&rsquo;re continuously adding new data sources, improving data quality, and expanding coverage. Contributions are welcome — whether that&rsquo;s reporting data issues, adding new sources, or improving the explorer.
                 </p>
                 <div className="flex flex-wrap gap-3 pt-2">
                   <a
-                    href="https://github.com/TextureHQ/opengrid"
+                    href="https://github.com/TextureHQ/commongrid"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-brand-primary hover:underline text-sm font-medium"
@@ -126,7 +126,7 @@ export default function AboutPage() {
                     GitHub Repository →
                   </a>
                   <a
-                    href="https://github.com/TextureHQ/opengrid/issues"
+                    href="https://github.com/TextureHQ/commongrid/issues"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-brand-primary hover:underline text-sm font-medium"

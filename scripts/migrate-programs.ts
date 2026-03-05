@@ -2,7 +2,7 @@
  * migrate-programs.ts
  *
  * Pulls all programs from the Notion Programs DB and migrates them to
- * OpenGrid's Program schema, writing the output to data/programs.json.
+ * CommonGrid's Program schema, writing the output to data/programs.json.
  *
  * Usage:
  *   source ~/.zshrc && npx ts-node scripts/migrate-programs.ts
@@ -311,7 +311,7 @@ function transformProgram(
     ? [{ entityId: utility.slug, role: "ADMINISTRATOR" }]
     : [];
 
-  // Regions — use OpenGrid region ID format (e.g. "region-st-15257")
+  // Regions — use CommonGrid region ID format (e.g. "region-st-15257")
   const regions = utility?.serviceTerritoryId ? [utility.serviceTerritoryId] : [];
 
   // Compensation tiers

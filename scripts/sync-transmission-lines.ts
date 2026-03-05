@@ -7,7 +7,7 @@
  *   - data/transmission-lines.geojson — full GeoJSON FeatureCollection for tippecanoe
  *
  * Usage:
- *   cd opengrid
+ *   cd commongrid
  *   npx tsx scripts/sync-transmission-lines.ts
  *
  * Output:

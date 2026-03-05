@@ -1,11 +1,11 @@
-# Open Grid: Community-Maintained Energy Knowledge Base
+# Common Grid: Community-Maintained Energy Knowledge Base
 
 **Domain:** Platform  
 **Status:** Research/Early Implementation
 
 ## Summary
 
-Expose the Context layer (Layer 1) as Open Grid — an open data project — seeded by Texture from public sources, then opened for community contributions. Positions Texture as the maintainer of shared energy infrastructure knowledge while the competitive moat remains in Layers 2–9.
+Expose the Context layer (Layer 1) as Common Grid — an open data project — seeded by Texture from public sources, then opened for community contributions. Positions Texture as the maintainer of shared energy infrastructure knowledge while the competitive moat remains in Layers 2–9.
 
 ## Why This Makes Sense
 

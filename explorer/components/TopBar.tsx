@@ -49,7 +49,7 @@ export function TopBar({ navigation }: TopBarProps) {
             <rect x="28" y="28" width="8" height="44" rx="2"/><rect x="28" y="64" width="30" height="8" rx="2"/><rect x="58" y="28" width="8" height="44" rx="2"/><rect x="44" y="28" width="22" height="8" rx="2"/>
           </svg>
           <span className="text-lg font-semibold text-text-heading tracking-tight">
-            OpenGrid
+            CommonGrid
           </span>
         </Link>
 

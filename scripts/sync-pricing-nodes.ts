@@ -8,7 +8,7 @@
  * 4. Outputs data/pricing-nodes.json
  *
  * Usage:
- *   cd opengrid
+ *   cd commongrid
  *   npx tsx scripts/sync-pricing-nodes.ts
  *
  * Data sources:

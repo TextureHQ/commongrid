@@ -8,7 +8,7 @@
  *   - EIA-861 Balancing_Authority_2024.xlsx (BA codes + states)
  *
  * Usage:
- *   cd apps/opengrid
+ *   cd apps/commongrid
  *   yarn sync:ba
  *
  * Outputs:

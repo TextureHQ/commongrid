@@ -22,7 +22,7 @@ echo "=== Step 3: Generate territory tiles with tippecanoe ==="
 tippecanoe \
   --output="$OUT_DIR/territories.pmtiles" \
   --force \
-  --name="OpenGrid Territories" \
+  --name="CommonGrid Territories" \
   --layer=territories \
   --minimum-zoom=0 \
   --maximum-zoom=12 \
@@ -39,7 +39,7 @@ echo "=== Step 4: Generate power plant tiles with tippecanoe ==="
 tippecanoe \
   --output="$OUT_DIR/power-plants.pmtiles" \
   --force \
-  --name="OpenGrid Power Plants" \
+  --name="CommonGrid Power Plants" \
   --layer=power-plants \
   --minimum-zoom=0 \
   --maximum-zoom=12 \
@@ -57,7 +57,7 @@ if [ -f "$ROOT_DIR/.tmp-transmission-lines.geojson" ]; then
   tippecanoe \
     --output="$OUT_DIR/transmission-lines.pmtiles" \
     --force \
-    --name="OpenGrid Transmission Lines" \
+    --name="CommonGrid Transmission Lines" \
     --layer=transmission-lines \
     --minimum-zoom=0 \
     --maximum-zoom=12 \
@@ -83,7 +83,7 @@ if [ -f "$ROOT_DIR/.tmp-ev-charging.geojson" ]; then
   tippecanoe \
     --output="$OUT_DIR/ev-charging.pmtiles" \
     --force \
-    --name="OpenGrid EV Charging" \
+    --name="CommonGrid EV Charging" \
     --layer=ev-charging \
     --minimum-zoom=0 \
     --maximum-zoom=12 \
@@ -108,7 +108,7 @@ if [ -f "$ROOT_DIR/.tmp-pricing-nodes.geojson" ]; then
   tippecanoe \
     --output="$OUT_DIR/pricing-nodes.pmtiles" \
     --force \
-    --name="OpenGrid Pricing Nodes" \
+    --name="CommonGrid Pricing Nodes" \
     --layer=pricing-nodes \
     --minimum-zoom=0 \
     --maximum-zoom=12 \

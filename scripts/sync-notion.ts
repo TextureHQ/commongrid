@@ -1,9 +1,9 @@
 /**
  * Sync script: Pull utilities and ISOs data from Notion Knowledge Base
- * and write static JSON files for the opengrid app.
+ * and write static JSON files for the commongrid app.
  *
  * Usage:
- *   cd apps/opengrid
+ *   cd apps/commongrid
  *   export $(cat ../../packages/notion-client/.env | xargs) && yarn sync:notion
  */
 
@@ -429,7 +429,7 @@ async function syncUtilities(
 }
 
 async function main() {
-  console.log("Syncing Notion Knowledge Base -> opengrid data\n");
+  console.log("Syncing Notion Knowledge Base -> commongrid data\n");
 
   // Build state lookup first
   const stateLookup = await buildStateLookup();

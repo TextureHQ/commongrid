@@ -1,10 +1,10 @@
-# ⚡ OpenGrid
+# ⚡ CommonGrid
 
 **The open dataset for the US electric grid** — utilities, grid operators, territory boundaries, and more.
 
-**[opengrid.info](https://opengrid.info)** · Built by [Texture](https://texturehq.com), maintained by the community.
+**[commongrid.info](https://commongrid.info)** · Built by [Texture](https://texturehq.com), maintained by the community.
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-ODbL%201.0-brightgreen.svg)](LICENSE)
 
 ---
 
@@ -28,8 +28,8 @@ For a detailed breakdown of every field, data source, and what we're planning to
 ### Just want the data?
 
 ```bash
-git clone https://github.com/TextureHQ/opengrid.git
-cd opengrid
+git clone https://github.com/TextureHQ/commongrid.git
+cd commongrid
 ```
 
 Then load any JSON file in your language of choice:
@@ -56,7 +56,7 @@ console.log(`${coops.length} distribution cooperatives`);
 
 ### Want to explore visually?
 
-The site at **[opengrid.info](https://opengrid.info)** is an interactive map and explorer for all the data in this repo.
+The site at **[commongrid.info](https://commongrid.info)** is an interactive map and explorer for all the data in this repo.
 
 **Run it locally:**
 
@@ -224,9 +224,9 @@ See the [Data Catalog](docs/DATA_CATALOG.md) for detailed source documentation a
 ## Repository Structure
 
 ```
-opengrid/
+commongrid/
 ├── README.md                 ← You are here
-├── LICENSE                   ← Apache 2.0
+├── LICENSE                   ← ODbL 1.0
 ├── data/
 │   ├── utilities.json        ← 3,132 utilities
 │   ├── isos.json             ← 7 ISOs
@@ -234,7 +234,7 @@ opengrid/
 │   ├── balancing-authorities.json  ← 45 BAs
 │   ├── regions.json          ← 3,000 regions
 │   └── territories/          ← 3,000+ GeoJSON boundary files
-├── app/                      ← Next.js pages (the opengrid.info site)
+├── app/                      ← Next.js pages (the commongrid.info site)
 │   └── (shell)/              ← Layout with nav, map, detail pages
 ├── components/               ← React components (TopBar, DataSourceLink, etc.)
 ├── lib/                      ← Data loading, formatting, geo utilities
@@ -260,7 +260,7 @@ We welcome contributions! See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for d
 
 ## License
 
-OpenGrid is licensed under the [Apache License 2.0](LICENSE).
+CommonGrid data is licensed under the [Open Database License (ODbL) 1.0](LICENSE). See the [full ODbL text](https://opendatacommons.org/licenses/odbl/1-0/) for details.
 
 The underlying data is sourced from US government agencies and public sources. The data itself is not copyrightable — our contribution is the cleaning, normalization, and structuring.
 

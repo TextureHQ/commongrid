@@ -9,7 +9,7 @@
  *   - Linkage to utilities.json and balancing-authorities.json
  *
  * Usage:
- *   cd opengrid
+ *   cd commongrid
  *   npx tsx scripts/sync-power-plants.ts
  *
  * Output:
