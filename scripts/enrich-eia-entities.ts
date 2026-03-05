@@ -10,7 +10,7 @@
  * 4. Marks stale/merged/defunct entries with appropriate status
  *
  * Usage:
- *   cd apps/opengrid
+ *   cd apps/commongrid
  *   yarn enrich:eia
  */
 

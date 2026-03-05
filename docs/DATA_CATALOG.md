@@ -1,8 +1,8 @@
-# OpenGrid Data Catalog
+# CommonGrid Data Catalog
 
 > **Last updated:** 2026-02-18
 >
-> A comprehensive inventory of open/public data sources for US (and international) electric grid intelligence. Covers what OpenGrid currently has, what we plan to add, and where the gaps are.
+> A comprehensive inventory of open/public data sources for US (and international) electric grid intelligence. Covers what CommonGrid currently has, what we plan to add, and where the gaps are.
 
 ---
 
@@ -908,4 +908,4 @@ Open-source tools that are useful for working with grid data. These are independ
 
 ---
 
-*This catalog is maintained as part of the OpenGrid project. Contributions and corrections welcome.*
+*This catalog is maintained as part of the CommonGrid project. Contributions and corrections welcome.*

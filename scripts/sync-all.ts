@@ -2,7 +2,7 @@
  * Orchestrator: Run all sync scripts in dependency order.
  *
  * Usage:
- *   cd apps/opengrid
+ *   cd apps/commongrid
  *   export $(cat ../../packages/notion-client/.env | xargs) && yarn sync:all
  */
 

@@ -6,7 +6,7 @@
  * https://cecgis-caenergy.opendata.arcgis.com/datasets/CAEnergy::electric-load-serving-entities-other
  *
  * Usage:
- *   cd apps/opengrid
+ *   cd apps/commongrid
  *   yarn sync:cca
  *
  * Outputs:

@@ -58,7 +58,7 @@ export function TopBar({ navigation }: TopBarProps) {
               <rect x="28" y="28" width="8" height="44" rx="2"/><rect x="28" y="64" width="30" height="8" rx="2"/><rect x="58" y="28" width="8" height="44" rx="2"/><rect x="44" y="28" width="22" height="8" rx="2"/>
             </svg>
             <span className="text-[15px] font-semibold text-text-heading tracking-tight">
-              OpenGrid
+              CommonGrid
             </span>
           </Link>
 
@@ -95,7 +95,7 @@ export function TopBar({ navigation }: TopBarProps) {
         <div className="ml-auto hidden sm:flex items-center gap-1">
           <Button
             variant="icon"
-            href="https://github.com/TextureHQ/opengrid"
+            href="https://github.com/TextureHQ/commongrid"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="View on GitHub"
@@ -162,7 +162,7 @@ export function TopBar({ navigation }: TopBarProps) {
           )}
           <Button
             variant="icon"
-            href="https://github.com/TextureHQ/opengrid"
+            href="https://github.com/TextureHQ/commongrid"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-2 w-full justify-start text-sm"

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const GITHUB_BASE = "https://github.com/TextureHQ/opengrid/blob/main";
+const GITHUB_BASE = "https://github.com/TextureHQ/commongrid/blob/main";
 
 interface DataSourceLinkProps {
   paths: string[];

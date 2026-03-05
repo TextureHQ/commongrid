@@ -87,7 +87,7 @@ async function tryOgImage(domain) {
   for (const url of urls) {
     try {
       const res = await fetchWithTimeout(url, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; OpenGrid/1.0)" },
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; CommonGrid/1.0)" },
       });
       if (!res.ok) continue;
       const html = await res.text();
@@ -126,7 +126,7 @@ async function tryFaviconFromPage(domain) {
   for (const url of urls) {
     try {
       const res = await fetchWithTimeout(url, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; OpenGrid/1.0)" },
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; CommonGrid/1.0)" },
       });
       if (!res.ok) continue;
       const html = await res.text();

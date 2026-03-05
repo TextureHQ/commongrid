@@ -1,6 +1,6 @@
-# Contributing to OpenGrid
+# Contributing to CommonGrid
 
-Thanks for your interest in contributing to OpenGrid! Whether you're fixing a typo in a utility name, adding missing territory boundaries, or improving the explorer app — every contribution helps make energy infrastructure data more accessible.
+Thanks for your interest in contributing to CommonGrid! Whether you're fixing a typo in a utility name, adding missing territory boundaries, or improving the explorer app — every contribution helps make energy infrastructure data more accessible.
 
 ## Ways to Contribute
 
@@ -111,4 +111,4 @@ See `scripts/README.md` for detailed documentation on each script.
 
 ## Questions?
 
-Open a [GitHub Discussion](https://github.com/TextureHQ/opengrid/discussions) or reach out to the Texture team.
+Open a [GitHub Discussion](https://github.com/TextureHQ/commongrid/discussions) or reach out to the Texture team.

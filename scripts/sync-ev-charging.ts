@@ -5,7 +5,7 @@
  * electric vehicle (ELEC) stations in the US.
  *
  * Usage:
- *   cd opengrid
+ *   cd commongrid
  *   npx tsx scripts/sync-ev-charging.ts
  *
  * Output:

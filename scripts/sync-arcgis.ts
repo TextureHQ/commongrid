@@ -3,7 +3,7 @@
  * and create Region records matched to utilities, ISOs, and RTOs.
  *
  * Usage:
- *   cd apps/opengrid
+ *   cd apps/commongrid
  *   yarn sync:arcgis
  *
  * Outputs:
@@ -121,7 +121,7 @@ async function fetchPaginatedGeoJSON<P>(
 }
 
 async function main() {
-  console.log("Syncing ArcGIS data -> opengrid\n");
+  console.log("Syncing ArcGIS data -> commongrid\n");
 
   fs.mkdirSync(DATA_DIR, { recursive: true });
   fs.mkdirSync(TERRITORIES_DIR, { recursive: true });

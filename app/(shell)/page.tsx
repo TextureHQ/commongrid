@@ -253,7 +253,7 @@ export default function LandingPage() {
             <Button variant="primary" href="/explore" icon="ArrowRight" iconPosition="right">
               Browse the registry
             </Button>
-            <Button variant="secondary" href="https://opengrid.texture.energy/api" target="_blank" rel="noopener noreferrer">
+            <Button variant="secondary" href="https://commongrid.texture.energy/api" target="_blank" rel="noopener noreferrer">
               View API docs
             </Button>
           </div>
@@ -415,7 +415,7 @@ export default function LandingPage() {
       <footer className="border-t border-border-default px-6 py-6">
         <div className="max-w-5xl mx-auto flex flex-col gap-3 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span>OpenGrid by Texture, Inc. · ODbL License</span>
+            <span>CommonGrid by Texture, Inc. · ODbL License</span>
             <span className="inline-flex items-center gap-1">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
               <span className="text-green-600 font-medium">Live</span>
@@ -423,8 +423,8 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center flex-wrap gap-x-5 gap-y-2">
             {[
-              { label: "GitHub", href: "https://github.com/TextureHQ/opengrid" },
-              { label: "API docs", href: "https://opengrid.texture.energy/api" },
+              { label: "GitHub", href: "https://github.com/TextureHQ/commongrid" },
+              { label: "API docs", href: "https://commongrid.texture.energy/api" },
               { label: "About", href: "/about" },
               { label: "License", href: "https://opendatacommons.org/licenses/odbl/" },
             ].map((link) => (

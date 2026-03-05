@@ -1,6 +1,6 @@
 # Sync Scripts
 
-Scripts that pull data from external sources (Notion, ArcGIS, EIA-861 XLSX) and write static JSON files consumed by the opengrid app.
+Scripts that pull data from external sources (Notion, ArcGIS, EIA-861 XLSX) and write static JSON files consumed by the commongrid app.
 
 ## Data Architecture
 

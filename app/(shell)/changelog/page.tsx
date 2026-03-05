@@ -140,7 +140,7 @@ export default function ChangelogPage() {
     <PageLayout maxWidth={900}>
       <PageLayout.Header
         title="Changelog"
-        description="Every update to the OpenGrid dataset — new entities added and existing records updated from authoritative sources."
+        description="Every update to the CommonGrid dataset — new entities added and existing records updated from authoritative sources."
       />
       <PageLayout.Content>
         <Section id="feed" navLabel="Changes" withDivider={false}>
