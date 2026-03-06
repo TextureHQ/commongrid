@@ -16,12 +16,15 @@ const dataSources = [
 ];
 
 const dataHighlights = [
-  { label: "Grid Operators", value: "3,132", icon: "⚡" },
-  { label: "Power Plants", value: "15,082", icon: "🏭" },
-  { label: "Transmission Lines", value: "52,000+", icon: "🔌" },
-  { label: "EV Charging Stations", value: "85,425", icon: "🔋" },
-  { label: "Pricing Nodes", value: "4,065", icon: "💰" },
-  { label: "Territory Boundaries", value: "3,000+ GeoJSON", icon: "🗺️" },
+  { label: "Utilities", value: "3,000+", icon: "🏢", href: "/grid-operators" },
+  { label: "Grid Operators", value: "3,132", icon: "⚡", href: "/grid-operators" },
+  { label: "Territory Boundaries", value: "4,841", icon: "🗺️", href: "/explore" },
+  { label: "Power Plants", value: "15,082", icon: "🏭", href: "/power-plants" },
+  { label: "Transmission Lines", value: "52,000+", icon: "🔌", href: "/transmission-lines" },
+  { label: "EV Charging Stations", value: "85,425", icon: "🔋", href: "/ev-charging" },
+  { label: "Pricing Nodes", value: "4,065", icon: "💰", href: "/pricing-nodes" },
+  { label: "Programs & Incentives", value: "500+", icon: "📋", href: "/explore?view=programs" },
+  { label: "Rates & Tariffs", value: "~12k", icon: "📄", href: "/explore?view=rates" },
 ];
 
 export default function AboutPage() {
@@ -54,37 +57,21 @@ export default function AboutPage() {
 
         {/* Data at a Glance */}
         <Section id="data" navLabel="Data" title="What's in CommonGrid" withDivider>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4">
             {dataHighlights.map((item) => (
-              <Card key={item.label} variant="outlined">
-                <Card.Content>
-                  <div className="text-2xl mb-2">{item.icon}</div>
-                  <div className="text-sm text-text-muted mb-1">{item.label}</div>
-                  <div className="text-lg font-semibold text-text-heading">{item.value}</div>
-                </Card.Content>
-              </Card>
+              <Link key={item.label} href={item.href} className="block group">
+                <Card variant="outlined" className="h-full group-hover:border-brand-primary/50 group-hover:shadow-sm transition-all">
+                  <Card.Content>
+                    <div className="text-2xl mb-2">{item.icon}</div>
+                    <div className="text-sm text-text-muted mb-1">{item.label}</div>
+                    <div className="text-lg font-semibold text-text-heading mb-3">{item.value}</div>
+                    <div className="text-xs text-brand-primary font-medium group-hover:underline">
+                      Browse {item.label} →
+                    </div>
+                  </Card.Content>
+                </Card>
+              </Link>
             ))}
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/grid-operators">
-              <Badge size="lg" shape="pill" variant="info">Browse Grid Operators →</Badge>
-            </Link>
-            <Link href="/transmission-lines">
-              <Badge size="lg" shape="pill" variant="error">Browse Transmission Lines →</Badge>
-            </Link>
-            <Link href="/power-plants">
-              <Badge size="lg" shape="pill" variant="warning">Browse Power Plants →</Badge>
-            </Link>
-            <Link href="/ev-charging">
-              <Badge size="lg" shape="pill" variant="success">Browse EV Charging →</Badge>
-            </Link>
-            <Link href="/explore">
-              <Badge size="lg" shape="pill" variant="success">Explore Map →</Badge>
-            </Link>
-            <a href="https://github.com/TextureHQ/commongrid" target="_blank" rel="noopener noreferrer">
-              <Badge size="lg" shape="pill" variant="default">View on GitHub →</Badge>
-            </a>
           </div>
         </Section>
 
@@ -99,6 +86,61 @@ export default function AboutPage() {
                     <div className="text-text-body text-sm">{source.description}</div>
                   </div>
                 ))}
+              </div>
+            </Card.Content>
+          </Card>
+        </Section>
+
+        {/* Contribute */}
+        <Section id="contribute" navLabel="Contribute" title="Help Build CommonGrid" withDivider>
+          <Card variant="outlined">
+            <Card.Content>
+              <div className="space-y-4 text-text-body leading-relaxed">
+                <p className="text-lg">
+                  <strong className="text-text-heading">CommonGrid isn&rsquo;t just our project — it&rsquo;s yours.</strong>
+                </p>
+                <p>
+                  The best open datasets are built by communities. Like OpenStreetMap proved that millions of contributors can map the world better than any single company, we believe the energy industry&rsquo;s data should be just as accessible and community-maintained.
+                </p>
+                <p>
+                  We need your help. Whether you work at a utility, a research lab, a state PUC, or you&rsquo;re just a data nerd who cares about the grid — there&rsquo;s a way to contribute:
+                </p>
+                <ul className="space-y-2 ml-1">
+                  <li className="flex gap-2">
+                    <span className="flex-none">📊</span>
+                    <span><strong>Submit data corrections</strong> — spot a wrong address, outdated customer count, or missing utility? Open an issue or PR.</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="flex-none">🗺️</span>
+                    <span><strong>Contribute new data sources</strong> — know of a public dataset we&rsquo;re missing? State-level data, municipal records, international grids? We want it.</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="flex-none">🔧</span>
+                    <span><strong>Improve the tools</strong> — better sync scripts, new visualizations, data validation — all contributions welcome.</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="flex-none">🐛</span>
+                    <span><strong>Report issues</strong> — even just flagging that something looks wrong is incredibly valuable.</span>
+                  </li>
+                </ul>
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <a
+                    href="https://github.com/TextureHQ/commongrid/issues/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-primary text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                  >
+                    Open an Issue →
+                  </a>
+                  <a
+                    href="https://github.com/TextureHQ/commongrid"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border-default text-text-body text-sm font-medium hover:border-brand-primary/50 transition-colors"
+                  >
+                    Fork on GitHub →
+                  </a>
+                </div>
               </div>
             </Card.Content>
           </Card>
