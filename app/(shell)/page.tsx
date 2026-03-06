@@ -216,7 +216,7 @@ export default function LandingPage() {
           {/* Badge */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-surface border border-border-default text-xs font-medium tracking-widest uppercase text-text-muted mb-8 shadow-sm">
             <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
-            Open Data Project · Updated Daily
+            Open Data Project · Continuously Updated
           </div>
 
           {/* Headline */}
@@ -253,8 +253,8 @@ export default function LandingPage() {
             <Button variant="primary" href="/explore" icon="ArrowRight" iconPosition="right">
               Browse the registry
             </Button>
-            <Button variant="secondary" href="https://commongrid.texture.energy/api" target="_blank" rel="noopener noreferrer">
-              View API docs
+            <Button variant="secondary" href="https://github.com/TextureHQ/commongrid" target="_blank" rel="noopener noreferrer">
+              View on GitHub
             </Button>
           </div>
         </div>
@@ -283,7 +283,7 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-border-default sm:hidden">
               <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-xs font-semibold text-green-600">Live · Updated Daily</span>
+              <span className="text-xs font-semibold text-green-600">Live · Continuously Updated</span>
             </div>
           </div>
         </div>
@@ -354,7 +354,7 @@ export default function LandingPage() {
             What's been updated
           </h2>
           <p className="text-base text-text-muted max-w-lg">
-            Every update is versioned, attributed, and synced from authoritative sources daily.
+            Every update is versioned, attributed, and synced from authoritative sources.
           </p>
         </div>
 
@@ -424,7 +424,7 @@ export default function LandingPage() {
           <div className="flex items-center flex-wrap gap-x-5 gap-y-2">
             {[
               { label: "GitHub", href: "https://github.com/TextureHQ/commongrid" },
-              { label: "API docs", href: "https://commongrid.texture.energy/api" },
+              { label: "Contribute", href: "https://github.com/TextureHQ/commongrid/issues" },
               { label: "About", href: "/about" },
               { label: "License", href: "https://opendatacommons.org/licenses/odbl/" },
             ].map((link) => (
