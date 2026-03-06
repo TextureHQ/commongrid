@@ -50,12 +50,25 @@ export function TopBar({ navigation }: TopBarProps) {
         {/* Left: logo + nav */}
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor" className="h-6 w-6 text-text-heading">
-              <circle cx="10" cy="10" r="3.5"/><circle cx="25" cy="10" r="3.5"/><circle cx="40" cy="10" r="3.5"/><circle cx="55" cy="10" r="3.5"/><circle cx="70" cy="10" r="3.5"/><circle cx="85" cy="10" r="3.5"/>
-              <circle cx="10" cy="90" r="3.5"/><circle cx="25" cy="90" r="3.5"/><circle cx="40" cy="90" r="3.5"/><circle cx="55" cy="90" r="3.5"/><circle cx="70" cy="90" r="3.5"/><circle cx="85" cy="90" r="3.5"/>
-              <circle cx="10" cy="26" r="3.5"/><circle cx="10" cy="42" r="3.5"/><circle cx="10" cy="58" r="3.5"/><circle cx="10" cy="74" r="3.5"/>
-              <circle cx="85" cy="26" r="3.5"/><circle cx="85" cy="42" r="3.5"/><circle cx="85" cy="58" r="3.5"/><circle cx="85" cy="74" r="3.5"/>
-              <rect x="28" y="28" width="8" height="44" rx="2"/><rect x="28" y="64" width="30" height="8" rx="2"/><rect x="58" y="28" width="8" height="44" rx="2"/><rect x="44" y="28" width="22" height="8" rx="2"/>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-text-heading">
+              {/* Top row */}
+              <circle cx="4" cy="4" r="1.8" fill="currentColor"/>
+              <circle cx="12" cy="4" r="1.8" fill="currentColor"/>
+              <circle cx="20" cy="4" r="1.8" fill="currentColor"/>
+              <circle cx="28" cy="4" r="1.8" fill="currentColor"/>
+              {/* Left col */}
+              <circle cx="4" cy="12" r="1.8" fill="currentColor"/>
+              <circle cx="4" cy="20" r="1.8" fill="currentColor"/>
+              {/* Right col */}
+              <circle cx="28" cy="12" r="1.8" fill="currentColor"/>
+              <circle cx="28" cy="20" r="1.8" fill="currentColor"/>
+              {/* Bottom row */}
+              <circle cx="4" cy="28" r="1.8" fill="currentColor"/>
+              <circle cx="12" cy="28" r="1.8" fill="currentColor"/>
+              <circle cx="20" cy="28" r="1.8" fill="currentColor"/>
+              <circle cx="28" cy="28" r="1.8" fill="currentColor"/>
+              {/* Solid center square */}
+              <rect x="11" y="11" width="10" height="10" rx="1.5" fill="currentColor"/>
             </svg>
             <span className="text-[15px] font-semibold text-text-heading tracking-tight">
               CommonGrid
