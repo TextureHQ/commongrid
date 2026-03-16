@@ -164,7 +164,7 @@ function GridOperatorsPageInner() {
               shape="square"
               variant="organization"
             />
-            <span className="truncate">{row.name}</span>
+            <span className="truncate hyphens-auto">{row.name}</span>
           </Link>
         ),
         mobile: { priority: 1, format: "primary" },

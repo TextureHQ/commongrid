@@ -158,7 +158,7 @@ export default function PricingNodesPage() {
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: getIsoColor(row.iso) }}
             />
-            {row.name}
+            <span className="hyphens-auto">{row.name}</span>
           </Link>
         ),
       },

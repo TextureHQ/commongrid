@@ -22,6 +22,14 @@ html, body {
   /* Dark mode brand handled by BrandProvider darkVariables in Providers.tsx (@texturehq/edges@1.28.2) */
 }
 
+/* Hyphenation support for long entity names at narrow viewports */
+.hyphens-auto {
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 @layer utilities {
   @media (min-width: 768px) {
     .md\:hidden {

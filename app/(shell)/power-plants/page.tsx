@@ -157,7 +157,7 @@ export default function PowerPlantsPage() {
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: getFuelCategoryColor(row.fuelCategory) }}
             />
-            {row.name}
+            <span className="hyphens-auto">{row.name}</span>
           </Link>
         ),
         mobile: { priority: 1, format: "primary" },

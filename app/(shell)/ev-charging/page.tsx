@@ -183,7 +183,7 @@ export default function EVChargingPage() {
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: getNetworkColor(row.evNetwork) }}
             />
-            {row.stationName}
+            <span className="hyphens-auto">{row.stationName}</span>
           </Link>
         ),
         mobile: { priority: 1, format: "primary" },
