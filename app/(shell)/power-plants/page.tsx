@@ -33,9 +33,12 @@ interface PowerPlantRow extends Record<string, unknown> {
   fuelCategory: string;
   totalCapacityMw: number;
   state: string;
+  county: string | null;
   utilityName: string;
   status: string;
   proposedCapacityMw: number | null;
+  operatingYear: number | null;
+  generatorCount: number;
 }
 
 const sortOptions = [
@@ -128,9 +131,12 @@ export default function PowerPlantsPage() {
         fuelCategory: p.fuelCategory,
         totalCapacityMw: p.totalCapacityMw,
         state: p.state,
+        county: p.county,
         utilityName: p.utilityName,
         status: p.status,
         proposedCapacityMw: p.proposedCapacityMw,
+        operatingYear: p.operatingYear,
+        generatorCount: p.generatorCount,
       })),
     [filtered]
   );
@@ -208,6 +214,33 @@ export default function PowerPlantsPage() {
           <Badge size="sm" shape="pill" variant={getPlantStatusBadgeVariant(row.status)}>
             {row.status === "operable" ? "Operable" : "Proposed"}
           </Badge>
+        ),
+        mobile: false,
+      },
+      {
+        id: "county",
+        label: "County",
+        accessor: "county",
+        render: (_value: unknown, row: PowerPlantRow) => (
+          <span className="text-text-body">{row.county ?? "—"}</span>
+        ),
+        mobile: false,
+      },
+      {
+        id: "operatingYear",
+        label: "Year",
+        accessor: "operatingYear",
+        render: (_value: unknown, row: PowerPlantRow) => (
+          <span className="text-text-body tabular-nums">{row.operatingYear ?? "—"}</span>
+        ),
+        mobile: false,
+      },
+      {
+        id: "generatorCount",
+        label: "Generators",
+        accessor: "generatorCount",
+        render: (_value: unknown, row: PowerPlantRow) => (
+          <span className="text-text-body tabular-nums">{row.generatorCount}</span>
         ),
         mobile: false,
       },

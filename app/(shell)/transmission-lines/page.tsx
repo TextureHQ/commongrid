@@ -199,14 +199,14 @@ export default function TransmissionLinesPage() {
       },
       {
         id: "sub1",
-        label: "Substation 1",
+        label: "From",
         accessor: "sub1",
         cell: TextCell,
         mobile: false,
       },
       {
         id: "sub2",
-        label: "Substation 2",
+        label: "To",
         accessor: "sub2",
         cell: TextCell,
         mobile: false,
