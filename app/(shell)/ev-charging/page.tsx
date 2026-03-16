@@ -292,7 +292,7 @@ export default function EVChargingPage() {
               <select
                 value={networkFilter}
                 onChange={(e) => setNetworkFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All Networks</option>
                 {networks.slice(0, 20).map((net) => (
@@ -304,7 +304,7 @@ export default function EVChargingPage() {
               <select
                 value={levelFilter}
                 onChange={(e) => setLevelFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All Charging Levels</option>
                 <option value="dcfast">DC Fast Only</option>
@@ -313,7 +313,7 @@ export default function EVChargingPage() {
               <select
                 value={accessFilter}
                 onChange={(e) => setAccessFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All Access Types</option>
                 <option value="public">Public</option>
@@ -323,7 +323,7 @@ export default function EVChargingPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All Statuses</option>
                 <option value="E">Open</option>
@@ -333,7 +333,7 @@ export default function EVChargingPage() {
               <select
                 value={stateFilter}
                 onChange={(e) => setStateFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All States</option>
                 {states.map((s) => (

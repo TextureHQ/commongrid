@@ -257,7 +257,7 @@ export default function PowerPlantsPage() {
               <select
                 value={fuelFilter}
                 onChange={(e) => setFuelFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 {fuelFilterOptions.map((opt) => (
                   <option key={opt.id} value={opt.value}>
@@ -268,7 +268,7 @@ export default function PowerPlantsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 {statusFilterOptions.map((opt) => (
                   <option key={opt.id} value={opt.value}>
@@ -279,7 +279,7 @@ export default function PowerPlantsPage() {
               <select
                 value={stateFilter}
                 onChange={(e) => setStateFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All States</option>
                 {states.map((s) => (

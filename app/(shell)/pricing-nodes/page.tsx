@@ -241,7 +241,7 @@ export default function PricingNodesPage() {
             <select
               value={isoFilter}
               onChange={(e) => setIsoFilter(e.target.value)}
-              className="h-9 rounded-lg border border-border-default bg-background-surface px-3 text-sm text-text-body"
+              className="h-9 rounded-lg border border-border-default bg-background-surface pl-3 pr-7 text-sm text-text-body"
             >
               <option value="all">All ISOs</option>
               {isos.map((iso) => (
@@ -253,7 +253,7 @@ export default function PricingNodesPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-9 rounded-lg border border-border-default bg-background-surface px-3 text-sm text-text-body"
+              className="h-9 rounded-lg border border-border-default bg-background-surface pl-3 pr-7 text-sm text-text-body"
             >
               <option value="all">All Types</option>
               {nodeTypes.map((type) => (
@@ -265,7 +265,7 @@ export default function PricingNodesPage() {
             <select
               value={stateFilter}
               onChange={(e) => setStateFilter(e.target.value)}
-              className="h-9 rounded-lg border border-border-default bg-background-surface px-3 text-sm text-text-body"
+              className="h-9 rounded-lg border border-border-default bg-background-surface pl-3 pr-7 text-sm text-text-body"
             >
               <option value="all">All States</option>
               {states.map((s) => (
