@@ -151,7 +151,7 @@ export function TopBar({ navigation }: TopBarProps) {
       </div>
 
       {mobileMenuOpen && (
-        <nav className="sm:hidden border-t border-border-default px-4 py-2">
+        <nav className="sm:hidden border-t border-border-default px-4 py-2 bg-[var(--color-background-subtle)]">
           {navigation.map((item) =>
             item.external ? (
               <a
@@ -159,7 +159,7 @@ export function TopBar({ navigation }: TopBarProps) {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block px-3 py-2 rounded-md text-sm transition-colors text-text-muted hover:text-text-body"
+                className="block px-3 py-2.5 rounded-md text-sm transition-colors text-text-muted hover:text-text-body hover:bg-background-surface"
               >
                 {item.label}
               </a>
@@ -167,24 +167,28 @@ export function TopBar({ navigation }: TopBarProps) {
               <Link
                 key={item.id}
                 href={item.href}
-                className={`block px-3 py-2 rounded-md text-sm transition-colors ${
-                  isActive(item) ? "text-text-body font-medium" : "text-text-muted hover:text-text-body"
+                className={`block px-3 py-2.5 rounded-md text-sm transition-colors ${
+                  isActive(item)
+                    ? "text-brand-primary font-medium bg-background-surface"
+                    : "text-text-muted hover:text-text-body hover:bg-background-surface"
                 }`}
               >
                 {item.label}
               </Link>
             )
           )}
-          <Button
-            variant="icon"
-            href="https://github.com/TextureHQ/commongrid"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 w-full justify-start text-sm"
-          >
-            <GitHubIcon />
-            <span>GitHub</span>
-          </Button>
+          <div className="mt-1 pt-2 border-t border-border-default">
+            <Button
+              variant="icon"
+              href="https://github.com/TextureHQ/commongrid"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 w-full justify-start text-sm"
+            >
+              <GitHubIcon />
+              <span>GitHub</span>
+            </Button>
+          </div>
         </nav>
       )}
     </header>
