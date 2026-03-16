@@ -82,7 +82,7 @@ export function ExplorerTabBar() {
           >
             <span className={isActive ? "text-brand-primary" : "text-text-muted"}>{tab.icon}</span>
             <span className="hidden sm:inline">{tab.label}</span>
-            <span className="sm:hidden">{tab.shortLabel}</span>
+            <span className="sm:hidden text-xs">{tab.shortLabel}</span>
           </button>
         );
       })}
