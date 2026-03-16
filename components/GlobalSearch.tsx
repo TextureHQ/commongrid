@@ -589,7 +589,7 @@ export function GlobalSearchModal() {
     <>
       {/* Backdrop — tap outside to close; starts below fixed nav on mobile */}
       <div
-        className="fixed inset-0 top-14 sm:top-0 z-50"
+        className="fixed inset-0 top-12 sm:top-0 z-50"
         style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
         onMouseDown={close}
         onTouchStart={close}
