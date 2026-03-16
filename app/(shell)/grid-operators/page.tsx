@@ -193,7 +193,17 @@ function GridOperatorsPageInner() {
         id: "jurisdiction",
         label: "Jurisdiction",
         accessor: "jurisdiction",
-        cell: TextCell,
+        render: (_value: unknown, row: UtilityRow) => (
+          <span
+            className={`text-text-body ${
+              jurisdictionFilter !== "all" && row.jurisdiction === jurisdictionFilter
+                ? "font-semibold text-brand-primary"
+                : ""
+            }`}
+          >
+            {row.jurisdiction ?? "—"}
+          </span>
+        ),
         mobile: false,
       },
       {
@@ -208,7 +218,7 @@ function GridOperatorsPageInner() {
         mobile: false,
       },
     ],
-    []
+    [jurisdictionFilter]
   );
 
   return (
