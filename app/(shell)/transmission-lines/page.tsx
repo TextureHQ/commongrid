@@ -31,11 +31,11 @@ interface TransmissionLineRow extends Record<string, unknown> {
 }
 
 const sortOptions = [
-  { id: "voltage:desc", label: "Voltage (High to Low)", value: "voltage:desc" },
-  { id: "voltage:asc", label: "Voltage (Low to High)", value: "voltage:asc" },
-  { id: "length:desc", label: "Length (Longest First)", value: "length:desc" },
-  { id: "length:asc", label: "Length (Shortest First)", value: "length:asc" },
-  { id: "owner:asc", label: "Owner A-Z", value: "owner:asc" },
+  { id: "voltage:desc", label: "Voltage ▼", value: "voltage:desc" },
+  { id: "voltage:asc", label: "Voltage ▲", value: "voltage:asc" },
+  { id: "length:desc", label: "Length ▼", value: "length:desc" },
+  { id: "length:asc", label: "Length ▲", value: "length:asc" },
+  { id: "owner:asc", label: "Owner ▲", value: "owner:asc" },
 ];
 
 const voltageClassFilterOptions = [

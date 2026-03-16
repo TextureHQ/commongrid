@@ -38,10 +38,10 @@ interface PricingNodeRow extends Record<string, unknown> {
 }
 
 const sortOptions = [
-  { id: "name:asc", label: "Name A-Z", value: "name:asc" },
-  { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "iso:asc", label: "ISO A-Z", value: "iso:asc" },
-  { id: "state:asc", label: "State A-Z", value: "state:asc" },
+  { id: "name:asc", label: "Name ▲", value: "name:asc" },
+  { id: "name:desc", label: "Name ▼", value: "name:desc" },
+  { id: "iso:asc", label: "ISO ▲", value: "iso:asc" },
+  { id: "state:asc", label: "State ▲", value: "state:asc" },
 ];
 
 function getNodeTypeBadgeVariant(type: PricingNodeType): "success" | "info" | "warning" | "neutral" {

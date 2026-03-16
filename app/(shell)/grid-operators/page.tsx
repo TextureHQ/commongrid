@@ -41,10 +41,10 @@ interface UtilityRow extends Record<string, unknown> {
 }
 
 const sortOptions = [
-  { id: "name:asc", label: "Name A-Z", value: "name:asc" },
-  { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "customers:desc", label: "Customers (High to Low)", value: "customers:desc" },
-  { id: "customers:asc", label: "Customers (Low to High)", value: "customers:asc" },
+  { id: "name:asc", label: "Name ▲", value: "name:asc" },
+  { id: "name:desc", label: "Name ▼", value: "name:desc" },
+  { id: "customers:desc", label: "Customers ▼", value: "customers:desc" },
+  { id: "customers:asc", label: "Customers ▲", value: "customers:asc" },
 ];
 
 const segmentFilterOptions = [

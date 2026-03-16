@@ -37,11 +37,11 @@ interface EVStationRow extends Record<string, unknown> {
 }
 
 const sortOptions = [
-  { id: "name:asc", label: "Name A-Z", value: "name:asc" },
-  { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "connectors:desc", label: "Most Connectors", value: "connectors:desc" },
-  { id: "dcfast:desc", label: "Most DC Fast", value: "dcfast:desc" },
-  { id: "state:asc", label: "State A-Z", value: "state:asc" },
+  { id: "name:asc", label: "Name ▲", value: "name:asc" },
+  { id: "name:desc", label: "Name ▼", value: "name:desc" },
+  { id: "connectors:desc", label: "Connectors ▼", value: "connectors:desc" },
+  { id: "dcfast:desc", label: "DC Fast ▼", value: "dcfast:desc" },
+  { id: "state:asc", label: "State ▲", value: "state:asc" },
 ];
 
 function getStatusBadgeVariant(status: string): "success" | "info" | "warning" | "neutral" {

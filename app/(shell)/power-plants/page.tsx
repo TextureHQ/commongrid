@@ -39,10 +39,10 @@ interface PowerPlantRow extends Record<string, unknown> {
 }
 
 const sortOptions = [
-  { id: "name:asc", label: "Name A-Z", value: "name:asc" },
-  { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "capacity:desc", label: "Capacity (High to Low)", value: "capacity:desc" },
-  { id: "capacity:asc", label: "Capacity (Low to High)", value: "capacity:asc" },
+  { id: "name:asc", label: "Name ▲", value: "name:asc" },
+  { id: "name:desc", label: "Name ▼", value: "name:desc" },
+  { id: "capacity:desc", label: "Capacity ▼", value: "capacity:desc" },
+  { id: "capacity:asc", label: "Capacity ▲", value: "capacity:asc" },
 ];
 
 const fuelFilterOptions = [
