@@ -123,6 +123,7 @@ export default function ChangelogPage() {
   const changelog = getChangelog();
   const [tab, setTab] = useState<"data" | "site">("data");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Merge and sort all entries newest-first
   const allEntries = useMemo(
@@ -139,11 +140,20 @@ export default function ChangelogPage() {
     return Array.from(types).sort();
   }, [allEntries]);
 
-  // Filtered entries
+  // Filtered entries (by entity type + search)
   const filteredEntries = useMemo(() => {
-    if (entityTypeFilter === "all") return allEntries;
-    return allEntries.filter((e) => e.entityType === entityTypeFilter);
-  }, [allEntries, entityTypeFilter]);
+    let result = allEntries;
+    if (entityTypeFilter !== "all") {
+      result = result.filter((e) => e.entityType === entityTypeFilter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (e) => e.name.toLowerCase().includes(q) || e.detail.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [allEntries, entityTypeFilter, searchQuery]);
 
   const groups = groupByDate(filteredEntries);
 
@@ -211,6 +221,18 @@ export default function ChangelogPage() {
 
         {tab === "data" && (
         <Section id="feed" navLabel="Changes" withDivider={false}>
+          {/* Search */}
+          <div className="relative mb-4">
+            <Icon name="MagnifyingGlass" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search changes..."
+              className="w-full h-9 pl-9 pr-3 rounded-lg border border-border-default bg-background-surface text-sm text-text-body placeholder:text-text-muted outline-none focus:border-brand-primary transition-colors"
+            />
+          </div>
+
           {/* Meta bar */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
