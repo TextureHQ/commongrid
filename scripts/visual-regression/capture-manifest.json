@@ -1,0 +1,177 @@
+{
+  "$schema": "./capture-manifest.schema.json",
+  "version": "1.0",
+  "baseRef": "main",
+  "prRef": "HEAD",
+  "devServer": {
+    "command": "npx next dev",
+    "readyPattern": "Ready in",
+    "basePort": 3100,
+    "prPort": 3101
+  },
+  "viewports": [
+    { "name": "mobile", "width": 375, "height": 812 },
+    { "name": "tablet", "width": 768, "height": 1024 },
+    { "name": "desktop", "width": 1440, "height": 900 }
+  ],
+  "captures": [
+    {
+      "id": "dropdown-chevron-padding",
+      "commit": "3f89367",
+      "route": "/grid-operators",
+      "description": "Inner right-side padding on filter dropdowns",
+      "viewports": ["mobile", "desktop"],
+      "regions": [
+        {
+          "selector": "main select:first-of-type",
+          "beforeColor": "blue",
+          "afterColor": "blue",
+          "label": "Chevron padding"
+        }
+      ]
+    },
+    {
+      "id": "header-spacing",
+      "commit": "106f641",
+      "route": "/grid-operators",
+      "description": "Header height h-14 → h-12",
+      "viewports": ["desktop"],
+      "regions": [
+        {
+          "selector": "header",
+          "beforeColor": "blue",
+          "afterColor": "blue",
+          "label": "h-14 → h-12"
+        }
+      ]
+    },
+    {
+      "id": "badge-variants",
+      "commit": "111ef3f",
+      "route": "/grid-operators",
+      "description": "Badge color mapping fix",
+      "waitFor": "main",
+      "viewports": ["desktop"],
+      "regions": [
+        {
+          "selector": "table tbody tr:nth-child(1) td:nth-child(2) span",
+          "beforeColor": "orange",
+          "afterColor": "orange",
+          "label": "Badge variant"
+        }
+      ]
+    },
+    {
+      "id": "logo-redesign",
+      "commit": "ecdc89b",
+      "route": "/",
+      "description": "G-in-C dendritic graph logo",
+      "viewports": ["desktop"],
+      "regions": [
+        {
+          "selector": "header a[href='/'] svg",
+          "beforeColor": "red",
+          "afterColor": "green",
+          "label": "Logo mark"
+        }
+      ]
+    },
+    {
+      "id": "sort-chevrons",
+      "commit": "37b1abc",
+      "route": "/power-plants",
+      "description": "Sort direction ▲/▼ in dropdown labels",
+      "waitFor": "main",
+      "viewports": ["desktop"],
+      "regions": [
+        {
+          "selector": "[class*='DataControls'] select, [data-testid='sort-select']",
+          "beforeColor": "blue",
+          "afterColor": "blue",
+          "label": "Sort ▲/▼"
+        }
+      ]
+    },
+    {
+      "id": "grid-operators-new-columns",
+      "commit": "ba4b06d",
+      "route": "/grid-operators",
+      "description": "EIA ID, BA Code, NERC, Website columns",
+      "waitFor": "main",
+      "viewports": ["desktop"],
+      "regions": [
+        {
+          "selector": "table thead",
+          "beforeColor": "red",
+          "afterColor": "green",
+          "label": "New columns"
+        }
+      ]
+    },
+    {
+      "id": "changelog-tabs",
+      "commit": "ea227b5",
+      "route": "/changelog",
+      "description": "Data Changes / Site Updates tab distinction",
+      "viewports": ["tablet", "desktop"],
+      "regions": [
+        {
+          "selector": "main > div",
+          "beforeColor": "red",
+          "afterColor": "green",
+          "label": "Tab bar + search"
+        }
+      ]
+    },
+    {
+      "id": "filter-stacking",
+      "commit": "049d059",
+      "route": "/ev-charging",
+      "description": "Filters stack vertically at narrow viewports",
+      "waitFor": "main",
+      "viewports": ["mobile"],
+      "regions": [
+        {
+          "selector": "select:first-of-type",
+          "beforeColor": "yellow",
+          "afterColor": "yellow",
+          "label": "Filter stacking"
+        }
+      ]
+    },
+    {
+      "id": "name-clamping",
+      "commit": "7c9de2f",
+      "route": "/grid-operators",
+      "description": "2-line name clamp on mobile",
+      "waitFor": "main",
+      "viewports": ["mobile"],
+      "regions": [
+        {
+          "selector": "table tbody tr:nth-child(1) td:nth-child(1)",
+          "beforeColor": "blue",
+          "afterColor": "blue",
+          "label": "Name clamping"
+        }
+      ]
+    },
+    {
+      "id": "mobile-menu",
+      "commit": "c206859",
+      "route": "/grid-operators",
+      "description": "Mobile menu active state + hover backgrounds",
+      "viewports": ["mobile"],
+      "actions": [
+        { "type": "click", "selector": "header button[aria-label='Toggle menu']" }
+      ],
+      "regions": [
+        {
+          "selector": "header nav",
+          "beforeColor": "blue",
+          "afterColor": "blue",
+          "label": "Mobile menu"
+        }
+      ]
+    }
+  ]
+}
