@@ -246,7 +246,7 @@ function GridOperatorsPageInner() {
             onChange: setSortValue,
           }}
           customControls={
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <select
                 value={segmentFilter}
                 onChange={(e) => setSegmentFilter(e.target.value)}

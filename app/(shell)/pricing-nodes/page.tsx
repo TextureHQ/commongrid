@@ -229,7 +229,7 @@ export default function PricingNodesPage() {
       <PageLayout.Content>
         <div className="px-4 sm:px-6 py-4 flex flex-col gap-4">
           {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}

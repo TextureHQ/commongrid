@@ -288,7 +288,7 @@ export default function EVChargingPage() {
             onChange: setSortValue,
           }}
           customControls={
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <select
                 value={networkFilter}
                 onChange={(e) => setNetworkFilter(e.target.value)}

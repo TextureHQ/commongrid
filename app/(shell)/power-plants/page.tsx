@@ -286,7 +286,7 @@ export default function PowerPlantsPage() {
             onChange: setSortValue,
           }}
           customControls={
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <select
                 value={fuelFilter}
                 onChange={(e) => setFuelFilter(e.target.value)}
