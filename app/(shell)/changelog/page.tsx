@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge, Card, Icon, PageLayout, Section } from "@texturehq/edges";
+import { useMemo, useState } from "react";
 import { getChangelog } from "@/lib/data";
 import type { ChangelogEntry } from "@/types/changelog";
 
@@ -120,13 +121,31 @@ function DateGroup({ date, entries }: { date: string; entries: ChangelogEntry[] 
 
 export default function ChangelogPage() {
   const changelog = getChangelog();
+  const [tab, setTab] = useState<"data" | "site">("data");
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
 
   // Merge and sort all entries newest-first
-  const allEntries = [...changelog.recentlyUpdated, ...changelog.newlyAdded].sort(
-    (a, b) => new Date(b.isoTimestamp).getTime() - new Date(a.isoTimestamp).getTime(),
+  const allEntries = useMemo(
+    () =>
+      [...changelog.recentlyUpdated, ...changelog.newlyAdded].sort(
+        (a, b) => new Date(b.isoTimestamp).getTime() - new Date(a.isoTimestamp).getTime(),
+      ),
+    [changelog],
   );
 
-  const groups = groupByDate(allEntries);
+  // Unique entity types for filter chips
+  const uniqueEntityTypes = useMemo(() => {
+    const types = new Set(allEntries.map((e) => e.entityType));
+    return Array.from(types).sort();
+  }, [allEntries]);
+
+  // Filtered entries
+  const filteredEntries = useMemo(() => {
+    if (entityTypeFilter === "all") return allEntries;
+    return allEntries.filter((e) => e.entityType === entityTypeFilter);
+  }, [allEntries, entityTypeFilter]);
+
+  const groups = groupByDate(filteredEntries);
 
   const lastUpdated = changelog.updatedAt
     ? new Date(changelog.updatedAt).toLocaleDateString("en-US", {
@@ -140,14 +159,62 @@ export default function ChangelogPage() {
     <PageLayout maxWidth={900}>
       <PageLayout.Header
         title="Changelog"
-        description="Every update to the CommonGrid dataset — new entities added and existing records updated from authoritative sources."
+        description="Live changes streaming from the energy industry — new entities added and existing records updated from authoritative sources."
       />
       <PageLayout.Content>
+        {/* Tab bar */}
+        <div className="flex gap-1 border-b border-border-default mb-6">
+          <button
+            type="button"
+            onClick={() => setTab("data")}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              tab === "data"
+                ? "border-brand-primary text-brand-primary"
+                : "border-transparent text-text-muted hover:text-text-body"
+            }`}
+          >
+            Data Changes
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("site")}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              tab === "site"
+                ? "border-brand-primary text-brand-primary"
+                : "border-transparent text-text-muted hover:text-text-body"
+            }`}
+          >
+            Site Updates
+          </button>
+        </div>
+
+        {tab === "site" && (
+          <Card variant="outlined">
+            <Card.Content className="py-12 text-center">
+              <Icon name="Code" size={32} className="text-text-muted mx-auto mb-3" />
+              <p className="text-sm font-medium text-text-heading mb-1">Product Updates</p>
+              <p className="text-sm text-text-muted max-w-md mx-auto">
+                Changes to the CommonGrid website and tools. Visit our{" "}
+                <a
+                  href="https://github.com/TextureHQ/commongrid/releases"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-primary hover:underline"
+                >
+                  GitHub releases
+                </a>{" "}
+                for the full history of site updates.
+              </p>
+            </Card.Content>
+          </Card>
+        )}
+
+        {tab === "data" && (
         <Section id="feed" navLabel="Changes" withDivider={false}>
           {/* Meta bar */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+              <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-sm text-text-muted">
                 Synced from authoritative sources daily
               </span>
@@ -198,8 +265,28 @@ export default function ChangelogPage() {
             ))}
           </div>
 
+          {/* Entity type filters */}
+          {uniqueEntityTypes.length > 1 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {["all", ...uniqueEntityTypes].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setEntityTypeFilter(type)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    entityTypeFilter === type
+                      ? "bg-brand-primary text-white"
+                      : "bg-background-subtle text-text-muted hover:text-text-body"
+                  }`}
+                >
+                  {type === "all" ? "All" : type.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Feed */}
-          {allEntries.length === 0 ? (
+          {filteredEntries.length === 0 ? (
             <Card variant="outlined">
               <Card.Content className="py-12 text-center">
                 <Icon name="Clock" size={32} className="text-text-muted mx-auto mb-3" />
@@ -218,6 +305,7 @@ export default function ChangelogPage() {
             ))
           )}
         </Section>
+        )}
       </PageLayout.Content>
     </PageLayout>
   );
