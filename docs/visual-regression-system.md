@@ -833,14 +833,369 @@ which files affect which routes:
 
 `"*"` means the change affects all routes — capture a representative sample.
 
-## 12. Dependencies
+## 12. Concrete Implementation Reference
+
+### 12.1 Playwright Capture — Actual API
+
+```typescript
+// playwright-capture.ts
+import { chromium, type Page, type BrowserContext } from 'playwright';
+
+interface CaptureResult {
+  path: string;
+  regions: Array<{ selector: string; bbox: { x: number; y: number; width: number; height: number } }>;
+}
+
+async function captureRoute(
+  context: BrowserContext,
+  baseUrl: string,
+  capture: ManifestCapture,
+  viewport: { name: string; width: number; height: number },
+  outputDir: string,
+): Promise<CaptureResult> {
+  const page = await context.newPage();
+  await page.setViewportSize({ width: viewport.width, height: viewport.height });
+
+  // Navigate and wait for content
+  await page.goto(`${baseUrl}${capture.route}`, { waitUntil: 'networkidle' });
+  if (capture.waitFor) {
+    await page.waitForSelector(capture.waitFor, { timeout: 10_000 });
+  }
+
+  // Disable animations for deterministic capture
+  await page.addStyleTag({ content: `
+    *, *::before, *::after {
+      animation-duration: 0s !important;
+      transition-duration: 0s !important;
+    }
+  `});
+
+  // Execute pre-capture actions (click dropdowns, hover, etc.)
+  if (capture.actions) {
+    for (const action of capture.actions) {
+      await page.locator(action.selector)[action.type as 'click']();
+      await page.waitForTimeout(200);
+    }
+  }
+
+  // Capture full viewport screenshot
+  const screenshotPath = `${outputDir}/${capture.id}-${viewport.name}.png`;
+  await page.screenshot({ path: screenshotPath, fullPage: false });
+
+  // Record bounding boxes for each annotatable region
+  const regions = [];
+  for (const region of capture.regions) {
+    const locator = page.locator(region.selector).first();
+    const bbox = await locator.boundingBox();
+    if (bbox) {
+      regions.push({ selector: region.selector, bbox, annotation: region.annotation });
+    }
+  }
+
+  await page.close();
+  return { path: screenshotPath, regions };
+}
+```
+
+### 12.2 Annotation — sharp + SVG Compositing
+
+```typescript
+// annotate.ts
+import sharp from 'sharp';
+
+const COLORS = {
+  red:    { stroke: '#EF4444', fill: 'rgba(239,68,68,0.85)' },
+  green:  { stroke: '#22C55E', fill: 'rgba(34,197,94,0.85)' },
+  blue:   { stroke: '#3B82F6', fill: 'rgba(59,130,246,0.85)' },
+  orange: { stroke: '#F97316', fill: 'rgba(249,115,22,0.85)' },
+  yellow: { stroke: '#EAB308', fill: 'rgba(234,179,8,0.85)' },
+};
+
+interface AnnotationRegion {
+  bbox: { x: number; y: number; width: number; height: number };
+  annotation: { color: keyof typeof COLORS; label: string };
+}
+
+async function annotateImage(
+  inputPath: string,
+  regions: AnnotationRegion[],
+  outputPath: string,
+): Promise<void> {
+  const meta = await sharp(inputPath).metadata();
+  const { width = 0, height = 0 } = meta;
+
+  // Build SVG overlay with all bounding boxes and labels
+  const boxes = regions.map((r) => {
+    const c = COLORS[r.annotation.color];
+    const pad = 4;
+    const x = Math.max(0, r.bbox.x - pad);
+    const y = Math.max(0, r.bbox.y - pad);
+    const w = r.bbox.width + pad * 2;
+    const h = r.bbox.height + pad * 2;
+    const labelW = r.annotation.label.length * 7 + 16;
+    const labelH = 20;
+    const labelY = Math.max(0, y - labelH - 2);
+
+    return `
+      <rect x="${x}" y="${y}" width="${w}" height="${h}"
+            fill="none" stroke="${c.stroke}" stroke-width="3" rx="4"/>
+      <rect x="${x}" y="${labelY}" width="${labelW}" height="${labelH}"
+            fill="${c.fill}" rx="3"/>
+      <text x="${x + 8}" y="${labelY + 14}"
+            font-size="11" font-weight="bold" fill="white"
+            font-family="system-ui, sans-serif">${r.annotation.label}</text>
+    `;
+  }).join('');
+
+  const svgOverlay = Buffer.from(
+    `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">${boxes}</svg>`
+  );
+
+  await sharp(inputPath)
+    .composite([{ input: svgOverlay, top: 0, left: 0 }])
+    .toFile(outputPath);
+}
+```
+
+### 12.3 Composition — Side-by-Side with Title Bar
+
+```typescript
+// compose.ts
+import sharp from 'sharp';
+
+async function composePair(
+  beforePath: string,
+  afterPath: string,
+  title: string,
+  outputPath: string,
+): Promise<void> {
+  const [bMeta, aMeta] = await Promise.all([
+    sharp(beforePath).metadata(),
+    sharp(afterPath).metadata(),
+  ]);
+
+  const bW = bMeta.width ?? 0;
+  const aW = aMeta.width ?? 0;
+  const maxH = Math.max(bMeta.height ?? 0, aMeta.height ?? 0);
+  const divider = 2;
+  const titleH = 48;
+  const footerH = 28;
+  const totalW = bW + aW + divider;
+  const totalH = maxH + titleH + footerH;
+
+  const titleSvg = `
+    <svg width="${totalW}" height="${titleH}">
+      <rect width="100%" height="100%" fill="#f8f9fb"/>
+      <text x="${totalW / 2}" y="30" text-anchor="middle"
+            font-size="14" font-weight="600" fill="#1f2937"
+            font-family="system-ui, sans-serif">${title}</text>
+    </svg>`;
+
+  const footerSvg = `
+    <svg width="${totalW}" height="${footerH}">
+      <rect width="100%" height="100%" fill="#f1f5f9"/>
+      <text x="${bW / 2}" y="18" text-anchor="middle"
+            font-size="11" fill="#64748b"
+            font-family="system-ui, sans-serif">BEFORE (main)</text>
+      <line x1="${bW + 1}" y1="4" x2="${bW + 1}" y2="24"
+            stroke="#cbd5e1" stroke-width="1"/>
+      <text x="${bW + divider + aW / 2}" y="18" text-anchor="middle"
+            font-size="11" fill="#64748b"
+            font-family="system-ui, sans-serif">AFTER (PR)</text>
+    </svg>`;
+
+  // Divider line
+  const dividerBuf = await sharp({
+    create: { width: divider, height: maxH, channels: 4,
+              background: { r: 203, g: 213, b: 225, alpha: 1 } },
+  }).png().toBuffer();
+
+  await sharp({
+    create: { width: totalW, height: totalH, channels: 4,
+              background: { r: 255, g: 255, b: 255, alpha: 1 } },
+  })
+    .composite([
+      { input: Buffer.from(titleSvg), top: 0, left: 0 },
+      { input: await sharp(beforePath).toBuffer(), top: titleH, left: 0 },
+      { input: dividerBuf, top: titleH, left: bW },
+      { input: await sharp(afterPath).toBuffer(), top: titleH, left: bW + divider },
+      { input: Buffer.from(footerSvg), top: titleH + maxH, left: 0 },
+    ])
+    .toFile(outputPath);
+}
+```
+
+### 12.4 Diff Detection — pixelmatch
+
+```typescript
+// diff.ts
+import { PNG } from 'pngjs';
+import pixelmatch from 'pixelmatch';
+import fs from 'fs';
+
+interface DiffResult {
+  diffPixels: number;
+  totalPixels: number;
+  diffPercent: number;
+  diffImagePath: string;
+}
+
+function computeDiff(beforePath: string, afterPath: string, diffPath: string): DiffResult {
+  const img1 = PNG.sync.read(fs.readFileSync(beforePath));
+  const img2 = PNG.sync.read(fs.readFileSync(afterPath));
+
+  // Images must be same dimensions — pad smaller if needed
+  const width = Math.max(img1.width, img2.width);
+  const height = Math.max(img1.height, img2.height);
+  const diff = new PNG({ width, height });
+
+  const diffPixels = pixelmatch(
+    img1.data, img2.data, diff.data, width, height,
+    { threshold: 0.1, includeAA: false }
+  );
+
+  fs.writeFileSync(diffPath, PNG.sync.write(diff));
+
+  const totalPixels = width * height;
+  return {
+    diffPixels,
+    totalPixels,
+    diffPercent: Number(((diffPixels / totalPixels) * 100).toFixed(2)),
+    diffImagePath: diffPath,
+  };
+}
+```
+
+### 12.5 Upload — GitHub Branch Storage
+
+Research confirmed GitHub's API does not support direct image uploads to comments.
+The most durable strategy is **pushing images to a dedicated branch** and referencing
+via raw GitHub URLs. This is the approach used by `opengisch/comment-pr-with-images`.
+
+```typescript
+// upload.ts
+import { execSync } from 'child_process';
+
+function uploadToGitHubBranch(
+  imagePaths: string[],
+  branch = 'visual-regression-assets',
+  subdir = 'comparisons',
+): Map<string, string> {
+  const repo = 'TextureHQ/commongrid';
+  const urls = new Map<string, string>();
+
+  // Create orphan branch if it doesn't exist
+  try {
+    execSync(`git rev-parse --verify ${branch}`, { stdio: 'ignore' });
+  } catch {
+    execSync(`git checkout --orphan ${branch}`);
+    execSync('git rm -rf . 2>/dev/null || true');
+    execSync('git commit --allow-empty -m "init visual regression assets"');
+    execSync(`git checkout -`);
+  }
+
+  // Use worktree to add images without switching branches
+  const worktreePath = '/tmp/vr-upload';
+  execSync(`git worktree add ${worktreePath} ${branch} 2>/dev/null || true`);
+
+  for (const imgPath of imagePaths) {
+    const filename = imgPath.split('/').pop()!;
+    execSync(`mkdir -p ${worktreePath}/${subdir}`);
+    execSync(`cp ${imgPath} ${worktreePath}/${subdir}/${filename}`);
+    urls.set(
+      imgPath,
+      `https://raw.githubusercontent.com/${repo}/${branch}/${subdir}/${filename}`,
+    );
+  }
+
+  execSync(`cd ${worktreePath} && git add -A && git commit -m "VR: update comparison images" && git push origin ${branch}`, { stdio: 'inherit' });
+  execSync(`git worktree remove ${worktreePath}`);
+
+  return urls;
+}
+```
+
+Alternative: use [CML](https://cml.dev) (`cml comment create`) which handles
+image embedding in PR comments automatically, or [imgbb](https://api.imgbb.com/)
+for zero-infrastructure external hosting.
+
+## 13. Existing Open-Source Visual Regression Tools
+
+### Landscape Comparison
 
 ```
-playwright          — browser automation + screenshots
-sharp               — image annotation (draw, composite, text)
-pixelmatch          — pixel-level diff detection
-pngjs               — PNG read/write for pixelmatch
-wait-on             — wait for dev server to be ready
+┌──────────────────────────────────────────────────────────────────────────┐
+│                  VISUAL REGRESSION TOOL LANDSCAPE                       │
+│                                                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐  │
+│  │  Lost Pixel  │  │  Argos CI    │  │   Chromatic  │  │   Percy     │  │
+│  │  ───────────  │  │  ──────────  │  │  ──────────  │  │  ─────────  │  │
+│  │  OSS / Free  │  │  OSS / Free  │  │  Freemium   │  │  SaaS only  │  │
+│  │  odiff (6x   │  │  Playwright  │  │  Storybook  │  │  DOM snap-  │  │
+│  │  faster diff) │  │  Cypress     │  │  deep integ │  │  shot based │  │
+│  │  Storybook + │  │  Puppeteer   │  │  TurboSnap  │  │  Multi-     │  │
+│  │  Page + PW   │  │  CI comments │  │  Cloud UI   │  │  browser    │  │
+│  │  Git baselines│  │  Anim freeze│  │  Review UI  │  │  rendering  │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └─────────────┘  │
+│        ▲                  ▲                                               │
+│        │                  │                                               │
+│   Best fit for       Good for                                            │
+│   agentic / CI      complex apps                                         │
+│   lightweight       with animations                                      │
+│                                                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                    │
+│  │  Playwright  │  │  BackstopJS  │  │  reg-suit    │                    │
+│  │  built-in    │  │  ───────────  │  │  ──────────  │                    │
+│  │  ───────────  │  │  Puppeteer   │  │  S3 + GitHub │                    │
+│  │  toHaveScr.. │  │  Config-     │  │  Plugin      │                    │
+│  │  pixelmatch  │  │  driven      │  │  architecture│                    │
+│  │  Zero extra  │  │  Scenarios   │  │  Notify PR   │                    │
+│  │  deps needed │  │  Docker ref  │  │  via comment │                    │
+│  └──────────────┘  └──────────────┘  └──────────────┘                    │
+│        ▲                                                                 │
+│        │                                                                 │
+│   Simplest start                                                         │
+│   (already a dep)                                                        │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-All devDependencies. No runtime impact on the application.
+### Recommendation Matrix
+
+| Criterion | Lost Pixel | Playwright built-in | Argos CI | Custom (this spec) |
+|-----------|-----------|-------------------|----------|-------------------|
+| **Open source** | Yes | Yes | Yes | Yes |
+| **Dependency weight** | odiff-bin + config | Zero (already in PW) | CLI + service | sharp + pixelmatch |
+| **Agentic-friendly** | Config-driven JSON | Test file per route | Config-driven | Manifest-driven |
+| **Annotation/bbox** | No | No | Diff overlay only | **Yes — full control** |
+| **Before/after compose** | Diff overlay | 3-panel (expected/actual/diff) | Cloud UI | **Custom side-by-side** |
+| **PR integration** | GitHub Action comment | Test report artifact | PR comment | **Custom markdown table** |
+| **Learning curve** | Low | Very low | Low | Medium |
+| **Color-coded annotations** | No | No | No | **Yes** |
+| **Selective capture** | Stories/pages | Test-scoped | Stories/pages | **Per-commit manifest** |
+
+### Recommendation
+
+**For CommonGrid specifically:**
+
+1. **Start with Playwright built-in** (`toHaveScreenshot`) for pure regression detection — zero new deps, catches unintended changes
+2. **Layer the custom system** (this spec) on top for PR-quality annotated comparison images — the bounding-box + color-coding + composition pipeline doesn't exist in any off-the-shelf tool
+3. **Consider Lost Pixel** if Storybook is ever adopted — it's the most lightweight OSS option with the fastest diff engine (odiff)
+
+The custom system fills a gap no existing tool covers: **per-commit, color-rationalized, annotated before/after comparison images** that communicate _what_ changed and _why_ at a glance in a PR description.
+
+## 14. Dependencies
+
+```
+# Core (all devDependencies)
+playwright          — browser automation + screenshots (may already be installed)
+sharp               — image annotation via SVG compositing (no native canvas dep)
+pixelmatch          — pixel-level diff detection (~150 lines, zero deps)
+pngjs               — PNG encode/decode for pixelmatch
+wait-on             — wait for dev server to be ready before capture
+
+# Optional
+join-images         — simplified side-by-side composition (built on sharp)
+odiff-bin           — 6x faster diff than pixelmatch (OCaml binary, optional upgrade)
+```
+
+Total footprint: ~3MB added to devDependencies. No runtime impact.
