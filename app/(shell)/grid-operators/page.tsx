@@ -38,6 +38,9 @@ interface UtilityRow extends Record<string, unknown> {
   jurisdiction: string | null;
   website: string | null;
   logo: string | null;
+  eiaId: string | null;
+  baCode: string | null;
+  nercRegion: string | null;
 }
 
 const sortOptions = [
@@ -135,6 +138,9 @@ function GridOperatorsPageInner() {
         jurisdiction: u.jurisdiction,
         website: u.website,
         logo: u.logo,
+        eiaId: u.eiaId,
+        baCode: u.baCode,
+        nercRegion: u.nercRegion,
       })),
     [filtered]
   );
@@ -215,6 +221,57 @@ function GridOperatorsPageInner() {
             {getStatusLabel(row.status)}
           </Badge>
         ),
+        mobile: false,
+      },
+      {
+        id: "eiaId",
+        label: "EIA ID",
+        accessor: "eiaId",
+        render: (_value: unknown, row: UtilityRow) => (
+          <span className="text-text-muted tabular-nums text-xs">{row.eiaId ?? "—"}</span>
+        ),
+        mobile: false,
+      },
+      {
+        id: "baCode",
+        label: "BA Code",
+        accessor: "baCode",
+        render: (_value: unknown, row: UtilityRow) => (
+          <span className="text-text-muted text-xs">{row.baCode ?? "—"}</span>
+        ),
+        mobile: false,
+      },
+      {
+        id: "nercRegion",
+        label: "NERC",
+        accessor: "nercRegion",
+        render: (_value: unknown, row: UtilityRow) => (
+          <span className="text-text-muted text-xs">{row.nercRegion ?? "—"}</span>
+        ),
+        mobile: false,
+      },
+      {
+        id: "website",
+        label: "Web",
+        accessor: "website",
+        render: (_value: unknown, row: UtilityRow) =>
+          row.website ? (
+            <a
+              href={row.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-text-muted hover:text-brand-primary transition-colors"
+              title={row.website}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                <path d="M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69L6.22 8.72Z" />
+                <path d="M3.5 6.75c0-.69.56-1.25 1.25-1.25H7A.75.75 0 0 0 7 4H4.75A2.75 2.75 0 0 0 2 6.75v4.5A2.75 2.75 0 0 0 4.75 14h4.5A2.75 2.75 0 0 0 12 11.25V9a.75.75 0 0 0-1.5 0v2.25c0 .69-.56 1.25-1.25 1.25h-4.5c-.69 0-1.25-.56-1.25-1.25v-4.5Z" />
+              </svg>
+            </a>
+          ) : (
+            <span className="text-text-muted">—</span>
+          ),
         mobile: false,
       },
     ],
