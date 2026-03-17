@@ -55,24 +55,36 @@ interface CatalogEntry {
 
 // ── Versioning ───────────────────────────────────────────────────────────────
 
+/** Delete all versioned files matching `{stem}_NN{ext}` in a directory. */
+function cleanVersionedFiles(dir: string, stem: string, ext: string): void {
+	if (!fs.existsSync(dir)) return;
+	const escapedStem = stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const re = new RegExp(`^${escapedStem}_(\\d+)${ext.replace(".", "\\.")}$`);
+	for (const f of fs.readdirSync(dir)) {
+		if (re.test(f)) fs.unlinkSync(path.join(dir, f));
+	}
+}
+
 /**
  * Find the next ordinal version for a file stem in a directory.
- * Existing: foo_00.png, foo_01.png → returns "foo_02" and 2.
+ * Deletes all prior versioned files so only the latest is kept.
+ * Existing: foo_00.png, foo_01.png → deletes both, returns "foo_02" and 2.
  * No existing: returns "foo_00" and 0.
  */
 function nextVersionedStem(dir: string, stem: string, ext: string): { filename: string; ordinal: number } {
 	let ordinal = 0;
 	if (fs.existsSync(dir)) {
-		const existing = fs.readdirSync(dir).filter(
-			(f) => f.startsWith(`${stem}_`) && f.endsWith(ext),
-		);
-		for (const f of existing) {
-			const match = f.match(new RegExp(`^${stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}_(\\d+)${ext.replace(".", "\\.")}$`));
+		const escapedStem = stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		const re = new RegExp(`^${escapedStem}_(\\d+)${ext.replace(".", "\\.")}$`);
+		for (const f of fs.readdirSync(dir)) {
+			const match = f.match(re);
 			if (match) {
 				const n = parseInt(match[1], 10);
 				if (n >= ordinal) ordinal = n + 1;
 			}
 		}
+		// Remove all prior versions
+		cleanVersionedFiles(dir, stem, ext);
 	}
 	const pad = String(ordinal).padStart(2, "0");
 	return { filename: `${stem}_${pad}${ext}`, ordinal };
@@ -333,9 +345,13 @@ async function main() {
 			const beforeRegionsPath = path.join(dirs.before, `${stem}.regions.json`);
 			const afterRegionsPath = path.join(dirs.after, `${stem}.regions.json`);
 
-			// Versioned outputs — each run gets an ordinal (_00, _01, _02…)
+			// Versioned outputs — each run overwrites prior versions, keeping only the latest
 			const { filename: compFilename, ordinal } = nextVersionedStem(dirs.comparisons, stem, ".png");
 			const versionSuffix = `_${String(ordinal).padStart(2, "0")}`;
+			// Clean prior annotated and diff versions for this stem
+			cleanVersionedFiles(dirs.annotated, `${stem}-before`, ".png");
+			cleanVersionedFiles(dirs.annotated, `${stem}-after`, ".png");
+			cleanVersionedFiles(dirs.diffs, `${stem}-diff`, ".png");
 			const beforeAnnotated = path.join(dirs.annotated, `${stem}-before${versionSuffix}.png`);
 			const afterAnnotated = path.join(dirs.annotated, `${stem}-after${versionSuffix}.png`);
 			const comparisonPath = path.join(dirs.comparisons, compFilename);
