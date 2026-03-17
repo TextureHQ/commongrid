@@ -184,7 +184,7 @@ function GridOperatorsPageInner() {
             {getSegmentLabel(row.segment)}
           </Badge>
         ),
-        mobile: { priority: 2, format: "badge" },
+        mobile: { priority: 2, format: "secondary" },
       },
       {
         id: "customerCount",
