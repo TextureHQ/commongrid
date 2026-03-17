@@ -81,6 +81,19 @@ function parseArgs() {
 
 // ── Server Management ───────────────────────────────────────────────────────
 
+async function ensurePortFree(port: number): Promise<void> {
+	try {
+		const res = await fetch(`http://localhost:${port}`);
+		throw new Error(
+			`Port ${port} is already in use (got HTTP ${res.status}). ` +
+			`Kill the process on that port or change devServer ports in capture-manifest.json.`,
+		);
+	} catch (err) {
+		if (err instanceof Error && err.message.startsWith("Port ")) throw err;
+		// fetch failed = port is free, good
+	}
+}
+
 function startDevServer(cwd: string, port: number): ChildProcess {
 	const child = spawn("npx", ["next", "dev", "-p", String(port)], {
 		cwd,
@@ -212,6 +225,11 @@ async function main() {
 			} catch {
 				console.warn("⚠ prebuild failed for PR branch (non-fatal)");
 			}
+
+			// Ensure ports are free before starting
+			console.log("🔌 Checking port availability...");
+			await ensurePortFree(manifest.devServer.prPort);
+			if (!opts.skipBase) await ensurePortFree(manifest.devServer.basePort);
 
 			// Start PR server (current branch)
 			console.log("🚀 Starting PR dev server on port", manifest.devServer.prPort);
