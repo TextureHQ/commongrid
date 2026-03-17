@@ -278,60 +278,87 @@ export default function ChangelogPage() {
             ))}
           </div>
 
-          {/* Filter fieldset */}
-          <fieldset className="relative border border-border-default rounded-lg px-2.5 pt-1 pb-2 mb-3">
-            <legend className="text-[9px] uppercase tracking-widest text-text-muted px-1 font-medium leading-none">Filter</legend>
-            <div className="flex items-center gap-2.5">
-              {uniqueEntityTypes.length > 1 && (
-                <div className="flex items-center rounded-lg bg-blue-50/80 dark:bg-blue-900/20 p-0.5 shadow-[inset_0_0.5px_2px_rgba(0,0,0,0.06)]">
-                  {["all", ...uniqueEntityTypes].map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setEntityTypeFilter(type)}
-                      className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all whitespace-nowrap ${
-                        entityTypeFilter === type
-                          ? "bg-brand-primary text-white shadow-sm"
-                          : "text-text-muted hover:text-text-body"
-                      }`}
-                    >
-                      {type === "all" ? "All" : type.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bIso\b/g, "ISO")}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className="relative flex-1">
-                <Icon name="MagnifyingGlass" size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search..."
-                  className="w-full h-7 pl-8 pr-3 rounded-lg border border-blue-100 dark:border-blue-800/30 bg-blue-50/30 dark:bg-blue-900/10 text-xs text-text-body placeholder:text-text-muted outline-none focus:border-brand-primary transition-colors"
-                />
-              </div>
-            </div>
-          </fieldset>
+          {/* Filter fieldset — expands to wrap results when a filter is active */}
+          {(() => {
+            const isFiltering = entityTypeFilter !== "all" || searchQuery.trim().length > 0;
 
-          {/* Feed */}
-          {filteredEntries.length === 0 ? (
-            <Card variant="outlined">
-              <Card.Content className="py-12 text-center">
-                <Icon name="Clock" size={32} className="text-text-muted mx-auto mb-3" />
-                <p className="text-text-muted text-sm">
-                  No changes recorded yet. Run{" "}
-                  <code className="text-xs bg-background-subtle px-1.5 py-0.5 rounded">
-                    npm run generate:changelog
-                  </code>{" "}
-                  after a sync to populate this feed.
-                </p>
-              </Card.Content>
-            </Card>
-          ) : (
-            groups.map(({ date, entries }) => (
-              <DateGroup key={date} date={date} entries={entries} />
-            ))
-          )}
+            const filterControls = (
+              <div className="flex items-center gap-2.5">
+                {uniqueEntityTypes.length > 1 && (
+                  <div className="flex items-center rounded-lg bg-blue-50/80 dark:bg-blue-900/20 p-0.5 shadow-[inset_0_0.5px_2px_rgba(0,0,0,0.06)]">
+                    {["all", ...uniqueEntityTypes].map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setEntityTypeFilter(type)}
+                        className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all whitespace-nowrap ${
+                          entityTypeFilter === type
+                            ? "bg-brand-primary text-white shadow-sm"
+                            : "text-text-muted hover:text-text-body"
+                        }`}
+                      >
+                        {type === "all" ? "All" : type.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bIso\b/g, "ISO")}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="relative flex-1">
+                  <Icon name="MagnifyingGlass" size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search..."
+                    className="w-full h-7 pl-8 pr-3 rounded-lg border border-blue-100 dark:border-blue-800/30 bg-blue-50/30 dark:bg-blue-900/10 text-xs text-text-body placeholder:text-text-muted outline-none focus:border-brand-primary transition-colors"
+                  />
+                </div>
+              </div>
+            );
+
+            const feed = filteredEntries.length === 0 ? (
+              <Card variant="outlined">
+                <Card.Content className="py-12 text-center">
+                  <Icon name="Clock" size={32} className="text-text-muted mx-auto mb-3" />
+                  <p className="text-text-muted text-sm">
+                    No changes recorded yet. Run{" "}
+                    <code className="text-xs bg-background-subtle px-1.5 py-0.5 rounded">
+                      npm run generate:changelog
+                    </code>{" "}
+                    after a sync to populate this feed.
+                  </p>
+                </Card.Content>
+              </Card>
+            ) : (
+              groups.map(({ date, entries }) => (
+                <DateGroup key={date} date={date} entries={entries} />
+              ))
+            );
+
+            const filterParts: string[] = [];
+            if (entityTypeFilter !== "all") {
+              filterParts.push(entityTypeFilter.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bIso\b/g, "ISO"));
+            }
+            if (searchQuery.trim()) {
+              filterParts.push(`"${searchQuery.trim()}"`);
+            }
+            const filterLabel = `Filtered by ${filterParts.join(" + ")} · ${filteredEntries.length} result${filteredEntries.length !== 1 ? "s" : ""}`;
+
+            return isFiltering ? (
+              <fieldset className="relative border border-blue-200 dark:border-blue-800/40 rounded-lg px-2.5 pt-1 pb-3 mb-3 bg-blue-50/20 dark:bg-blue-900/5 transition-all">
+                <legend className="text-[9px] uppercase tracking-widest text-brand-primary px-1 font-medium leading-none">{filterLabel}</legend>
+                {filterControls}
+                <div className="mt-3">{feed}</div>
+              </fieldset>
+            ) : (
+              <>
+                <fieldset className="relative border border-border-default rounded-lg px-2.5 pt-1 pb-2 mb-3">
+                  <legend className="text-[9px] uppercase tracking-widest text-text-muted px-1 font-medium leading-none">Filter</legend>
+                  {filterControls}
+                </fieldset>
+                {feed}
+              </>
+            );
+          })()}
         </Section>
         )}
       </PageLayout.Content>
