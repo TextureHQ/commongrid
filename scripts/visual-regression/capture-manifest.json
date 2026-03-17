@@ -6,8 +6,8 @@
   "devServer": {
     "command": "npx next dev",
     "readyPattern": "Ready in",
-    "basePort": 3100,
-    "prPort": 3101
+    "basePort": 4100,
+    "prPort": 4101
   },
   "viewports": [
     { "name": "mobile", "width": 375, "height": 812 },
