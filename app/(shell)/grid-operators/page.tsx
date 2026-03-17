@@ -224,30 +224,37 @@ function GridOperatorsPageInner() {
         mobile: false,
       },
       {
-        id: "eiaId",
-        label: "EIA ID",
+        id: "codes",
+        label: "Codes",
         accessor: "eiaId",
-        render: (_value: unknown, row: UtilityRow) => (
-          <span className="text-text-muted tabular-nums text-xs">{row.eiaId ?? "—"}</span>
-        ),
-        mobile: false,
-      },
-      {
-        id: "baCode",
-        label: "BA Code",
-        accessor: "baCode",
-        render: (_value: unknown, row: UtilityRow) => (
-          <span className="text-text-muted text-xs">{row.baCode ?? "—"}</span>
-        ),
-        mobile: false,
-      },
-      {
-        id: "nercRegion",
-        label: "NERC",
-        accessor: "nercRegion",
-        render: (_value: unknown, row: UtilityRow) => (
-          <span className="text-text-muted text-xs">{row.nercRegion ?? "—"}</span>
-        ),
+        render: (_value: unknown, row: UtilityRow) => {
+          const codes = [
+            row.eiaId ? { label: "EIA", value: row.eiaId, href: `https://www.eia.gov/electricity/data/eia861/` } : null,
+            row.baCode ? { label: "BA", value: row.baCode, href: `https://www.eia.gov/electricity/gridmonitor/` } : null,
+            row.nercRegion ? { label: "NERC", value: row.nercRegion, href: `https://www.nerc.com/AboutNERC/keyplayers/Pages/default.aspx` } : null,
+          ].filter(Boolean) as { label: string; value: string; href: string }[];
+
+          if (codes.length === 0) return <span className="text-text-muted">—</span>;
+
+          return (
+            <div className="flex flex-col gap-0.5">
+              {codes.map((c) => (
+                <a
+                  key={c.label}
+                  href={c.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 rounded bg-surface-secondary px-1.5 py-0.5 text-[10px] leading-tight text-text-muted hover:text-brand-primary hover:bg-surface-tertiary transition-colors w-fit tabular-nums"
+                  title={`${c.label}: ${c.value}`}
+                >
+                  <span className="font-semibold text-text-subtle">{c.label}</span>
+                  <span>{c.value}</span>
+                </a>
+              ))}
+            </div>
+          );
+        },
         mobile: false,
       },
       {

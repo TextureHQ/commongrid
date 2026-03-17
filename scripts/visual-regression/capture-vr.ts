@@ -22,6 +22,7 @@ import { captureAll, type ManifestCapture, type ManifestViewport } from "./playw
 import { annotateImage, type AnnotationColor, type AnnotationRegion } from "./annotate";
 import { composeComparison } from "./compose";
 import { computeDiff } from "./diff";
+import { scanForAlerts, type AlertRegion } from "./detect-alerts";
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
@@ -48,6 +49,7 @@ interface CatalogEntry {
 		after: string;
 		comparison: string;
 		diffPercent: number;
+		alerts?: { before: AlertRegion[]; after: AlertRegion[] };
 	}>;
 }
 
@@ -352,6 +354,24 @@ async function main() {
 				console.log(`  📊 ${stem}: ${diffPercent}% pixel diff`);
 			}
 
+			// Alert scan — detect red pill-shaped indicators in raw screenshots
+			let alertsBefore: AlertRegion[] = [];
+			let alertsAfter: AlertRegion[] = [];
+			if (fs.existsSync(beforeRaw)) {
+				const scan = scanForAlerts(beforeRaw);
+				alertsBefore = scan.regions;
+				if (scan.hasAlerts) {
+					console.log(`  🔴 ${stem} BEFORE: ${scan.regions.length} alert region(s) detected [${scan.regions.map((r) => r.corner).join(", ")}]`);
+				}
+			}
+			if (fs.existsSync(afterRaw)) {
+				const scan = scanForAlerts(afterRaw);
+				alertsAfter = scan.regions;
+				if (scan.hasAlerts) {
+					console.log(`  🔴 ${stem} AFTER: ${scan.regions.length} alert region(s) detected [${scan.regions.map((r) => r.corner).join(", ")}]`);
+				}
+			}
+
 			// Compose
 			if (!opts.skipCompose && fs.existsSync(beforeAnnotated) && fs.existsSync(afterAnnotated)) {
 				const title = `${capture.description} · ${vp.name} (${vp.width}px)`;
@@ -364,6 +384,9 @@ async function main() {
 				after: path.relative(outDir, afterAnnotated),
 				comparison: path.relative(outDir, comparisonPath),
 				diffPercent,
+				alerts: (alertsBefore.length > 0 || alertsAfter.length > 0)
+					? { before: alertsBefore, after: alertsAfter }
+					: undefined,
 			};
 		}
 
@@ -414,6 +437,35 @@ async function main() {
 	}
 	mdLines.push("", "</details>");
 
+	// Alert summary in report
+	const allAlerts = catalog.flatMap((c) =>
+		Object.entries(c.viewports)
+			.filter(([, d]) => d.alerts)
+			.map(([vpName, d]) => ({ id: c.id, vpName, alerts: d.alerts! })),
+	);
+
+	if (allAlerts.length > 0) {
+		mdLines.push(
+			"",
+			"---",
+			"",
+			"### ⚠️ Alert Indicators Detected",
+			"",
+			"The following captures contain red pill/badge-shaped elements that may indicate runtime errors or notifications:",
+			"",
+			"| Capture | Viewport | State | Regions | Location(s) |",
+			"|---------|----------|-------|---------|-------------|",
+		);
+		for (const { id, vpName, alerts } of allAlerts) {
+			if (alerts.before.length > 0) {
+				mdLines.push(`| ${id} | ${vpName} | BEFORE | ${alerts.before.length} | ${alerts.before.map((r) => r.corner).join(", ")} |`);
+			}
+			if (alerts.after.length > 0) {
+				mdLines.push(`| ${id} | ${vpName} | AFTER | ${alerts.after.length} | ${alerts.after.map((r) => r.corner).join(", ")} |`);
+			}
+		}
+	}
+
 	const mdPath = path.join(outDir, "pr-screenshots.md");
 	fs.writeFileSync(mdPath, mdLines.join("\n"));
 
@@ -426,6 +478,10 @@ async function main() {
 	const totalDiffs = catalog.flatMap((c) => Object.values(c.viewports));
 	const changed = totalDiffs.filter((d) => d.diffPercent > 0);
 	console.log(`\n   ${totalDiffs.length} captures, ${changed.length} with visual changes`);
+
+	if (allAlerts.length > 0) {
+		console.log(`\n   🔴 ${allAlerts.length} capture(s) have alert indicators — inspect these screenshots!`);
+	}
 }
 
 main().catch((err) => {

@@ -169,7 +169,7 @@ export default function ChangelogPage() {
     <PageLayout maxWidth={900}>
       <PageLayout.Header
         title="Changelog"
-        description="Live changes streaming from the energy industry — new entities added and existing records updated from authoritative sources."
+        description="What's changing in the grid data we track — and in the tools we're building to track it."
       />
       <PageLayout.Content>
         {/* Tab bar */}

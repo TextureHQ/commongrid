@@ -14,6 +14,9 @@ export const metadata: Metadata = {
     default: "CommonGrid",
   },
   description: "Community-maintained energy knowledge base",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
