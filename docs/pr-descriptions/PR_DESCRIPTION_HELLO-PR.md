@@ -189,7 +189,8 @@ quadrantChart
 | `37b1abc` | feat | 5 data pages | Sort-direction ▲/▼ chevrons in dropdown labels | S | low |
 | `791740d` | feat | power-plants, transmission-lines | County, Year, Generators columns; From/To labels | M | low |
 | `ece78d0` | feat | grid-operators | Jurisdiction state-based highlighting on filter | S | low |
-| `ea227b5` | feat | changelog | Data Changes / Site Updates tab distinction | L | med |
+| `ea227b5` | feat | changelog | Data Changes / Site Updates tab distinction | L | low |
+| `aec3b14` | feat | changelog | Pill toggle, filter fieldset, condensed layout | L | low |
 | `c9e343a` | fix | ExplorerMap | ResizeObserver replaces setTimeout for map resize | M | med |
 | `ecdc89b` | feat | TopBar, logo.svg | Logo redesign — G-in-C _(reverted by bf7378b)_ | M | — |
 | `049d059` | style | 5 data pages | Stack filter dropdowns vertically at narrow breakpoints | S | low |
@@ -218,7 +219,7 @@ quadrantChart
 |------|---------|-------------|
 | `grid-operators/page.tsx` | 7 | fix, style, feat (chevron → hyphens → clamp → sort → stack → highlight → codes) |
 | `TopBar.tsx` | 3 | style, feat, revert (spacing → mobile menu → logo revert) |
-| `changelog/page.tsx` | 2 | feat (tabs → search) |
+| `changelog/page.tsx` | 3 | feat (tabs → search → pill toggle + filter fieldset) |
 | `lib/formatting.ts` | 2 | fix (badge variants, mirrored in explorer/) |
 | `ExplorerMap.tsx` | 2 | fix (ResizeObserver → key prop via ExplorerShell) |
 
@@ -227,7 +228,7 @@ quadrantChart
 | File | Layer | Character |
 |------|-------|-----------|
 | `app/(shell)/grid-operators/page.tsx` | page | Major: Codes column, highlighting, clamping |
-| `app/(shell)/changelog/page.tsx` | page | Major: tab UI, search, entity filters |
+| `app/(shell)/changelog/page.tsx` | page | Major: pill toggle, filter fieldset, search, condensed layout |
 | `app/(shell)/power-plants/page.tsx` | page | New columns: county, year, generators |
 | `app/(shell)/ev-charging/page.tsx` | page | Style: padding, stacking, hyphenation |
 | `app/(shell)/pricing-nodes/page.tsx` | page | Style: padding, sort labels |
@@ -251,7 +252,7 @@ quadrantChart
 - Grid-operators: consolidated Codes column with linked EIA/BA/NERC badges
 - Power-plants: County, Operating Year, Generator Count columns
 - Transmission-lines: From/To substation labels
-- Changelog: Data Changes / Site Updates tab bar with entity-type filter chips + text search
+- Changelog: pill toggle (Grid Data / Site) replacing tab bar, filter fieldset with entity-type pills + inline search, combined sync status line with pulse dot
 - Jurisdiction highlighting when filter is active
 - CSS `hyphens-auto` utility class
 - Explore page: title and description metadata
@@ -267,6 +268,7 @@ quadrantChart
 - Mobile menu: active brand color, hover backgrounds
 
 ### Fixed
+- Grid-operators mobile: double badge rendering on segment column (format "badge" → "secondary")
 - Native `<select>` chevron crowding text — asymmetric padding across 9 files
 - Mapbox blank-on-layout-switch — ResizeObserver replaces fragile setTimeout
 - Map layout mode switch stale renders — key={layout} forces clean remount
@@ -303,10 +305,10 @@ _Corrected badge color mapping for all utility segment types._
 <!-- ![sort-chevrons-desktop](URL) -->
 _Sort direction ▲/▼ indicators in dropdown labels on power-plants._
 
-### Changelog Tabs (tablet + desktop)
+### Changelog Redesign (tablet + desktop)
 <!-- ![changelog-tabs-desktop](URL) -->
 <!-- ![changelog-tabs-tablet](URL) -->
-_Data Changes / Site Updates tab distinction with entity-type filter chips._
+_Pill toggle (Grid Data / Site), filter fieldset with entity-type pills + inline search, combined sync status with pulse indicator._
 
 ### Filter Stacking (mobile)
 <!-- ![filter-stacking-mobile](URL) -->
@@ -347,7 +349,7 @@ _Mobile menu with active brand color state and hover backgrounds._
 - [ ] CMD+K opens search → section headers show entity counts → "Loading more..." during Tier-2 fetch
 - [ ] Grid-operators: Codes column shows stacked EIA/BA/NERC badges linking to respective sources
 - [ ] Grid-operators: filter by jurisdiction → matching cells highlighted with brand color + bold
-- [ ] Changelog: switch Data Changes ↔ Site Updates tabs → entity-type filter chips narrow results → search bar filters
+- [ ] Changelog: Grid Data ↔ Site pill toggle switches view + description → filter fieldset narrows results → inline search filters
 - [ ] Explorer map: switch hybrid → list → map → hybrid without blank/flash
 - [ ] Service territory detail: map zooms to tight bounds, not US-wide
 - [ ] All 5 data pages: sort dropdown labels show ▲/▼ direction indicators
