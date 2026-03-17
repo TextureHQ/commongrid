@@ -167,11 +167,11 @@ export default function ChangelogPage() {
 
   return (
     <PageLayout maxWidth={900}>
-      <PageLayout.Header
-        title="Changelog"
-        description="What's changing in the grid data we track — and in the tools we're building to track it."
-      />
+      <PageLayout.Header title="Changelog" />
       <PageLayout.Content>
+        <p className="text-sm text-text-muted -mt-2 mb-6">
+          What's changing in the grid data we track — and in the tools we're building to track it.
+        </p>
         {/* Tab bar */}
         <div className="flex gap-1 border-b border-border-default mb-6">
           <button
