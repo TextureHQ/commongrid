@@ -13,7 +13,11 @@
     "sync:ev-charging": "tsx scripts/sync-ev-charging.ts",
     "sync:pricing-nodes": "tsx scripts/sync-pricing-nodes.ts",
     "generate:changelog": "npx tsx scripts/generate-changelog.ts",
-    "sync:all": "npx tsx scripts/sync-all.ts"
+    "sync:all": "npx tsx scripts/sync-all.ts",
+    "vr:capture": "npx tsx scripts/visual-regression/capture-vr.ts",
+    "vr:capture:pr-only": "npx tsx scripts/visual-regression/capture-vr.ts --skip-base",
+    "vr:clean": "npx tsx scripts/visual-regression/clean.ts",
+    "vr:clean:all": "npx tsx scripts/visual-regression/clean.ts --all"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.5",
@@ -35,7 +39,12 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "adm-zip": "^0.5.16",
+    "pixelmatch": "^7.1.0",
+    "playwright": "^1.58.2",
+    "pngjs": "^7.0.0",
+    "sharp": "^0.34.5",
     "typescript": "^5.9.2",
+    "wait-on": "^9.0.4",
     "xlsx": "^0.18.5"
   }
 }
