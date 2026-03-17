@@ -46,9 +46,9 @@ export function TopBar({ navigation }: TopBarProps) {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-60 bg-[var(--color-background-subtle)] border-b border-border-default">
-      <div className="flex items-center h-14 px-5">
+      <div className="flex items-center h-12 px-4 lg:px-6">
         {/* Left: logo + nav */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-text-heading">
               {/* Top row */}
@@ -70,7 +70,7 @@ export function TopBar({ navigation }: TopBarProps) {
               {/* Solid center square */}
               <rect x="11" y="11" width="10" height="10" rx="1.5" fill="currentColor"/>
             </svg>
-            <span className="text-[15px] font-semibold text-text-heading tracking-tight">
+            <span className="text-sm font-semibold text-text-heading tracking-tight">
               CommonGrid
             </span>
           </Link>
@@ -83,7 +83,7 @@ export function TopBar({ navigation }: TopBarProps) {
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-md text-sm transition-colors text-text-muted hover:text-text-body"
+                  className="px-2.5 py-1 rounded-md text-sm transition-colors text-text-muted hover:text-text-body"
                 >
                   {item.label}
                 </a>
@@ -91,7 +91,7 @@ export function TopBar({ navigation }: TopBarProps) {
                 <Link
                   key={item.id}
                   href={item.href}
-                  className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                  className={`px-2.5 py-1 rounded-md text-sm transition-colors ${
                     isActive(item)
                       ? "text-text-body font-medium"
                       : "text-text-muted hover:text-text-body"
@@ -105,7 +105,7 @@ export function TopBar({ navigation }: TopBarProps) {
         </div>
 
         {/* Right: icons */}
-        <div className="ml-auto hidden sm:flex items-center gap-1">
+        <div className="ml-auto hidden sm:flex items-center gap-1.5">
           <Button
             variant="icon"
             href="https://github.com/TextureHQ/commongrid"
@@ -128,7 +128,7 @@ export function TopBar({ navigation }: TopBarProps) {
         </div>
 
         {/* Mobile: theme toggle + hamburger */}
-        <div className="ml-auto flex items-center gap-1 sm:hidden">
+        <div className="ml-auto flex items-center gap-1.5 sm:hidden">
           {mounted && (
             <Button
               variant="icon"
@@ -149,7 +149,7 @@ export function TopBar({ navigation }: TopBarProps) {
       </div>
 
       {mobileMenuOpen && (
-        <nav className="sm:hidden border-t border-border-default px-4 py-2">
+        <nav className="sm:hidden border-t border-border-default px-4 py-2 bg-[var(--color-background-subtle)]">
           {navigation.map((item) =>
             item.external ? (
               <a
@@ -157,7 +157,7 @@ export function TopBar({ navigation }: TopBarProps) {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block px-3 py-2 rounded-md text-sm transition-colors text-text-muted hover:text-text-body"
+                className="block px-3 py-2.5 rounded-md text-sm transition-colors text-text-muted hover:text-text-body hover:bg-background-surface"
               >
                 {item.label}
               </a>
@@ -165,24 +165,28 @@ export function TopBar({ navigation }: TopBarProps) {
               <Link
                 key={item.id}
                 href={item.href}
-                className={`block px-3 py-2 rounded-md text-sm transition-colors ${
-                  isActive(item) ? "text-text-body font-medium" : "text-text-muted hover:text-text-body"
+                className={`block px-3 py-2.5 rounded-md text-sm transition-colors ${
+                  isActive(item)
+                    ? "text-brand-primary font-medium bg-background-surface"
+                    : "text-text-muted hover:text-text-body hover:bg-background-surface"
                 }`}
               >
                 {item.label}
               </Link>
             )
           )}
-          <Button
-            variant="icon"
-            href="https://github.com/TextureHQ/commongrid"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 w-full justify-start text-sm"
-          >
-            <GitHubIcon />
-            <span>GitHub</span>
-          </Button>
+          <div className="mt-1 pt-2 border-t border-border-default">
+            <Button
+              variant="icon"
+              href="https://github.com/TextureHQ/commongrid"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 w-full justify-start text-sm"
+            >
+              <GitHubIcon />
+              <span>GitHub</span>
+            </Button>
+          </div>
         </nav>
       )}
     </header>

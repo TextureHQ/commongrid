@@ -33,7 +33,7 @@ export function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full h-11 pl-10 pr-20 rounded-lg border border-border-default bg-background-surface text-text-body text-base placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary transition-colors"
+        className="w-full h-10 sm:h-11 pl-10 pr-20 rounded-lg border border-border-default bg-background-surface text-text-body text-sm sm:text-base placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary transition-colors"
       />
       <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-3">
         {value && (
@@ -50,7 +50,7 @@ export function SearchInput({
           </button>
         )}
         {resultCount !== undefined && value && (
-          <span className="text-xs text-text-muted tabular-nums whitespace-nowrap">
+          <span className="text-xs text-text-muted tabular-nums whitespace-nowrap hidden sm:inline">
             {resultCount.toLocaleString()} {resultLabel ?? "results"}
           </span>
         )}

@@ -589,7 +589,7 @@ export function GlobalSearchModal() {
     <>
       {/* Backdrop — tap outside to close; starts below fixed nav on mobile */}
       <div
-        className="fixed inset-0 top-14 sm:top-0 z-50"
+        className="fixed inset-0 top-12 sm:top-0 z-50"
         style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
         onMouseDown={close}
         onTouchStart={close}
@@ -654,7 +654,10 @@ export function GlobalSearchModal() {
             />
             <div className="flex items-center gap-2 flex-none">
               {loadingAsync && (
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3.5 h-3.5 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
+                  <span className="text-[10px] text-text-muted hidden sm:inline">Loading more...</span>
+                </div>
               )}
               {query ? (
                 <button
@@ -735,6 +738,7 @@ export function GlobalSearchModal() {
                   <div key={group.kind} className="mb-1">
                     <div className="px-2 py-1.5">
                       <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">{group.label}</span>
+                      <span className="text-[10px] text-text-muted ml-1.5 tabular-nums">{group.items.length}</span>
                     </div>
                     {group.items.map((result) => {
                       const idx = flatIndex++;

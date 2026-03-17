@@ -14,7 +14,7 @@ export function DataSourceLink({ paths, className = "" }: DataSourceLinkProps) {
         href={`${GITHUB_BASE}/${paths[0]}`}
         target="_blank"
         rel="noopener noreferrer"
-        className={`inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-brand-primary transition-colors ${className}`}
+        className={`inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-brand-primary transition-colors truncate ${className}`}
       >
         <span>📦</span>
         <span>View source data on GitHub</span>

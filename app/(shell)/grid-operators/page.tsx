@@ -38,13 +38,16 @@ interface UtilityRow extends Record<string, unknown> {
   jurisdiction: string | null;
   website: string | null;
   logo: string | null;
+  eiaId: string | null;
+  baCode: string | null;
+  nercRegion: string | null;
 }
 
 const sortOptions = [
-  { id: "name:asc", label: "Name A-Z", value: "name:asc" },
-  { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "customers:desc", label: "Customers (High to Low)", value: "customers:desc" },
-  { id: "customers:asc", label: "Customers (Low to High)", value: "customers:asc" },
+  { id: "name:asc", label: "Name ▲", value: "name:asc" },
+  { id: "name:desc", label: "Name ▼", value: "name:desc" },
+  { id: "customers:desc", label: "Customers ▼", value: "customers:desc" },
+  { id: "customers:asc", label: "Customers ▲", value: "customers:asc" },
 ];
 
 const segmentFilterOptions = [
@@ -135,6 +138,9 @@ function GridOperatorsPageInner() {
         jurisdiction: u.jurisdiction,
         website: u.website,
         logo: u.logo,
+        eiaId: u.eiaId,
+        baCode: u.baCode,
+        nercRegion: u.nercRegion,
       })),
     [filtered]
   );
@@ -164,7 +170,7 @@ function GridOperatorsPageInner() {
               shape="square"
               variant="organization"
             />
-            <span className="truncate">{row.name}</span>
+            <span className="line-clamp-2 sm:line-clamp-1 hyphens-auto">{row.name}</span>
           </Link>
         ),
         mobile: { priority: 1, format: "primary" },
@@ -178,7 +184,7 @@ function GridOperatorsPageInner() {
             {getSegmentLabel(row.segment)}
           </Badge>
         ),
-        mobile: { priority: 2, format: "badge" },
+        mobile: { priority: 2, format: "secondary" },
       },
       {
         id: "customerCount",
@@ -193,7 +199,17 @@ function GridOperatorsPageInner() {
         id: "jurisdiction",
         label: "Jurisdiction",
         accessor: "jurisdiction",
-        cell: TextCell,
+        render: (_value: unknown, row: UtilityRow) => (
+          <span
+            className={`text-text-body ${
+              jurisdictionFilter !== "all" && row.jurisdiction === jurisdictionFilter
+                ? "font-semibold text-brand-primary"
+                : ""
+            }`}
+          >
+            {row.jurisdiction ?? "—"}
+          </span>
+        ),
         mobile: false,
       },
       {
@@ -207,8 +223,66 @@ function GridOperatorsPageInner() {
         ),
         mobile: false,
       },
+      {
+        id: "codes",
+        label: "Codes",
+        accessor: "eiaId",
+        render: (_value: unknown, row: UtilityRow) => {
+          const codes = [
+            row.eiaId ? { label: "EIA", value: row.eiaId, href: `https://www.eia.gov/electricity/data/eia861/` } : null,
+            row.baCode ? { label: "BA", value: row.baCode, href: `https://www.eia.gov/electricity/gridmonitor/` } : null,
+            row.nercRegion ? { label: "NERC", value: row.nercRegion, href: `https://www.nerc.com/AboutNERC/keyplayers/Pages/default.aspx` } : null,
+          ].filter(Boolean) as { label: string; value: string; href: string }[];
+
+          if (codes.length === 0) return <span className="text-text-muted">—</span>;
+
+          return (
+            <div className="flex flex-col gap-0.5">
+              {codes.map((c) => (
+                <a
+                  key={c.label}
+                  href={c.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 rounded bg-surface-secondary px-1.5 py-0.5 text-[10px] leading-tight text-text-muted hover:text-brand-primary hover:bg-surface-tertiary transition-colors w-fit tabular-nums"
+                  title={`${c.label}: ${c.value}`}
+                >
+                  <span className="font-semibold text-text-subtle">{c.label}</span>
+                  <span>{c.value}</span>
+                </a>
+              ))}
+            </div>
+          );
+        },
+        mobile: false,
+      },
+      {
+        id: "website",
+        label: "Web",
+        accessor: "website",
+        render: (_value: unknown, row: UtilityRow) =>
+          row.website ? (
+            <a
+              href={row.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-text-muted hover:text-brand-primary transition-colors"
+              title={row.website}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                <path d="M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69L6.22 8.72Z" />
+                <path d="M3.5 6.75c0-.69.56-1.25 1.25-1.25H7A.75.75 0 0 0 7 4H4.75A2.75 2.75 0 0 0 2 6.75v4.5A2.75 2.75 0 0 0 4.75 14h4.5A2.75 2.75 0 0 0 12 11.25V9a.75.75 0 0 0-1.5 0v2.25c0 .69-.56 1.25-1.25 1.25h-4.5c-.69 0-1.25-.56-1.25-1.25v-4.5Z" />
+              </svg>
+            </a>
+          ) : (
+            <span className="text-text-muted">—</span>
+          ),
+        mobile: false,
+      },
     ],
-    []
+    [jurisdictionFilter]
   );
 
   return (
@@ -236,11 +310,11 @@ function GridOperatorsPageInner() {
             onChange: setSortValue,
           }}
           customControls={
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <select
                 value={segmentFilter}
                 onChange={(e) => setSegmentFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 {segmentFilterOptions.map((opt) => (
                   <option key={opt.id} value={opt.value}>
@@ -251,7 +325,7 @@ function GridOperatorsPageInner() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 {statusFilterOptions.map((opt) => (
                   <option key={opt.id} value={opt.value}>
@@ -262,7 +336,7 @@ function GridOperatorsPageInner() {
               <select
                 value={jurisdictionFilter}
                 onChange={(e) => setJurisdictionFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All Jurisdictions</option>
                 {jurisdictions.map((j) => (

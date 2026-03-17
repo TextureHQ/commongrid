@@ -9,9 +9,9 @@ import { getAllIsos, getAllBalancingAuthorities, getAllUtilities, searchEntities
 import { getSegmentLabel } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
 
-function getTileUrl() {
+function getTileUrl(layerType = "territories") {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}/api/tiles/territories/{z}/{x}/{y}`;
+  return `${origin}/api/tiles/${layerType}/{z}/{x}/{y}`;
 }
 
 const segmentColorMapping = {
@@ -233,14 +233,19 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
 
   const hasHighlight = !!state.highlightGeoJSON;
 
-  // Trigger map resize after mount (fixes blank map on client-side navigation)
+  // Trigger map resize on container size changes (fixes blank map on layout transitions)
+  const containerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const map = mapRef.current?.getMap?.();
-      if (!map) return;
-      map.resize();
-    }, 100);
-    return () => clearTimeout(timer);
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver(() => {
+      requestAnimationFrame(() => {
+        const map = mapRef.current?.getMap?.();
+        if (map) map.resize();
+      });
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
   }, []);
 
   // Build Mapbox filter expression for utility territory tiles
@@ -673,18 +678,23 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   }, [handleClick, router, state.highlightGeoJSON, isGridOperatorView, filteredGridBoundaryData, hasHighlight, territoryFilter, layerVisibility]);
 
   if (!hasMapboxToken) {
+    const isDev = process.env.NODE_ENV === "development";
     return (
       <div className="h-full w-full flex items-center justify-center bg-background-surface">
         <div className="text-center px-6">
           <div className="text-lg font-semibold text-text-heading mb-2">Map Unavailable</div>
-          <p className="text-sm text-text-muted">Set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to enable the map.</p>
+          <p className="text-sm text-text-muted">
+            {isDev
+              ? "Set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to enable the map."
+              : "The map is temporarily unavailable. Please try again later."}
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full relative">
+    <div ref={containerRef} className="h-full w-full relative">
       <InteractiveMap
         ref={mapRef as React.Ref<any>}
         mapboxAccessToken={effectiveToken!}

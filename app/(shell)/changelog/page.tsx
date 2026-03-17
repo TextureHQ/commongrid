@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge, Card, Icon, PageLayout, Section } from "@texturehq/edges";
+import { useMemo, useState } from "react";
 import { getChangelog } from "@/lib/data";
 import type { ChangelogEntry } from "@/types/changelog";
 
@@ -99,8 +100,8 @@ function EntryRow({ entry }: { entry: ChangelogEntry }) {
 
 function DateGroup({ date, entries }: { date: string; entries: ChangelogEntry[] }) {
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-3 mb-3">
+    <div className="mb-5">
+      <div className="flex items-center gap-3 mb-2">
         <div className="text-xs font-semibold uppercase tracking-widest text-text-muted">{date}</div>
         <div className="flex-1 h-px bg-border-default" />
         <div className="text-xs text-text-muted">{entries.length} change{entries.length !== 1 ? "s" : ""}</div>
@@ -120,13 +121,41 @@ function DateGroup({ date, entries }: { date: string; entries: ChangelogEntry[] 
 
 export default function ChangelogPage() {
   const changelog = getChangelog();
+  const [tab, setTab] = useState<"data" | "site">("data");
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Merge and sort all entries newest-first
-  const allEntries = [...changelog.recentlyUpdated, ...changelog.newlyAdded].sort(
-    (a, b) => new Date(b.isoTimestamp).getTime() - new Date(a.isoTimestamp).getTime(),
+  const allEntries = useMemo(
+    () =>
+      [...changelog.recentlyUpdated, ...changelog.newlyAdded].sort(
+        (a, b) => new Date(b.isoTimestamp).getTime() - new Date(a.isoTimestamp).getTime(),
+      ),
+    [changelog],
   );
 
-  const groups = groupByDate(allEntries);
+  // Unique entity types for filter chips
+  const uniqueEntityTypes = useMemo(() => {
+    const types = new Set(allEntries.map((e) => e.entityType));
+    return Array.from(types).sort();
+  }, [allEntries]);
+
+  // Filtered entries (by entity type + search)
+  const filteredEntries = useMemo(() => {
+    let result = allEntries;
+    if (entityTypeFilter !== "all") {
+      result = result.filter((e) => e.entityType === entityTypeFilter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (e) => e.name.toLowerCase().includes(q) || e.detail.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [allEntries, entityTypeFilter, searchQuery]);
+
+  const groups = groupByDate(filteredEntries);
 
   const lastUpdated = changelog.updatedAt
     ? new Date(changelog.updatedAt).toLocaleDateString("en-US", {
@@ -137,30 +166,81 @@ export default function ChangelogPage() {
     : null;
 
   return (
-    <PageLayout maxWidth={900}>
-      <PageLayout.Header
-        title="Changelog"
-        description="Every update to the CommonGrid dataset — new entities added and existing records updated from authoritative sources."
-      />
+    <PageLayout maxWidth={900} paddingYClass="pt-2 md:pt-3">
       <PageLayout.Content>
-        <Section id="feed" navLabel="Changes" withDivider={false}>
-          {/* Meta bar */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-sm text-text-muted">
-                Synced from authoritative sources daily
-              </span>
-            </div>
-            {lastUpdated && (
-              <span className="text-xs text-text-muted">
-                Last updated {lastUpdated}
-              </span>
-            )}
+        {/* Pill toggle — upper right */}
+        <div className="flex justify-end mt-1 md:mt-2 mb-1">
+          <div className="flex-none flex items-center rounded-full bg-neutral-200/70 dark:bg-neutral-700/60 p-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.12)]">
+            <button
+              type="button"
+              onClick={() => setTab("data")}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                tab === "data"
+                  ? "bg-white dark:bg-neutral-600 text-text-heading shadow-sm"
+                  : "text-text-muted hover:text-text-body"
+              }`}
+            >
+              Grid Data
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("site")}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                tab === "site"
+                  ? "bg-white dark:bg-neutral-600 text-text-heading shadow-sm"
+                  : "text-text-muted hover:text-text-body"
+              }`}
+            >
+              Site
+            </button>
           </div>
+        </div>
 
+        {/* Title + description */}
+        <h1 className="text-3xl font-bold text-text-heading leading-none mb-1.5">Changelog</h1>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            {tab === "data" && (
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-[pulse_4s_ease-in-out_infinite]" />
+            )}
+            <span className="text-sm text-text-muted">
+              {tab === "data"
+                ? "Live changes synced routinely from authoritative energy industry sources."
+                : "Product updates to the CommonGrid website and tools."}
+            </span>
+          </div>
+          {tab === "data" && lastUpdated && (
+            <span className="text-xs text-text-muted whitespace-nowrap">
+              Last updated {lastUpdated}
+            </span>
+          )}
+        </div>
+
+        {tab === "site" && (
+          <Card variant="outlined">
+            <Card.Content className="py-12 text-center">
+              <Icon name="Code" size={32} className="text-text-muted mx-auto mb-3" />
+              <p className="text-sm font-medium text-text-heading mb-1">Product Updates</p>
+              <p className="text-sm text-text-muted max-w-md mx-auto">
+                Changes to the CommonGrid website and tools. Visit our{" "}
+                <a
+                  href="https://github.com/TextureHQ/commongrid/releases"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-primary hover:underline"
+                >
+                  GitHub releases
+                </a>{" "}
+                for the full history of site updates.
+              </p>
+            </Card.Content>
+          </Card>
+        )}
+
+        {tab === "data" && (
+        <Section id="feed" navLabel="Changes" withDivider={false}>
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
             {[
               {
                 label: "Recently updated",
@@ -198,26 +278,89 @@ export default function ChangelogPage() {
             ))}
           </div>
 
-          {/* Feed */}
-          {allEntries.length === 0 ? (
-            <Card variant="outlined">
-              <Card.Content className="py-12 text-center">
-                <Icon name="Clock" size={32} className="text-text-muted mx-auto mb-3" />
-                <p className="text-text-muted text-sm">
-                  No changes recorded yet. Run{" "}
-                  <code className="text-xs bg-background-subtle px-1.5 py-0.5 rounded">
-                    npm run generate:changelog
-                  </code>{" "}
-                  after a sync to populate this feed.
-                </p>
-              </Card.Content>
-            </Card>
-          ) : (
-            groups.map(({ date, entries }) => (
-              <DateGroup key={date} date={date} entries={entries} />
-            ))
-          )}
+          {/* Filter fieldset — expands to wrap results when a filter is active */}
+          {(() => {
+            const isFiltering = entityTypeFilter !== "all" || searchQuery.trim().length > 0;
+
+            const filterControls = (
+              <div className="flex items-center gap-2.5">
+                {uniqueEntityTypes.length > 1 && (
+                  <div className="flex items-center rounded-lg bg-blue-50/80 dark:bg-blue-900/20 p-0.5 shadow-[inset_0_0.5px_2px_rgba(0,0,0,0.06)]">
+                    {["all", ...uniqueEntityTypes].map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setEntityTypeFilter(type)}
+                        className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all whitespace-nowrap ${
+                          entityTypeFilter === type
+                            ? "bg-brand-primary text-white shadow-sm"
+                            : "text-text-muted hover:text-text-body"
+                        }`}
+                      >
+                        {type === "all" ? "All" : type.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bIso\b/g, "ISO")}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="relative flex-1">
+                  <Icon name="MagnifyingGlass" size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search..."
+                    className="w-full h-7 pl-8 pr-3 rounded-lg border border-blue-100 dark:border-blue-800/30 bg-blue-50/30 dark:bg-blue-900/10 text-xs text-text-body placeholder:text-text-muted outline-none focus:border-brand-primary transition-colors"
+                  />
+                </div>
+              </div>
+            );
+
+            const feed = filteredEntries.length === 0 ? (
+              <Card variant="outlined">
+                <Card.Content className="py-12 text-center">
+                  <Icon name="Clock" size={32} className="text-text-muted mx-auto mb-3" />
+                  <p className="text-text-muted text-sm">
+                    No changes recorded yet. Run{" "}
+                    <code className="text-xs bg-background-subtle px-1.5 py-0.5 rounded">
+                      npm run generate:changelog
+                    </code>{" "}
+                    after a sync to populate this feed.
+                  </p>
+                </Card.Content>
+              </Card>
+            ) : (
+              groups.map(({ date, entries }) => (
+                <DateGroup key={date} date={date} entries={entries} />
+              ))
+            );
+
+            const filterParts: string[] = [];
+            if (entityTypeFilter !== "all") {
+              filterParts.push(entityTypeFilter.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bIso\b/g, "ISO"));
+            }
+            if (searchQuery.trim()) {
+              filterParts.push(`"${searchQuery.trim()}"`);
+            }
+            const filterLabel = `Filtered by ${filterParts.join(" + ")} · ${filteredEntries.length} result${filteredEntries.length !== 1 ? "s" : ""}`;
+
+            return isFiltering ? (
+              <fieldset className="relative border border-blue-200 dark:border-blue-800/40 rounded-lg px-2.5 pt-1 pb-3 mb-3 bg-blue-50/20 dark:bg-blue-900/5 transition-all">
+                <legend className="text-[9px] uppercase tracking-widest text-brand-primary px-1 font-medium leading-none">{filterLabel}</legend>
+                {filterControls}
+                <div className="mt-3">{feed}</div>
+              </fieldset>
+            ) : (
+              <>
+                <fieldset className="relative border border-border-default rounded-lg px-2.5 pt-1 pb-2 mb-3">
+                  <legend className="text-[9px] uppercase tracking-widest text-text-muted px-1 font-medium leading-none">Filter</legend>
+                  {filterControls}
+                </fieldset>
+                {feed}
+              </>
+            );
+          })()}
         </Section>
+        )}
       </PageLayout.Content>
     </PageLayout>
   );

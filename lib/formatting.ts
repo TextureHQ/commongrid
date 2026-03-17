@@ -31,16 +31,16 @@ export function getSegmentLabel(segment: string): string {
   return UtilitySegmentLabel[segment as UtilitySegment] ?? segment;
 }
 
-export function getSegmentBadgeVariant(segment: string): "info" | "success" | "warning" | "default" {
-  const variants: Record<string, "info" | "success" | "warning" | "default"> = {
+export function getSegmentBadgeVariant(segment: string): "info" | "success" | "warning" | "neutral" | "default" {
+  const variants: Record<string, "info" | "success" | "warning" | "neutral" | "default"> = {
     [UtilitySegment.INVESTOR_OWNED_UTILITY]: "info",
-    [UtilitySegment.DISTRIBUTION_COOPERATIVE]: "warning",
-    [UtilitySegment.GENERATION_AND_TRANSMISSION]: "default",
-    [UtilitySegment.MUNICIPAL_UTILITY]: "success",
-    [UtilitySegment.COMMUNITY_CHOICE_AGGREGATOR]: "success",
-    [UtilitySegment.POLITICAL_SUBDIVISION]: "success",
-    [UtilitySegment.TRANSMISSION_OPERATOR]: "default",
-    [UtilitySegment.JOINT_ACTION_AGENCY]: "default",
+    [UtilitySegment.DISTRIBUTION_COOPERATIVE]: "success",
+    [UtilitySegment.GENERATION_AND_TRANSMISSION]: "success",
+    [UtilitySegment.MUNICIPAL_UTILITY]: "warning",
+    [UtilitySegment.COMMUNITY_CHOICE_AGGREGATOR]: "neutral",
+    [UtilitySegment.POLITICAL_SUBDIVISION]: "warning",
+    [UtilitySegment.TRANSMISSION_OPERATOR]: "info",
+    [UtilitySegment.JOINT_ACTION_AGENCY]: "success",
     [UtilitySegment.FEDERAL]: "info",
   };
   return variants[segment] ?? "default";

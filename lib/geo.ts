@@ -39,15 +39,18 @@ export function computeViewStateFromGeoJSON(geoJSON: FeatureCollection): ViewSta
   const latSpan = maxLat - minLat;
   const maxSpan = Math.max(lngSpan, latSpan);
 
-  let zoom = 8;
-  if (maxSpan > 20) zoom = 3;
-  else if (maxSpan > 10) zoom = 4;
-  else if (maxSpan > 5) zoom = 5;
+  // Finer-grained zoom with padding for tight bounding box fit
+  let zoom = 10;
+  if (maxSpan > 30) zoom = 3;
+  else if (maxSpan > 15) zoom = 4;
+  else if (maxSpan > 8) zoom = 5;
+  else if (maxSpan > 4) zoom = 5.5;
   else if (maxSpan > 2) zoom = 6;
   else if (maxSpan > 1) zoom = 7;
   else if (maxSpan > 0.5) zoom = 8;
   else if (maxSpan > 0.2) zoom = 9;
-  else zoom = 10;
+  else if (maxSpan > 0.05) zoom = 10;
+  else zoom = 11;
 
   return { longitude: centerLng, latitude: centerLat, zoom };
 }

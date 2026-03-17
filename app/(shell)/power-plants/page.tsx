@@ -33,16 +33,19 @@ interface PowerPlantRow extends Record<string, unknown> {
   fuelCategory: string;
   totalCapacityMw: number;
   state: string;
+  county: string | null;
   utilityName: string;
   status: string;
   proposedCapacityMw: number | null;
+  operatingYear: number | null;
+  generatorCount: number;
 }
 
 const sortOptions = [
-  { id: "name:asc", label: "Name A-Z", value: "name:asc" },
-  { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "capacity:desc", label: "Capacity (High to Low)", value: "capacity:desc" },
-  { id: "capacity:asc", label: "Capacity (Low to High)", value: "capacity:asc" },
+  { id: "name:asc", label: "Name ▲", value: "name:asc" },
+  { id: "name:desc", label: "Name ▼", value: "name:desc" },
+  { id: "capacity:desc", label: "Capacity ▼", value: "capacity:desc" },
+  { id: "capacity:asc", label: "Capacity ▲", value: "capacity:asc" },
 ];
 
 const fuelFilterOptions = [
@@ -128,9 +131,12 @@ export default function PowerPlantsPage() {
         fuelCategory: p.fuelCategory,
         totalCapacityMw: p.totalCapacityMw,
         state: p.state,
+        county: p.county,
         utilityName: p.utilityName,
         status: p.status,
         proposedCapacityMw: p.proposedCapacityMw,
+        operatingYear: p.operatingYear,
+        generatorCount: p.generatorCount,
       })),
     [filtered]
   );
@@ -157,7 +163,7 @@ export default function PowerPlantsPage() {
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: getFuelCategoryColor(row.fuelCategory) }}
             />
-            {row.name}
+            <span className="hyphens-auto">{row.name}</span>
           </Link>
         ),
         mobile: { priority: 1, format: "primary" },
@@ -211,6 +217,33 @@ export default function PowerPlantsPage() {
         ),
         mobile: false,
       },
+      {
+        id: "county",
+        label: "County",
+        accessor: "county",
+        render: (_value: unknown, row: PowerPlantRow) => (
+          <span className="text-text-body">{row.county ?? "—"}</span>
+        ),
+        mobile: false,
+      },
+      {
+        id: "operatingYear",
+        label: "Year",
+        accessor: "operatingYear",
+        render: (_value: unknown, row: PowerPlantRow) => (
+          <span className="text-text-body tabular-nums">{row.operatingYear ?? "—"}</span>
+        ),
+        mobile: false,
+      },
+      {
+        id: "generatorCount",
+        label: "Generators",
+        accessor: "generatorCount",
+        render: (_value: unknown, row: PowerPlantRow) => (
+          <span className="text-text-body tabular-nums">{row.generatorCount}</span>
+        ),
+        mobile: false,
+      },
     ],
     []
   );
@@ -253,11 +286,11 @@ export default function PowerPlantsPage() {
             onChange: setSortValue,
           }}
           customControls={
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <select
                 value={fuelFilter}
                 onChange={(e) => setFuelFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 {fuelFilterOptions.map((opt) => (
                   <option key={opt.id} value={opt.value}>
@@ -268,7 +301,7 @@ export default function PowerPlantsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 {statusFilterOptions.map((opt) => (
                   <option key={opt.id} value={opt.value}>
@@ -279,7 +312,7 @@ export default function PowerPlantsPage() {
               <select
                 value={stateFilter}
                 onChange={(e) => setStateFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All States</option>
                 {states.map((s) => (

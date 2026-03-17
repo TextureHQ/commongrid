@@ -31,11 +31,11 @@ interface TransmissionLineRow extends Record<string, unknown> {
 }
 
 const sortOptions = [
-  { id: "voltage:desc", label: "Voltage (High to Low)", value: "voltage:desc" },
-  { id: "voltage:asc", label: "Voltage (Low to High)", value: "voltage:asc" },
-  { id: "length:desc", label: "Length (Longest First)", value: "length:desc" },
-  { id: "length:asc", label: "Length (Shortest First)", value: "length:asc" },
-  { id: "owner:asc", label: "Owner A-Z", value: "owner:asc" },
+  { id: "voltage:desc", label: "Voltage ▼", value: "voltage:desc" },
+  { id: "voltage:asc", label: "Voltage ▲", value: "voltage:asc" },
+  { id: "length:desc", label: "Length ▼", value: "length:desc" },
+  { id: "length:asc", label: "Length ▲", value: "length:asc" },
+  { id: "owner:asc", label: "Owner ▲", value: "owner:asc" },
 ];
 
 const voltageClassFilterOptions = [
@@ -199,14 +199,14 @@ export default function TransmissionLinesPage() {
       },
       {
         id: "sub1",
-        label: "Substation 1",
+        label: "From",
         accessor: "sub1",
         cell: TextCell,
         mobile: false,
       },
       {
         id: "sub2",
-        label: "Substation 2",
+        label: "To",
         accessor: "sub2",
         cell: TextCell,
         mobile: false,
@@ -264,11 +264,11 @@ export default function TransmissionLinesPage() {
             onChange: setSortValue,
           }}
           customControls={
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <select
                 value={voltageFilter}
                 onChange={(e) => setVoltageFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 {voltageClassFilterOptions.map((opt) => (
                   <option key={opt.id} value={opt.value}>
@@ -279,7 +279,7 @@ export default function TransmissionLinesPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 {statusFilterOptions.map((opt) => (
                   <option key={opt.id} value={opt.value}>

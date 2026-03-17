@@ -69,7 +69,7 @@ function HybridLayout({ mapboxAccessToken }: HybridLayoutProps) {
 
       {/* Map — RIGHT */}
       <div className="flex-1 min-w-0 h-full">
-        <ExplorerMap mapboxAccessToken={mapboxAccessToken} />
+        <ExplorerMap key="hybrid" mapboxAccessToken={mapboxAccessToken} />
       </div>
     </div>
   );
@@ -114,7 +114,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
           )}
           {layout === "map" && (
             <div className="h-full">
-              <ExplorerMap mapboxAccessToken={mapboxAccessToken} />
+              <ExplorerMap key={layout} mapboxAccessToken={mapboxAccessToken} />
             </div>
           )}
         </div>
@@ -122,7 +122,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
         {/* Mobile layouts */}
         <div className="md:hidden h-full relative">
           {layout === "map" ? (
-            <ExplorerMap mapboxAccessToken={mapboxAccessToken} />
+            <ExplorerMap key={layout} mapboxAccessToken={mapboxAccessToken} />
           ) : (
             <div className="h-full bg-background-surface">
               <ExplorerPanel />

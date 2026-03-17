@@ -38,10 +38,10 @@ interface PricingNodeRow extends Record<string, unknown> {
 }
 
 const sortOptions = [
-  { id: "name:asc", label: "Name A-Z", value: "name:asc" },
-  { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "iso:asc", label: "ISO A-Z", value: "iso:asc" },
-  { id: "state:asc", label: "State A-Z", value: "state:asc" },
+  { id: "name:asc", label: "Name ▲", value: "name:asc" },
+  { id: "name:desc", label: "Name ▼", value: "name:desc" },
+  { id: "iso:asc", label: "ISO ▲", value: "iso:asc" },
+  { id: "state:asc", label: "State ▲", value: "state:asc" },
 ];
 
 function getNodeTypeBadgeVariant(type: PricingNodeType): "success" | "info" | "warning" | "neutral" {
@@ -158,7 +158,7 @@ export default function PricingNodesPage() {
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: getIsoColor(row.iso) }}
             />
-            {row.name}
+            <span className="hyphens-auto">{row.name}</span>
           </Link>
         ),
       },
@@ -229,7 +229,7 @@ export default function PricingNodesPage() {
       <PageLayout.Content>
         <div className="px-4 sm:px-6 py-4 flex flex-col gap-4">
           {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
@@ -241,7 +241,7 @@ export default function PricingNodesPage() {
             <select
               value={isoFilter}
               onChange={(e) => setIsoFilter(e.target.value)}
-              className="h-9 rounded-lg border border-border-default bg-background-surface px-3 text-sm text-text-body"
+              className="h-9 rounded-lg border border-border-default bg-background-surface pl-3 pr-7 text-sm text-text-body"
             >
               <option value="all">All ISOs</option>
               {isos.map((iso) => (
@@ -253,7 +253,7 @@ export default function PricingNodesPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-9 rounded-lg border border-border-default bg-background-surface px-3 text-sm text-text-body"
+              className="h-9 rounded-lg border border-border-default bg-background-surface pl-3 pr-7 text-sm text-text-body"
             >
               <option value="all">All Types</option>
               {nodeTypes.map((type) => (
@@ -265,7 +265,7 @@ export default function PricingNodesPage() {
             <select
               value={stateFilter}
               onChange={(e) => setStateFilter(e.target.value)}
-              className="h-9 rounded-lg border border-border-default bg-background-surface px-3 text-sm text-text-body"
+              className="h-9 rounded-lg border border-border-default bg-background-surface pl-3 pr-7 text-sm text-text-body"
             >
               <option value="all">All States</option>
               {states.map((s) => (

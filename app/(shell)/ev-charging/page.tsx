@@ -37,11 +37,11 @@ interface EVStationRow extends Record<string, unknown> {
 }
 
 const sortOptions = [
-  { id: "name:asc", label: "Name A-Z", value: "name:asc" },
-  { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "connectors:desc", label: "Most Connectors", value: "connectors:desc" },
-  { id: "dcfast:desc", label: "Most DC Fast", value: "dcfast:desc" },
-  { id: "state:asc", label: "State A-Z", value: "state:asc" },
+  { id: "name:asc", label: "Name ▲", value: "name:asc" },
+  { id: "name:desc", label: "Name ▼", value: "name:desc" },
+  { id: "connectors:desc", label: "Connectors ▼", value: "connectors:desc" },
+  { id: "dcfast:desc", label: "DC Fast ▼", value: "dcfast:desc" },
+  { id: "state:asc", label: "State ▲", value: "state:asc" },
 ];
 
 function getStatusBadgeVariant(status: string): "success" | "info" | "warning" | "neutral" {
@@ -183,7 +183,7 @@ export default function EVChargingPage() {
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: getNetworkColor(row.evNetwork) }}
             />
-            {row.stationName}
+            <span className="hyphens-auto">{row.stationName}</span>
           </Link>
         ),
         mobile: { priority: 1, format: "primary" },
@@ -288,11 +288,11 @@ export default function EVChargingPage() {
             onChange: setSortValue,
           }}
           customControls={
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <select
                 value={networkFilter}
                 onChange={(e) => setNetworkFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All Networks</option>
                 {networks.slice(0, 20).map((net) => (
@@ -304,7 +304,7 @@ export default function EVChargingPage() {
               <select
                 value={levelFilter}
                 onChange={(e) => setLevelFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All Charging Levels</option>
                 <option value="dcfast">DC Fast Only</option>
@@ -313,7 +313,7 @@ export default function EVChargingPage() {
               <select
                 value={accessFilter}
                 onChange={(e) => setAccessFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All Access Types</option>
                 <option value="public">Public</option>
@@ -323,7 +323,7 @@ export default function EVChargingPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All Statuses</option>
                 <option value="E">Open</option>
@@ -333,7 +333,7 @@ export default function EVChargingPage() {
               <select
                 value={stateFilter}
                 onChange={(e) => setStateFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
+                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface pl-2 pr-7 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All States</option>
                 {states.map((s) => (
