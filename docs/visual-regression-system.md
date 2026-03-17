@@ -1,703 +1,379 @@
 # Visual Regression Capture System
 
-> Automated before/after screenshot generation for user-facing PR changes,
-> with annotated bounding boxes and combined comparison images.
+> Automated before/after screenshot pipeline for PR review.
+> Captures two states of a running app via git worktree isolation,
+> annotates regions of interest, computes pixel diffs, and composes
+> side-by-side comparison images with a markdown report.
 
-## 1. System Overview
+## Quick Start
 
+```bash
+# Full pipeline: base (worktree) + PR screenshots, annotate, diff, compose
+npm run vr:capture
+
+# PR-only: skip base screenshots (use existing ones from a prior run)
+npm run vr:capture:pr-only
+
+# Cherry-pick specific captures and viewports
+npx tsx scripts/visual-regression/capture-vr.ts \
+  --captures logo-redesign,header-spacing \
+  --viewports desktop
+
+# Re-process existing screenshots (skip Playwright, re-annotate + compose)
+npx tsx scripts/visual-regression/capture-vr.ts --skip-capture
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    VISUAL REGRESSION PIPELINE                       │
-│                                                                     │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐      │
-│  │  DEFINE   │───▶│ CAPTURE  │───▶│ ANNOTATE │───▶│ COMPOSE  │──┐   │
-│  │  Targets  │    │  States  │    │  Regions │    │  Pairs   │  │   │
-│  └──────────┘    └──────────┘    └──────────┘    └──────────┘  │   │
-│                                                                 ▼   │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐      │
-│  │  EMBED   │◀───│ UPLOAD   │◀───│ CATALOG  │◀───│ DIFF     │      │
-│  │  in PR   │    │  Images  │    │  Results │    │  Detect  │      │
-│  └──────────┘    └──────────┘    └──────────┘    └──────────┘      │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
 
-## 2. Architecture
+## How It Works
 
 ```mermaid
-graph TD
-    subgraph "1 · Target Definition"
-        MANIFEST[capture-manifest.json<br/><i>routes, selectors, viewports,<br/>annotation regions, colors</i>]
-        COMMITS[git log analysis<br/><i>map commits → files → routes</i>]
-        COMMITS --> MANIFEST
-    end
+graph LR
+    A[Define<br>Targets] --> B[Capture<br>States]
+    B --> C[Annotate<br>Regions]
+    C --> D[Diff<br>Detect]
+    D --> E[Compose<br>Pairs]
+    E --> F[Catalog<br>+ Report]
 
-    subgraph "2 · Dual-State Capture"
-        BASE_CO[git stash / worktree<br/>checkout base branch]
-        BASE_DEV[start dev server<br/>on port 3100]
-        BASE_SNAP[Playwright captures<br/>base-state screenshots]
-
-        PR_CO[restore PR branch]
-        PR_DEV[start dev server<br/>on port 3101]
-        PR_SNAP[Playwright captures<br/>PR-state screenshots]
-
-        BASE_CO --> BASE_DEV --> BASE_SNAP
-        PR_CO --> PR_DEV --> PR_SNAP
-    end
-
-    subgraph "3 · Annotation Engine"
-        BBOX[draw bounding boxes<br/><i>sharp / node-canvas</i>]
-        LABEL[add text labels<br/><i>BEFORE / AFTER</i>]
-        COLOR[color rationalization<br/><i>red=removed, green=added,<br/>blue=changed, orange=moved</i>]
-        BBOX --> LABEL --> COLOR
-    end
-
-    subgraph "4 · Composition"
-        SIDE[side-by-side merge<br/><i>BEFORE │ AFTER</i>]
-        HEADER[add title bar<br/><i>commit scope + viewport</i>]
-        SIDE --> HEADER
-    end
-
-    subgraph "5 · Upload & Embed"
-        UPLOAD[upload to host<br/><i>GitHub / R2 / S3</i>]
-        TABLE[generate markdown table<br/><i>viewport × change</i>]
-        PR[inject into PR description<br/><i>or post as comment</i>]
-        UPLOAD --> TABLE --> PR
-    end
-
-    MANIFEST --> BASE_CO & PR_CO
-    BASE_SNAP --> BBOX
-    PR_SNAP --> BBOX
-    COLOR --> SIDE
-    HEADER --> UPLOAD
-
-    style MANIFEST fill:#e1f5fe,stroke:#0277bd
-    style BBOX fill:#fff3e0,stroke:#ef6c00
-    style SIDE fill:#e8f5e9,stroke:#2e7d32
-    style UPLOAD fill:#f3e5f5,stroke:#7b1fa2
+    style A fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
+    style B fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
+    style C fill:#fef08a,stroke:#a16207,color:#713f12
+    style D fill:#fef08a,stroke:#a16207,color:#713f12
+    style E fill:#bbf7d0,stroke:#15803d,color:#14532d
+    style F fill:#bbf7d0,stroke:#15803d,color:#14532d
 ```
 
-## 3. Capture Manifest Schema
+The pipeline runs in three phases:
 
-The manifest declares what to screenshot, where to annotate, and how to color-code.
-It can be auto-generated from git diff analysis or hand-authored per commit.
+1. **Capture** — Playwright takes viewport-sized screenshots of each route on two parallel dev servers (base branch via git worktree on port 4100, PR branch on port 4101). Bounding box coordinates for annotated regions are recorded alongside each screenshot.
+2. **Annotate + Diff** — Sharp draws color-coded bounding boxes onto the raw screenshots. Pixelmatch compares before/after pairs and calculates a pixel-diff percentage.
+3. **Compose + Report** — Annotated images are combined into titled side-by-side comparison PNGs. A `catalog.json` and `pr-screenshots.md` markdown report are generated.
+
+Each phase is independently skippable via CLI flags.
+
+---
+
+## Execution Flow (Detailed)
+
+```mermaid
+flowchart TD
+    START([CLI invocation]) --> INIT[Parse args + read manifest<br>Apply capture/viewport filters<br>Create output directories]
+
+    INIT --> P1{Phase 1:<br>Capture}
+    P1 -- "--skip-capture" --> P2
+
+    P1 --> PREBUILD[npm run prebuild<br>populate public/data/]
+    PREBUILD --> PORTS[Check ports 4100 + 4101 free]
+    PORTS --> PR_SERVER[Start PR dev server<br>port 4101 · current branch]
+
+    PR_SERVER --> SKIP_BASE{--skip-base?}
+    SKIP_BASE -- yes --> WAIT
+    SKIP_BASE -- no --> WORKTREE
+
+    subgraph WORKTREE [Base Worktree Setup]
+        WT1[git worktree add /tmp/cg-vr-base] --> WT2[npm install --prefer-offline]
+        WT2 --> WT3[Copy data/ into worktree]
+        WT3 --> WT4[npm run prebuild in worktree]
+        WT4 --> WT5[Start base dev server<br>port 4100 · in worktree]
+    end
+
+    WORKTREE --> WAIT[Wait for servers ready<br>90s timeout · poll every 1.5s]
+
+    WAIT --> CAPTURE
+
+    subgraph CAPTURE [For each capture × viewport]
+        C1[page.goto route · waitUntil: load] --> C2[Wait for waitFor selector · 15s]
+        C2 --> C3[Wait for data content<br>table rows / cards / h1 · 10s]
+        C3 --> C4[1500ms settle time]
+        C4 --> C5[Inject animation-disable CSS]
+        C5 --> C6[Execute actions<br>click / hover / fill]
+        C6 --> C7[Take viewport screenshot]
+        C7 --> C8[Record bounding boxes<br>for each region selector]
+    end
+
+    CAPTURE --> CLEANUP[Kill servers<br>Remove worktree]
+    CLEANUP --> P2
+
+    P2[Phase 2:<br>Annotate + Diff]
+
+    subgraph ANNOTATE [For each capture × viewport]
+        A1[Load .regions.json bbox data] --> A2[Draw color-coded boxes + labels<br>Sharp SVG composite]
+        A2 --> A3[Compute pixel diff<br>pixelmatch · threshold 0.1]
+        A3 --> A4[Generate diff overlay image]
+    end
+
+    P2 --> ANNOTATE
+    ANNOTATE --> COMPOSE{--skip-compose?}
+    COMPOSE -- no --> SIDE[Compose side-by-side<br>title bar + BEFORE / AFTER + footer]
+    COMPOSE -- yes --> P3
+    SIDE --> P3
+
+    P3[Phase 3:<br>Output]
+    P3 --> OUT1[Write catalog.json]
+    P3 --> OUT2[Write pr-screenshots.md]
+
+    style START fill:#eff6ff,stroke:#1d4ed8,color:#1e3a5f
+    style INIT fill:#f8fafc,stroke:#64748b,color:#1e293b
+    style P1 fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
+    style P2 fill:#fef08a,stroke:#a16207,color:#713f12
+    style P3 fill:#bbf7d0,stroke:#15803d,color:#14532d
+    style PREBUILD fill:#e0e7ff,stroke:#4338ca,color:#312e81
+    style PORTS fill:#e0e7ff,stroke:#4338ca,color:#312e81
+    style PR_SERVER fill:#e0e7ff,stroke:#4338ca,color:#312e81
+    style SKIP_BASE fill:#e0e7ff,stroke:#4338ca,color:#312e81
+    style WAIT fill:#e0e7ff,stroke:#4338ca,color:#312e81
+    style CLEANUP fill:#fecaca,stroke:#b91c1c,color:#7f1d1d
+```
+
+### Playwright Wait Cascade
+
+```mermaid
+flowchart LR
+    NAV[page.goto<br>waitUntil: load] --> WF{waitFor<br>selector?}
+    WF -- yes --> WFS[Wait 15s<br>for selector]
+    WF -- no --> DATA
+    WFS --> DATA[Wait 10s for<br>data content]
+    DATA --> SETTLE[1500ms<br>settle]
+    SETTLE --> CSS[Inject<br>no-animation CSS]
+    CSS --> ACT{actions<br>defined?}
+    ACT -- yes --> EXEC[Execute each<br>+ 300ms settle]
+    ACT -- no --> SNAP
+    EXEC --> SNAP[Screenshot<br>+ bbox record]
+
+    style NAV fill:#dbeafe,stroke:#1d4ed8,color:#1e3a5f
+    style WF fill:#fef08a,stroke:#a16207,color:#713f12
+    style WFS fill:#e0e7ff,stroke:#4338ca,color:#312e81
+    style DATA fill:#e0e7ff,stroke:#4338ca,color:#312e81
+    style SETTLE fill:#e0e7ff,stroke:#4338ca,color:#312e81
+    style CSS fill:#fecaca,stroke:#b91c1c,color:#7f1d1d
+    style ACT fill:#fef08a,stroke:#a16207,color:#713f12
+    style EXEC fill:#e0e7ff,stroke:#4338ca,color:#312e81
+    style SNAP fill:#bbf7d0,stroke:#15803d,color:#14532d
+```
+
+---
+
+## CLI Reference
+
+```
+npx tsx scripts/visual-regression/capture-vr.ts [options]
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--base-ref <ref>` | `main` | Git ref for baseline screenshots |
+| `--captures <id,id,...>` | all | Comma-separated capture IDs to run |
+| `--viewports <vp,vp,...>` | all | Comma-separated viewport names to run |
+| `--skip-capture` | off | Skip Playwright phase; re-process existing screenshots |
+| `--skip-base` | off | Skip base worktree + server; only capture PR state |
+| `--skip-compose` | off | Skip side-by-side composition; just capture + annotate |
+| `--output <dir>` | `.visual-regression` | Output directory (relative to repo root) |
+
+**npm aliases:**
+- `npm run vr:capture` — full pipeline
+- `npm run vr:capture:pr-only` — equivalent to `--skip-base`
+
+---
+
+## File Structure
+
+```
+scripts/visual-regression/
+├── capture-vr.ts            # Main orchestrator (args, servers, worktree, phases)
+├── playwright-capture.ts    # Headless Chromium: navigate, wait, screenshot, bbox
+├── annotate.ts              # Sharp SVG composite: bounding boxes + labels
+├── compose.ts               # Sharp: side-by-side comparison images
+├── diff.ts                  # Pixelmatch: pixel-level diff + overlay
+├── capture-manifest.json    # Capture definitions (routes, regions, viewports)
+└── file-route-map.json      # Maps source files → affected routes (for authoring)
+
+.visual-regression/          # Output (gitignored)
+├── captures/
+│   ├── before/              # Raw + .regions.json from base branch
+│   ├── after/               # Raw + .regions.json from PR branch
+│   ├── annotated/           # Screenshots with bounding box overlays
+│   ├── comparisons/         # Side-by-side titled composition images
+│   └── diffs/               # Pixel diff overlay images
+├── catalog.json             # Machine-readable results
+└── pr-screenshots.md        # Human-readable markdown report
+```
+
+---
+
+## Capture Manifest
+
+The manifest (`scripts/visual-regression/capture-manifest.json`) defines what to capture and how.
+
+### Top-level structure
 
 ```jsonc
-// scripts/visual-regression/capture-manifest.json
 {
-  "$schema": "./capture-manifest.schema.json",
   "version": "1.0",
-  "baseRef": "main",
-  "prRef": "HEAD",
-  "devServerPort": {
-    "base": 3100,
-    "pr": 3101
+  "baseRef": "main",              // default base branch
+  "prRef": "HEAD",                // current branch
+  "devServer": {
+    "command": "npx next dev",    // dev server command
+    "readyPattern": "Ready in",   // stdout pattern indicating ready
+    "basePort": 4100,             // port for base branch server
+    "prPort": 4101                // port for PR branch server
   },
-  "viewports": [
-    { "name": "mobile",  "width": 375,  "height": 812 },
+  "viewports": [                  // available viewport sizes
+    { "name": "mobile",  "width": 375,  "height": 812  },
     { "name": "tablet",  "width": 768,  "height": 1024 },
-    { "name": "desktop", "width": 1440, "height": 900 }
+    { "name": "desktop", "width": 1440, "height": 900  }
   ],
-  "captures": [
+  "captures": [ ... ]            // see below
+}
+```
+
+### Capture entry
+
+```jsonc
+{
+  "id": "badge-variants",                    // unique identifier (used in filenames)
+  "commit": "111ef3f",                       // optional: originating commit for traceability
+  "route": "/grid-operators",                // URL path to navigate to
+  "description": "Badge color mapping fix",  // human-readable title for composition
+
+  // Optional: restrict to specific viewports (default: all)
+  "viewports": ["desktop"],
+
+  // Optional: CSS selector to wait for before capturing (15s timeout)
+  "waitFor": "main",
+
+  // Optional: pre-capture interactions
+  "actions": [
+    { "type": "click", "selector": "header button[aria-label='Toggle menu']" },
+    { "type": "hover", "selector": ".tooltip-trigger" },
+    { "type": "fill",  "selector": "input[name='search']", "value": "test" }
+  ],
+
+  // Regions to annotate with bounding boxes
+  "regions": [
     {
-      "id": "dropdown-chevron-padding",
-      "commit": "3f89367",
-      "route": "/grid-operators",
-      "description": "Inner right-side padding on filter dropdowns",
-      "waitFor": "table >> tr >> td",
-      "regions": [
-        {
-          "selector": "select:first-of-type",
-          "annotation": {
-            "color": "blue",
-            "label": "Chevron padding"
-          }
-        }
-      ]
-    },
-    {
-      "id": "header-spacing",
-      "commit": "106f641",
-      "route": "/grid-operators",
-      "description": "Header height h-14 → h-12",
-      "regions": [
-        {
-          "selector": "header",
-          "annotation": {
-            "color": "blue",
-            "label": "h-14 → h-12"
-          }
-        }
-      ]
-    },
-    {
-      "id": "badge-variants",
-      "commit": "111ef3f",
-      "route": "/grid-operators?segment=DISTRIBUTION_COOPERATIVE",
-      "description": "Badge color mapping fix",
-      "waitFor": "[data-testid='data-table'] >> tr:nth-child(2)",
-      "regions": [
-        {
-          "selector": "span:has-text('Distribution Co-op')",
-          "annotation": {
-            "color": "orange",
-            "label": "warning → success"
-          }
-        }
-      ]
-    },
-    {
-      "id": "logo-redesign",
-      "commit": "ecdc89b",
-      "route": "/",
-      "description": "G-in-C dendritic graph logo",
-      "regions": [
-        {
-          "selector": "header a[href='/'] svg",
-          "annotation": {
-            "color": "green",
-            "label": "New logo mark"
-          }
-        }
-      ]
-    },
-    {
-      "id": "changelog-tabs",
-      "commit": "ea227b5",
-      "route": "/changelog",
-      "description": "Data Changes / Site Updates tab distinction",
-      "regions": [
-        {
-          "selector": "button:has-text('Data Changes')",
-          "annotation": {
-            "color": "green",
-            "label": "New tab bar"
-          }
-        }
-      ]
-    },
-    {
-      "id": "sort-chevrons",
-      "commit": "37b1abc",
-      "route": "/grid-operators",
-      "description": "Sort direction ▲/▼ in dropdown labels",
-      "actions": [
-        { "type": "click", "selector": "[data-testid='sort-select']" }
-      ],
-      "regions": [
-        {
-          "selector": "[data-testid='sort-select']",
-          "annotation": {
-            "color": "blue",
-            "label": "▲/▼ indicators"
-          }
-        }
-      ]
+      "selector": "table tbody tr:nth-child(1) td:nth-child(2) span",
+      "beforeColor": "orange",   // color on BEFORE screenshot
+      "afterColor": "orange",    // color on AFTER screenshot
+      "label": "Badge variant"   // label text drawn above the box
     }
   ]
 }
 ```
 
-## 4. Color Rationalization System
+### Region color semantics
 
-Annotation box colors communicate the _nature_ of the visual change:
+| Color | Hex | Meaning | Typical usage |
+|-------|-----|---------|---------------|
+| `red` | `#EF4444` | Removed | Element only in BEFORE (beforeColor: red, afterColor: green) |
+| `green` | `#22C55E` | Added | Element only in AFTER (beforeColor: red, afterColor: green) |
+| `blue` | `#3B82F6` | Modified in-place | Same element, changed styling/content |
+| `orange` | `#F97316` | Recolored/remapped | Color or visual mapping changed |
+| `yellow` | `#EAB308` | Moved/reflowed | Element position shifted |
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│                    ANNOTATION COLOR KEY                        │
-│                                                                │
-│  ┌─────────┐                                                   │
-│  │  RED    │  Removed — element/style that existed is gone     │
-│  │ #EF4444 │  e.g., a column was deleted, a section removed    │
-│  └─────────┘                                                   │
-│  ┌─────────┐                                                   │
-│  │  GREEN  │  Added — new element that didn't exist before     │
-│  │ #22C55E │  e.g., new table column, new tab bar, new logo    │
-│  └─────────┘                                                   │
-│  ┌─────────┐                                                   │
-│  │  BLUE   │  Modified — existing element changed in-place     │
-│  │ #3B82F6 │  e.g., spacing adjusted, text changed, resized    │
-│  └─────────┘                                                   │
-│  ┌─────────┐                                                   │
-│  │ ORANGE  │  Recolored/Remapped — visual property changed     │
-│  │ #F97316 │  e.g., badge color variant, theme token swap      │
-│  └─────────┘                                                   │
-│  ┌─────────┐                                                   │
-│  │ YELLOW  │  Moved/Reflowed — same content, different place   │
-│  │ #EAB308 │  e.g., responsive stacking, layout reorder        │
-│  └─────────┘                                                   │
-│                                                                │
-│  BEFORE images use: red, blue, orange, yellow                  │
-│  AFTER images use:  green, blue, orange, yellow                │
-│                                                                │
-│  Rule: red on BEFORE pairs with green on AFTER for             │
-│        add/remove changes. blue/orange/yellow are symmetric.   │
-└────────────────────────────────────────────────────────────────┘
-```
+Use symmetric colors (same before/after) for in-place changes. Use asymmetric (red/green) for additions/removals.
 
-```mermaid
-graph LR
-    subgraph "BEFORE annotation"
-        R[RED — will be removed]
-        B1[BLUE — will change]
-        O1[ORANGE — will recolor]
-        Y1[YELLOW — will move]
-    end
+---
 
-    subgraph "AFTER annotation"
-        G[GREEN — was added]
-        B2[BLUE — was changed]
-        O2[ORANGE — was recolored]
-        Y2[YELLOW — was moved]
-    end
+## Module Reference
 
-    R -.->|"removed"| G
-    B1 -->|"modified"| B2
-    O1 -->|"recolored"| O2
-    Y1 -->|"reflowed"| Y2
+### `capture-vr.ts` — Orchestrator
 
-    style R fill:#fecaca,stroke:#ef4444
-    style G fill:#bbf7d0,stroke:#22c55e
-    style B1 fill:#bfdbfe,stroke:#3b82f6
-    style B2 fill:#bfdbfe,stroke:#3b82f6
-    style O1 fill:#fed7aa,stroke:#f97316
-    style O2 fill:#fed7aa,stroke:#f97316
-    style Y1 fill:#fef08a,stroke:#eab308
-    style Y2 fill:#fef08a,stroke:#eab308
-```
+The main entry point. Parses CLI args, manages server lifecycle and git worktree, then sequences the three phases. All cleanup (server kill, worktree removal) runs in `finally` blocks.
 
-## 5. Pipeline Execution Flow
+Key behaviors:
+- **Port check**: Fetches `http://localhost:<port>` before starting servers. If a response comes back, the port is occupied and the script aborts with an actionable error.
+- **Server wait**: Polls every 1.5s for up to 90s. Accepts HTTP 200 as ready. Accepts HTTP 404 after timeout (route may not exist on base).
+- **Worktree**: Created at `/tmp/cg-vr-base`. Installs deps, copies `data/`, runs prebuild. Force-removed on cleanup.
 
-### 5.1 Dual-Server Git State Isolation
+### `playwright-capture.ts` — Screenshot Engine
 
-The key challenge: we need the dev server running on **both** the base and PR states
-simultaneously (or sequentially) to capture screenshots against each.
+Launches headless Chromium and iterates captures × viewports. For each:
 
-**Strategy A: Sequential (simpler, slower)**
+1. Creates a fresh browser context with exact viewport dimensions, 1x scale, light color scheme
+2. Navigates with `waitUntil: "load"` (not `networkidle`, which hangs on long-poll connections)
+3. Waits for content readiness via a cascade:
+   - Explicit `waitFor` selector (15s)
+   - Generic data-content selector: `[class*="DataTable"] [role="row"], table tr, [class*="Card"], main h1` (10s)
+   - 1500ms settle time
+4. Injects animation-disable CSS (`animation-duration: 0s`, `transition-duration: 0s`)
+5. Executes optional `actions` (click, hover, fill) with 300ms settle after each
+6. Takes a viewport-sized screenshot (not full-page)
+7. Records bounding boxes (`element.boundingBox()`) for each region selector
+8. Writes `{id}-{viewport}.png` and `{id}-{viewport}.regions.json`
+
+### `annotate.ts` — Bounding Box Renderer
+
+Uses Sharp's SVG composite to overlay annotations without a native Canvas dependency.
+
+For each region:
+- Draws a rounded-corner rectangle (3px stroke, 4px padding) in the region's color
+- Draws a pill-shaped label background above the box
+- Renders label text in white, 11px bold system font
+
+If no regions have bounding boxes, copies the image as-is.
+
+### `diff.ts` — Pixel Diff Engine
+
+Wraps `pixelmatch` (same library Playwright uses internally):
+- Reads both PNGs via `pngjs`
+- Pads the smaller image to match dimensions (transparent fill)
+- Runs diff with threshold 0.1, `includeAA: false`
+- Returns `{ diffPixels, totalPixels, diffPercent }` and writes a diff overlay PNG
+
+### `compose.ts` — Side-by-Side Composition
+
+Creates a single comparison image via Sharp:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  SEQUENTIAL CAPTURE                                     │
-│                                                         │
-│  1. git stash (save PR work)                            │
-│  2. git checkout main                                   │
-│  3. npm install (if deps changed)                       │
-│  4. next dev --port 3100 &                              │
-│  5. wait-on http://localhost:3100                        │
-│  6. playwright: capture all BEFORE screenshots          │
-│  7. kill dev server                                     │
-│  8. git checkout - (back to PR branch)                  │
-│  9. git stash pop                                       │
-│  10. npm install (if deps changed)                      │
-│  11. next dev --port 3100 &                             │
-│  12. wait-on http://localhost:3100                       │
-│  13. playwright: capture all AFTER screenshots          │
-│  14. kill dev server                                    │
-│  15. annotate + compose + upload                        │
-│                                                         │
-│  ⏱  ~3-5 min total (2 cold starts)                     │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│  Title bar (48px) — description · viewport
+├───────────────────┬──────────────────────┤
+│                   │                      │
+│     BEFORE        │      AFTER           │
+│                   │                      │
+├───────────────────┴──────────────────────┤
+│  Footer (28px) — "BEFORE (main)" │ "AFTER (PR)"
+└──────────────────────────────────────────┘
 ```
 
-**Strategy B: Parallel via git worktree (faster, recommended)**
+Divider is 2px. Title and footer use SVG text rendering with system fonts.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  PARALLEL CAPTURE VIA WORKTREE                          │
-│                                                         │
-│  1. git worktree add /tmp/cg-base main                  │
-│  2. cd /tmp/cg-base && npm install && next dev -p 3100 &│
-│  3. cd (original) && next dev -p 3101 &                 │
-│  4. wait-on http://localhost:3100                        │
-│  5. wait-on http://localhost:3101                        │
-│  6. playwright captures BOTH in parallel:               │
-│     ├── port 3100 → BEFORE screenshots                  │
-│     └── port 3101 → AFTER screenshots                   │
-│  7. kill both servers                                   │
-│  8. git worktree remove /tmp/cg-base                    │
-│  9. annotate + compose + upload                         │
-│                                                         │
-│  ⏱  ~2-3 min total (parallel capture)                  │
-└─────────────────────────────────────────────────────────┘
-```
+---
 
-```mermaid
-sequenceDiagram
-    participant CLI as capture-vr.ts
-    participant GIT as git
-    participant BASE as Base Server :3100
-    participant PR as PR Server :3101
-    participant PW as Playwright
-    participant IMG as Image Engine
-    participant HOST as Upload Host
+## File-Route Map
 
-    CLI->>GIT: worktree add /tmp/cg-base main
-    CLI->>BASE: npm install && next dev -p 3100
-    CLI->>PR: next dev -p 3101
-    CLI->>CLI: wait-on both ports
+`file-route-map.json` maps source files to the routes they affect. This is a reference for authoring new capture entries — when a commit touches `components/TopBar.tsx`, the `"*"` mapping tells you every route is potentially affected.
 
-    par Parallel Capture
-        CLI->>PW: capture(manifest, port=3100, label="BEFORE")
-        PW->>BASE: navigate to each route
-        PW-->>CLI: before/*.png
-
-        CLI->>PW: capture(manifest, port=3101, label="AFTER")
-        PW->>PR: navigate to each route
-        PW-->>CLI: after/*.png
-    end
-
-    CLI->>BASE: kill
-    CLI->>GIT: worktree remove
-
-    loop Each capture in manifest
-        CLI->>IMG: annotate(before.png, regions, "before" colors)
-        IMG-->>CLI: before-annotated.png
-        CLI->>IMG: annotate(after.png, regions, "after" colors)
-        IMG-->>CLI: after-annotated.png
-        CLI->>IMG: compose(before-annotated, after-annotated, title)
-        IMG-->>CLI: comparison.png
-    end
-
-    CLI->>HOST: upload all comparison images
-    HOST-->>CLI: image URLs
-    CLI->>CLI: generate markdown table
-    CLI-->>CLI: pr-screenshots.md
-```
-
-### 5.2 Playwright Capture Script
-
-```
-scripts/visual-regression/
-├── capture-manifest.json      # What to capture (the spec)
-├── capture-vr.ts              # Main orchestrator
-├── playwright-capture.ts      # Playwright screenshot logic
-├── annotate.ts                # Bounding box / label drawing
-├── compose.ts                 # Side-by-side composition
-├── upload.ts                  # Image hosting upload
-└── generate-pr-table.ts       # Markdown table generator
-```
-
-**Core capture logic (pseudocode):**
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  playwright-capture.ts                                  │
-│                                                         │
-│  for each capture in manifest.captures:                 │
-│    for each viewport in manifest.viewports:             │
-│      1. browser.newPage()                               │
-│      2. page.setViewportSize(viewport)                  │
-│      3. page.goto(baseUrl + capture.route)              │
-│      4. if capture.waitFor:                             │
-│           page.waitForSelector(capture.waitFor)         │
-│      5. if capture.actions:                             │
-│           for action in capture.actions:                │
-│             page[action.type](action.selector)          │
-│      6. page.screenshot({ path, fullPage: false })      │
-│      7. for each region in capture.regions:             │
-│           element = page.locator(region.selector)       │
-│           bbox = element.boundingBox()                  │
-│           store bbox coordinates for annotation         │
-│      8. close page                                      │
-│                                                         │
-│  Output: screenshots/ directory with:                   │
-│    {captureId}-{viewport}-{state}.png                   │
-│    {captureId}-{viewport}-{state}.regions.json          │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 5.3 Annotation Engine
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  annotate.ts                                            │
-│                                                         │
-│  Input:  screenshot.png + regions.json                  │
-│  Output: screenshot-annotated.png                       │
-│                                                         │
-│  Using: sharp (fast, no native deps) or node-canvas     │
-│                                                         │
-│  for each region:                                       │
-│    1. Parse bbox {x, y, width, height}                  │
-│    2. Expand by 4px padding                             │
-│    3. Draw rectangle stroke:                            │
-│       - strokeWidth: 3px                                │
-│       - color: region.annotation.color (from key)       │
-│       - cornerRadius: 4px                               │
-│       - opacity: 0.9                                    │
-│    4. Draw label pill above top-left corner:            │
-│       - background: same color, opacity 0.85            │
-│       - text: region.annotation.label                   │
-│       - font: 11px, bold, white                         │
-│       - padding: 4px 8px                                │
-│    5. Composite onto source image                       │
-│                                                         │
-│  Visual result:                                         │
-│                                                         │
-│    ┌─ Chevron padding ─┐                                │
-│    │┌──────────────────┐│                                │
-│    ││  [All Segments ▼]││ ◄── 3px blue border           │
-│    │└──────────────────┘│                                │
-│    └────────────────────┘                                │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 5.4 Composition Engine
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  compose.ts                                             │
-│                                                         │
-│  Input:  before-annotated.png, after-annotated.png      │
-│  Output: comparison-{id}-{viewport}.png                 │
-│                                                         │
-│  Layout:                                                │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  ░░░░░░░░░░░░░░░░ TITLE BAR ░░░░░░░░░░░░░░░░░░░│   │
-│  │  "Dropdown Chevron Padding · mobile (375px)"     │   │
-│  │  commit: 3f89367                                 │   │
-│  ├────────────────────┬─────────────────────────────┤   │
-│  │                    │                             │   │
-│  │     B E F O R E    │      A F T E R              │   │
-│  │                    │                             │   │
-│  │  ┌──────────────┐  │  ┌──────────────┐           │   │
-│  │  │ [Segments ▼] │  │  │ [Segments ▼] │           │   │
-│  │  └──────────────┘  │  └──────────────┘           │   │
-│  │   ▲ blue box       │   ▲ blue box                │   │
-│  │                    │                             │   │
-│  ├────────────────────┴─────────────────────────────┤   │
-│  │  ░░ FOOTER: "BEFORE (main) │ AFTER (welcome-pr)" ░░│   │
-│  └──────────────────────────────────────────────────┘   │
-│                                                         │
-│  Dimensions:                                            │
-│    width  = before.width + after.width + divider(2px)   │
-│    height = max(before, after) + title(48px) + foot(28) │
-│                                                         │
-│  If images differ in height:                            │
-│    pad shorter one with background color at bottom      │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
-
-## 6. Image Hosting Strategy
-
-```mermaid
-graph TD
-    subgraph "Option A: GitHub Issue Upload (recommended)"
-        A1[Create draft issue or<br/>use existing bot issue]
-        A2[POST image via<br/>GitHub GraphQL API]
-        A3[Get user-content URL<br/><i>https://github.com/user-<br/>attachments/assets/UUID</i>]
-        A4[URL is permanent<br/>even if issue is deleted]
-        A1 --> A2 --> A3 --> A4
-    end
-
-    subgraph "Option B: Git LFS in repo"
-        B1[Store in<br/>docs/screenshots/]
-        B2[Track with git-lfs]
-        B3[Reference via<br/>relative path]
-        B1 --> B2 --> B3
-    end
-
-    subgraph "Option C: Cloud bucket"
-        C1[Upload to<br/>R2 / S3 / GCS]
-        C2[Public URL with<br/>content-hash filename]
-        C3[Long-lived, CDN-backed]
-        C1 --> C2 --> C3
-    end
-
-    subgraph "Option D: GitHub Actions Artifact"
-        D1[Upload as<br/>workflow artifact]
-        D2[90-day retention<br/>by default]
-        D3[Not embeddable<br/>in markdown ✗]
-        D1 --> D2 --> D3
-    end
-
-    style A4 fill:#e8f5e9,stroke:#2e7d32
-    style D3 fill:#ffebee,stroke:#c62828
-```
-
-### Recommendation
-
-**Option A (GitHub Issue Upload)** is the best fit because:
-
-1. **Permanent URLs** — `github.com/user-attachments/assets/*` URLs persist indefinitely
-2. **No infrastructure** — no bucket to manage, no LFS quota
-3. **Automatable** — `gh api` or GraphQL mutation can upload programmatically
-4. **Embeddable** — standard markdown image syntax works in PR descriptions
-5. **Free** — included in GitHub's storage
-
-**Workflow:**
-
-```
-┌──────────────────────────────────────────────────┐
-│  Upload via GitHub API                           │
-│                                                  │
-│  1. Create (or reuse) a "Visual Regression Bot"  │
-│     issue in the repo                            │
-│                                                  │
-│  2. For each comparison image:                   │
-│     curl -X POST \                               │
-│       -H "Authorization: token $GITHUB_TOKEN" \  │
-│       -F "file=@comparison.png" \                │
-│       https://uploads.github.com/repos/          │
-│         TextureHQ/commongrid/issues/             │
-│         {issue}/comments                         │
-│                                                  │
-│  3. Parse response for asset URL                 │
-│                                                  │
-│  4. Delete the comment (URL survives)            │
-│     or keep for audit trail                      │
-│                                                  │
-│  Alternative: use gh CLI                         │
-│     gh issue comment {N} --body '![](file)'      │
-│                                                  │
-└──────────────────────────────────────────────────┘
-```
-
-## 7. End-to-End Workflow
-
-```mermaid
-flowchart TD
-    START([PR opened or<br/>manual trigger]) --> PARSE
-
-    subgraph "Phase 1: Analyze"
-        PARSE[Parse git diff<br/>main...HEAD]
-        ROUTE[Map changed files<br/>→ affected routes]
-        GEN[Generate or load<br/>capture-manifest.json]
-        PARSE --> ROUTE --> GEN
-    end
-
-    subgraph "Phase 2: Capture"
-        WORK[git worktree add<br/>/tmp/cg-base main]
-        BASE_S[Start base server<br/>:3100]
-        PR_S[Start PR server<br/>:3101]
-        CAP_B[Playwright captures<br/>BEFORE screenshots]
-        CAP_A[Playwright captures<br/>AFTER screenshots]
-        BBOX_B[Record bounding<br/>box coordinates]
-        BBOX_A[Record bounding<br/>box coordinates]
-
-        WORK --> BASE_S & PR_S
-        BASE_S --> CAP_B --> BBOX_B
-        PR_S --> CAP_A --> BBOX_A
-    end
-
-    subgraph "Phase 3: Process"
-        ANN_B[Annotate BEFORE<br/>red/blue/orange/yellow]
-        ANN_A[Annotate AFTER<br/>green/blue/orange/yellow]
-        COMP[Compose side-by-side<br/>with title + footer]
-        DIFF[pixelmatch diff<br/>detection]
-
-        BBOX_B --> ANN_B
-        BBOX_A --> ANN_A
-        ANN_B --> COMP
-        ANN_A --> COMP
-        ANN_B --> DIFF
-        ANN_A --> DIFF
-    end
-
-    subgraph "Phase 4: Publish"
-        UPLOAD_IMG[Upload to<br/>GitHub issue assets]
-        MD_TABLE[Generate markdown<br/>comparison table]
-        PR_COMMENT[Post as PR comment<br/>or update description]
-        CATALOG[Write catalog.json<br/>for future reference]
-
-        COMP --> UPLOAD_IMG --> MD_TABLE --> PR_COMMENT
-        DIFF --> CATALOG
-    end
-
-    GEN --> WORK
-
-    CLEANUP[Kill servers<br/>Remove worktree] --> DONE([Done])
-    PR_COMMENT --> CLEANUP
-
-    style START fill:#e1f5fe
-    style DONE fill:#e8f5e9
-    style COMP fill:#fff3e0
-    style UPLOAD_IMG fill:#f3e5f5
-```
-
-## 8. Output Artifacts
-
-### 8.1 Directory Structure
-
-```
-.visual-regression/
-├── captures/
-│   ├── before/
-│   │   ├── dropdown-chevron-padding-mobile.png
-│   │   ├── dropdown-chevron-padding-mobile.regions.json
-│   │   ├── dropdown-chevron-padding-tablet.png
-│   │   ├── header-spacing-mobile.png
-│   │   └── ...
-│   ├── after/
-│   │   ├── dropdown-chevron-padding-mobile.png
-│   │   ├── dropdown-chevron-padding-mobile.regions.json
-│   │   └── ...
-│   ├── annotated/
-│   │   ├── dropdown-chevron-padding-mobile-before.png
-│   │   ├── dropdown-chevron-padding-mobile-after.png
-│   │   └── ...
-│   └── comparisons/
-│       ├── dropdown-chevron-padding-mobile.png     ◄── final output
-│       ├── dropdown-chevron-padding-tablet.png
-│       ├── header-spacing-desktop.png
-│       └── ...
-├── catalog.json                                     ◄── index of all captures
-└── pr-screenshots.md                                ◄── markdown embed table
-```
-
-### 8.2 Generated Markdown Table
-
-```markdown
-## Visual Regression Report
-
-| Change | Mobile (375px) | Tablet (768px) | Desktop (1440px) |
-|--------|---------------|----------------|-----------------|
-| Dropdown chevron padding | ![](url) | ![](url) | ![](url) |
-| Header spacing h-14→h-12 | ![](url) | ![](url) | ![](url) |
-| Badge variant colors | — | — | ![](url) |
-| Logo redesign | ![](url) | — | ![](url) |
-| Changelog tabs | — | ![](url) | ![](url) |
-| Filter stacking | ![](url) | — | — |
-| Name clamping | ![](url) | — | — |
-
-<details>
-<summary>Diff detection summary</summary>
-
-| Capture | Viewport | Pixel diff % | Status |
-|---------|----------|-------------|--------|
-| dropdown-chevron-padding | mobile | 2.3% | Changed |
-| dropdown-chevron-padding | tablet | 1.8% | Changed |
-| header-spacing | desktop | 4.1% | Changed |
-| badge-variants | desktop | 3.7% | Changed |
-| logo-redesign | mobile | 12.4% | Changed |
-| changelog-tabs | tablet | 18.2% | New UI |
-
-</details>
-```
-
-### 8.3 Catalog JSON
-
-```jsonc
-// .visual-regression/catalog.json
+```json
 {
-  "generatedAt": "2026-03-16T18:30:00Z",
+  "app/(shell)/grid-operators/page.tsx": ["/grid-operators"],
+  "components/TopBar.tsx": ["*"],
+  "public/logo.svg": ["*"]
+}
+```
+
+Use `git diff --name-only main...HEAD` to find changed files, then look them up here to determine which routes need captures.
+
+---
+
+## Output Artifacts
+
+### `catalog.json`
+
+```json
+{
+  "generatedAt": "2025-03-15T...",
   "baseRef": "main",
-  "prRef": "welcome-pr",
-  "prNumber": null,
+  "prRef": "HEAD",
   "comparisons": [
     {
-      "id": "dropdown-chevron-padding",
-      "commit": "3f89367",
-      "description": "Inner right-side padding on filter dropdowns",
+      "id": "header-spacing",
+      "commit": "106f641",
+      "description": "Header height h-14 → h-12",
       "viewports": {
-        "mobile": {
-          "before": "captures/before/dropdown-chevron-padding-mobile.png",
-          "after": "captures/after/dropdown-chevron-padding-mobile.png",
-          "comparison": "captures/comparisons/dropdown-chevron-padding-mobile.png",
-          "uploadUrl": "https://github.com/user-attachments/assets/...",
-          "pixelDiffPercent": 2.3
+        "desktop": {
+          "before": "captures/annotated/header-spacing-desktop-before.png",
+          "after":  "captures/annotated/header-spacing-desktop-after.png",
+          "comparison": "captures/comparisons/header-spacing-desktop.png",
+          "diffPercent": 3.41
         }
       }
     }
@@ -705,497 +381,48 @@ flowchart TD
 }
 ```
 
-## 9. CLI Interface
-
-```
-Usage:
-  npx tsx scripts/visual-regression/capture-vr.ts [options]
-
-Options:
-  --manifest <path>    Path to capture manifest (default: auto-detect)
-  --base-ref <ref>     Base git ref to compare against (default: main)
-  --viewports <list>   Comma-separated viewport names (default: all)
-  --captures <list>    Comma-separated capture IDs (default: all)
-  --skip-capture       Skip capture, re-annotate/compose from existing
-  --skip-upload        Skip upload, just generate local files
-  --upload-method      github | r2 | s3 | local (default: github)
-  --output-dir <path>  Output directory (default: .visual-regression)
-  --parallel           Use git worktree for parallel capture (default)
-  --sequential         Use sequential checkout instead of worktree
-
-Examples:
-  # Full pipeline
-  npx tsx scripts/visual-regression/capture-vr.ts
-
-  # Just one capture at mobile
-  npx tsx scripts/visual-regression/capture-vr.ts \
-    --captures dropdown-chevron-padding --viewports mobile
-
-  # Re-compose from existing screenshots (no server needed)
-  npx tsx scripts/visual-regression/capture-vr.ts --skip-capture
-
-  # Generate manifest from git diff
-  npx tsx scripts/visual-regression/generate-manifest.ts
-```
-
-## 10. Integration Points
-
-### 10.1 GitHub Actions Workflow
-
-```yaml
-# .github/workflows/visual-regression.yml
-name: Visual Regression
-on:
-  pull_request:
-    types: [opened, synchronize]
-
-jobs:
-  capture:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # full history for worktree
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - run: npm ci
-      - run: npx playwright install chromium
-
-      - name: Capture visual regression
-        run: npx tsx scripts/visual-regression/capture-vr.ts
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Post comparison images
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const table = fs.readFileSync('.visual-regression/pr-screenshots.md', 'utf8');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: table,
-            });
-```
-
-### 10.2 PR Template Integration
-
-The generated `pr-screenshots.md` can be spliced into the Screenshots section
-of `PR_DESCRIPTION.md` during the upload phase, or posted as a separate PR comment
-that auto-updates on each push.
-
-### 10.3 Manual Trigger
-
-```bash
-# From repo root, with PR branch checked out:
-npm run vr:capture
-
-# Add to package.json scripts:
-# "vr:capture": "tsx scripts/visual-regression/capture-vr.ts",
-# "vr:manifest": "tsx scripts/visual-regression/generate-manifest.ts"
-```
-
-## 11. File-to-Route Mapping
-
-For auto-generating the manifest from `git diff`, the system needs to know
-which files affect which routes:
-
-```jsonc
-// scripts/visual-regression/file-route-map.json
-{
-  "app/(shell)/grid-operators/page.tsx": ["/grid-operators"],
-  "app/(shell)/power-plants/page.tsx": ["/power-plants"],
-  "app/(shell)/transmission-lines/page.tsx": ["/transmission-lines"],
-  "app/(shell)/ev-charging/page.tsx": ["/ev-charging"],
-  "app/(shell)/pricing-nodes/page.tsx": ["/pricing-nodes"],
-  "app/(shell)/changelog/page.tsx": ["/changelog"],
-  "app/(shell)/explore/page.tsx": ["/explore"],
-  "app/(shell)/about/page.tsx": ["/about"],
-  "app/(shell)/page.tsx": ["/"],
-  "components/TopBar.tsx": ["*"],
-  "components/ShellLayoutClient.tsx": ["*"],
-  "components/GlobalSearch.tsx": ["*"],
-  "components/SearchInput.tsx": ["/grid-operators", "/power-plants", "/transmission-lines", "/ev-charging", "/pricing-nodes"],
-  "components/DataSourceLink.tsx": ["/grid-operators", "/power-plants", "/transmission-lines", "/ev-charging", "/pricing-nodes"],
-  "components/explorer/*": ["/explore"],
-  "lib/formatting.ts": ["/grid-operators", "/explore"],
-  "lib/geo.ts": ["/explore", "/grid-operators/*"],
-  "app/globals.css": ["*"],
-  "public/logo.svg": ["*"],
-  "public/favicon.svg": ["*"]
-}
-```
-
-`"*"` means the change affects all routes — capture a representative sample.
-
-## 12. Concrete Implementation Reference
-
-### 12.1 Playwright Capture — Actual API
-
-```typescript
-// playwright-capture.ts
-import { chromium, type Page, type BrowserContext } from 'playwright';
-
-interface CaptureResult {
-  path: string;
-  regions: Array<{ selector: string; bbox: { x: number; y: number; width: number; height: number } }>;
-}
-
-async function captureRoute(
-  context: BrowserContext,
-  baseUrl: string,
-  capture: ManifestCapture,
-  viewport: { name: string; width: number; height: number },
-  outputDir: string,
-): Promise<CaptureResult> {
-  const page = await context.newPage();
-  await page.setViewportSize({ width: viewport.width, height: viewport.height });
-
-  // Navigate and wait for content
-  await page.goto(`${baseUrl}${capture.route}`, { waitUntil: 'networkidle' });
-  if (capture.waitFor) {
-    await page.waitForSelector(capture.waitFor, { timeout: 10_000 });
-  }
-
-  // Disable animations for deterministic capture
-  await page.addStyleTag({ content: `
-    *, *::before, *::after {
-      animation-duration: 0s !important;
-      transition-duration: 0s !important;
-    }
-  `});
-
-  // Execute pre-capture actions (click dropdowns, hover, etc.)
-  if (capture.actions) {
-    for (const action of capture.actions) {
-      await page.locator(action.selector)[action.type as 'click']();
-      await page.waitForTimeout(200);
-    }
-  }
-
-  // Capture full viewport screenshot
-  const screenshotPath = `${outputDir}/${capture.id}-${viewport.name}.png`;
-  await page.screenshot({ path: screenshotPath, fullPage: false });
-
-  // Record bounding boxes for each annotatable region
-  const regions = [];
-  for (const region of capture.regions) {
-    const locator = page.locator(region.selector).first();
-    const bbox = await locator.boundingBox();
-    if (bbox) {
-      regions.push({ selector: region.selector, bbox, annotation: region.annotation });
-    }
-  }
-
-  await page.close();
-  return { path: screenshotPath, regions };
-}
-```
-
-### 12.2 Annotation — sharp + SVG Compositing
-
-```typescript
-// annotate.ts
-import sharp from 'sharp';
-
-const COLORS = {
-  red:    { stroke: '#EF4444', fill: 'rgba(239,68,68,0.85)' },
-  green:  { stroke: '#22C55E', fill: 'rgba(34,197,94,0.85)' },
-  blue:   { stroke: '#3B82F6', fill: 'rgba(59,130,246,0.85)' },
-  orange: { stroke: '#F97316', fill: 'rgba(249,115,22,0.85)' },
-  yellow: { stroke: '#EAB308', fill: 'rgba(234,179,8,0.85)' },
-};
-
-interface AnnotationRegion {
-  bbox: { x: number; y: number; width: number; height: number };
-  annotation: { color: keyof typeof COLORS; label: string };
-}
-
-async function annotateImage(
-  inputPath: string,
-  regions: AnnotationRegion[],
-  outputPath: string,
-): Promise<void> {
-  const meta = await sharp(inputPath).metadata();
-  const { width = 0, height = 0 } = meta;
-
-  // Build SVG overlay with all bounding boxes and labels
-  const boxes = regions.map((r) => {
-    const c = COLORS[r.annotation.color];
-    const pad = 4;
-    const x = Math.max(0, r.bbox.x - pad);
-    const y = Math.max(0, r.bbox.y - pad);
-    const w = r.bbox.width + pad * 2;
-    const h = r.bbox.height + pad * 2;
-    const labelW = r.annotation.label.length * 7 + 16;
-    const labelH = 20;
-    const labelY = Math.max(0, y - labelH - 2);
-
-    return `
-      <rect x="${x}" y="${y}" width="${w}" height="${h}"
-            fill="none" stroke="${c.stroke}" stroke-width="3" rx="4"/>
-      <rect x="${x}" y="${labelY}" width="${labelW}" height="${labelH}"
-            fill="${c.fill}" rx="3"/>
-      <text x="${x + 8}" y="${labelY + 14}"
-            font-size="11" font-weight="bold" fill="white"
-            font-family="system-ui, sans-serif">${r.annotation.label}</text>
-    `;
-  }).join('');
-
-  const svgOverlay = Buffer.from(
-    `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">${boxes}</svg>`
-  );
-
-  await sharp(inputPath)
-    .composite([{ input: svgOverlay, top: 0, left: 0 }])
-    .toFile(outputPath);
-}
-```
-
-### 12.3 Composition — Side-by-Side with Title Bar
-
-```typescript
-// compose.ts
-import sharp from 'sharp';
-
-async function composePair(
-  beforePath: string,
-  afterPath: string,
-  title: string,
-  outputPath: string,
-): Promise<void> {
-  const [bMeta, aMeta] = await Promise.all([
-    sharp(beforePath).metadata(),
-    sharp(afterPath).metadata(),
-  ]);
-
-  const bW = bMeta.width ?? 0;
-  const aW = aMeta.width ?? 0;
-  const maxH = Math.max(bMeta.height ?? 0, aMeta.height ?? 0);
-  const divider = 2;
-  const titleH = 48;
-  const footerH = 28;
-  const totalW = bW + aW + divider;
-  const totalH = maxH + titleH + footerH;
-
-  const titleSvg = `
-    <svg width="${totalW}" height="${titleH}">
-      <rect width="100%" height="100%" fill="#f8f9fb"/>
-      <text x="${totalW / 2}" y="30" text-anchor="middle"
-            font-size="14" font-weight="600" fill="#1f2937"
-            font-family="system-ui, sans-serif">${title}</text>
-    </svg>`;
-
-  const footerSvg = `
-    <svg width="${totalW}" height="${footerH}">
-      <rect width="100%" height="100%" fill="#f1f5f9"/>
-      <text x="${bW / 2}" y="18" text-anchor="middle"
-            font-size="11" fill="#64748b"
-            font-family="system-ui, sans-serif">BEFORE (main)</text>
-      <line x1="${bW + 1}" y1="4" x2="${bW + 1}" y2="24"
-            stroke="#cbd5e1" stroke-width="1"/>
-      <text x="${bW + divider + aW / 2}" y="18" text-anchor="middle"
-            font-size="11" fill="#64748b"
-            font-family="system-ui, sans-serif">AFTER (PR)</text>
-    </svg>`;
-
-  // Divider line
-  const dividerBuf = await sharp({
-    create: { width: divider, height: maxH, channels: 4,
-              background: { r: 203, g: 213, b: 225, alpha: 1 } },
-  }).png().toBuffer();
-
-  await sharp({
-    create: { width: totalW, height: totalH, channels: 4,
-              background: { r: 255, g: 255, b: 255, alpha: 1 } },
-  })
-    .composite([
-      { input: Buffer.from(titleSvg), top: 0, left: 0 },
-      { input: await sharp(beforePath).toBuffer(), top: titleH, left: 0 },
-      { input: dividerBuf, top: titleH, left: bW },
-      { input: await sharp(afterPath).toBuffer(), top: titleH, left: bW + divider },
-      { input: Buffer.from(footerSvg), top: titleH + maxH, left: 0 },
-    ])
-    .toFile(outputPath);
-}
-```
-
-### 12.4 Diff Detection — pixelmatch
-
-```typescript
-// diff.ts
-import { PNG } from 'pngjs';
-import pixelmatch from 'pixelmatch';
-import fs from 'fs';
-
-interface DiffResult {
-  diffPixels: number;
-  totalPixels: number;
-  diffPercent: number;
-  diffImagePath: string;
-}
-
-function computeDiff(beforePath: string, afterPath: string, diffPath: string): DiffResult {
-  const img1 = PNG.sync.read(fs.readFileSync(beforePath));
-  const img2 = PNG.sync.read(fs.readFileSync(afterPath));
-
-  // Images must be same dimensions — pad smaller if needed
-  const width = Math.max(img1.width, img2.width);
-  const height = Math.max(img1.height, img2.height);
-  const diff = new PNG({ width, height });
-
-  const diffPixels = pixelmatch(
-    img1.data, img2.data, diff.data, width, height,
-    { threshold: 0.1, includeAA: false }
-  );
-
-  fs.writeFileSync(diffPath, PNG.sync.write(diff));
-
-  const totalPixels = width * height;
-  return {
-    diffPixels,
-    totalPixels,
-    diffPercent: Number(((diffPixels / totalPixels) * 100).toFixed(2)),
-    diffImagePath: diffPath,
-  };
-}
-```
-
-### 12.5 Upload — GitHub Branch Storage
-
-Research confirmed GitHub's API does not support direct image uploads to comments.
-The most durable strategy is **pushing images to a dedicated branch** and referencing
-via raw GitHub URLs. This is the approach used by `opengisch/comment-pr-with-images`.
-
-```typescript
-// upload.ts
-import { execSync } from 'child_process';
-
-function uploadToGitHubBranch(
-  imagePaths: string[],
-  branch = 'visual-regression-assets',
-  subdir = 'comparisons',
-): Map<string, string> {
-  const repo = 'TextureHQ/commongrid';
-  const urls = new Map<string, string>();
-
-  // Create orphan branch if it doesn't exist
-  try {
-    execSync(`git rev-parse --verify ${branch}`, { stdio: 'ignore' });
-  } catch {
-    execSync(`git checkout --orphan ${branch}`);
-    execSync('git rm -rf . 2>/dev/null || true');
-    execSync('git commit --allow-empty -m "init visual regression assets"');
-    execSync(`git checkout -`);
-  }
-
-  // Use worktree to add images without switching branches
-  const worktreePath = '/tmp/vr-upload';
-  execSync(`git worktree add ${worktreePath} ${branch} 2>/dev/null || true`);
-
-  for (const imgPath of imagePaths) {
-    const filename = imgPath.split('/').pop()!;
-    execSync(`mkdir -p ${worktreePath}/${subdir}`);
-    execSync(`cp ${imgPath} ${worktreePath}/${subdir}/${filename}`);
-    urls.set(
-      imgPath,
-      `https://raw.githubusercontent.com/${repo}/${branch}/${subdir}/${filename}`,
-    );
-  }
-
-  execSync(`cd ${worktreePath} && git add -A && git commit -m "VR: update comparison images" && git push origin ${branch}`, { stdio: 'inherit' });
-  execSync(`git worktree remove ${worktreePath}`);
-
-  return urls;
-}
-```
-
-Alternative: use [CML](https://cml.dev) (`cml comment create`) which handles
-image embedding in PR comments automatically, or [imgbb](https://api.imgbb.com/)
-for zero-infrastructure external hosting.
-
-## 13. Existing Open-Source Visual Regression Tools
-
-### Landscape Comparison
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                  VISUAL REGRESSION TOOL LANDSCAPE                       │
-│                                                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐  │
-│  │  Lost Pixel  │  │  Argos CI    │  │   Chromatic  │  │   Percy     │  │
-│  │  ───────────  │  │  ──────────  │  │  ──────────  │  │  ─────────  │  │
-│  │  OSS / Free  │  │  OSS / Free  │  │  Freemium   │  │  SaaS only  │  │
-│  │  odiff (6x   │  │  Playwright  │  │  Storybook  │  │  DOM snap-  │  │
-│  │  faster diff) │  │  Cypress     │  │  deep integ │  │  shot based │  │
-│  │  Storybook + │  │  Puppeteer   │  │  TurboSnap  │  │  Multi-     │  │
-│  │  Page + PW   │  │  CI comments │  │  Cloud UI   │  │  browser    │  │
-│  │  Git baselines│  │  Anim freeze│  │  Review UI  │  │  rendering  │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  └─────────────┘  │
-│        ▲                  ▲                                               │
-│        │                  │                                               │
-│   Best fit for       Good for                                            │
-│   agentic / CI      complex apps                                         │
-│   lightweight       with animations                                      │
-│                                                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                    │
-│  │  Playwright  │  │  BackstopJS  │  │  reg-suit    │                    │
-│  │  built-in    │  │  ───────────  │  │  ──────────  │                    │
-│  │  ───────────  │  │  Puppeteer   │  │  S3 + GitHub │                    │
-│  │  toHaveScr.. │  │  Config-     │  │  Plugin      │                    │
-│  │  pixelmatch  │  │  driven      │  │  architecture│                    │
-│  │  Zero extra  │  │  Scenarios   │  │  Notify PR   │                    │
-│  │  deps needed │  │  Docker ref  │  │  via comment │                    │
-│  └──────────────┘  └──────────────┘  └──────────────┘                    │
-│        ▲                                                                 │
-│        │                                                                 │
-│   Simplest start                                                         │
-│   (already a dep)                                                        │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-### Recommendation Matrix
-
-| Criterion | Lost Pixel | Playwright built-in | Argos CI | Custom (this spec) |
-|-----------|-----------|-------------------|----------|-------------------|
-| **Open source** | Yes | Yes | Yes | Yes |
-| **Dependency weight** | odiff-bin + config | Zero (already in PW) | CLI + service | sharp + pixelmatch |
-| **Agentic-friendly** | Config-driven JSON | Test file per route | Config-driven | Manifest-driven |
-| **Annotation/bbox** | No | No | Diff overlay only | **Yes — full control** |
-| **Before/after compose** | Diff overlay | 3-panel (expected/actual/diff) | Cloud UI | **Custom side-by-side** |
-| **PR integration** | GitHub Action comment | Test report artifact | PR comment | **Custom markdown table** |
-| **Learning curve** | Low | Very low | Low | Medium |
-| **Color-coded annotations** | No | No | No | **Yes** |
-| **Selective capture** | Stories/pages | Test-scoped | Stories/pages | **Per-commit manifest** |
-
-### Recommendation
-
-**For CommonGrid specifically:**
-
-1. **Start with Playwright built-in** (`toHaveScreenshot`) for pure regression detection — zero new deps, catches unintended changes
-2. **Layer the custom system** (this spec) on top for PR-quality annotated comparison images — the bounding-box + color-coding + composition pipeline doesn't exist in any off-the-shelf tool
-3. **Consider Lost Pixel** if Storybook is ever adopted — it's the most lightweight OSS option with the fastest diff engine (odiff)
-
-The custom system fills a gap no existing tool covers: **per-commit, color-rationalized, annotated before/after comparison images** that communicate _what_ changed and _why_ at a glance in a PR description.
-
-## 14. Dependencies
-
-```
-# Core (all devDependencies)
-playwright          — browser automation + screenshots (may already be installed)
-sharp               — image annotation via SVG compositing (no native canvas dep)
-pixelmatch          — pixel-level diff detection (~150 lines, zero deps)
-pngjs               — PNG encode/decode for pixelmatch
-wait-on             — wait for dev server to be ready before capture
-
-# Optional
-join-images         — simplified side-by-side composition (built on sharp)
-odiff-bin           — 6x faster diff than pixelmatch (OCaml binary, optional upgrade)
-```
-
-Total footprint: ~3MB added to devDependencies. No runtime impact.
+### `pr-screenshots.md`
+
+A markdown report with tables of all comparisons and their diff percentages, suitable for pasting into PR descriptions.
+
+---
+
+## Dependencies
+
+| Package | Role |
+|---------|------|
+| `playwright` | Headless Chromium automation |
+| `sharp` | Fast PNG composition and SVG overlay (no native canvas) |
+| `pixelmatch` | Pixel-level image comparison |
+| `pngjs` | PNG read/write for pixelmatch |
+| `tsx` | TypeScript execution without build step |
+
+---
+
+## Adapting for Other Projects
+
+This system is generic. To use it in a different Next.js (or any dev-server) project:
+
+1. **Copy `scripts/visual-regression/`** into your project
+2. **Edit `capture-manifest.json`**:
+   - Set `devServer.command` to your dev server start command
+   - Set `devServer.readyPattern` to the stdout string your server prints when ready
+   - Adjust ports if 4100/4101 conflict
+   - Define your `viewports`
+   - Author `captures` entries for the routes and regions you care about
+3. **Add npm scripts** to `package.json`:
+   ```json
+   "vr:capture": "npx tsx scripts/visual-regression/capture-vr.ts",
+   "vr:capture:pr-only": "npx tsx scripts/visual-regression/capture-vr.ts --skip-base"
+   ```
+4. **Add `.visual-regression/` to `.gitignore`**
+5. If your project has a prebuild step that populates public assets, ensure the `createWorktree` function in `capture-vr.ts` calls it (it currently runs `npm run prebuild`)
+
+### Non-Next.js projects
+
+The only Next.js-specific assumptions are:
+- `npx next dev -p <port>` as the dev server command (configurable in manifest)
+- `npm run prebuild` for data file population (edit `createWorktree` if not needed)
+- The content-readiness selector in `playwright-capture.ts` uses `[class*="DataTable"]` etc. — adjust to match your app's DOM patterns
+
+Everything else (worktree strategy, annotation, diffing, composition) is framework-agnostic.
