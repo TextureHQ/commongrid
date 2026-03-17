@@ -15,7 +15,9 @@
     "generate:changelog": "npx tsx scripts/generate-changelog.ts",
     "sync:all": "npx tsx scripts/sync-all.ts",
     "vr:capture": "npx tsx scripts/visual-regression/capture-vr.ts",
-    "vr:capture:pr-only": "npx tsx scripts/visual-regression/capture-vr.ts --skip-base"
+    "vr:capture:pr-only": "npx tsx scripts/visual-regression/capture-vr.ts --skip-base",
+    "vr:clean": "npx tsx scripts/visual-regression/clean.ts",
+    "vr:clean:all": "npx tsx scripts/visual-regression/clean.ts --all"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.5",
