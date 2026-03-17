@@ -69,7 +69,7 @@ function HybridLayout({ mapboxAccessToken }: HybridLayoutProps) {
 
       {/* Map — RIGHT */}
       <div className="flex-1 min-w-0 h-full">
-        <ExplorerMap key={layout} mapboxAccessToken={mapboxAccessToken} />
+        <ExplorerMap key="hybrid" mapboxAccessToken={mapboxAccessToken} />
       </div>
     </div>
   );
