@@ -89,18 +89,16 @@ export async function captureAll(
 				const page = await context.newPage();
 
 				try {
-					// Navigate
+					// Navigate — use load (not networkidle which hangs on long-poll)
 					await page.goto(`${baseUrl}${capture.route}`, {
-						waitUntil: "domcontentloaded",
+						waitUntil: "load",
 						timeout: 30_000,
 					});
-					// Allow hydration and client-side data loading
-					await page.waitForTimeout(2500);
 
-					// Wait for specific content
+					// Wait for specific content selector if provided
 					if (capture.waitFor) {
 						await page
-							.waitForSelector(capture.waitFor, { timeout: 10_000 })
+							.waitForSelector(capture.waitFor, { timeout: 15_000 })
 							.catch(() => {
 								console.warn(
 									`  ⚠ waitFor selector not found: ${capture.waitFor} (${capture.id}/${vp.name})`,
@@ -108,8 +106,18 @@ export async function captureAll(
 							});
 					}
 
-					// Small settle delay for rendering
-					await page.waitForTimeout(500);
+					// Wait for data-driven content to render:
+					// Try to detect that the page has loaded real content by waiting
+					// for either a table row, a card, or a list item to appear
+					await page.waitForSelector(
+						'[class*="DataTable"] [role="row"], table tr, [class*="Card"], main h1',
+						{ timeout: 10_000 },
+					).catch(() => {
+						// Fallback: just wait a fixed amount
+					});
+
+					// Final settle for any remaining renders / transitions
+					await page.waitForTimeout(1500);
 
 					// Disable animations
 					await page.addStyleTag({ content: ANIMATION_DISABLE_CSS });
