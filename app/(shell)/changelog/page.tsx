@@ -100,8 +100,8 @@ function EntryRow({ entry }: { entry: ChangelogEntry }) {
 
 function DateGroup({ date, entries }: { date: string; entries: ChangelogEntry[] }) {
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-3 mb-3">
+    <div className="mb-5">
+      <div className="flex items-center gap-3 mb-2">
         <div className="text-xs font-semibold uppercase tracking-widest text-text-muted">{date}</div>
         <div className="flex-1 h-px bg-border-default" />
         <div className="text-xs text-text-muted">{entries.length} change{entries.length !== 1 ? "s" : ""}</div>
@@ -166,36 +166,54 @@ export default function ChangelogPage() {
     : null;
 
   return (
-    <PageLayout maxWidth={900}>
-      <PageLayout.Header title="Changelog" />
+    <PageLayout maxWidth={900} paddingYClass="pt-2 md:pt-3">
       <PageLayout.Content>
-        <p className="text-sm text-text-muted -mt-2 mb-6">
-          What's changing in the grid data we track — and in the tools we're building to track it.
-        </p>
-        {/* Tab bar */}
-        <div className="flex gap-1 border-b border-border-default mb-6">
-          <button
-            type="button"
-            onClick={() => setTab("data")}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === "data"
-                ? "border-brand-primary text-brand-primary"
-                : "border-transparent text-text-muted hover:text-text-body"
-            }`}
-          >
-            Data Changes
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("site")}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === "site"
-                ? "border-brand-primary text-brand-primary"
-                : "border-transparent text-text-muted hover:text-text-body"
-            }`}
-          >
-            Site Updates
-          </button>
+        {/* Pill toggle — upper right */}
+        <div className="flex justify-end mt-1 md:mt-2 mb-1">
+          <div className="flex-none flex items-center rounded-full bg-neutral-200/70 dark:bg-neutral-700/60 p-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.12)]">
+            <button
+              type="button"
+              onClick={() => setTab("data")}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                tab === "data"
+                  ? "bg-white dark:bg-neutral-600 text-text-heading shadow-sm"
+                  : "text-text-muted hover:text-text-body"
+              }`}
+            >
+              Grid Data
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("site")}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                tab === "site"
+                  ? "bg-white dark:bg-neutral-600 text-text-heading shadow-sm"
+                  : "text-text-muted hover:text-text-body"
+              }`}
+            >
+              Site
+            </button>
+          </div>
+        </div>
+
+        {/* Title + description */}
+        <h1 className="text-3xl font-bold text-text-heading leading-none mb-1.5">Changelog</h1>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            {tab === "data" && (
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-[pulse_4s_ease-in-out_infinite]" />
+            )}
+            <span className="text-sm text-text-muted">
+              {tab === "data"
+                ? "Live changes synced routinely from authoritative energy industry sources."
+                : "Product updates to the CommonGrid website and tools."}
+            </span>
+          </div>
+          {tab === "data" && lastUpdated && (
+            <span className="text-xs text-text-muted whitespace-nowrap">
+              Last updated {lastUpdated}
+            </span>
+          )}
         </div>
 
         {tab === "site" && (
@@ -221,35 +239,8 @@ export default function ChangelogPage() {
 
         {tab === "data" && (
         <Section id="feed" navLabel="Changes" withDivider={false}>
-          {/* Search */}
-          <div className="relative mb-4">
-            <Icon name="MagnifyingGlass" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search changes..."
-              className="w-full h-9 pl-9 pr-3 rounded-lg border border-border-default bg-background-surface text-sm text-text-body placeholder:text-text-muted outline-none focus:border-brand-primary transition-colors"
-            />
-          </div>
-
-          {/* Meta bar */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-sm text-text-muted">
-                Synced from authoritative sources daily
-              </span>
-            </div>
-            {lastUpdated && (
-              <span className="text-xs text-text-muted">
-                Last updated {lastUpdated}
-              </span>
-            )}
-          </div>
-
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
             {[
               {
                 label: "Recently updated",
@@ -287,25 +278,40 @@ export default function ChangelogPage() {
             ))}
           </div>
 
-          {/* Entity type filters */}
-          {uniqueEntityTypes.length > 1 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {["all", ...uniqueEntityTypes].map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setEntityTypeFilter(type)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                    entityTypeFilter === type
-                      ? "bg-brand-primary text-white"
-                      : "bg-background-subtle text-text-muted hover:text-text-body"
-                  }`}
-                >
-                  {type === "all" ? "All" : type.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                </button>
-              ))}
+          {/* Filter fieldset */}
+          <fieldset className="relative border border-border-default rounded-lg px-2.5 pt-1 pb-2 mb-3">
+            <legend className="text-[9px] uppercase tracking-widest text-text-muted px-1 font-medium leading-none">Filter</legend>
+            <div className="flex items-center gap-2.5">
+              {uniqueEntityTypes.length > 1 && (
+                <div className="flex items-center rounded-lg bg-blue-50/80 dark:bg-blue-900/20 p-0.5 shadow-[inset_0_0.5px_2px_rgba(0,0,0,0.06)]">
+                  {["all", ...uniqueEntityTypes].map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setEntityTypeFilter(type)}
+                      className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all whitespace-nowrap ${
+                        entityTypeFilter === type
+                          ? "bg-brand-primary text-white shadow-sm"
+                          : "text-text-muted hover:text-text-body"
+                      }`}
+                    >
+                      {type === "all" ? "All" : type.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bIso\b/g, "ISO")}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="relative flex-1">
+                <Icon name="MagnifyingGlass" size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search..."
+                  className="w-full h-7 pl-8 pr-3 rounded-lg border border-blue-100 dark:border-blue-800/30 bg-blue-50/30 dark:bg-blue-900/10 text-xs text-text-body placeholder:text-text-muted outline-none focus:border-brand-primary transition-colors"
+                />
+              </div>
             </div>
-          )}
+          </fieldset>
 
           {/* Feed */}
           {filteredEntries.length === 0 ? (
