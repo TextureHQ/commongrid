@@ -2,27 +2,23 @@
 
 import {
   Avatar,
+  addFilterCondition,
   Badge,
   type Column,
+  createEmptyFilter,
   DataControls,
   DataTable,
   EmptyState,
-  FilterDialog,
   type FacetConfig,
+  FilterDialog,
   type FilterState,
-  addFilterCondition,
-  createEmptyFilter,
   getFilterFields,
-  removeFilterCondition,
 } from "@texturehq/edges";
 import { useCallback, useMemo, useState } from "react";
-import { useExplorer } from "../ExplorerContext";
 import { getAllUtilities, searchEntities, sortByName } from "@/lib/data";
-import {
-  getSegmentBadgeVariant,
-  getSegmentLabel,
-} from "@/lib/formatting";
+import { getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
 import { type Utility, UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
+import { useExplorer } from "../ExplorerContext";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -41,11 +37,57 @@ const sortOptions = [
 
 // All US state/territory codes present in the data
 const ALL_STATE_CODES = [
-  "AK","AL","AR","AZ","CA","CO","CT","DC","DE","FL","GA","HI",
-  "IA","ID","IL","IN","KS","KY","LA","MA","MD","ME","MI","MN",
-  "MO","MS","MT","NC","ND","NE","NH","NJ","NM","NV","NY","OH",
-  "OK","OR","PA","RI","SC","SD","TN","TX","UT","VA","VT","WA",
-  "WI","WV","WY",
+  "AK",
+  "AL",
+  "AR",
+  "AZ",
+  "CA",
+  "CO",
+  "CT",
+  "DC",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "IA",
+  "ID",
+  "IL",
+  "IN",
+  "KS",
+  "KY",
+  "LA",
+  "MA",
+  "MD",
+  "ME",
+  "MI",
+  "MN",
+  "MO",
+  "MS",
+  "MT",
+  "NC",
+  "ND",
+  "NE",
+  "NH",
+  "NJ",
+  "NM",
+  "NV",
+  "NY",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VA",
+  "VT",
+  "WA",
+  "WI",
+  "WV",
+  "WY",
 ];
 
 const FACET_CONFIGS: FacetConfig[] = [
@@ -70,7 +112,10 @@ const FACET_CONFIGS: FacetConfig[] = [
 /** Returns individual state codes from a comma-separated jurisdiction string */
 function parseJurisdictionStates(jurisdiction: string | null): string[] {
   if (!jurisdiction) return [];
-  return jurisdiction.split(",").map((s) => s.trim()).filter(Boolean);
+  return jurisdiction
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 /** Extract selected string values for a field from FilterState */
@@ -277,7 +322,11 @@ export function UtilityListPanel() {
           <EmptyState
             icon="Lightning"
             title="No utilities found"
-            description={state.q || activeFilterCount > 0 ? "Try adjusting your search or filters." : "No utilities match the selected filters."}
+            description={
+              state.q || activeFilterCount > 0
+                ? "Try adjusting your search or filters."
+                : "No utilities match the selected filters."
+            }
             fullHeight={true}
           />
         ) : (

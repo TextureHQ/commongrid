@@ -1,12 +1,4 @@
-import {
-  pgTable,
-  text,
-  integer,
-  doublePrecision,
-  timestamp,
-  index,
-  customType,
-} from "drizzle-orm/pg-core";
+import { customType, doublePrecision, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { regions } from "./regions";
 
 /**
@@ -110,12 +102,8 @@ export const territories = pgTable(
     // Provenance & audit
     source: text("source"),
     sourceUrl: text("source_url"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("idx_territories_region_id").on(table.regionId),

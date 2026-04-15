@@ -5,24 +5,17 @@
  * Cross-referenced with EIA-860 power plant coordinates.
  */
 
-export type IsoRto =
-  | "CAISO"
-  | "PJM"
-  | "ERCOT"
-  | "MISO"
-  | "NYISO"
-  | "ISONE"
-  | "SPP";
+export type IsoRto = "CAISO" | "PJM" | "ERCOT" | "MISO" | "NYISO" | "ISONE" | "SPP";
 
 export type PricingNodeType =
-  | "gen"       // Generation node (at a power plant)
-  | "load"      // Load node (demand point)
-  | "hub"       // Trading hub (aggregate reference price)
-  | "zone"      // Load zone / pricing zone
-  | "sublap"    // Sub-Load Aggregation Point (CAISO-specific)
-  | "lap"       // Load Aggregation Point (CAISO-specific)
+  | "gen" // Generation node (at a power plant)
+  | "load" // Load node (demand point)
+  | "hub" // Trading hub (aggregate reference price)
+  | "zone" // Load zone / pricing zone
+  | "sublap" // Sub-Load Aggregation Point (CAISO-specific)
+  | "lap" // Load Aggregation Point (CAISO-specific)
   | "interface" // Inter-tie / interface point
-  | "bus";      // Electrical bus node
+  | "bus"; // Electrical bus node
 
 export const ISO_LABELS: Record<IsoRto, string> = {
   CAISO: "CAISO",
@@ -56,13 +49,13 @@ export const NODE_TYPE_LABELS: Record<PricingNodeType, string> = {
 };
 
 export const ISO_COLORS: Record<IsoRto, string> = {
-  CAISO: "#eab308",   // gold
-  PJM: "#3b82f6",     // blue
-  ERCOT: "#ef4444",   // red
-  MISO: "#22c55e",    // green
-  NYISO: "#8b5cf6",   // purple
-  ISONE: "#14b8a6",   // teal
-  SPP: "#f97316",     // orange
+  CAISO: "#eab308", // gold
+  PJM: "#3b82f6", // blue
+  ERCOT: "#ef4444", // red
+  MISO: "#22c55e", // green
+  NYISO: "#8b5cf6", // purple
+  ISONE: "#14b8a6", // teal
+  SPP: "#f97316", // orange
 };
 
 export const NODE_TYPE_RADIUS: Record<PricingNodeType, number> = {
@@ -93,26 +86,9 @@ export interface PricingNode {
   source: string;
 }
 
-export const ISOS: IsoRto[] = [
-  "CAISO",
-  "PJM",
-  "ERCOT",
-  "MISO",
-  "NYISO",
-  "ISONE",
-  "SPP",
-];
+export const ISOS: IsoRto[] = ["CAISO", "PJM", "ERCOT", "MISO", "NYISO", "ISONE", "SPP"];
 
-export const NODE_TYPES: PricingNodeType[] = [
-  "hub",
-  "zone",
-  "sublap",
-  "lap",
-  "interface",
-  "gen",
-  "load",
-  "bus",
-];
+export const NODE_TYPES: PricingNodeType[] = ["hub", "zone", "sublap", "lap", "interface", "gen", "load", "bus"];
 
 export function getIsoColor(iso: IsoRto): string {
   return ISO_COLORS[iso] ?? "#9ca3af";

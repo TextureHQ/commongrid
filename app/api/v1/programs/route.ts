@@ -9,15 +9,15 @@ import { z } from "zod";
 
 import {
   ApiError,
+  type CursorV1,
+  decodeCursor,
+  encodeCursor,
+  jsonResponse,
+  paginatedResponse,
+  withCors,
   withErrorHandling,
   withRequestId,
   withTiming,
-  withCors,
-  jsonResponse,
-  paginatedResponse,
-  encodeCursor,
-  decodeCursor,
-  type CursorV1,
 } from "@/lib/api";
 import { loadPrograms } from "@/lib/data/programs";
 import type { Program } from "@/types/programs";
@@ -45,11 +45,7 @@ type SortField = "name" | "status";
 // Sorting
 // ---------------------------------------------------------------------------
 
-function sortPrograms(
-  programs: Program[],
-  sortField: SortField,
-  order: "asc" | "desc"
-): Program[] {
+function sortPrograms(programs: Program[], sortField: SortField, order: "asc" | "desc"): Program[] {
   return [...programs].sort((a, b) => {
     let cmp = (a[sortField] as string).localeCompare(b[sortField] as string);
 
@@ -81,12 +77,7 @@ function tryEncodeCursor(data: CursorV1): string | null {
 }
 
 /** Apply cursor offset to a sorted program list. */
-function applyCursor(
-  sorted: Program[],
-  cursor: CursorV1,
-  sortField: SortField,
-  order: "asc" | "desc"
-): Program[] {
+function applyCursor(sorted: Program[], cursor: CursorV1, sortField: SortField, order: "asc" | "desc"): Program[] {
   const cursorSortValue = cursor.s[sortField] as string | undefined;
   const cursorId = cursor.id;
 
@@ -110,24 +101,40 @@ function applyCursor(
 // ---------------------------------------------------------------------------
 
 const ALL_FIELDS = new Set<string>([
-  "id", "slug", "name", "description",
-  "organizations", "assetTypes", "marketSegments",
-  "participationModels", "incentiveStructures", "gridServices",
-  "regions", "compensationTiers", "capacityTarget", "maxEnrollments",
-  "programSeason", "launchedAt", "enrollmentOpens", "enrollmentCloses",
-  "endsAt", "status", "programWebsite", "faqUrl", "termsUrl", "contactUrl",
-  "variants", "createdAt", "updatedAt",
+  "id",
+  "slug",
+  "name",
+  "description",
+  "organizations",
+  "assetTypes",
+  "marketSegments",
+  "participationModels",
+  "incentiveStructures",
+  "gridServices",
+  "regions",
+  "compensationTiers",
+  "capacityTarget",
+  "maxEnrollments",
+  "programSeason",
+  "launchedAt",
+  "enrollmentOpens",
+  "enrollmentCloses",
+  "endsAt",
+  "status",
+  "programWebsite",
+  "faqUrl",
+  "termsUrl",
+  "contactUrl",
+  "variants",
+  "createdAt",
+  "updatedAt",
 ]);
 
-function projectFields(
-  program: Program,
-  fields: string[]
-): Partial<Program> {
+function projectFields(program: Program, fields: string[]): Partial<Program> {
   const result: Partial<Program> = {};
   for (const field of fields) {
     if (ALL_FIELDS.has(field)) {
-      (result as Record<string, unknown>)[field] =
-        (program as unknown as Record<string, unknown>)[field];
+      (result as Record<string, unknown>)[field] = (program as unknown as Record<string, unknown>)[field];
     }
   }
   return result;
@@ -206,9 +213,7 @@ async function handler(req: Request): Promise<Response> {
         .filter((f) => ALL_FIELDS.has(f))
     : null;
 
-  const data = requestedFields
-    ? items.map((p) => projectFields(p, requestedFields))
-    : items;
+  const data = requestedFields ? items.map((p) => projectFields(p, requestedFields)) : items;
 
   const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
 

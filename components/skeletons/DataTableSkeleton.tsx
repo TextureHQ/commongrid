@@ -5,10 +5,7 @@ interface DataTableSkeletonProps {
   columns?: number;
 }
 
-export function DataTableSkeleton({
-  rows = 10,
-  columns = 4,
-}: DataTableSkeletonProps) {
+export function DataTableSkeleton({ rows = 10, columns = 4 }: DataTableSkeletonProps) {
   return (
     <div role="status" aria-live="polite" aria-atomic="true">
       <span className="sr-only">Loading data...</span>
@@ -16,14 +13,17 @@ export function DataTableSkeleton({
         {/* Header row */}
         <div className="flex gap-4 border-b border-border-default pb-2">
           {Array.from({ length: columns }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholder, never reorders
             <Shimmer key={`header-${i}`} className="h-4 flex-1" />
           ))}
         </div>
         {/* Data rows */}
         {Array.from({ length: rows }).map((_, rowIdx) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholder, never reorders
           <div key={`row-${rowIdx}`} className="flex gap-4 py-2">
             {Array.from({ length: columns }).map((_, colIdx) => (
               <Shimmer
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholder, never reorders
                 key={`cell-${rowIdx}-${colIdx}`}
                 className={`h-4 flex-1 ${colIdx === 0 ? "max-w-[200px]" : ""}`}
               />

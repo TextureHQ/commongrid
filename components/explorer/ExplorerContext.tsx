@@ -1,17 +1,8 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useReducer,
-  useEffect,
-  useRef,
-  type ReactNode,
-} from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import type { FeatureCollection } from "geojson";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -171,20 +162,13 @@ function stateToSearchParams(state: ExplorerState): string {
   if (state.q) params.set("q", state.q);
   if (state.segment && state.segment !== "all") params.set("segment", state.segment);
   if (state.type && state.type !== "all") params.set("type", state.type);
-  if (state.jurisdictions && state.jurisdictions.length > 0)
-    params.set("jurisdictions", state.jurisdictions.join(","));
+  if (state.jurisdictions && state.jurisdictions.length > 0) params.set("jurisdictions", state.jurisdictions.join(","));
   const str = params.toString();
   return str ? `/explore?${str}` : "/explore";
 }
 
 function parseTab(value: string | null): EntityTab {
-  const valid: EntityTab[] = [
-    "utilities",
-    "grid-operators",
-    "power-plants",
-    "programs",
-    "transmission-lines",
-  ];
+  const valid: EntityTab[] = ["utilities", "grid-operators", "power-plants", "programs", "transmission-lines"];
   // backwards-compat: old "view" param values that were list views
   if (value === "grid-operators" || value === "programs") return value;
   if (valid.includes(value as EntityTab)) return value as EntityTab;
@@ -228,9 +212,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     const segmentParam = searchParams.get("segment") ?? "all";
     const typeParam = searchParams.get("type") ?? "all";
     const jurisdictionsParam = searchParams.get("jurisdictions");
-    const jurisdictionsFromUrl = jurisdictionsParam
-      ? jurisdictionsParam.split(",").filter(Boolean)
-      : [];
+    const jurisdictionsFromUrl = jurisdictionsParam ? jurisdictionsParam.split(",").filter(Boolean) : [];
 
     const tab = parseTab(tabParam);
     const layout = parseLayout(layoutParam);
@@ -257,7 +239,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, state.jurisdictions, state.layout, state.q, state.segment, state.slug, state.tab, state.type]);
 
   // Sync state TO URL when state changes (but not when syncing from URL)
   useEffect(() => {
@@ -268,29 +250,27 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     const url = stateToSearchParams(state);
     router.push(url, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.layout, state.tab, state.slug, state.q, state.segment, state.type, state.jurisdictions]);
+  }, [
+    state.layout,
+    state.tab,
+    state.slug,
+    state.q,
+    state.segment,
+    state.type,
+    state.jurisdictions,
+    router.push,
+    state,
+  ]);
 
-  const navigateToTab = useCallback(
-    (tab: EntityTab) => dispatch({ type: "NAVIGATE_TAB", tab }),
-    []
-  );
+  const navigateToTab = useCallback((tab: EntityTab) => dispatch({ type: "NAVIGATE_TAB", tab }), []);
   const navigateToDetail = useCallback(
     (view: DetailView, slug: string) => dispatch({ type: "NAVIGATE_DETAIL", view, slug }),
     []
   );
-  const setLayout = useCallback(
-    (layout: LayoutMode) => dispatch({ type: "SET_LAYOUT", layout }),
-    []
-  );
+  const setLayout = useCallback((layout: LayoutMode) => dispatch({ type: "SET_LAYOUT", layout }), []);
   const setSearch = useCallback((q: string) => dispatch({ type: "SET_SEARCH", q }), []);
-  const setSegment = useCallback(
-    (segment: string) => dispatch({ type: "SET_SEGMENT", segment }),
-    []
-  );
-  const setTypeFilter = useCallback(
-    (type: string) => dispatch({ type: "SET_TYPE", typeFilter: type }),
-    []
-  );
+  const setSegment = useCallback((segment: string) => dispatch({ type: "SET_SEGMENT", segment }), []);
+  const setTypeFilter = useCallback((type: string) => dispatch({ type: "SET_TYPE", typeFilter: type }), []);
   const setJurisdictions = useCallback(
     (jurisdictions: string[]) => dispatch({ type: "SET_JURISDICTIONS", jurisdictions }),
     []
@@ -299,10 +279,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     (geoJSON: FeatureCollection | null) => dispatch({ type: "SET_HIGHLIGHT", geoJSON }),
     []
   );
-  const setHoveredSlug = useCallback(
-    (slug: string | null) => dispatch({ type: "SET_HOVERED_SLUG", slug }),
-    []
-  );
+  const setHoveredSlug = useCallback((slug: string | null) => dispatch({ type: "SET_HOVERED_SLUG", slug }), []);
 
   const goBack = useCallback(() => {
     const prev = state.previousView;

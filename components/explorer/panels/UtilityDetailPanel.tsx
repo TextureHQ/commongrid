@@ -1,18 +1,9 @@
 "use client";
 
-import {
-  Avatar,
-  Badge,
-  Card,
-  type Column,
-  DataControls,
-  DataTable,
-  Section,
-} from "@texturehq/edges";
+import { Avatar, Badge, Card, type Column, DataControls, DataTable, Section } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useExplorer } from "../ExplorerContext";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   getBalancingAuthorityById,
   getIsoById,
@@ -24,7 +15,6 @@ import {
   getUtilityById,
   getUtilityBySlug,
 } from "@/lib/data";
-import { usePowerPlants, filterByUtility } from "@/lib/power-plants";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -37,6 +27,8 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
+import { filterByUtility, usePowerPlants } from "@/lib/power-plants";
+import { useExplorer } from "../ExplorerContext";
 
 interface ServedUtilityRow extends Record<string, unknown> {
   slug: string;
@@ -120,7 +112,10 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   );
 
   const { plants: allPlants } = usePowerPlants();
-  const utilityPowerPlants = useMemo(() => (utility ? filterByUtility(allPlants, utility.id) : []), [utility, allPlants]);
+  const utilityPowerPlants = useMemo(
+    () => (utility ? filterByUtility(allPlants, utility.id) : []),
+    [utility, allPlants]
+  );
 
   const handleServedRowClick = useCallback(
     (row: ServedUtilityRow) => {
@@ -177,7 +172,11 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     return (
       <div className="flex flex-col h-full">
         <div className="flex-none px-4 pt-4 pb-2">
-          <button type="button" onClick={goBack} className="text-sm text-text-muted hover:text-text-body transition-colors mb-2">
+          <button
+            type="button"
+            onClick={goBack}
+            className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
+          >
             &larr; Back
           </button>
         </div>
@@ -203,7 +202,11 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="flex-none px-4 pt-4 pb-2">
-        <button type="button" onClick={goBack} className="text-sm text-text-muted hover:text-text-body transition-colors mb-2">
+        <button
+          type="button"
+          onClick={goBack}
+          className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
+        >
           &larr; Back
         </button>
       </div>
@@ -253,7 +256,12 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
                   <div className="text-xs text-text-muted mb-0.5">Website</div>
                   <div className="text-sm font-medium">
                     {utility.website ? (
-                      <a href={utility.website} target="_blank" rel="noopener noreferrer" className="text-brand-primary hover:underline">
+                      <a
+                        href={utility.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-primary hover:underline"
+                      >
                         {safeHostname(utility.website)}
                       </a>
                     ) : (
@@ -333,9 +341,21 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
                     <div className="col-span-2">
                       <div className="text-xs text-text-muted mb-0.5">Activities</div>
                       <div className="flex gap-1.5 flex-wrap">
-                        {utility.hasGeneration && <Badge size="sm" shape="pill" variant="info">Generation</Badge>}
-                        {utility.hasTransmission && <Badge size="sm" shape="pill" variant="info">Transmission</Badge>}
-                        {utility.hasDistribution && <Badge size="sm" shape="pill" variant="info">Distribution</Badge>}
+                        {utility.hasGeneration && (
+                          <Badge size="sm" shape="pill" variant="info">
+                            Generation
+                          </Badge>
+                        )}
+                        {utility.hasTransmission && (
+                          <Badge size="sm" shape="pill" variant="info">
+                            Transmission
+                          </Badge>
+                        )}
+                        {utility.hasDistribution && (
+                          <Badge size="sm" shape="pill" variant="info">
+                            Distribution
+                          </Badge>
+                        )}
                         {!utility.hasGeneration && !utility.hasTransmission && !utility.hasDistribution && (
                           <span className="text-text-muted">{"\u2014"}</span>
                         )}
@@ -518,9 +538,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
                 </Link>
               ))}
               {utilityPowerPlants.length > 20 && (
-                <div className="text-xs text-text-muted text-center pt-1">
-                  + {utilityPowerPlants.length - 20} more
-                </div>
+                <div className="text-xs text-text-muted text-center pt-1">+ {utilityPowerPlants.length - 20} more</div>
               )}
             </div>
           </Section>

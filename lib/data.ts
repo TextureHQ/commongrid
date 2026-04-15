@@ -5,8 +5,8 @@ import programsData from "@/data/programs.json";
 import regionsData from "@/data/regions.json";
 import rtosData from "@/data/rtos.json";
 import utilitiesData from "@/data/utilities.json";
-import type { BalancingAuthority, Iso, Region, Rto, Utility } from "@/types/entities";
 import type { Changelog } from "@/types/changelog";
+import type { BalancingAuthority, Iso, Region, Rto, Utility } from "@/types/entities";
 import type { Program } from "@/types/programs";
 
 const changelog: Changelog = changelogData as Changelog;

@@ -5,8 +5,8 @@
  * the NEXT_PUBLIC_FF_DB_PRICING_NODES feature flag.
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { getDataSource } from "@/lib/feature-flags";
 import type { IsoRto, PricingNode, PricingNodeType } from "@/types/pricing-nodes";
@@ -36,10 +36,7 @@ function loadJson(): PricingNode[] {
   return _jsonCache;
 }
 
-function applyJsonFilters(
-  nodes: PricingNode[],
-  filters: PricingNodeFilters
-): PricingNode[] {
+function applyJsonFilters(nodes: PricingNode[], filters: PricingNodeFilters): PricingNode[] {
   let result = nodes;
 
   if (filters.iso) {
@@ -53,10 +50,7 @@ function applyJsonFilters(
   }
   if (filters.search) {
     const q = filters.search.toLowerCase();
-    result = result.filter(
-      (n) =>
-        n.name.toLowerCase().includes(q) || n.slug.toLowerCase().includes(q)
-    );
+    result = result.filter((n) => n.name.toLowerCase().includes(q) || n.slug.toLowerCase().includes(q));
   }
 
   return result;
@@ -154,9 +148,7 @@ async function loadBySlugFromDb(slug: string): Promise<PricingNode | null> {
  * Load pricing nodes, optionally filtered.
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_PRICING_NODES flag.
  */
-export async function loadPricingNodes(
-  filters?: PricingNodeFilters
-): Promise<PricingNode[]> {
+export async function loadPricingNodes(filters?: PricingNodeFilters): Promise<PricingNode[]> {
   if (getDataSource("pricingNodes") === "database") {
     return loadFromDb(filters);
   }
@@ -169,9 +161,7 @@ export async function loadPricingNodes(
  * Load a single pricing node by slug.
  * Returns null if not found.
  */
-export async function loadPricingNodeBySlug(
-  slug: string
-): Promise<PricingNode | null> {
+export async function loadPricingNodeBySlug(slug: string): Promise<PricingNode | null> {
   if (getDataSource("pricingNodes") === "database") {
     return loadBySlugFromDb(slug);
   }

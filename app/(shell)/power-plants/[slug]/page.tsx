@@ -4,22 +4,16 @@ import {
   Badge,
   Card,
   InteractiveMap,
-  layer,
   Loader,
+  layer,
   PageLayout,
   Section,
-  StatList,
   type StatItem,
+  StatList,
 } from "@texturehq/edges";
-import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { DataSourceLink } from "@/components/DataSourceLink";
-import { useMemo } from "react";
-import {
-  getBalancingAuthorityById,
-  getUtilityById,
-} from "@/lib/data";
-import { usePowerPlant } from "@/lib/power-plants";
+import { getBalancingAuthorityById, getUtilityById } from "@/lib/data";
 import {
   formatCapacity,
   formatStateName,
@@ -28,6 +22,7 @@ import {
   getFuelCategoryLabel,
   getPlantStatusBadgeVariant,
 } from "@/lib/formatting";
+import { usePowerPlant } from "@/lib/power-plants";
 
 export default function PowerPlantDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -74,9 +69,7 @@ export default function PowerPlantDetailPage() {
       id: "fuelType",
       label: "Fuel Type",
       value: (
-        <Badge variant={getFuelBadgeVariant(plant.fuelCategory)}>
-          {getFuelCategoryLabel(plant.fuelCategory)}
-        </Badge>
+        <Badge variant={getFuelBadgeVariant(plant.fuelCategory)}>{getFuelCategoryLabel(plant.fuelCategory)}</Badge>
       ),
     },
     {

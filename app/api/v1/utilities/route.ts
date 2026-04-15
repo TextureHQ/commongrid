@@ -1,27 +1,13 @@
-import { NextRequest } from "next/server";
-
-import { getDataSource } from "@/lib/feature-flags";
-import { getDb } from "@/lib/db/client";
-import {
-  utilities,
-  isos,
-  rtos,
-  balancingAuthorities,
-} from "@/lib/db/schema";
-import {
-  withRequestId,
-  withErrorHandling,
-  withTiming,
-  generateRequestId,
-} from "@/lib/api/middleware";
-import {
-  jsonResponse,
-  paginatedResponse,
-} from "@/lib/api/response";
+import { and, asc, desc, eq, gt, ilike, lt, or, sql } from "drizzle-orm";
+import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
-import { parsePaginationParams, encodeCursor } from "@/lib/api/pagination";
+import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
+import { encodeCursor, parsePaginationParams } from "@/lib/api/pagination";
+import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
-import { eq, asc, desc, gt, lt, sql, and, ilike, or } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import { balancingAuthorities, isos, rtos, utilities } from "@/lib/db/schema";
+import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // Types for JSON data
@@ -49,10 +35,7 @@ interface JsonUtility {
 // Sparse field selection helper
 // ---------------------------------------------------------------------------
 
-function selectFields(
-  items: Record<string, unknown>[],
-  fields: string[]
-): Record<string, unknown>[] {
+function selectFields(items: Record<string, unknown>[], fields: string[]): Record<string, unknown>[] {
   return items.map((item) => {
     const result: Record<string, unknown> = {};
     for (const field of fields) {
@@ -91,7 +74,7 @@ interface DbFilterParams extends FilterParams {
 // GET /api/v1/utilities — List utilities with filtering
 // ---------------------------------------------------------------------------
 
-async function handleGet(req: Request, ctx: RouteContext) {
+async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
   const source = getDataSource("utilities");
 
@@ -136,8 +119,7 @@ async function handleGet(req: Request, ctx: RouteContext) {
 // ---------------------------------------------------------------------------
 
 async function handleJsonMode(params: FilterParams) {
-  const allUtilities = (await import("@/data/utilities.json"))
-    .default as JsonUtility[];
+  const allUtilities = (await import("@/data/utilities.json")).default as JsonUtility[];
   let filtered = allUtilities;
 
   if (params.segment) {
@@ -148,13 +130,11 @@ async function handleJsonMode(params: FilterParams) {
   }
   if (params.state) {
     const stateUpper = params.state.toUpperCase();
-    filtered = filtered.filter(
-      (u) =>
-        u.jurisdiction !== null &&
-        u.jurisdiction
-          .split(",")
-          .map((s: string) => s.trim())
-          .includes(stateUpper)
+    filtered = filtered.filter((u) =>
+      u.jurisdiction
+        ?.split(",")
+        .map((s: string) => s.trim())
+        .includes(stateUpper)
     );
   }
   if (params.iso) {
@@ -171,8 +151,8 @@ async function handleJsonMode(params: FilterParams) {
     filtered = filtered.filter(
       (u) =>
         u.name.toLowerCase().includes(term) ||
-        (u.eiaName && u.eiaName.toLowerCase().includes(term)) ||
-        (u.shortName && u.shortName.toLowerCase().includes(term))
+        u.eiaName?.toLowerCase().includes(term) ||
+        u.shortName?.toLowerCase().includes(term)
     );
   }
   if (params.hasGeneration !== null) {
@@ -190,10 +170,7 @@ async function handleJsonMode(params: FilterParams) {
 
   // Pagination
   const { limit } = parsePaginationParams(params.url.searchParams);
-  const page = Math.max(
-    1,
-    parseInt(params.url.searchParams.get("page") ?? "1", 10) || 1
-  );
+  const page = Math.max(1, parseInt(params.url.searchParams.get("page") ?? "1", 10) || 1);
   const offset = (page - 1) * limit;
   const paged = filtered.slice(offset, offset + limit);
   const hasMore = offset + limit < filtered.length;
@@ -206,12 +183,7 @@ async function handleJsonMode(params: FilterParams) {
   }
 
   return jsonResponse(
-    paginatedResponse(
-      result,
-      filtered.length,
-      hasMore ? `page:${page + 1}` : null,
-      limit
-    ),
+    paginatedResponse(result, filtered.length, hasMore ? `page:${page + 1}` : null, limit),
     200,
     corsHeaders()
   );
@@ -223,9 +195,7 @@ async function handleJsonMode(params: FilterParams) {
 
 async function handleDatabaseMode(params: DbFilterParams) {
   const db = getDb();
-  const { cursor, limit, sort, order } = parsePaginationParams(
-    params.url.searchParams
-  );
+  const { cursor, limit, sort, order } = parsePaginationParams(params.url.searchParams);
 
   const sortColumn =
     sort === "name"
@@ -246,9 +216,7 @@ async function handleDatabaseMode(params: DbFilterParams) {
     conditions.push(eq(utilities.status, params.status));
   }
   if (params.state) {
-    conditions.push(
-      ilike(utilities.jurisdiction, `%${params.state.toUpperCase()}%`)
-    );
+    conditions.push(ilike(utilities.jurisdiction, `%${params.state.toUpperCase()}%`));
   }
   if (params.iso) {
     conditions.push(eq(utilities.isoId, params.iso));
@@ -260,19 +228,13 @@ async function handleDatabaseMode(params: DbFilterParams) {
     conditions.push(eq(utilities.balancingAuthorityId, params.ba));
   }
   if (params.hasGeneration !== null) {
-    conditions.push(
-      eq(utilities.hasGeneration, params.hasGeneration === "true")
-    );
+    conditions.push(eq(utilities.hasGeneration, params.hasGeneration === "true"));
   }
   if (params.hasTransmission !== null) {
-    conditions.push(
-      eq(utilities.hasTransmission, params.hasTransmission === "true")
-    );
+    conditions.push(eq(utilities.hasTransmission, params.hasTransmission === "true"));
   }
   if (params.hasDistribution !== null) {
-    conditions.push(
-      eq(utilities.hasDistribution, params.hasDistribution === "true")
-    );
+    conditions.push(eq(utilities.hasDistribution, params.hasDistribution === "true"));
   }
 
   // Full-text search
@@ -304,11 +266,10 @@ async function handleDatabaseMode(params: DbFilterParams) {
   // Cursor pagination
   if (cursor) {
     const op = order === "desc" ? lt : gt;
-    conditions.push(op(sortColumn, cursor.s["value"] as string));
+    conditions.push(op(sortColumn, cursor.s.value as string));
   }
 
-  const whereClause =
-    conditions.length > 0 ? and(...conditions) : undefined;
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   let query = db
     .select()
@@ -325,13 +286,7 @@ async function handleDatabaseMode(params: DbFilterParams) {
   const data = hasMore ? rows.slice(0, limit) : rows;
 
   const sortKey =
-    sort === "name"
-      ? "name"
-      : sort === "customerCount"
-        ? "customerCount"
-        : sort === "segment"
-          ? "segment"
-          : "slug";
+    sort === "name" ? "name" : sort === "customerCount" ? "customerCount" : sort === "segment" ? "segment" : "slug";
 
   const nextCursor =
     hasMore && data.length > 0
@@ -347,14 +302,10 @@ async function handleDatabaseMode(params: DbFilterParams) {
   // Count with filter conditions only (no cursor)
   const countConditions = conditions.slice(0, filterConditionCount);
 
-  let countQuery = db
-    .select({ count: sql<number>`count(*)` })
-    .from(utilities);
+  let countQuery = db.select({ count: sql<number>`count(*)` }).from(utilities);
 
   if (countConditions.length > 0) {
-    countQuery = countQuery.where(
-      and(...countConditions)
-    ) as typeof countQuery;
+    countQuery = countQuery.where(and(...countConditions)) as typeof countQuery;
   }
 
   const [{ count }] = await countQuery;
@@ -372,11 +323,7 @@ async function handleDatabaseMode(params: DbFilterParams) {
     resultData = selectFields(resultData, fieldList);
   }
 
-  return jsonResponse(
-    paginatedResponse(resultData, Number(count), nextCursor, limit),
-    200,
-    corsHeaders()
-  );
+  return jsonResponse(paginatedResponse(resultData, Number(count), nextCursor, limit), 200, corsHeaders());
 }
 
 // ---------------------------------------------------------------------------
@@ -395,20 +342,15 @@ async function resolveIncludes(
   const baIds = new Set<string>();
 
   for (const row of data) {
-    if (includes.includes("iso") && row.isoId)
-      isoIds.add(row.isoId as string);
-    if (includes.includes("rto") && row.rtoId)
-      rtoIds.add(row.rtoId as string);
-    if (includes.includes("ba") && row.balancingAuthorityId)
-      baIds.add(row.balancingAuthorityId as string);
+    if (includes.includes("iso") && row.isoId) isoIds.add(row.isoId as string);
+    if (includes.includes("rto") && row.rtoId) rtoIds.add(row.rtoId as string);
+    if (includes.includes("ba") && row.balancingAuthorityId) baIds.add(row.balancingAuthorityId as string);
   }
 
   const [isoMap, rtoMap, baMap] = await Promise.all([
     isoIds.size > 0 ? fetchEntitiesById(db, isos, [...isoIds]) : new Map(),
     rtoIds.size > 0 ? fetchEntitiesById(db, rtos, [...rtoIds]) : new Map(),
-    baIds.size > 0
-      ? fetchEntitiesById(db, balancingAuthorities, [...baIds])
-      : new Map(),
+    baIds.size > 0 ? fetchEntitiesById(db, balancingAuthorities, [...baIds]) : new Map(),
   ]);
 
   return data.map((row) => {
@@ -420,8 +362,7 @@ async function resolveIncludes(
       enriched._rto = rtoMap.get(row.rtoId as string) ?? null;
     }
     if (includes.includes("ba") && row.balancingAuthorityId) {
-      enriched._ba =
-        baMap.get(row.balancingAuthorityId as string) ?? null;
+      enriched._ba = baMap.get(row.balancingAuthorityId as string) ?? null;
     }
     return enriched;
   });
@@ -429,21 +370,15 @@ async function resolveIncludes(
 
 async function fetchEntitiesById(
   db: DbClient,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: Drizzle table type varies by table; using explicit typing would require complex generics
   table: any,
   ids: string[]
 ): Promise<Map<string, Record<string, unknown>>> {
-  const rows = await db
-    .select()
-    .from(table)
-    .where(sql`${table.id} = ANY(${ids})`);
+  const rows = await db.select().from(table).where(sql`${table.id} = ANY(${ids})`);
 
   const map = new Map<string, Record<string, unknown>>();
   for (const row of rows) {
-    map.set(
-      (row as Record<string, unknown>).id as string,
-      row as Record<string, unknown>
-    );
+    map.set((row as Record<string, unknown>).id as string, row as Record<string, unknown>);
   }
   return map;
 }

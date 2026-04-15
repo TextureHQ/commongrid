@@ -8,10 +8,10 @@
  * See docs/specs/persistence-api.md §12.3.
  */
 
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-export function middleware(request: NextRequest): NextResponse {
+export function middleware(_request: NextRequest): NextResponse {
   const response = NextResponse.next();
 
   // Prevent MIME-type sniffing.
@@ -24,10 +24,7 @@ export function middleware(request: NextRequest): NextResponse {
   response.headers.set("X-XSS-Protection", "0");
 
   // Limit referrer information sent to third parties.
-  response.headers.set(
-    "Referrer-Policy",
-    "strict-origin-when-cross-origin"
-  );
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
   return response;
 }

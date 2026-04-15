@@ -20,10 +20,9 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { readJSON, writeJSON } from "./lib";
 
 const EIA_860M_PAGE = "https://www.eia.gov/electricity/data/eia860m/";
-const TEMP_DIR = path.join(os.tmpdir(), "eia860m-sync");
+const _TEMP_DIR = path.join(os.tmpdir(), "eia860m-sync");
 
 async function checkLatestMonth(): Promise<string | null> {
   console.log("  Checking EIA-860M page for latest month...");

@@ -73,7 +73,8 @@ interface ArcGISResponse {
 async function fetchBatch(offset: number): Promise<ArcGISResponse> {
   const params = new URLSearchParams({
     where: "1=1",
-    outFields: "OBJECTID_1,OBJECTID,ID,TYPE,STATUS,NAICS_CODE,SOURCE,OWNER,VOLTAGE,VOLT_CLASS,SUB_1,SUB_2,SHAPE__Len,Shape__Length",
+    outFields:
+      "OBJECTID_1,OBJECTID,ID,TYPE,STATUS,NAICS_CODE,SOURCE,OWNER,VOLTAGE,VOLT_CLASS,SUB_1,SUB_2,SHAPE__Len,Shape__Length",
     f: "geojson",
     resultRecordCount: String(BATCH_SIZE),
     resultOffset: String(offset),

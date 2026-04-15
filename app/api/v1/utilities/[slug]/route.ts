@@ -1,24 +1,13 @@
-import { NextRequest } from "next/server";
-
-import { getDataSource } from "@/lib/feature-flags";
-import { getDb } from "@/lib/db/client";
-import {
-  utilities,
-  isos,
-  rtos,
-  balancingAuthorities,
-} from "@/lib/db/schema";
-import {
-  withRequestId,
-  withErrorHandling,
-  withTiming,
-  generateRequestId,
-} from "@/lib/api/middleware";
-import { jsonResponse } from "@/lib/api/response";
+import { eq } from "drizzle-orm";
+import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { ApiError } from "@/lib/api/errors";
+import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
+import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
-import { eq } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import { balancingAuthorities, isos, rtos, utilities } from "@/lib/db/schema";
+import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/utilities/[slug] — Get utility by slug with optional includes
@@ -47,9 +36,7 @@ async function handleGet(req: Request, ctx: RouteContext) {
 
 async function handleJsonDetail(slug: string, include: string | null) {
   const allUtilities = (await import("@/data/utilities.json")).default;
-  const utility = allUtilities.find(
-    (u: { slug: string }) => u.slug === slug
-  );
+  const utility = allUtilities.find((u: { slug: string }) => u.slug === slug);
 
   if (!utility) {
     throw new ApiError("NOT_FOUND", `Utility '${slug}' not found`);
@@ -61,27 +48,15 @@ async function handleJsonDetail(slug: string, include: string | null) {
 
     if (includes.includes("iso") && utility.isoId) {
       const allIsos = (await import("@/data/isos.json")).default;
-      result._iso =
-        allIsos.find(
-          (i: { id: string }) => i.id === utility.isoId
-        ) ?? null;
+      result._iso = allIsos.find((i: { id: string }) => i.id === utility.isoId) ?? null;
     }
     if (includes.includes("rto") && utility.rtoId) {
       const allRtos = (await import("@/data/rtos.json")).default;
-      result._rto =
-        allRtos.find(
-          (r: { id: string }) => r.id === utility.rtoId
-        ) ?? null;
+      result._rto = allRtos.find((r: { id: string }) => r.id === utility.rtoId) ?? null;
     }
     if (includes.includes("ba") && utility.balancingAuthorityId) {
-      const allBAs = (
-        await import("@/data/balancing-authorities.json")
-      ).default;
-      result._ba =
-        allBAs.find(
-          (b: { id: string }) =>
-            b.id === utility.balancingAuthorityId
-        ) ?? null;
+      const allBAs = (await import("@/data/balancing-authorities.json")).default;
+      result._ba = allBAs.find((b: { id: string }) => b.id === utility.balancingAuthorityId) ?? null;
     }
 
     return jsonResponse({ data: result }, 200, corsHeaders());
@@ -96,11 +71,7 @@ async function handleJsonDetail(slug: string, include: string | null) {
 
 async function handleDatabaseDetail(slug: string, include: string | null) {
   const db = getDb();
-  const [utility] = await db
-    .select()
-    .from(utilities)
-    .where(eq(utilities.slug, slug))
-    .limit(1);
+  const [utility] = await db.select().from(utilities).where(eq(utilities.slug, slug)).limit(1);
 
   if (!utility) {
     throw new ApiError("NOT_FOUND", `Utility '${slug}' not found`);
@@ -141,12 +112,7 @@ async function handleDatabaseDetail(slug: string, include: string | null) {
         db
           .select()
           .from(balancingAuthorities)
-          .where(
-            eq(
-              balancingAuthorities.id,
-              utility.balancingAuthorityId
-            )
-          )
+          .where(eq(balancingAuthorities.id, utility.balancingAuthorityId))
           .limit(1)
           .then(([ba]) => {
             result._ba = ba ?? null;
@@ -163,10 +129,7 @@ async function handleDatabaseDetail(slug: string, include: string | null) {
 
 const handler = withRequestId(withErrorHandling(withTiming(handleGet)));
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   return handler(req, { params: { slug }, requestId: generateRequestId() });
 }

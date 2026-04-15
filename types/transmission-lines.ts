@@ -4,27 +4,21 @@
  */
 
 export type VoltageClass =
-  | "extra-high"   // 345kV+
-  | "high"         // 230–344kV
-  | "medium"       // 115–229kV
-  | "sub-trans"    // 69–114kV
+  | "extra-high" // 345kV+
+  | "high" // 230–344kV
+  | "medium" // 115–229kV
+  | "sub-trans" // 69–114kV
   | "unknown";
 
 export const VoltageClassLabel: Record<VoltageClass, string> = {
   "extra-high": "Extra High Voltage (345kV+)",
-  "high": "High Voltage (230–344kV)",
-  "medium": "Medium Voltage (115–229kV)",
+  high: "High Voltage (230–344kV)",
+  medium: "Medium Voltage (115–229kV)",
   "sub-trans": "Sub-Transmission (69–114kV)",
-  "unknown": "Unknown Voltage",
+  unknown: "Unknown Voltage",
 };
 
-export const VOLTAGE_CLASSES: VoltageClass[] = [
-  "extra-high",
-  "high",
-  "medium",
-  "sub-trans",
-  "unknown",
-];
+export const VOLTAGE_CLASSES: VoltageClass[] = ["extra-high", "high", "medium", "sub-trans", "unknown"];
 
 /**
  * Lightweight metadata record for list/search pages.

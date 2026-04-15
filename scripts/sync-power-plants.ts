@@ -21,7 +21,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import AdmZip from "adm-zip";
 import * as XLSX from "xlsx";
-import { readJSON, slugify, writeJSON } from "./lib";
+import { readJSON, slugify } from "./lib";
 
 const EIA_860_URL = "https://www.eia.gov/electricity/data/eia860/xls/eia8602024.zip";
 const TEMP_DIR = path.join(os.tmpdir(), "eia860-sync");

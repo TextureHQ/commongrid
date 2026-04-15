@@ -4,7 +4,7 @@
  * Provides efficient random-access tile serving from .pmtiles archives.
  * Uses Node.js file handles with caching to avoid re-opening files per request.
  */
-import { open, type FileHandle } from "node:fs/promises";
+import { type FileHandle, open } from "node:fs/promises";
 import { join } from "node:path";
 import { PMTiles } from "pmtiles";
 
@@ -41,6 +41,7 @@ function getArchive(name: string): PMTiles {
     const filePath = join(process.cwd(), "public", "tiles", `${name}.pmtiles`);
     archiveCache.set(name, new PMTiles(new NodeFileSource(filePath)));
   }
+  // biome-ignore lint/style/noNonNullAssertion: value was just set in the if-block above
   return archiveCache.get(name)!;
 }
 
@@ -48,12 +49,7 @@ function getArchive(name: string): PMTiles {
  * Fetch a single MVT tile from a named PMTiles archive.
  * Returns the raw tile bytes or null if the tile doesn't exist.
  */
-export async function getTile(
-  archive: string,
-  z: number,
-  x: number,
-  y: number,
-): Promise<ArrayBuffer | null> {
+export async function getTile(archive: string, z: number, x: number, y: number): Promise<ArrayBuffer | null> {
   const pm = getArchive(archive);
   const result = await pm.getZxy(z, x, y);
   return result ? result.data : null;

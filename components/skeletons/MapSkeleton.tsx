@@ -2,12 +2,7 @@ import { Shimmer } from "./Shimmer";
 
 export function MapSkeleton() {
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-      className="relative"
-    >
+    <div role="status" aria-live="polite" aria-atomic="true" className="relative">
       <span className="sr-only">Loading map...</span>
       <Shimmer className="h-[400px] w-full rounded-lg" />
       {/* Map controls placeholder */}

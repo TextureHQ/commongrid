@@ -1,10 +1,7 @@
 import { getTile } from "@/lib/pmtiles-server";
 import { resolveOverzoom } from "@/lib/tile-utils";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ z: string; x: string; y: string }> },
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ z: string; x: string; y: string }> }) {
   const { z, x, y: yRaw } = await params;
   const yClean = yRaw.replace(/\.pbf$|\.mvt$/, "");
 

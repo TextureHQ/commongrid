@@ -3,8 +3,8 @@
 import { Badge, Card, Section } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import { useEffect, useMemo } from "react";
-import { useExplorer } from "../ExplorerContext";
 import { getAllUtilities, getProgramBySlug, getRegionById } from "@/lib/data";
+import { safeHostname } from "@/lib/geo";
 import {
   AssetTypeLabel,
   CompensationTypeLabel,
@@ -15,7 +15,7 @@ import {
   ProgramOrganizationRole,
   ProgramStatus,
 } from "@/types/programs";
-import { safeHostname } from "@/lib/geo";
+import { useExplorer } from "../ExplorerContext";
 
 export function ProgramDetailPanel({ slug }: { slug: string }) {
   const { goBack, navigateToDetail, setHighlight } = useExplorer();
@@ -68,9 +68,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   }
 
   const adminOrgs = program.organizations.filter((o) => o.role === ProgramOrganizationRole.ADMINISTRATOR);
-  const adminUtilities = adminOrgs
-    .map((o) => utilities.find((u) => u.slug === o.entityId))
-    .filter(Boolean);
+  const adminUtilities = adminOrgs.map((o) => utilities.find((u) => u.slug === o.entityId)).filter(Boolean);
 
   function getStatusVariant(status: string): "success" | "warning" | "default" {
     if (status === ProgramStatus.ACTIVE) return "success";
@@ -106,17 +104,11 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
         <div>
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-lg font-semibold text-text-heading leading-tight">{program.name}</h2>
-            <Badge
-              size="sm"
-              shape="pill"
-              variant={getStatusVariant(program.status)}
-            >
+            <Badge size="sm" shape="pill" variant={getStatusVariant(program.status)}>
               {getStatusLabel(program.status)}
             </Badge>
           </div>
-          {program.description && (
-            <p className="text-sm text-text-muted mt-2 leading-relaxed">{program.description}</p>
-          )}
+          {program.description && <p className="text-sm text-text-muted mt-2 leading-relaxed">{program.description}</p>}
         </div>
 
         {/* Overview */}
@@ -258,9 +250,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
                             {CompensationUnitLabel[tier.unit as keyof typeof CompensationUnitLabel] ?? tier.unit}
                           </span>
                         </div>
-                        {tier.description && (
-                          <div className="text-xs text-text-muted mt-0.5">{tier.description}</div>
-                        )}
+                        {tier.description && <div className="text-xs text-text-muted mt-0.5">{tier.description}</div>}
                       </div>
                       <Badge size="sm" shape="pill" variant="default">
                         {CompensationTypeLabel[tier.type as keyof typeof CompensationTypeLabel] ?? tier.type}

@@ -8,12 +8,12 @@
 
 import {
   ApiError,
+  jsonResponse,
+  type RouteContext,
+  withCors,
   withErrorHandling,
   withRequestId,
   withTiming,
-  withCors,
-  jsonResponse,
-  type RouteContext,
 } from "@/lib/api";
 import { loadProgramBySlug } from "@/lib/data/programs";
 import { getDataSource } from "@/lib/feature-flags";
@@ -54,12 +54,7 @@ async function loadVersionsFromDb(entityId: string): Promise<VersionEntry[]> {
       delta: entityVersions.delta,
     })
     .from(entityVersions)
-    .where(
-      and(
-        eq(entityVersions.entityType, "program"),
-        eq(entityVersions.entityId, entityId)
-      )
-    )
+    .where(and(eq(entityVersions.entityType, "program"), eq(entityVersions.entityId, entityId)))
     .orderBy(asc(entityVersions.versionNumber));
 
   return rows.map((row) => ({
@@ -77,39 +72,38 @@ async function loadVersionsFromDb(entityId: string): Promise<VersionEntry[]> {
 // Route handler
 // ---------------------------------------------------------------------------
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ slug: string }> }
-): Promise<Response> {
+export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
 
   return withRequestId(
     withErrorHandling(
-      withTiming(withCors(async (r: Request, _ctx: RouteContext) => {
-        // Verify the program exists (works in both JSON and DB mode)
-        const program = await loadProgramBySlug(slug);
-        if (!program) {
-          throw new ApiError("NOT_FOUND", `Program '${slug}' not found`);
-        }
-
-        // Version history is only available in database mode
-        let versions: VersionEntry[] = [];
-        if (getDataSource("programs") === "database") {
-          versions = await loadVersionsFromDb(program.id);
-        }
-
-        return jsonResponse(
-          {
-            data: versions,
-            meta: { source: getDataSource("programs") },
-          },
-          200,
-          {
-            "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-            "Cache-Tag": `program:${slug}:versions`,
+      withTiming(
+        withCors(async (_r: Request, _ctx: RouteContext) => {
+          // Verify the program exists (works in both JSON and DB mode)
+          const program = await loadProgramBySlug(slug);
+          if (!program) {
+            throw new ApiError("NOT_FOUND", `Program '${slug}' not found`);
           }
-        );
-      }))
+
+          // Version history is only available in database mode
+          let versions: VersionEntry[] = [];
+          if (getDataSource("programs") === "database") {
+            versions = await loadVersionsFromDb(program.id);
+          }
+
+          return jsonResponse(
+            {
+              data: versions,
+              meta: { source: getDataSource("programs") },
+            },
+            200,
+            {
+              "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+              "Cache-Tag": `program:${slug}:versions`,
+            }
+          );
+        })
+      )
     )
   )(req, { requestId: "" });
 }

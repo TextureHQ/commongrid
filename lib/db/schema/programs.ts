@@ -1,13 +1,4 @@
-import {
-  pgTable,
-  text,
-  integer,
-  doublePrecision,
-  timestamp,
-  jsonb,
-  index,
-  customType,
-} from "drizzle-orm/pg-core";
+import { customType, doublePrecision, index, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * Custom tsvector type for full-text search columns.
@@ -77,12 +68,8 @@ export const programs = pgTable(
     submittedBy: text("submitted_by"),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     reviewedBy: text("reviewed_by"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     version: integer("version").notNull().default(1),
   },
   (table) => [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { TransmissionLine, VoltageClass } from "@/types/transmission-lines";
 
 /**
@@ -89,16 +89,13 @@ export function getVoltageLabel(voltage: number | null): string {
 
 export function filterByVoltageClass(
   lines: TransmissionLine[],
-  voltageClass: VoltageClass | "all",
+  voltageClass: VoltageClass | "all"
 ): TransmissionLine[] {
   if (voltageClass === "all") return lines;
   return lines.filter((l) => l.voltageClass === voltageClass);
 }
 
-export function filterByStatus(
-  lines: TransmissionLine[],
-  status: string,
-): TransmissionLine[] {
+export function filterByStatus(lines: TransmissionLine[], status: string): TransmissionLine[] {
   if (status === "all") return lines;
   return lines.filter((l) => l.status.toLowerCase().includes(status.toLowerCase()));
 }

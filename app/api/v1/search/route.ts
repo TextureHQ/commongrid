@@ -17,19 +17,8 @@
 
 import { z } from "zod";
 
-import {
-  ApiError,
-  withErrorHandling,
-  withRequestId,
-  withTiming,
-  jsonResponse,
-  corsHeaders,
-} from "@/lib/api";
-import {
-  searchAll,
-  type EntityType,
-  type SearchResult,
-} from "@/lib/data/search";
+import { ApiError, corsHeaders, jsonResponse, withErrorHandling, withRequestId, withTiming } from "@/lib/api";
+import { type EntityType, type SearchResult, searchAll } from "@/lib/data/search";
 
 // ---------------------------------------------------------------------------
 // Validation schema

@@ -1,7 +1,7 @@
 "use client";
 
 import { SegmentedControl, type SegmentOption } from "@texturehq/edges";
-import { useExplorer, type LayoutMode } from "./ExplorerContext";
+import { type LayoutMode, useExplorer } from "./ExplorerContext";
 
 const OPTIONS: SegmentOption[] = [
   { id: "map", label: "Map" },

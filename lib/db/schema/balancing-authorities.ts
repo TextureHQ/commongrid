@@ -1,10 +1,4 @@
-import {
-  pgTable,
-  text,
-  integer,
-  timestamp,
-  index,
-} from "drizzle-orm/pg-core";
+import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { isos } from "./isos";
 import { regions } from "./regions";
 
@@ -40,12 +34,8 @@ export const balancingAuthorities = pgTable(
     submittedBy: text("submitted_by"),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     reviewedBy: text("reviewed_by"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     version: integer("version").notNull().default(1),
   },
   (table) => [
@@ -56,7 +46,5 @@ export const balancingAuthorities = pgTable(
   ]
 );
 
-export type BalancingAuthoritySelect =
-  typeof balancingAuthorities.$inferSelect;
-export type BalancingAuthorityInsert =
-  typeof balancingAuthorities.$inferInsert;
+export type BalancingAuthoritySelect = typeof balancingAuthorities.$inferSelect;
+export type BalancingAuthorityInsert = typeof balancingAuthorities.$inferInsert;

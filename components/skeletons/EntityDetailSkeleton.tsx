@@ -13,10 +13,8 @@ export function EntityDetailSkeleton() {
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={`stat-${i}`}
-              className="space-y-2 rounded-lg border border-border-default p-4"
-            >
+            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholder, never reorders
+            <div key={`stat-${i}`} className="space-y-2 rounded-lg border border-border-default p-4">
               <Shimmer className="h-3 w-20" />
               <Shimmer className="h-6 w-16" />
             </div>

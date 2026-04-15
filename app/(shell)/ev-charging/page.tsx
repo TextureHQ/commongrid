@@ -1,26 +1,19 @@
 "use client";
 
-import {
-  Badge,
-  type Column,
-  DataControls,
-  DataTable,
-  Loader,
-  PageLayout,
-} from "@texturehq/edges";
+import { Badge, type Column, DataControls, DataTable, Loader, PageLayout } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useMemo, useState } from "react";
+import { DataSourceLink } from "@/components/DataSourceLink";
+import { SearchInput } from "@/components/SearchInput";
 import { useEvCharging } from "@/lib/ev-charging";
 import { useFuseSearch } from "@/lib/search";
-import { SearchInput } from "@/components/SearchInput";
 import {
   type EVStation,
+  getAccessLabel,
   getNetworkColor,
   getNetworkShortName,
   getStatusLabel,
-  getAccessLabel,
   getTotalConnectors,
 } from "@/types/ev-charging";
 
@@ -46,19 +39,27 @@ const sortOptions = [
 
 function getStatusBadgeVariant(status: string): "success" | "info" | "warning" | "neutral" {
   switch (status) {
-    case "E": return "success";
-    case "P": return "info";
-    case "T": return "warning";
-    default: return "neutral";
+    case "E":
+      return "success";
+    case "P":
+      return "info";
+    case "T":
+      return "warning";
+    default:
+      return "neutral";
   }
 }
 
 function getAccessBadgeVariant(access: string): "info" | "neutral" | "warning" {
   switch (access) {
-    case "public": return "info";
-    case "private": return "neutral";
-    case "restricted": return "warning";
-    default: return "neutral";
+    case "public":
+      return "info";
+    case "private":
+      return "neutral";
+    case "restricted":
+      return "warning";
+    default:
+      return "neutral";
   }
 }
 
@@ -130,9 +131,7 @@ export default function EVChargingPage() {
       const [field, direction] = sortValue.split(":");
       if (field === "name") {
         result = [...result].sort((a, b) =>
-          direction === "asc"
-            ? a.stationName.localeCompare(b.stationName)
-            : b.stationName.localeCompare(a.stationName)
+          direction === "asc" ? a.stationName.localeCompare(b.stationName) : b.stationName.localeCompare(a.stationName)
         );
       } else if (field === "connectors") {
         result = [...result].sort((a, b) => getTotalConnectors(b) - getTotalConnectors(a));
@@ -202,7 +201,9 @@ export default function EVChargingPage() {
         label: "Location",
         accessor: "city",
         render: (_value: unknown, row: EVStationRow) => (
-          <span className="text-text-body">{row.city}, {row.state}</span>
+          <span className="text-text-body">
+            {row.city}, {row.state}
+          </span>
         ),
         mobile: { priority: 3, format: "secondary" },
       },
@@ -248,7 +249,11 @@ export default function EVChargingPage() {
 
   if (isLoading) {
     return (
-      <PageLayout className="flex flex-col h-full overflow-hidden bg-background-default" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
+      <PageLayout
+        className="flex flex-col h-full overflow-hidden bg-background-default"
+        paddingYClass="pt-8 md:pt-12"
+        paddingXClass="px-4"
+      >
         <div className="flex-none">
           <PageLayout.Header title="EV Charging Stations" sticky={true} />
         </div>
@@ -260,7 +265,11 @@ export default function EVChargingPage() {
   }
 
   return (
-    <PageLayout className="flex flex-col h-full overflow-hidden bg-background-default" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
+    <PageLayout
+      className="flex flex-col h-full overflow-hidden bg-background-default"
+      paddingYClass="pt-8 md:pt-12"
+      paddingXClass="px-4"
+    >
       <div className="flex-none">
         <PageLayout.Header
           title="EV Charging Stations"

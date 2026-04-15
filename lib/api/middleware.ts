@@ -11,11 +11,11 @@
  * See docs/specs/persistence-api.md §4.10 and §12.4.
  */
 
-import { ApiError, formatError } from "./errors";
-import type { RouteContext, RouteHandler } from "./types";
-import { withCors } from "./cors";
-import { checkRateLimit, rateLimitHeaders, rateLimitResponse } from "./rate-limit";
 import { validateApiKey } from "./auth";
+import { withCors } from "./cors";
+import { ApiError, formatError } from "./errors";
+import { checkRateLimit, rateLimitHeaders, rateLimitResponse } from "./rate-limit";
+import type { RouteContext, RouteHandler } from "./types";
 
 // ---------------------------------------------------------------------------
 // Request ID
@@ -56,9 +56,7 @@ export function withErrorHandling(handler: RouteHandler): RouteHandler {
       const requestId = ctx.requestId ?? generateRequestId();
 
       if (err instanceof ApiError) {
-        console.error(
-          `[${requestId}] ApiError ${err.code}: ${err.message}`
-        );
+        console.error(`[${requestId}] ApiError ${err.code}: ${err.message}`);
         return Response.json(formatError(err, requestId), {
           status: err.status,
           headers: { "X-Request-Id": requestId },
@@ -67,10 +65,7 @@ export function withErrorHandling(handler: RouteHandler): RouteHandler {
 
       // Unexpected error — log the full stack, return a safe message.
       console.error(`[${requestId}] Unexpected error:`, err);
-      const internal = new ApiError(
-        "INTERNAL_ERROR",
-        "An unexpected error occurred"
-      );
+      const internal = new ApiError("INTERNAL_ERROR", "An unexpected error occurred");
       return Response.json(formatError(internal, requestId), {
         status: 500,
         headers: { "X-Request-Id": requestId },
@@ -98,9 +93,7 @@ export function withTiming(handler: RouteHandler): RouteHandler {
 
     if (elapsed > 200) {
       const url = new URL(req.url).pathname;
-      console.warn(
-        `[${ctx.requestId ?? "?"}] Slow request: ${req.method} ${url} took ${ms}ms`
-      );
+      console.warn(`[${ctx.requestId ?? "?"}] Slow request: ${req.method} ${url} took ${ms}ms`);
     }
 
     return response;
@@ -134,34 +127,21 @@ export interface ApiMiddlewareOptions {
  *
  * Rate-limit headers are appended to every successful response.
  */
-export function withApiMiddleware(
-  handler: RouteHandler,
-  options: ApiMiddlewareOptions = {}
-): RouteHandler {
-  const { requireAuth = false, resource = "", action = "", rateLimit = true } =
-    options;
+export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareOptions = {}): RouteHandler {
+  const { requireAuth = false, resource = "", action = "", rateLimit = true } = options;
 
-  const core: RouteHandler = async (
-    req: Request,
-    ctx: RouteContext
-  ): Promise<Response> => {
+  const core: RouteHandler = async (req: Request, ctx: RouteContext): Promise<Response> => {
     const authHeader = req.headers.get("Authorization");
     const isAuthenticated = !!authHeader;
     const method = req.method;
-    const isWrite =
-      method === "POST" ||
-      method === "PUT" ||
-      method === "PATCH" ||
-      method === "DELETE";
+    const isWrite = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
     const isBulk = new URL(req.url).pathname.includes("/bulk");
 
     // ── Rate limiting ──────────────────────────────────────────────────────
     let rlResult: Awaited<ReturnType<typeof checkRateLimit>> | null = null;
 
     if (rateLimit) {
-      const ip =
-        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-        "unknown";
+      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
       const identifier = isAuthenticated ? `auth:${authHeader}` : `ip:${ip}`;
 
       rlResult = await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk);

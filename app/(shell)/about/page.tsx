@@ -4,15 +4,43 @@ import { Badge, Card, PageLayout, Section } from "@texturehq/edges";
 import Link from "next/link";
 
 const dataSources = [
-  { name: "EIA-860", description: "Annual Electric Generator Report — 15,082 power plants, generator details, fuel types, and capacity data" },
-  { name: "EIA-861", description: "Annual electric power industry report — utility ownership, customers, sales, and revenue data" },
-  { name: "HIFLD", description: "Homeland Infrastructure Foundation-Level Data — electric service territory boundaries and 52,000+ transmission line segments" },
-  { name: "DOE AFDC", description: "Alternative Fuels Data Center — 85,000+ US EV charging stations with network, connector, and access data. Updated weekly." },
-  { name: "CEC", description: "California Energy Commission — CCA territory data and California-specific utility information" },
-  { name: "CAISO OASIS", description: "California ISO Open Access Same-time Information System — pricing node definitions and wholesale market reference data" },
-  { name: "ISO/RTO Public Data", description: "Public pricing node, zone, and hub data from CAISO, PJM, ERCOT, MISO, NYISO, ISO-NE, and SPP" },
+  {
+    name: "EIA-860",
+    description:
+      "Annual Electric Generator Report — 15,082 power plants, generator details, fuel types, and capacity data",
+  },
+  {
+    name: "EIA-861",
+    description: "Annual electric power industry report — utility ownership, customers, sales, and revenue data",
+  },
+  {
+    name: "HIFLD",
+    description:
+      "Homeland Infrastructure Foundation-Level Data — electric service territory boundaries and 52,000+ transmission line segments",
+  },
+  {
+    name: "DOE AFDC",
+    description:
+      "Alternative Fuels Data Center — 85,000+ US EV charging stations with network, connector, and access data. Updated weekly.",
+  },
+  {
+    name: "CEC",
+    description: "California Energy Commission — CCA territory data and California-specific utility information",
+  },
+  {
+    name: "CAISO OASIS",
+    description:
+      "California ISO Open Access Same-time Information System — pricing node definitions and wholesale market reference data",
+  },
+  {
+    name: "ISO/RTO Public Data",
+    description: "Public pricing node, zone, and hub data from CAISO, PJM, ERCOT, MISO, NYISO, ISO-NE, and SPP",
+  },
   { name: "FERC", description: "Federal Energy Regulatory Commission — ISO/RTO boundaries and wholesale market data" },
-  { name: "State PUC Records", description: "State Public Utility Commission filings — rate structures and regulatory data" },
+  {
+    name: "State PUC Records",
+    description: "State Public Utility Commission filings — rate structures and regulatory data",
+  },
 ];
 
 const dataHighlights = [
@@ -38,17 +66,28 @@ export default function AboutPage() {
             <Card.Content>
               <div className="space-y-4 text-text-body leading-relaxed">
                 <p className="text-lg">
-                  <strong className="text-text-heading">CommonGrid</strong> is the open-source energy infrastructure dataset built by{" "}
-                  <a href="https://texturehq.com" target="_blank" rel="noopener noreferrer" className="text-brand-primary hover:underline">
+                  <strong className="text-text-heading">CommonGrid</strong> is the open-source energy infrastructure
+                  dataset built by{" "}
+                  <a
+                    href="https://texturehq.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-primary hover:underline"
+                  >
                     Texture
                   </a>
-                  . It exists because the data that powers America&rsquo;s energy system shouldn&rsquo;t be this hard to find.
+                  . It exists because the data that powers America&rsquo;s energy system shouldn&rsquo;t be this hard to
+                  find.
                 </p>
                 <p>
-                  Utility territories are buried in PDFs. Rate structures are scattered across regulatory filings. Grid operator boundaries? Nobody agrees on those. If you&rsquo;ve ever tried to answer a simple question like <em>&ldquo;which utility serves this address?&rdquo;</em> — you know the pain.
+                  Utility territories are buried in PDFs. Rate structures are scattered across regulatory filings. Grid
+                  operator boundaries? Nobody agrees on those. If you&rsquo;ve ever tried to answer a simple question
+                  like <em>&ldquo;which utility serves this address?&rdquo;</em> — you know the pain.
                 </p>
                 <p>
-                  Texture spent years pulling data from EIA, NOAA, HIFLD, FERC, and hundreds of public sources to build the most comprehensive energy infrastructure dataset available. Now we&rsquo;re open-sourcing it: browse it, build on it, contribute back.
+                  Texture spent years pulling data from EIA, NOAA, HIFLD, FERC, and hundreds of public sources to build
+                  the most comprehensive energy infrastructure dataset available. Now we&rsquo;re open-sourcing it:
+                  browse it, build on it, contribute back.
                 </p>
               </div>
             </Card.Content>
@@ -60,7 +99,10 @@ export default function AboutPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4">
             {dataHighlights.map((item) => (
               <Link key={item.label} href={item.href} className="block group">
-                <Card variant="outlined" className="h-full group-hover:border-brand-primary/50 group-hover:shadow-sm transition-all">
+                <Card
+                  variant="outlined"
+                  className="h-full group-hover:border-brand-primary/50 group-hover:shadow-sm transition-all"
+                >
                   <Card.Content>
                     <div className="text-2xl mb-2">{item.icon}</div>
                     <div className="text-sm text-text-muted mb-1">{item.label}</div>
@@ -97,30 +139,47 @@ export default function AboutPage() {
             <Card.Content>
               <div className="space-y-4 text-text-body leading-relaxed">
                 <p className="text-lg">
-                  <strong className="text-text-heading">CommonGrid isn&rsquo;t just our project — it&rsquo;s yours.</strong>
+                  <strong className="text-text-heading">
+                    CommonGrid isn&rsquo;t just our project — it&rsquo;s yours.
+                  </strong>
                 </p>
                 <p>
-                  The best open datasets are built by communities. Like OpenStreetMap proved that millions of contributors can map the world better than any single company, we believe the energy industry&rsquo;s data should be just as accessible and community-maintained.
+                  The best open datasets are built by communities. Like OpenStreetMap proved that millions of
+                  contributors can map the world better than any single company, we believe the energy industry&rsquo;s
+                  data should be just as accessible and community-maintained.
                 </p>
                 <p>
-                  We need your help. Whether you work at a utility, a research lab, a state PUC, or you&rsquo;re just a data nerd who cares about the grid — there&rsquo;s a way to contribute:
+                  We need your help. Whether you work at a utility, a research lab, a state PUC, or you&rsquo;re just a
+                  data nerd who cares about the grid — there&rsquo;s a way to contribute:
                 </p>
                 <ul className="space-y-2 ml-1">
                   <li className="flex gap-2">
                     <span className="flex-none">📊</span>
-                    <span><strong>Submit data corrections</strong> — spot a wrong address, outdated customer count, or missing utility? Open an issue or PR.</span>
+                    <span>
+                      <strong>Submit data corrections</strong> — spot a wrong address, outdated customer count, or
+                      missing utility? Open an issue or PR.
+                    </span>
                   </li>
                   <li className="flex gap-2">
                     <span className="flex-none">🗺️</span>
-                    <span><strong>Contribute new data sources</strong> — know of a public dataset we&rsquo;re missing? State-level data, municipal records, international grids? We want it.</span>
+                    <span>
+                      <strong>Contribute new data sources</strong> — know of a public dataset we&rsquo;re missing?
+                      State-level data, municipal records, international grids? We want it.
+                    </span>
                   </li>
                   <li className="flex gap-2">
                     <span className="flex-none">🔧</span>
-                    <span><strong>Improve the tools</strong> — better sync scripts, new visualizations, data validation — all contributions welcome.</span>
+                    <span>
+                      <strong>Improve the tools</strong> — better sync scripts, new visualizations, data validation —
+                      all contributions welcome.
+                    </span>
                   </li>
                   <li className="flex gap-2">
                     <span className="flex-none">🐛</span>
-                    <span><strong>Report issues</strong> — even just flagging that something looks wrong is incredibly valuable.</span>
+                    <span>
+                      <strong>Report issues</strong> — even just flagging that something looks wrong is incredibly
+                      valuable.
+                    </span>
                   </li>
                 </ul>
                 <div className="flex flex-wrap gap-3 pt-2">
@@ -152,11 +211,15 @@ export default function AboutPage() {
             <Card.Content>
               <div className="space-y-4 text-text-body leading-relaxed">
                 <div className="flex items-center gap-2">
-                  <Badge size="sm" shape="pill" variant="warning">Early Access</Badge>
+                  <Badge size="sm" shape="pill" variant="warning">
+                    Early Access
+                  </Badge>
                   <span className="text-text-muted text-sm">Actively growing</span>
                 </div>
                 <p>
-                  CommonGrid is under active development. We&rsquo;re continuously adding new data sources, improving data quality, and expanding coverage. Contributions are welcome — whether that&rsquo;s reporting data issues, adding new sources, or improving the explorer.
+                  CommonGrid is under active development. We&rsquo;re continuously adding new data sources, improving
+                  data quality, and expanding coverage. Contributions are welcome — whether that&rsquo;s reporting data
+                  issues, adding new sources, or improving the explorer.
                 </p>
                 <div className="flex flex-wrap gap-3 pt-2">
                   <a

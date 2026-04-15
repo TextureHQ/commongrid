@@ -1,13 +1,4 @@
-import {
-  pgTable,
-  text,
-  integer,
-  timestamp,
-  jsonb,
-  bigserial,
-  index,
-  unique,
-} from "drizzle-orm/pg-core";
+import { bigserial, index, integer, jsonb, pgTable, text, timestamp, unique } from "drizzle-orm/pg-core";
 
 /**
  * Entity Versions (Delta-Based)
@@ -38,9 +29,7 @@ export const entityVersions = pgTable(
     delta: jsonb("delta"),
 
     changedBy: text("changed_by"), // who made this change
-    changedAt: timestamp("changed_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
     changeType: text("change_type").notNull(), // 'create', 'update', 'delete'
     changeSummary: text("change_summary"), // human-readable summary
   },

@@ -7,7 +7,7 @@
  * See docs/specs/persistence-api.md §4.2 for the full design.
  */
 
-import { createHmac } from "crypto";
+import { createHmac } from "node:crypto";
 
 import { ApiError } from "./errors";
 
@@ -31,19 +31,13 @@ export interface CursorV1 {
 function getSecret(): string {
   const secret = process.env.CURSOR_SECRET;
   if (!secret) {
-    throw new ApiError(
-      "INTERNAL_ERROR",
-      "CURSOR_SECRET environment variable is not set"
-    );
+    throw new ApiError("INTERNAL_ERROR", "CURSOR_SECRET environment variable is not set");
   }
   return secret;
 }
 
 function sign(payload: string): string {
-  return createHmac("sha256", getSecret())
-    .update(payload)
-    .digest("hex")
-    .slice(0, 16);
+  return createHmac("sha256", getSecret()).update(payload).digest("hex").slice(0, 16);
 }
 
 // ---------------------------------------------------------------------------
@@ -73,9 +67,7 @@ export function decodeCursor(cursor: string): CursorV1 {
   }
 
   try {
-    return JSON.parse(
-      Buffer.from(payload, "base64url").toString()
-    ) as CursorV1;
+    return JSON.parse(Buffer.from(payload, "base64url").toString()) as CursorV1;
   } catch {
     throw new ApiError("BAD_REQUEST", "Malformed cursor payload");
   }
@@ -99,17 +91,13 @@ export interface PaginationParams {
  * so route handlers can get decoded cursor data early. For full validation,
  * prefer the Zod `paginationSchema` in `validation.ts`.
  */
-export function parsePaginationParams(
-  searchParams: URLSearchParams
-): PaginationParams {
+export function parsePaginationParams(searchParams: URLSearchParams): PaginationParams {
   const rawCursor = searchParams.get("cursor");
   const rawLimit = searchParams.get("limit");
   const rawSort = searchParams.get("sort");
   const rawOrder = searchParams.get("order");
 
-  const limit = rawLimit
-    ? Math.min(Math.max(parseInt(rawLimit, 10) || 50, 1), 200)
-    : 50;
+  const limit = rawLimit ? Math.min(Math.max(parseInt(rawLimit, 10) || 50, 1), 200) : 50;
   const order = rawOrder === "desc" ? "desc" : "asc";
 
   return {

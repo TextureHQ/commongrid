@@ -5,27 +5,20 @@ import Fuse from "fuse.js";
 import { useRouter } from "next/navigation";
 import {
   createContext,
+  type KeyboardEvent,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
-  type ReactNode,
 } from "react";
-import {
-  getAllBalancingAuthorities,
-  getAllIsos,
-  getAllPrograms,
-  getAllRtos,
-  getAllUtilities,
-} from "@/lib/data";
-import type { BalancingAuthority, Iso, Rto, Utility } from "@/types/entities";
-import type { Program } from "@/types/programs";
-import type { PricingNode } from "@/types/pricing-nodes";
+import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getAllRtos, getAllUtilities } from "@/lib/data";
+import type { BalancingAuthority, Iso, PowerPlant, Rto, Utility } from "@/types/entities";
 import type { EVStation } from "@/types/ev-charging";
-import type { PowerPlant } from "@/types/entities";
+import type { PricingNode } from "@/types/pricing-nodes";
+import type { Program } from "@/types/programs";
 
 // ---------------------------------------------------------------------------
 // Context
@@ -48,11 +41,7 @@ export function GlobalSearchProvider({ children }: { children: ReactNode }) {
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
 
-  return (
-    <GlobalSearchContext.Provider value={{ isOpen, open, close }}>
-      {children}
-    </GlobalSearchContext.Provider>
-  );
+  return <GlobalSearchContext.Provider value={{ isOpen, open, close }}>{children}</GlobalSearchContext.Provider>;
 }
 
 export function useGlobalSearch(): GlobalSearchContextValue {
@@ -63,15 +52,7 @@ export function useGlobalSearch(): GlobalSearchContextValue {
 // Search result types
 // ---------------------------------------------------------------------------
 
-type EntityKind =
-  | "utility"
-  | "iso"
-  | "rto"
-  | "ba"
-  | "power-plant"
-  | "ev-station"
-  | "pricing-node"
-  | "program";
+type EntityKind = "utility" | "iso" | "rto" | "ba" | "power-plant" | "ev-station" | "pricing-node" | "program";
 
 interface SearchResult {
   kind: EntityKind;
@@ -363,18 +344,9 @@ export function GlobalSearchModal() {
   const programFuse = useMemo(() => buildProgramFuse(programs), [programs]);
 
   // Build tier-2 Fuse indices once data is loaded
-  const plantFuse = useMemo(
-    () => (plants ? buildPlantFuse(plants) : null),
-    [plants]
-  );
-  const stationFuse = useMemo(
-    () => (stations ? buildStationFuse(stations) : null),
-    [stations]
-  );
-  const pricingNodeFuse = useMemo(
-    () => (pricingNodes ? buildPricingNodeFuse(pricingNodes) : null),
-    [pricingNodes]
-  );
+  const plantFuse = useMemo(() => (plants ? buildPlantFuse(plants) : null), [plants]);
+  const stationFuse = useMemo(() => (stations ? buildStationFuse(stations) : null), [stations]);
+  const pricingNodeFuse = useMemo(() => (pricingNodes ? buildPricingNodeFuse(pricingNodes) : null), [pricingNodes]);
 
   // Focus input on open
   useEffect(() => {
@@ -454,9 +426,9 @@ export function GlobalSearchModal() {
     return () => {
       cancelled = true;
     };
-  // Only run when modal opens; we intentionally don't re-run when plants/stations/pricingNodes change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+    // Only run when modal opens; we intentionally don't re-run when plants/stations/pricingNodes change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, plants, pricingNodes, stations]);
 
   // Escape key closes modal
   useEffect(() => {
@@ -492,13 +464,22 @@ export function GlobalSearchModal() {
       .slice(0, MAX_PER_KIND)
       .map((r) => baToResult(r.item));
     const plantResults = plantFuse
-      ? plantFuse.search(q).slice(0, MAX_PER_KIND).map((r) => plantToResult(r.item))
+      ? plantFuse
+          .search(q)
+          .slice(0, MAX_PER_KIND)
+          .map((r) => plantToResult(r.item))
       : [];
     const stationResults = stationFuse
-      ? stationFuse.search(q).slice(0, MAX_PER_KIND).map((r) => stationToResult(r.item))
+      ? stationFuse
+          .search(q)
+          .slice(0, MAX_PER_KIND)
+          .map((r) => stationToResult(r.item))
       : [];
     const pricingNodeResults = pricingNodeFuse
-      ? pricingNodeFuse.search(q).slice(0, MAX_PER_KIND).map((r) => pricingNodeToResult(r.item))
+      ? pricingNodeFuse
+          .search(q)
+          .slice(0, MAX_PER_KIND)
+          .map((r) => pricingNodeToResult(r.item))
       : [];
     const programResults = programFuse
       .search(q)
@@ -517,28 +498,19 @@ export function GlobalSearchModal() {
     );
 
     return out.slice(0, MAX_TOTAL);
-  }, [
-    query,
-    utilityFuse,
-    isoFuse,
-    rtoFuse,
-    baFuse,
-    plantFuse,
-    stationFuse,
-    pricingNodeFuse,
-    programFuse,
-  ]);
+  }, [query, utilityFuse, isoFuse, rtoFuse, baFuse, plantFuse, stationFuse, pricingNodeFuse, programFuse]);
 
   // Group results by kind (maintain KIND_ORDER order)
   const grouped = useMemo<Array<{ kind: EntityKind; label: string; items: SearchResult[] }>>(() => {
     const map = new Map<EntityKind, SearchResult[]>();
     for (const r of results) {
       if (!map.has(r.kind)) map.set(r.kind, []);
-      map.get(r.kind)!.push(r);
+      map.get(r.kind)?.push(r);
     }
     return KIND_ORDER.filter((k) => map.has(k)).map((k) => ({
       kind: k,
       label: KIND_LABELS[k],
+      // biome-ignore lint/style/noNonNullAssertion: map.has(k) was checked in the filter above
       items: map.get(k)!,
     }));
   }, [results]);
@@ -546,7 +518,7 @@ export function GlobalSearchModal() {
   // Reset active index when results change
   useEffect(() => {
     setActiveIndex(0);
-  }, [results]);
+  }, []);
 
   const navigateTo = useCallback(
     (result: SearchResult) => {
@@ -618,6 +590,7 @@ export function GlobalSearchModal() {
       `}</style>
 
       {/* Modal — full-screen below nav on mobile, floating centered on desktop */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: event stops propagation to prevent close-on-outside-click */}
       <div
         className="og-search-modal-wrapper fixed z-50"
         style={{
@@ -632,12 +605,15 @@ export function GlobalSearchModal() {
           style={{
             height: "calc(100dvh - 3.5rem)",
             background: "var(--color-background-surface)",
-            boxShadow: "0 32px 64px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.08)",
+            boxShadow:
+              "0 32px 64px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}
         >
-
           {/* Search input */}
-          <div className="flex items-center gap-3 px-4 sm:px-5 border-b border-border-default flex-none" style={{ height: 52 }}>
+          <div
+            className="flex items-center gap-3 px-4 sm:px-5 border-b border-border-default flex-none"
+            style={{ height: 52 }}
+          >
             <Icon name="MagnifyingGlass" size={18} className="text-text-muted flex-none" />
             <input
               ref={inputRef}
@@ -674,6 +650,7 @@ export function GlobalSearchModal() {
                   Cancel
                 </button>
               )}
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: kbd visually acts as a dismiss hint, onClick is non-critical */}
               <kbd
                 onClick={close}
                 className="hidden sm:flex items-center px-2 py-1 rounded-md border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[11px] font-mono cursor-pointer hover:bg-border-default transition-colors select-none"
@@ -695,23 +672,34 @@ export function GlobalSearchModal() {
                   <button
                     key={link.href}
                     type="button"
-                    onClick={() => { router.push(link.href); close(); }}
+                    onClick={() => {
+                      router.push(link.href);
+                      close();
+                    }}
                     className="w-full flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-lg text-left hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)] transition-colors group"
                   >
-                    <span className={`flex-none w-8 h-8 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${KIND_DOT_COLOR[link.kind].replace("-400", "-100")}`}>
+                    <span
+                      className={`flex-none w-8 h-8 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${KIND_DOT_COLOR[link.kind].replace("-400", "-100")}`}
+                    >
                       <span className={`w-2 h-2 rounded-full ${KIND_DOT_COLOR[link.kind]}`} />
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-text-heading">{link.label}</div>
                       <div className="text-xs text-text-muted">{link.subtitle}</div>
                     </div>
-                    <Icon name="ArrowRight" size={14} className="flex-none text-text-muted opacity-30 group-hover:opacity-70 transition-opacity" />
+                    <Icon
+                      name="ArrowRight"
+                      size={14}
+                      className="flex-none text-text-muted opacity-30 group-hover:opacity-70 transition-opacity"
+                    />
                   </button>
                 ))}
                 {/* Tip — desktop only */}
                 <div className="hidden sm:flex mt-3 mx-2 pt-3 border-t border-border-default items-center gap-2">
                   <span className="text-xs text-text-muted">Tip:</span>
-                  <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[10px] font-mono">⌘K</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[10px] font-mono">
+                    ⌘K
+                  </kbd>
                   <span className="text-xs text-text-muted">opens search from anywhere</span>
                 </div>
               </div>
@@ -734,7 +722,9 @@ export function GlobalSearchModal() {
                 {grouped.map((group) => (
                   <div key={group.kind} className="mb-1">
                     <div className="px-2 py-1.5">
-                      <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">{group.label}</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">
+                        {group.label}
+                      </span>
                     </div>
                     {group.items.map((result) => {
                       const idx = flatIndex++;
@@ -751,7 +741,9 @@ export function GlobalSearchModal() {
                           onMouseEnter={() => setActiveIndex(idx)}
                           onClick={() => navigateTo(result)}
                         >
-                          <span className={`flex-none w-8 h-8 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${KIND_DOT_COLOR[result.kind].replace("-400", "-100")}`}>
+                          <span
+                            className={`flex-none w-8 h-8 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${KIND_DOT_COLOR[result.kind].replace("-400", "-100")}`}
+                          >
                             <span className={`w-2 h-2 rounded-full ${result.dotColor}`} />
                           </span>
                           <div className="flex-1 min-w-0">
@@ -782,15 +774,21 @@ export function GlobalSearchModal() {
           <div className="hidden sm:flex flex-none px-5 py-2.5 border-t border-border-default items-center justify-between bg-[var(--color-background-subtle)]">
             <div className="flex items-center gap-3 text-[11px] text-text-muted">
               <span className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">↑↓</kbd>
+                <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">
+                  ↑↓
+                </kbd>
                 navigate
               </span>
               <span className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">↵</kbd>
+                <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">
+                  ↵
+                </kbd>
                 open
               </span>
               <span className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">esc</kbd>
+                <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">
+                  esc
+                </kbd>
                 close
               </span>
             </div>

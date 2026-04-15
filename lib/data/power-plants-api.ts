@@ -5,11 +5,11 @@
  * the NEXT_PUBLIC_FF_DB_POWER_PLANTS feature flag.
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { getDataSource } from "@/lib/feature-flags";
-import type { PowerPlant, FuelCategory } from "@/types/entities";
+import type { FuelCategory, PowerPlant } from "@/types/entities";
 
 // ---------------------------------------------------------------------------
 // Filters
@@ -36,30 +36,21 @@ function loadJson(): PowerPlant[] {
   return _jsonCache;
 }
 
-function applyJsonFilters(
-  plants: PowerPlant[],
-  filters: PowerPlantFilters
-): PowerPlant[] {
+function applyJsonFilters(plants: PowerPlant[], filters: PowerPlantFilters): PowerPlant[] {
   let result = plants;
 
   if (filters.state) {
     result = result.filter((p) => p.state === filters.state);
   }
   if (filters.fuelCategory) {
-    result = result.filter(
-      (p) => p.fuelCategory === (filters.fuelCategory as FuelCategory)
-    );
+    result = result.filter((p) => p.fuelCategory === (filters.fuelCategory as FuelCategory));
   }
   if (filters.status) {
     result = result.filter((p) => p.status === filters.status);
   }
   if (filters.search) {
     const q = filters.search.toLowerCase();
-    result = result.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.utilityName.toLowerCase().includes(q)
-    );
+    result = result.filter((p) => p.name.toLowerCase().includes(q) || p.utilityName.toLowerCase().includes(q));
   }
 
   return result;
@@ -69,9 +60,7 @@ function applyJsonFilters(
 // DB source (placeholder — mirrors the programs pattern)
 // ---------------------------------------------------------------------------
 
-async function loadFromDb(
-  filters?: PowerPlantFilters
-): Promise<PowerPlant[]> {
+async function loadFromDb(filters?: PowerPlantFilters): Promise<PowerPlant[]> {
   // When DB mode is wired up, this will query the power_plants table.
   // For now, fall back to JSON so the endpoint still works.
   const plants = loadJson();
@@ -91,9 +80,7 @@ async function loadBySlugFromDb(slug: string): Promise<PowerPlant | null> {
  * Load power plants, optionally filtered.
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_POWER_PLANTS flag.
  */
-export async function loadPowerPlants(
-  filters?: PowerPlantFilters
-): Promise<PowerPlant[]> {
+export async function loadPowerPlants(filters?: PowerPlantFilters): Promise<PowerPlant[]> {
   if (getDataSource("powerPlants") === "database") {
     return loadFromDb(filters);
   }
@@ -106,9 +93,7 @@ export async function loadPowerPlants(
  * Load a single power plant by slug.
  * Returns null if not found.
  */
-export async function loadPowerPlantBySlug(
-  slug: string
-): Promise<PowerPlant | null> {
+export async function loadPowerPlantBySlug(slug: string): Promise<PowerPlant | null> {
   if (getDataSource("powerPlants") === "database") {
     return loadBySlugFromDb(slug);
   }

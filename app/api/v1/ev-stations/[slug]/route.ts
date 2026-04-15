@@ -7,12 +7,12 @@
 
 import {
   ApiError,
+  jsonResponse,
+  type RouteContext,
+  withCors,
   withErrorHandling,
   withRequestId,
   withTiming,
-  withCors,
-  jsonResponse,
-  type RouteContext,
 } from "@/lib/api";
 import { loadEVStationBySlug } from "@/lib/data/ev-stations";
 
@@ -20,26 +20,25 @@ import { loadEVStationBySlug } from "@/lib/data/ev-stations";
 // Route handler
 // ---------------------------------------------------------------------------
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ slug: string }> }
-): Promise<Response> {
+export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
 
   return withRequestId(
     withErrorHandling(
-      withTiming(withCors(async (r: Request, _ctx: RouteContext) => {
-        const station = await loadEVStationBySlug(slug);
+      withTiming(
+        withCors(async (_r: Request, _ctx: RouteContext) => {
+          const station = await loadEVStationBySlug(slug);
 
-        if (!station) {
-          throw new ApiError("NOT_FOUND", `EV station '${slug}' not found`);
-        }
+          if (!station) {
+            throw new ApiError("NOT_FOUND", `EV station '${slug}' not found`);
+          }
 
-        return jsonResponse({ data: station }, 200, {
-          "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
-          "Cache-Tag": `ev-station:${slug}`,
-        });
-      }))
+          return jsonResponse({ data: station }, 200, {
+            "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
+            "Cache-Tag": `ev-station:${slug}`,
+          });
+        })
+      )
     )
   )(req, { requestId: "" });
 }

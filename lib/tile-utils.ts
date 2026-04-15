@@ -11,11 +11,7 @@ export const MAX_TILE_ZOOM = 12;
  * When z > MAX_TILE_ZOOM, finds the ancestor tile at MAX_TILE_ZOOM
  * that contains the requested tile.
  */
-export function resolveOverzoom(
-  z: number,
-  x: number,
-  y: number,
-): { z: number; x: number; y: number } {
+export function resolveOverzoom(z: number, x: number, y: number): { z: number; x: number; y: number } {
   if (z <= MAX_TILE_ZOOM) {
     return { z, x, y };
   }

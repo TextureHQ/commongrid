@@ -12,12 +12,10 @@ import {
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useMemo, useState } from "react";
-import { sortByName } from "@/lib/data";
-import { usePowerPlants } from "@/lib/power-plants";
-import { useFuseSearch } from "@/lib/search";
+import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
+import { sortByName } from "@/lib/data";
 import {
   formatCapacity,
   getFuelBadgeVariant,
@@ -25,7 +23,9 @@ import {
   getFuelCategoryLabel,
   getPlantStatusBadgeVariant,
 } from "@/lib/formatting";
-import { type FuelCategory, FUEL_CATEGORIES, FuelCategoryLabel, type PowerPlant } from "@/types/entities";
+import { usePowerPlants } from "@/lib/power-plants";
+import { useFuseSearch } from "@/lib/search";
+import { FUEL_CATEGORIES, FuelCategoryLabel, type PowerPlant } from "@/types/entities";
 
 interface PowerPlantRow extends Record<string, unknown> {
   slug: string;
@@ -179,9 +179,7 @@ export default function PowerPlantsPage() {
         accessor: "totalCapacityMw",
         render: (_value: unknown, row: PowerPlantRow) => (
           <span className="text-text-body">
-            {row.status === "operable"
-              ? formatCapacity(row.totalCapacityMw)
-              : formatCapacity(row.proposedCapacityMw)}
+            {row.status === "operable" ? formatCapacity(row.totalCapacityMw) : formatCapacity(row.proposedCapacityMw)}
           </span>
         ),
         mobile: { priority: 3, format: "secondary" },
@@ -217,7 +215,11 @@ export default function PowerPlantsPage() {
 
   if (isLoading) {
     return (
-      <PageLayout className="flex flex-col h-full overflow-hidden bg-background-default" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
+      <PageLayout
+        className="flex flex-col h-full overflow-hidden bg-background-default"
+        paddingYClass="pt-8 md:pt-12"
+        paddingXClass="px-4"
+      >
         <div className="flex-none">
           <PageLayout.Header title="Power Plants" sticky={true} />
         </div>
@@ -229,7 +231,11 @@ export default function PowerPlantsPage() {
   }
 
   return (
-    <PageLayout className="flex flex-col h-full overflow-hidden bg-background-default" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
+    <PageLayout
+      className="flex flex-col h-full overflow-hidden bg-background-default"
+      paddingYClass="pt-8 md:pt-12"
+      paddingXClass="px-4"
+    >
       <div className="flex-none">
         <PageLayout.Header title="Power Plants" sticky={true} />
         <DataSourceLink paths={["data/power-plants.json"]} className="px-1 pb-2" />
@@ -298,7 +304,9 @@ export default function PowerPlantsPage() {
           <EmptyState
             icon="Lightning"
             title="No power plants found"
-            description={searchQuery ? "Try adjusting your search or filter criteria." : "No power plants in the dataset."}
+            description={
+              searchQuery ? "Try adjusting your search or filter criteria." : "No power plants in the dataset."
+            }
             fullHeight={true}
           />
         ) : (

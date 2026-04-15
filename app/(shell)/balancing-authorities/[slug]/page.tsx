@@ -8,24 +8,19 @@ import {
   DataTable,
   EmptyState,
   InteractiveMap,
-  layer,
   Loader,
+  layer,
   PageLayout,
   Section,
-  StatList,
   type StatItem,
+  StatList,
 } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
-import {
-  getBalancingAuthorityBySlug,
-  getIsoById,
-  getUtilitiesByBalancingAuthority,
-} from "@/lib/data";
-import { usePowerPlants, filterByBA } from "@/lib/power-plants";
+import { getBalancingAuthorityBySlug, getIsoById, getUtilitiesByBalancingAuthority } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -37,6 +32,7 @@ import {
   getSegmentLabel,
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
+import { filterByBA, usePowerPlants } from "@/lib/power-plants";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -139,9 +135,7 @@ export default function BADetailPage() {
     { id: "shortName", label: "Short Name", value: ba.shortName },
     { id: "eiaCode", label: "EIA Code", value: ba.eiaCode ?? null, copyable: true },
     { id: "states", label: "States", value: formatStates(ba.states) },
-    ...(iso
-      ? [{ id: "iso", label: "ISO", value: iso.shortName, href: `/explore?view=iso&slug=${iso.slug}` }]
-      : []),
+    ...(iso ? [{ id: "iso", label: "ISO", value: iso.shortName, href: `/explore?view=iso&slug=${iso.slug}` }] : []),
     {
       id: "website",
       label: "Website",
@@ -229,7 +223,11 @@ export default function BADetailPage() {
               </Card>
             </>
           ) : (
-            <EmptyState icon="Lightning" title="No utilities" description="No utilities are linked to this balancing authority." />
+            <EmptyState
+              icon="Lightning"
+              title="No utilities"
+              description="No utilities are linked to this balancing authority."
+            />
           )}
         </Section>
 

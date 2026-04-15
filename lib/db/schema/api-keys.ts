@@ -1,11 +1,5 @@
-import {
-  pgTable,
-  text,
-  boolean,
-  timestamp,
-  index,
-} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * API Keys
@@ -23,9 +17,7 @@ import { sql } from "drizzle-orm";
 export const apiKeys = pgTable(
   "api_keys",
   {
-    id: text("id")
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
+    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
     name: text("name").notNull(),
     keyHash: text("key_hash").notNull().unique(), // SHA-256 hash of the API key
     keyPrefix: text("key_prefix").notNull(), // first 8 chars for identification
@@ -35,9 +27,7 @@ export const apiKeys = pgTable(
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
     isActive: boolean("is_active").notNull().default(true),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("idx_api_keys_hash").on(table.keyHash),

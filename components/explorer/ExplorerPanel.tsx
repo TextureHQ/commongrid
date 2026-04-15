@@ -1,16 +1,16 @@
 "use client";
 
 import { useExplorer } from "./ExplorerContext";
-import { UtilityListPanel } from "./panels/UtilityListPanel";
+import { BADetailPanel } from "./panels/BADetailPanel";
 import { GridOperatorListPanel } from "./panels/GridOperatorListPanel";
-import { ProgramListPanel } from "./panels/ProgramListPanel";
+import { IsoDetailPanel } from "./panels/IsoDetailPanel";
 import { PowerPlantListPanel } from "./panels/PowerPlantListPanel";
+import { ProgramDetailPanel } from "./panels/ProgramDetailPanel";
+import { ProgramListPanel } from "./panels/ProgramListPanel";
+import { RtoDetailPanel } from "./panels/RtoDetailPanel";
 import { TransmissionListPanel } from "./panels/TransmissionListPanel";
 import { UtilityDetailPanel } from "./panels/UtilityDetailPanel";
-import { IsoDetailPanel } from "./panels/IsoDetailPanel";
-import { RtoDetailPanel } from "./panels/RtoDetailPanel";
-import { BADetailPanel } from "./panels/BADetailPanel";
-import { ProgramDetailPanel } from "./panels/ProgramDetailPanel";
+import { UtilityListPanel } from "./panels/UtilityListPanel";
 
 export function ExplorerPanel() {
   const { state } = useExplorer();
@@ -50,7 +50,7 @@ export function ExplorerPanel() {
 // Grid operator detail router: detects ISO vs RTO vs BA from slug
 // ---------------------------------------------------------------------------
 
-import { getAllIsos, getAllRtos, getAllBalancingAuthorities } from "@/lib/data";
+import { getAllBalancingAuthorities, getAllIsos, getAllRtos } from "@/lib/data";
 
 function GridOperatorDetailRouter({ slug }: { slug: string }) {
   const isos = getAllIsos();

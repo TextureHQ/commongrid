@@ -2,9 +2,16 @@
 
 import { Button, Card, Icon, TextLink } from "@texturehq/edges";
 import Link from "next/link";
-import { getAllUtilities, getAllIsos, getAllRtos, getAllBalancingAuthorities, getAllPrograms, getChangelog } from "@/lib/data";
-import type { ChangelogEntry } from "@/types/changelog";
 import { useGlobalSearch } from "@/components/GlobalSearch";
+import {
+  getAllBalancingAuthorities,
+  getAllIsos,
+  getAllPrograms,
+  getAllRtos,
+  getAllUtilities,
+  getChangelog,
+} from "@/lib/data";
+import type { ChangelogEntry } from "@/types/changelog";
 
 // Power plant count is hardcoded to avoid importing the 8.7 MB JSON into the pre-rendered page.
 // Updated by sync-power-plants script.
@@ -171,9 +178,7 @@ function ActivityRow({ entry }: { entry: ChangelogEntry }) {
 
   return (
     <div className="flex items-center gap-3 py-3 border-b border-border-default last:border-0">
-      <div
-        className={`flex-none w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold ${color}`}
-      >
+      <div className={`flex-none w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold ${color}`}>
         {initial}
       </div>
       <div className="flex-1 min-w-0">
@@ -209,7 +214,6 @@ export default function LandingPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-[var(--color-background-subtle)]">
-
       {/* ── Hero ─────────────────────────────────────────── */}
       <section className="px-6 pt-16 pb-14 sm:pt-20 sm:pb-16 text-center">
         <div className="max-w-3xl mx-auto">
@@ -221,14 +225,13 @@ export default function LandingPage() {
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-text-heading leading-tight mb-5">
-            The open registry of{" "}
-            <span className="text-brand-primary">U.S. energy infrastructure</span>
+            The open registry of <span className="text-brand-primary">U.S. energy infrastructure</span>
           </h1>
 
           {/* Subtitle */}
           <p className="text-base sm:text-lg text-text-muted leading-relaxed max-w-xl mx-auto mb-8">
-            Structured, normalized, and spatially-aware data on utilities, grid operators,
-            territories, programs, and rates — free to browse, download, and build on.
+            Structured, normalized, and spatially-aware data on utilities, grid operators, territories, programs, and
+            rates — free to browse, download, and build on.
           </p>
 
           {/* Search */}
@@ -239,9 +242,7 @@ export default function LandingPage() {
               className="w-full flex items-center gap-3 px-4 h-12 rounded-xl border border-border-default bg-background-surface shadow-sm hover:border-brand-primary/50 hover:shadow-md transition-all cursor-text text-left"
             >
               <Icon name="MagnifyingGlass" size={18} className="text-text-muted flex-none" />
-              <span className="flex-1 text-sm text-text-muted">
-                Search utilities, programs, ISOs, territories...
-              </span>
+              <span className="flex-1 text-sm text-text-muted">Search utilities, programs, ISOs, territories...</span>
               <kbd className="flex-none hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-xs font-mono">
                 ⌘K
               </kbd>
@@ -253,7 +254,12 @@ export default function LandingPage() {
             <Button variant="primary" href="/explore" icon="ArrowRight" iconPosition="right">
               Browse the registry
             </Button>
-            <Button variant="secondary" href="https://github.com/TextureHQ/commongrid" target="_blank" rel="noopener noreferrer">
+            <Button
+              variant="secondary"
+              href="https://github.com/TextureHQ/commongrid"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               View on GitHub
             </Button>
           </div>
@@ -272,9 +278,7 @@ export default function LandingPage() {
                 { value: programCount.toLocaleString(), label: "Programs" },
               ].map((stat) => (
                 <div key={stat.label} className="text-center flex flex-col">
-                  <div className="text-xl sm:text-2xl font-bold text-text-heading tabular-nums">
-                    {stat.value}
-                  </div>
+                  <div className="text-xl sm:text-2xl font-bold text-text-heading tabular-nums">{stat.value}</div>
                   <div className="text-[10px] font-medium uppercase tracking-wider text-text-muted mt-0.5 whitespace-nowrap">
                     {stat.label}
                   </div>
@@ -295,19 +299,19 @@ export default function LandingPage() {
           <div className="text-xs font-semibold uppercase tracking-widest text-brand-primary mb-2">
             Browse the Registry
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-text-heading mb-2">
-            Choose where to start
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-text-heading mb-2">Choose where to start</h2>
           <p className="text-base text-text-muted max-w-lg">
-            Six entity types, one connected graph. Pick any entry point — they all link back into
-            each other.
+            Six entity types, one connected graph. Pick any entry point — they all link back into each other.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {ENTITY_CARDS.map((card) => (
             <Link key={card.id} href={card.href} className="block group">
-              <Card variant="outlined" className="h-full group-hover:border-brand-primary/50 group-hover:shadow-sm transition-all">
+              <Card
+                variant="outlined"
+                className="h-full group-hover:border-brand-primary/50 group-hover:shadow-sm transition-all"
+              >
                 <Card.Content className="p-6 flex flex-col h-full">
                   {/* Icon */}
                   <div
@@ -317,14 +321,10 @@ export default function LandingPage() {
                   </div>
 
                   {/* Title */}
-                  <div className="text-[15px] font-semibold text-text-heading mb-1.5">
-                    {card.title}
-                  </div>
+                  <div className="text-[15px] font-semibold text-text-heading mb-1.5">{card.title}</div>
 
                   {/* Description */}
-                  <p className="text-sm text-text-muted leading-relaxed flex-1">
-                    {card.description}
-                  </p>
+                  <p className="text-sm text-text-muted leading-relaxed flex-1">{card.description}</p>
 
                   {/* Footer */}
                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-border-default">
@@ -347,12 +347,8 @@ export default function LandingPage() {
       {/* ── Recent Activity ──────────────────────────────── */}
       <section className="px-6 pb-20 max-w-5xl mx-auto">
         <div className="mb-8">
-          <div className="text-xs font-semibold uppercase tracking-widest text-brand-primary mb-2">
-            Recent Activity
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-text-heading mb-2">
-            What's been updated
-          </h2>
+          <div className="text-xs font-semibold uppercase tracking-widest text-brand-primary mb-2">Recent Activity</div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-text-heading mb-2">What's been updated</h2>
           <p className="text-base text-text-muted max-w-lg">
             Every update is versioned, attributed, and synced from authoritative sources.
           </p>
@@ -364,24 +360,20 @@ export default function LandingPage() {
               {/* Left: recently updated */}
               <div className="p-6">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-semibold text-text-heading">
-                    Recently updated entities
-                  </span>
+                  <span className="text-sm font-semibold text-text-heading">Recently updated entities</span>
                   <TextLink href="/changelog" className="text-xs">
                     View all changes →
                   </TextLink>
                 </div>
                 <div>
                   {changelog.recentlyUpdated.length > 0 ? (
-                    changelog.recentlyUpdated.slice(0, 5).map((entry) => (
-                      <ActivityRow key={`${entry.entityType}:${entry.slug}`} entry={entry} />
-                    ))
+                    changelog.recentlyUpdated
+                      .slice(0, 5)
+                      .map((entry) => <ActivityRow key={`${entry.entityType}:${entry.slug}`} entry={entry} />)
                   ) : (
                     <p className="text-sm text-text-muted py-4">
                       No updates recorded yet. Run{" "}
-                      <code className="text-xs bg-background-subtle px-1 py-0.5 rounded">
-                        yarn generate:changelog
-                      </code>{" "}
+                      <code className="text-xs bg-background-subtle px-1 py-0.5 rounded">yarn generate:changelog</code>{" "}
                       after a sync to populate this feed.
                     </p>
                   )}
@@ -398,9 +390,9 @@ export default function LandingPage() {
                 </div>
                 <div>
                   {changelog.newlyAdded.length > 0 ? (
-                    changelog.newlyAdded.slice(0, 5).map((entry) => (
-                      <ActivityRow key={`${entry.entityType}:${entry.slug}`} entry={entry} />
-                    ))
+                    changelog.newlyAdded
+                      .slice(0, 5)
+                      .map((entry) => <ActivityRow key={`${entry.entityType}:${entry.slug}`} entry={entry} />)
                   ) : (
                     <p className="text-sm text-text-muted py-4">No new entities added yet.</p>
                   )}

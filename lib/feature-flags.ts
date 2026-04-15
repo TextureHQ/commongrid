@@ -44,9 +44,7 @@ export function isUsingDatabase(entityType: string): boolean {
  * Useful for conditionally importing database modules.
  */
 export function isAnyEntityUsingDatabase(): boolean {
-  return Object.keys(ENTITY_DATA_SOURCE_MAP).some(
-    (key) => getDataSource(key) === "database"
-  );
+  return Object.keys(ENTITY_DATA_SOURCE_MAP).some((key) => getDataSource(key) === "database");
 }
 
 /**
