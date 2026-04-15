@@ -77,7 +77,7 @@ export interface SearchOptions {
 
 export interface SearchAllResult {
   results: Map<EntityType, SearchResult[]>;
-  source: "json" | "database";
+  source: "json" | "db";
 }
 
 // ---------------------------------------------------------------------------
@@ -289,7 +289,7 @@ export async function searchAll(query: string, options: SearchOptions = {}): Pro
     const flagKey = ENTITY_TYPE_TO_FLAG_KEY[entityType];
     const source = getDataSource(flagKey);
 
-    if (source === "database") {
+    if (source === "db") {
       anyDatabase = true;
       results.set(entityType, await searchFromDb(entityType, query, limit));
     } else {
@@ -299,6 +299,6 @@ export async function searchAll(query: string, options: SearchOptions = {}): Pro
 
   return {
     results,
-    source: anyDatabase ? "database" : "json",
+    source: anyDatabase ? "db" : "json",
   };
 }

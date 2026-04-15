@@ -149,7 +149,7 @@ async function loadBySlugFromDb(slug: string): Promise<PricingNode | null> {
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_PRICING_NODES flag.
  */
 export async function loadPricingNodes(filters?: PricingNodeFilters): Promise<PricingNode[]> {
-  if (getDataSource("pricingNodes") === "database") {
+  if (getDataSource("pricingNodes") === "db") {
     return loadFromDb(filters);
   }
 
@@ -162,7 +162,7 @@ export async function loadPricingNodes(filters?: PricingNodeFilters): Promise<Pr
  * Returns null if not found.
  */
 export async function loadPricingNodeBySlug(slug: string): Promise<PricingNode | null> {
-  if (getDataSource("pricingNodes") === "database") {
+  if (getDataSource("pricingNodes") === "db") {
     return loadBySlugFromDb(slug);
   }
 

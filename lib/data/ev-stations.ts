@@ -90,7 +90,7 @@ async function loadBySlugFromDb(slug: string): Promise<EVStation | null> {
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_EV_STATIONS flag.
  */
 export async function loadEVStations(filters?: EVStationFilters): Promise<EVStation[]> {
-  if (getDataSource("evStations") === "database") {
+  if (getDataSource("evStations") === "db") {
     return loadFromDb(filters);
   }
 
@@ -103,7 +103,7 @@ export async function loadEVStations(filters?: EVStationFilters): Promise<EVStat
  * Returns null if not found.
  */
 export async function loadEVStationBySlug(slug: string): Promise<EVStation | null> {
-  if (getDataSource("evStations") === "database") {
+  if (getDataSource("evStations") === "db") {
     return loadBySlugFromDb(slug);
   }
 
