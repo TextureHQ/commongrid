@@ -12,13 +12,13 @@ import {
   withErrorHandling,
   withRequestId,
   withTiming,
-  corsHeaders,
   jsonResponse,
   paginatedResponse,
   encodeCursor,
   decodeCursor,
   type CursorV1,
 } from "@/lib/api";
+import { corsHeaders } from "@/lib/api/cors";
 import { loadPricingNodes } from "@/lib/data/pricing-nodes";
 import type { PricingNode } from "@/types/pricing-nodes";
 
@@ -192,9 +192,9 @@ async function handler(req: Request): Promise<Response> {
   const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
 
   return jsonResponse(envelope, 200, {
+    ...corsHeaders(),
     "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
     "Cache-Tag": "pricing-nodes",
-    ...corsHeaders(),
   });
 }
 
