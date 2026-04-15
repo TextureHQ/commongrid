@@ -293,11 +293,31 @@ async function testUtilities() {
   });
 
   // Filters
-  await test("Utilities segment filter works", async () => {
-    const { data } = await apiRequest("/api/v1/utilities?segment=INVESTOR_OWNED");
+  await test("Utilities segment filter works (INVESTOR_OWNED_UTILITY)", async () => {
+    const { data } = await apiRequest("/api/v1/utilities?segment=INVESTOR_OWNED_UTILITY");
     assert(data.data.length > 0, "Should return investor-owned utilities");
     const utility = data.data[0] as Record<string, unknown>;
-    assertEqual(utility.segment, "INVESTOR_OWNED");
+    assertEqual(utility.segment, "INVESTOR_OWNED_UTILITY");
+  });
+
+  await test("Utilities segment filter works (DISTRIBUTION_COOPERATIVE)", async () => {
+    const { data } = await apiRequest("/api/v1/utilities?segment=DISTRIBUTION_COOPERATIVE");
+    assert(data.data.length > 0, "Should return distribution cooperatives");
+    const utility = data.data[0] as Record<string, unknown>;
+    assertEqual(utility.segment, "DISTRIBUTION_COOPERATIVE");
+  });
+
+  await test("Utilities segment filter works (MUNICIPAL_UTILITY)", async () => {
+    const { data } = await apiRequest("/api/v1/utilities?segment=MUNICIPAL_UTILITY");
+    assert(data.data.length > 0, "Should return municipal utilities");
+    const utility = data.data[0] as Record<string, unknown>;
+    assertEqual(utility.segment, "MUNICIPAL_UTILITY");
+  });
+
+  await test("Utilities segment filter returns empty for invalid segment", async () => {
+    const { data } = await apiRequest("/api/v1/utilities?segment=NONEXISTENT_SEGMENT");
+    assertEqual(data.data.length, 0, "Should return no results for invalid segment");
+    assertEqual(data.pagination.total, 0);
   });
 
   await test("Utilities status filter works", async () => {
