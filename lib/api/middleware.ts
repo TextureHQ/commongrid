@@ -5,11 +5,17 @@
  * (request IDs, error handling, timing, CORS) without coupling routes to
  * framework-specific middleware infrastructure.
  *
+ * `withApiMiddleware` is the single convenience wrapper that route handlers
+ * should use — it composes all layers in the correct order.
+ *
  * See docs/specs/persistence-api.md §4.10 and §12.4.
  */
 
 import { ApiError, formatError } from "./errors";
 import type { RouteContext, RouteHandler } from "./types";
+import { withCors } from "./cors";
+import { checkRateLimit, rateLimitHeaders, rateLimitResponse } from "./rate-limit";
+import { validateApiKey } from "./auth";
 
 // ---------------------------------------------------------------------------
 // Request ID
@@ -102,25 +108,102 @@ export function withTiming(handler: RouteHandler): RouteHandler {
 }
 
 // ---------------------------------------------------------------------------
-// CORS
+// Composed middleware
 // ---------------------------------------------------------------------------
 
-/** CORS headers per §12.4 — restrictive in production, permissive in dev. */
-export function withCors(response: Response): Response {
-  const origin =
-    process.env.NODE_ENV === "production"
-      ? "https://commongrid.info"
-      : "*";
+export interface ApiMiddlewareOptions {
+  /** When true, requests without a valid Bearer key receive 401. */
+  requireAuth?: boolean;
+  /** Resource name used for scope validation (e.g., "utilities"). */
+  resource?: string;
+  /** Action name used for scope validation (e.g., "read", "write"). */
+  action?: string;
+  /**
+   * Enable rate limiting. Defaults to true.
+   * Set to false only for health-check / internal endpoints.
+   */
+  rateLimit?: boolean;
+}
 
-  response.headers.set("Access-Control-Allow-Origin", origin);
-  response.headers.set(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PATCH, OPTIONS"
-  );
-  response.headers.set(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
-  );
+/**
+ * Single wrapper for API route handlers.
+ *
+ * Layer order (outer → inner):
+ *   withErrorHandling → withRequestId → withTiming → withCors
+ *   → rate limiting → auth → handler
+ *
+ * Rate-limit headers are appended to every successful response.
+ */
+export function withApiMiddleware(
+  handler: RouteHandler,
+  options: ApiMiddlewareOptions = {}
+): RouteHandler {
+  const { requireAuth = false, resource = "", action = "", rateLimit = true } =
+    options;
 
-  return response;
+  const core: RouteHandler = async (
+    req: Request,
+    ctx: RouteContext
+  ): Promise<Response> => {
+    const authHeader = req.headers.get("Authorization");
+    const isAuthenticated = !!authHeader;
+    const method = req.method;
+    const isWrite =
+      method === "POST" ||
+      method === "PUT" ||
+      method === "PATCH" ||
+      method === "DELETE";
+    const isBulk = new URL(req.url).pathname.includes("/bulk");
+
+    // ── Rate limiting ──────────────────────────────────────────────────────
+    let rlResult: Awaited<ReturnType<typeof checkRateLimit>> | null = null;
+
+    if (rateLimit) {
+      const ip =
+        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+        "unknown";
+      const identifier = isAuthenticated ? `auth:${authHeader}` : `ip:${ip}`;
+
+      rlResult = await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk);
+
+      if (!rlResult.success) {
+        return rateLimitResponse(rlResult, ctx.requestId);
+      }
+    }
+
+    // ── Authentication ─────────────────────────────────────────────────────
+    if (requireAuth) {
+      const authResult = await validateApiKey(authHeader, resource, action);
+      if (!authResult.valid) {
+        return Response.json(
+          {
+            error: {
+              code: "UNAUTHORIZED",
+              message: authResult.error ?? "Unauthorized",
+              request_id: ctx.requestId,
+              timestamp: new Date().toISOString(),
+            },
+          },
+          {
+            status: 401,
+            headers: { "X-Request-Id": ctx.requestId },
+          }
+        );
+      }
+    }
+
+    // ── Handler ────────────────────────────────────────────────────────────
+    const response = await handler(req, ctx);
+
+    // Attach rate-limit headers to the outgoing response.
+    if (rlResult) {
+      for (const [key, value] of Object.entries(rateLimitHeaders(rlResult))) {
+        response.headers.set(key, value);
+      }
+    }
+
+    return response;
+  };
+
+  return withErrorHandling(withRequestId(withTiming(withCors(core))));
 }
