@@ -90,6 +90,10 @@ export interface PaginationParams {
  * This is a lightweight parser intended for use *before* Zod schemas run,
  * so route handlers can get decoded cursor data early. For full validation,
  * prefer the Zod `paginationSchema` in `validation.ts`.
+ *
+ * Supports two cursor formats:
+ * - `page:N` (legacy JSON mode) - decoded and handled by JSON mode routes
+ * - HMAC-signed cursors (database mode) - decoded here
  */
 export function parsePaginationParams(searchParams: URLSearchParams): PaginationParams {
   const rawCursor = searchParams.get("cursor");
@@ -100,8 +104,15 @@ export function parsePaginationParams(searchParams: URLSearchParams): Pagination
   const limit = rawLimit ? Math.min(Math.max(parseInt(rawLimit, 10) || 50, 1), 200) : 50;
   const order = rawOrder === "desc" ? "desc" : "asc";
 
+  // Handle page:N format cursors (JSON mode)
+  // These are not decoded here - they're handled by JSON mode routes
+  let cursor: CursorV1 | null = null;
+  if (rawCursor && !rawCursor.startsWith("page:")) {
+    cursor = decodeCursor(rawCursor);
+  }
+
   return {
-    cursor: rawCursor ? decodeCursor(rawCursor) : null,
+    cursor,
     limit,
     sort: rawSort ?? undefined,
     order,
