@@ -1,6 +1,4 @@
-import { PageLayout } from "@texturehq/edges";
 import type { Metadata } from "next";
-import { DataSourceLink } from "@/components/DataSourceLink";
 import type { PowerPlant } from "@/types/entities";
 import { PowerPlantsClient } from "./PowerPlantsClient";
 
@@ -64,21 +62,11 @@ export default async function PowerPlantsPage({ searchParams }: PageProps) {
   const states = Array.from(new Set(statesJson.data.map((p) => p.state))).sort();
 
   return (
-    <PageLayout
-      className="flex flex-col h-full overflow-hidden bg-background-default"
-      paddingYClass="pt-8 md:pt-12"
-      paddingXClass="px-4"
-    >
-      <div className="flex-none">
-        <PageLayout.Header title="Power Plants" sticky={true} />
-        <DataSourceLink paths={["data/power-plants.json"]} className="px-1 pb-2" />
-      </div>
-      <PowerPlantsClient
-        initialData={json.data}
-        initialTotal={json.total}
-        initialCursor={json.cursor}
-        states={states}
-      />
-    </PageLayout>
+    <PowerPlantsClient
+      initialData={json.data}
+      initialTotal={json.total}
+      initialCursor={json.cursor}
+      states={states}
+    />
   );
 }

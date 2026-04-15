@@ -3,18 +3,15 @@
 import { Badge, type Column, DataControls, DataTable, Loader, PageLayout } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
-import { useEvCharging } from "@/lib/ev-charging";
-import { useFuseSearch } from "@/lib/search";
+import type { EVStation } from "@/types/ev-charging";
 import {
-  type EVStation,
   getAccessLabel,
   getNetworkColor,
   getNetworkShortName,
   getStatusLabel,
-  getTotalConnectors,
 } from "@/types/ev-charging";
 
 interface EVStationRow extends Record<string, unknown> {
@@ -29,11 +26,15 @@ interface EVStationRow extends Record<string, unknown> {
   statusCode: string;
 }
 
+interface PaginationMeta {
+  totalCount: number;
+  nextCursor: string | null;
+  limit: number;
+}
+
 const sortOptions = [
   { id: "name:asc", label: "Name A-Z", value: "name:asc" },
   { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "connectors:desc", label: "Most Connectors", value: "connectors:desc" },
-  { id: "dcfast:desc", label: "Most DC Fast", value: "dcfast:desc" },
   { id: "state:asc", label: "State A-Z", value: "state:asc" },
 ];
 
@@ -65,8 +66,15 @@ function getAccessBadgeVariant(access: string): "info" | "neutral" | "warning" {
 
 export default function EVChargingPage() {
   const router = useRouter();
-  const { stations: allStations, isLoading } = useEvCharging();
+  const [isPending, startTransition] = useTransition();
+  
+  // State
+  const [stations, setStations] = useState<EVStation[]>([]);
+  const [meta, setMeta] = useState<PaginationMeta>({ totalCount: 0, nextCursor: null, limit: 100 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortValue, setSortValue] = useState("name:asc");
   const [accessFilter, setAccessFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -74,79 +82,119 @@ export default function EVChargingPage() {
   const [levelFilter, setLevelFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
 
-  // Unique states for filter
-  const states = useMemo(() => {
-    const s = new Set(allStations.map((s) => s.state));
-    return Array.from(s).sort();
-  }, [allStations]);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const nextPagePrefetchedRef = useRef(false);
 
-  // Unique networks for filter (top networks by count)
+  // Unique networks for filter (derive from current results)
   const networks = useMemo(() => {
     const n = new Map<string, number>();
-    for (const s of allStations) {
+    for (const s of stations) {
       const net = s.evNetwork ?? "Non-Networked";
       n.set(net, (n.get(net) ?? 0) + 1);
     }
     return [...n.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
-  }, [allStations]);
+  }, [stations]);
 
-  const fuseOptions = useMemo(
-    () => ({
-      keys: [
-        { name: "stationName", weight: 0.5 },
-        { name: "city", weight: 0.2 },
-        { name: "state", weight: 0.15 },
-        { name: "evNetwork", weight: 0.1 },
-        { name: "streetAddress", weight: 0.05 },
-      ],
-      threshold: 0.3,
-      ignoreLocation: true,
-    }),
-    []
-  );
+  // Unique states for filter
+  const states = useMemo(() => {
+    const s = new Set(stations.map((s) => s.state));
+    return Array.from(s).sort();
+  }, [stations]);
 
-  const searched = useFuseSearch(allStations, searchQuery, fuseOptions);
-
-  const filtered = useMemo(() => {
-    let result: EVStation[] = searched;
-    if (accessFilter !== "all") {
-      result = result.filter((s) => s.accessCode === accessFilter);
+  // Debounced search
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
-    if (statusFilter !== "all") {
-      result = result.filter((s) => s.statusCode === statusFilter);
-    }
-    if (networkFilter !== "all") {
-      const net = networkFilter;
-      result = result.filter((s) => (s.evNetwork ?? "Non-Networked") === net);
-    }
-    if (levelFilter === "dcfast") {
-      result = result.filter((s) => s.evDcFastNum > 0);
-    } else if (levelFilter === "level2") {
-      result = result.filter((s) => s.evLevel2EvseNum > 0);
-    }
-    if (stateFilter !== "all") {
-      result = result.filter((s) => s.state === stateFilter);
-    }
-    if (!searchQuery.trim()) {
-      const [field, direction] = sortValue.split(":");
-      if (field === "name") {
-        result = [...result].sort((a, b) =>
-          direction === "asc" ? a.stationName.localeCompare(b.stationName) : b.stationName.localeCompare(a.stationName)
-        );
-      } else if (field === "connectors") {
-        result = [...result].sort((a, b) => getTotalConnectors(b) - getTotalConnectors(a));
-      } else if (field === "dcfast") {
-        result = [...result].sort((a, b) => b.evDcFastNum - a.evDcFastNum);
-      } else if (field === "state") {
-        result = [...result].sort((a, b) => a.state.localeCompare(b.state));
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
+    };
+  }, [searchQuery]);
+
+  // Fetch data when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (accessFilter !== "all") params.set("accessCode", accessFilter);
+    if (statusFilter !== "all") params.set("statusCode", statusFilter);
+    if (networkFilter !== "all") params.set("network", networkFilter);
+    if (stateFilter !== "all") params.set("state", stateFilter);
+    
+    const [field, direction] = sortValue.split(":");
+    if (field === "name") params.set("sort", "stationName");
+    else if (field === "state") params.set("sort", "state");
+    params.set("order", direction);
+    params.set("limit", "100");
+
+    startTransition(async () => {
+      setIsLoading(true);
+      const res = await fetch(`/api/v1/ev-stations?${params.toString()}`);
+      const data = await res.json();
+      setStations(data.data);
+      setMeta(data.meta);
+      setIsLoading(false);
+      nextPagePrefetchedRef.current = false;
+    });
+  }, [debouncedSearch, sortValue, accessFilter, statusFilter, networkFilter, levelFilter, stateFilter]);
+
+  // Aggressive prefetch of next page
+  useEffect(() => {
+    if (meta.nextCursor && !nextPagePrefetchedRef.current && !isLoadingMore && !isLoading) {
+      nextPagePrefetchedRef.current = true;
+      const params = new URLSearchParams();
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      if (accessFilter !== "all") params.set("accessCode", accessFilter);
+      if (statusFilter !== "all") params.set("statusCode", statusFilter);
+      if (networkFilter !== "all") params.set("network", networkFilter);
+      if (stateFilter !== "all") params.set("state", stateFilter);
+      
+      const [field, direction] = sortValue.split(":");
+      if (field === "name") params.set("sort", "stationName");
+      else if (field === "state") params.set("sort", "state");
+      params.set("order", direction);
+      params.set("limit", "100");
+      params.set("cursor", meta.nextCursor);
+
+      // Prefetch in the background
+      fetch(`/api/v1/ev-stations?${params.toString()}`);
     }
-    return result;
-  }, [searched, searchQuery, accessFilter, statusFilter, networkFilter, levelFilter, stateFilter, sortValue]);
+  }, [meta.nextCursor, isLoadingMore, isLoading, debouncedSearch, sortValue, accessFilter, statusFilter, networkFilter, stateFilter]);
+
+  const loadMore = useCallback(async () => {
+    if (!meta.nextCursor || isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (accessFilter !== "all") params.set("accessCode", accessFilter);
+    if (statusFilter !== "all") params.set("statusCode", statusFilter);
+    if (networkFilter !== "all") params.set("network", networkFilter);
+    if (stateFilter !== "all") params.set("state", stateFilter);
+    
+    const [field, direction] = sortValue.split(":");
+    if (field === "name") params.set("sort", "stationName");
+    else if (field === "state") params.set("sort", "state");
+    params.set("order", direction);
+    params.set("limit", "100");
+    params.set("cursor", meta.nextCursor);
+
+    const res = await fetch(`/api/v1/ev-stations?${params.toString()}`);
+    const data = await res.json();
+    
+    setStations((prev) => [...prev, ...data.data]);
+    setMeta(data.meta);
+    setIsLoadingMore(false);
+    nextPagePrefetchedRef.current = false;
+  }, [meta.nextCursor, isLoadingMore, debouncedSearch, sortValue, accessFilter, statusFilter, networkFilter, stateFilter]);
 
   const rows: EVStationRow[] = useMemo(
     () =>
-      filtered.map((s) => ({
+      stations.map((s) => ({
         slug: s.slug,
         stationName: s.stationName,
         evNetwork: s.evNetwork,
@@ -157,7 +205,7 @@ export default function EVChargingPage() {
         accessCode: s.accessCode,
         statusCode: s.statusCode,
       })),
-    [filtered]
+    [stations]
   );
 
   const handleRowClick = useCallback(
@@ -273,7 +321,7 @@ export default function EVChargingPage() {
       <div className="flex-none">
         <PageLayout.Header
           title="EV Charging Stations"
-          subtitle={`${allStations.length.toLocaleString()} stations`}
+          subtitle={`${meta.totalCount.toLocaleString()} stations`}
           sticky={true}
         />
         <DataSourceLink paths={["data/ev-charging.json"]} className="px-1 pb-2" />
@@ -284,13 +332,13 @@ export default function EVChargingPage() {
           onChange={setSearchQuery}
           onClear={() => setSearchQuery("")}
           placeholder="Search stations, networks, cities..."
-          resultCount={filtered.length}
+          resultCount={stations.length}
           resultLabel="stations"
         />
       </div>
       <div className="flex-none">
         <DataControls
-          resultsCount={{ count: filtered.length, label: "stations" }}
+          resultsCount={{ count: stations.length, label: "loaded" }}
           sort={{
             value: sortValue,
             options: sortOptions,
@@ -356,17 +404,31 @@ export default function EVChargingPage() {
           sticky={true}
         />
       </div>
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 flex flex-col">
         <DataTable
-          className="border-r border-l"
+          className="border-r border-l flex-1"
           data={rows}
           columns={columns}
           mobileBreakpoint="md"
-          isLoading={false}
+          isLoading={isPending}
           height="100%"
           stickyHeader={true}
           onRowClick={handleRowClick}
         />
+        {meta.nextCursor && (
+          <div className="flex justify-center py-4 flex-shrink-0">
+            <button
+              onClick={loadMore}
+              disabled={isLoadingMore}
+              className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 flex items-center gap-2"
+            >
+              {isLoadingMore && <Loader size={16} />}
+              {isLoadingMore 
+                ? "Loading..." 
+                : `Load More (${(meta.totalCount - stations.length).toLocaleString()} remaining)`}
+            </button>
+          </div>
+        )}
       </div>
     </PageLayout>
   );
