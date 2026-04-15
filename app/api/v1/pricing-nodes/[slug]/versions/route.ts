@@ -1,112 +1,46 @@
-/**
- * GET /api/v1/pricing-nodes/:slug/versions
- *
- * Return the version history for a pricing node. Queries the entity_versions
- * table when the DB flag is active; returns an empty list in JSON mode
- * (no version history is stored in static JSON files).
- */
-
-import {
-  ApiError,
-  withApiMiddleware,
-  jsonResponse,
-  type RouteContext,
-} from "@/lib/api";
-import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
+import { NextRequest, NextResponse } from "next/server";
 import { getDataSource } from "@/lib/feature-flags";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface VersionEntry {
-  id: number;
-  versionNumber: number;
-  changeType: string;
-  changeSummary: string | null;
-  changedBy: string | null;
-  changedAt: string;
-  delta: Record<string, { old: unknown; new: unknown }> | null;
-}
-
-// ---------------------------------------------------------------------------
-// DB version loading
-// ---------------------------------------------------------------------------
-
-async function loadVersionsFromDb(entityId: string): Promise<VersionEntry[]> {
-  const { getDb } = await import("@/lib/db/client");
-  const { entityVersions } = await import("@/lib/db/schema");
-  const { eq, and, asc } = await import("drizzle-orm");
-
-  const db = getDb();
-
-  const rows = await db
-    .select({
-      id: entityVersions.id,
-      versionNumber: entityVersions.versionNumber,
-      changeType: entityVersions.changeType,
-      changeSummary: entityVersions.changeSummary,
-      changedBy: entityVersions.changedBy,
-      changedAt: entityVersions.changedAt,
-      delta: entityVersions.delta,
-    })
-    .from(entityVersions)
-    .where(
-      and(
-        eq(entityVersions.entityType, "pricing_node"),
-        eq(entityVersions.entityId, entityId)
-      )
-    )
-    .orderBy(asc(entityVersions.versionNumber));
-
-  return rows.map((row) => ({
-    id: row.id,
-    versionNumber: row.versionNumber,
-    changeType: row.changeType,
-    changeSummary: row.changeSummary ?? null,
-    changedBy: row.changedBy ?? null,
-    changedAt: row.changedAt.toISOString(),
-    delta: (row.delta as Record<string, { old: unknown; new: unknown }>) ?? null,
-  }));
-}
-
-// ---------------------------------------------------------------------------
-// Route handler
-// ---------------------------------------------------------------------------
-
 export async function GET(
-  req: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
-): Promise<Response> {
-  const { slug } = await params;
+) {
+  try {
+    const { slug } = await params;
 
-  const wrapped = withApiMiddleware(
-    async (_r: Request, _ctx: RouteContext) => {
-      // Verify the node exists (works in both JSON and DB mode)
-      const node = await loadPricingNodeBySlug(slug);
-      if (!node) {
-        throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
-      }
+    // Version history only available in database mode
+    if (getDataSource("pricingNodes") === "json") {
+      return NextResponse.json({
+        data: [],
+        message: "Version history not available in JSON mode",
+        entitySlug: slug,
+      });
+    }
 
-      // Version history is only available in database mode
-      let versions: VersionEntry[] = [];
-      if (getDataSource("pricingNodes") === "database") {
-        versions = await loadVersionsFromDb(node.id);
-      }
-
-      return jsonResponse(
-        {
-          data: versions,
-          meta: { source: getDataSource("pricingNodes") },
-        },
-        200,
-        {
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-          "Cache-Tag": `pricing-node:${slug}:versions`,
-        }
+    // Database mode — query entity_versions
+    const { db } = await import("@/lib/db/client");
+    if (!db) {
+      return NextResponse.json(
+        { error: { code: "SERVICE_UNAVAILABLE", message: "Database not configured" } },
+        { status: 503 }
       );
     }
-  );
 
-  return wrapped(req, { requestId: "" });
+    const { sql } = await import("drizzle-orm");
+    const rows = await db.execute(sql`
+      SELECT version_number, change_type, change_summary, changed_by, changed_at
+      FROM entity_versions
+      WHERE entity_type = 'pricing_node' AND entity_id = ${slug}
+      ORDER BY version_number DESC
+      LIMIT 50
+    `);
+
+    return NextResponse.json({ data: rows });
+  } catch (error) {
+    console.error("Error fetching pricing node versions:", error);
+    return NextResponse.json(
+      { error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred" } },
+      { status: 500 }
+    );
+  }
 }
