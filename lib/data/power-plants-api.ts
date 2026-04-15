@@ -57,19 +57,137 @@ function applyJsonFilters(plants: PowerPlant[], filters: PowerPlantFilters): Pow
 }
 
 // ---------------------------------------------------------------------------
-// DB source (placeholder — mirrors the programs pattern)
+// DB source
 // ---------------------------------------------------------------------------
 
+function dbRowToPowerPlant(row: Record<string, unknown>): PowerPlant {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    name: row.name as string,
+    plantCode: row.plantCode as string,
+    utilityId: (row.utilityId as string | null) ?? undefined,
+    utilityName: row.utilityName as string,
+    balancingAuthorityId: (row.balancingAuthorityId as string | null) ?? undefined,
+    baCode: (row.baCode as string | null) ?? undefined,
+    state: row.state as string,
+    county: (row.county as string | null) ?? undefined,
+    latitude: row.latitude as number,
+    longitude: row.longitude as number,
+    nercRegion: (row.nercRegion as string | null) ?? undefined,
+    sector: row.sector as string,
+    primaryFuel: (row.primaryFuel as string | null) ?? undefined,
+    fuelCategory: row.fuelCategory as FuelCategory,
+    technologies: (row.technologies as string[]) ?? [],
+    energySources: (row.energySources as string[]) ?? [],
+    totalCapacityMw: row.totalCapacityMw as number,
+    generatorCount: row.generatorCount as number,
+    operatingYear: (row.operatingYear as number | null) ?? undefined,
+    gridVoltageKv: (row.gridVoltageKv as number | null) ?? undefined,
+    status: row.status as string,
+    proposedCapacityMw: (row.proposedCapacityMw as number | null) ?? undefined,
+    proposedOnlineYear: (row.proposedOnlineYear as number | null) ?? undefined,
+  };
+}
+
 async function loadFromDb(filters?: PowerPlantFilters): Promise<PowerPlant[]> {
-  // When DB mode is wired up, this will query the power_plants table.
-  // For now, fall back to JSON so the endpoint still works.
-  const plants = loadJson();
-  return filters ? applyJsonFilters(plants, filters) : plants;
+  const { getDb } = await import("@/lib/db/client");
+  const { powerPlants } = await import("@/lib/db/schema");
+  const { eq, and, or, sql } = await import("drizzle-orm");
+  type DrizzleSQL = ReturnType<typeof eq>;
+
+  const db = getDb();
+  const conditions: DrizzleSQL[] = [];
+
+  if (filters?.state) conditions.push(eq(powerPlants.state, filters.state));
+  if (filters?.fuelCategory) conditions.push(eq(powerPlants.fuelCategory, filters.fuelCategory));
+  if (filters?.status) conditions.push(eq(powerPlants.status, filters.status));
+
+  // Full-text search using the search_vector column
+  if (filters?.search) {
+    const searchTerm = filters.search.trim();
+    conditions.push(
+      or(
+        sql`${powerPlants.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
+        sql`${powerPlants.name} ILIKE ${`%${searchTerm}%`}`,
+        sql`${powerPlants.utilityName} ILIKE ${`%${searchTerm}%`}`
+      )!
+    );
+  }
+
+  const rows = await db
+    .select({
+      id: powerPlants.id,
+      slug: powerPlants.slug,
+      name: powerPlants.name,
+      plantCode: powerPlants.plantCode,
+      utilityId: powerPlants.utilityId,
+      utilityName: powerPlants.utilityName,
+      balancingAuthorityId: powerPlants.balancingAuthorityId,
+      baCode: powerPlants.baCode,
+      state: powerPlants.state,
+      county: powerPlants.county,
+      latitude: powerPlants.latitude,
+      longitude: powerPlants.longitude,
+      nercRegion: powerPlants.nercRegion,
+      sector: powerPlants.sector,
+      primaryFuel: powerPlants.primaryFuel,
+      fuelCategory: powerPlants.fuelCategory,
+      technologies: powerPlants.technologies,
+      energySources: powerPlants.energySources,
+      totalCapacityMw: powerPlants.totalCapacityMw,
+      generatorCount: powerPlants.generatorCount,
+      operatingYear: powerPlants.operatingYear,
+      gridVoltageKv: powerPlants.gridVoltageKv,
+      status: powerPlants.status,
+      proposedCapacityMw: powerPlants.proposedCapacityMw,
+      proposedOnlineYear: powerPlants.proposedOnlineYear,
+    })
+    .from(powerPlants)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+  return rows.map(dbRowToPowerPlant);
 }
 
 async function loadBySlugFromDb(slug: string): Promise<PowerPlant | null> {
-  const plants = loadJson();
-  return plants.find((p) => p.slug === slug) ?? null;
+  const { getDb } = await import("@/lib/db/client");
+  const { powerPlants } = await import("@/lib/db/schema");
+  const { eq } = await import("drizzle-orm");
+
+  const db = getDb();
+  const rows = await db
+    .select({
+      id: powerPlants.id,
+      slug: powerPlants.slug,
+      name: powerPlants.name,
+      plantCode: powerPlants.plantCode,
+      utilityId: powerPlants.utilityId,
+      utilityName: powerPlants.utilityName,
+      balancingAuthorityId: powerPlants.balancingAuthorityId,
+      baCode: powerPlants.baCode,
+      state: powerPlants.state,
+      county: powerPlants.county,
+      latitude: powerPlants.latitude,
+      longitude: powerPlants.longitude,
+      nercRegion: powerPlants.nercRegion,
+      sector: powerPlants.sector,
+      primaryFuel: powerPlants.primaryFuel,
+      fuelCategory: powerPlants.fuelCategory,
+      technologies: powerPlants.technologies,
+      energySources: powerPlants.energySources,
+      totalCapacityMw: powerPlants.totalCapacityMw,
+      generatorCount: powerPlants.generatorCount,
+      operatingYear: powerPlants.operatingYear,
+      gridVoltageKv: powerPlants.gridVoltageKv,
+      status: powerPlants.status,
+      proposedCapacityMw: powerPlants.proposedCapacityMw,
+      proposedOnlineYear: powerPlants.proposedOnlineYear,
+    })
+    .from(powerPlants)
+    .where(eq(powerPlants.slug, slug))
+    .limit(1);
+
+  return rows.length > 0 ? dbRowToPowerPlant(rows[0]) : null;
 }
 
 // ---------------------------------------------------------------------------
