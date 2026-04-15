@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+
 /**
  * API Test Harness for CommonGrid
  *
@@ -9,8 +10,8 @@
  *   API_BASE_URL=https://commongrid.info npm run test:api
  */
 
-import { getDb } from "../lib/db/client";
 import { sql } from "drizzle-orm";
+import { getDb } from "../lib/db/client";
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -46,7 +47,7 @@ interface TestResult {
 }
 
 const results: TestResult[] = [];
-let currentTestName = "";
+let _currentTestName = "";
 
 // ---------------------------------------------------------------------------
 // Colored Console Output
@@ -85,13 +86,10 @@ function warn(msg: string) {
 // ---------------------------------------------------------------------------
 
 function startTest(name: string) {
-  currentTestName = name;
+  _currentTestName = name;
 }
 
-async function test(
-  name: string,
-  fn: () => Promise<void> | void
-): Promise<void> {
+async function test(name: string, fn: () => Promise<void> | void): Promise<void> {
   startTest(name);
   const startTime = performance.now();
   try {
@@ -115,10 +113,7 @@ function assert(condition: boolean, message: string) {
 
 function assertEqual<T>(actual: T, expected: T, message?: string) {
   if (actual !== expected) {
-    throw new Error(
-      message ||
-        `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`
-    );
+    throw new Error(message || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
   }
 }
 
@@ -162,9 +157,7 @@ async function apiRequest<T = unknown>(
   const duration = performance.now() - startTime;
 
   if (!response.ok) {
-    throw new Error(
-      `HTTP ${response.status}: ${response.statusText} (${url})`
-    );
+    throw new Error(`HTTP ${response.status}: ${response.statusText} (${url})`);
   }
 
   const data = await response.json();
@@ -187,9 +180,7 @@ async function apiRequestSingle<T = unknown>(
   const duration = performance.now() - startTime;
 
   if (!response.ok) {
-    throw new Error(
-      `HTTP ${response.status}: ${response.statusText} (${url})`
-    );
+    throw new Error(`HTTP ${response.status}: ${response.statusText} (${url})`);
   }
 
   const json = await response.json();
@@ -200,10 +191,7 @@ async function apiRequestSingle<T = unknown>(
 // Validation Helpers
 // ---------------------------------------------------------------------------
 
-function validatePaginatedResponse<T>(
-  response: ApiResponse<T>,
-  expectedMinCount?: number
-) {
+function validatePaginatedResponse<T>(response: ApiResponse<T>, expectedMinCount?: number) {
   assertExists(response.data, "Response should have data array");
   assert(Array.isArray(response.data), "data should be an array");
   assertExists(response.pagination, "Response should have pagination object");
@@ -218,10 +206,7 @@ function validatePaginatedResponse<T>(
   );
 
   if (expectedMinCount !== undefined) {
-    assert(
-      pagination.total >= expectedMinCount,
-      `Expected total >= ${expectedMinCount}, got ${pagination.total}`
-    );
+    assert(pagination.total >= expectedMinCount, `Expected total >= ${expectedMinCount}, got ${pagination.total}`);
   }
 }
 
@@ -233,10 +218,7 @@ function validateResponseTime(duration: number, target = RESPONSE_TIME_TARGET_MS
 
 function validateRequiredFields(item: Record<string, unknown>, fields: string[]) {
   for (const field of fields) {
-    assertExists(
-      item[field],
-      `Required field "${field}" is missing or null`
-    );
+    assertExists(item[field], `Required field "${field}" is missing or null`);
   }
 }
 
@@ -244,30 +226,22 @@ function validateRequiredFields(item: Record<string, unknown>, fields: string[])
 // Database Validation Helpers
 // ---------------------------------------------------------------------------
 
-async function getActualCount(tableName: string): Promise<number> {
+async function _getActualCount(tableName: string): Promise<number> {
   const db = getDb();
   const result = await db.execute(sql.raw(`SELECT COUNT(*) as count FROM ${tableName}`));
   return Number(result.rows[0]?.count || 0);
 }
 
-async function getSampleSlugs(
-  tableName: string,
-  count = 3,
-  slugColumn = "slug"
-): Promise<string[]> {
+async function getSampleSlugs(tableName: string, count = 3, slugColumn = "slug"): Promise<string[]> {
   const db = getDb();
-  const result = await db.execute(
-    sql.raw(`SELECT ${slugColumn} FROM ${tableName} LIMIT ${count}`)
-  );
-  return result.rows.map((row: any) => row[slugColumn] || row.slug);
+  const result = await db.execute(sql.raw(`SELECT ${slugColumn} FROM ${tableName} LIMIT ${count}`));
+  return result.rows.map((row: Record<string, unknown>) => (row[slugColumn] as string) || (row.slug as string));
 }
 
 async function getSampleIds(tableName: string, count = 3): Promise<string[]> {
   const db = getDb();
-  const result = await db.execute(
-    sql.raw(`SELECT id FROM ${tableName} LIMIT ${count}`)
-  );
-  return result.rows.map((row: any) => row.id);
+  const result = await db.execute(sql.raw(`SELECT id FROM ${tableName} LIMIT ${count}`));
+  return result.rows.map((row: Record<string, unknown>) => row.id as string);
 }
 
 // ---------------------------------------------------------------------------
@@ -755,11 +729,8 @@ async function main() {
   }
 
   // Performance summary
-  const avgResponseTime =
-    results.reduce((sum, r) => sum + r.duration, 0) / results.length;
-  console.log(
-    `\nAverage response time: ${avgResponseTime.toFixed(0)}ms (target: ${RESPONSE_TIME_TARGET_MS}ms)`
-  );
+  const avgResponseTime = results.reduce((sum, r) => sum + r.duration, 0) / results.length;
+  console.log(`\nAverage response time: ${avgResponseTime.toFixed(0)}ms (target: ${RESPONSE_TIME_TARGET_MS}ms)`);
   console.log(`Total test duration: ${(totalDuration / 1000).toFixed(2)}s`);
 
   // Failed tests detail
