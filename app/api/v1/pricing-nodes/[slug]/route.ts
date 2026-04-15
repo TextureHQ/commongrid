@@ -7,10 +7,7 @@
 
 import {
   ApiError,
-  withErrorHandling,
-  withRequestId,
-  withTiming,
-  withCors,
+  withApiMiddleware,
   jsonResponse,
   type RouteContext,
 } from "@/lib/api";
@@ -26,22 +23,20 @@ export async function GET(
 ): Promise<Response> {
   const { slug } = await params;
 
-  return withRequestId(
-    withErrorHandling(
-      withTiming(async (r: Request, _ctx: RouteContext) => {
-        const node = await loadPricingNodeBySlug(slug);
+  const wrapped = withApiMiddleware(
+    async (_r: Request, _ctx: RouteContext) => {
+      const node = await loadPricingNodeBySlug(slug);
 
-        if (!node) {
-          throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
-        }
+      if (!node) {
+        throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
+      }
 
-        return withCors(
-          jsonResponse({ data: node }, 200, {
-            "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
-            "Cache-Tag": `pricing-node:${slug}`,
-          })
-        );
-      })
-    )
-  )(req, { requestId: "" });
+      return jsonResponse({ data: node }, 200, {
+        "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
+        "Cache-Tag": `pricing-node:${slug}`,
+      });
+    }
+  );
+
+  return wrapped(req, { requestId: "" });
 }

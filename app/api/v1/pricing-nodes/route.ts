@@ -9,15 +9,13 @@ import { z } from "zod";
 
 import {
   ApiError,
-  withErrorHandling,
-  withRequestId,
-  withTiming,
-  withCors,
+  withApiMiddleware,
   jsonResponse,
   paginatedResponse,
   encodeCursor,
   decodeCursor,
   type CursorV1,
+  type RouteContext,
 } from "@/lib/api";
 import { loadPricingNodes } from "@/lib/data/pricing-nodes";
 import type { PricingNode } from "@/types/pricing-nodes";
@@ -191,16 +189,15 @@ async function handler(req: Request): Promise<Response> {
 
   const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
 
-  return withCors(
-    jsonResponse(envelope, 200, {
-      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-      "Cache-Tag": "pricing-nodes",
-    })
-  );
+  return jsonResponse(envelope, 200, {
+    "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+    "Cache-Tag": "pricing-nodes",
+  });
 }
 
 export async function GET(req: Request): Promise<Response> {
-  return withRequestId(withErrorHandling(withTiming(handler)))(req, {
-    requestId: "",
-  });
+  const wrapped = withApiMiddleware(
+    async (r: Request, _ctx: RouteContext) => handler(r)
+  );
+  return wrapped(req, { requestId: "" });
 }
