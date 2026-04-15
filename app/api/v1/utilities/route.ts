@@ -170,7 +170,16 @@ async function handleJsonMode(params: FilterParams) {
 
   // Pagination
   const { limit } = parsePaginationParams(params.url.searchParams);
-  const page = Math.max(1, parseInt(params.url.searchParams.get("page") ?? "1", 10) || 1);
+  
+  // Extract page number from cursor (page:N) or page parameter
+  let page = 1;
+  const cursorParam = params.url.searchParams.get("cursor");
+  if (cursorParam && cursorParam.startsWith("page:")) {
+    const pageNum = parseInt(cursorParam.slice(5), 10);
+    page = Math.max(1, pageNum || 1);
+  } else {
+    page = Math.max(1, parseInt(params.url.searchParams.get("page") ?? "1", 10) || 1);
+  }
   const offset = (page - 1) * limit;
   const paged = filtered.slice(offset, offset + limit);
   const hasMore = offset + limit < filtered.length;

@@ -106,4 +106,16 @@ describe("parsePaginationParams", () => {
     const params = parsePaginationParams(new URLSearchParams(`cursor=${token}`));
     expect(params.cursor).toEqual(sampleCursor);
   });
+
+  it("handles page:N cursor format (JSON mode)", () => {
+    const params = parsePaginationParams(new URLSearchParams("cursor=page:2"));
+    expect(params.cursor).toBeNull();
+    expect(params.limit).toBe(50);
+  });
+
+  it("handles page:10 cursor format", () => {
+    const params = parsePaginationParams(new URLSearchParams("cursor=page:10&limit=25"));
+    expect(params.cursor).toBeNull();
+    expect(params.limit).toBe(25);
+  });
 });
