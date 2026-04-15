@@ -36,6 +36,16 @@ import {
 } from "../lib/db/schema";
 
 // ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface FkWarnings {
+  missingBaIds: Set<string>;
+  missingIsoIds: Set<string>;
+  missingRtoIds: Set<string>;
+}
+
+// ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
 
@@ -168,51 +178,78 @@ async function seedBalancingAuthorities(db: DrizzleDb): Promise<number> {
   return inserted;
 }
 
-async function seedUtilities(db: DrizzleDb): Promise<number> {
+async function seedUtilities(
+  db: DrizzleDb,
+  validIsoIds: Set<string>,
+  validRtoIds: Set<string>,
+  validBaIds: Set<string>
+): Promise<{ inserted: number; warnings: FkWarnings }> {
   const data = loadJson<Array<Record<string, unknown>>>("utilities.json");
   let inserted = 0;
 
+  const warnings: FkWarnings = {
+    missingBaIds: new Set<string>(),
+    missingIsoIds: new Set<string>(),
+    missingRtoIds: new Set<string>(),
+  };
+
   for (const batch of chunk(data, BATCH_SIZE)) {
-    const rows = batch.map((r) => ({
-      id: r.id as string,
-      slug: r.slug as string,
-      name: r.name as string,
-      eiaName: (r.eiaName as string) ?? null,
-      shortName: (r.shortName as string) ?? null,
-      logo: (r.logo as string) ?? null,
-      website: (r.website as string) ?? null,
-      eiaId: (r.eiaId as string) ?? null,
-      segment: r.segment as string,
-      status: r.status as string,
-      customerCount: (r.customerCount as number) ?? null,
-      peakDemandMw: (r.peakDemandMw as number) ?? null,
-      winterPeakDemandMw: (r.winterPeakDemandMw as number) ?? null,
-      totalRevenueDollars: (r.totalRevenueDollars as number) ?? null,
-      totalSalesMwh: (r.totalSalesMwh as number) ?? null,
-      baCode: (r.baCode as string) ?? null,
-      nercRegion: (r.nercRegion as string) ?? null,
-      hasGeneration: (r.hasGeneration as boolean) ?? null,
-      hasTransmission: (r.hasTransmission as boolean) ?? null,
-      hasDistribution: (r.hasDistribution as boolean) ?? null,
-      amiMeterCount: (r.amiMeterCount as number) ?? null,
-      totalMeterCount: (r.totalMeterCount as number) ?? null,
-      jurisdiction: (r.jurisdiction as string) ?? null,
-      isoId: (r.isoId as string) ?? null,
-      rtoId: (r.rtoId as string) ?? null,
-      balancingAuthorityId: (r.balancingAuthorityId as string) ?? null,
-      generationProviderId: (r.generationProviderId as string) ?? null,
-      transmissionProviderId: (r.transmissionProviderId as string) ?? null,
-      parentId: (r.parentId as string) ?? null,
-      successorId: (r.successorId as string) ?? null,
-      serviceTerritoryId: (r.serviceTerritoryId as string) ?? null,
-      notionPageId: (r.notionPageId as string) ?? null,
-    }));
+    const rows = batch.map((r) => {
+      // Validate FK references and collect missing IDs
+      const baId = r.balancingAuthorityId as string | undefined;
+      const isoId = r.isoId as string | undefined;
+      const rtoId = r.rtoId as string | undefined;
+
+      const validBaId = baId && validBaIds.has(baId) ? baId : null;
+      const validIsoId = isoId && validIsoIds.has(isoId) ? isoId : null;
+      const validRtoId = rtoId && validRtoIds.has(rtoId) ? rtoId : null;
+
+      // Track missing references
+      if (baId && !validBaId) warnings.missingBaIds.add(baId);
+      if (isoId && !validIsoId) warnings.missingIsoIds.add(isoId);
+      if (rtoId && !validRtoId) warnings.missingRtoIds.add(rtoId);
+
+      return {
+        id: r.id as string,
+        slug: r.slug as string,
+        name: r.name as string,
+        eiaName: (r.eiaName as string) ?? null,
+        shortName: (r.shortName as string) ?? null,
+        logo: (r.logo as string) ?? null,
+        website: (r.website as string) ?? null,
+        eiaId: (r.eiaId as string) ?? null,
+        segment: r.segment as string,
+        status: r.status as string,
+        customerCount: (r.customerCount as number) ?? null,
+        peakDemandMw: (r.peakDemandMw as number) ?? null,
+        winterPeakDemandMw: (r.winterPeakDemandMw as number) ?? null,
+        totalRevenueDollars: (r.totalRevenueDollars as number) ?? null,
+        totalSalesMwh: (r.totalSalesMwh as number) ?? null,
+        baCode: (r.baCode as string) ?? null,
+        nercRegion: (r.nercRegion as string) ?? null,
+        hasGeneration: (r.hasGeneration as boolean) ?? null,
+        hasTransmission: (r.hasTransmission as boolean) ?? null,
+        hasDistribution: (r.hasDistribution as boolean) ?? null,
+        amiMeterCount: (r.amiMeterCount as number) ?? null,
+        totalMeterCount: (r.totalMeterCount as number) ?? null,
+        jurisdiction: (r.jurisdiction as string) ?? null,
+        isoId: validIsoId,
+        rtoId: validRtoId,
+        balancingAuthorityId: validBaId,
+        generationProviderId: (r.generationProviderId as string) ?? null,
+        transmissionProviderId: (r.transmissionProviderId as string) ?? null,
+        parentId: (r.parentId as string) ?? null,
+        successorId: (r.successorId as string) ?? null,
+        serviceTerritoryId: (r.serviceTerritoryId as string) ?? null,
+        notionPageId: (r.notionPageId as string) ?? null,
+      };
+    });
 
     await db.insert(utilities).values(rows).onConflictDoNothing();
     inserted += batch.length;
   }
 
-  return inserted;
+  return { inserted, warnings };
 }
 
 async function seedPrograms(db: DrizzleDb): Promise<number> {
@@ -685,11 +722,39 @@ async function main(): Promise<void> {
     expectedCounts.balancing_authorities = baCount;
     console.log(`✅ balancing_authorities: ${baCount}/${baCount} seeded (${elapsed(start)})`);
 
+    // Build valid ID sets for FK validation
+    const isoData = loadJson<Array<Record<string, unknown>>>("isos.json");
+    const rtoData = loadJson<Array<Record<string, unknown>>>("rtos.json");
+    const baData = loadJson<Array<Record<string, unknown>>>("balancing-authorities.json");
+
+    const validIsoIds = new Set(isoData.map((r) => r.id as string));
+    const validRtoIds = new Set(rtoData.map((r) => r.id as string));
+    const validBaIds = new Set(baData.map((r) => r.id as string));
+
     // --- Utilities ---
     start = Date.now();
-    const utilityCount = await seedUtilities(db);
-    expectedCounts.utilities = utilityCount;
-    console.log(`✅ utilities: ${utilityCount}/${utilityCount} seeded (${elapsed(start)})`);
+    const utilityResult = await seedUtilities(db, validIsoIds, validRtoIds, validBaIds);
+    expectedCounts.utilities = utilityResult.inserted;
+    console.log(`✅ utilities: ${utilityResult.inserted}/${utilityResult.inserted} seeded (${elapsed(start)})`);
+
+    // Log FK warnings
+    if (utilityResult.warnings.missingBaIds.size > 0) {
+      console.log(
+        `  ⚠️  ${utilityResult.warnings.missingBaIds.size} utilities reference missing balancing authorities:`
+      );
+      const missingBas = Array.from(utilityResult.warnings.missingBaIds).sort();
+      console.log(`      ${missingBas.join(", ")}`);
+    }
+    if (utilityResult.warnings.missingIsoIds.size > 0) {
+      console.log(`  ⚠️  ${utilityResult.warnings.missingIsoIds.size} utilities reference missing ISOs:`);
+      const missingIsos = Array.from(utilityResult.warnings.missingIsoIds).sort();
+      console.log(`      ${missingIsos.join(", ")}`);
+    }
+    if (utilityResult.warnings.missingRtoIds.size > 0) {
+      console.log(`  ⚠️  ${utilityResult.warnings.missingRtoIds.size} utilities reference missing RTOs:`);
+      const missingRtos = Array.from(utilityResult.warnings.missingRtoIds).sort();
+      console.log(`      ${missingRtos.join(", ")}`);
+    }
 
     // --- Programs ---
     start = Date.now();
