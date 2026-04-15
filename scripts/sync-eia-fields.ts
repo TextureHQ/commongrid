@@ -107,7 +107,7 @@ function readSalesData(
   { baCode: string | null; revenueDollars: number | null; salesMwh: number | null; customers: number | null }
 > {
   const wb = XLSX.readFile(filePath);
-  const sheet = wb.Sheets["States"];
+  const sheet = wb.Sheets.States;
   if (!sheet) return new Map();
 
   const rawRows: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -168,7 +168,7 @@ function readAdvancedMeters(
   filePath: string
 ): Map<string, { amiTotal: number | null; metersTotal: number | null; baCode: string | null }> {
   const wb = XLSX.readFile(filePath);
-  const sheet = wb.Sheets["states"];
+  const sheet = wb.Sheets.states;
   if (!sheet) return new Map();
 
   const rawRows: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -209,7 +209,7 @@ function readOperationalData(
   filePath: string
 ): Map<string, { summerPeakMw: number | null; winterPeakMw: number | null }> {
   const wb = XLSX.readFile(filePath);
-  const sheet = wb.Sheets["States"];
+  const sheet = wb.Sheets.States;
   if (!sheet) return new Map();
 
   const rawRows: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -292,9 +292,9 @@ async function main() {
       nercUpdated++;
     }
 
-    const gen = parseBool(row["Generation"]);
-    const trans = parseBool(row["Transmission"]);
-    const dist = parseBool(row["Distribution"]);
+    const gen = parseBool(row.Generation);
+    const trans = parseBool(row.Transmission);
+    const dist = parseBool(row.Distribution);
     if (gen !== null || trans !== null || dist !== null) {
       utility.hasGeneration = gen;
       utility.hasTransmission = trans;

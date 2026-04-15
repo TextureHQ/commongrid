@@ -1347,7 +1347,7 @@ const BA_TO_ISO: Record<string, string> = {
 
 // ───── ISO BA codes for plant filtering ─────────────────────────────────────
 
-const ISO_BA_CODES: Record<string, string[]> = {
+const _ISO_BA_CODES: Record<string, string[]> = {
   CAISO: ["CISO"],
   PJM: ["PJM"],
   ERCOT: ["ERCO"],

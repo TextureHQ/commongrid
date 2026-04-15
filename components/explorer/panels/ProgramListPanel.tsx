@@ -134,17 +134,16 @@ export function ProgramListPanel() {
         render: (_value: unknown, row: ProgramRow) => (
           <div className="flex items-center gap-2">
             <span className="text-sm text-text-body">{row.compensationSummary as string}</span>
-            {/* biome-ignore lint/a11y/useAnchorContent: aria-label="Program website" provides accessible label */}
             {row.programWebsite && (
-              <
+              <a
                 href={row.programWebsite as string}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="text-text-muted hover:text-brand-primary transition-colors"
                 title="Program website"
-                aria-label="Program website"
               >
+                <span className="sr-only">Program website</span>
                 <svg
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"

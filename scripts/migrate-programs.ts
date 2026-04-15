@@ -10,10 +10,9 @@
  *   NOTION_API_KEY=<key> npx ts-node scripts/migrate-programs.ts
  */
 
-import * as crypto from "crypto";
-import * as fs from "fs";
-import * as https from "https";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as https from "node:https";
+import * as path from "node:path";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -154,7 +153,7 @@ function slugify(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
-function getStateFromJurisdiction(jurisdiction: string | null | undefined): string[] {
+function _getStateFromJurisdiction(jurisdiction: string | null | undefined): string[] {
   if (!jurisdiction) return [];
   // jurisdiction may be "CO", "FL, IN, KY", etc.
   const parts = jurisdiction
