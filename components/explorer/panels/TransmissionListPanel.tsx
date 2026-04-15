@@ -1,23 +1,16 @@
 "use client";
 
-import {
-  Badge,
-  type Column,
-  DataControls,
-  DataTable,
-  EmptyState,
-  Loader,
-} from "@texturehq/edges";
+import { Badge, type Column, DataControls, DataTable, EmptyState, Loader } from "@texturehq/edges";
 import { useMemo } from "react";
-import { useExplorer } from "../ExplorerContext";
-import { useTransmissionLines } from "@/lib/transmission-lines";
 import { useFuseSearch } from "@/lib/search";
+import { useTransmissionLines } from "@/lib/transmission-lines";
 import {
   type TransmissionLine,
-  type VoltageClass,
   VOLTAGE_CLASSES,
+  type VoltageClass,
   VoltageClassLabel,
 } from "@/types/transmission-lines";
+import { useExplorer } from "../ExplorerContext";
 
 interface TransmissionLineRow extends Record<string, unknown> {
   objectId: number;
@@ -150,9 +143,7 @@ export function TransmissionListPanel() {
         label: "Length",
         accessor: "lengthMiles",
         render: (_value: unknown, row: TransmissionLineRow) => (
-          <span className="text-text-body">
-            {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
-          </span>
+          <span className="text-text-body">{row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}</span>
         ),
         mobile: { priority: 3, format: "secondary" },
       },
@@ -165,8 +156,7 @@ export function TransmissionListPanel() {
             size="sm"
             shape="pill"
             variant={
-              row.status.toLowerCase().includes("in service") &&
-              !row.status.toLowerCase().includes("not")
+              row.status.toLowerCase().includes("in service") && !row.status.toLowerCase().includes("not")
                 ? "success"
                 : row.status.toLowerCase().includes("not in service")
                   ? "error"

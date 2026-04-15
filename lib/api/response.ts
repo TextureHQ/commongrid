@@ -48,11 +48,7 @@ export function paginatedResponse<T>(
  * @param status  - HTTP status code (default `200`).
  * @param headers - Additional headers to merge in.
  */
-export function jsonResponse(
-  data: unknown,
-  status: number = 200,
-  headers: Record<string, string> = {}
-): Response {
+export function jsonResponse(data: unknown, status: number = 200, headers: Record<string, string> = {}): Response {
   return Response.json(data, {
     status,
     headers: {

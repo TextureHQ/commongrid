@@ -54,7 +54,7 @@ function groupByDate(entries: ChangelogEntry[]): Array<{ date: string; entries: 
   for (const entry of entries) {
     const date = formatDate(entry.isoTimestamp);
     if (!groups.has(date)) groups.set(date, []);
-    groups.get(date)!.push(entry);
+    groups.get(date)?.push(entry);
   }
   return Array.from(groups.entries()).map(([date, entries]) => ({ date, entries }));
 }
@@ -78,11 +78,7 @@ function EntryRow({ entry }: { entry: ChangelogEntry }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-0.5">
           <span className="text-sm font-semibold text-text-heading">{entry.name}</span>
-          <Badge
-            size="sm"
-            shape="pill"
-            variant={entry.kind === "added" ? "success" : "info"}
-          >
+          <Badge size="sm" shape="pill" variant={entry.kind === "added" ? "success" : "info"}>
             {entry.kind === "added" ? "New" : "Updated"}
           </Badge>
         </div>
@@ -103,7 +99,9 @@ function DateGroup({ date, entries }: { date: string; entries: ChangelogEntry[] 
       <div className="flex items-center gap-3 mb-3">
         <div className="text-xs font-semibold uppercase tracking-widest text-text-muted">{date}</div>
         <div className="flex-1 h-px bg-border-default" />
-        <div className="text-xs text-text-muted">{entries.length} change{entries.length !== 1 ? "s" : ""}</div>
+        <div className="text-xs text-text-muted">
+          {entries.length} change{entries.length !== 1 ? "s" : ""}
+        </div>
       </div>
       <Card variant="outlined">
         <Card.Content className="p-0 px-6">
@@ -123,7 +121,7 @@ export default function ChangelogPage() {
 
   // Merge and sort all entries newest-first
   const allEntries = [...changelog.recentlyUpdated, ...changelog.newlyAdded].sort(
-    (a, b) => new Date(b.isoTimestamp).getTime() - new Date(a.isoTimestamp).getTime(),
+    (a, b) => new Date(b.isoTimestamp).getTime() - new Date(a.isoTimestamp).getTime()
   );
 
   const groups = groupByDate(allEntries);
@@ -148,15 +146,9 @@ export default function ChangelogPage() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-sm text-text-muted">
-                Synced from authoritative sources daily
-              </span>
+              <span className="text-sm text-text-muted">Synced from authoritative sources daily</span>
             </div>
-            {lastUpdated && (
-              <span className="text-xs text-text-muted">
-                Last updated {lastUpdated}
-              </span>
-            )}
+            {lastUpdated && <span className="text-xs text-text-muted">Last updated {lastUpdated}</span>}
           </div>
 
           {/* Stats */}
@@ -205,17 +197,13 @@ export default function ChangelogPage() {
                 <Icon name="Clock" size={32} className="text-text-muted mx-auto mb-3" />
                 <p className="text-text-muted text-sm">
                   No changes recorded yet. Run{" "}
-                  <code className="text-xs bg-background-subtle px-1.5 py-0.5 rounded">
-                    npm run generate:changelog
-                  </code>{" "}
+                  <code className="text-xs bg-background-subtle px-1.5 py-0.5 rounded">npm run generate:changelog</code>{" "}
                   after a sync to populate this feed.
                 </p>
               </Card.Content>
             </Card>
           ) : (
-            groups.map(({ date, entries }) => (
-              <DateGroup key={date} date={date} entries={entries} />
-            ))
+            groups.map(({ date, entries }) => <DateGroup key={date} date={date} entries={entries} />)
           )}
         </Section>
       </PageLayout.Content>

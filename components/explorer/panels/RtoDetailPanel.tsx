@@ -1,20 +1,12 @@
 "use client";
 
-import {
-  Badge,
-  Card,
-  type Column,
-  DataControls,
-  DataTable,
-  EmptyState,
-  Section,
-} from "@texturehq/edges";
+import { Badge, Card, type Column, DataControls, DataTable, EmptyState, Section } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import { useCallback, useEffect, useMemo } from "react";
-import { useExplorer } from "../ExplorerContext";
 import { getRtoBySlug, getUtilitiesByRto } from "@/lib/data";
 import { formatCustomerCount, formatStates, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
+import { useExplorer } from "../ExplorerContext";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -46,7 +38,14 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
   const utilities = useMemo(() => (rto ? getUtilitiesByRto(rto.id) : []), [rto]);
 
   const utilityRows: UtilityRow[] = useMemo(
-    () => utilities.map((u) => ({ slug: u.slug, name: u.name, segment: u.segment, customerCount: u.customerCount, jurisdiction: u.jurisdiction })),
+    () =>
+      utilities.map((u) => ({
+        slug: u.slug,
+        name: u.name,
+        segment: u.segment,
+        customerCount: u.customerCount,
+        jurisdiction: u.jurisdiction,
+      })),
     [utilities]
   );
 
@@ -62,7 +61,14 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
         label: "Name",
         accessor: "name",
         render: (_value: unknown, row: UtilityRow) => (
-          <button type="button" onClick={(e) => { e.stopPropagation(); navigateToDetail("utility", row.slug); }} className="font-medium text-text-body hover:text-brand-primary">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigateToDetail("utility", row.slug);
+            }}
+            className="font-medium text-text-body hover:text-brand-primary"
+          >
             {row.name}
           </button>
         ),
@@ -73,7 +79,9 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
         label: "Segment",
         accessor: "segment",
         render: (_value: unknown, row: UtilityRow) => (
-          <Badge size="sm" shape="pill" variant={getSegmentBadgeVariant(row.segment)}>{getSegmentLabel(row.segment)}</Badge>
+          <Badge size="sm" shape="pill" variant={getSegmentBadgeVariant(row.segment)}>
+            {getSegmentLabel(row.segment)}
+          </Badge>
         ),
         mobile: { priority: 2, format: "badge" },
       },
@@ -81,7 +89,9 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
         id: "customerCount",
         label: "Customers",
         accessor: "customerCount",
-        render: (_value: unknown, row: UtilityRow) => <span className="text-text-body">{formatCustomerCount(row.customerCount)}</span>,
+        render: (_value: unknown, row: UtilityRow) => (
+          <span className="text-text-body">{formatCustomerCount(row.customerCount)}</span>
+        ),
         mobile: false,
       },
     ],
@@ -92,7 +102,13 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
     return (
       <div className="flex flex-col h-full">
         <div className="flex-none px-4 pt-4 pb-2">
-          <button type="button" onClick={goBack} className="text-sm text-text-muted hover:text-text-body transition-colors mb-2">&larr; Back</button>
+          <button
+            type="button"
+            onClick={goBack}
+            className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
+          >
+            &larr; Back
+          </button>
         </div>
         <div className="flex-1 flex items-center justify-center text-text-muted">RTO not found</div>
       </div>
@@ -102,7 +118,13 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="flex-none px-4 pt-4 pb-2">
-        <button type="button" onClick={goBack} className="text-sm text-text-muted hover:text-text-body transition-colors mb-2">&larr; Back</button>
+        <button
+          type="button"
+          onClick={goBack}
+          className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
+        >
+          &larr; Back
+        </button>
       </div>
 
       <div className="px-4 pb-6 space-y-6">
@@ -127,10 +149,17 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
                   <div className="text-xs text-text-muted mb-0.5">Website</div>
                   <div className="text-sm font-medium">
                     {rto.website ? (
-                      <a href={rto.website} target="_blank" rel="noopener noreferrer" className="text-brand-primary hover:underline">
+                      <a
+                        href={rto.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-primary hover:underline"
+                      >
                         {safeHostname(rto.website)}
                       </a>
-                    ) : "\u2014"}
+                    ) : (
+                      "\u2014"
+                    )}
                   </div>
                 </div>
               </div>
@@ -143,7 +172,13 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
             <>
               <DataControls resultsCount={{ count: utilityRows.length }} />
               <Card className="p-0 overflow-hidden">
-                <DataTable data={utilityRows} columns={utilityColumns} mobileBreakpoint="md" isLoading={false} onRowClick={handleUtilityRowClick} />
+                <DataTable
+                  data={utilityRows}
+                  columns={utilityColumns}
+                  mobileBreakpoint="md"
+                  isLoading={false}
+                  onRowClick={handleUtilityRowClick}
+                />
               </Card>
             </>
           ) : (

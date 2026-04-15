@@ -1,5 +1,5 @@
 interface DbStatus {
-  status: 'ok' | 'error' | 'unconfigured';
+  status: "ok" | "error" | "unconfigured";
   latencyMs?: number;
   error?: string;
 }
@@ -10,7 +10,7 @@ interface SyncStatus {
 }
 
 interface HealthResponse {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: "healthy" | "degraded" | "unhealthy";
   database?: DbStatus;
   lastSync?: SyncStatus;
   version: string | undefined;
@@ -18,19 +18,19 @@ interface HealthResponse {
 
 async function checkDatabase(): Promise<DbStatus> {
   if (!process.env.DATABASE_URL) {
-    return { status: 'unconfigured' };
+    return { status: "unconfigured" };
   }
 
   const start = Date.now();
 
   try {
-    const { neon } = await import('@neondatabase/serverless');
+    const { neon } = await import("@neondatabase/serverless");
     const sql = neon(process.env.DATABASE_URL);
     await sql`SELECT 1`;
-    return { status: 'ok', latencyMs: Date.now() - start };
+    return { status: "ok", latencyMs: Date.now() - start };
   } catch (err) {
     return {
-      status: 'error',
+      status: "error",
       latencyMs: Date.now() - start,
       error: err instanceof Error ? err.message : String(err),
     };
@@ -56,12 +56,12 @@ async function checkLastSync(): Promise<SyncStatus> {
 export async function GET() {
   const [db, lastSync] = await Promise.all([checkDatabase(), checkLastSync()]);
 
-  let status: HealthResponse['status'] = 'healthy';
+  let status: HealthResponse["status"] = "healthy";
 
-  if (db.status === 'error') {
-    status = 'unhealthy';
+  if (db.status === "error") {
+    status = "unhealthy";
   } else if (lastSync.stale) {
-    status = 'degraded';
+    status = "degraded";
   }
 
   const body: HealthResponse = {
@@ -71,7 +71,7 @@ export async function GET() {
     version: process.env.VERCEL_GIT_COMMIT_SHA,
   };
 
-  const httpStatus = status === 'unhealthy' ? 503 : 200;
+  const httpStatus = status === "unhealthy" ? 503 : 200;
 
   return Response.json(body, { status: httpStatus });
 }

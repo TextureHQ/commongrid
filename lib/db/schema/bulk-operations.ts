@@ -1,10 +1,4 @@
-import {
-  pgTable,
-  text,
-  timestamp,
-  jsonb,
-  index,
-} from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * Bulk Operations (Idempotency Tracking)
@@ -19,15 +13,11 @@ export const bulkOperations = pgTable(
   {
     idempotencyKey: text("idempotency_key").primaryKey(),
     status: text("status").notNull().default("pending"), // 'pending', 'completed', 'failed'
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     result: jsonb("result"),
   },
-  (table) => [
-    index("idx_bulk_ops_created").on(table.createdAt),
-  ]
+  (table) => [index("idx_bulk_ops_created").on(table.createdAt)]
 );
 
 export type BulkOperationSelect = typeof bulkOperations.$inferSelect;

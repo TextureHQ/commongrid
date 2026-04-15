@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 const GITHUB_BASE = "https://github.com/TextureHQ/commongrid/blob/main";
 
 interface DataSourceLinkProps {

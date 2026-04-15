@@ -8,6 +8,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:biome": "biome check .",
+    "lint:biome:fix": "biome check --fix .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "sync:power-plants": "tsx scripts/sync-power-plants.ts",
     "sync:transmission-lines": "tsx scripts/sync-transmission-lines.ts",
     "sync:ev-charging": "tsx scripts/sync-ev-charging.ts",
@@ -41,9 +46,11 @@
     "@types/node": "^24.7.2",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
+    "@vitest/coverage-v8": "^4.1.4",
     "adm-zip": "^0.5.16",
     "drizzle-kit": "^0.31.10",
     "typescript": "^5.9.2",
+    "vitest": "^4.1.4",
     "xlsx": "^0.18.5"
   }
 }

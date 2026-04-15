@@ -22,9 +22,7 @@ export const pooledDb = createPooledClient();
  */
 export function getPooledDb() {
   if (!pooledDb) {
-    throw new Error(
-      "DATABASE_URL is not configured. Set it in environment variables."
-    );
+    throw new Error("DATABASE_URL is not configured. Set it in environment variables.");
   }
   return pooledDb;
 }

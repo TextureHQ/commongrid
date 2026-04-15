@@ -11,13 +11,11 @@ import {
   TextCell,
 } from "@texturehq/edges";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
-import { Suspense, useCallback, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { getAllUtilities, sortByName } from "@/lib/data";
-import { useFuseSearch } from "@/lib/search";
 import { SearchInput } from "@/components/SearchInput";
+import { getAllUtilities, sortByName } from "@/lib/data";
 import {
   formatCustomerCount,
   getSegmentBadgeVariant,
@@ -25,9 +23,8 @@ import {
   getStatusBadgeVariant,
   getStatusLabel,
 } from "@/lib/formatting";
-import { safeHostname } from "@/lib/geo";
-import type { Utility } from "@/types/entities";
-import { UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
+import { useFuseSearch } from "@/lib/search";
+import { UtilitySegmentLabel } from "@/types/entities";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -212,7 +209,11 @@ function GridOperatorsPageInner() {
   );
 
   return (
-    <PageLayout className="flex flex-col h-full overflow-hidden bg-background-default" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
+    <PageLayout
+      className="flex flex-col h-full overflow-hidden bg-background-default"
+      paddingYClass="pt-8 md:pt-12"
+      paddingXClass="px-4"
+    >
       <div className="flex-none">
         <PageLayout.Header title="Grid Operators" sticky={true} />
         <DataSourceLink paths={["data/utilities.json"]} className="px-1 pb-2" />

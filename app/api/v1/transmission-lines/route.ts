@@ -9,15 +9,15 @@ import { z } from "zod";
 
 import {
   ApiError,
+  type CursorV1,
+  decodeCursor,
+  encodeCursor,
+  jsonResponse,
+  paginatedResponse,
+  withCors,
   withErrorHandling,
   withRequestId,
   withTiming,
-  withCors,
-  jsonResponse,
-  paginatedResponse,
-  encodeCursor,
-  decodeCursor,
-  type CursorV1,
 } from "@/lib/api";
 import { loadTransmissionLines } from "@/lib/data/transmission-lines";
 import type { TransmissionLine } from "@/types/transmission-lines";
@@ -44,11 +44,7 @@ type SortField = "owner" | "voltageClass" | "lengthMiles";
 // Sorting
 // ---------------------------------------------------------------------------
 
-function sortLines(
-  lines: TransmissionLine[],
-  sortField: SortField,
-  order: "asc" | "desc"
-): TransmissionLine[] {
+function sortLines(lines: TransmissionLine[], sortField: SortField, order: "asc" | "desc"): TransmissionLine[] {
   return [...lines].sort((a, b) => {
     let cmp: number;
 
@@ -125,20 +121,26 @@ function applyCursor(
 // ---------------------------------------------------------------------------
 
 const ALL_FIELDS = new Set<string>([
-  "objectId", "id", "type", "status", "owner",
-  "voltage", "voltClass", "voltageClass",
-  "sub1", "sub2", "lengthMiles", "naicsCode", "source",
+  "objectId",
+  "id",
+  "type",
+  "status",
+  "owner",
+  "voltage",
+  "voltClass",
+  "voltageClass",
+  "sub1",
+  "sub2",
+  "lengthMiles",
+  "naicsCode",
+  "source",
 ]);
 
-function projectFields(
-  line: TransmissionLine,
-  fields: string[]
-): Partial<TransmissionLine> {
+function projectFields(line: TransmissionLine, fields: string[]): Partial<TransmissionLine> {
   const result: Partial<TransmissionLine> = {};
   for (const field of fields) {
     if (ALL_FIELDS.has(field)) {
-      (result as Record<string, unknown>)[field] =
-        (line as unknown as Record<string, unknown>)[field];
+      (result as Record<string, unknown>)[field] = (line as unknown as Record<string, unknown>)[field];
     }
   }
   return result;
@@ -158,17 +160,7 @@ async function handler(req: Request): Promise<Response> {
     });
   }
 
-  const {
-    voltageClass,
-    owner,
-    status,
-    search,
-    fields,
-    sort,
-    order,
-    limit,
-    cursor: rawCursor,
-  } = parsed.data;
+  const { voltageClass, owner, status, search, fields, sort, order, limit, cursor: rawCursor } = parsed.data;
 
   // Decode cursor if provided
   let cursor: CursorV1 | null = null;
@@ -215,9 +207,7 @@ async function handler(req: Request): Promise<Response> {
         .filter((f) => ALL_FIELDS.has(f))
     : null;
 
-  const data = requestedFields
-    ? items.map((l) => projectFields(l, requestedFields))
-    : items;
+  const data = requestedFields ? items.map((l) => projectFields(l, requestedFields)) : items;
 
   const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
 

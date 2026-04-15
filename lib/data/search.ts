@@ -8,8 +8,8 @@
  * For DB mode:    stub — returns empty results until pg_trgm/tsvector is wired.
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { getDataSource } from "@/lib/feature-flags";
 
@@ -116,12 +116,7 @@ function matchesQuery(value: string, query: string): boolean {
   return value.toLowerCase().includes(query);
 }
 
-function searchSimple(
-  items: SimpleEntity[],
-  query: string,
-  entityType: EntityType,
-  limit: number
-): SearchResult[] {
+function searchSimple(items: SimpleEntity[], query: string, entityType: EntityType, limit: number): SearchResult[] {
   const results: SearchResult[] = [];
   for (const item of items) {
     if (results.length >= limit) break;
@@ -156,48 +151,25 @@ function searchWithShortName(
         slug: item.slug,
         name: item.name,
         entityType,
-        matchField: nameMatch
-          ? "name"
-          : shortNameMatch
-            ? "shortName"
-            : "slug",
+        matchField: nameMatch ? "name" : shortNameMatch ? "shortName" : "slug",
       });
     }
   }
   return results;
 }
 
-function searchJsonEntities(
-  entityType: EntityType,
-  query: string,
-  limit: number
-): SearchResult[] {
+function searchJsonEntities(entityType: EntityType, query: string, limit: number): SearchResult[] {
   const q = query.toLowerCase();
 
   switch (entityType) {
     case "utility":
-      return searchSimple(
-        getJsonCache<SimpleEntity>("utility", "utilities.json"),
-        q,
-        entityType,
-        limit
-      );
+      return searchSimple(getJsonCache<SimpleEntity>("utility", "utilities.json"), q, entityType, limit);
 
     case "program":
-      return searchSimple(
-        getJsonCache<SimpleEntity>("program", "programs.json"),
-        q,
-        entityType,
-        limit
-      );
+      return searchSimple(getJsonCache<SimpleEntity>("program", "programs.json"), q, entityType, limit);
 
     case "power-plant":
-      return searchSimple(
-        getJsonCache<SimpleEntity>("power-plant", "power-plants.json"),
-        q,
-        entityType,
-        limit
-      );
+      return searchSimple(getJsonCache<SimpleEntity>("power-plant", "power-plants.json"), q, entityType, limit);
 
     case "ev-station": {
       const items = getJsonCache<EvEntity>("ev-station", "ev-charging.json");
@@ -219,18 +191,10 @@ function searchJsonEntities(
     }
 
     case "pricing-node":
-      return searchSimple(
-        getJsonCache<SimpleEntity>("pricing-node", "pricing-nodes.json"),
-        q,
-        entityType,
-        limit
-      );
+      return searchSimple(getJsonCache<SimpleEntity>("pricing-node", "pricing-nodes.json"), q, entityType, limit);
 
     case "transmission-line": {
-      const items = getJsonCache<TransmissionEntity>(
-        "transmission-line",
-        "transmission-lines.json"
-      );
+      const items = getJsonCache<TransmissionEntity>("transmission-line", "transmission-lines.json");
       const results: SearchResult[] = [];
       for (const item of items) {
         if (results.length >= limit) break;
@@ -247,27 +211,14 @@ function searchJsonEntities(
     }
 
     case "iso":
-      return searchWithShortName(
-        getJsonCache<SimpleEntityWithShortName>("iso", "isos.json"),
-        q,
-        entityType,
-        limit
-      );
+      return searchWithShortName(getJsonCache<SimpleEntityWithShortName>("iso", "isos.json"), q, entityType, limit);
 
     case "rto":
-      return searchWithShortName(
-        getJsonCache<SimpleEntityWithShortName>("rto", "rtos.json"),
-        q,
-        entityType,
-        limit
-      );
+      return searchWithShortName(getJsonCache<SimpleEntityWithShortName>("rto", "rtos.json"), q, entityType, limit);
 
     case "balancing-authority":
       return searchWithShortName(
-        getJsonCache<SimpleEntityWithShortName>(
-          "balancing-authority",
-          "balancing-authorities.json"
-        ),
+        getJsonCache<SimpleEntityWithShortName>("balancing-authority", "balancing-authorities.json"),
         q,
         entityType,
         limit
@@ -280,11 +231,7 @@ function searchJsonEntities(
 // ---------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function searchFromDb(
-  _entityType: EntityType,
-  _query: string,
-  _limit: number
-): Promise<SearchResult[]> {
+async function searchFromDb(_entityType: EntityType, _query: string, _limit: number): Promise<SearchResult[]> {
   // TODO: implement using pg_trgm similarity + tsvector full-text search
   return [];
 }
@@ -320,18 +267,13 @@ const ENTITY_TYPE_TO_FLAG_KEY: Record<EntityType, string> = {
  * @param query   Search query (min 2 chars, caller is responsible for validation).
  * @param options Entity type filter and per-type result limit.
  */
-export async function searchAll(
-  query: string,
-  options: SearchOptions = {}
-): Promise<SearchAllResult> {
+export async function searchAll(query: string, options: SearchOptions = {}): Promise<SearchAllResult> {
   const limit = options.limit ?? 5;
 
   // Resolve which entity types to search
   let entityTypes: EntityType[];
   if (options.types && options.types.length > 0) {
-    entityTypes = options.types
-      .map((t) => TYPE_SLUG_MAP[t])
-      .filter((t): t is EntityType => t !== undefined);
+    entityTypes = options.types.map((t) => TYPE_SLUG_MAP[t]).filter((t): t is EntityType => t !== undefined);
     // Fall back to all types if every supplied type was unrecognized
     if (entityTypes.length === 0) {
       entityTypes = ALL_ENTITY_TYPES;

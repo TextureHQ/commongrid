@@ -8,12 +8,12 @@ import {
   DataControls,
   DataTable,
   InteractiveMap,
-  layer,
   Loader,
+  layer,
   PageLayout,
   Section,
-  StatList,
   type StatItem,
+  StatList,
 } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
@@ -31,7 +31,6 @@ import {
   getUtilityById,
   getUtilityBySlug,
 } from "@/lib/data";
-import { usePowerPlants, filterByUtility } from "@/lib/power-plants";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -44,6 +43,7 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
+import { filterByUtility, usePowerPlants } from "@/lib/power-plants";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -198,20 +198,12 @@ export default function UtilityDetailPage() {
     {
       id: "segment",
       label: "Segment",
-      value: (
-        <Badge variant={getSegmentBadgeVariant(utility.segment)}>
-          {getSegmentLabel(utility.segment)}
-        </Badge>
-      ),
+      value: <Badge variant={getSegmentBadgeVariant(utility.segment)}>{getSegmentLabel(utility.segment)}</Badge>,
     },
     {
       id: "status",
       label: "Status",
-      value: (
-        <Badge variant={getStatusBadgeVariant(utility.status)}>
-          {getStatusLabel(utility.status)}
-        </Badge>
-      ),
+      value: <Badge variant={getStatusBadgeVariant(utility.status)}>{getStatusLabel(utility.status)}</Badge>,
     },
     {
       id: "customers",
@@ -282,9 +274,7 @@ export default function UtilityDetailPage() {
           },
         ]
       : []),
-    ...(utility.nercRegion !== null
-      ? [{ id: "nercRegion", label: "NERC Region", value: utility.nercRegion }]
-      : []),
+    ...(utility.nercRegion !== null ? [{ id: "nercRegion", label: "NERC Region", value: utility.nercRegion }] : []),
   ];
 
   return (
@@ -311,7 +301,12 @@ export default function UtilityDetailPage() {
           <div className="text-xl font-semibold text-text-heading">{utility.name}</div>
           {utility.shortName && <div className="text-sm text-text-muted">{utility.shortName}</div>}
           {utility.website && (
-            <a href={utility.website} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-primary hover:underline">
+            <a
+              href={utility.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-brand-primary hover:underline"
+            >
               {safeHostname(utility.website)}
             </a>
           )}
@@ -338,9 +333,21 @@ export default function UtilityDetailPage() {
                   <div className="mt-4">
                     <div className="text-sm text-text-muted mb-2">Activities</div>
                     <div className="flex gap-1.5 flex-wrap">
-                      {utility.hasGeneration && <Badge size="sm" shape="pill" variant="info">Generation</Badge>}
-                      {utility.hasTransmission && <Badge size="sm" shape="pill" variant="info">Transmission</Badge>}
-                      {utility.hasDistribution && <Badge size="sm" shape="pill" variant="info">Distribution</Badge>}
+                      {utility.hasGeneration && (
+                        <Badge size="sm" shape="pill" variant="info">
+                          Generation
+                        </Badge>
+                      )}
+                      {utility.hasTransmission && (
+                        <Badge size="sm" shape="pill" variant="info">
+                          Transmission
+                        </Badge>
+                      )}
+                      {utility.hasDistribution && (
+                        <Badge size="sm" shape="pill" variant="info">
+                          Distribution
+                        </Badge>
+                      )}
                       {!utility.hasGeneration && !utility.hasTransmission && !utility.hasDistribution && (
                         <span className="text-text-muted">{"\u2014"}</span>
                       )}
@@ -448,13 +455,34 @@ export default function UtilityDetailPage() {
                       ? [{ id: "parent", label: "Parent", value: parent.name, href: `/grid-operators/${parent.slug}` }]
                       : []),
                     ...(generationProvider
-                      ? [{ id: "genProvider", label: "Generation Provider", value: generationProvider.name, href: `/grid-operators/${generationProvider.slug}` }]
+                      ? [
+                          {
+                            id: "genProvider",
+                            label: "Generation Provider",
+                            value: generationProvider.name,
+                            href: `/grid-operators/${generationProvider.slug}`,
+                          },
+                        ]
                       : []),
                     ...(transmissionProvider
-                      ? [{ id: "txProvider", label: "Transmission Provider", value: transmissionProvider.name, href: `/grid-operators/${transmissionProvider.slug}` }]
+                      ? [
+                          {
+                            id: "txProvider",
+                            label: "Transmission Provider",
+                            value: transmissionProvider.name,
+                            href: `/grid-operators/${transmissionProvider.slug}`,
+                          },
+                        ]
                       : []),
                     ...(successor
-                      ? [{ id: "successor", label: "Successor", value: successor.name, href: `/grid-operators/${successor.slug}` }]
+                      ? [
+                          {
+                            id: "successor",
+                            label: "Successor",
+                            value: successor.name,
+                            href: `/grid-operators/${successor.slug}`,
+                          },
+                        ]
                       : []),
                   ]}
                 />

@@ -134,9 +134,7 @@ export async function checkRateLimit(
 // ---------------------------------------------------------------------------
 
 /** Standard rate-limit response headers. */
-export function rateLimitHeaders(
-  result: RateLimitResult
-): Record<string, string> {
+export function rateLimitHeaders(result: RateLimitResult): Record<string, string> {
   return {
     "X-RateLimit-Limit": String(result.limit),
     "X-RateLimit-Remaining": String(result.remaining),
@@ -145,10 +143,7 @@ export function rateLimitHeaders(
 }
 
 /** Build a 429 response with Retry-After and rate-limit headers. */
-export function rateLimitResponse(
-  result: RateLimitResult,
-  requestId: string
-): Response {
+export function rateLimitResponse(result: RateLimitResult, requestId: string): Response {
   const nowSecs = Math.floor(Date.now() / 1000);
   const retryAfter = Math.max(0, result.reset - nowSecs);
 

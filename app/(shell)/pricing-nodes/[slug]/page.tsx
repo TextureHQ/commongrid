@@ -4,36 +4,36 @@ import {
   Badge,
   Card,
   InteractiveMap,
-  layer,
   Loader,
+  layer,
   PageLayout,
   Section,
-  StatList,
   type StatItem,
+  StatList,
 } from "@texturehq/edges";
-import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { usePricingNode } from "@/lib/pricing-nodes";
-import {
-  type IsoRto,
-  type PricingNodeType,
-  ISO_LABELS,
-  ISO_FULL_NAMES,
-  NODE_TYPE_LABELS,
-  getIsoColor,
-} from "@/types/pricing-nodes";
+import { getIsoColor, ISO_FULL_NAMES, ISO_LABELS, NODE_TYPE_LABELS, type PricingNodeType } from "@/types/pricing-nodes";
 
 function getNodeTypeBadgeVariant(type: PricingNodeType): "success" | "info" | "warning" | "neutral" {
   switch (type) {
-    case "hub": return "warning";
-    case "zone": return "info";
-    case "sublap": return "info";
-    case "lap": return "info";
-    case "gen": return "success";
-    case "load": return "neutral";
-    case "interface": return "neutral";
-    default: return "neutral";
+    case "hub":
+      return "warning";
+    case "zone":
+      return "info";
+    case "sublap":
+      return "info";
+    case "lap":
+      return "info";
+    case "gen":
+      return "success";
+    case "load":
+      return "neutral";
+    case "interface":
+      return "neutral";
+    default:
+      return "neutral";
   }
 }
 
@@ -44,10 +44,7 @@ export default function PricingNodeDetailPage() {
   if (isLoading) {
     return (
       <PageLayout maxWidth={896}>
-        <PageLayout.Header
-          title="Pricing Node"
-          breadcrumbs={[{ label: "Pricing Nodes", href: "/pricing-nodes" }]}
-        />
+        <PageLayout.Header title="Pricing Node" breadcrumbs={[{ label: "Pricing Nodes", href: "/pricing-nodes" }]} />
         <div className="flex items-center justify-center py-24">
           <Loader size={32} />
         </div>
@@ -126,10 +123,7 @@ export default function PricingNodeDetailPage() {
           <Card variant="outlined">
             <Card.Content>
               <div className="flex items-center gap-3 mb-6">
-                <span
-                  className="w-4 h-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: isoColor }}
-                />
+                <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: isoColor }} />
                 <div>
                   <div className="text-lg font-semibold">{node.name}</div>
                   <div className="text-sm text-text-muted">
@@ -179,9 +173,7 @@ export default function PricingNodeDetailPage() {
                         },
                         tooltip: {
                           trigger: "hover",
-                          content: () => (
-                            <div className="text-sm font-medium">{node.name}</div>
-                          ),
+                          content: () => <div className="text-sm font-medium">{node.name}</div>,
                         },
                       }),
                     ]}

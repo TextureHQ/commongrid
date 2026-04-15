@@ -5,11 +5,11 @@
  * the NEXT_PUBLIC_FF_DB_PROGRAMS feature flag.
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { getDataSource } from "@/lib/feature-flags";
-import type { Program, ProgramStatus, AssetType, MarketSegment, GridService } from "@/types/programs";
+import type { AssetType, GridService, MarketSegment, Program, ProgramStatus } from "@/types/programs";
 
 // ---------------------------------------------------------------------------
 // Filters
@@ -37,36 +37,24 @@ function loadJson(): Program[] {
   return _jsonCache;
 }
 
-function applyJsonFilters(
-  programs: Program[],
-  filters: ProgramFilters
-): Program[] {
+function applyJsonFilters(programs: Program[], filters: ProgramFilters): Program[] {
   let result = programs;
 
   if (filters.status) {
     result = result.filter((p) => p.status === filters.status);
   }
   if (filters.assetType) {
-    result = result.filter((p) =>
-      p.assetTypes.includes(filters.assetType as AssetType)
-    );
+    result = result.filter((p) => p.assetTypes.includes(filters.assetType as AssetType));
   }
   if (filters.marketSegment) {
-    result = result.filter((p) =>
-      p.marketSegments.includes(filters.marketSegment as MarketSegment)
-    );
+    result = result.filter((p) => p.marketSegments.includes(filters.marketSegment as MarketSegment));
   }
   if (filters.gridService) {
-    result = result.filter((p) =>
-      p.gridServices.includes(filters.gridService as GridService)
-    );
+    result = result.filter((p) => p.gridServices.includes(filters.gridService as GridService));
   }
   if (filters.search) {
     const q = filters.search.toLowerCase();
-    result = result.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q)
-    );
+    result = result.filter((p) => p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q));
   }
 
   return result;
@@ -103,12 +91,8 @@ function dbRowToProgram(row: Record<string, unknown>): Program {
     termsUrl: (row.termsUrl as string | null) ?? undefined,
     contactUrl: (row.contactUrl as string | null) ?? undefined,
     variants: (row.variants as Program["variants"]) ?? [],
-    createdAt: row.createdAt instanceof Date
-      ? (row.createdAt as Date).toISOString()
-      : (row.createdAt as string),
-    updatedAt: row.updatedAt instanceof Date
-      ? (row.updatedAt as Date).toISOString()
-      : (row.updatedAt as string),
+    createdAt: row.createdAt instanceof Date ? (row.createdAt as Date).toISOString() : (row.createdAt as string),
+    updatedAt: row.updatedAt instanceof Date ? (row.updatedAt as Date).toISOString() : (row.updatedAt as string),
   };
 }
 
@@ -161,19 +145,13 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
 
   // Apply array-based filters in memory (JSONB array contains)
   if (filters?.assetType) {
-    result = result.filter((p) =>
-      p.assetTypes.includes(filters.assetType as AssetType)
-    );
+    result = result.filter((p) => p.assetTypes.includes(filters.assetType as AssetType));
   }
   if (filters?.marketSegment) {
-    result = result.filter((p) =>
-      p.marketSegments.includes(filters.marketSegment as MarketSegment)
-    );
+    result = result.filter((p) => p.marketSegments.includes(filters.marketSegment as MarketSegment));
   }
   if (filters?.gridService) {
-    result = result.filter((p) =>
-      p.gridServices.includes(filters.gridService as GridService)
-    );
+    result = result.filter((p) => p.gridServices.includes(filters.gridService as GridService));
   }
 
   return result;
@@ -230,9 +208,7 @@ async function loadBySlugFromDb(slug: string): Promise<Program | null> {
  * Load programs, optionally filtered.
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_PROGRAMS flag.
  */
-export async function loadPrograms(
-  filters?: ProgramFilters
-): Promise<Program[]> {
+export async function loadPrograms(filters?: ProgramFilters): Promise<Program[]> {
   if (getDataSource("programs") === "database") {
     return loadFromDb(filters);
   }
@@ -245,9 +221,7 @@ export async function loadPrograms(
  * Load a single program by slug.
  * Returns null if not found.
  */
-export async function loadProgramBySlug(
-  slug: string
-): Promise<Program | null> {
+export async function loadProgramBySlug(slug: string): Promise<Program | null> {
   if (getDataSource("programs") === "database") {
     return loadBySlugFromDb(slug);
   }

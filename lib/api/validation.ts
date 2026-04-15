@@ -67,11 +67,8 @@ export interface BboxValues {
  */
 export function parseBbox(bbox: string): BboxValues {
   const parts = bbox.split(",").map(Number);
-  if (parts.length !== 4 || parts.some(isNaN)) {
-    throw new ApiError(
-      "BAD_REQUEST",
-      "Invalid bbox format. Expected: west,south,east,north"
-    );
+  if (parts.length !== 4 || parts.some(Number.isNaN)) {
+    throw new ApiError("BAD_REQUEST", "Invalid bbox format. Expected: west,south,east,north");
   }
   return {
     west: parts[0],

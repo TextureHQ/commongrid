@@ -105,11 +105,7 @@ function entityTypeLabel(kind: EntityKind, record: EntityRecord): string {
 }
 
 /** Generate a human-readable update detail line from field diffs */
-function describeUpdate(
-  kind: EntityKind,
-  record: EntityRecord,
-  prev: EntityRecord,
-): string {
+function describeUpdate(kind: EntityKind, record: EntityRecord, prev: EntityRecord): string {
   const changed: string[] = [];
 
   // Check specific meaningful fields and emit friendly descriptions
@@ -170,9 +166,7 @@ function describeAdded(kind: EntityKind, record: EntityRecord): string {
     const seg = record.segment as string | null;
     if (seg === "DISTRIBUTION_COOPERATIVE") {
       const state = jurisdiction?.split(",")[0]?.trim() ?? states?.[0] ?? "";
-      return state
-        ? `${state} distribution co-op added · ${typeLabel}`
-        : `Distribution co-op added · ${typeLabel}`;
+      return state ? `${state} distribution co-op added · ${typeLabel}` : `Distribution co-op added · ${typeLabel}`;
     }
     if (seg === "GENERATION_AND_TRANSMISSION") {
       return `G&T co-op added · ${typeLabel}`;
@@ -200,10 +194,7 @@ interface DiffResult {
   added: EntityRecord[];
 }
 
-function diffEntities(
-  current: EntityRecord[],
-  snapshot: EntityRecord[],
-): DiffResult {
+function diffEntities(current: EntityRecord[], snapshot: EntityRecord[]): DiffResult {
   const snapshotMap = new Map(snapshot.map((e) => [e.id, e]));
   const updated: DiffResult["updated"] = [];
   const added: EntityRecord[] = [];
@@ -279,10 +270,7 @@ function main() {
     : { updatedAt: now, recentlyUpdated: [], newlyAdded: [] };
 
   // Prepend new entries, deduplicate by slug+kind, cap at MAX_ENTRIES
-  const mergeEntries = (
-    newEntries: ChangelogEntry[],
-    existing: ChangelogEntry[],
-  ): ChangelogEntry[] => {
+  const mergeEntries = (newEntries: ChangelogEntry[], existing: ChangelogEntry[]): ChangelogEntry[] => {
     const seen = new Set<string>();
     const merged: ChangelogEntry[] = [];
     for (const entry of [...newEntries, ...existing]) {

@@ -26,13 +26,7 @@ export type EVStatusCode = "E" | "P" | "T";
 
 export type EVOwnerTypeCode = "P" | "FG" | "SG" | "LG" | "T";
 
-export type EVConnectorType =
-  | "J1772"
-  | "J1772COMBO"
-  | "CHADEMO"
-  | "TESLA"
-  | "NACS"
-  | string;
+export type EVConnectorType = "J1772" | "J1772COMBO" | "CHADEMO" | "TESLA" | "NACS" | string;
 
 export interface EVStation {
   id: string;
@@ -70,7 +64,7 @@ export const EV_NETWORKS: Array<{ id: string; label: string }> = [
 
 export const EV_NETWORK_COLORS: Record<string, string> = {
   "ChargePoint Network": "#0070f3",
-  "Tesla": "#cc0000",
+  Tesla: "#cc0000",
   "Electrify America": "#00a550",
   "EVgo Network": "#f97316",
   "Blink Network": "#8b5cf6",
@@ -85,7 +79,7 @@ export function getNetworkShortName(network: string | null): string {
   if (!network) return "Non-Networked";
   const map: Record<string, string> = {
     "ChargePoint Network": "ChargePoint",
-    "Tesla": "Tesla",
+    Tesla: "Tesla",
     "Electrify America": "Electrify America",
     "EVgo Network": "EVgo",
     "Blink Network": "Blink",

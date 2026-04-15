@@ -5,8 +5,8 @@
  * the NEXT_PUBLIC_FF_DB_TRANSMISSION feature flag.
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { getDataSource } from "@/lib/feature-flags";
 import type { TransmissionLine, VoltageClass } from "@/types/transmission-lines";
@@ -36,10 +36,7 @@ function loadJson(): TransmissionLine[] {
   return _jsonCache;
 }
 
-function applyJsonFilters(
-  lines: TransmissionLine[],
-  filters: TransmissionLineFilters
-): TransmissionLine[] {
+function applyJsonFilters(lines: TransmissionLine[], filters: TransmissionLineFilters): TransmissionLine[] {
   let result = lines;
 
   if (filters.voltageClass) {
@@ -53,9 +50,7 @@ function applyJsonFilters(
   }
   if (filters.search) {
     const q = filters.search.toLowerCase();
-    result = result.filter(
-      (l) => l.owner.toLowerCase().includes(q)
-    );
+    result = result.filter((l) => l.owner.toLowerCase().includes(q));
   }
 
   return result;
@@ -156,9 +151,7 @@ async function loadByIdFromDb(id: string): Promise<TransmissionLine | null> {
  * Load transmission lines, optionally filtered.
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_TRANSMISSION flag.
  */
-export async function loadTransmissionLines(
-  filters?: TransmissionLineFilters
-): Promise<TransmissionLine[]> {
+export async function loadTransmissionLines(filters?: TransmissionLineFilters): Promise<TransmissionLine[]> {
   if (getDataSource("transmissionLines") === "database") {
     return loadFromDb(filters);
   }
@@ -171,9 +164,7 @@ export async function loadTransmissionLines(
  * Load a single transmission line by ID.
  * Returns null if not found.
  */
-export async function loadTransmissionLineById(
-  id: string
-): Promise<TransmissionLine | null> {
+export async function loadTransmissionLineById(id: string): Promise<TransmissionLine | null> {
   if (getDataSource("transmissionLines") === "database") {
     return loadByIdFromDb(id);
   }

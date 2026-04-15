@@ -1,28 +1,20 @@
 "use client";
 
-import {
-  Badge,
-  type Column,
-  DataControls,
-  DataTable,
-  Loader,
-  PageLayout,
-  TextCell,
-} from "@texturehq/edges";
+import { Badge, type Column, DataControls, DataTable, Loader, PageLayout, TextCell } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DataSourceLink } from "@/components/DataSourceLink";
 import { useCallback, useMemo, useState } from "react";
+import { DataSourceLink } from "@/components/DataSourceLink";
+import { SearchInput } from "@/components/SearchInput";
 import { usePricingNodes } from "@/lib/pricing-nodes";
 import { useFuseSearch } from "@/lib/search";
-import { SearchInput } from "@/components/SearchInput";
 import {
-  type PricingNode,
-  type IsoRto,
-  type PricingNodeType,
-  ISO_LABELS,
-  NODE_TYPE_LABELS,
   getIsoColor,
+  ISO_LABELS,
+  type IsoRto,
+  NODE_TYPE_LABELS,
+  type PricingNode,
+  type PricingNodeType,
 } from "@/types/pricing-nodes";
 
 interface PricingNodeRow extends Record<string, unknown> {
@@ -46,14 +38,22 @@ const sortOptions = [
 
 function getNodeTypeBadgeVariant(type: PricingNodeType): "success" | "info" | "warning" | "neutral" {
   switch (type) {
-    case "hub": return "warning";
-    case "zone": return "info";
-    case "sublap": return "info";
-    case "lap": return "info";
-    case "gen": return "success";
-    case "load": return "neutral";
-    case "interface": return "neutral";
-    default: return "neutral";
+    case "hub":
+      return "warning";
+    case "zone":
+      return "info";
+    case "sublap":
+      return "info";
+    case "lap":
+      return "info";
+    case "gen":
+      return "success";
+    case "load":
+      return "neutral";
+    case "interface":
+      return "neutral";
+    default:
+      return "neutral";
   }
 }
 
@@ -222,10 +222,7 @@ export default function PricingNodesPage() {
         title="Pricing Nodes"
         description={`${allNodes.length.toLocaleString()} wholesale electricity market pricing nodes across 7 ISOs/RTOs — trading hubs, load zones, SUBLAPs, and generation nodes.`}
       />
-      <DataSourceLink
-        paths={["data/pricing-nodes.json"]}
-        className="px-4 sm:px-6 pb-2"
-      />
+      <DataSourceLink paths={["data/pricing-nodes.json"]} className="px-4 sm:px-6 pb-2" />
       <PageLayout.Content>
         <div className="px-4 sm:px-6 py-4 flex flex-col gap-4">
           {/* Filters */}
@@ -269,7 +266,9 @@ export default function PricingNodesPage() {
             >
               <option value="all">All States</option>
               {states.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>
+                  {s}
+                </option>
               ))}
             </select>
           </div>
@@ -285,11 +284,7 @@ export default function PricingNodesPage() {
           />
 
           {/* Table */}
-          <DataTable<PricingNodeRow>
-            columns={columns}
-            data={rows}
-            onRowClick={handleRowClick}
-          />
+          <DataTable<PricingNodeRow> columns={columns} data={rows} onRowClick={handleRowClick} />
         </div>
       </PageLayout.Content>
     </PageLayout>

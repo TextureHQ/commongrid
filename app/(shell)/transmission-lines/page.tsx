@@ -10,12 +10,17 @@ import {
   PageLayout,
   TextCell,
 } from "@texturehq/edges";
-import { DataSourceLink } from "@/components/DataSourceLink";
 import { useMemo, useState } from "react";
-import { useTransmissionLines } from "@/lib/transmission-lines";
-import { useFuseSearch } from "@/lib/search";
+import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
-import { type TransmissionLine, type VoltageClass, VOLTAGE_CLASSES, VoltageClassLabel } from "@/types/transmission-lines";
+import { useFuseSearch } from "@/lib/search";
+import { useTransmissionLines } from "@/lib/transmission-lines";
+import {
+  type TransmissionLine,
+  VOLTAGE_CLASSES,
+  type VoltageClass,
+  VoltageClassLabel,
+} from "@/types/transmission-lines";
 
 interface TransmissionLineRow extends Record<string, unknown> {
   objectId: number;
@@ -56,21 +61,31 @@ const statusFilterOptions = [
 
 function getVoltageBadgeVariant(vc: VoltageClass): "error" | "warning" | "success" | "info" | "neutral" {
   switch (vc) {
-    case "extra-high": return "error";
-    case "high": return "warning";
-    case "medium": return "success";
-    case "sub-trans": return "info";
-    default: return "neutral";
+    case "extra-high":
+      return "error";
+    case "high":
+      return "warning";
+    case "medium":
+      return "success";
+    case "sub-trans":
+      return "info";
+    default:
+      return "neutral";
   }
 }
 
 function getVoltageClassShortLabel(vc: VoltageClass): string {
   switch (vc) {
-    case "extra-high": return "345kV+";
-    case "high": return "230–344kV";
-    case "medium": return "115–229kV";
-    case "sub-trans": return "69–114kV";
-    default: return "Unknown";
+    case "extra-high":
+      return "345kV+";
+    case "high":
+      return "230–344kV";
+    case "medium":
+      return "115–229kV";
+    case "sub-trans":
+      return "69–114kV";
+    default:
+      return "Unknown";
   }
 }
 
@@ -186,10 +201,13 @@ export default function TransmissionLinesPage() {
             size="sm"
             shape="pill"
             variant={
-              row.status.toLowerCase().includes("in service") && !row.status.toLowerCase().includes("not") ? "success" :
-              row.status.toLowerCase().includes("not in service") ? "error" :
-              row.status.toLowerCase().includes("construction") ? "warning" :
-              "neutral"
+              row.status.toLowerCase().includes("in service") && !row.status.toLowerCase().includes("not")
+                ? "success"
+                : row.status.toLowerCase().includes("not in service")
+                  ? "error"
+                  : row.status.toLowerCase().includes("construction")
+                    ? "warning"
+                    : "neutral"
             }
           >
             {row.status || "Unknown"}
@@ -216,9 +234,7 @@ export default function TransmissionLinesPage() {
         label: "Length",
         accessor: "lengthMiles",
         render: (_value: unknown, row: TransmissionLineRow) => (
-          <span className="text-text-body">
-            {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
-          </span>
+          <span className="text-text-body">{row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}</span>
         ),
         mobile: false,
       },
@@ -228,7 +244,11 @@ export default function TransmissionLinesPage() {
 
   if (isLoading) {
     return (
-      <PageLayout className="flex flex-col h-full overflow-hidden bg-background-default" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
+      <PageLayout
+        className="flex flex-col h-full overflow-hidden bg-background-default"
+        paddingYClass="pt-8 md:pt-12"
+        paddingXClass="px-4"
+      >
         <div className="flex-none">
           <PageLayout.Header title="Transmission Lines" sticky={true} />
         </div>
@@ -240,7 +260,11 @@ export default function TransmissionLinesPage() {
   }
 
   return (
-    <PageLayout className="flex flex-col h-full overflow-hidden bg-background-default" paddingYClass="pt-8 md:pt-12" paddingXClass="px-4">
+    <PageLayout
+      className="flex flex-col h-full overflow-hidden bg-background-default"
+      paddingYClass="pt-8 md:pt-12"
+      paddingXClass="px-4"
+    >
       <div className="flex-none">
         <PageLayout.Header title="Transmission Lines" sticky={true} />
         <DataSourceLink paths={["data/transmission-lines.json"]} className="px-1 pb-2" />
@@ -297,7 +321,9 @@ export default function TransmissionLinesPage() {
           <EmptyState
             icon="Lightning"
             title="No transmission lines found"
-            description={searchQuery ? "Try adjusting your search or filter criteria." : "No transmission lines in the dataset."}
+            description={
+              searchQuery ? "Try adjusting your search or filter criteria." : "No transmission lines in the dataset."
+            }
             fullHeight={true}
           />
         ) : (

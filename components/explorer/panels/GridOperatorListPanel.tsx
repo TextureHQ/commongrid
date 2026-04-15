@@ -1,23 +1,9 @@
 "use client";
 
-import {
-  Avatar,
-  Badge,
-  type Column,
-  DataControls,
-  DataTable,
-  EmptyState,
-} from "@texturehq/edges";
+import { Avatar, Badge, type Column, DataControls, DataTable, EmptyState } from "@texturehq/edges";
 import { useCallback, useMemo } from "react";
-import { useExplorer, type DetailView } from "../ExplorerContext";
-import {
-  getAllBalancingAuthorities,
-  getAllIsos,
-  getAllRtos,
-  getIsoById,
-  searchEntities,
-  sortByName,
-} from "@/lib/data";
+import { getAllBalancingAuthorities, getAllIsos, getAllRtos, searchEntities, sortByName } from "@/lib/data";
+import { type DetailView, useExplorer } from "../ExplorerContext";
 
 type GridOperatorType = "ISO" | "RTO" | "BA";
 
@@ -45,7 +31,7 @@ const typeBadgeVariant: Record<GridOperatorType, "info" | "success" | "warning" 
   BA: "default",
 };
 
-const typeToDetailView: Record<GridOperatorType, DetailView> = {
+const _typeToDetailView: Record<GridOperatorType, DetailView> = {
   ISO: "iso",
   RTO: "rto",
   BA: "ba",

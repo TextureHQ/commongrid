@@ -4,31 +4,35 @@ import {
   Badge,
   Card,
   InteractiveMap,
-  layer,
   Loader,
+  layer,
   PageLayout,
   Section,
-  StatList,
   type StatItem,
+  StatList,
 } from "@texturehq/edges";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { useEvStation } from "@/lib/ev-charging";
 import {
+  getAccessLabel,
   getNetworkColor,
   getNetworkShortName,
   getStatusLabel,
-  getAccessLabel,
   getTotalConnectors,
 } from "@/types/ev-charging";
 
 function getStatusBadgeVariant(status: string): "success" | "info" | "warning" | "neutral" {
   switch (status) {
-    case "E": return "success";
-    case "P": return "info";
-    case "T": return "warning";
-    default: return "neutral";
+    case "E":
+      return "success";
+    case "P":
+      return "info";
+    case "T":
+      return "warning";
+    default:
+      return "neutral";
   }
 }
 
@@ -51,10 +55,7 @@ export default function EVStationDetailPage() {
   if (isLoading) {
     return (
       <PageLayout maxWidth={896}>
-        <PageLayout.Header
-          title="EV Charging Station"
-          breadcrumbs={[{ label: "EV Charging", href: "/ev-charging" }]}
-        />
+        <PageLayout.Header title="EV Charging Station" breadcrumbs={[{ label: "EV Charging", href: "/ev-charging" }]} />
         <div className="flex items-center justify-center py-24">
           <Loader size={32} />
         </div>
@@ -137,15 +138,10 @@ export default function EVStationDetailPage() {
           <Card variant="outlined">
             <Card.Content>
               <div className="flex items-center gap-3 mb-6">
-                <span
-                  className="w-4 h-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: networkColor }}
-                />
+                <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: networkColor }} />
                 <div>
                   <div className="text-lg font-semibold">{station.stationName}</div>
-                  <div className="text-sm text-text-muted">
-                    {getNetworkShortName(station.evNetwork)}
-                  </div>
+                  <div className="text-sm text-text-muted">{getNetworkShortName(station.evNetwork)}</div>
                 </div>
               </div>
               <StatList layout="two-column" showDividers items={overviewItems} />
@@ -160,23 +156,17 @@ export default function EVStationDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
                   <div className="text-sm text-text-muted mb-1">Level 1 (120V)</div>
-                  <div className="text-2xl font-bold text-text-heading">
-                    {station.evLevel1EvseNum}
-                  </div>
+                  <div className="text-2xl font-bold text-text-heading">{station.evLevel1EvseNum}</div>
                   <div className="text-xs text-text-muted">ports</div>
                 </div>
                 <div>
                   <div className="text-sm text-text-muted mb-1">Level 2 (240V)</div>
-                  <div className="text-2xl font-bold text-text-heading">
-                    {station.evLevel2EvseNum}
-                  </div>
+                  <div className="text-2xl font-bold text-text-heading">{station.evLevel2EvseNum}</div>
                   <div className="text-xs text-text-muted">ports</div>
                 </div>
                 <div>
                   <div className="text-sm text-text-muted mb-1">DC Fast Charge</div>
-                  <div className="text-2xl font-bold text-text-heading">
-                    {station.evDcFastNum}
-                  </div>
+                  <div className="text-2xl font-bold text-text-heading">{station.evDcFastNum}</div>
                   <div className="text-xs text-text-muted">ports</div>
                 </div>
               </div>
@@ -255,10 +245,7 @@ export default function EVStationDetailPage() {
             </div>
           </Card>
           <div className="mt-3">
-            <Link
-              href="/ev-charging"
-              className="text-sm text-brand-primary hover:underline"
-            >
+            <Link href="/ev-charging" className="text-sm text-brand-primary hover:underline">
               ← Back to all EV charging stations
             </Link>
           </div>

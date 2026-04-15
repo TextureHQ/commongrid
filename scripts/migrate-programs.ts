@@ -10,10 +10,10 @@
  *   NOTION_API_KEY=<key> npx ts-node scripts/migrate-programs.ts
  */
 
-import * as fs from "fs";
-import * as path from "path";
-import * as https from "https";
 import * as crypto from "crypto";
+import * as fs from "fs";
+import * as https from "https";
+import * as path from "path";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -73,12 +73,12 @@ interface Program {
 // ─── Mappings ─────────────────────────────────────────────────────────────────
 
 const ASSET_TYPE_MAP: Record<string, string[]> = {
-  "Thermostat": ["THERMOSTAT"],
-  "EV": ["EV_CHARGER"],
+  Thermostat: ["THERMOSTAT"],
+  EV: ["EV_CHARGER"],
   "Water Heater": ["WATER_HEATER"],
-  "Battery": ["BATTERY"],
-  "Behavioral": ["NON_DEVICE"],
-  "Irrigation": ["IRRIGATION"],
+  Battery: ["BATTERY"],
+  Behavioral: ["NON_DEVICE"],
+  Irrigation: ["IRRIGATION"],
   "C&I": ["COMMERCIAL_LOAD"],
 };
 
@@ -88,9 +88,9 @@ const PARTICIPATION_MODEL_MAP: Record<string, string[]> = {
 };
 
 const COMP_TYPE_MAP: Record<string, string> = {
-  "Rebate": "REBATE",
-  "Annual": "ANNUAL",
-  "Monthly": "MONTHLY",
+  Rebate: "REBATE",
+  Annual: "ANNUAL",
+  Monthly: "MONTHLY",
 };
 
 const COMP_UNIT_MAP: Record<string, string> = {
@@ -100,17 +100,20 @@ const COMP_UNIT_MAP: Record<string, string> = {
   "per home": "PER_HOME",
 };
 
-const PROGRAM_TYPE_INFERRED: Record<string, {
-  marketSegments: string[];
-  gridServices: string[];
-  incentiveStructures: string[];
-}> = {
-  "Thermostat": {
+const PROGRAM_TYPE_INFERRED: Record<
+  string,
+  {
+    marketSegments: string[];
+    gridServices: string[];
+    incentiveStructures: string[];
+  }
+> = {
+  Thermostat: {
     marketSegments: ["RESIDENTIAL"],
     gridServices: ["DEMAND_RESPONSE", "PEAK_SHAVING"],
     incentiveStructures: ["REBATE", "BILL_CREDIT"],
   },
-  "EV": {
+  EV: {
     marketSegments: ["RESIDENTIAL"],
     gridServices: ["DEMAND_RESPONSE", "LOAD_SHIFTING"],
     incentiveStructures: ["REBATE", "DIRECT_PAYMENT"],
@@ -120,17 +123,17 @@ const PROGRAM_TYPE_INFERRED: Record<string, {
     gridServices: ["DEMAND_RESPONSE", "LOAD_SHIFTING"],
     incentiveStructures: ["REBATE", "BILL_CREDIT"],
   },
-  "Battery": {
+  Battery: {
     marketSegments: ["RESIDENTIAL"],
     gridServices: ["DEMAND_RESPONSE", "PEAK_SHAVING", "ENERGY_ARBITRAGE"],
     incentiveStructures: ["REBATE", "CAPACITY_PAYMENT"],
   },
-  "Behavioral": {
+  Behavioral: {
     marketSegments: ["RESIDENTIAL"],
     gridServices: ["DEMAND_RESPONSE", "LOAD_FLEXIBILITY"],
     incentiveStructures: ["BILL_CREDIT"],
   },
-  "Irrigation": {
+  Irrigation: {
     marketSegments: ["AGRICULTURAL"],
     gridServices: ["DEMAND_RESPONSE", "PEAK_SHAVING"],
     incentiveStructures: ["DIRECT_PAYMENT"],
@@ -145,13 +148,19 @@ const PROGRAM_TYPE_INFERRED: Record<string, {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function slugify(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function getStateFromJurisdiction(jurisdiction: string | null | undefined): string[] {
   if (!jurisdiction) return [];
   // jurisdiction may be "CO", "FL, IN, KY", etc.
-  const parts = jurisdiction.split(",").map((s) => s.trim()).filter((s) => s.length === 2);
+  const parts = jurisdiction
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length === 2);
   return parts.length > 0 ? [parts[0]] : [];
 }
 
@@ -166,7 +175,7 @@ function notionRequest(method: string, urlPath: string, body?: object): Promise<
       path: urlPath,
       method,
       headers: {
-        "Authorization": `Bearer ${NOTION_API_KEY}`,
+        Authorization: `Bearer ${NOTION_API_KEY}`,
         "Notion-Version": NOTION_VERSION,
         "Content-Type": "application/json",
         ...(data ? { "Content-Length": Buffer.byteLength(data) } : {}),
@@ -207,11 +216,11 @@ async function fetchAllPrograms(): Promise<unknown[]> {
     const body: Record<string, unknown> = { page_size: 100 };
     if (startCursor) body.start_cursor = startCursor;
 
-    const response = await notionRequest(
-      "POST",
-      `/v1/databases/${PROGRAMS_DB_ID}/query`,
-      body
-    ) as { results: unknown[]; has_more: boolean; next_cursor: string | null };
+    const response = (await notionRequest("POST", `/v1/databases/${PROGRAMS_DB_ID}/query`, body)) as {
+      results: unknown[];
+      has_more: boolean;
+      next_cursor: string | null;
+    };
 
     results.push(...response.results);
     hasMore = response.has_more;
@@ -227,7 +236,10 @@ async function fetchAllPrograms(): Promise<unknown[]> {
 function getTitle(props: Record<string, unknown>, key: string): string {
   const p = props[key] as { type: string; title: Array<{ plain_text: string }> } | undefined;
   if (!p || p.type !== "title") return "";
-  return p.title.map((t) => t.plain_text).join("").trim();
+  return p.title
+    .map((t) => t.plain_text)
+    .join("")
+    .trim();
 }
 
 function getSelect(props: Record<string, unknown>, key: string): string | null {
@@ -251,7 +263,10 @@ function getUrl(props: Record<string, unknown>, key: string): string | null {
 function getRichText(props: Record<string, unknown>, key: string): string | null {
   const p = props[key] as { type: string; rich_text: Array<{ plain_text: string }> } | undefined;
   if (!p || p.type !== "rich_text") return null;
-  const text = p.rich_text.map((t) => t.plain_text).join("").trim();
+  const text = p.rich_text
+    .map((t) => t.plain_text)
+    .join("")
+    .trim();
   return text || null;
 }
 
@@ -263,10 +278,7 @@ function getRelationId(props: Record<string, unknown>, key: string): string | nu
 
 // ─── Transform ────────────────────────────────────────────────────────────────
 
-function transformProgram(
-  notionPage: unknown,
-  utilitiesByNotionId: Map<string, UtilityRecord>
-): Program | null {
+function transformProgram(notionPage: unknown, utilitiesByNotionId: Map<string, UtilityRecord>): Program | null {
   const page = notionPage as { id: string; properties: Record<string, unknown> };
   const props = page.properties;
 
@@ -307,9 +319,7 @@ function transformProgram(
   const incentiveStructures = inferred?.incentiveStructures ?? [];
 
   // Organizations
-  const organizations: ProgramOrganization[] = utility
-    ? [{ entityId: utility.slug, role: "ADMINISTRATOR" }]
-    : [];
+  const organizations: ProgramOrganization[] = utility ? [{ entityId: utility.slug, role: "ADMINISTRATOR" }] : [];
 
   // Regions — use CommonGrid region ID format (e.g. "region-st-15257")
   const regions = utility?.serviceTerritoryId ? [utility.serviceTerritoryId] : [];
@@ -409,7 +419,7 @@ async function main() {
       matched++;
     } else {
       unmatched++;
-      const p = (page as { id: string; properties: Record<string, unknown> });
+      const p = page as { id: string; properties: Record<string, unknown> };
       const utilityId = getRelationId(p.properties, "Utility");
       if (utilityId) unmatchedIds.push(utilityId);
     }

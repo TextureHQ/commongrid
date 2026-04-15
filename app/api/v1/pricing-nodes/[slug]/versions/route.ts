@@ -8,14 +8,13 @@
 
 import {
   ApiError,
+  corsHeaders,
+  jsonResponse,
+  type RouteContext,
   withErrorHandling,
   withRequestId,
   withTiming,
-  jsonResponse,
-  generateRequestId,
-  type RouteContext,
 } from "@/lib/api";
-import { corsHeaders } from "@/lib/api/cors";
 import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
 import { getDataSource } from "@/lib/feature-flags";
 
@@ -55,12 +54,7 @@ async function loadVersionsFromDb(entityId: string): Promise<VersionEntry[]> {
       delta: entityVersions.delta,
     })
     .from(entityVersions)
-    .where(
-      and(
-        eq(entityVersions.entityType, "pricing_node"),
-        eq(entityVersions.entityId, entityId)
-      )
-    )
+    .where(and(eq(entityVersions.entityType, "pricing_node"), eq(entityVersions.entityId, entityId)))
     .orderBy(asc(entityVersions.versionNumber));
 
   return rows.map((row) => ({
@@ -78,44 +72,37 @@ async function loadVersionsFromDb(entityId: string): Promise<VersionEntry[]> {
 // Route handler
 // ---------------------------------------------------------------------------
 
-async function handleGet(req: Request, ctx: RouteContext): Promise<Response> {
-  const slug = ctx.params?.slug;
-  if (!slug) {
-    throw new ApiError("BAD_REQUEST", "Missing slug parameter");
-  }
-
-  // Verify the node exists (works in both JSON and DB mode)
-  const node = await loadPricingNodeBySlug(slug);
-  if (!node) {
-    throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
-  }
-
-  // Version history is only available in database mode
-  let versions: VersionEntry[] = [];
-  if (getDataSource("pricingNodes") === "database") {
-    versions = await loadVersionsFromDb(node.id);
-  }
-
-  return jsonResponse(
-    {
-      data: versions,
-      meta: { source: getDataSource("pricingNodes") },
-    },
-    200,
-    {
-      ...corsHeaders(),
-      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-      "Cache-Tag": `pricing-node:${slug}:versions`,
-    }
-  );
-}
-
-const handler = withRequestId(withErrorHandling(withTiming(handleGet)));
-
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ slug: string }> }
-): Promise<Response> {
+export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
-  return handler(req, { params: { slug }, requestId: generateRequestId() });
+
+  return withRequestId(
+    withErrorHandling(
+      withTiming(async (_r: Request, _ctx: RouteContext) => {
+        // Verify the node exists (works in both JSON and DB mode)
+        const node = await loadPricingNodeBySlug(slug);
+        if (!node) {
+          throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
+        }
+
+        // Version history is only available in database mode
+        let versions: VersionEntry[] = [];
+        if (getDataSource("pricingNodes") === "database") {
+          versions = await loadVersionsFromDb(node.id);
+        }
+
+        return jsonResponse(
+          {
+            data: versions,
+            meta: { source: getDataSource("pricingNodes") },
+          },
+          200,
+          {
+            "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+            "Cache-Tag": `pricing-node:${slug}:versions`,
+            ...corsHeaders(),
+          }
+        );
+      })
+    )
+  )(req, { requestId: "" });
 }

@@ -1,10 +1,4 @@
-import {
-  pgTable,
-  text,
-  integer,
-  timestamp,
-  index,
-} from "drizzle-orm/pg-core";
+import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { regions } from "./regions";
 
 /**
@@ -33,17 +27,11 @@ export const rtos = pgTable(
     submittedBy: text("submitted_by"),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     reviewedBy: text("reviewed_by"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     version: integer("version").notNull().default(1),
   },
-  (table) => [
-    index("idx_rtos_slug").on(table.slug),
-  ]
+  (table) => [index("idx_rtos_slug").on(table.slug)]
 );
 
 export type RtoSelect = typeof rtos.$inferSelect;

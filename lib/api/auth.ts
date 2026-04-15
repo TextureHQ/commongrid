@@ -8,7 +8,7 @@
  * See docs/specs/persistence-api.md §5.1.
  */
 
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { eq } from "drizzle-orm";
 
 // ---------------------------------------------------------------------------
@@ -42,11 +42,7 @@ export function hashApiKey(key: string): string {
  *   - `*:read`    → matches any resource with action `read`
  *   - `utilities:*` → matches any action on `utilities`
  */
-export function hasScope(
-  scopes: string[],
-  resource: string,
-  action: string
-): boolean {
+export function hasScope(scopes: string[], resource: string, action: string): boolean {
   for (const scope of scopes) {
     const colonIdx = scope.indexOf(":");
     if (colonIdx === -1) continue;
@@ -76,11 +72,7 @@ export function hasScope(
  *
  * The `lastUsedAt` timestamp is updated fire-and-forget.
  */
-export async function validateApiKey(
-  authHeader: string | null,
-  resource: string,
-  action: string
-): Promise<AuthResult> {
+export async function validateApiKey(authHeader: string | null, resource: string, action: string): Promise<AuthResult> {
   if (!authHeader) {
     return { valid: false, error: "Missing Authorization header" };
   }
@@ -105,11 +97,7 @@ export async function validateApiKey(
 
   const keyHash = hashApiKey(key);
 
-  const rows = await db
-    .select()
-    .from(apiKeys)
-    .where(eq(apiKeys.keyHash, keyHash))
-    .limit(1);
+  const rows = await db.select().from(apiKeys).where(eq(apiKeys.keyHash, keyHash)).limit(1);
 
   const apiKey = rows[0];
 
@@ -133,9 +121,7 @@ export async function validateApiKey(
   db.update(apiKeys)
     .set({ lastUsedAt: new Date() })
     .where(eq(apiKeys.keyHash, keyHash))
-    .catch((err: unknown) =>
-      console.error("Failed to update lastUsedAt:", err)
-    );
+    .catch((err: unknown) => console.error("Failed to update lastUsedAt:", err));
 
   return { valid: true, identity: apiKey.name };
 }

@@ -9,16 +9,16 @@ import { z } from "zod";
 
 import {
   ApiError,
+  type CursorV1,
+  corsHeaders,
+  decodeCursor,
+  encodeCursor,
+  jsonResponse,
+  paginatedResponse,
   withErrorHandling,
   withRequestId,
   withTiming,
-  jsonResponse,
-  paginatedResponse,
-  encodeCursor,
-  decodeCursor,
-  type CursorV1,
 } from "@/lib/api";
-import { corsHeaders } from "@/lib/api/cors";
 import { loadPricingNodes } from "@/lib/data/pricing-nodes";
 import type { PricingNode } from "@/types/pricing-nodes";
 
@@ -44,11 +44,7 @@ type SortField = "name" | "iso" | "nodeType";
 // Sorting
 // ---------------------------------------------------------------------------
 
-function sortNodes(
-  nodes: PricingNode[],
-  sortField: SortField,
-  order: "asc" | "desc"
-): PricingNode[] {
+function sortNodes(nodes: PricingNode[], sortField: SortField, order: "asc" | "desc"): PricingNode[] {
   return [...nodes].sort((a, b) => {
     let cmp = (a[sortField] as string).localeCompare(b[sortField] as string);
 
@@ -109,20 +105,25 @@ function applyCursor(
 // ---------------------------------------------------------------------------
 
 const ALL_FIELDS = new Set<string>([
-  "id", "slug", "name", "iso", "nodeType",
-  "latitude", "longitude", "zone", "state",
-  "voltageKv", "eiaPlantCode", "source",
+  "id",
+  "slug",
+  "name",
+  "iso",
+  "nodeType",
+  "latitude",
+  "longitude",
+  "zone",
+  "state",
+  "voltageKv",
+  "eiaPlantCode",
+  "source",
 ]);
 
-function projectFields(
-  node: PricingNode,
-  fields: string[]
-): Partial<PricingNode> {
+function projectFields(node: PricingNode, fields: string[]): Partial<PricingNode> {
   const result: Partial<PricingNode> = {};
   for (const field of fields) {
     if (ALL_FIELDS.has(field)) {
-      (result as Record<string, unknown>)[field] =
-        (node as unknown as Record<string, unknown>)[field];
+      (result as Record<string, unknown>)[field] = (node as unknown as Record<string, unknown>)[field];
     }
   }
   return result;
@@ -142,8 +143,7 @@ async function handler(req: Request): Promise<Response> {
     });
   }
 
-  const { iso, nodeType, state, search, fields, sort, order, limit, cursor: rawCursor } =
-    parsed.data;
+  const { iso, nodeType, state, search, fields, sort, order, limit, cursor: rawCursor } = parsed.data;
 
   // Decode cursor if provided
   let cursor: CursorV1 | null = null;
@@ -185,16 +185,14 @@ async function handler(req: Request): Promise<Response> {
         .filter((f) => ALL_FIELDS.has(f))
     : null;
 
-  const data = requestedFields
-    ? items.map((n) => projectFields(n, requestedFields))
-    : items;
+  const data = requestedFields ? items.map((n) => projectFields(n, requestedFields)) : items;
 
   const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
 
   return jsonResponse(envelope, 200, {
-    ...corsHeaders(),
     "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
     "Cache-Tag": "pricing-nodes",
+    ...corsHeaders(),
   });
 }
 

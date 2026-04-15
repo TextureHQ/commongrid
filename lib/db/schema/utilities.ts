@@ -1,17 +1,8 @@
-import {
-  pgTable,
-  text,
-  integer,
-  doublePrecision,
-  boolean,
-  timestamp,
-  index,
-  customType,
-} from "drizzle-orm/pg-core";
-import { isos } from "./isos";
-import { rtos } from "./rtos";
+import { boolean, customType, doublePrecision, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { balancingAuthorities } from "./balancing-authorities";
+import { isos } from "./isos";
 import { regions } from "./regions";
+import { rtos } from "./rtos";
 
 /**
  * Custom tsvector type for full-text search columns.
@@ -65,10 +56,9 @@ export const utilities = pgTable(
       onDelete: "restrict",
     }),
     /** FK to balancing_authorities; ON DELETE SET NULL */
-    balancingAuthorityId: text("balancing_authority_id").references(
-      () => balancingAuthorities.id,
-      { onDelete: "set null" }
-    ),
+    balancingAuthorityId: text("balancing_authority_id").references(() => balancingAuthorities.id, {
+      onDelete: "set null",
+    }),
     /** FK to utilities (self-ref); ON DELETE SET NULL */
     generationProviderId: text("generation_provider_id"),
     /** FK to utilities (self-ref); ON DELETE SET NULL */
@@ -77,10 +67,7 @@ export const utilities = pgTable(
     parentId: text("parent_id"),
     /** FK to utilities (self-ref); ON DELETE SET NULL */
     successorId: text("successor_id"),
-    serviceTerritoryId: text("service_territory_id").references(
-      () => regions.id,
-      { onDelete: "set null" }
-    ),
+    serviceTerritoryId: text("service_territory_id").references(() => regions.id, { onDelete: "set null" }),
     notionPageId: text("notion_page_id"),
 
     /**
@@ -98,12 +85,8 @@ export const utilities = pgTable(
     submittedBy: text("submitted_by"),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     reviewedBy: text("reviewed_by"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     version: integer("version").notNull().default(1),
   },
   (table) => [

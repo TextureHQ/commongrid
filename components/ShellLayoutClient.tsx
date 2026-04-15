@@ -2,8 +2,8 @@
 
 import type { ReactNode } from "react";
 import { useEffect } from "react";
-import { type NavigationItem, TopBar } from "@/components/TopBar";
 import { GlobalSearchModal, GlobalSearchProvider, useGlobalSearch } from "@/components/GlobalSearch";
+import { type NavigationItem, TopBar } from "@/components/TopBar";
 
 interface ShellLayoutClientProps {
   children: ReactNode;

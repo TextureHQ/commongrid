@@ -46,10 +46,7 @@ export class ApiError extends Error {
 // Format an error into the standard response envelope
 // ---------------------------------------------------------------------------
 
-export function formatError(
-  error: ApiError,
-  requestId: string
-): ApiErrorResponse {
+export function formatError(error: ApiError, requestId: string): ApiErrorResponse {
   return {
     error: {
       code: error.code,

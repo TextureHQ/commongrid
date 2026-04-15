@@ -1,13 +1,13 @@
 "use client";
 
 import { InteractiveMap, type LayerFeature, type LayerSpec, layer } from "@texturehq/edges";
-import type { FeatureCollection, Feature } from "geojson";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Feature, FeatureCollection } from "geojson";
 import { useRouter } from "next/navigation";
-import { useExplorer } from "./ExplorerContext";
-import { getAllIsos, getAllBalancingAuthorities, getAllUtilities, searchEntities } from "@/lib/data";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getAllBalancingAuthorities, getAllIsos, getAllUtilities, searchEntities } from "@/lib/data";
 import { getSegmentLabel } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
+import { useExplorer } from "./ExplorerContext";
 
 function getTileUrl() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -51,22 +51,22 @@ function getPricingNodesTileUrl() {
 
 // Pricing node ISO color mapping
 const pricingNodeIsoColorMapping: Record<string, { hex: string }> = {
-  "CAISO": { hex: "#eab308" },   // gold
-  "PJM": { hex: "#3b82f6" },     // blue
-  "ERCOT": { hex: "#ef4444" },   // red
-  "MISO": { hex: "#22c55e" },    // green
-  "NYISO": { hex: "#8b5cf6" },   // purple
-  "ISONE": { hex: "#14b8a6" },   // teal
-  "SPP": { hex: "#f97316" },     // orange
+  CAISO: { hex: "#eab308" }, // gold
+  PJM: { hex: "#3b82f6" }, // blue
+  ERCOT: { hex: "#ef4444" }, // red
+  MISO: { hex: "#22c55e" }, // green
+  NYISO: { hex: "#8b5cf6" }, // purple
+  ISONE: { hex: "#14b8a6" }, // teal
+  SPP: { hex: "#f97316" }, // orange
 };
 
 // Color by voltage class
 const voltageClassColorMapping = {
   "extra-high": { hex: "#ef4444" }, // 345kV+ — red
-  "high":       { hex: "#f97316" }, // 230–344kV — orange
-  "medium":     { hex: "#22c55e" }, // 115–229kV — green
-  "sub-trans":  { hex: "#60a5fa" }, // 69–114kV — light blue
-  "unknown":    { hex: "#9ca3af" }, // unknown — gray
+  high: { hex: "#f97316" }, // 230–344kV — orange
+  medium: { hex: "#22c55e" }, // 115–229kV — green
+  "sub-trans": { hex: "#60a5fa" }, // 69–114kV — light blue
+  unknown: { hex: "#9ca3af" }, // unknown — gray
 };
 
 const fuelCategoryColorMapping = {
@@ -83,7 +83,7 @@ const fuelCategoryColorMapping = {
 
 // EV network color mapping (top networks get distinct colors, rest gray)
 const evNetworkColorMapping: Record<string, { hex: string }> = {
-  "Tesla": { hex: "#cc0000" },
+  Tesla: { hex: "#cc0000" },
   "ChargePoint Network": { hex: "#0070f3" },
   "Electrify America": { hex: "#00a550" },
   "EVgo Network": { hex: "#f97316" },
@@ -95,15 +95,51 @@ const evNetworkColorMapping: Record<string, { hex: string }> = {
 
 // Distinct, high-contrast colors for operator boundaries
 const OPERATOR_PALETTE = [
-  "#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6",
-  "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16",
-  "#06b6d4", "#e11d48", "#059669", "#d97706", "#7c3aed",
-  "#db2777", "#0d9488", "#ea580c", "#4f46e5", "#65a30d",
-  "#0891b2", "#be123c", "#047857", "#b45309", "#6d28d9",
-  "#a21caf", "#0f766e", "#c2410c", "#4338ca", "#4d7c0f",
-  "#0e7490", "#9f1239", "#15803d", "#92400e", "#5b21b6",
-  "#86198f", "#115e59", "#9a3412", "#3730a3", "#3f6212",
-  "#155e75", "#881337", "#166534", "#78350f", "#4c1d95",
+  "#3b82f6",
+  "#ef4444",
+  "#10b981",
+  "#f59e0b",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#f97316",
+  "#6366f1",
+  "#84cc16",
+  "#06b6d4",
+  "#e11d48",
+  "#059669",
+  "#d97706",
+  "#7c3aed",
+  "#db2777",
+  "#0d9488",
+  "#ea580c",
+  "#4f46e5",
+  "#65a30d",
+  "#0891b2",
+  "#be123c",
+  "#047857",
+  "#b45309",
+  "#6d28d9",
+  "#a21caf",
+  "#0f766e",
+  "#c2410c",
+  "#4338ca",
+  "#4d7c0f",
+  "#0e7490",
+  "#9f1239",
+  "#15803d",
+  "#92400e",
+  "#5b21b6",
+  "#86198f",
+  "#115e59",
+  "#9a3412",
+  "#3730a3",
+  "#3f6212",
+  "#155e75",
+  "#881337",
+  "#166534",
+  "#78350f",
+  "#4c1d95",
 ];
 
 interface GridBoundaryData {
@@ -184,7 +220,9 @@ function useGridOperatorBoundaries(isActive: boolean) {
     }
 
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isActive]);
 
   return data;
@@ -209,9 +247,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const { state, navigateToDetail } = useExplorer();
   const router = useRouter();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
-  const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>(
-    DEFAULT_TOGGLEABLE_LAYER_VISIBILITY
-  );
+  const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>(DEFAULT_TOGGLEABLE_LAYER_VISIBILITY);
   const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
 
   const handleLayerToggle = useCallback((layerId: string) => {
@@ -245,6 +281,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
 
   // Build Mapbox filter expression for utility territory tiles
   const territoryFilter = useMemo(() => {
+    // biome-ignore lint/suspicious/noExplicitAny: Mapbox GL filter expressions are untyped arrays
     const conditions: any[] = [];
 
     if (state.segment && state.segment !== "all") {
@@ -319,7 +356,8 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   }, [state.highlightGeoJSON, state.segment, state.q]);
 
   // Fit map bounds when filters change (utility territories)
-  const hasActiveFilter = !isGridOperatorView && !hasHighlight && !!((state.segment && state.segment !== "all") || state.q);
+  const hasActiveFilter =
+    !isGridOperatorView && !hasHighlight && !!((state.segment && state.segment !== "all") || state.q);
 
   useEffect(() => {
     if (!hasActiveFilter) return;
@@ -350,9 +388,13 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
 
       if (filtered.length === 0) return;
 
-      let minLng = 180, maxLng = -180, minLat = 90, maxLat = -90;
+      let minLng = 180,
+        maxLng = -180,
+        minLat = 90,
+        maxLat = -90;
       for (const f of filtered) {
         if (!f.geometry || !("coordinates" in f.geometry)) continue;
+        // biome-ignore lint/suspicious/noExplicitAny: recursive GeoJSON coordinate traversal, nested array shape is unknown
         const processCoords = (coords: any) => {
           if (!Array.isArray(coords)) return;
           if (typeof coords[0] === "number" && typeof coords[1] === "number") {
@@ -364,12 +406,16 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
             for (const c of coords) processCoords(c);
           }
         };
+        // biome-ignore lint/suspicious/noExplicitAny: cast to access .coordinates on narrowed GeoJSON geometry union
         processCoords((f.geometry as any).coordinates);
       }
 
       if (minLng < maxLng && minLat < maxLat) {
         m.fitBounds(
-          [[minLng, minLat], [maxLng, maxLat]],
+          [
+            [minLng, minLat],
+            [maxLng, maxLat],
+          ],
           { padding: 50, duration: 1200, maxZoom: 10 }
         );
       }
@@ -495,13 +541,9 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
           trigger: "hover",
           content: (feature: LayerFeature) => (
             <div className="flex flex-col gap-0.5">
-              <span className="font-medium text-sm">
-                {feature.properties.owner || "Unknown Owner"}
-              </span>
+              <span className="font-medium text-sm">{feature.properties.owner || "Unknown Owner"}</span>
               <span className="text-xs text-gray-500">
-                {feature.properties.voltage != null
-                  ? `${feature.properties.voltage} kV`
-                  : "Voltage unknown"}
+                {feature.properties.voltage != null ? `${feature.properties.voltage} kV` : "Voltage unknown"}
                 {feature.properties.status ? ` · ${feature.properties.status}` : ""}
               </span>
             </div>
@@ -584,14 +626,21 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
           trigger: "hover",
           content: (feature: LayerFeature) => {
             const nodeTypeLabels: Record<string, string> = {
-              gen: "Generation", load: "Load", hub: "Trading Hub",
-              zone: "Load Zone", sublap: "Sub-LAP", lap: "LAP", interface: "Interface", bus: "Bus",
+              gen: "Generation",
+              load: "Load",
+              hub: "Trading Hub",
+              zone: "Load Zone",
+              sublap: "Sub-LAP",
+              lap: "LAP",
+              interface: "Interface",
+              bus: "Bus",
             };
             return (
               <div className="flex flex-col gap-0.5">
                 <span className="font-medium text-sm">{feature.properties.name}</span>
                 <span className="text-xs text-gray-500">
-                  {feature.properties.iso} · {nodeTypeLabels[feature.properties.nodeType] ?? feature.properties.nodeType}
+                  {feature.properties.iso} ·{" "}
+                  {nodeTypeLabels[feature.properties.nodeType] ?? feature.properties.nodeType}
                   {feature.properties.zone ? ` · ${feature.properties.zone}` : ""}
                 </span>
               </div>
@@ -670,7 +719,16 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     }
 
     return result;
-  }, [handleClick, router, state.highlightGeoJSON, isGridOperatorView, filteredGridBoundaryData, hasHighlight, territoryFilter, layerVisibility]);
+  }, [
+    handleClick,
+    router,
+    state.highlightGeoJSON,
+    isGridOperatorView,
+    filteredGridBoundaryData,
+    hasHighlight,
+    territoryFilter,
+    layerVisibility,
+  ]);
 
   if (!hasMapboxToken) {
     return (
@@ -686,7 +744,9 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   return (
     <div className="h-full w-full relative">
       <InteractiveMap
+        // biome-ignore lint/suspicious/noExplicitAny: InteractiveMap ref type is opaque from @texturehq/edges
         ref={mapRef as React.Ref<any>}
+        // biome-ignore lint/style/noNonNullAssertion: effectiveToken is guaranteed non-null when map renders (checked in parent)
         mapboxAccessToken={effectiveToken!}
         initialViewState={US_CENTER}
         mapType={mapType}

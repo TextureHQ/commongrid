@@ -17,10 +17,7 @@ import type { RouteContext, RouteHandler } from "./types";
 
 /** Returns the CORS headers that must be present on every API response. */
 export function corsHeaders(): Record<string, string> {
-  const origin =
-    process.env.NODE_ENV === "production"
-      ? "https://commongrid.info"
-      : "*";
+  const origin = process.env.NODE_ENV === "production" ? "https://commongrid.info" : "*";
 
   return {
     "Access-Control-Allow-Origin": origin,

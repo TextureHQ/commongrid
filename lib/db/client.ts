@@ -23,9 +23,7 @@ export const db = createClient();
  */
 export function getDb() {
   if (!db) {
-    throw new Error(
-      "DATABASE_URL is not configured. Set it in environment variables."
-    );
+    throw new Error("DATABASE_URL is not configured. Set it in environment variables.");
   }
   return db;
 }

@@ -1,26 +1,13 @@
 "use client";
 
-import {
-  Badge,
-  type Column,
-  DataControls,
-  DataTable,
-  EmptyState,
-  Loader,
-} from "@texturehq/edges";
-import { useCallback, useMemo } from "react";
+import { Badge, type Column, DataControls, DataTable, EmptyState, Loader } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
-import { useExplorer } from "../ExplorerContext";
+import { useCallback, useMemo } from "react";
+import { formatCapacity, getFuelBadgeVariant, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
 import { usePowerPlants } from "@/lib/power-plants";
 import { useFuseSearch } from "@/lib/search";
-import { sortByName } from "@/lib/data";
-import {
-  formatCapacity,
-  getFuelBadgeVariant,
-  getFuelCategoryColor,
-  getFuelCategoryLabel,
-} from "@/lib/formatting";
-import { type PowerPlant, FUEL_CATEGORIES, FuelCategoryLabel } from "@/types/entities";
+import { FUEL_CATEGORIES, FuelCategoryLabel, type PowerPlant } from "@/types/entities";
+import { useExplorer } from "../ExplorerContext";
 
 interface PowerPlantRow extends Record<string, unknown> {
   slug: string;
@@ -136,9 +123,7 @@ export function PowerPlantListPanel() {
         accessor: "totalCapacityMw",
         render: (_value: unknown, row: PowerPlantRow) => (
           <span className="text-text-body">
-            {row.status === "operable"
-              ? formatCapacity(row.totalCapacityMw)
-              : formatCapacity(row.proposedCapacityMw)}
+            {row.status === "operable" ? formatCapacity(row.totalCapacityMw) : formatCapacity(row.proposedCapacityMw)}
           </span>
         ),
         mobile: { priority: 3, format: "secondary" },
@@ -147,9 +132,7 @@ export function PowerPlantListPanel() {
         id: "state",
         label: "State",
         accessor: "state",
-        render: (_value: unknown, row: PowerPlantRow) => (
-          <span className="text-text-body">{row.state}</span>
-        ),
+        render: (_value: unknown, row: PowerPlantRow) => <span className="text-text-body">{row.state}</span>,
         mobile: false,
       },
     ],

@@ -39,10 +39,7 @@ export interface ApiErrorResponse {
 }
 
 /** Shape of a Next.js API route handler with extended context. */
-export type RouteHandler = (
-  req: Request,
-  ctx: RouteContext
-) => Promise<Response>;
+export type RouteHandler = (req: Request, ctx: RouteContext) => Promise<Response>;
 
 /** Extended context passed through middleware chain. */
 export interface RouteContext {

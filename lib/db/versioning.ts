@@ -26,12 +26,7 @@ export function computeDelta(
     const newVal = newData[key];
 
     // Skip internal fields
-    if (
-      key === "createdAt" ||
-      key === "updatedAt" ||
-      key === "version" ||
-      key === "searchVector"
-    ) {
+    if (key === "createdAt" || key === "updatedAt" || key === "version" || key === "searchVector") {
       continue;
     }
 
@@ -46,9 +41,7 @@ export function computeDelta(
 /**
  * Generate a human-readable summary of changes.
  */
-export function generateChangeSummary(
-  delta: Record<string, { old: unknown; new: unknown }>
-): string {
+export function generateChangeSummary(delta: Record<string, { old: unknown; new: unknown }>): string {
   const fields = Object.keys(delta);
 
   if (fields.length === 0) return "No changes";
@@ -59,8 +52,7 @@ export function generateChangeSummary(
         const oldStr = JSON.stringify(delta[f].old);
         const newStr = JSON.stringify(delta[f].new);
         // Truncate long values
-        const truncate = (s: string) =>
-          s.length > 50 ? s.slice(0, 47) + "..." : s;
+        const truncate = (s: string) => (s.length > 50 ? `${s.slice(0, 47)}...` : s);
         return `${f}: ${truncate(oldStr)} → ${truncate(newStr)}`;
       })
       .join(", ");
@@ -135,20 +127,16 @@ export function reconstructEntityAtVersion(
   if (versions.length === 0) return null;
 
   // Sort by version number
-  const sorted = [...versions].sort(
-    (a, b) => a.versionNumber - b.versionNumber
-  );
+  const sorted = [...versions].sort((a, b) => a.versionNumber - b.versionNumber);
 
   // First version must have a snapshot
   const base = sorted[0];
   if (!base.snapshot) {
-    throw new Error(
-      `Version 1 for entity must have a snapshot, but none found`
-    );
+    throw new Error(`Version 1 for entity must have a snapshot, but none found`);
   }
 
   // Start with base snapshot
-  let entity = { ...base.snapshot };
+  const entity = { ...base.snapshot };
 
   // Apply deltas up to target version
   for (let i = 1; i < sorted.length; i++) {
