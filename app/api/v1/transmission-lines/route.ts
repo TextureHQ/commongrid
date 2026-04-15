@@ -1,8 +1,8 @@
 /**
- * GET /api/v1/pricing-nodes
+ * GET /api/v1/transmission-lines
  *
- * List pricing nodes with filtering, sorting, cursor pagination, and sparse
- * field projection. Data source is controlled by NEXT_PUBLIC_FF_DB_PRICING_NODES.
+ * List transmission lines with filtering, sorting, cursor pagination, and sparse
+ * field projection. Data source is controlled by NEXT_PUBLIC_FF_DB_TRANSMISSION.
  */
 
 import { z } from "zod";
@@ -19,42 +19,48 @@ import {
   decodeCursor,
   type CursorV1,
 } from "@/lib/api";
-import { loadPricingNodes } from "@/lib/data/pricing-nodes";
-import type { PricingNode } from "@/types/pricing-nodes";
+import { loadTransmissionLines } from "@/lib/data/transmission-lines";
+import type { TransmissionLine } from "@/types/transmission-lines";
 
 // ---------------------------------------------------------------------------
 // Validation schema
 // ---------------------------------------------------------------------------
 
 const querySchema = z.object({
-  iso: z.string().optional(),
-  nodeType: z.string().optional(),
-  state: z.string().optional(),
+  voltageClass: z.string().optional(),
+  owner: z.string().optional(),
+  status: z.string().optional(),
   search: z.string().min(2).max(200).optional(),
   fields: z.string().optional(),
-  sort: z.enum(["name", "iso", "nodeType"]).default("name"),
+  sort: z.enum(["owner", "voltageClass", "lengthMiles"]).default("owner"),
   order: z.enum(["asc", "desc"]).default("asc"),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   cursor: z.string().optional(),
 });
 
-type SortField = "name" | "iso" | "nodeType";
+type SortField = "owner" | "voltageClass" | "lengthMiles";
 
 // ---------------------------------------------------------------------------
 // Sorting
 // ---------------------------------------------------------------------------
 
-function sortNodes(
-  nodes: PricingNode[],
+function sortLines(
+  lines: TransmissionLine[],
   sortField: SortField,
   order: "asc" | "desc"
-): PricingNode[] {
-  return [...nodes].sort((a, b) => {
-    let cmp = (a[sortField] as string).localeCompare(b[sortField] as string);
+): TransmissionLine[] {
+  return [...lines].sort((a, b) => {
+    let cmp: number;
 
-    // Secondary: name (when not the primary sort key)
-    if (cmp === 0 && sortField !== "name") {
-      cmp = a.name.localeCompare(b.name);
+    if (sortField === "lengthMiles") {
+      cmp = (a.lengthMiles ?? 0) - (b.lengthMiles ?? 0);
+    } else {
+      cmp = (a[sortField] as string).localeCompare(b[sortField] as string);
+    }
+
+    // Secondary: owner (when not the primary sort key)
+    if (cmp === 0 && sortField !== "owner") {
+      cmp = a.owner.localeCompare(b.owner);
     }
 
     // Tertiary: id (tiebreaker)
@@ -79,25 +85,35 @@ function tryEncodeCursor(data: CursorV1): string | null {
   }
 }
 
-/** Apply cursor offset to a sorted node list. */
+/** Apply cursor offset to a sorted transmission line list. */
 function applyCursor(
-  sorted: PricingNode[],
+  sorted: TransmissionLine[],
   cursor: CursorV1,
   sortField: SortField,
   order: "asc" | "desc"
-): PricingNode[] {
-  const cursorSortValue = cursor.s[sortField] as string | undefined;
+): TransmissionLine[] {
+  const cursorSortValue = cursor.s[sortField];
   const cursorId = cursor.id;
 
   const startIdx = sorted.findIndex((item) => {
-    const itemValue = item[sortField] as string;
-    const cmpVal = cursorSortValue ?? "";
-    const cmp = itemValue.localeCompare(cmpVal);
-
-    if (order === "asc") {
-      return cmp > 0 || (cmp === 0 && item.id > cursorId);
+    if (sortField === "lengthMiles") {
+      const itemValue = item.lengthMiles ?? 0;
+      const cmpVal = (cursorSortValue as number) ?? 0;
+      const diff = itemValue - cmpVal;
+      if (order === "asc") {
+        return diff > 0 || (diff === 0 && item.id > cursorId);
+      } else {
+        return diff < 0 || (diff === 0 && item.id > cursorId);
+      }
     } else {
-      return cmp < 0 || (cmp === 0 && item.id > cursorId);
+      const itemValue = item[sortField] as string;
+      const cmpVal = (cursorSortValue as string) ?? "";
+      const cmp = itemValue.localeCompare(cmpVal);
+      if (order === "asc") {
+        return cmp > 0 || (cmp === 0 && item.id > cursorId);
+      } else {
+        return cmp < 0 || (cmp === 0 && item.id > cursorId);
+      }
     }
   });
 
@@ -109,20 +125,20 @@ function applyCursor(
 // ---------------------------------------------------------------------------
 
 const ALL_FIELDS = new Set<string>([
-  "id", "slug", "name", "iso", "nodeType",
-  "latitude", "longitude", "zone", "state",
-  "voltageKv", "eiaPlantCode", "source",
+  "objectId", "id", "type", "status", "owner",
+  "voltage", "voltClass", "voltageClass",
+  "sub1", "sub2", "lengthMiles", "naicsCode", "source",
 ]);
 
 function projectFields(
-  node: PricingNode,
+  line: TransmissionLine,
   fields: string[]
-): Partial<PricingNode> {
-  const result: Partial<PricingNode> = {};
+): Partial<TransmissionLine> {
+  const result: Partial<TransmissionLine> = {};
   for (const field of fields) {
     if (ALL_FIELDS.has(field)) {
       (result as Record<string, unknown>)[field] =
-        (node as unknown as Record<string, unknown>)[field];
+        (line as unknown as Record<string, unknown>)[field];
     }
   }
   return result;
@@ -142,8 +158,17 @@ async function handler(req: Request): Promise<Response> {
     });
   }
 
-  const { iso, nodeType, state, search, fields, sort, order, limit, cursor: rawCursor } =
-    parsed.data;
+  const {
+    voltageClass,
+    owner,
+    status,
+    search,
+    fields,
+    sort,
+    order,
+    limit,
+    cursor: rawCursor,
+  } = parsed.data;
 
   // Decode cursor if provided
   let cursor: CursorV1 | null = null;
@@ -152,10 +177,15 @@ async function handler(req: Request): Promise<Response> {
   }
 
   // Load filtered data
-  const allNodes = await loadPricingNodes({ iso, nodeType, state, search });
+  const allLines = await loadTransmissionLines({
+    voltageClass,
+    owner,
+    status,
+    search,
+  });
 
   // Sort
-  const sorted = sortNodes(allNodes, sort, order);
+  const sorted = sortLines(allLines, sort, order);
   const totalCount = sorted.length;
 
   // Apply cursor offset for next-page traversal
@@ -172,7 +202,7 @@ async function handler(req: Request): Promise<Response> {
     const last = items[items.length - 1];
     nextCursor = tryEncodeCursor({
       v: 1,
-      s: { [sort]: last[sort] },
+      s: { [sort]: last[sort as keyof TransmissionLine] },
       id: last.id,
     });
   }
@@ -186,14 +216,14 @@ async function handler(req: Request): Promise<Response> {
     : null;
 
   const data = requestedFields
-    ? items.map((n) => projectFields(n, requestedFields))
+    ? items.map((l) => projectFields(l, requestedFields))
     : items;
 
   const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
 
   return jsonResponse(envelope, 200, {
     "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-    "Cache-Tag": "pricing-nodes",
+    "Cache-Tag": "transmission-lines",
   });
 }
 

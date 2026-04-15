@@ -1,8 +1,8 @@
 /**
- * GET /api/v1/pricing-nodes/:slug
+ * GET /api/v1/programs/:slug
  *
- * Fetch a single pricing node by slug. Returns 404 if not found.
- * Data source is controlled by NEXT_PUBLIC_FF_DB_PRICING_NODES.
+ * Fetch a single program by slug. Returns 404 if not found.
+ * Data source is controlled by NEXT_PUBLIC_FF_DB_PROGRAMS.
  */
 
 import {
@@ -14,7 +14,7 @@ import {
   jsonResponse,
   type RouteContext,
 } from "@/lib/api";
-import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
+import { loadProgramBySlug } from "@/lib/data/programs";
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -29,15 +29,15 @@ export async function GET(
   return withRequestId(
     withErrorHandling(
       withTiming(withCors(async (r: Request, _ctx: RouteContext) => {
-        const node = await loadPricingNodeBySlug(slug);
+        const program = await loadProgramBySlug(slug);
 
-        if (!node) {
-          throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
+        if (!program) {
+          throw new ApiError("NOT_FOUND", `Program '${slug}' not found`);
         }
 
-        return jsonResponse({ data: node }, 200, {
+        return jsonResponse({ data: program }, 200, {
           "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
-          "Cache-Tag": `pricing-node:${slug}`,
+          "Cache-Tag": `program:${slug}`,
         });
       }))
     )
