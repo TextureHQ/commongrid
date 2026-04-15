@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { getDataSource } from "@/lib/feature-flags";
-import type { EVAccessCode, EVStation, EVStatusCode } from "@/types/ev-charging";
+import type { EVAccessCode, EVOwnerTypeCode, EVStation, EVStatusCode } from "@/types/ev-charging";
 
 // ---------------------------------------------------------------------------
 // Filters
@@ -66,19 +66,121 @@ function applyJsonFilters(stations: EVStation[], filters: EVStationFilters): EVS
 }
 
 // ---------------------------------------------------------------------------
-// DB source (placeholder — mirrors the programs pattern)
+// DB source
 // ---------------------------------------------------------------------------
 
+function dbRowToEVStation(row: Record<string, unknown>): EVStation {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    stationName: row.stationName as string,
+    streetAddress: row.streetAddress as string,
+    city: row.city as string,
+    state: row.state as string,
+    zip: row.zip as string,
+    latitude: row.latitude as number,
+    longitude: row.longitude as number,
+    evNetwork: row.evNetwork as string | null,
+    evLevel1EvseNum: row.evLevel1EvseNum as number,
+    evLevel2EvseNum: row.evLevel2EvseNum as number,
+    evDcFastNum: row.evDcFastNum as number,
+    evConnectorTypes: row.evConnectorTypes as string[],
+    accessCode: row.accessCode as EVAccessCode,
+    statusCode: row.statusCode as EVStatusCode,
+    openDate: row.openDate as string | null,
+    facilityType: row.facilityType as string | null,
+    ownerTypeCode: row.ownerTypeCode as EVOwnerTypeCode | null,
+    evPricing: row.evPricing as string | null,
+  };
+}
+
 async function loadFromDb(filters?: EVStationFilters): Promise<EVStation[]> {
-  // When DB mode is wired up, this will query the ev_stations table.
-  // For now, fall back to JSON so the endpoint still works.
-  const stations = loadJson();
-  return filters ? applyJsonFilters(stations, filters) : stations;
+  const { getDb } = await import("@/lib/db/client");
+  const { evStations } = await import("@/lib/db/schema");
+  const { eq, ilike, and, or, sql } = await import("drizzle-orm");
+  type DrizzleSQL = ReturnType<typeof eq>;
+
+  const db = getDb();
+  const conditions: DrizzleSQL[] = [];
+
+  if (filters?.state) conditions.push(eq(evStations.state, filters.state));
+  if (filters?.city) conditions.push(ilike(evStations.city, filters.city));
+  if (filters?.network) conditions.push(eq(evStations.evNetwork, filters.network));
+  if (filters?.accessCode) conditions.push(eq(evStations.accessCode, filters.accessCode));
+  if (filters?.statusCode) conditions.push(eq(evStations.statusCode, filters.statusCode));
+  if (filters?.search) {
+    const searchTerm = filters.search.trim();
+    conditions.push(
+      or(
+        sql`${evStations.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
+        ilike(evStations.stationName, `%${searchTerm}%`)
+      )!
+    );
+  }
+
+  const rows = await db
+    .select({
+      id: evStations.id,
+      slug: evStations.slug,
+      stationName: evStations.stationName,
+      streetAddress: evStations.streetAddress,
+      city: evStations.city,
+      state: evStations.state,
+      zip: evStations.zip,
+      latitude: evStations.latitude,
+      longitude: evStations.longitude,
+      evNetwork: evStations.evNetwork,
+      evLevel1EvseNum: evStations.evLevel1EvseNum,
+      evLevel2EvseNum: evStations.evLevel2EvseNum,
+      evDcFastNum: evStations.evDcFastNum,
+      evConnectorTypes: evStations.evConnectorTypes,
+      accessCode: evStations.accessCode,
+      statusCode: evStations.statusCode,
+      openDate: evStations.openDate,
+      facilityType: evStations.facilityType,
+      ownerTypeCode: evStations.ownerTypeCode,
+      evPricing: evStations.evPricing,
+    })
+    .from(evStations)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+  return rows.map(dbRowToEVStation);
 }
 
 async function loadBySlugFromDb(slug: string): Promise<EVStation | null> {
-  const stations = loadJson();
-  return stations.find((s) => s.slug === slug) ?? null;
+  const { getDb } = await import("@/lib/db/client");
+  const { evStations } = await import("@/lib/db/schema");
+  const { eq } = await import("drizzle-orm");
+
+  const db = getDb();
+  const rows = await db
+    .select({
+      id: evStations.id,
+      slug: evStations.slug,
+      stationName: evStations.stationName,
+      streetAddress: evStations.streetAddress,
+      city: evStations.city,
+      state: evStations.state,
+      zip: evStations.zip,
+      latitude: evStations.latitude,
+      longitude: evStations.longitude,
+      evNetwork: evStations.evNetwork,
+      evLevel1EvseNum: evStations.evLevel1EvseNum,
+      evLevel2EvseNum: evStations.evLevel2EvseNum,
+      evDcFastNum: evStations.evDcFastNum,
+      evConnectorTypes: evStations.evConnectorTypes,
+      accessCode: evStations.accessCode,
+      statusCode: evStations.statusCode,
+      openDate: evStations.openDate,
+      facilityType: evStations.facilityType,
+      ownerTypeCode: evStations.ownerTypeCode,
+      evPricing: evStations.evPricing,
+    })
+    .from(evStations)
+    .where(eq(evStations.slug, slug))
+    .limit(1);
+
+  return rows.length > 0 ? dbRowToEVStation(rows[0]) : null;
 }
 
 // ---------------------------------------------------------------------------
