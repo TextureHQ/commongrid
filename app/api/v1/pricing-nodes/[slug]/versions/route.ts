@@ -8,10 +8,7 @@
 
 import {
   ApiError,
-  withErrorHandling,
-  withRequestId,
-  withTiming,
-  withCors,
+  withApiMiddleware,
   jsonResponse,
   type RouteContext,
 } from "@/lib/api";
@@ -83,35 +80,33 @@ export async function GET(
 ): Promise<Response> {
   const { slug } = await params;
 
-  return withRequestId(
-    withErrorHandling(
-      withTiming(async (r: Request, _ctx: RouteContext) => {
-        // Verify the node exists (works in both JSON and DB mode)
-        const node = await loadPricingNodeBySlug(slug);
-        if (!node) {
-          throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
-        }
+  const wrapped = withApiMiddleware(
+    async (_r: Request, _ctx: RouteContext) => {
+      // Verify the node exists (works in both JSON and DB mode)
+      const node = await loadPricingNodeBySlug(slug);
+      if (!node) {
+        throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
+      }
 
-        // Version history is only available in database mode
-        let versions: VersionEntry[] = [];
-        if (getDataSource("pricingNodes") === "database") {
-          versions = await loadVersionsFromDb(node.id);
-        }
+      // Version history is only available in database mode
+      let versions: VersionEntry[] = [];
+      if (getDataSource("pricingNodes") === "database") {
+        versions = await loadVersionsFromDb(node.id);
+      }
 
-        return withCors(
-          jsonResponse(
-            {
-              data: versions,
-              meta: { source: getDataSource("pricingNodes") },
-            },
-            200,
-            {
-              "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-              "Cache-Tag": `pricing-node:${slug}:versions`,
-            }
-          )
-        );
-      })
-    )
-  )(req, { requestId: "" });
+      return jsonResponse(
+        {
+          data: versions,
+          meta: { source: getDataSource("pricingNodes") },
+        },
+        200,
+        {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+          "Cache-Tag": `pricing-node:${slug}:versions`,
+        }
+      );
+    }
+  );
+
+  return wrapped(req, { requestId: "" });
 }
