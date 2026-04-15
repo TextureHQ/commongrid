@@ -19,7 +19,8 @@
     "sync:pricing-nodes": "tsx scripts/sync-pricing-nodes.ts",
     "generate:changelog": "npx tsx scripts/generate-changelog.ts",
     "sync:all": "npx tsx scripts/sync-all.ts",
-    "seed": "tsx scripts/seed-database.ts"
+    "seed": "tsx scripts/seed-database.ts",
+    "test:api": "tsx scripts/test-api-endpoints.ts"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.5",
