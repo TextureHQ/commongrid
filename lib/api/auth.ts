@@ -1,199 +1,141 @@
+/**
+ * API key authentication for CommonGrid.
+ *
+ * Keys are prefixed with `cg_`, stored as SHA-256 hashes, and carry
+ * scopes in the format `resource:action` (e.g., `utilities:read`,
+ * `*:read`, `*:*`).
+ *
+ * See docs/specs/persistence-api.md §5.1.
+ */
+
 import { createHash } from "crypto";
+import { eq } from "drizzle-orm";
 
-/**
- * Authentication context returned by the auth middleware.
- */
-export interface AuthContext {
-  type: "api-key" | "oauth";
-  identity: string;
-  scopes: string[];
-  metadata: Record<string, unknown>;
-}
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-/**
- * Hash an API key for storage/lookup.
- * Keys are stored as SHA-256 hashes — plaintext is never persisted.
- */
+export type AuthResult = {
+  valid: boolean;
+  identity?: string;
+  error?: string;
+};
+
+// ---------------------------------------------------------------------------
+// Key hashing
+// ---------------------------------------------------------------------------
+
+/** SHA-256 hash of a plaintext API key. Used for storage and lookup. */
 export function hashApiKey(key: string): string {
   return createHash("sha256").update(key).digest("hex");
 }
 
-/**
- * Extract the prefix from an API key for identification in logs.
- * e.g., "cg_a1b2c3d4-e5f6-..." → "cg_a1b2"
- */
-export function getKeyPrefix(key: string): string {
-  return key.slice(0, 7);
-}
+// ---------------------------------------------------------------------------
+// Scope matching
+// ---------------------------------------------------------------------------
 
 /**
- * Check if an AuthContext has a specific scope.
- * Supports exact match and wildcards (* for any resource or action).
+ * Returns true if any scope in the list grants the requested resource+action.
  *
- * Examples:
- *   hasScope(auth, "utilities", "read")  → checks for "utilities:read", "utilities:*", "*:read", "*:*"
+ * Wildcard rules:
+ *   - `*:*`       → matches everything
+ *   - `*:read`    → matches any resource with action `read`
+ *   - `utilities:*` → matches any action on `utilities`
  */
 export function hasScope(
-  auth: AuthContext,
+  scopes: string[],
   resource: string,
   action: string
 ): boolean {
-  const required = `${resource}:${action}`;
-  return auth.scopes.some(
-    (s) =>
-      s === required ||
-      s === `${resource}:*` ||
-      s === `*:${action}` ||
-      s === "*:*"
-  );
+  for (const scope of scopes) {
+    const colonIdx = scope.indexOf(":");
+    if (colonIdx === -1) continue;
+
+    const scopeResource = scope.slice(0, colonIdx);
+    const scopeAction = scope.slice(colonIdx + 1);
+
+    const resourceMatch = scopeResource === "*" || scopeResource === resource;
+    const actionMatch = scopeAction === "*" || scopeAction === action;
+
+    if (resourceMatch && actionMatch) return true;
+  }
+  return false;
 }
 
+// ---------------------------------------------------------------------------
+// Validation
+// ---------------------------------------------------------------------------
+
 /**
- * Authenticate a request from the Authorization header.
- * Returns null for unauthenticated requests (OK for public reads).
- * Throws on invalid/expired keys.
+ * Validates a Bearer API key from an Authorization header.
  *
- * NOTE: This is a standalone implementation that doesn't depend on
- * the Drizzle schema. It uses raw SQL via the db client.
- * When the full schema is available, this can be updated to use
- * typed queries.
+ * Performs a database lookup by hash, checks expiry and active status,
+ * and verifies the key holds the requested scope. Uses a dynamic import
+ * so the module can load even when DATABASE_URL is absent (e.g., static
+ * builds or dev without a DB).
+ *
+ * The `lastUsedAt` timestamp is updated fire-and-forget.
  */
-export async function authenticate(
-  request: Request
-): Promise<AuthContext | null> {
-  const authHeader = request.headers.get("Authorization");
-
-  if (!authHeader) return null;
-
-  if (authHeader.startsWith("Bearer cg_")) {
-    return authenticateApiKey(authHeader);
-  }
-
-  // Future: JWT (OAuth) support
-  // if (authHeader.startsWith("Bearer ey")) {
-  //   return authenticateOAuth(authHeader);
-  // }
-
-  return null;
-}
-
-/**
- * Validate an API key against the database.
- */
-async function authenticateApiKey(
-  authHeader: string
-): Promise<AuthContext | null> {
-  // Lazy import to avoid importing db at module level
-  // (allows build to pass without DATABASE_URL)
-  const { db } = await import("@/lib/db/client");
-
-  if (!db) {
-    console.warn("Auth: DATABASE_URL not configured, rejecting API key auth");
-    return null;
-  }
-
-  const key = authHeader.replace("Bearer ", "");
-  const keyHash = hashApiKey(key);
-
-  try {
-    const { sql } = await import("drizzle-orm");
-    const result = await db.execute(
-      sql`SELECT id, name, scopes, expires_at, is_active
-          FROM api_keys
-          WHERE key_hash = ${keyHash} AND is_active = true
-          LIMIT 1`
-    );
-
-    const rows = result as unknown as Array<{
-      id: string;
-      name: string;
-      scopes: string[];
-      expires_at: string | null;
-      is_active: boolean;
-    }>;
-
-    if (!rows || rows.length === 0) return null;
-
-    const apiKey = rows[0];
-
-    // Check expiration
-    if (apiKey.expires_at && new Date(apiKey.expires_at) < new Date()) {
-      return null;
-    }
-
-    // Fire-and-forget: update last_used_at
-    db.execute(
-      sql`UPDATE api_keys SET last_used_at = NOW() WHERE id = ${apiKey.id}`
-    ).catch(() => {
-      // Silently ignore — non-critical
-    });
-
-    return {
-      type: "api-key",
-      identity: apiKey.name,
-      scopes: apiKey.scopes ?? [],
-      metadata: { keyId: apiKey.id },
-    };
-  } catch (error) {
-    console.error("Auth: API key validation failed:", error);
-    return null;
-  }
-}
-
-/**
- * Require authentication for a request.
- * Returns the auth context or throws an error response.
- */
-export async function requireAuth(
-  request: Request,
+export async function validateApiKey(
+  authHeader: string | null,
   resource: string,
   action: string
-): Promise<AuthContext> {
-  const auth = await authenticate(request);
-
-  if (!auth) {
-    throw new Response(
-      JSON.stringify({
-        error: {
-          code: "UNAUTHORIZED",
-          message:
-            "Authentication required. Provide a valid API key via Authorization: Bearer cg_...",
-          timestamp: new Date().toISOString(),
-        },
-      }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+): Promise<AuthResult> {
+  if (!authHeader) {
+    return { valid: false, error: "Missing Authorization header" };
   }
 
-  if (!hasScope(auth, resource, action)) {
-    throw new Response(
-      JSON.stringify({
-        error: {
-          code: "FORBIDDEN",
-          message: `API key lacks required scope '${resource}:${action}'`,
-          timestamp: new Date().toISOString(),
-        },
-      }),
-      { status: 403, headers: { "Content-Type": "application/json" } }
-    );
+  if (!authHeader.startsWith("Bearer ")) {
+    return { valid: false, error: "Invalid Authorization header format" };
   }
 
-  return auth;
-}
+  const key = authHeader.slice(7).trim();
 
-/**
- * Generate a new API key.
- * Returns the plaintext key (shown once) and the hash for storage.
- */
-export function generateApiKey(): {
-  key: string;
-  hash: string;
-  prefix: string;
-} {
-  const uuid = crypto.randomUUID();
-  const key = `cg_${uuid}`;
-  const hash = hashApiKey(key);
-  const prefix = getKeyPrefix(key);
+  if (!key.startsWith("cg_")) {
+    return { valid: false, error: "Invalid API key format" };
+  }
 
-  return { key, hash, prefix };
+  // Dynamic import so this module loads cleanly in no-DB environments.
+  const { db } = await import("@/lib/db/client");
+  if (!db) {
+    return { valid: false, error: "Database not configured" };
+  }
+
+  const { apiKeys } = await import("@/lib/db/schema");
+
+  const keyHash = hashApiKey(key);
+
+  const rows = await db
+    .select()
+    .from(apiKeys)
+    .where(eq(apiKeys.keyHash, keyHash))
+    .limit(1);
+
+  const apiKey = rows[0];
+
+  if (!apiKey) {
+    return { valid: false, error: "Invalid API key" };
+  }
+
+  if (!apiKey.isActive) {
+    return { valid: false, error: "API key is inactive" };
+  }
+
+  if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
+    return { valid: false, error: "API key has expired" };
+  }
+
+  if (!hasScope(apiKey.scopes, resource, action)) {
+    return { valid: false, error: "Insufficient scope" };
+  }
+
+  // Fire-and-forget — don't block the request on a bookkeeping write.
+  db.update(apiKeys)
+    .set({ lastUsedAt: new Date() })
+    .where(eq(apiKeys.keyHash, keyHash))
+    .catch((err: unknown) =>
+      console.error("Failed to update lastUsedAt:", err)
+    );
+
+  return { valid: true, identity: apiKey.name };
 }
