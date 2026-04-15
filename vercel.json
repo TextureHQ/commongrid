@@ -1,5 +1,11 @@
 {
   "installCommand": "npm install",
   "buildCommand": "npm run prebuild && next build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/cron/keep-alive",
+      "schedule": "*/4 8-22 * * 1-5"
+    }
+  ]
 }
