@@ -39,7 +39,8 @@ async function handleDatabaseMode(url: URL) {
   const search = url.searchParams.get("search") ?? url.searchParams.get("q");
 
   // We'll join with regions to get name, slug, type, state
-  const sortColumn = sort === "name" ? regions.name : sort === "state" ? regions.state : sort === "type" ? regions.type : regions.slug;
+  const sortColumn =
+    sort === "name" ? regions.name : sort === "state" ? regions.state : sort === "type" ? regions.type : regions.slug;
   const orderFn = order === "desc" ? desc : asc;
 
   // Build WHERE conditions
