@@ -12,7 +12,7 @@ import { getDataSource } from "@/lib/feature-flags";
 import type { EVAccessCode, EVOwnerTypeCode, EVStation, EVStatusCode } from "@/types/ev-charging";
 
 // ---------------------------------------------------------------------------
-// Filters
+// Filters and Query Options
 // ---------------------------------------------------------------------------
 
 export interface EVStationFilters {
@@ -23,6 +23,14 @@ export interface EVStationFilters {
   statusCode?: string;
   /** Min 2 chars. Matches against stationName and city (case-insensitive). */
   search?: string;
+}
+
+export interface EVStationQueryOptions {
+  filters?: EVStationFilters;
+  sort?: "stationName" | "city" | "state";
+  order?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -94,14 +102,15 @@ function dbRowToEVStation(row: Record<string, unknown>): EVStation {
   };
 }
 
-async function loadFromDb(filters?: EVStationFilters): Promise<EVStation[]> {
+async function loadFromDb(options?: EVStationQueryOptions): Promise<EVStation[]> {
   const { getDb } = await import("@/lib/db/client");
   const { evStations } = await import("@/lib/db/schema");
-  const { eq, ilike, and, or, sql } = await import("drizzle-orm");
+  const { eq, ilike, and, or, sql, desc, asc } = await import("drizzle-orm");
   type DrizzleSQL = ReturnType<typeof eq>;
 
   const db = getDb();
   const conditions: DrizzleSQL[] = [];
+  const filters = options?.filters;
 
   if (filters?.state) conditions.push(eq(evStations.state, filters.state));
   if (filters?.city) conditions.push(ilike(evStations.city, filters.city));
@@ -118,7 +127,21 @@ async function loadFromDb(filters?: EVStationFilters): Promise<EVStation[]> {
     );
   }
 
-  const rows = await db
+  // Build ORDER BY clause
+  const sortField = options?.sort ?? "stationName";
+  const sortOrder = options?.order ?? "asc";
+  const orderFn = sortOrder === "desc" ? desc : asc;
+  
+  let orderBy;
+  if (sortField === "city") {
+    orderBy = [orderFn(evStations.city), asc(evStations.stationName), asc(evStations.id)];
+  } else if (sortField === "state") {
+    orderBy = [orderFn(evStations.state), asc(evStations.stationName), asc(evStations.id)];
+  } else {
+    orderBy = [orderFn(evStations.stationName), asc(evStations.id)];
+  }
+
+  let query = db
     .select({
       id: evStations.id,
       slug: evStations.slug,
@@ -142,8 +165,18 @@ async function loadFromDb(filters?: EVStationFilters): Promise<EVStation[]> {
       evPricing: evStations.evPricing,
     })
     .from(evStations)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(...orderBy);
 
+  // Apply pagination
+  if (options?.limit !== undefined) {
+    query = query.limit(options.limit) as typeof query;
+  }
+  if (options?.offset !== undefined) {
+    query = query.offset(options.offset) as typeof query;
+  }
+
+  const rows = await query;
   return rows.map(dbRowToEVStation);
 }
 
@@ -188,16 +221,60 @@ async function loadBySlugFromDb(slug: string): Promise<EVStation | null> {
 // ---------------------------------------------------------------------------
 
 /**
- * Load EV stations, optionally filtered.
+ * Load EV stations with optional filters, sorting, and pagination.
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_EV_STATIONS flag.
  */
-export async function loadEVStations(filters?: EVStationFilters): Promise<EVStation[]> {
+export async function loadEVStations(options?: EVStationQueryOptions): Promise<EVStation[]> {
   if (getDataSource("evStations") === "db") {
-    return loadFromDb(filters);
+    return loadFromDb(options);
   }
 
+  // JSON fallback (no pagination support — caller must handle in-memory)
   const stations = loadJson();
-  return filters ? applyJsonFilters(stations, filters) : stations;
+  return options?.filters ? applyJsonFilters(stations, options.filters) : stations;
+}
+
+/**
+ * Count EV stations matching the given filters.
+ * Uses accurate COUNT query when in DB mode, or counts JSON in-memory.
+ */
+export async function countEVStations(filters?: EVStationFilters): Promise<number> {
+  if (getDataSource("evStations") === "db") {
+    const { getDb } = await import("@/lib/db/client");
+    const { evStations } = await import("@/lib/db/schema");
+    const { eq, ilike, and, or, sql, count } = await import("drizzle-orm");
+    type DrizzleSQL = ReturnType<typeof eq>;
+
+    const db = getDb();
+    const conditions: DrizzleSQL[] = [];
+
+    if (filters?.state) conditions.push(eq(evStations.state, filters.state));
+    if (filters?.city) conditions.push(ilike(evStations.city, filters.city));
+    if (filters?.network) conditions.push(eq(evStations.evNetwork, filters.network));
+    if (filters?.accessCode) conditions.push(eq(evStations.accessCode, filters.accessCode));
+    if (filters?.statusCode) conditions.push(eq(evStations.statusCode, filters.statusCode));
+    if (filters?.search) {
+      const searchTerm = filters.search.trim();
+      conditions.push(
+        or(
+          sql`${evStations.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
+          ilike(evStations.stationName, `%${searchTerm}%`)
+        )!
+      );
+    }
+
+    const result = await db
+      .select({ count: count() })
+      .from(evStations)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+    return result[0]?.count ?? 0;
+  }
+
+  // JSON fallback
+  const stations = loadJson();
+  const filtered = filters ? applyJsonFilters(stations, filters) : stations;
+  return filtered.length;
 }
 
 /**
