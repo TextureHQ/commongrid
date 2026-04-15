@@ -125,15 +125,13 @@ async function loadFromDb(options?: PowerPlantQueryOptions): Promise<PowerPlant[
   const sortField = options?.sort ?? "name";
   const sortOrder = options?.order ?? "asc";
   const orderFn = sortOrder === "desc" ? desc : asc;
-  
-  let orderBy;
-  if (sortField === "totalCapacityMw") {
-    orderBy = [orderFn(powerPlants.totalCapacityMw), asc(powerPlants.name), asc(powerPlants.id)];
-  } else if (sortField === "state") {
-    orderBy = [orderFn(powerPlants.state), asc(powerPlants.name), asc(powerPlants.id)];
-  } else {
-    orderBy = [orderFn(powerPlants.name), asc(powerPlants.id)];
-  }
+
+  const orderBy =
+    sortField === "totalCapacityMw"
+      ? [orderFn(powerPlants.totalCapacityMw), asc(powerPlants.name), asc(powerPlants.id)]
+      : sortField === "state"
+        ? [orderFn(powerPlants.state), asc(powerPlants.name), asc(powerPlants.id)]
+        : [orderFn(powerPlants.name), asc(powerPlants.id)];
 
   let query = db
     .select({

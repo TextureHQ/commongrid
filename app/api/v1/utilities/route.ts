@@ -174,7 +174,7 @@ async function handleJsonMode(params: FilterParams) {
   // Extract page number from cursor (page:N) or page parameter
   let page = 1;
   const cursorParam = params.url.searchParams.get("cursor");
-  if (cursorParam && cursorParam.startsWith("page:")) {
+  if (cursorParam?.startsWith("page:")) {
     const pageNum = parseInt(cursorParam.slice(5), 10);
     page = Math.max(1, pageNum || 1);
   } else {

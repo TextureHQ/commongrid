@@ -105,15 +105,13 @@ async function loadFromDb(options?: TransmissionLineQueryOptions): Promise<Trans
   const sortField = options?.sort ?? "owner";
   const sortOrder = options?.order ?? "asc";
   const orderFn = sortOrder === "desc" ? desc : asc;
-  
-  let orderBy;
-  if (sortField === "voltageClass") {
-    orderBy = [orderFn(transmissionLines.voltageClass), asc(transmissionLines.owner), asc(transmissionLines.id)];
-  } else if (sortField === "lengthMiles") {
-    orderBy = [orderFn(transmissionLines.lengthMiles), asc(transmissionLines.owner), asc(transmissionLines.id)];
-  } else {
-    orderBy = [orderFn(transmissionLines.owner), asc(transmissionLines.id)];
-  }
+
+  const orderBy =
+    sortField === "voltageClass"
+      ? [orderFn(transmissionLines.voltageClass), asc(transmissionLines.owner), asc(transmissionLines.id)]
+      : sortField === "lengthMiles"
+        ? [orderFn(transmissionLines.lengthMiles), asc(transmissionLines.owner), asc(transmissionLines.id)]
+        : [orderFn(transmissionLines.owner), asc(transmissionLines.id)];
 
   let query = db
     .select({

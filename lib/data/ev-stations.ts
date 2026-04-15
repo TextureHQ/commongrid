@@ -131,15 +131,13 @@ async function loadFromDb(options?: EVStationQueryOptions): Promise<EVStation[]>
   const sortField = options?.sort ?? "stationName";
   const sortOrder = options?.order ?? "asc";
   const orderFn = sortOrder === "desc" ? desc : asc;
-  
-  let orderBy;
-  if (sortField === "city") {
-    orderBy = [orderFn(evStations.city), asc(evStations.stationName), asc(evStations.id)];
-  } else if (sortField === "state") {
-    orderBy = [orderFn(evStations.state), asc(evStations.stationName), asc(evStations.id)];
-  } else {
-    orderBy = [orderFn(evStations.stationName), asc(evStations.id)];
-  }
+
+  const orderBy =
+    sortField === "city"
+      ? [orderFn(evStations.city), asc(evStations.stationName), asc(evStations.id)]
+      : sortField === "state"
+        ? [orderFn(evStations.state), asc(evStations.stationName), asc(evStations.id)]
+        : [orderFn(evStations.stationName), asc(evStations.id)];
 
   let query = db
     .select({

@@ -19,7 +19,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
-import { loadPowerPlants, countPowerPlants } from "@/lib/data/power-plants-api";
+import { countPowerPlants, loadPowerPlants } from "@/lib/data/power-plants-api";
 import type { PowerPlant } from "@/types/entities";
 
 // ---------------------------------------------------------------------------
@@ -191,7 +191,7 @@ async function handler(req: Request): Promise<Response> {
   if (useDb && !cursor) {
     // DB mode: use SQL-level pagination with accurate count
     const filters = { state, fuelCategory, status, search };
-    
+
     // Parallel: fetch page + total count
     const [results, count] = await Promise.all([
       loadPowerPlants({
