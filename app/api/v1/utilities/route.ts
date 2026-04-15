@@ -170,7 +170,7 @@ async function handleJsonMode(params: FilterParams) {
 
   // Pagination
   const { limit } = parsePaginationParams(params.url.searchParams);
-  
+
   // Extract page number from cursor (page:N) or page parameter
   let page = 1;
   const cursorParam = params.url.searchParams.get("cursor");
