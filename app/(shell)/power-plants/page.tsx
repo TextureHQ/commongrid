@@ -62,11 +62,6 @@ export default async function PowerPlantsPage({ searchParams }: PageProps) {
   const states = Array.from(new Set(statesJson.data.map((p) => p.state))).sort();
 
   return (
-    <PowerPlantsClient
-      initialData={json.data}
-      initialTotal={json.total}
-      initialCursor={json.cursor}
-      states={states}
-    />
+    <PowerPlantsClient initialData={json.data} initialTotal={json.total} initialCursor={json.cursor} states={states} />
   );
 }

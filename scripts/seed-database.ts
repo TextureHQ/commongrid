@@ -726,7 +726,7 @@ async function main(): Promise<void> {
     const isoData = loadJson<Array<Record<string, unknown>>>("isos.json");
     const rtoData = loadJson<Array<Record<string, unknown>>>("rtos.json");
     const baData = loadJson<Array<Record<string, unknown>>>("balancing-authorities.json");
-    
+
     const validIsoIds = new Set(isoData.map((r) => r.id as string));
     const validRtoIds = new Set(rtoData.map((r) => r.id as string));
     const validBaIds = new Set(baData.map((r) => r.id as string));
@@ -736,10 +736,12 @@ async function main(): Promise<void> {
     const utilityResult = await seedUtilities(db, validIsoIds, validRtoIds, validBaIds);
     expectedCounts.utilities = utilityResult.inserted;
     console.log(`✅ utilities: ${utilityResult.inserted}/${utilityResult.inserted} seeded (${elapsed(start)})`);
-    
+
     // Log FK warnings
     if (utilityResult.warnings.missingBaIds.size > 0) {
-      console.log(`  ⚠️  ${utilityResult.warnings.missingBaIds.size} utilities reference missing balancing authorities:`);
+      console.log(
+        `  ⚠️  ${utilityResult.warnings.missingBaIds.size} utilities reference missing balancing authorities:`
+      );
       const missingBas = Array.from(utilityResult.warnings.missingBaIds).sort();
       console.log(`      ${missingBas.join(", ")}`);
     }

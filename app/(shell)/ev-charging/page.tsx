@@ -7,12 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
 import type { EVStation } from "@/types/ev-charging";
-import {
-  getAccessLabel,
-  getNetworkColor,
-  getNetworkShortName,
-  getStatusLabel,
-} from "@/types/ev-charging";
+import { getAccessLabel, getNetworkColor, getNetworkShortName, getStatusLabel } from "@/types/ev-charging";
 
 interface EVStationRow extends Record<string, unknown> {
   slug: string;
@@ -67,7 +62,7 @@ function getAccessBadgeVariant(access: string): "info" | "neutral" | "warning" {
 export default function EVChargingPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  
+
   // State
   const [stations, setStations] = useState<EVStation[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({ totalCount: 0, nextCursor: null, limit: 100 });
@@ -124,7 +119,7 @@ export default function EVChargingPage() {
     if (statusFilter !== "all") params.set("statusCode", statusFilter);
     if (networkFilter !== "all") params.set("network", networkFilter);
     if (stateFilter !== "all") params.set("state", stateFilter);
-    
+
     const [field, direction] = sortValue.split(":");
     if (field === "name") params.set("sort", "stationName");
     else if (field === "state") params.set("sort", "state");
@@ -140,7 +135,7 @@ export default function EVChargingPage() {
       setIsLoading(false);
       nextPagePrefetchedRef.current = false;
     });
-  }, [debouncedSearch, sortValue, accessFilter, statusFilter, networkFilter, levelFilter, stateFilter]);
+  }, [debouncedSearch, sortValue, accessFilter, statusFilter, networkFilter, stateFilter]);
 
   // Aggressive prefetch of next page
   useEffect(() => {
@@ -152,7 +147,7 @@ export default function EVChargingPage() {
       if (statusFilter !== "all") params.set("statusCode", statusFilter);
       if (networkFilter !== "all") params.set("network", networkFilter);
       if (stateFilter !== "all") params.set("state", stateFilter);
-      
+
       const [field, direction] = sortValue.split(":");
       if (field === "name") params.set("sort", "stationName");
       else if (field === "state") params.set("sort", "state");
@@ -163,7 +158,17 @@ export default function EVChargingPage() {
       // Prefetch in the background
       fetch(`/api/v1/ev-stations?${params.toString()}`);
     }
-  }, [meta.nextCursor, isLoadingMore, isLoading, debouncedSearch, sortValue, accessFilter, statusFilter, networkFilter, stateFilter]);
+  }, [
+    meta.nextCursor,
+    isLoadingMore,
+    isLoading,
+    debouncedSearch,
+    sortValue,
+    accessFilter,
+    statusFilter,
+    networkFilter,
+    stateFilter,
+  ]);
 
   const loadMore = useCallback(async () => {
     if (!meta.nextCursor || isLoadingMore) return;
@@ -175,7 +180,7 @@ export default function EVChargingPage() {
     if (statusFilter !== "all") params.set("statusCode", statusFilter);
     if (networkFilter !== "all") params.set("network", networkFilter);
     if (stateFilter !== "all") params.set("state", stateFilter);
-    
+
     const [field, direction] = sortValue.split(":");
     if (field === "name") params.set("sort", "stationName");
     else if (field === "state") params.set("sort", "state");
@@ -185,12 +190,21 @@ export default function EVChargingPage() {
 
     const res = await fetch(`/api/v1/ev-stations?${params.toString()}`);
     const data = await res.json();
-    
+
     setStations((prev) => [...prev, ...data.data]);
     setMeta(data.meta);
     setIsLoadingMore(false);
     nextPagePrefetchedRef.current = false;
-  }, [meta.nextCursor, isLoadingMore, debouncedSearch, sortValue, accessFilter, statusFilter, networkFilter, stateFilter]);
+  }, [
+    meta.nextCursor,
+    isLoadingMore,
+    debouncedSearch,
+    sortValue,
+    accessFilter,
+    statusFilter,
+    networkFilter,
+    stateFilter,
+  ]);
 
   const rows: EVStationRow[] = useMemo(
     () =>
@@ -418,13 +432,14 @@ export default function EVChargingPage() {
         {meta.nextCursor && (
           <div className="flex justify-center py-4 flex-shrink-0">
             <button
+              type="button"
               onClick={loadMore}
               disabled={isLoadingMore}
               className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 flex items-center gap-2"
             >
               {isLoadingMore && <Loader size={16} />}
-              {isLoadingMore 
-                ? "Loading..." 
+              {isLoadingMore
+                ? "Loading..."
                 : `Load More (${(meta.totalCount - stations.length).toLocaleString()} remaining)`}
             </button>
           </div>
