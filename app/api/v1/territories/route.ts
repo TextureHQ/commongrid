@@ -6,7 +6,7 @@ import { encodeCursor, parsePaginationParams } from "@/lib/api/pagination";
 import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
-import { regions, territories, utilities } from "@/lib/db/schema";
+import { regions, territories } from "@/lib/db/schema";
 import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
@@ -39,14 +39,7 @@ async function handleDatabaseMode(url: URL) {
   const search = url.searchParams.get("search") ?? url.searchParams.get("q");
 
   // We'll join with regions to get name, slug, type, state
-  const sortColumn =
-    sort === "name"
-      ? regions.name
-      : sort === "state"
-        ? regions.state
-        : sort === "type"
-          ? regions.type
-          : regions.slug;
+  const sortColumn = sort === "name" ? regions.name : sort === "state" ? regions.state : sort === "type" ? regions.type : regions.slug;
   const orderFn = order === "desc" ? desc : asc;
 
   // Build WHERE conditions
@@ -113,8 +106,7 @@ async function handleDatabaseMode(url: URL) {
   const hasMore = rows.length > limit;
   const data = hasMore ? rows.slice(0, limit) : rows;
 
-  const sortKey =
-    sort === "name" ? "name" : sort === "state" ? "state" : sort === "type" ? "type" : "slug";
+  const sortKey = sort === "name" ? "name" : sort === "state" ? "state" : sort === "type" ? "type" : "slug";
 
   const nextCursor =
     hasMore && data.length > 0
