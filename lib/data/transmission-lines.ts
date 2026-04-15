@@ -152,7 +152,7 @@ async function loadByIdFromDb(id: string): Promise<TransmissionLine | null> {
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_TRANSMISSION flag.
  */
 export async function loadTransmissionLines(filters?: TransmissionLineFilters): Promise<TransmissionLine[]> {
-  if (getDataSource("transmissionLines") === "database") {
+  if (getDataSource("transmissionLines") === "db") {
     return loadFromDb(filters);
   }
 
@@ -165,7 +165,7 @@ export async function loadTransmissionLines(filters?: TransmissionLineFilters): 
  * Returns null if not found.
  */
 export async function loadTransmissionLineById(id: string): Promise<TransmissionLine | null> {
-  if (getDataSource("transmissionLines") === "database") {
+  if (getDataSource("transmissionLines") === "db") {
     return loadByIdFromDb(id);
   }
 

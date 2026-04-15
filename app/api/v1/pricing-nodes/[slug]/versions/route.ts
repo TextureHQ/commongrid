@@ -86,7 +86,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
         // Version history is only available in database mode
         let versions: VersionEntry[] = [];
-        if (getDataSource("pricingNodes") === "database") {
+        if (getDataSource("pricingNodes") === "db") {
           versions = await loadVersionsFromDb(node.id);
         }
 

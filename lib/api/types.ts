@@ -6,7 +6,7 @@
  */
 
 /** Where the data is currently sourced from (allows gradual migration). */
-export type DataSource = "database" | "json";
+export type DataSource = "db" | "json";
 
 /** Authentication context attached to a request after auth middleware runs. */
 export interface AuthContext {

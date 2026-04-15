@@ -81,7 +81,7 @@ async function loadBySlugFromDb(slug: string): Promise<PowerPlant | null> {
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_POWER_PLANTS flag.
  */
 export async function loadPowerPlants(filters?: PowerPlantFilters): Promise<PowerPlant[]> {
-  if (getDataSource("powerPlants") === "database") {
+  if (getDataSource("powerPlants") === "db") {
     return loadFromDb(filters);
   }
 
@@ -94,7 +94,7 @@ export async function loadPowerPlants(filters?: PowerPlantFilters): Promise<Powe
  * Returns null if not found.
  */
 export async function loadPowerPlantBySlug(slug: string): Promise<PowerPlant | null> {
-  if (getDataSource("powerPlants") === "database") {
+  if (getDataSource("powerPlants") === "db") {
     return loadBySlugFromDb(slug);
   }
 

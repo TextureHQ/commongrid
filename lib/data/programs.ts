@@ -209,7 +209,7 @@ async function loadBySlugFromDb(slug: string): Promise<Program | null> {
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_PROGRAMS flag.
  */
 export async function loadPrograms(filters?: ProgramFilters): Promise<Program[]> {
-  if (getDataSource("programs") === "database") {
+  if (getDataSource("programs") === "db") {
     return loadFromDb(filters);
   }
 
@@ -222,7 +222,7 @@ export async function loadPrograms(filters?: ProgramFilters): Promise<Program[]>
  * Returns null if not found.
  */
 export async function loadProgramBySlug(slug: string): Promise<Program | null> {
-  if (getDataSource("programs") === "database") {
+  if (getDataSource("programs") === "db") {
     return loadBySlugFromDb(slug);
   }
 
