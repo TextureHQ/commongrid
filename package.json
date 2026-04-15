@@ -13,7 +13,8 @@
     "sync:ev-charging": "tsx scripts/sync-ev-charging.ts",
     "sync:pricing-nodes": "tsx scripts/sync-pricing-nodes.ts",
     "generate:changelog": "npx tsx scripts/generate-changelog.ts",
-    "sync:all": "npx tsx scripts/sync-all.ts"
+    "sync:all": "npx tsx scripts/sync-all.ts",
+    "seed": "tsx scripts/seed-database.ts"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.5",
