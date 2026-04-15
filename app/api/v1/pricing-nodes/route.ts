@@ -12,7 +12,7 @@ import {
   withErrorHandling,
   withRequestId,
   withTiming,
-  withCors,
+  corsHeaders,
   jsonResponse,
   paginatedResponse,
   encodeCursor,
@@ -194,11 +194,12 @@ async function handler(req: Request): Promise<Response> {
   return jsonResponse(envelope, 200, {
     "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
     "Cache-Tag": "pricing-nodes",
+    ...corsHeaders(),
   });
 }
 
 export async function GET(req: Request): Promise<Response> {
-  return withRequestId(withErrorHandling(withTiming(withCors(handler))))(req, {
+  return withRequestId(withErrorHandling(withTiming(handler)))(req, {
     requestId: "",
   });
 }

@@ -10,7 +10,7 @@ import {
   withErrorHandling,
   withRequestId,
   withTiming,
-  withCors,
+  corsHeaders,
   jsonResponse,
   type RouteContext,
 } from "@/lib/api";
@@ -28,7 +28,7 @@ export async function GET(
 
   return withRequestId(
     withErrorHandling(
-      withTiming(withCors(async (r: Request, _ctx: RouteContext) => {
+      withTiming(async (r: Request, _ctx: RouteContext) => {
         const node = await loadPricingNodeBySlug(slug);
 
         if (!node) {
@@ -38,8 +38,9 @@ export async function GET(
         return jsonResponse({ data: node }, 200, {
           "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
           "Cache-Tag": `pricing-node:${slug}`,
+          ...corsHeaders(),
         });
-      }))
+      })
     )
   )(req, { requestId: "" });
 }

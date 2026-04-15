@@ -11,7 +11,7 @@ import {
   withErrorHandling,
   withRequestId,
   withTiming,
-  withCors,
+  corsHeaders,
   jsonResponse,
   type RouteContext,
 } from "@/lib/api";
@@ -85,7 +85,7 @@ export async function GET(
 
   return withRequestId(
     withErrorHandling(
-      withTiming(withCors(async (r: Request, _ctx: RouteContext) => {
+      withTiming(async (r: Request, _ctx: RouteContext) => {
         // Verify the node exists (works in both JSON and DB mode)
         const node = await loadPricingNodeBySlug(slug);
         if (!node) {
@@ -107,9 +107,10 @@ export async function GET(
           {
             "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
             "Cache-Tag": `pricing-node:${slug}:versions`,
+            ...corsHeaders(),
           }
         );
-      }))
+      })
     )
   )(req, { requestId: "" });
 }
