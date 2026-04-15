@@ -5,11 +5,11 @@
  * the NEXT_PUBLIC_FF_DB_EV_STATIONS feature flag.
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { getDataSource } from "@/lib/feature-flags";
-import type { EVStation, EVAccessCode, EVStatusCode } from "@/types/ev-charging";
+import type { EVAccessCode, EVStation, EVStatusCode } from "@/types/ev-charging";
 
 // ---------------------------------------------------------------------------
 // Filters
@@ -38,10 +38,7 @@ function loadJson(): EVStation[] {
   return _jsonCache;
 }
 
-function applyJsonFilters(
-  stations: EVStation[],
-  filters: EVStationFilters
-): EVStation[] {
+function applyJsonFilters(stations: EVStation[], filters: EVStationFilters): EVStation[] {
   let result = stations;
 
   if (filters.state) {
@@ -55,22 +52,14 @@ function applyJsonFilters(
     result = result.filter((s) => s.evNetwork === filters.network);
   }
   if (filters.accessCode) {
-    result = result.filter(
-      (s) => s.accessCode === (filters.accessCode as EVAccessCode)
-    );
+    result = result.filter((s) => s.accessCode === (filters.accessCode as EVAccessCode));
   }
   if (filters.statusCode) {
-    result = result.filter(
-      (s) => s.statusCode === (filters.statusCode as EVStatusCode)
-    );
+    result = result.filter((s) => s.statusCode === (filters.statusCode as EVStatusCode));
   }
   if (filters.search) {
     const q = filters.search.toLowerCase();
-    result = result.filter(
-      (s) =>
-        s.stationName.toLowerCase().includes(q) ||
-        s.city.toLowerCase().includes(q)
-    );
+    result = result.filter((s) => s.stationName.toLowerCase().includes(q) || s.city.toLowerCase().includes(q));
   }
 
   return result;
@@ -80,9 +69,7 @@ function applyJsonFilters(
 // DB source (placeholder — mirrors the programs pattern)
 // ---------------------------------------------------------------------------
 
-async function loadFromDb(
-  filters?: EVStationFilters
-): Promise<EVStation[]> {
+async function loadFromDb(filters?: EVStationFilters): Promise<EVStation[]> {
   // When DB mode is wired up, this will query the ev_stations table.
   // For now, fall back to JSON so the endpoint still works.
   const stations = loadJson();
@@ -102,9 +89,7 @@ async function loadBySlugFromDb(slug: string): Promise<EVStation | null> {
  * Load EV stations, optionally filtered.
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_EV_STATIONS flag.
  */
-export async function loadEVStations(
-  filters?: EVStationFilters
-): Promise<EVStation[]> {
+export async function loadEVStations(filters?: EVStationFilters): Promise<EVStation[]> {
   if (getDataSource("evStations") === "database") {
     return loadFromDb(filters);
   }
@@ -117,9 +102,7 @@ export async function loadEVStations(
  * Load a single EV station by slug.
  * Returns null if not found.
  */
-export async function loadEVStationBySlug(
-  slug: string
-): Promise<EVStation | null> {
+export async function loadEVStationBySlug(slug: string): Promise<EVStation | null> {
   if (getDataSource("evStations") === "database") {
     return loadBySlugFromDb(slug);
   }

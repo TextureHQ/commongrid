@@ -9,15 +9,15 @@ import { z } from "zod";
 
 import {
   ApiError,
+  type CursorV1,
+  decodeCursor,
+  encodeCursor,
+  jsonResponse,
+  paginatedResponse,
+  withCors,
   withErrorHandling,
   withRequestId,
   withTiming,
-  withCors,
-  jsonResponse,
-  paginatedResponse,
-  encodeCursor,
-  decodeCursor,
-  type CursorV1,
 } from "@/lib/api";
 import { loadPowerPlants } from "@/lib/data/power-plants-api";
 import type { PowerPlant } from "@/types/entities";
@@ -44,11 +44,7 @@ type SortField = "name" | "totalCapacityMw" | "state";
 // Sorting
 // ---------------------------------------------------------------------------
 
-function sortPlants(
-  plants: PowerPlant[],
-  sortField: SortField,
-  order: "asc" | "desc"
-): PowerPlant[] {
+function sortPlants(plants: PowerPlant[], sortField: SortField, order: "asc" | "desc"): PowerPlant[] {
   return [...plants].sort((a, b) => {
     let cmp: number;
 
@@ -125,23 +121,38 @@ function applyCursor(
 // ---------------------------------------------------------------------------
 
 const ALL_FIELDS = new Set<string>([
-  "id", "slug", "name", "plantCode", "utilityId", "utilityName",
-  "balancingAuthorityId", "baCode", "state", "county",
-  "latitude", "longitude", "nercRegion", "sector",
-  "primaryFuel", "fuelCategory", "technologies", "energySources",
-  "totalCapacityMw", "generatorCount", "operatingYear", "gridVoltageKv",
-  "status", "proposedCapacityMw", "proposedOnlineYear",
+  "id",
+  "slug",
+  "name",
+  "plantCode",
+  "utilityId",
+  "utilityName",
+  "balancingAuthorityId",
+  "baCode",
+  "state",
+  "county",
+  "latitude",
+  "longitude",
+  "nercRegion",
+  "sector",
+  "primaryFuel",
+  "fuelCategory",
+  "technologies",
+  "energySources",
+  "totalCapacityMw",
+  "generatorCount",
+  "operatingYear",
+  "gridVoltageKv",
+  "status",
+  "proposedCapacityMw",
+  "proposedOnlineYear",
 ]);
 
-function projectFields(
-  plant: PowerPlant,
-  fields: string[]
-): Partial<PowerPlant> {
+function projectFields(plant: PowerPlant, fields: string[]): Partial<PowerPlant> {
   const result: Partial<PowerPlant> = {};
   for (const field of fields) {
     if (ALL_FIELDS.has(field)) {
-      (result as Record<string, unknown>)[field] =
-        (plant as unknown as Record<string, unknown>)[field];
+      (result as Record<string, unknown>)[field] = (plant as unknown as Record<string, unknown>)[field];
     }
   }
   return result;
@@ -161,17 +172,7 @@ async function handler(req: Request): Promise<Response> {
     });
   }
 
-  const {
-    state,
-    fuelCategory,
-    status,
-    search,
-    fields,
-    sort,
-    order,
-    limit,
-    cursor: rawCursor,
-  } = parsed.data;
+  const { state, fuelCategory, status, search, fields, sort, order, limit, cursor: rawCursor } = parsed.data;
 
   // Decode cursor if provided
   let cursor: CursorV1 | null = null;
@@ -218,9 +219,7 @@ async function handler(req: Request): Promise<Response> {
         .filter((f) => ALL_FIELDS.has(f))
     : null;
 
-  const data = requestedFields
-    ? items.map((p) => projectFields(p, requestedFields))
-    : items;
+  const data = requestedFields ? items.map((p) => projectFields(p, requestedFields)) : items;
 
   const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
 

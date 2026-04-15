@@ -9,15 +9,15 @@ import { z } from "zod";
 
 import {
   ApiError,
+  type CursorV1,
+  decodeCursor,
+  encodeCursor,
+  jsonResponse,
+  paginatedResponse,
+  withCors,
   withErrorHandling,
   withRequestId,
   withTiming,
-  withCors,
-  jsonResponse,
-  paginatedResponse,
-  encodeCursor,
-  decodeCursor,
-  type CursorV1,
 } from "@/lib/api";
 import { loadEVStations } from "@/lib/data/ev-stations";
 import type { EVStation } from "@/types/ev-charging";
@@ -46,11 +46,7 @@ type SortField = "stationName" | "city" | "state";
 // Sorting
 // ---------------------------------------------------------------------------
 
-function sortStations(
-  stations: EVStation[],
-  sortField: SortField,
-  order: "asc" | "desc"
-): EVStation[] {
+function sortStations(stations: EVStation[], sortField: SortField, order: "asc" | "desc"): EVStation[] {
   return [...stations].sort((a, b) => {
     let cmp = (a[sortField] as string).localeCompare(b[sortField] as string);
 
@@ -82,12 +78,7 @@ function tryEncodeCursor(data: CursorV1): string | null {
 }
 
 /** Apply cursor offset to a sorted station list. */
-function applyCursor(
-  sorted: EVStation[],
-  cursor: CursorV1,
-  sortField: SortField,
-  order: "asc" | "desc"
-): EVStation[] {
+function applyCursor(sorted: EVStation[], cursor: CursorV1, sortField: SortField, order: "asc" | "desc"): EVStation[] {
   const cursorSortValue = cursor.s[sortField] as string | undefined;
   const cursorId = cursor.id;
 
@@ -111,22 +102,33 @@ function applyCursor(
 // ---------------------------------------------------------------------------
 
 const ALL_FIELDS = new Set<string>([
-  "id", "slug", "stationName", "streetAddress", "city", "state", "zip",
-  "latitude", "longitude", "evNetwork",
-  "evLevel1EvseNum", "evLevel2EvseNum", "evDcFastNum",
-  "evConnectorTypes", "accessCode", "statusCode",
-  "openDate", "facilityType", "ownerTypeCode", "evPricing",
+  "id",
+  "slug",
+  "stationName",
+  "streetAddress",
+  "city",
+  "state",
+  "zip",
+  "latitude",
+  "longitude",
+  "evNetwork",
+  "evLevel1EvseNum",
+  "evLevel2EvseNum",
+  "evDcFastNum",
+  "evConnectorTypes",
+  "accessCode",
+  "statusCode",
+  "openDate",
+  "facilityType",
+  "ownerTypeCode",
+  "evPricing",
 ]);
 
-function projectFields(
-  station: EVStation,
-  fields: string[]
-): Partial<EVStation> {
+function projectFields(station: EVStation, fields: string[]): Partial<EVStation> {
   const result: Partial<EVStation> = {};
   for (const field of fields) {
     if (ALL_FIELDS.has(field)) {
-      (result as Record<string, unknown>)[field] =
-        (station as unknown as Record<string, unknown>)[field];
+      (result as Record<string, unknown>)[field] = (station as unknown as Record<string, unknown>)[field];
     }
   }
   return result;
@@ -207,9 +209,7 @@ async function handler(req: Request): Promise<Response> {
         .filter((f) => ALL_FIELDS.has(f))
     : null;
 
-  const data = requestedFields
-    ? items.map((s) => projectFields(s, requestedFields))
-    : items;
+  const data = requestedFields ? items.map((s) => projectFields(s, requestedFields)) : items;
 
   const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
 
