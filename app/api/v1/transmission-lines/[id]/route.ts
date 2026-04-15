@@ -1,8 +1,8 @@
 /**
- * GET /api/v1/pricing-nodes/:slug
+ * GET /api/v1/transmission-lines/:id
  *
- * Fetch a single pricing node by slug. Returns 404 if not found.
- * Data source is controlled by NEXT_PUBLIC_FF_DB_PRICING_NODES.
+ * Fetch a single transmission line by ID. Returns 404 if not found.
+ * Data source is controlled by NEXT_PUBLIC_FF_DB_TRANSMISSION.
  */
 
 import {
@@ -14,7 +14,7 @@ import {
   jsonResponse,
   type RouteContext,
 } from "@/lib/api";
-import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
+import { loadTransmissionLineById } from "@/lib/data/transmission-lines";
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -22,22 +22,22 @@ import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
-  const { slug } = await params;
+  const { id } = await params;
 
   return withRequestId(
     withErrorHandling(
       withTiming(withCors(async (r: Request, _ctx: RouteContext) => {
-        const node = await loadPricingNodeBySlug(slug);
+        const line = await loadTransmissionLineById(id);
 
-        if (!node) {
-          throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
+        if (!line) {
+          throw new ApiError("NOT_FOUND", `Transmission line '${id}' not found`);
         }
 
-        return jsonResponse({ data: node }, 200, {
+        return jsonResponse({ data: line }, 200, {
           "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
-          "Cache-Tag": `pricing-node:${slug}`,
+          "Cache-Tag": `transmission-line:${id}`,
         });
       }))
     )

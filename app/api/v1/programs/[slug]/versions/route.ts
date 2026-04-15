@@ -1,7 +1,7 @@
 /**
- * GET /api/v1/pricing-nodes/:slug/versions
+ * GET /api/v1/programs/:slug/versions
  *
- * Return the version history for a pricing node. Queries the entity_versions
+ * Return the version history for a program. Queries the entity_versions
  * table when the DB flag is active; returns an empty list in JSON mode
  * (no version history is stored in static JSON files).
  */
@@ -15,7 +15,7 @@ import {
   jsonResponse,
   type RouteContext,
 } from "@/lib/api";
-import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
+import { loadProgramBySlug } from "@/lib/data/programs";
 import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
@@ -56,7 +56,7 @@ async function loadVersionsFromDb(entityId: string): Promise<VersionEntry[]> {
     .from(entityVersions)
     .where(
       and(
-        eq(entityVersions.entityType, "pricing_node"),
+        eq(entityVersions.entityType, "program"),
         eq(entityVersions.entityId, entityId)
       )
     )
@@ -86,27 +86,27 @@ export async function GET(
   return withRequestId(
     withErrorHandling(
       withTiming(withCors(async (r: Request, _ctx: RouteContext) => {
-        // Verify the node exists (works in both JSON and DB mode)
-        const node = await loadPricingNodeBySlug(slug);
-        if (!node) {
-          throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
+        // Verify the program exists (works in both JSON and DB mode)
+        const program = await loadProgramBySlug(slug);
+        if (!program) {
+          throw new ApiError("NOT_FOUND", `Program '${slug}' not found`);
         }
 
         // Version history is only available in database mode
         let versions: VersionEntry[] = [];
-        if (getDataSource("pricingNodes") === "database") {
-          versions = await loadVersionsFromDb(node.id);
+        if (getDataSource("programs") === "database") {
+          versions = await loadVersionsFromDb(program.id);
         }
 
         return jsonResponse(
           {
             data: versions,
-            meta: { source: getDataSource("pricingNodes") },
+            meta: { source: getDataSource("programs") },
           },
           200,
           {
             "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-            "Cache-Tag": `pricing-node:${slug}:versions`,
+            "Cache-Tag": `program:${slug}:versions`,
           }
         );
       }))
