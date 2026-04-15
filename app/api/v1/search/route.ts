@@ -1,211 +1,122 @@
 /**
  * GET /api/v1/search
  *
- * Global cross-entity search across utilities, power plants, programs,
- * and pricing nodes. JSON mode uses simple string matching; database mode
- * is planned for a future iteration.
+ * Global search across all entity types. Returns grouped results by entity
+ * type with a configurable per-type limit.
  *
- * Query params:
- *   ?q=duke+energy    — Search query (min 2 chars)
- *   ?limit=5          — Max results per entity type (default 5, max 20)
+ * Query parameters:
+ *   q       (required) Search query, min 2 chars.
+ *   limit   Max results per entity type. Default 5, max 25.
+ *   types   Comma-separated entity type filter
+ *           (e.g. "utilities,power-plants"). Defaults to all types.
  *
- * Spec ref: §4.7
+ * Data source is controlled per-entity by NEXT_PUBLIC_FF_DB_* feature flags.
+ * JSON mode targets <500 ms (data loaded lazily, cached in-process).
+ * DB mode stubs return empty results until pg_trgm/tsvector is implemented.
  */
+
+import { z } from "zod";
 
 import {
   ApiError,
-  withApiMiddleware,
+  withErrorHandling,
+  withRequestId,
+  withTiming,
   jsonResponse,
-  type RouteContext,
+  corsHeaders,
 } from "@/lib/api";
-import { getDataSource } from "@/lib/feature-flags";
+import {
+  searchAll,
+  type EntityType,
+  type SearchResult,
+} from "@/lib/data/search";
 
 // ---------------------------------------------------------------------------
-// Types
+// Validation schema
 // ---------------------------------------------------------------------------
 
-interface SearchResult {
-  entityType: string;
-  id: string;
-  slug: string;
-  name: string;
-  subtitle: string | null;
-}
+const querySchema = z.object({
+  q: z.string().min(2, "Query must be at least 2 characters").max(200),
+  limit: z.coerce.number().int().min(1).max(25).default(5),
+  types: z.string().optional(),
+});
 
 // ---------------------------------------------------------------------------
-// JSON mode search helpers
+// Response key mapping
 // ---------------------------------------------------------------------------
 
-async function searchUtilities(
-  query: string,
-  limit: number
-): Promise<SearchResult[]> {
-  if (getDataSource("utilities") !== "json") return [];
-
-  const utilities = (await import("@/data/utilities.json")).default;
-  return utilities
-    .filter(
-      (u: { name?: string; eiaName?: string | null }) =>
-        u.name?.toLowerCase().includes(query) ||
-        u.eiaName?.toLowerCase().includes(query)
-    )
-    .slice(0, limit)
-    .map(
-      (u: {
-        id: string;
-        slug: string;
-        name: string;
-        segment?: string | null;
-      }) => ({
-        entityType: "utility" as const,
-        id: u.id,
-        slug: u.slug,
-        name: u.name,
-        subtitle: u.segment ?? null,
-      })
-    );
-}
-
-async function searchPowerPlants(
-  query: string,
-  limit: number
-): Promise<SearchResult[]> {
-  if (getDataSource("powerPlants") !== "json") return [];
-
-  const plants = (await import("@/data/power-plants.json")).default;
-  return plants
-    .filter(
-      (p: { name?: string; utilityName?: string | null }) =>
-        p.name?.toLowerCase().includes(query) ||
-        p.utilityName?.toLowerCase().includes(query)
-    )
-    .slice(0, limit)
-    .map(
-      (p: {
-        id: string;
-        slug: string;
-        name: string;
-        fuelCategory?: string | null;
-      }) => ({
-        entityType: "power_plant" as const,
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        subtitle: p.fuelCategory ?? null,
-      })
-    );
-}
-
-async function searchPrograms(
-  query: string,
-  limit: number
-): Promise<SearchResult[]> {
-  if (getDataSource("programs") !== "json") return [];
-
-  const programs = (await import("@/data/programs.json")).default;
-  return programs
-    .filter((p: { name?: string }) => p.name?.toLowerCase().includes(query))
-    .slice(0, limit)
-    .map(
-      (p: {
-        id: string;
-        slug: string;
-        name: string;
-        status?: string | null;
-      }) => ({
-        entityType: "program" as const,
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        subtitle: p.status ?? null,
-      })
-    );
-}
-
-async function searchPricingNodes(
-  query: string,
-  limit: number
-): Promise<SearchResult[]> {
-  if (getDataSource("pricingNodes") !== "json") return [];
-
-  const nodes = (await import("@/data/pricing-nodes.json")).default;
-  return nodes
-    .filter((n: { name?: string }) => n.name?.toLowerCase().includes(query))
-    .slice(0, limit)
-    .map(
-      (n: {
-        id: string;
-        slug: string;
-        name: string;
-        iso?: string | null;
-      }) => ({
-        entityType: "pricing_node" as const,
-        id: n.id,
-        slug: n.slug,
-        name: n.name,
-        subtitle: n.iso ?? null,
-      })
-    );
-}
+/** Maps internal EntityType (singular, kebab) → camelCase response group key. */
+const ENTITY_TYPE_TO_KEY: Record<EntityType, string> = {
+  utility: "utilities",
+  program: "programs",
+  "power-plant": "powerPlants",
+  "ev-station": "evStations",
+  "pricing-node": "pricingNodes",
+  "transmission-line": "transmissionLines",
+  iso: "isos",
+  rto: "rtos",
+  "balancing-authority": "balancingAuthorities",
+};
 
 // ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
 
-const handler = withApiMiddleware(
-  async (r: Request, _ctx: RouteContext) => {
-    const url = new URL(r.url);
-    const q = url.searchParams.get("q");
-    const limitParam = url.searchParams.get("limit");
-    const limit = Math.min(Math.max(Number(limitParam) || 5, 1), 20);
+async function handler(req: Request): Promise<Response> {
+  const { searchParams } = new URL(req.url);
 
-    if (!q || q.length < 2) {
-      throw new ApiError(
-        "BAD_REQUEST",
-        "q parameter is required (minimum 2 characters)"
-      );
-    }
-
-    const query = q.toLowerCase();
-
-    // Run all searches in parallel
-    const [utilities, powerPlants, programs, pricingNodes] =
-      await Promise.all([
-        searchUtilities(query, limit),
-        searchPowerPlants(query, limit),
-        searchPrograms(query, limit),
-        searchPricingNodes(query, limit),
-      ]);
-
-    const results = [
-      ...utilities,
-      ...powerPlants,
-      ...programs,
-      ...pricingNodes,
-    ];
-
-    return jsonResponse(
-      {
-        data: results,
-        meta: {
-          query: q,
-          total: results.length,
-          counts: {
-            utilities: utilities.length,
-            powerPlants: powerPlants.length,
-            programs: programs.length,
-            pricingNodes: pricingNodes.length,
-          },
-        },
-      },
-      200,
-      {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-      }
-    );
+  const parsed = querySchema.safeParse(Object.fromEntries(searchParams));
+  if (!parsed.success) {
+    throw new ApiError("VALIDATION_ERROR", "Invalid query parameters", {
+      issues: parsed.error.issues,
+    });
   }
-);
+
+  const { q, limit, types: rawTypes } = parsed.data;
+
+  const types = rawTypes
+    ? rawTypes
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+    : undefined;
+
+  const { results, source } = await searchAll(q, { types, limit });
+
+  // Build grouped response — only include types that were searched
+  const data: Record<string, (SearchResult & { type: EntityType })[]> = {};
+  let totalResults = 0;
+
+  for (const [entityType, items] of results) {
+    const key = ENTITY_TYPE_TO_KEY[entityType];
+    data[key] = items.map((r) => ({ ...r, type: entityType }));
+    totalResults += items.length;
+  }
+
+  return jsonResponse(
+    {
+      data,
+      meta: {
+        query: q,
+        totalResults,
+        source,
+      },
+    },
+    200,
+    {
+      "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+      "Cache-Tag": "search",
+      ...corsHeaders(),
+    }
+  );
+}
 
 export async function GET(req: Request): Promise<Response> {
-  return handler(req, { requestId: "" });
+  return withRequestId(withErrorHandling(withTiming(handler)))(req, {
+    requestId: "",
+  });
+}
+
+export async function OPTIONS(): Promise<Response> {
+  return new Response(null, { status: 204, headers: corsHeaders() });
 }
