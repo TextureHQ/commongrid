@@ -7,7 +7,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAllBalancingAuthorities, getAllIsos } from "@/lib/data";
 import { getSegmentLabel } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
-import { searchUtilities, useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "./ExplorerContext";
 
 function getTileUrl() {
@@ -247,7 +246,6 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const hasMapboxToken = !!effectiveToken;
   const { state, navigateToDetail } = useExplorer();
   const router = useRouter();
-  const { utilities } = useUtilities();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
   const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>(DEFAULT_TOGGLEABLE_LAYER_VISIBILITY);
   const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
@@ -290,21 +288,10 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
       conditions.push(["==", ["get", "segment"], state.segment]);
     }
 
-    if (state.q) {
-      const matching = searchUtilities(utilities, state.q);
-      const slugs = matching.map((u) => u.slug);
-      if (slugs.length > 0) {
-        conditions.push(["in", ["get", "slug"], ["literal", slugs]]);
-      } else {
-        // No matches — hide everything
-        conditions.push(["==", ["get", "slug"], "__no_match__"]);
-      }
-    }
-
     if (conditions.length === 0) return undefined;
     if (conditions.length === 1) return conditions[0];
     return ["all", ...conditions];
-  }, [utilities, state.segment, state.q]);
+  }, [state.segment]);
 
   // Filter grid operator GeoJSON by type and search
   const filteredGridBoundaryData = useMemo(() => {
