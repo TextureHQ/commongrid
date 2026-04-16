@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, Badge, Card, type Column, DataControls, DataTable, Section } from "@texturehq/edges";
+import { Avatar, Badge, Card, type Column, DataControls, DataTable, Loader, Section } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo } from "react";
@@ -9,12 +9,8 @@ import {
   getIsoById,
   getRegionById,
   getRtoById,
-  getUtilitiesByGenerationProvider,
-  getUtilitiesByParent,
-  getUtilitiesByTransmissionProvider,
-  getUtilityById,
-  getUtilityBySlug,
 } from "@/lib/data";
+import { useUtilities } from "@/lib/utilities-client";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -41,17 +37,38 @@ interface ServedUtilityRow extends Record<string, unknown> {
 export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
 
-  const utility = getUtilityBySlug(slug);
+  const { utilities, isLoading: utilitiesLoading } = useUtilities();
 
-  const iso = utility?.isoId ? getIsoById(utility.isoId) : null;
-  const rto = utility?.rtoId ? getRtoById(utility.rtoId) : null;
-  const ba = utility?.balancingAuthorityId ? getBalancingAuthorityById(utility.balancingAuthorityId) : null;
-  const parent = utility?.parentId ? getUtilityById(utility.parentId) : null;
-  const generationProvider = utility?.generationProviderId ? getUtilityById(utility.generationProviderId) : null;
-  const transmissionProvider = utility?.transmissionProviderId ? getUtilityById(utility.transmissionProviderId) : null;
-  const successor = utility?.successorId ? getUtilityById(utility.successorId) : null;
+  const utility = useMemo(() => utilities.find((u) => u.slug === slug) ?? null, [utilities, slug]);
 
-  const region = utility?.serviceTerritoryId ? getRegionById(utility.serviceTerritoryId) : null;
+  const iso = useMemo(() => (utility?.isoId ? getIsoById(utility.isoId) : null), [utility]);
+  const rto = useMemo(() => (utility?.rtoId ? getRtoById(utility.rtoId) : null), [utility]);
+  const ba = useMemo(
+    () => (utility?.balancingAuthorityId ? getBalancingAuthorityById(utility.balancingAuthorityId) : null),
+    [utility]
+  );
+  const parent = useMemo(
+    () => (utility?.parentId ? utilities.find((u) => u.id === utility.parentId) ?? null : null),
+    [utility, utilities]
+  );
+  const generationProvider = useMemo(
+    () => (utility?.generationProviderId ? utilities.find((u) => u.id === utility.generationProviderId) ?? null : null),
+    [utility, utilities]
+  );
+  const transmissionProvider = useMemo(
+    () =>
+      utility?.transmissionProviderId ? utilities.find((u) => u.id === utility.transmissionProviderId) ?? null : null,
+    [utility, utilities]
+  );
+  const successor = useMemo(
+    () => (utility?.successorId ? utilities.find((u) => u.id === utility.successorId) ?? null : null),
+    [utility, utilities]
+  );
+
+  const region = useMemo(
+    () => (utility?.serviceTerritoryId ? getRegionById(utility.serviceTerritoryId) : null),
+    [utility]
+  );
 
   const territoryFileKey = useMemo(() => {
     if (!region) return null;
@@ -77,9 +94,18 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     return () => setHighlight(null);
   }, [territoryFileKey, setHighlight]);
 
-  const generationMembers = useMemo(() => (utility ? getUtilitiesByGenerationProvider(utility.id) : []), [utility]);
-  const transmissionMembers = useMemo(() => (utility ? getUtilitiesByTransmissionProvider(utility.id) : []), [utility]);
-  const childUtilities = useMemo(() => (utility ? getUtilitiesByParent(utility.id) : []), [utility]);
+  const generationMembers = useMemo(
+    () => (utility ? utilities.filter((u) => u.generationProviderId === utility.id) : []),
+    [utility, utilities]
+  );
+  const transmissionMembers = useMemo(
+    () => (utility ? utilities.filter((u) => u.transmissionProviderId === utility.id) : []),
+    [utility, utilities]
+  );
+  const childUtilities = useMemo(
+    () => (utility ? utilities.filter((u) => u.parentId === utility.id) : []),
+    [utility, utilities]
+  );
 
   const servedRows: ServedUtilityRow[] = useMemo(() => {
     const seen = new Set<string>();
@@ -167,6 +193,14 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     ],
     [navigateToDetail]
   );
+
+  if (utilitiesLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
 
   if (!utility) {
     return (

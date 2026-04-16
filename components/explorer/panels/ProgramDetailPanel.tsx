@@ -3,7 +3,8 @@
 import { Badge, Card, Section } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import { useEffect, useMemo } from "react";
-import { getAllUtilities, getProgramBySlug, getRegionById } from "@/lib/data";
+import { getProgramBySlug, getRegionById } from "@/lib/data";
+import { useUtilities } from "@/lib/utilities-client";
 import { safeHostname } from "@/lib/geo";
 import {
   AssetTypeLabel,
@@ -21,7 +22,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   const { goBack, navigateToDetail, setHighlight } = useExplorer();
 
   const program = getProgramBySlug(slug);
-  const utilities = getAllUtilities();
+  const { utilities } = useUtilities();
 
   // Resolve territory for map highlighting from program.regions[0]
   const primaryRegionId = program?.regions[0] ?? null;

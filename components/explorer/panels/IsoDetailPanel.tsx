@@ -3,7 +3,8 @@
 import { Badge, Card, type Column, DataControls, DataTable, EmptyState, Section } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import { useCallback, useEffect, useMemo } from "react";
-import { getBalancingAuthoritiesByIso, getIsoBySlug, getUtilitiesByIso } from "@/lib/data";
+import { getBalancingAuthoritiesByIso, getIsoBySlug } from "@/lib/data";
+import { useUtilities } from "@/lib/utilities-client";
 import { formatCustomerCount, formatStates, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
@@ -44,7 +45,8 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
     return () => setHighlight(null);
   }, [iso?.shortName, setHighlight]);
 
-  const utilities = useMemo(() => (iso ? getUtilitiesByIso(iso.id) : []), [iso]);
+  const { utilities: allUtilities } = useUtilities();
+  const utilities = useMemo(() => (iso ? allUtilities.filter((u) => u.isoId === iso.id) : []), [iso, allUtilities]);
   const balancingAuthorities = useMemo(() => (iso ? getBalancingAuthoritiesByIso(iso.id) : []), [iso]);
 
   const utilityRows: UtilityRow[] = useMemo(

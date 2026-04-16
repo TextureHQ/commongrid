@@ -13,9 +13,10 @@ import {
   FilterDialog,
   type FilterState,
   getFilterFields,
+  Loader,
 } from "@texturehq/edges";
 import { useCallback, useMemo, useState } from "react";
-import { getAllUtilities, searchEntities, sortByName } from "@/lib/data";
+import { searchUtilities, sortUtilities, useUtilities } from "@/lib/utilities-client";
 import { getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
 import { type Utility, UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
 import { useExplorer } from "../ExplorerContext";
@@ -167,18 +168,18 @@ export function UtilityListPanel() {
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [sortValue, setSortValue] = useState("name:asc");
 
+  const { utilities: allUtilities, isLoading } = useUtilities();
+
   // Keep FilterDialog state in sync with ExplorerContext
   const filterState = useMemo(
     () => buildFilterState(state.segment, state.jurisdictions),
     [state.segment, state.jurisdictions]
   );
 
-  const allUtilities = useMemo(() => getAllUtilities(), []);
-
   const filtered = useMemo(() => {
     let result: Utility[] = allUtilities;
     if (state.q) {
-      result = searchEntities(result, state.q);
+      result = searchUtilities(result, state.q);
     }
     if (state.segment !== "all") {
       result = result.filter((u) => u.segment === state.segment);
@@ -190,7 +191,7 @@ export function UtilityListPanel() {
       });
     }
     const order = sortValue.endsWith(":desc") ? "desc" : "asc";
-    result = sortByName(result, order);
+    result = sortUtilities(result, order);
     return result;
   }, [allUtilities, state.q, state.segment, state.jurisdictions, sortValue]);
 
@@ -295,6 +296,14 @@ export function UtilityListPanel() {
     ],
     []
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

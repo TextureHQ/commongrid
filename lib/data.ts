@@ -4,16 +4,29 @@ import isosData from "@/data/isos.json";
 import programsData from "@/data/programs.json";
 import regionsData from "@/data/regions.json";
 import rtosData from "@/data/rtos.json";
-import utilitiesData from "@/data/utilities.json";
 import type { Changelog } from "@/types/changelog";
-import type { BalancingAuthority, Iso, Region, Rto, Utility } from "@/types/entities";
+import type { BalancingAuthority, Iso, Region, Rto } from "@/types/entities";
 import type { Program } from "@/types/programs";
+
+// Utilities data is in a separate module (lib/data-utilities.ts) to avoid
+// bundling the 3.1 MB JSON into client bundles. Re-export for backward
+// compatibility with server components.
+export {
+  getAllUtilities,
+  getUtilityBySlug,
+  getUtilityById,
+  getUtilitiesByIso,
+  getUtilitiesByRto,
+  getUtilitiesByBalancingAuthority,
+  getUtilitiesByGenerationProvider,
+  getUtilitiesByTransmissionProvider,
+  getUtilitiesByParent,
+} from "./data-utilities";
 
 const changelog: Changelog = changelogData as Changelog;
 const isos: Iso[] = isosData as Iso[];
 const rtos: Rto[] = rtosData as Rto[];
 const balancingAuthorities: BalancingAuthority[] = basData as BalancingAuthority[];
-const utilities: Utility[] = utilitiesData as Utility[];
 const regions: Region[] = regionsData as Region[];
 const programs: Program[] = programsData as Program[];
 
@@ -53,41 +66,7 @@ export function getBalancingAuthorityById(id: string): BalancingAuthority | unde
   return balancingAuthorities.find((ba) => ba.id === id);
 }
 
-export function getAllUtilities(): Utility[] {
-  return utilities;
-}
 
-export function getUtilityBySlug(slug: string): Utility | undefined {
-  return utilities.find((u) => u.slug === slug);
-}
-
-export function getUtilityById(id: string): Utility | undefined {
-  return utilities.find((u) => u.id === id);
-}
-
-export function getUtilitiesByIso(isoId: string): Utility[] {
-  return utilities.filter((u) => u.isoId === isoId);
-}
-
-export function getUtilitiesByRto(rtoId: string): Utility[] {
-  return utilities.filter((u) => u.rtoId === rtoId);
-}
-
-export function getUtilitiesByBalancingAuthority(baId: string): Utility[] {
-  return utilities.filter((u) => u.balancingAuthorityId === baId);
-}
-
-export function getUtilitiesByGenerationProvider(providerId: string): Utility[] {
-  return utilities.filter((u) => u.generationProviderId === providerId);
-}
-
-export function getUtilitiesByTransmissionProvider(providerId: string): Utility[] {
-  return utilities.filter((u) => u.transmissionProviderId === providerId);
-}
-
-export function getUtilitiesByParent(parentId: string): Utility[] {
-  return utilities.filter((u) => u.parentId === parentId);
-}
 
 export function getRegionById(id: string): Region | undefined {
   return regions.find((r) => r.id === id);

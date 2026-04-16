@@ -4,7 +4,8 @@ import { Badge, Card, type Column, DataControls, DataTable, EmptyState, Section 
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo } from "react";
-import { getBalancingAuthorityBySlug, getIsoById, getUtilitiesByBalancingAuthority } from "@/lib/data";
+import { getBalancingAuthorityBySlug, getIsoById } from "@/lib/data";
+import { useUtilities } from "@/lib/utilities-client";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -46,7 +47,8 @@ export function BADetailPanel({ slug }: { slug: string }) {
     return () => setHighlight(null);
   }, [ba?.slug, ba?.regionId, setHighlight]);
 
-  const utilities = useMemo(() => (ba ? getUtilitiesByBalancingAuthority(ba.id) : []), [ba]);
+  const { utilities: allUtilities } = useUtilities();
+  const utilities = useMemo(() => (ba ? allUtilities.filter((u) => u.balancingAuthorityId === ba.id) : []), [ba, allUtilities]);
   const { plants: allPlants } = usePowerPlants();
   const baPowerPlants = useMemo(() => (ba ? filterByBA(allPlants, ba.id) : []), [ba, allPlants]);
 
