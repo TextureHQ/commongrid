@@ -15,9 +15,8 @@ import {
   getFilterFields,
   Loader,
 } from "@texturehq/edges";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
-import { searchUtilities, sortUtilities, useUtilities } from "@/lib/utilities-client";
 import { type Utility, UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
 import { useExplorer } from "../ExplorerContext";
 
@@ -29,6 +28,13 @@ interface UtilityRow extends Record<string, unknown> {
   status: string;
   customerCount: number | null;
   jurisdiction: string | null;
+}
+
+interface PaginationMeta {
+  total: number;
+  nextCursor: string | null;
+  hasMore: boolean;
+  limit: number;
 }
 
 const sortOptions = [
@@ -110,15 +116,6 @@ const FACET_CONFIGS: FacetConfig[] = [
   },
 ];
 
-/** Returns individual state codes from a comma-separated jurisdiction string */
-function parseJurisdictionStates(jurisdiction: string | null): string[] {
-  if (!jurisdiction) return [];
-  return jurisdiction
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
 /** Extract selected string values for a field from FilterState */
 function getSelectedValues(filters: FilterState, field: string): string[] {
   if (!filters) return [];
@@ -162,13 +159,101 @@ function buildFilterState(segment: string, jurisdictions: string[]): FilterState
   return filters;
 }
 
+/** Build URLSearchParams for the /api/v1/utilities endpoint */
+function buildApiParams(
+  q: string,
+  segment: string,
+  jurisdictions: string[],
+  sortValue: string,
+  limit: number,
+  cursor?: string | null
+): URLSearchParams {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (segment !== "all") params.set("segment", segment);
+  // API only supports a single state param; pass first selected jurisdiction
+  if (jurisdictions.length > 0) params.set("state", jurisdictions[0]);
+  const [sortField, sortOrder] = sortValue.split(":");
+  params.set("sort", sortField ?? "name");
+  params.set("order", sortOrder ?? "asc");
+  params.set("limit", String(limit));
+  if (cursor) params.set("cursor", cursor);
+  return params;
+}
+
 export function UtilityListPanel() {
   const { state, setSearch, setSegment, setJurisdictions, navigateToDetail } = useExplorer();
 
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [sortValue, setSortValue] = useState("name:asc");
 
-  const { utilities: allUtilities, isLoading } = useUtilities();
+  // API-backed state
+  const [utilities, setUtilities] = useState<Utility[]>([]);
+  const [meta, setMeta] = useState<PaginationMeta>({ total: 0, nextCursor: null, hasMore: false, limit: 50 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Debounced search
+  const [debouncedSearch, setDebouncedSearch] = useState(state.q);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearch(state.q);
+    }, 300);
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [state.q]);
+
+  // Fetch utilities when filters/sort change
+  useEffect(() => {
+    const controller = new AbortController();
+    const params = buildApiParams(debouncedSearch, state.segment, state.jurisdictions, sortValue, 50);
+
+    setIsLoading(true);
+    fetch(`/api/v1/utilities?${params.toString()}`, { signal: controller.signal })
+      .then((res) => res.json())
+      .then((data) => {
+        setUtilities(data.data ?? []);
+        setMeta({
+          total: data.pagination?.total ?? 0,
+          nextCursor: data.pagination?.cursor ?? null,
+          hasMore: data.pagination?.hasMore ?? false,
+          limit: data.pagination?.limit ?? 50,
+        });
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [debouncedSearch, state.segment, state.jurisdictions, sortValue]);
+
+  const loadMore = useCallback(async () => {
+    if (!meta.nextCursor || isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    const params = buildApiParams(debouncedSearch, state.segment, state.jurisdictions, sortValue, 50, meta.nextCursor);
+
+    const res = await fetch(`/api/v1/utilities?${params.toString()}`);
+    const data = await res.json();
+
+    setUtilities((prev) => [...prev, ...(data.data ?? [])]);
+    setMeta({
+      total: data.pagination?.total ?? 0,
+      nextCursor: data.pagination?.cursor ?? null,
+      hasMore: data.pagination?.hasMore ?? false,
+      limit: data.pagination?.limit ?? 50,
+    });
+    setIsLoadingMore(false);
+  }, [meta.nextCursor, isLoadingMore, debouncedSearch, state.segment, state.jurisdictions, sortValue]);
 
   // Keep FilterDialog state in sync with ExplorerContext
   const filterState = useMemo(
@@ -176,28 +261,9 @@ export function UtilityListPanel() {
     [state.segment, state.jurisdictions]
   );
 
-  const filtered = useMemo(() => {
-    let result: Utility[] = allUtilities;
-    if (state.q) {
-      result = searchUtilities(result, state.q);
-    }
-    if (state.segment !== "all") {
-      result = result.filter((u) => u.segment === state.segment);
-    }
-    if (state.jurisdictions.length > 0) {
-      result = result.filter((u) => {
-        const states = parseJurisdictionStates(u.jurisdiction);
-        return state.jurisdictions.some((j) => states.includes(j));
-      });
-    }
-    const order = sortValue.endsWith(":desc") ? "desc" : "asc";
-    result = sortUtilities(result, order);
-    return result;
-  }, [allUtilities, state.q, state.segment, state.jurisdictions, sortValue]);
-
   const rows: UtilityRow[] = useMemo(
     () =>
-      filtered.map((u) => ({
+      utilities.map((u) => ({
         slug: u.slug,
         name: u.name,
         logo: u.logo,
@@ -206,7 +272,7 @@ export function UtilityListPanel() {
         customerCount: u.customerCount,
         jurisdiction: u.jurisdiction,
       })),
-    [filtered]
+    [utilities]
   );
 
   const handleRowClick = useCallback(
@@ -309,7 +375,7 @@ export function UtilityListPanel() {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-none px-4">
         <DataControls
-          resultsCount={{ count: filtered.length, label: "utilities" }}
+          resultsCount={{ count: meta.total, label: "utilities" }}
           search={{
             value: state.q,
             onChange: setSearch,
@@ -328,7 +394,7 @@ export function UtilityListPanel() {
           sticky={true}
         />
       </div>
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 flex flex-col">
         {rows.length === 0 ? (
           <EmptyState
             icon="Lightning"
@@ -341,15 +407,32 @@ export function UtilityListPanel() {
             fullHeight={true}
           />
         ) : (
-          <DataTable
-            data={rows}
-            columns={columns}
-            mobileBreakpoint="md"
-            isLoading={false}
-            height="100%"
-            stickyHeader={true}
-            onRowClick={handleRowClick}
-          />
+          <>
+            <DataTable
+              data={rows}
+              columns={columns}
+              mobileBreakpoint="md"
+              isLoading={false}
+              height="100%"
+              stickyHeader={true}
+              onRowClick={handleRowClick}
+            />
+            {meta.hasMore && (
+              <div className="flex justify-center py-4 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isLoadingMore && <Loader size={16} />}
+                  {isLoadingMore
+                    ? "Loading..."
+                    : `Load More (${(meta.total - utilities.length).toLocaleString()} remaining)`}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -361,7 +444,7 @@ export function UtilityListPanel() {
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
         title="Filter Utilities"
-        resultCount={filtered.length}
+        resultCount={meta.total}
       />
     </div>
   );
