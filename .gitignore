@@ -12,6 +12,9 @@ public/data/territories/
 # Power plants JSON in public/ is copied from data/ at build time
 public/data/power-plants.json
 
+# Utilities JSON in public/ is copied from data/ at build time
+public/data/utilities.json
+
 # Transmission lines JSON in public/ is copied from data/ at build time
 public/data/transmission-lines.json
 
