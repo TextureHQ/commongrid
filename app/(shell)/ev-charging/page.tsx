@@ -130,8 +130,12 @@ export default function EVChargingPage() {
       setIsLoading(true);
       const res = await fetch(`/api/v1/ev-stations?${params.toString()}`);
       const data = await res.json();
-      setStations(data.data);
-      setMeta(data.meta);
+      setStations(data.data ?? []);
+      setMeta({
+        totalCount: data.pagination?.total ?? 0,
+        nextCursor: data.pagination?.cursor ?? null,
+        limit: data.pagination?.limit ?? 100,
+      });
       setIsLoading(false);
       nextPagePrefetchedRef.current = false;
     });
@@ -191,8 +195,12 @@ export default function EVChargingPage() {
     const res = await fetch(`/api/v1/ev-stations?${params.toString()}`);
     const data = await res.json();
 
-    setStations((prev) => [...prev, ...data.data]);
-    setMeta(data.meta);
+    setStations((prev) => [...prev, ...(data.data ?? [])]);
+    setMeta({
+      totalCount: data.pagination?.total ?? 0,
+      nextCursor: data.pagination?.cursor ?? null,
+      limit: data.pagination?.limit ?? 100,
+    });
     setIsLoadingMore(false);
     nextPagePrefetchedRef.current = false;
   }, [
