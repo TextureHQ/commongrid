@@ -165,6 +165,7 @@ export function UtilityListPanel() {
   const { state, setSearch, setSegment, setJurisdictions, navigateToDetail } = useExplorer();
 
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [sortValue, setSortValue] = useState("name:asc");
 
   // Keep FilterDialog state in sync with ExplorerContext
   const filterState = useMemo(
@@ -188,9 +189,10 @@ export function UtilityListPanel() {
         return state.jurisdictions.some((j) => states.includes(j));
       });
     }
-    result = sortByName(result, "asc");
+    const order = sortValue.endsWith(":desc") ? "desc" : "asc";
+    result = sortByName(result, order);
     return result;
-  }, [allUtilities, state.q, state.segment, state.jurisdictions]);
+  }, [allUtilities, state.q, state.segment, state.jurisdictions, sortValue]);
 
   const rows: UtilityRow[] = useMemo(
     () =>
@@ -306,9 +308,9 @@ export function UtilityListPanel() {
             placeholder: "Search utilities...",
           }}
           sort={{
-            value: "name:asc",
+            value: sortValue,
             options: sortOptions,
-            onChange: () => {},
+            onChange: setSortValue,
           }}
           filters={activeFilters}
           onRemoveFilter={handleRemoveFilter}

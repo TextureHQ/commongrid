@@ -201,8 +201,15 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const [state, dispatch] = useReducer(reducer, initialState);
   const isUrlSync = useRef(false);
+  // Always-current ref so the FROM-URL effect can read state without needing
+  // state values in its dependency array (which would cause the sync loop bug).
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
-  // Sync state FROM URL on mount and on popstate (browser back/forward)
+  // Sync state FROM URL on mount and on popstate (browser back/forward).
+  // Depends ONLY on searchParams — not on state — to avoid the bidirectional
+  // sync loop where a user action (navigateToTab, setSegment, …) causes this
+  // effect to fire with stale URL params and override the action.
   useEffect(() => {
     // Support old ?view= param for backwards compat
     const tabParam = searchParams.get("tab") ?? searchParams.get("view");
@@ -217,14 +224,15 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     const tab = parseTab(tabParam);
     const layout = parseLayout(layoutParam);
 
+    const cur = stateRef.current;
     if (
-      layout !== state.layout ||
-      tab !== state.tab ||
-      slugParam !== state.slug ||
-      qParam !== state.q ||
-      segmentParam !== state.segment ||
-      typeParam !== state.type ||
-      JSON.stringify(jurisdictionsFromUrl) !== JSON.stringify(state.jurisdictions)
+      layout !== cur.layout ||
+      tab !== cur.tab ||
+      slugParam !== cur.slug ||
+      qParam !== cur.q ||
+      segmentParam !== cur.segment ||
+      typeParam !== cur.type ||
+      JSON.stringify(jurisdictionsFromUrl) !== JSON.stringify(cur.jurisdictions)
     ) {
       isUrlSync.current = true;
       dispatch({
@@ -238,8 +246,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
         jurisdictions: jurisdictionsFromUrl,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, state.jurisdictions, state.layout, state.q, state.segment, state.slug, state.tab, state.type]);
+  }, [searchParams]);
 
   // Sync state TO URL when state changes (but not when syncing from URL)
   useEffect(() => {
