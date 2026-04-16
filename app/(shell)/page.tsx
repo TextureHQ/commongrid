@@ -3,14 +3,8 @@
 import { Button, Card, Icon, TextLink } from "@texturehq/edges";
 import Link from "next/link";
 import { useGlobalSearch } from "@/components/GlobalSearch";
-import {
-  getAllBalancingAuthorities,
-  getAllIsos,
-  getAllPrograms,
-  getAllRtos,
-  getAllUtilities,
-  getChangelog,
-} from "@/lib/data";
+import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getAllRtos, getChangelog } from "@/lib/data";
+import { useUtilities } from "@/lib/utilities-client";
 import type { ChangelogEntry } from "@/types/changelog";
 
 // Power plant count is hardcoded to avoid importing the 8.7 MB JSON into the pre-rendered page.
@@ -192,7 +186,8 @@ function ActivityRow({ entry }: { entry: ChangelogEntry }) {
 
 export default function LandingPage() {
   const { open: openSearch } = useGlobalSearch();
-  const utilityCount = getAllUtilities().length;
+  const { utilities } = useUtilities();
+  const utilityCount = utilities.length;
   const isoCount = getAllIsos().length;
   const rtoCount = getAllRtos().length;
   const baCount = getAllBalancingAuthorities().length;

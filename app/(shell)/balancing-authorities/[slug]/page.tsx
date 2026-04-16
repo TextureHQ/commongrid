@@ -20,7 +20,7 @@ import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
-import { getBalancingAuthorityBySlug, getIsoById, getUtilitiesByBalancingAuthority } from "@/lib/data";
+import { getBalancingAuthorityBySlug, getIsoById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -33,6 +33,7 @@ import {
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
 import { filterByBA, usePowerPlants } from "@/lib/power-plants";
+import { useUtilities } from "@/lib/utilities-client";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -63,7 +64,11 @@ export default function BADetailPage() {
       .finally(() => setTerritoryLoading(false));
   }, [ba?.slug, ba?.regionId]);
 
-  const utilities = useMemo(() => (ba ? getUtilitiesByBalancingAuthority(ba.id) : []), [ba]);
+  const { utilities: allUtilities } = useUtilities();
+  const utilities = useMemo(
+    () => (ba ? allUtilities.filter((u) => u.balancingAuthorityId === ba.id) : []),
+    [ba, allUtilities]
+  );
   const { plants: allPlants, isLoading: plantsLoading } = usePowerPlants();
   const baPowerPlants = useMemo(() => (ba ? filterByBA(allPlants, ba.id) : []), [ba, allPlants]);
 

@@ -15,7 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
-import { getAllUtilities, sortByName } from "@/lib/data";
+import { sortByName } from "@/lib/data";
 import {
   formatCustomerCount,
   getSegmentBadgeVariant,
@@ -24,6 +24,7 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { useFuseSearch } from "@/lib/search";
+import { useUtilities } from "@/lib/utilities-client";
 import { UtilitySegmentLabel } from "@/types/entities";
 
 interface UtilityRow extends Record<string, unknown> {
@@ -76,7 +77,7 @@ const FUSE_OPTIONS = {
 
 function GridOperatorsPageInner() {
   const router = useRouter();
-  const allUtilities = useMemo(() => getAllUtilities(), []);
+  const { utilities: allUtilities } = useUtilities();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
   const [sortValue, setSortValue] = useState("customers:desc");

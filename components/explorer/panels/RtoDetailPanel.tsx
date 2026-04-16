@@ -3,9 +3,10 @@
 import { Badge, Card, type Column, DataControls, DataTable, EmptyState, Section } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import { useCallback, useEffect, useMemo } from "react";
-import { getRtoBySlug, getUtilitiesByRto } from "@/lib/data";
+import { getRtoBySlug } from "@/lib/data";
 import { formatCustomerCount, formatStates, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
+import { useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "../ExplorerContext";
 
 interface UtilityRow extends Record<string, unknown> {
@@ -35,7 +36,8 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
     return () => setHighlight(null);
   }, [rto?.shortName, setHighlight]);
 
-  const utilities = useMemo(() => (rto ? getUtilitiesByRto(rto.id) : []), [rto]);
+  const { utilities: allUtilities } = useUtilities();
+  const utilities = useMemo(() => (rto ? allUtilities.filter((u) => u.rtoId === rto.id) : []), [rto, allUtilities]);
 
   const utilityRows: UtilityRow[] = useMemo(
     () =>

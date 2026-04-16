@@ -191,11 +191,10 @@ async function handleJsonMode(params: FilterParams) {
     result = selectFields(paged, fieldList);
   }
 
-  return jsonResponse(
-    paginatedResponse(result, filtered.length, hasMore ? `page:${page + 1}` : null, limit),
-    200,
-    corsHeaders()
-  );
+  return jsonResponse(paginatedResponse(result, filtered.length, hasMore ? `page:${page + 1}` : null, limit), 200, {
+    ...corsHeaders(),
+    "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -332,7 +331,10 @@ async function handleDatabaseMode(params: DbFilterParams) {
     resultData = selectFields(resultData, fieldList);
   }
 
-  return jsonResponse(paginatedResponse(resultData, Number(count), nextCursor, limit), 200, corsHeaders());
+  return jsonResponse(paginatedResponse(resultData, Number(count), nextCursor, limit), 200, {
+    ...corsHeaders(),
+    "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+  });
 }
 
 // ---------------------------------------------------------------------------

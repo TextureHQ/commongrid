@@ -4,9 +4,10 @@ import { InteractiveMap, type LayerFeature, type LayerSpec, layer } from "@textu
 import type { Feature, FeatureCollection } from "geojson";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getAllBalancingAuthorities, getAllIsos, getAllUtilities, searchEntities } from "@/lib/data";
+import { getAllBalancingAuthorities, getAllIsos } from "@/lib/data";
 import { getSegmentLabel } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
+import { searchUtilities, useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "./ExplorerContext";
 
 function getTileUrl() {
@@ -246,6 +247,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
   const hasMapboxToken = !!effectiveToken;
   const { state, navigateToDetail } = useExplorer();
   const router = useRouter();
+  const { utilities } = useUtilities();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
   const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>(DEFAULT_TOGGLEABLE_LAYER_VISIBILITY);
   const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
@@ -289,8 +291,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     }
 
     if (state.q) {
-      const allUtils = getAllUtilities();
-      const matching = searchEntities(allUtils, state.q);
+      const matching = searchUtilities(utilities, state.q);
       const slugs = matching.map((u) => u.slug);
       if (slugs.length > 0) {
         conditions.push(["in", ["get", "slug"], ["literal", slugs]]);
@@ -303,7 +304,7 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
     if (conditions.length === 0) return undefined;
     if (conditions.length === 1) return conditions[0];
     return ["all", ...conditions];
-  }, [state.segment, state.q]);
+  }, [utilities, state.segment, state.q]);
 
   // Filter grid operator GeoJSON by type and search
   const filteredGridBoundaryData = useMemo(() => {

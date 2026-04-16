@@ -2,7 +2,8 @@
 
 import { Badge, type Column, DataControls, DataTable, EmptyState } from "@texturehq/edges";
 import { useCallback, useMemo } from "react";
-import { getAllPrograms, getAllUtilities, searchEntities, sortByName } from "@/lib/data";
+import { getAllPrograms, searchEntities, sortByName } from "@/lib/data";
+import { useUtilities } from "@/lib/utilities-client";
 import { AssetTypeLabel, CompensationTypeLabel, CompensationUnitLabel, type Program } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
 
@@ -39,7 +40,7 @@ function getPrimaryCompensationSummary(program: Program): string {
 export function ProgramListPanel() {
   const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
 
-  const utilities = useMemo(() => getAllUtilities(), []);
+  const { utilities } = useUtilities();
 
   const allPrograms = useMemo((): ProgramRow[] => {
     const programs = getAllPrograms();

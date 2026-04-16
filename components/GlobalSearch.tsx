@@ -14,7 +14,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getAllRtos, getAllUtilities } from "@/lib/data";
+import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getAllRtos } from "@/lib/data";
+import { useUtilities } from "@/lib/utilities-client";
 import type { BalancingAuthority, Iso, PowerPlant, Rto, Utility } from "@/types/entities";
 import type { EVStation } from "@/types/ev-charging";
 import type { PricingNode } from "@/types/pricing-nodes";
@@ -329,8 +330,8 @@ export function GlobalSearchModal() {
   // Track fetch state
   const [loadingAsync, setLoadingAsync] = useState(false);
 
-  // Tier-1 static data (synchronous, already bundled)
-  const utilities = useMemo(() => getAllUtilities(), []);
+  // Tier-1 static data
+  const { utilities } = useUtilities();
   const isos = useMemo(() => getAllIsos(), []);
   const rtos = useMemo(() => getAllRtos(), []);
   const bas = useMemo(() => getAllBalancingAuthorities(), []);

@@ -13,7 +13,7 @@ import {
 } from "@texturehq/edges";
 import { notFound, useParams } from "next/navigation";
 import { DataSourceLink } from "@/components/DataSourceLink";
-import { getBalancingAuthorityById, getUtilityById } from "@/lib/data";
+import { getBalancingAuthorityById } from "@/lib/data";
 import {
   formatCapacity,
   formatStateName,
@@ -23,10 +23,12 @@ import {
   getPlantStatusBadgeVariant,
 } from "@/lib/formatting";
 import { usePowerPlant } from "@/lib/power-plants";
+import { useUtilities } from "@/lib/utilities-client";
 
 export default function PowerPlantDetailPage() {
   const params = useParams<{ slug: string }>();
   const { plant, isLoading } = usePowerPlant(params.slug);
+  const { utilities } = useUtilities();
 
   if (isLoading) {
     return (
@@ -43,7 +45,7 @@ export default function PowerPlantDetailPage() {
     notFound();
   }
 
-  const utility = plant.utilityId ? getUtilityById(plant.utilityId) : null;
+  const utility = plant.utilityId ? (utilities.find((u) => u.id === plant.utilityId) ?? null) : null;
   const ba = plant.balancingAuthorityId ? getBalancingAuthorityById(plant.balancingAuthorityId) : null;
 
   const pointGeoJSON = {
