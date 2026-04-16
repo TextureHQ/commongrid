@@ -19,7 +19,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
-import { loadPowerPlants } from "@/lib/data/power-plants-api";
+import { countPowerPlants, loadPowerPlants } from "@/lib/data/power-plants-api";
 import type { PowerPlant } from "@/types/entities";
 
 // ---------------------------------------------------------------------------
@@ -180,25 +180,51 @@ async function handler(req: Request): Promise<Response> {
     cursor = decodeCursor(rawCursor);
   }
 
-  // Load filtered data
-  const allPlants = await loadPowerPlants({
-    state,
-    fuelCategory,
-    status,
-    search,
-  });
+  // When using DB mode, delegate sorting + pagination to SQL for performance
+  const { getDataSource } = await import("@/lib/feature-flags");
+  const useDb = getDataSource("powerPlants") === "db";
 
-  // Sort
-  const sorted = sortPlants(allPlants, sort, order);
-  const totalCount = sorted.length;
+  let items: PowerPlant[];
+  let totalCount: number;
+  let hasMore: boolean;
 
-  // Apply cursor offset for next-page traversal
-  const afterCursor = cursor ? applyCursor(sorted, cursor, sort, order) : sorted;
+  if (useDb && !cursor) {
+    // DB mode: use SQL-level pagination with accurate count
+    const filters = { state, fuelCategory, status, search };
 
-  // Slice page (fetch one extra to detect hasMore)
-  const page = afterCursor.slice(0, limit + 1);
-  const hasMore = page.length > limit;
-  const items = hasMore ? page.slice(0, limit) : page;
+    // Parallel: fetch page + total count
+    const [results, count] = await Promise.all([
+      loadPowerPlants({
+        filters,
+        sort,
+        order,
+        limit: limit + 1, // Fetch one extra to detect hasMore
+        offset: 0,
+      }),
+      countPowerPlants(filters),
+    ]);
+
+    hasMore = results.length > limit;
+    items = hasMore ? results.slice(0, limit) : results;
+    totalCount = count;
+  } else {
+    // JSON mode OR cursor-based pagination: use in-memory sort/pagination
+    const allPlants = await loadPowerPlants({
+      filters: { state, fuelCategory, status, search },
+    });
+
+    // Sort
+    const sorted = sortPlants(allPlants, sort, order);
+    totalCount = sorted.length;
+
+    // Apply cursor offset for next-page traversal
+    const afterCursor = cursor ? applyCursor(sorted, cursor, sort, order) : sorted;
+
+    // Slice page (fetch one extra to detect hasMore)
+    const page = afterCursor.slice(0, limit + 1);
+    hasMore = page.length > limit;
+    items = hasMore ? page.slice(0, limit) : page;
+  }
 
   // Encode next cursor from last item on this page
   let nextCursor: string | null = null;

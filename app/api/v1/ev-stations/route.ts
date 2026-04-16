@@ -19,7 +19,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
-import { loadEVStations } from "@/lib/data/ev-stations";
+import { countEVStations, loadEVStations } from "@/lib/data/ev-stations";
 import type { EVStation } from "@/types/ev-charging";
 
 // ---------------------------------------------------------------------------
@@ -168,27 +168,51 @@ async function handler(req: Request): Promise<Response> {
     cursor = decodeCursor(rawCursor);
   }
 
-  // Load filtered data
-  const allStations = await loadEVStations({
-    state,
-    city,
-    network,
-    accessCode,
-    statusCode,
-    search,
-  });
+  // When using DB mode, delegate sorting + pagination to SQL for performance
+  const { getDataSource } = await import("@/lib/feature-flags");
+  const useDb = getDataSource("evStations") === "db";
 
-  // Sort
-  const sorted = sortStations(allStations, sort, order);
-  const totalCount = sorted.length;
+  let items: EVStation[];
+  let totalCount: number;
+  let hasMore: boolean;
 
-  // Apply cursor offset for next-page traversal
-  const afterCursor = cursor ? applyCursor(sorted, cursor, sort, order) : sorted;
+  if (useDb && !cursor) {
+    // DB mode: use SQL-level pagination with accurate count
+    const filters = { state, city, network, accessCode, statusCode, search };
 
-  // Slice page (fetch one extra to detect hasMore)
-  const page = afterCursor.slice(0, limit + 1);
-  const hasMore = page.length > limit;
-  const items = hasMore ? page.slice(0, limit) : page;
+    // Parallel: fetch page + total count
+    const [results, count] = await Promise.all([
+      loadEVStations({
+        filters,
+        sort,
+        order,
+        limit: limit + 1, // Fetch one extra to detect hasMore
+        offset: 0,
+      }),
+      countEVStations(filters),
+    ]);
+
+    hasMore = results.length > limit;
+    items = hasMore ? results.slice(0, limit) : results;
+    totalCount = count;
+  } else {
+    // JSON mode OR cursor-based pagination: use in-memory sort/pagination
+    const allStations = await loadEVStations({
+      filters: { state, city, network, accessCode, statusCode, search },
+    });
+
+    // Sort
+    const sorted = sortStations(allStations, sort, order);
+    totalCount = sorted.length;
+
+    // Apply cursor offset for next-page traversal
+    const afterCursor = cursor ? applyCursor(sorted, cursor, sort, order) : sorted;
+
+    // Slice page (fetch one extra to detect hasMore)
+    const page = afterCursor.slice(0, limit + 1);
+    hasMore = page.length > limit;
+    items = hasMore ? page.slice(0, limit) : page;
+  }
 
   // Encode next cursor from last item on this page
   let nextCursor: string | null = null;

@@ -13,7 +13,7 @@ import { getDataSource } from "@/lib/feature-flags";
 // GET /api/v1/territories/[slug] — Get territory by slug
 // ---------------------------------------------------------------------------
 
-async function handleGet(req: Request, ctx: RouteContext) {
+async function handleGet(_req: Request, ctx: RouteContext) {
   const slug = ctx.params?.slug;
   if (!slug) {
     throw new ApiError("BAD_REQUEST", "Missing slug parameter");

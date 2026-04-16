@@ -12,7 +12,7 @@ import { getDataSource } from "@/lib/feature-flags";
 import type { FuelCategory, PowerPlant } from "@/types/entities";
 
 // ---------------------------------------------------------------------------
-// Filters
+// Filters and Query Options
 // ---------------------------------------------------------------------------
 
 export interface PowerPlantFilters {
@@ -21,6 +21,14 @@ export interface PowerPlantFilters {
   status?: string;
   /** Min 2 chars. Matches against name and utilityName (case-insensitive). */
   search?: string;
+}
+
+export interface PowerPlantQueryOptions {
+  filters?: PowerPlantFilters;
+  sort?: "name" | "totalCapacityMw" | "state";
+  order?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -90,14 +98,15 @@ function dbRowToPowerPlant(row: Record<string, unknown>): PowerPlant {
   };
 }
 
-async function loadFromDb(filters?: PowerPlantFilters): Promise<PowerPlant[]> {
+async function loadFromDb(options?: PowerPlantQueryOptions): Promise<PowerPlant[]> {
   const { getDb } = await import("@/lib/db/client");
   const { powerPlants } = await import("@/lib/db/schema");
-  const { eq, ilike, and, or, sql } = await import("drizzle-orm");
+  const { eq, ilike, and, or, sql, desc, asc } = await import("drizzle-orm");
   type DrizzleSQL = ReturnType<typeof eq>;
 
   const db = getDb();
   const conditions: DrizzleSQL[] = [];
+  const filters = options?.filters;
 
   if (filters?.state) conditions.push(eq(powerPlants.state, filters.state));
   if (filters?.fuelCategory) conditions.push(eq(powerPlants.fuelCategory, filters.fuelCategory));
@@ -112,7 +121,19 @@ async function loadFromDb(filters?: PowerPlantFilters): Promise<PowerPlant[]> {
     );
   }
 
-  const rows = await db
+  // Build ORDER BY clause
+  const sortField = options?.sort ?? "name";
+  const sortOrder = options?.order ?? "asc";
+  const orderFn = sortOrder === "desc" ? desc : asc;
+
+  const orderBy =
+    sortField === "totalCapacityMw"
+      ? [orderFn(powerPlants.totalCapacityMw), asc(powerPlants.name), asc(powerPlants.id)]
+      : sortField === "state"
+        ? [orderFn(powerPlants.state), asc(powerPlants.name), asc(powerPlants.id)]
+        : [orderFn(powerPlants.name), asc(powerPlants.id)];
+
+  let query = db
     .select({
       id: powerPlants.id,
       slug: powerPlants.slug,
@@ -141,8 +162,18 @@ async function loadFromDb(filters?: PowerPlantFilters): Promise<PowerPlant[]> {
       proposedOnlineYear: powerPlants.proposedOnlineYear,
     })
     .from(powerPlants)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(...orderBy);
 
+  // Apply pagination
+  if (options?.limit !== undefined) {
+    query = query.limit(options.limit) as typeof query;
+  }
+  if (options?.offset !== undefined) {
+    query = query.offset(options.offset) as typeof query;
+  }
+
+  const rows = await query;
   return rows.map(dbRowToPowerPlant);
 }
 
@@ -192,16 +223,58 @@ async function loadBySlugFromDb(slug: string): Promise<PowerPlant | null> {
 // ---------------------------------------------------------------------------
 
 /**
- * Load power plants, optionally filtered.
+ * Load power plants with optional filters, sorting, and pagination.
  * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_POWER_PLANTS flag.
  */
-export async function loadPowerPlants(filters?: PowerPlantFilters): Promise<PowerPlant[]> {
+export async function loadPowerPlants(options?: PowerPlantQueryOptions): Promise<PowerPlant[]> {
   if (getDataSource("powerPlants") === "db") {
-    return loadFromDb(filters);
+    return loadFromDb(options);
   }
 
+  // JSON fallback (no pagination support — caller must handle in-memory)
   const plants = loadJson();
-  return filters ? applyJsonFilters(plants, filters) : plants;
+  return options?.filters ? applyJsonFilters(plants, options.filters) : plants;
+}
+
+/**
+ * Count power plants matching the given filters.
+ * Uses accurate COUNT query when in DB mode, or counts JSON in-memory.
+ */
+export async function countPowerPlants(filters?: PowerPlantFilters): Promise<number> {
+  if (getDataSource("powerPlants") === "db") {
+    const { getDb } = await import("@/lib/db/client");
+    const { powerPlants } = await import("@/lib/db/schema");
+    const { eq, ilike, and, or, sql, count } = await import("drizzle-orm");
+    type DrizzleSQL = ReturnType<typeof eq>;
+
+    const db = getDb();
+    const conditions: DrizzleSQL[] = [];
+
+    if (filters?.state) conditions.push(eq(powerPlants.state, filters.state));
+    if (filters?.fuelCategory) conditions.push(eq(powerPlants.fuelCategory, filters.fuelCategory));
+    if (filters?.status) conditions.push(eq(powerPlants.status, filters.status));
+    if (filters?.search) {
+      const searchTerm = filters.search.trim();
+      conditions.push(
+        or(
+          sql`${powerPlants.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
+          ilike(powerPlants.name, `%${searchTerm}%`)
+        )!
+      );
+    }
+
+    const result = await db
+      .select({ count: count() })
+      .from(powerPlants)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+    return result[0]?.count ?? 0;
+  }
+
+  // JSON fallback
+  const plants = loadJson();
+  const filtered = filters ? applyJsonFilters(plants, filters) : plants;
+  return filtered.length;
 }
 
 /**
