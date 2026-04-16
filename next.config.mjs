@@ -1,3 +1,5 @@
+import { withSentryConfig } from "@sentry/nextjs";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
@@ -36,4 +38,21 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Upload source maps to Sentry for readable stack traces
+  org: "texture",
+  project: "commongrid",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Suppress source map upload logs
+  silent: !process.env.CI,
+
+  // Automatically tree-shake Sentry logger statements
+  disableLogger: true,
+
+  // Hide source maps from users
+  hideSourceMaps: true,
+
+  // Widen upload scope to include utility modules
+  widenClientFileUpload: true,
+});

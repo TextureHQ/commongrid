@@ -25,6 +25,7 @@
   "dependencies": {
     "@floating-ui/dom": "^1.7.5",
     "@neondatabase/serverless": "^1.0.2",
+    "@sentry/nextjs": "^10.49.0",
     "@tailwindcss/postcss": "^4.1.14",
     "@texturehq/edges": "^1.28.2",
     "@upstash/ratelimit": "^2.0.8",
