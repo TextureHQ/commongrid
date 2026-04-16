@@ -16,7 +16,6 @@ import { Suspense, useCallback, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
 import { sortByName } from "@/lib/data";
-import { useUtilities } from "@/lib/utilities-client";
 import {
   formatCustomerCount,
   getSegmentBadgeVariant,
@@ -25,6 +24,7 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { useFuseSearch } from "@/lib/search";
+import { useUtilities } from "@/lib/utilities-client";
 import { UtilitySegmentLabel } from "@/types/entities";
 
 interface UtilityRow extends Record<string, unknown> {

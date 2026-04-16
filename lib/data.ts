@@ -13,14 +13,14 @@ import type { Program } from "@/types/programs";
 // compatibility with server components.
 export {
   getAllUtilities,
-  getUtilityBySlug,
-  getUtilityById,
-  getUtilitiesByIso,
-  getUtilitiesByRto,
   getUtilitiesByBalancingAuthority,
   getUtilitiesByGenerationProvider,
-  getUtilitiesByTransmissionProvider,
+  getUtilitiesByIso,
   getUtilitiesByParent,
+  getUtilitiesByRto,
+  getUtilitiesByTransmissionProvider,
+  getUtilityById,
+  getUtilityBySlug,
 } from "./data-utilities";
 
 const changelog: Changelog = changelogData as Changelog;
@@ -65,8 +65,6 @@ export function getBalancingAuthorityBySlug(slug: string): BalancingAuthority | 
 export function getBalancingAuthorityById(id: string): BalancingAuthority | undefined {
   return balancingAuthorities.find((ba) => ba.id === id);
 }
-
-
 
 export function getRegionById(id: string): Region | undefined {
   return regions.find((r) => r.id === id);

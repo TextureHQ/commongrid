@@ -16,8 +16,8 @@ import {
   Loader,
 } from "@texturehq/edges";
 import { useCallback, useMemo, useState } from "react";
-import { searchUtilities, sortUtilities, useUtilities } from "@/lib/utilities-client";
 import { getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
+import { searchUtilities, sortUtilities, useUtilities } from "@/lib/utilities-client";
 import { type Utility, UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
 import { useExplorer } from "../ExplorerContext";
 

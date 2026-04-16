@@ -92,9 +92,7 @@ export function getUtilitiesByParent(utilities: Utility[], parentId: string): Ut
 
 export function searchUtilities(utilities: Utility[], query: string): Utility[] {
   const lower = query.toLowerCase();
-  return utilities.filter(
-    (u) => u.name.toLowerCase().includes(lower) || u.slug.toLowerCase().includes(lower)
-  );
+  return utilities.filter((u) => u.name.toLowerCase().includes(lower) || u.slug.toLowerCase().includes(lower));
 }
 
 export function sortUtilities(utilities: Utility[], direction: "asc" | "desc" = "asc"): Utility[] {

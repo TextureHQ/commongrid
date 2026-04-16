@@ -4,9 +4,9 @@ import { Badge, Card, type Column, DataControls, DataTable, EmptyState, Section 
 import type { FeatureCollection } from "geojson";
 import { useCallback, useEffect, useMemo } from "react";
 import { getBalancingAuthoritiesByIso, getIsoBySlug } from "@/lib/data";
-import { useUtilities } from "@/lib/utilities-client";
 import { formatCustomerCount, formatStates, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
+import { useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "../ExplorerContext";
 
 interface UtilityRow extends Record<string, unknown> {

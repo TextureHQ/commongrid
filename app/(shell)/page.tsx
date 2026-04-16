@@ -3,13 +3,7 @@
 import { Button, Card, Icon, TextLink } from "@texturehq/edges";
 import Link from "next/link";
 import { useGlobalSearch } from "@/components/GlobalSearch";
-import {
-  getAllBalancingAuthorities,
-  getAllIsos,
-  getAllPrograms,
-  getAllRtos,
-  getChangelog,
-} from "@/lib/data";
+import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getAllRtos, getChangelog } from "@/lib/data";
 import { useUtilities } from "@/lib/utilities-client";
 import type { ChangelogEntry } from "@/types/changelog";
 

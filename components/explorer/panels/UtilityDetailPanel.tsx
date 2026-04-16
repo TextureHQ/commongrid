@@ -4,13 +4,7 @@ import { Avatar, Badge, Card, type Column, DataControls, DataTable, Loader, Sect
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo } from "react";
-import {
-  getBalancingAuthorityById,
-  getIsoById,
-  getRegionById,
-  getRtoById,
-} from "@/lib/data";
-import { useUtilities } from "@/lib/utilities-client";
+import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -24,6 +18,7 @@ import {
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { filterByUtility, usePowerPlants } from "@/lib/power-plants";
+import { useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "../ExplorerContext";
 
 interface ServedUtilityRow extends Record<string, unknown> {
@@ -48,20 +43,21 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     [utility]
   );
   const parent = useMemo(
-    () => (utility?.parentId ? utilities.find((u) => u.id === utility.parentId) ?? null : null),
+    () => (utility?.parentId ? (utilities.find((u) => u.id === utility.parentId) ?? null) : null),
     [utility, utilities]
   );
   const generationProvider = useMemo(
-    () => (utility?.generationProviderId ? utilities.find((u) => u.id === utility.generationProviderId) ?? null : null),
+    () =>
+      utility?.generationProviderId ? (utilities.find((u) => u.id === utility.generationProviderId) ?? null) : null,
     [utility, utilities]
   );
   const transmissionProvider = useMemo(
     () =>
-      utility?.transmissionProviderId ? utilities.find((u) => u.id === utility.transmissionProviderId) ?? null : null,
+      utility?.transmissionProviderId ? (utilities.find((u) => u.id === utility.transmissionProviderId) ?? null) : null,
     [utility, utilities]
   );
   const successor = useMemo(
-    () => (utility?.successorId ? utilities.find((u) => u.id === utility.successorId) ?? null : null),
+    () => (utility?.successorId ? (utilities.find((u) => u.id === utility.successorId) ?? null) : null),
     [utility, utilities]
   );
 

@@ -20,13 +20,7 @@ import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
-import {
-  getBalancingAuthorityById,
-  getIsoById,
-  getRegionById,
-  getRtoById,
-} from "@/lib/data";
-import { useUtilities } from "@/lib/utilities-client";
+import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -40,6 +34,7 @@ import {
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
 import { filterByUtility, usePowerPlants } from "@/lib/power-plants";
+import { useUtilities } from "@/lib/utilities-client";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -59,12 +54,32 @@ export default function UtilityDetailPage() {
 
   const iso = useMemo(() => (utility?.isoId ? getIsoById(utility.isoId) : null), [utility]);
   const rto = useMemo(() => (utility?.rtoId ? getRtoById(utility.rtoId) : null), [utility]);
-  const ba = useMemo(() => (utility?.balancingAuthorityId ? getBalancingAuthorityById(utility.balancingAuthorityId) : null), [utility]);
-  const parent = useMemo(() => (utility?.parentId ? utilities.find((u) => u.id === utility.parentId) ?? null : null), [utility, utilities]);
-  const generationProvider = useMemo(() => (utility?.generationProviderId ? utilities.find((u) => u.id === utility.generationProviderId) ?? null : null), [utility, utilities]);
-  const transmissionProvider = useMemo(() => (utility?.transmissionProviderId ? utilities.find((u) => u.id === utility.transmissionProviderId) ?? null : null), [utility, utilities]);
-  const successor = useMemo(() => (utility?.successorId ? utilities.find((u) => u.id === utility.successorId) ?? null : null), [utility, utilities]);
-  const region = useMemo(() => (utility?.serviceTerritoryId ? getRegionById(utility.serviceTerritoryId) : null), [utility]);
+  const ba = useMemo(
+    () => (utility?.balancingAuthorityId ? getBalancingAuthorityById(utility.balancingAuthorityId) : null),
+    [utility]
+  );
+  const parent = useMemo(
+    () => (utility?.parentId ? (utilities.find((u) => u.id === utility.parentId) ?? null) : null),
+    [utility, utilities]
+  );
+  const generationProvider = useMemo(
+    () =>
+      utility?.generationProviderId ? (utilities.find((u) => u.id === utility.generationProviderId) ?? null) : null,
+    [utility, utilities]
+  );
+  const transmissionProvider = useMemo(
+    () =>
+      utility?.transmissionProviderId ? (utilities.find((u) => u.id === utility.transmissionProviderId) ?? null) : null,
+    [utility, utilities]
+  );
+  const successor = useMemo(
+    () => (utility?.successorId ? (utilities.find((u) => u.id === utility.successorId) ?? null) : null),
+    [utility, utilities]
+  );
+  const region = useMemo(
+    () => (utility?.serviceTerritoryId ? getRegionById(utility.serviceTerritoryId) : null),
+    [utility]
+  );
 
   const territoryFileKey = useMemo(() => {
     if (!region) return null;
@@ -86,9 +101,18 @@ export default function UtilityDetailPage() {
       .finally(() => setTerritoryLoading(false));
   }, [territoryFileKey]);
 
-  const generationMembers = useMemo(() => (utility ? utilities.filter((u) => u.generationProviderId === utility.id) : []), [utility, utilities]);
-  const transmissionMembers = useMemo(() => (utility ? utilities.filter((u) => u.transmissionProviderId === utility.id) : []), [utility, utilities]);
-  const childUtilities = useMemo(() => (utility ? utilities.filter((u) => u.parentId === utility.id) : []), [utility, utilities]);
+  const generationMembers = useMemo(
+    () => (utility ? utilities.filter((u) => u.generationProviderId === utility.id) : []),
+    [utility, utilities]
+  );
+  const transmissionMembers = useMemo(
+    () => (utility ? utilities.filter((u) => u.transmissionProviderId === utility.id) : []),
+    [utility, utilities]
+  );
+  const childUtilities = useMemo(
+    () => (utility ? utilities.filter((u) => u.parentId === utility.id) : []),
+    [utility, utilities]
+  );
 
   const servedRows: UtilityRow[] = useMemo(() => {
     const seen = new Set<string>();

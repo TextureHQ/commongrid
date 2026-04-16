@@ -4,8 +4,8 @@ import { Badge, Card, Section } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import { useEffect, useMemo } from "react";
 import { getProgramBySlug, getRegionById } from "@/lib/data";
-import { useUtilities } from "@/lib/utilities-client";
 import { safeHostname } from "@/lib/geo";
+import { useUtilities } from "@/lib/utilities-client";
 import {
   AssetTypeLabel,
   CompensationTypeLabel,

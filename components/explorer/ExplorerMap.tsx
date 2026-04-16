@@ -5,9 +5,9 @@ import type { Feature, FeatureCollection } from "geojson";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAllBalancingAuthorities, getAllIsos } from "@/lib/data";
-import { searchUtilities, useUtilities } from "@/lib/utilities-client";
 import { getSegmentLabel } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
+import { searchUtilities, useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "./ExplorerContext";
 
 function getTileUrl() {
