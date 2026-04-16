@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/territories/:id/geometry
+ * GET /api/v1/territories/:slug/geometry
  *
  * Returns GeoJSON geometry for a specific territory.
  * JSON mode reads from data/territories/{eiaId}.json files.
@@ -37,23 +37,23 @@ async function loadTerritoryGeoJsonFromFile(regionId: string) {
 // Route handler
 // ---------------------------------------------------------------------------
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
-  const { id } = await params;
+export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
+  const { slug } = await params;
 
   const wrapped = withApiMiddleware(async (r: Request, _ctx: RouteContext) => {
     const url = new URL(r.url);
 
     // JSON mode
     if (getDataSource("regions") === "json") {
-      const geojson = await loadTerritoryGeoJsonFromFile(id);
+      const geojson = await loadTerritoryGeoJsonFromFile(slug);
 
       if (!geojson) {
-        throw new ApiError("NOT_FOUND", `Territory '${id}' not found`);
+        throw new ApiError("NOT_FOUND", `Territory '${slug}' not found`);
       }
 
       return jsonResponse({ data: geojson }, 200, {
         "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=86400",
-        "Cache-Tag": `territory:${id}`,
+        "Cache-Tag": `territory:${slug}`,
       });
     }
 
@@ -72,22 +72,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
               SELECT ST_AsGeoJSON(
                 ST_SimplifyPreserveTopology(geography::geometry, ${Number(simplify) || 0.01})
               ) as geojson
-              FROM territories WHERE id = ${id}
+              FROM territories WHERE id = ${slug}
             `
         : sql`
               SELECT ST_AsGeoJSON(geography::geometry) as geojson
-              FROM territories WHERE id = ${id}
+              FROM territories WHERE id = ${slug}
             `
     );
 
     const rows = result as unknown as Array<{ geojson: string }>;
     if (!rows.length) {
-      throw new ApiError("NOT_FOUND", `Territory '${id}' not found`);
+      throw new ApiError("NOT_FOUND", `Territory '${slug}' not found`);
     }
 
     return jsonResponse({ data: JSON.parse(rows[0].geojson) }, 200, {
       "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=86400",
-      "Cache-Tag": `territory:${id}`,
+      "Cache-Tag": `territory:${slug}`,
     });
   });
 
