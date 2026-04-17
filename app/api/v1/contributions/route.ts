@@ -18,19 +18,19 @@ import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import {
+  balancingAuthorities,
   contributions,
   entityLocks,
-  utilities,
-  powerPlants,
   evStations,
-  transmissionLines,
-  pricingNodes,
   isos,
-  rtos,
-  balancingAuthorities,
-  regions,
+  powerPlants,
+  pricingNodes,
   programs,
+  regions,
+  rtos,
   territories,
+  transmissionLines,
+  utilities,
 } from "@/lib/db/schema";
 
 // ---------------------------------------------------------------------------
@@ -130,11 +130,9 @@ async function handlePost(req: Request, ctx: RouteContext) {
 
   // entity_type
   if (!entity_type || !VALID_ENTITY_TYPES.includes(entity_type)) {
-    throw new ApiError(
-      "VALIDATION_ERROR",
-      `entity_type must be one of: ${VALID_ENTITY_TYPES.join(", ")}`,
-      { field: "entity_type" }
-    );
+    throw new ApiError("VALIDATION_ERROR", `entity_type must be one of: ${VALID_ENTITY_TYPES.join(", ")}`, {
+      field: "entity_type",
+    });
   }
 
   // entity_id
@@ -151,29 +149,23 @@ async function handlePost(req: Request, ctx: RouteContext) {
 
   // edit_summary (min 25 chars)
   if (!edit_summary || typeof edit_summary !== "string" || edit_summary.trim().length < 25) {
-    throw new ApiError(
-      "VALIDATION_ERROR",
-      "edit_summary is required and must be at least 25 characters.",
-      { field: "edit_summary" }
-    );
+    throw new ApiError("VALIDATION_ERROR", "edit_summary is required and must be at least 25 characters.", {
+      field: "edit_summary",
+    });
   }
 
   // source_type
   if (!source_type || !VALID_SOURCE_TYPES.includes(source_type)) {
-    throw new ApiError(
-      "VALIDATION_ERROR",
-      `source_type must be one of: ${VALID_SOURCE_TYPES.join(", ")}`,
-      { field: "source_type" }
-    );
+    throw new ApiError("VALIDATION_ERROR", `source_type must be one of: ${VALID_SOURCE_TYPES.join(", ")}`, {
+      field: "source_type",
+    });
   }
 
   // changes JSONB — must be a non-empty object
   if (!changes || typeof changes !== "object" || Array.isArray(changes) || Object.keys(changes).length === 0) {
-    throw new ApiError(
-      "VALIDATION_ERROR",
-      "changes is required and must be a non-empty object with field changes.",
-      { field: "changes" }
-    );
+    throw new ApiError("VALIDATION_ERROR", "changes is required and must be a non-empty object with field changes.", {
+      field: "changes",
+    });
   }
 
   const db = getDb();
@@ -215,8 +207,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
   // --- Derive entity metadata ---
   const entitySlug = entity.slug ?? entity.id;
   // Try common state column names
-  const entityState: string | null =
-    entity.state ?? entity.jurisdiction?.split(",")[0]?.trim() ?? null;
+  const entityState: string | null = entity.state ?? entity.jurisdiction?.split(",")[0]?.trim() ?? null;
 
   // --- Insert the contribution ---
   const [contribution] = await db
@@ -239,11 +230,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
     })
     .returning();
 
-  return jsonResponse(
-    { data: contribution },
-    201,
-    { ...corsHeaders(), "X-Request-Id": ctx.requestId }
-  );
+  return jsonResponse({ data: contribution }, 201, { ...corsHeaders(), "X-Request-Id": ctx.requestId });
 }
 
 // ---------------------------------------------------------------------------
@@ -270,22 +257,18 @@ async function handleGet(req: Request, ctx: RouteContext) {
 
   if (status) {
     if (!VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
-      throw new ApiError(
-        "VALIDATION_ERROR",
-        `status must be one of: ${VALID_STATUSES.join(", ")}`,
-        { field: "status" }
-      );
+      throw new ApiError("VALIDATION_ERROR", `status must be one of: ${VALID_STATUSES.join(", ")}`, {
+        field: "status",
+      });
     }
     conditions.push(eq(contributions.status, status));
   }
 
   if (entityType) {
     if (!VALID_ENTITY_TYPES.includes(entityType as EntityType)) {
-      throw new ApiError(
-        "VALIDATION_ERROR",
-        `entity_type must be one of: ${VALID_ENTITY_TYPES.join(", ")}`,
-        { field: "entity_type" }
-      );
+      throw new ApiError("VALIDATION_ERROR", `entity_type must be one of: ${VALID_ENTITY_TYPES.join(", ")}`, {
+        field: "entity_type",
+      });
     }
     conditions.push(eq(contributions.entityType, entityType));
   }
@@ -308,12 +291,7 @@ async function handleGet(req: Request, ctx: RouteContext) {
   const [{ count }] = await countQuery;
 
   // Data query
-  let dataQuery = db
-    .select()
-    .from(contributions)
-    .orderBy(desc(contributions.createdAt))
-    .limit(limit)
-    .offset(offset);
+  let dataQuery = db.select().from(contributions).orderBy(desc(contributions.createdAt)).limit(limit).offset(offset);
 
   if (whereClause) {
     dataQuery = dataQuery.where(whereClause) as typeof dataQuery;
@@ -322,11 +300,10 @@ async function handleGet(req: Request, ctx: RouteContext) {
   const rows = await dataQuery;
   const hasMore = offset + limit < Number(count);
 
-  return jsonResponse(
-    paginatedResponse(rows, Number(count), hasMore ? String(page + 1) : null, limit),
-    200,
-    { ...corsHeaders(), "X-Request-Id": ctx.requestId }
-  );
+  return jsonResponse(paginatedResponse(rows, Number(count), hasMore ? String(page + 1) : null, limit), 200, {
+    ...corsHeaders(),
+    "X-Request-Id": ctx.requestId,
+  });
 }
 
 // ---------------------------------------------------------------------------

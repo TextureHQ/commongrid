@@ -37,28 +37,20 @@ const VALID_SOURCE_TYPES = [
 // GET /api/v1/contributions/:id — Get contribution detail
 // ---------------------------------------------------------------------------
 
-async function handleGet(req: Request, ctx: RouteContext) {
+async function handleGet(_req: Request, ctx: RouteContext) {
   const id = ctx.params?.id;
   if (!id) {
     throw new ApiError("BAD_REQUEST", "Contribution ID is required.");
   }
 
   const db = getDb();
-  const [contribution] = await db
-    .select()
-    .from(contributions)
-    .where(eq(contributions.id, id))
-    .limit(1);
+  const [contribution] = await db.select().from(contributions).where(eq(contributions.id, id)).limit(1);
 
   if (!contribution) {
     throw new ApiError("NOT_FOUND", `Contribution ${id} not found.`);
   }
 
-  return jsonResponse(
-    { data: contribution },
-    200,
-    { ...corsHeaders(), "X-Request-Id": ctx.requestId }
-  );
+  return jsonResponse({ data: contribution }, 200, { ...corsHeaders(), "X-Request-Id": ctx.requestId });
 }
 
 // ---------------------------------------------------------------------------
@@ -75,11 +67,7 @@ async function handlePatch(req: Request, ctx: RouteContext) {
   const db = getDb();
 
   // Fetch the contribution
-  const [existing] = await db
-    .select()
-    .from(contributions)
-    .where(eq(contributions.id, id))
-    .limit(1);
+  const [existing] = await db.select().from(contributions).where(eq(contributions.id, id)).limit(1);
 
   if (!existing) {
     throw new ApiError("NOT_FOUND", `Contribution ${id} not found.`);
@@ -106,33 +94,25 @@ async function handlePatch(req: Request, ctx: RouteContext) {
 
   if (edit_summary !== undefined) {
     if (typeof edit_summary !== "string" || edit_summary.trim().length < 25) {
-      throw new ApiError(
-        "VALIDATION_ERROR",
-        "edit_summary must be at least 25 characters.",
-        { field: "edit_summary" }
-      );
+      throw new ApiError("VALIDATION_ERROR", "edit_summary must be at least 25 characters.", { field: "edit_summary" });
     }
     updates.editSummary = edit_summary.trim();
   }
 
   if (changes !== undefined) {
     if (typeof changes !== "object" || Array.isArray(changes) || Object.keys(changes).length === 0) {
-      throw new ApiError(
-        "VALIDATION_ERROR",
-        "changes must be a non-empty object with field changes.",
-        { field: "changes" }
-      );
+      throw new ApiError("VALIDATION_ERROR", "changes must be a non-empty object with field changes.", {
+        field: "changes",
+      });
     }
     updates.changes = changes;
   }
 
   if (source_type !== undefined) {
     if (!VALID_SOURCE_TYPES.includes(source_type as (typeof VALID_SOURCE_TYPES)[number])) {
-      throw new ApiError(
-        "VALIDATION_ERROR",
-        `source_type must be one of: ${VALID_SOURCE_TYPES.join(", ")}`,
-        { field: "source_type" }
-      );
+      throw new ApiError("VALIDATION_ERROR", `source_type must be one of: ${VALID_SOURCE_TYPES.join(", ")}`, {
+        field: "source_type",
+      });
     }
     updates.sourceType = source_type;
   }
@@ -155,17 +135,9 @@ async function handlePatch(req: Request, ctx: RouteContext) {
   // Set updatedAt
   updates.updatedAt = new Date();
 
-  const [updated] = await db
-    .update(contributions)
-    .set(updates)
-    .where(eq(contributions.id, id))
-    .returning();
+  const [updated] = await db.update(contributions).set(updates).where(eq(contributions.id, id)).returning();
 
-  return jsonResponse(
-    { data: updated },
-    200,
-    { ...corsHeaders(), "X-Request-Id": ctx.requestId }
-  );
+  return jsonResponse({ data: updated }, 200, { ...corsHeaders(), "X-Request-Id": ctx.requestId });
 }
 
 // ---------------------------------------------------------------------------
@@ -175,18 +147,12 @@ async function handlePatch(req: Request, ctx: RouteContext) {
 const getHandler = withRequestId(withErrorHandling(withTiming(handleGet)));
 const patchHandler = withRequestId(withErrorHandling(withTiming(handlePatch)));
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return getHandler(req, { requestId: generateRequestId(), params: { id } });
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return patchHandler(req, { requestId: generateRequestId(), params: { id } });
 }
