@@ -40,10 +40,16 @@ export async function tryAutoApprove(
   contributionId: string,
   entityType: string,
   changes: Record<string, unknown>,
-  isCreate = false
+  isCreate = false,
+  isDelete = false
 ): Promise<AutoApproveResult> {
-  // For creates, require moderator or admin role
-  if (isCreate) {
+  // Deletions: only admin can self-approve (destructive action)
+  if (isDelete) {
+    if (user.role !== "admin") {
+      return { autoApproved: false, reason: "Deletions require admin approval" };
+    }
+  } else if (isCreate) {
+    // For creates, require moderator or admin role
     if (user.role !== "moderator" && user.role !== "admin") {
       return { autoApproved: false, reason: "Creates require moderator approval" };
     }
