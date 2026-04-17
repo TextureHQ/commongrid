@@ -32,6 +32,7 @@ import {
   transmissionLines,
   utilities,
 } from "@/lib/db/schema";
+import { tryAutoApprove } from "@/lib/mod/auto-approve";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -230,7 +231,32 @@ async function handlePost(req: Request, ctx: RouteContext) {
     })
     .returning();
 
-  return jsonResponse({ data: contribution }, 201, { ...corsHeaders(), "X-Request-Id": ctx.requestId });
+  // --- Try auto-approval for trusted contributors editing non-critical fields ---
+  let autoApproveResult: { autoApproved: boolean; reason?: string } = { autoApproved: false };
+  if (!geometry_change_type) {
+    // Geometry changes always require manual review
+    autoApproveResult = await tryAutoApprove(
+      db,
+      user,
+      contribution.id,
+      entity_type,
+      changes as Record<string, unknown>
+    );
+  }
+
+  // If auto-approved, re-fetch to get the updated status
+  const responseData = autoApproveResult.autoApproved
+    ? ((await db.select().from(contributions).where(eq(contributions.id, contribution.id)).limit(1))[0] ?? contribution)
+    : contribution;
+
+  return jsonResponse(
+    {
+      data: responseData,
+      ...(autoApproveResult.autoApproved ? { auto_approved: true } : {}),
+    },
+    201,
+    { ...corsHeaders(), "X-Request-Id": ctx.requestId }
+  );
 }
 
 // ---------------------------------------------------------------------------
