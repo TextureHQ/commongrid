@@ -16,6 +16,7 @@ import { withCors } from "./cors";
 import { ApiError, formatError } from "./errors";
 import { checkRateLimit, rateLimitHeaders, rateLimitResponse } from "./rate-limit";
 import type { RouteContext, RouteHandler } from "./types";
+import { normalizeEndpoint, trackUsage } from "./usage-tracker";
 
 // ---------------------------------------------------------------------------
 // Request ID
@@ -116,6 +117,11 @@ export interface ApiMiddlewareOptions {
    * Set to false only for health-check / internal endpoints.
    */
   rateLimit?: boolean;
+  /**
+   * Enable usage tracking. Defaults to true.
+   * Set to false for internal / health-check endpoints.
+   */
+  trackUsage?: boolean;
 }
 
 /**
@@ -123,19 +129,31 @@ export interface ApiMiddlewareOptions {
  *
  * Layer order (outer → inner):
  *   withErrorHandling → withRequestId → withTiming → withCors
- *   → rate limiting → auth → handler
+ *   → rate limiting → auth → handler → usage tracking (fire-and-forget)
  *
  * Rate-limit headers are appended to every successful response.
+ * Usage events are recorded asynchronously and never block the response.
  */
 export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareOptions = {}): RouteHandler {
-  const { requireAuth = false, resource = "", action = "", rateLimit = true } = options;
+  const {
+    requireAuth = false,
+    resource = "",
+    action = "",
+    rateLimit = true,
+    trackUsage: enableTracking = true,
+  } = options;
 
   const core: RouteHandler = async (req: Request, ctx: RouteContext): Promise<Response> => {
+    const start = performance.now();
     const authHeader = req.headers.get("Authorization");
     const isAuthenticated = !!authHeader;
     const method = req.method;
     const isWrite = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
     const isBulk = new URL(req.url).pathname.includes("/bulk");
+
+    // Track API key ID for usage events (set during auth validation)
+    let apiKeyId: string | null = null;
+    let keyTier: string | undefined;
 
     // ── Rate limiting ──────────────────────────────────────────────────────
     let rlResult: Awaited<ReturnType<typeof checkRateLimit>> | null = null;
@@ -144,9 +162,22 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
       const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
       const identifier = isAuthenticated ? `auth:${authHeader}` : `ip:${ip}`;
 
-      rlResult = await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk);
+      rlResult = await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk, keyTier);
 
       if (!rlResult.success) {
+        // Track the 429 event
+        if (enableTracking) {
+          const elapsed = performance.now() - start;
+          trackUsage({
+            endpoint: normalizeEndpoint(req.url),
+            method,
+            statusCode: 429,
+            responseTimeMs: Math.round(elapsed),
+            isAuthenticated,
+            tier: rlResult.tier === "write" ? (isAuthenticated ? "registered" : "anonymous") : rlResult.tier,
+            apiKeyId,
+          });
+        }
         return rateLimitResponse(rlResult, ctx.requestId);
       }
     }
@@ -170,6 +201,10 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
           }
         );
       }
+      // Store the key identity for usage tracking
+      if (authResult.identity) {
+        apiKeyId = authResult.identity;
+      }
     }
 
     // ── Handler ────────────────────────────────────────────────────────────
@@ -180,6 +215,21 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
       for (const [key, value] of Object.entries(rateLimitHeaders(rlResult))) {
         response.headers.set(key, value);
       }
+    }
+
+    // ── Usage tracking (fire-and-forget) ───────────────────────────────────
+    if (enableTracking) {
+      const elapsed = performance.now() - start;
+      const tier = rlResult?.tier ?? (isAuthenticated ? "registered" : "anonymous");
+      trackUsage({
+        endpoint: normalizeEndpoint(req.url),
+        method,
+        statusCode: response.status,
+        responseTimeMs: Math.round(elapsed),
+        isAuthenticated,
+        tier: tier === "write" ? (isAuthenticated ? "registered" : "anonymous") : tier,
+        apiKeyId,
+      });
     }
 
     return response;
