@@ -9,7 +9,14 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 // ---------------------------------------------------------------------------
 
 export type LayoutMode = "hybrid" | "list" | "map";
-export type EntityTab = "utilities" | "grid-operators" | "power-plants" | "programs" | "transmission-lines";
+export type EntityTab =
+  | "utilities"
+  | "grid-operators"
+  | "power-plants"
+  | "programs"
+  | "transmission-lines"
+  | "ev-charging"
+  | "pricing-nodes";
 export type ViewMode = "landing" | "list" | "detail";
 export type DetailView = "utility" | "iso" | "rto" | "ba" | "program";
 export type ListView = EntityTab;
@@ -168,7 +175,15 @@ function stateToSearchParams(state: ExplorerState): string {
 }
 
 function parseTab(value: string | null): EntityTab {
-  const valid: EntityTab[] = ["utilities", "grid-operators", "power-plants", "programs", "transmission-lines"];
+  const valid: EntityTab[] = [
+    "utilities",
+    "grid-operators",
+    "power-plants",
+    "programs",
+    "transmission-lines",
+    "ev-charging",
+    "pricing-nodes",
+  ];
   // backwards-compat: old "view" param values that were list views
   if (value === "grid-operators" || value === "programs") return value;
   if (valid.includes(value as EntityTab)) return value as EntityTab;

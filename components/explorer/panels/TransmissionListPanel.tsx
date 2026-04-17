@@ -1,7 +1,19 @@
 "use client";
 
-import { Badge, type Column, DataControls, DataTable, EmptyState, Loader } from "@texturehq/edges";
+import {
+  Badge,
+  Button,
+  type Column,
+  DataControls,
+  DataTable,
+  EmptyState,
+  Icon,
+  Loader,
+  Tooltip,
+} from "@texturehq/edges";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useFuseSearch } from "@/lib/search";
 import { useTransmissionLines } from "@/lib/transmission-lines";
 import {
@@ -65,6 +77,8 @@ function getVoltageShortLabel(vc: VoltageClass): string {
 
 export function TransmissionListPanel() {
   const { state, setSearch, setTypeFilter } = useExplorer();
+  const router = useRouter();
+  const { user } = useCurrentUser();
   const { lines: allLines, isLoading } = useTransmissionLines();
 
   const fuseOptions = useMemo(
@@ -187,6 +201,19 @@ export function TransmissionListPanel() {
       <div className="flex-none px-4">
         <div className="flex items-center justify-between py-2">
           <span className="text-sm font-medium text-text-heading">Transmission Lines</span>
+          {user ? (
+            <Button variant="primary" size="sm" onPress={() => router.push("/transmission-lines/new")}>
+              <Icon name="Plus" size="sm" />
+              <span>Add New</span>
+            </Button>
+          ) : (
+            <Tooltip content="Sign in to add entities">
+              <Button variant="secondary" size="sm" isDisabled>
+                <Icon name="Plus" size="sm" />
+                <span>Add New</span>
+              </Button>
+            </Tooltip>
+          )}
         </div>
         <DataControls
           resultsCount={{ count: filtered.length, label: "lines" }}

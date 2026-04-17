@@ -88,12 +88,48 @@ function TransmissionIcon() {
   );
 }
 
+function EVChargingIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      className="w-3.5 h-3.5"
+    >
+      <path d="M11.25 2.5a.75.75 0 0 0-1.5 0v2.25H7.5V2.5a.75.75 0 0 0-1.5 0v2.25h-.5A1.5 1.5 0 0 0 4 6.25v5.5A1.5 1.5 0 0 0 5.5 13h4a1.5 1.5 0 0 0 1.5-1.5v-5.5a1.5 1.5 0 0 0-1.5-1.5h-.5V2.5ZM6.75 10a.75.75 0 0 1 .75-.75h1a.75.75 0 0 1 0 1.5h-1a.75.75 0 0 1-.75-.75Zm0-2.5a.75.75 0 0 1 .75-.75h1a.75.75 0 0 1 0 1.5h-1A.75.75 0 0 1 6.75 7.5Z" />
+      <path d="M12.5 7a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h.25a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25H13.5a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5h.5a.5.5 0 0 1 0 1h-.5Z" />
+    </svg>
+  );
+}
+
+function PricingNodeIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      className="w-3.5 h-3.5"
+    >
+      <path
+        fillRule="evenodd"
+        d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2ZM4.5 8a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5Z"
+        clipRule="evenodd"
+      />
+      <path d="M8 4.75a.75.75 0 0 1 .75.75v5a.75.75 0 0 1-1.5 0v-5A.75.75 0 0 1 8 4.75Z" />
+    </svg>
+  );
+}
+
 const TABS: TabDef[] = [
   { id: "utilities", label: "Utilities", shortLabel: "Utilities", icon: <UtilityIcon /> },
   { id: "grid-operators", label: "Grid Operators", shortLabel: "Grid Ops", icon: <GridOpsIcon /> },
   { id: "power-plants", label: "Power Plants", shortLabel: "Plants", icon: <PowerPlantIcon /> },
   { id: "programs", label: "Programs", shortLabel: "Programs", icon: <ProgramIcon /> },
   { id: "transmission-lines", label: "Transmission", shortLabel: "Lines", icon: <TransmissionIcon /> },
+  { id: "ev-charging", label: "EV Charging", shortLabel: "EV", icon: <EVChargingIcon /> },
+  { id: "pricing-nodes", label: "Pricing Nodes", shortLabel: "Nodes", icon: <PricingNodeIcon /> },
 ];
 
 export function ExplorerTabBar() {
