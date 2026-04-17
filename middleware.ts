@@ -1,34 +1,50 @@
 /**
- * Next.js edge middleware — security headers for all API responses.
+ * Next.js middleware — Clerk auth + security headers.
  *
- * Runs before every matched request and injects HTTP security headers
- * recommended by OWASP. Only applied to /api/* routes to keep non-API
- * pages unaffected.
+ * Clerk's `clerkMiddleware` handles session management automatically.
+ * We layer security headers on top for all API responses.
  *
- * See docs/specs/persistence-api.md §12.3.
+ * Protected routes (require sign-in):
+ *   /contributions, /settings, /mod/*, /developers/dashboard
+ *
+ * See docs/specs/persistence-api.md §12.3 for security headers.
+ * See docs/specs/community-contributions-api-prd.md §3.2 for auth spec.
  */
 
-import type { NextRequest } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-export function middleware(_request: NextRequest): NextResponse {
+const isProtectedRoute = createRouteMatcher([
+  "/contributions(.*)",
+  "/settings(.*)",
+  "/mod/(.*)",
+  "/developers/dashboard(.*)",
+]);
+
+export default clerkMiddleware(async (auth, request) => {
+  // Protect authenticated routes
+  if (isProtectedRoute(request)) {
+    await auth.protect();
+  }
+
   const response = NextResponse.next();
 
-  // Prevent MIME-type sniffing.
-  response.headers.set("X-Content-Type-Options", "nosniff");
-
-  // Disallow embedding in frames (clickjacking defence).
-  response.headers.set("X-Frame-Options", "DENY");
-
-  // Disable legacy XSS filter — modern browsers handle this via CSP.
-  response.headers.set("X-XSS-Protection", "0");
-
-  // Limit referrer information sent to third parties.
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  // Security headers for API routes
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    response.headers.set("X-Content-Type-Options", "nosniff");
+    response.headers.set("X-Frame-Options", "DENY");
+    response.headers.set("X-XSS-Protection", "0");
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  }
 
   return response;
-}
+});
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: [
+    // Skip Next.js internals and all static files, unless found in search params
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Always run for API routes
+    "/(api|trpc)(.*)",
+  ],
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { Button, Icon, useColorMode } from "@texturehq/edges";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,6 +29,7 @@ export function TopBar({ navigation }: TopBarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { isDarkTheme, toggleTheme } = useColorMode();
+  const { isSignedIn, isLoaded } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -43,6 +45,8 @@ export function TopBar({ navigation }: TopBarProps) {
     if (item.href !== "/" && pathname.startsWith(`${item.href}/`)) return true;
     return item.activePatterns?.some((p) => pathname.startsWith(p)) ?? false;
   };
+
+  const showAuth = mounted && isLoaded;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-60 bg-[var(--color-background-subtle)] border-b border-border-default">
@@ -108,8 +112,8 @@ export function TopBar({ navigation }: TopBarProps) {
           </nav>
         </div>
 
-        {/* Right: icons */}
-        <div className="ml-auto hidden sm:flex items-center gap-1">
+        {/* Right: icons + auth */}
+        <div className="ml-auto hidden sm:flex items-center gap-2">
           <Button
             variant="icon"
             href="https://github.com/TextureHQ/commongrid"
@@ -125,10 +129,50 @@ export function TopBar({ navigation }: TopBarProps) {
               <Icon name={isDarkTheme ? "Sun" : "Moon"} size={18} />
             </Button>
           )}
+
+          {/* Auth: Sign In / User Avatar */}
+          {showAuth && !isSignedIn && (
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className="px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-[var(--color-brand-primary)] text-white hover:bg-[var(--color-brand-dark)]"
+              >
+                Sign In
+              </button>
+            </SignInButton>
+          )}
+          {showAuth && isSignedIn && (
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "h-8 w-8",
+                },
+              }}
+            />
+          )}
         </div>
 
-        {/* Mobile: theme toggle + hamburger */}
+        {/* Mobile: theme toggle + auth + hamburger */}
         <div className="ml-auto flex items-center gap-1 sm:hidden">
+          {showAuth && !isSignedIn && (
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors bg-[var(--color-brand-primary)] text-white hover:bg-[var(--color-brand-dark)]"
+              >
+                Sign In
+              </button>
+            </SignInButton>
+          )}
+          {showAuth && isSignedIn && (
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "h-7 w-7",
+                },
+              }}
+            />
+          )}
           {mounted && (
             <Button variant="icon" onClick={toggleTheme} aria-label="Toggle color mode">
               <Icon name={isDarkTheme ? "Sun" : "Moon"} size={18} />
