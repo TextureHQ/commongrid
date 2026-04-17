@@ -457,7 +457,8 @@ export default function LandingPage() {
           <div className="text-xs font-semibold uppercase tracking-widest text-brand-primary mb-2">For Developers</div>
           <h2 className="text-2xl sm:text-3xl font-bold text-text-heading mb-2">Build with CommonGrid data</h2>
           <p className="text-base text-text-muted max-w-lg">
-            RESTful API with full CRUD access. JSON responses, cursor-based pagination, and comprehensive filtering.
+            Free REST API with 60 requests/hour. Register for 5,000/hr. RESTful endpoints, JSON responses, and
+            comprehensive filtering.
           </p>
         </div>
 
@@ -499,7 +500,10 @@ export default function LandingPage() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4">
+                <div className="mt-4 flex gap-2">
+                  <Button variant="primary" size="sm" href="/developers" icon="Key">
+                    Get API Key
+                  </Button>
                   <Button
                     variant="secondary"
                     size="sm"
@@ -509,7 +513,7 @@ export default function LandingPage() {
                     icon="ArrowSquareOut"
                     iconPosition="right"
                   >
-                    API Documentation
+                    View Docs
                   </Button>
                 </div>
               </div>
