@@ -12,6 +12,7 @@ import {
   StatList,
 } from "@texturehq/edges";
 import { notFound, useParams } from "next/navigation";
+import { type EditableField, EntityActions } from "@/components/contributions";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { usePricingNode } from "@/lib/pricing-nodes";
 import { getIsoColor, ISO_FULL_NAMES, ISO_LABELS, NODE_TYPE_LABELS, type PricingNodeType } from "@/types/pricing-nodes";
@@ -35,6 +36,16 @@ function getNodeTypeBadgeVariant(type: PricingNodeType): "success" | "info" | "w
     default:
       return "neutral";
   }
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: Pricing node data shape varies
+function getPricingNodeEditableFields(node: any): EditableField[] {
+  return [
+    { name: "name", label: "Node Name", section: "General", type: "text", currentValue: node.name },
+    { name: "zone", label: "Zone", section: "General", type: "text", currentValue: node.zone },
+    { name: "state", label: "State", section: "Location", type: "text", currentValue: node.state },
+    { name: "voltage_kv", label: "Voltage (kV)", section: "Technical", type: "number", currentValue: node.voltageKv },
+  ];
 }
 
 export default function PricingNodeDetailPage() {
@@ -115,6 +126,17 @@ export default function PricingNodeDetailPage() {
           { label: "Pricing Nodes", href: "/pricing-nodes" },
           { label: node.slug, copyable: true, copyValue: node.slug },
         ]}
+        actions={
+          <EntityActions
+            entityType="pricing_node"
+            entityId={node.id ?? node.slug}
+            entitySlug={node.slug}
+            entityVersion={1}
+            entityName={node.name}
+            versionApiEntityType="pricing-node"
+            editableFields={getPricingNodeEditableFields(node)}
+          />
+        }
       />
       <DataSourceLink paths={["data/pricing-nodes.json"]} className="px-4 sm:px-6 pb-2" />
       <PageLayout.Content>
