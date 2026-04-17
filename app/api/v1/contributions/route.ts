@@ -129,6 +129,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
   } = body;
 
   const isCreate = change_type === "create";
+  const isDelete = change_type === "delete";
 
   // --- Validation ---
 
@@ -265,7 +266,8 @@ async function handlePost(req: Request, ctx: RouteContext) {
       contribution.id,
       entity_type,
       changes as Record<string, unknown>,
-      isCreate
+      isCreate,
+      isDelete
     );
 
     // If create was auto-approved, we need to insert the entity
