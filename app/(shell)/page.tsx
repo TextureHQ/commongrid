@@ -265,11 +265,13 @@ export default function LandingPage() {
       <div className="px-6 -mt-0.5">
         <div className="max-w-2xl mx-auto">
           <div className="bg-background-surface border border-border-default rounded-xl shadow-sm py-5 px-6 -mt-px">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-2 items-start">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-y-4 gap-x-2 items-start">
               {[
                 { value: utilityCount.toLocaleString(), label: "Utilities" },
                 { value: gridOperatorCount.toLocaleString(), label: "Grid Operators" },
                 { value: TERRITORY_COUNT.toLocaleString(), label: "Territories" },
+                { value: POWER_PLANT_COUNT.toLocaleString(), label: "Power Plants" },
+                { value: EV_STATION_COUNT.toLocaleString(), label: "EV Stations" },
                 { value: programCount.toLocaleString(), label: "Programs" },
               ].map((stat) => (
                 <div key={stat.label} className="text-center flex flex-col">
@@ -391,6 +393,124 @@ export default function LandingPage() {
                   ) : (
                     <p className="text-sm text-text-muted py-4">No new entities added yet.</p>
                   )}
+                </div>
+              </div>
+            </div>
+          </Card.Content>
+        </Card>
+      </section>
+
+      {/* ── Community Contributions ────────────────────── */}
+      <section className="px-6 py-16 sm:py-20 max-w-5xl mx-auto">
+        <div className="mb-8">
+          <div className="text-xs font-semibold uppercase tracking-widest text-brand-primary mb-2">Community</div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-text-heading mb-2">Help improve grid data</h2>
+          <p className="text-base text-text-muted max-w-lg">
+            CommonGrid is community-driven. Suggest edits, cite sources, and make U.S. energy data more accurate for
+            everyone.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {[
+            {
+              icon: "PencilSimple" as const,
+              title: "Suggest Edits",
+              description:
+                "Found an inaccuracy? Click 'Suggest Edit' on any entity page to propose corrections with source citations.",
+            },
+            {
+              icon: "ShieldCheck" as const,
+              title: "Peer Review",
+              description:
+                "Every edit is reviewed by moderators. Trusted contributors can get auto-approved for non-critical fields.",
+            },
+            {
+              icon: "ClockCounterClockwise" as const,
+              title: "Full History",
+              description:
+                "Every change is versioned. See who changed what and when — complete audit trail for every entity.",
+            },
+          ].map((item) => (
+            <Card key={item.title} variant="outlined">
+              <Card.Content className="p-6">
+                <div className="w-10 h-10 rounded-lg bg-brand-primary/10 flex items-center justify-center mb-4">
+                  <Icon name={item.icon} size={20} className="text-brand-primary" />
+                </div>
+                <div className="text-[15px] font-semibold text-text-heading mb-1.5">{item.title}</div>
+                <p className="text-sm text-text-muted leading-relaxed">{item.description}</p>
+              </Card.Content>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-8 text-center">
+          <Button variant="primary" href="/explore" icon="ArrowRight" iconPosition="right">
+            Start Contributing
+          </Button>
+        </div>
+      </section>
+
+      {/* ── For Developers ───────────────────────────────── */}
+      <section className="px-6 pb-16 sm:pb-20 max-w-5xl mx-auto">
+        <div className="mb-8">
+          <div className="text-xs font-semibold uppercase tracking-widest text-brand-primary mb-2">For Developers</div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-text-heading mb-2">Build with CommonGrid data</h2>
+          <p className="text-base text-text-muted max-w-lg">
+            RESTful API with full CRUD access. JSON responses, cursor-based pagination, and comprehensive filtering.
+          </p>
+        </div>
+
+        <Card variant="outlined">
+          <Card.Content className="p-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border-default">
+              {/* API example */}
+              <div className="p-6">
+                <div className="text-sm font-semibold text-text-heading mb-3">Quick Start</div>
+                <div className="bg-background-muted rounded-lg p-4 font-mono text-xs leading-relaxed overflow-x-auto">
+                  <div className="text-text-muted"># List utilities in California</div>
+                  <div className="text-text-body">curl https://commongrid.info/api/v1/utilities?state=CA</div>
+                  <div className="text-text-muted mt-3"># Get a specific power plant</div>
+                  <div className="text-text-body">curl https://commongrid.info/api/v1/power-plants/palo-verde</div>
+                  <div className="text-text-muted mt-3"># Search across all entities</div>
+                  <div className="text-text-body">curl https://commongrid.info/api/v1/search?q=solar</div>
+                </div>
+              </div>
+
+              {/* Endpoints */}
+              <div className="p-6">
+                <div className="text-sm font-semibold text-text-heading mb-3">Available Endpoints</div>
+                <div className="space-y-2">
+                  {[
+                    { method: "GET", path: "/api/v1/utilities", desc: "3,000+ electric utilities" },
+                    { method: "GET", path: "/api/v1/power-plants", desc: "15,000+ power plants" },
+                    { method: "GET", path: "/api/v1/ev-stations", desc: "85,000+ EV stations" },
+                    { method: "GET", path: "/api/v1/pricing-nodes", desc: "4,000+ pricing nodes" },
+                    { method: "GET", path: "/api/v1/territories", desc: "Service territories" },
+                    { method: "GET", path: "/api/v1/programs", desc: "Utility programs" },
+                    { method: "GET", path: "/api/v1/search", desc: "Full-text search" },
+                  ].map((ep) => (
+                    <div key={ep.path} className="flex items-center gap-2 text-xs">
+                      <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-mono font-medium">
+                        {ep.method}
+                      </span>
+                      <span className="font-mono text-text-body">{ep.path}</span>
+                      <span className="text-text-muted ml-auto hidden sm:block">{ep.desc}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    href="https://github.com/TextureHQ/commongrid#api"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    icon="ArrowSquareOut"
+                    iconPosition="right"
+                  >
+                    API Documentation
+                  </Button>
                 </div>
               </div>
             </div>
