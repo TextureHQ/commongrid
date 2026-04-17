@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-
-import { rateLimitHeaders, rateLimitResponse, resolveTier } from "../rate-limit";
 import type { RateLimitResult } from "../rate-limit";
+import { rateLimitHeaders, rateLimitResponse, resolveTier } from "../rate-limit";
 
 describe("resolveTier", () => {
   it("returns 'anonymous' for unauthenticated read requests", () => {
