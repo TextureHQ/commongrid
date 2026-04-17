@@ -23,6 +23,7 @@
     "test:api": "tsx scripts/test-api-endpoints.ts"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.2.2",
     "@floating-ui/dom": "^1.7.5",
     "@neondatabase/serverless": "^1.0.2",
     "@sentry/nextjs": "^10.49.0",
@@ -37,6 +38,7 @@
     "postcss": "^8.5.6",
     "react": "^19.1.2",
     "react-dom": "^19.1.2",
+    "svix": "^1.90.0",
     "swr": "^2.4.1",
     "tailwindcss": "^4.1.14",
     "zod": "^4.3.6"
