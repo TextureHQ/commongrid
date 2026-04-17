@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+
 /**
  * Seed community_editable_fields table
  *
@@ -10,9 +11,9 @@
  *   tsx scripts/seed-editable-fields.ts
  */
 
+import { sql } from "drizzle-orm";
 import { db } from "../lib/db/client";
 import { communityEditableFields } from "../lib/db/schema/community-editable-fields";
-import { sql } from "drizzle-orm";
 
 interface EditableFieldDefinition {
   entityType: string;

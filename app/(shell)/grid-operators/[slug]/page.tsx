@@ -19,8 +19,8 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DataSourceLink } from "@/components/DataSourceLink";
 import { EntityActions } from "@/components/contributions/EntityActions";
+import { DataSourceLink } from "@/components/DataSourceLink";
 import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
 import {
   formatCapacity,

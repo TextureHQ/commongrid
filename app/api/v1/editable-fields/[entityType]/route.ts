@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { communityEditableFields } from "@/lib/db/schema/community-editable-fields";
-import { eq } from "drizzle-orm";
 
 /**
  * GET /api/v1/editable-fields/[entityType]
@@ -9,26 +9,14 @@ import { eq } from "drizzle-orm";
  * Returns editable field definitions for the specified entity type.
  * Used by EditEntityPanel to render the appropriate form fields.
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ entityType: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ entityType: string }> }) {
   const { entityType } = await params;
 
   // Validate entity type
-  const validEntityTypes = [
-    "utility",
-    "power_plant",
-    "ev_station",
-    "pricing_node",
-    "program",
-  ];
+  const validEntityTypes = ["utility", "power_plant", "ev_station", "pricing_node", "program"];
 
   if (!validEntityTypes.includes(entityType)) {
-    return NextResponse.json(
-      { error: `Invalid entity type: ${entityType}` },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: `Invalid entity type: ${entityType}` }, { status: 400 });
   }
 
   try {
@@ -47,9 +35,6 @@ export async function GET(
     return NextResponse.json({ data: fields });
   } catch (error) {
     console.error("Error fetching editable fields:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch editable fields" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch editable fields" }, { status: 500 });
   }
 }

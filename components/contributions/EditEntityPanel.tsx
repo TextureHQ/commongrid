@@ -1,14 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import {
-  Drawer,
-  Button,
-  Icon,
-  Loader,
-  Badge,
-} from "@texturehq/edges";
+import { Badge, Button, Drawer, Icon, Loader } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 interface EditableField {
   fieldName: string;
@@ -51,7 +45,7 @@ const SOURCE_TYPE_OPTIONS = [
 export function EditEntityPanel({
   entityType,
   entityId,
-  entitySlug,
+  entitySlug: _entitySlug,
   entityName,
   currentValues,
   onClose,
@@ -95,9 +89,7 @@ export function EditEntityPanel({
         setFormValues(initialValues);
       } catch (error) {
         console.error("Error fetching editable fields:", error);
-        setFieldsError(
-          error instanceof Error ? error.message : "Failed to load editable fields"
-        );
+        setFieldsError(error instanceof Error ? error.message : "Failed to load editable fields");
       } finally {
         setIsLoadingFields(false);
       }
@@ -119,8 +111,7 @@ export function EditEntityPanel({
   }, [formValues, currentValues]);
 
   const hasChanges = Object.keys(changedFields).length > 0;
-  const canSubmit =
-    hasChanges && editSummary.trim().length >= 25 && !isSubmitting;
+  const canSubmit = hasChanges && editSummary.trim().length >= 25 && !isSubmitting;
 
   const handleFieldChange = (fieldName: string, value: unknown) => {
     setFormValues((prev) => ({ ...prev, [fieldName]: value }));
@@ -155,7 +146,7 @@ export function EditEntityPanel({
         throw new Error(json.error ?? "Failed to submit contribution");
       }
 
-      const json = await res.json();
+      const _json = await res.json();
       setSubmitSuccess(true);
 
       // Show success for 2 seconds, then close
@@ -165,9 +156,7 @@ export function EditEntityPanel({
       }, 2000);
     } catch (error) {
       console.error("Error submitting contribution:", error);
-      setSubmitError(
-        error instanceof Error ? error.message : "Failed to submit contribution"
-      );
+      setSubmitError(error instanceof Error ? error.message : "Failed to submit contribution");
     } finally {
       setIsSubmitting(false);
     }
@@ -179,17 +168,10 @@ export function EditEntityPanel({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-default p-4">
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-text-heading truncate">
-              Suggest Edit
-            </h2>
+            <h2 className="text-lg font-semibold text-text-heading truncate">Suggest Edit</h2>
             <p className="text-sm text-text-muted truncate">{entityName}</p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onPress={onClose}
-            className="ml-2 flex-shrink-0"
-          >
+          <Button variant="ghost" size="sm" onPress={onClose} className="ml-2 flex-shrink-0">
             <Icon name="X" size="sm" />
           </Button>
         </div>
@@ -220,9 +202,7 @@ export function EditEntityPanel({
             <>
               {/* Editable Fields */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-text-heading">
-                  Fields
-                </h3>
+                <h3 className="text-sm font-semibold text-text-heading">Fields</h3>
                 {fields.map((field) => (
                   <div key={field.fieldName} className="space-y-1">
                     <label
@@ -236,11 +216,7 @@ export function EditEntityPanel({
                         </Badge>
                       )}
                     </label>
-                    {renderFieldInput(
-                      field,
-                      formValues[field.fieldName],
-                      handleFieldChange
-                    )}
+                    {renderFieldInput(field, formValues[field.fieldName], handleFieldChange)}
                   </div>
                 ))}
               </div>
@@ -254,11 +230,7 @@ export function EditEntityPanel({
                   <ul className="text-xs text-text-muted space-y-1">
                     {Object.keys(changedFields).map((fieldName) => {
                       const field = fields.find((f) => f.fieldName === fieldName);
-                      return (
-                        <li key={fieldName}>
-                          • {field?.displayName ?? fieldName}
-                        </li>
-                      );
+                      return <li key={fieldName}>• {field?.displayName ?? fieldName}</li>;
                     })}
                   </ul>
                 </div>
@@ -266,15 +238,10 @@ export function EditEntityPanel({
 
               {/* Source Citation */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-text-heading">
-                  Source Citation
-                </h3>
+                <h3 className="text-sm font-semibold text-text-heading">Source Citation</h3>
 
                 <div className="space-y-1">
-                  <label
-                    htmlFor="sourceType"
-                    className="text-sm font-medium text-text-body"
-                  >
+                  <label htmlFor="sourceType" className="text-sm font-medium text-text-body">
                     Source Type
                   </label>
                   <select
@@ -292,10 +259,7 @@ export function EditEntityPanel({
                 </div>
 
                 <div className="space-y-1">
-                  <label
-                    htmlFor="sourceUrl"
-                    className="text-sm font-medium text-text-body"
-                  >
+                  <label htmlFor="sourceUrl" className="text-sm font-medium text-text-body">
                     Source URL (optional)
                   </label>
                   <input
@@ -309,10 +273,7 @@ export function EditEntityPanel({
                 </div>
 
                 <div className="space-y-1">
-                  <label
-                    htmlFor="sourceDate"
-                    className="text-sm font-medium text-text-body"
-                  >
+                  <label htmlFor="sourceDate" className="text-sm font-medium text-text-body">
                     Source Date (optional)
                   </label>
                   <input
@@ -336,9 +297,7 @@ export function EditEntityPanel({
                   </span>
                   <span
                     className={`text-xs ${
-                      editSummary.trim().length >= 25
-                        ? "text-feedback-success"
-                        : "text-text-muted"
+                      editSummary.trim().length >= 25 ? "text-feedback-success" : "text-text-muted"
                     }`}
                   >
                     {editSummary.trim().length}/25
@@ -366,8 +325,9 @@ export function EditEntityPanel({
               {submitSuccess && (
                 <div className="rounded-md bg-green-50 p-4 border border-green-200">
                   <p className="text-sm font-medium text-green-800">Contribution submitted!</p>
-                  <p className="text-sm text-green-700 mt-1">Your changes have been submitted for review. Thank you for
-                  contributing to CommonGrid!</p>
+                  <p className="text-sm text-green-700 mt-1">
+                    Your changes have been submitted for review. Thank you for contributing to CommonGrid!
+                  </p>
                 </div>
               )}
             </>
@@ -380,12 +340,7 @@ export function EditEntityPanel({
             <Button variant="secondary" size="md" onPress={onClose}>
               Cancel
             </Button>
-            <Button
-              variant="primary"
-              size="md"
-              onPress={handleSubmit}
-              isDisabled={!canSubmit}
-            >
+            <Button variant="primary" size="md" onPress={handleSubmit} isDisabled={!canSubmit}>
               {isSubmitting ? (
                 <>
                   <Loader size={16} />
@@ -405,11 +360,7 @@ export function EditEntityPanel({
 /**
  * Render the appropriate input field based on field type
  */
-function renderFieldInput(
-  field: EditableField,
-  value: unknown,
-  onChange: (fieldName: string, value: unknown) => void
-) {
+function renderFieldInput(field: EditableField, value: unknown, onChange: (fieldName: string, value: unknown) => void) {
   const inputClassName =
     "w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20";
 
@@ -444,9 +395,7 @@ function renderFieldInput(
           type="number"
           step="1"
           value={(value as number) ?? ""}
-          onChange={(e) =>
-            onChange(field.fieldName, e.target.value ? parseInt(e.target.value, 10) : null)
-          }
+          onChange={(e) => onChange(field.fieldName, e.target.value ? parseInt(e.target.value, 10) : null)}
           min={field.validationRules?.min}
           max={field.validationRules?.max}
           className={inputClassName}
@@ -460,9 +409,7 @@ function renderFieldInput(
           type="number"
           step="any"
           value={(value as number) ?? ""}
-          onChange={(e) =>
-            onChange(field.fieldName, e.target.value ? parseFloat(e.target.value) : null)
-          }
+          onChange={(e) => onChange(field.fieldName, e.target.value ? parseFloat(e.target.value) : null)}
           min={field.validationRules?.min}
           max={field.validationRules?.max}
           className={inputClassName}

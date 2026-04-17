@@ -110,7 +110,7 @@ function entityDetailHref(entityType: string, entitySlug: string): string {
     pricing_node: "pricing-nodes",
     utility: "grid-operators",
   };
-  const pathSegment = pathMap[entityType] ?? entityType.replace(/_/g, "-") + "s";
+  const pathSegment = pathMap[entityType] ?? `${entityType.replace(/_/g, "-")}s`;
   return `/${pathSegment}/${entitySlug}`;
 }
 

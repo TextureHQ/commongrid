@@ -26,8 +26,6 @@ import {
 import { usePowerPlant } from "@/lib/power-plants";
 import { useUtilities } from "@/lib/utilities-client";
 
-
-
 export default function PowerPlantDetailPage() {
   const params = useParams<{ slug: string }>();
   const { plant, isLoading } = usePowerPlant(params.slug);

@@ -49,8 +49,6 @@ function getOwnerTypeLabel(code: string | null): string {
   return map[code] ?? code;
 }
 
-
-
 export default function EVStationDetailPage() {
   const params = useParams<{ slug: string }>();
   const { station, isLoading } = useEvStation(params.slug);

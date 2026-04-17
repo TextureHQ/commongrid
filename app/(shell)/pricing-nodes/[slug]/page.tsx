@@ -38,8 +38,6 @@ function getNodeTypeBadgeVariant(type: PricingNodeType): "success" | "info" | "w
   }
 }
 
-
-
 export default function PricingNodeDetailPage() {
   const params = useParams<{ slug: string }>();
   const { node, isLoading } = usePricingNode(params.slug);

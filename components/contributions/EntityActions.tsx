@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Button, Icon, Tooltip } from "@texturehq/edges";
+import { useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { EditEntityPanel } from "./EditEntityPanel";
 
@@ -19,13 +19,7 @@ interface EntityActionsProps {
  * Action buttons for entity detail pages, including "Suggest Edit".
  * Disabled for anonymous users with a tooltip prompt to sign in.
  */
-export function EntityActions({
-  entityType,
-  entityId,
-  entitySlug,
-  entityName,
-  currentValues,
-}: EntityActionsProps) {
+export function EntityActions({ entityType, entityId, entitySlug, entityName, currentValues }: EntityActionsProps) {
   const { user, isLoading } = useCurrentUser();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
