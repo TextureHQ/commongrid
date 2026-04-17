@@ -43,6 +43,10 @@ export function EditEntityPanel({
 
   // Fetch editable fields on mount
   useEffect(() => {
+    // Convert snake_case to camelCase for field name lookups
+    const snakeToCamel = (str: string): string => {
+      return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    };
     const fetchFields = async () => {
       try {
         setIsLoadingFields(true);
@@ -55,9 +59,11 @@ export function EditEntityPanel({
         setFields(json.data ?? []);
 
         // Initialize form values with current values
+        // Map snake_case field names to camelCase for lookups
         const initialValues: Record<string, unknown> = {};
         for (const field of json.data ?? []) {
-          initialValues[field.fieldName] = currentValues[field.fieldName];
+          const camelCaseKey = snakeToCamel(field.fieldName);
+          initialValues[field.fieldName] = currentValues[camelCaseKey] ?? currentValues[field.fieldName];
         }
         setFormValues(initialValues);
       } catch (error) {
@@ -175,6 +181,17 @@ export function EditEntityPanel({
             <>
               {/* Editable Fields */}
               <EntityFormFields fields={fields} formValues={formValues} onChange={handleFieldChange} mode="edit" />
+
+              {/* Service Territory Note (for utilities only) */}
+              {entityType === "utility" && (
+                <div className="rounded-md bg-background-muted border border-border-default p-3">
+                  <h4 className="text-sm font-medium text-text-body mb-1">Service Territory</h4>
+                  <p className="text-xs text-text-muted">
+                    Service territory boundary editing is not available via the website. Territory boundaries are
+                    maintained from authoritative geospatial sources. Contact us for corrections.
+                  </p>
+                </div>
+              )}
 
               {/* Changes Summary */}
               {hasChanges && (

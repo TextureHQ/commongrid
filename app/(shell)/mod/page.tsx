@@ -185,9 +185,17 @@ export default function ModerationDashboardPage() {
               {user.role === "admin" ? "Admin" : "Moderator"}
             </Badge>
           </div>
-          <Button variant="secondary" href="/contributions">
-            View All Contributions
-          </Button>
+          <div className="flex items-center gap-2">
+            {user.role === "admin" && (
+              <Button variant="secondary" href="/mod/users">
+                <Icon name="Users" size="sm" />
+                Manage Users
+              </Button>
+            )}
+            <Button variant="secondary" href="/contributions">
+              View All Contributions
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}

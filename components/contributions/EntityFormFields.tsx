@@ -109,7 +109,7 @@ export function SourceCitationFields({
           value={sourceUrl}
           onChange={(e) => onSourceUrlChange(e.target.value)}
           placeholder="https://..."
-          className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+          className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
         />
       </div>
 
@@ -153,7 +153,7 @@ export function EditSummaryField({ value, onChange, minLength = 25, placeholder 
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder ?? `Describe the changes you're making (minimum ${minLength} characters)`}
         rows={3}
-        className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+        className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
       />
     </div>
   );
@@ -164,7 +164,7 @@ export function EditSummaryField({ value, onChange, minLength = 25, placeholder 
  */
 function renderFieldInput(field: EditableField, value: unknown, onChange: (fieldName: string, value: unknown) => void) {
   const inputClassName =
-    "w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20";
+    "w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20";
 
   switch (field.fieldType) {
     case "text":
