@@ -232,6 +232,8 @@ export function TransmissionListPanel() {
             isLoading={false}
             height="100%"
             stickyHeader={true}
+            enableVirtualization={true}
+            estimatedRowHeight={56}
           />
         )}
       </div>

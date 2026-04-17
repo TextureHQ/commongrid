@@ -223,6 +223,8 @@ export function PowerPlantListPanel() {
             height="100%"
             stickyHeader={true}
             onRowClick={handleRowClick}
+            enableVirtualization={true}
+            estimatedRowHeight={56}
           />
         )}
       </div>

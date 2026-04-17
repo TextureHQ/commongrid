@@ -213,6 +213,8 @@ export function ProgramListPanel() {
             height="100%"
             stickyHeader={true}
             onRowClick={handleRowClick}
+            enableVirtualization={true}
+            estimatedRowHeight={72}
           />
         )}
       </div>
