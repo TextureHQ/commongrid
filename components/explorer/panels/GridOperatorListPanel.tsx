@@ -1,7 +1,19 @@
 "use client";
 
-import { Avatar, Badge, type Column, DataControls, DataTable, EmptyState } from "@texturehq/edges";
+import {
+  Avatar,
+  Badge,
+  Button,
+  type Column,
+  DataControls,
+  DataTable,
+  EmptyState,
+  Icon,
+  Tooltip,
+} from "@texturehq/edges";
+import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getAllBalancingAuthorities, getAllIsos, getAllRtos, searchEntities, sortByName } from "@/lib/data";
 import { type DetailView, useExplorer } from "../ExplorerContext";
 
@@ -39,6 +51,8 @@ const _typeToDetailView: Record<GridOperatorType, DetailView> = {
 
 export function GridOperatorListPanel() {
   const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
+  const router = useRouter();
+  const { user } = useCurrentUser();
 
   const allOperators = useMemo(() => {
     const seen = new Set<string>();
@@ -141,6 +155,22 @@ export function GridOperatorListPanel() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-none px-4">
+        <div className="flex items-center justify-between py-2">
+          <span className="text-sm font-medium text-text-heading">Grid Operators</span>
+          {user ? (
+            <Button variant="primary" size="sm" onPress={() => router.push("/grid-operators/new")}>
+              <Icon name="Plus" size="sm" />
+              <span>Add New</span>
+            </Button>
+          ) : (
+            <Tooltip content="Sign in to add entities">
+              <Button variant="secondary" size="sm" isDisabled>
+                <Icon name="Plus" size="sm" />
+                <span>Add New</span>
+              </Button>
+            </Tooltip>
+          )}
+        </div>
         <DataControls
           resultsCount={{ count: filtered.length, label: "grid operators" }}
           search={{

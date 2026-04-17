@@ -1,8 +1,19 @@
 "use client";
 
-import { Badge, type Column, DataControls, DataTable, EmptyState, Loader } from "@texturehq/edges";
+import {
+  Badge,
+  Button,
+  type Column,
+  DataControls,
+  DataTable,
+  EmptyState,
+  Icon,
+  Loader,
+  Tooltip,
+} from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { formatCapacity, getFuelBadgeVariant, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
 import { usePowerPlants } from "@/lib/power-plants";
 import { useFuseSearch } from "@/lib/search";
@@ -32,6 +43,7 @@ const fuelFilterOptions = [
 export function PowerPlantListPanel() {
   const { state, setSearch, setTypeFilter } = useExplorer();
   const router = useRouter();
+  const { user } = useCurrentUser();
   const { plants: allPlants, isLoading } = usePowerPlants();
 
   const fuseOptions = useMemo(
@@ -150,6 +162,22 @@ export function PowerPlantListPanel() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-none px-4">
+        <div className="flex items-center justify-between py-2">
+          <span className="text-sm font-medium text-text-heading">Power Plants</span>
+          {user ? (
+            <Button variant="primary" size="sm" onPress={() => router.push("/power-plants/new")}>
+              <Icon name="Plus" size="sm" />
+              <span>Add New</span>
+            </Button>
+          ) : (
+            <Tooltip content="Sign in to add entities">
+              <Button variant="secondary" size="sm" isDisabled>
+                <Icon name="Plus" size="sm" />
+                <span>Add New</span>
+              </Button>
+            </Tooltip>
+          )}
+        </div>
         <DataControls
           resultsCount={{ count: filtered.length, label: "power plants" }}
           search={{

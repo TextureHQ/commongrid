@@ -1,8 +1,10 @@
 "use client";
 
-import { Badge, Card, Section } from "@texturehq/edges";
+import { Badge, Card, Icon, Section, Tooltip } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getProgramBySlug, getRegionById } from "@/lib/data";
 import { safeHostname } from "@/lib/geo";
 import { useUtilities } from "@/lib/utilities-client";
@@ -20,6 +22,8 @@ import { useExplorer } from "../ExplorerContext";
 
 export function ProgramDetailPanel({ slug }: { slug: string }) {
   const { goBack, navigateToDetail, setHighlight } = useExplorer();
+  const { user } = useCurrentUser();
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const program = getProgramBySlug(slug);
   const { utilities } = useUtilities();
@@ -110,6 +114,27 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
             </Badge>
           </div>
           {program.description && <p className="text-sm text-text-muted mt-2 leading-relaxed">{program.description}</p>}
+        </div>
+
+        {/* Suggest Edit */}
+        <div>
+          {user ? (
+            <button
+              type="button"
+              onClick={() => setIsEditOpen(true)}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-primary hover:underline"
+            >
+              <Icon name="PencilSimple" size="sm" />
+              Suggest Edit
+            </button>
+          ) : (
+            <Tooltip content="Sign in to suggest edits">
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted cursor-not-allowed">
+                <Icon name="PencilSimple" size="sm" />
+                Suggest Edit
+              </span>
+            </Tooltip>
+          )}
         </div>
 
         {/* Overview */}
@@ -315,6 +340,18 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           </Section>
         )}
       </div>
+
+      {isEditOpen && program && (
+        <EditEntityPanel
+          entityType="program"
+          entityId={program.slug}
+          entitySlug={program.slug}
+          entityName={program.name}
+          currentValues={program as unknown as Record<string, unknown>}
+          onClose={() => setIsEditOpen(false)}
+          onSubmitted={() => setIsEditOpen(false)}
+        />
+      )}
     </div>
   );
 }
