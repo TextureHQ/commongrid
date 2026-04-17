@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { SignInButton, useUser } from "@clerk/nextjs";
 import { Badge, Button, Card, Icon, Loader, PageLayout, SegmentedControl } from "@texturehq/edges";
 import Link from "next/link";
 import type React from "react";
@@ -166,6 +166,33 @@ export default function ContributionsDashboard() {
         <div className="flex items-center justify-center py-24">
           <Loader size={32} />
         </div>
+      </PageLayout>
+    );
+  }
+
+  // Show sign-in prompt for unauthenticated users
+  if (!user) {
+    return (
+      <PageLayout maxWidth={896}>
+        <PageLayout.Header title="My Contributions" breadcrumbs={[{ label: "Contributions" }]} />
+        <PageLayout.Content>
+          <div className="px-4 sm:px-6 py-12">
+            <Card variant="outlined">
+              <Card.Content className="py-16 text-center">
+                <Icon name="UserCircle" size={48} className="text-text-muted mx-auto mb-4" />
+                <div className="text-lg font-semibold text-text-heading mb-2">Sign in to view your contributions</div>
+                <p className="text-text-muted mb-6 max-w-md mx-auto">
+                  Track your suggested edits and help improve CommonGrid data quality.
+                </p>
+                <SignInButton mode="modal">
+                  <Button variant="brand" size="lg">
+                    Sign In
+                  </Button>
+                </SignInButton>
+              </Card.Content>
+            </Card>
+          </div>
+        </PageLayout.Content>
       </PageLayout>
     );
   }
