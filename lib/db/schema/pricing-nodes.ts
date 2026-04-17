@@ -52,6 +52,9 @@ export const pricingNodes = pgTable(
     voltageKv: doublePrecision("voltage_kv"),
     eiaPlantCode: text("eia_plant_code"),
 
+    /** NULL | 'semi_locked' | 'fully_locked' — denormalized cache from entity_locks table */
+    lockedStatus: text("locked_status"),
+
     // Provenance & audit
     source: text("source").notNull(),
     sourceUrl: text("source_url"),

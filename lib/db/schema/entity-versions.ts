@@ -1,4 +1,5 @@
 import { bigserial, index, integer, jsonb, pgTable, text, timestamp, unique } from "drizzle-orm/pg-core";
+import { contributions } from "./contributions";
 
 /**
  * Entity Versions (Delta-Based)
@@ -32,6 +33,19 @@ export const entityVersions = pgTable(
     changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
     changeType: text("change_type").notNull(), // 'create', 'update', 'delete'
     changeSummary: text("change_summary"), // human-readable summary
+
+    // Enhanced provenance (ERD §4.2)
+    /** FK to contributions; ON DELETE SET NULL — version history preserved */
+    contributionId: text("contribution_id").references(() => contributions.id, {
+      onDelete: "set null",
+    }),
+    /**
+     * Origin of this version.
+     * 'sync' | 'community' | 'admin' | 'merge' | 'community_override'
+     *
+     * 'community_override' = moderator approved a community value over an official sync value.
+     */
+    sourceType: text("source_type"),
   },
   (table) => [
     unique("entity_versions_entity_type_entity_id_version_number_unique").on(
@@ -42,6 +56,10 @@ export const entityVersions = pgTable(
     index("idx_ev_entity").on(table.entityType, table.entityId),
     index("idx_ev_changed_at").on(table.changedAt),
     index("idx_ev_change_type").on(table.changeType),
+    index("idx_ev_source_type").on(table.sourceType),
+    // Partial index — defined in migration DDL:
+    // CREATE INDEX idx_ev_contribution ON entity_versions(contribution_id)
+    //   WHERE contribution_id IS NOT NULL;
   ]
 );
 

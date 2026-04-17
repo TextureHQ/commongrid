@@ -79,6 +79,9 @@ export const utilities = pgTable(
      */
     searchVector: tsvector("search_vector"),
 
+    /** NULL | 'semi_locked' | 'fully_locked' — denormalized cache from entity_locks table */
+    lockedStatus: text("locked_status"),
+
     // Provenance & audit
     source: text("source"),
     sourceUrl: text("source_url"),
