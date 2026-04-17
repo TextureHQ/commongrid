@@ -2,9 +2,11 @@
 
 import { useExplorer } from "./ExplorerContext";
 import { BADetailPanel } from "./panels/BADetailPanel";
+import { EVChargingListPanel } from "./panels/EVChargingListPanel";
 import { GridOperatorListPanel } from "./panels/GridOperatorListPanel";
 import { IsoDetailPanel } from "./panels/IsoDetailPanel";
 import { PowerPlantListPanel } from "./panels/PowerPlantListPanel";
+import { PricingNodeListPanel } from "./panels/PricingNodeListPanel";
 import { ProgramDetailPanel } from "./panels/ProgramDetailPanel";
 import { ProgramListPanel } from "./panels/ProgramListPanel";
 import { RtoDetailPanel } from "./panels/RtoDetailPanel";
@@ -41,6 +43,10 @@ export function ExplorerPanel() {
       return <ProgramListPanel />;
     case "transmission-lines":
       return <TransmissionListPanel />;
+    case "ev-charging":
+      return <EVChargingListPanel />;
+    case "pricing-nodes":
+      return <PricingNodeListPanel />;
     default:
       return <UtilityListPanel />;
   }
