@@ -125,7 +125,10 @@ async function handlePost(req: Request, ctx: RouteContext) {
     changes,
     changeset_id,
     geometry_change_type,
+    change_type,
   } = body;
+
+  const isCreate = change_type === "create";
 
   // --- Validation ---
 
@@ -171,44 +174,65 @@ async function handlePost(req: Request, ctx: RouteContext) {
 
   const db = getDb();
 
-  // --- Entity existence check ---
+  // --- Entity existence check (skip for creates) ---
   const entityTable = getEntityTable(entity_type as EntityType);
-  const [entity] = await db.select().from(entityTable).where(eq(entityTable.id, entity_id)).limit(1);
+  // biome-ignore lint/suspicious/noExplicitAny: Entity type varies by entityType
+  let entity: any = null;
+  let entitySlug: string;
+  let entityState: string | null = null;
 
-  if (!entity) {
-    throw new ApiError("NOT_FOUND", `Entity ${entity_type}/${entity_id} not found.`);
+  if (isCreate) {
+    // For creates, generate a slug from the name
+    const nameField = changes.name?.new || changes.stationName?.new || changes.station_name?.new;
+    if (!nameField || typeof nameField !== "string") {
+      throw new ApiError("VALIDATION_ERROR", "name is required for creating a new entity.", { field: "name" });
+    }
+    // Import slugify
+    const { slugify } = await import("@/lib/slugify");
+    entitySlug = slugify(nameField);
+
+    // Derive state from changes if available
+    entityState = (changes.state?.new || changes.jurisdiction?.new?.split(",")[0]?.trim() || null) as string | null;
+  } else {
+    // For edits, entity must exist
+    [entity] = await db.select().from(entityTable).where(eq(entityTable.id, entity_id)).limit(1);
+
+    if (!entity) {
+      throw new ApiError("NOT_FOUND", `Entity ${entity_type}/${entity_id} not found.`);
+    }
+
+    entitySlug = entity.slug ?? entity.id;
+    // Try common state column names
+    entityState = entity.state ?? entity.jurisdiction?.split(",")[0]?.trim() ?? null;
   }
 
-  // --- Entity lock check ---
-  const [lock] = await db
-    .select()
-    .from(entityLocks)
-    .where(
-      and(
-        eq(entityLocks.entityType, entity_type),
-        eq(entityLocks.entityId, entity_id),
-        // Only respect non-expired locks
-        sql`(${entityLocks.expiresAt} IS NULL OR ${entityLocks.expiresAt} > NOW())`
+  // --- Entity lock check (skip for creates) ---
+  if (!isCreate) {
+    const [lock] = await db
+      .select()
+      .from(entityLocks)
+      .where(
+        and(
+          eq(entityLocks.entityType, entity_type),
+          eq(entityLocks.entityId, entity_id),
+          // Only respect non-expired locks
+          sql`(${entityLocks.expiresAt} IS NULL OR ${entityLocks.expiresAt} > NOW())`
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  if (lock) {
-    if (lock.lockLevel === "fully_locked") {
-      throw new ApiError("FORBIDDEN", "This entity is locked and cannot be edited by community contributors.");
-    }
-    if (lock.lockLevel === "semi_locked" && user.role === "contributor") {
-      throw new ApiError(
-        "FORBIDDEN",
-        "This entity is semi-locked. Only trusted contributors and moderators can edit it."
-      );
+    if (lock) {
+      if (lock.lockLevel === "fully_locked") {
+        throw new ApiError("FORBIDDEN", "This entity is locked and cannot be edited by community contributors.");
+      }
+      if (lock.lockLevel === "semi_locked" && user.role === "contributor") {
+        throw new ApiError(
+          "FORBIDDEN",
+          "This entity is semi-locked. Only trusted contributors and moderators can edit it."
+        );
+      }
     }
   }
-
-  // --- Derive entity metadata ---
-  const entitySlug = entity.slug ?? entity.id;
-  // Try common state column names
-  const entityState: string | null = entity.state ?? entity.jurisdiction?.split(",")[0]?.trim() ?? null;
 
   // --- Insert the contribution ---
   const [contribution] = await db
@@ -231,8 +255,8 @@ async function handlePost(req: Request, ctx: RouteContext) {
     })
     .returning();
 
-  // --- Try auto-approval for trusted contributors editing non-critical fields ---
-  let autoApproveResult: { autoApproved: boolean; reason?: string } = { autoApproved: false };
+  // --- Try auto-approval ---
+  let autoApproveResult: { autoApproved: boolean; reason?: string; newSlug?: string } = { autoApproved: false };
   if (!geometry_change_type) {
     // Geometry changes always require manual review
     autoApproveResult = await tryAutoApprove(
@@ -240,8 +264,22 @@ async function handlePost(req: Request, ctx: RouteContext) {
       user,
       contribution.id,
       entity_type,
-      changes as Record<string, unknown>
+      changes as Record<string, unknown>,
+      isCreate
     );
+
+    // If create was auto-approved, we need to insert the entity
+    if (isCreate && autoApproveResult.autoApproved) {
+      await createEntity(
+        db,
+        entity_type as EntityType,
+        entity_id,
+        changes as Record<string, { old: null; new: unknown }>,
+        entitySlug,
+        user.id
+      );
+      autoApproveResult.newSlug = entitySlug;
+    }
   }
 
   // If auto-approved, re-fetch to get the updated status
@@ -330,6 +368,41 @@ async function handleGet(req: Request, ctx: RouteContext) {
     ...corsHeaders(),
     "X-Request-Id": ctx.requestId,
   });
+}
+
+// ---------------------------------------------------------------------------
+// createEntity — Insert a new entity when a create contribution is auto-approved
+// ---------------------------------------------------------------------------
+
+async function createEntity(
+  db: ReturnType<typeof getDb>,
+  entityType: EntityType,
+  entityId: string,
+  changes: Record<string, { old: null; new: unknown }>,
+  entitySlug: string,
+  userId: string
+): Promise<string> {
+  const entityTable = getEntityTable(entityType);
+
+  // Build the insert values from changes
+  const insertValues: Record<string, unknown> = {
+    id: entityId,
+    slug: entitySlug,
+    version: 1,
+    submittedBy: userId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  // Extract field values from changes { field: { old: null, new: value } }
+  for (const [field, change] of Object.entries(changes)) {
+    insertValues[field] = change.new;
+  }
+
+  // Insert the entity
+  await db.insert(entityTable).values(insertValues);
+
+  return entityId;
 }
 
 // ---------------------------------------------------------------------------

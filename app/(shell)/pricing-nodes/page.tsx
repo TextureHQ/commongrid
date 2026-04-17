@@ -1,11 +1,22 @@
 "use client";
 
-import { Badge, type Column, DataControls, DataTable, Loader, PageLayout, TextCell } from "@texturehq/edges";
+import {
+  Badge,
+  Button,
+  type Column,
+  DataControls,
+  DataTable,
+  Icon,
+  Loader,
+  PageLayout,
+  TextCell,
+} from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePricingNodes } from "@/lib/pricing-nodes";
 import { useFuseSearch } from "@/lib/search";
 import {
@@ -59,6 +70,7 @@ function getNodeTypeBadgeVariant(type: PricingNodeType): "success" | "info" | "w
 
 export default function PricingNodesPage() {
   const router = useRouter();
+  const { user } = useCurrentUser();
   const { nodes: allNodes, isLoading } = usePricingNodes();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortValue, setSortValue] = useState("name:asc");
@@ -208,7 +220,18 @@ export default function PricingNodesPage() {
   if (isLoading) {
     return (
       <PageLayout>
-        <PageLayout.Header title="Pricing Nodes" />
+        <div className="flex items-center justify-between">
+          <PageLayout.Header title="Pricing Nodes" />
+          <Button
+            variant={user ? "primary" : "secondary"}
+            size="md"
+            isDisabled={!user}
+            onPress={() => router.push("/pricing-nodes/new")}
+          >
+            <Icon name="Plus" size="sm" />
+            <span>Add Pricing Node</span>
+          </Button>
+        </div>
         <div className="flex items-center justify-center py-24">
           <Loader size={32} />
         </div>
@@ -218,10 +241,21 @@ export default function PricingNodesPage() {
 
   return (
     <PageLayout>
-      <PageLayout.Header
-        title="Pricing Nodes"
-        description={`${allNodes.length.toLocaleString()} wholesale electricity market pricing nodes across 7 ISOs/RTOs — trading hubs, load zones, SUBLAPs, and generation nodes.`}
-      />
+      <div className="flex items-center justify-between">
+        <PageLayout.Header
+          title="Pricing Nodes"
+          description={`${allNodes.length.toLocaleString()} wholesale electricity market pricing nodes across 7 ISOs/RTOs — trading hubs, load zones, SUBLAPs, and generation nodes.`}
+        />
+        <Button
+          variant={user ? "primary" : "secondary"}
+          size="md"
+          isDisabled={!user}
+          onPress={() => router.push("/pricing-nodes/new")}
+        >
+          <Icon name="Plus" size="sm" />
+          <span>Add Pricing Node</span>
+        </Button>
+      </div>
       <DataSourceLink paths={["data/pricing-nodes.json"]} className="px-4 sm:px-6 pb-2" />
       <PageLayout.Content>
         <div className="px-4 sm:px-6 py-4 flex flex-col gap-4">

@@ -1,23 +1,9 @@
 "use client";
 
-import { Badge, Button, Drawer, Icon, Loader } from "@texturehq/edges";
+import { Button, Drawer, Icon, Loader } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
-interface EditableField {
-  fieldName: string;
-  fieldType: "text" | "integer" | "float" | "boolean" | "enum" | "url";
-  isCritical: boolean;
-  displayName: string;
-  validationRules?: {
-    min?: number;
-    max?: number;
-    minLength?: number;
-    maxLength?: number;
-    pattern?: string;
-    enum?: string[];
-  };
-}
+import { type EditableField, EditSummaryField, EntityFormFields, SourceCitationFields } from "./EntityFormFields";
 
 interface EditEntityPanelProps {
   entityType: string;
@@ -28,19 +14,6 @@ interface EditEntityPanelProps {
   onClose: () => void;
   onSubmitted: () => void;
 }
-
-const SOURCE_TYPE_OPTIONS = [
-  { value: "eia_filing", label: "EIA Filing" },
-  { value: "utility_website", label: "Utility Website" },
-  { value: "state_puc", label: "State PUC" },
-  { value: "sec_filing", label: "SEC Filing" },
-  { value: "ferc_filing", label: "FERC Filing" },
-  { value: "news_article", label: "News Article" },
-  { value: "academic_paper", label: "Academic Paper" },
-  { value: "government_db", label: "Government Database" },
-  { value: "personal_observation", label: "Personal Observation" },
-  { value: "other", label: "Other" },
-];
 
 export function EditEntityPanel({
   entityType,
@@ -201,25 +174,7 @@ export function EditEntityPanel({
           {!isLoadingFields && !fieldsError && fields.length > 0 && (
             <>
               {/* Editable Fields */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-text-heading">Fields</h3>
-                {fields.map((field) => (
-                  <div key={field.fieldName} className="space-y-1">
-                    <label
-                      htmlFor={field.fieldName}
-                      className="flex items-center gap-2 text-sm font-medium text-text-body"
-                    >
-                      {field.displayName}
-                      {field.isCritical && (
-                        <Badge variant="warning" size="sm">
-                          Critical
-                        </Badge>
-                      )}
-                    </label>
-                    {renderFieldInput(field, formValues[field.fieldName], handleFieldChange)}
-                  </div>
-                ))}
-              </div>
+              <EntityFormFields fields={fields} formValues={formValues} onChange={handleFieldChange} mode="edit" />
 
               {/* Changes Summary */}
               {hasChanges && (
@@ -237,81 +192,17 @@ export function EditEntityPanel({
               )}
 
               {/* Source Citation */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-text-heading">Source Citation</h3>
-
-                <div className="space-y-1">
-                  <label htmlFor="sourceType" className="text-sm font-medium text-text-body">
-                    Source Type
-                  </label>
-                  <select
-                    id="sourceType"
-                    value={sourceType}
-                    onChange={(e) => setSourceType(e.target.value)}
-                    className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  >
-                    {SOURCE_TYPE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label htmlFor="sourceUrl" className="text-sm font-medium text-text-body">
-                    Source URL (optional)
-                  </label>
-                  <input
-                    id="sourceUrl"
-                    type="url"
-                    value={sourceUrl}
-                    onChange={(e) => setSourceUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label htmlFor="sourceDate" className="text-sm font-medium text-text-body">
-                    Source Date (optional)
-                  </label>
-                  <input
-                    id="sourceDate"
-                    type="date"
-                    value={sourceDate}
-                    onChange={(e) => setSourceDate(e.target.value)}
-                    className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                  />
-                </div>
-              </div>
+              <SourceCitationFields
+                sourceType={sourceType}
+                sourceUrl={sourceUrl}
+                sourceDate={sourceDate}
+                onSourceTypeChange={setSourceType}
+                onSourceUrlChange={setSourceUrl}
+                onSourceDateChange={setSourceDate}
+              />
 
               {/* Edit Summary */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="editSummary"
-                  className="flex items-center justify-between text-sm font-medium text-text-body"
-                >
-                  <span>
-                    Edit Summary <span className="text-feedback-error">*</span>
-                  </span>
-                  <span
-                    className={`text-xs ${
-                      editSummary.trim().length >= 25 ? "text-feedback-success" : "text-text-muted"
-                    }`}
-                  >
-                    {editSummary.trim().length}/25
-                  </span>
-                </label>
-                <textarea
-                  id="editSummary"
-                  value={editSummary}
-                  onChange={(e) => setEditSummary(e.target.value)}
-                  placeholder="Describe the changes you're making (minimum 25 characters)"
-                  rows={3}
-                  className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                />
-              </div>
+              <EditSummaryField value={editSummary} onChange={setEditSummary} />
 
               {/* Submit Error */}
               {submitError && (
@@ -355,109 +246,4 @@ export function EditEntityPanel({
       </div>
     </Drawer>
   );
-}
-
-/**
- * Render the appropriate input field based on field type
- */
-function renderFieldInput(field: EditableField, value: unknown, onChange: (fieldName: string, value: unknown) => void) {
-  const inputClassName =
-    "w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20";
-
-  switch (field.fieldType) {
-    case "text":
-      return (
-        <input
-          id={field.fieldName}
-          type="text"
-          value={(value as string) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value)}
-          className={inputClassName}
-        />
-      );
-
-    case "url":
-      return (
-        <input
-          id={field.fieldName}
-          type="url"
-          value={(value as string) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value)}
-          placeholder="https://..."
-          className={inputClassName}
-        />
-      );
-
-    case "integer":
-      return (
-        <input
-          id={field.fieldName}
-          type="number"
-          step="1"
-          value={(value as number) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value ? parseInt(e.target.value, 10) : null)}
-          min={field.validationRules?.min}
-          max={field.validationRules?.max}
-          className={inputClassName}
-        />
-      );
-
-    case "float":
-      return (
-        <input
-          id={field.fieldName}
-          type="number"
-          step="any"
-          value={(value as number) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value ? parseFloat(e.target.value) : null)}
-          min={field.validationRules?.min}
-          max={field.validationRules?.max}
-          className={inputClassName}
-        />
-      );
-
-    case "boolean":
-      return (
-        <div className="flex items-center gap-2">
-          <input
-            id={field.fieldName}
-            type="checkbox"
-            checked={(value as boolean) ?? false}
-            onChange={(e) => onChange(field.fieldName, e.target.checked)}
-            className="h-4 w-4 rounded border-border-default text-brand-primary focus:ring-2 focus:ring-brand-primary/20"
-          />
-          <label htmlFor={field.fieldName} className="text-sm text-text-body">
-            {value ? "Yes" : "No"}
-          </label>
-        </div>
-      );
-
-    case "enum":
-      return (
-        <select
-          id={field.fieldName}
-          value={(value as string) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value)}
-          className={inputClassName}
-        >
-          <option value="">-- Select --</option>
-          {field.validationRules?.enum?.map((option) => (
-            <option key={option} value={option}>
-              {option.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-            </option>
-          ))}
-        </select>
-      );
-
-    default:
-      return (
-        <input
-          id={field.fieldName}
-          type="text"
-          value={(value as string) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value)}
-          className={inputClassName}
-        />
-      );
-  }
 }

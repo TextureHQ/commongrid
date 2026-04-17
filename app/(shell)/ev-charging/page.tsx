@@ -1,11 +1,12 @@
 "use client";
 
-import { Badge, type Column, DataControls, DataTable, Loader, PageLayout } from "@texturehq/edges";
+import { Badge, Button, type Column, DataControls, DataTable, Icon, Loader, PageLayout } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { EVStation } from "@/types/ev-charging";
 import { getAccessLabel, getNetworkColor, getNetworkShortName, getStatusLabel } from "@/types/ev-charging";
 
@@ -61,6 +62,7 @@ function getAccessBadgeVariant(access: string): "info" | "neutral" | "warning" {
 
 export default function EVChargingPage() {
   const router = useRouter();
+  const { user } = useCurrentUser();
   const [isPending, startTransition] = useTransition();
 
   // State
@@ -325,7 +327,18 @@ export default function EVChargingPage() {
         paddingXClass="px-4"
       >
         <div className="flex-none">
-          <PageLayout.Header title="EV Charging Stations" sticky={true} />
+          <div className="flex items-center justify-between">
+            <PageLayout.Header title="EV Charging Stations" sticky={true} />
+            <Button
+              variant={user ? "primary" : "secondary"}
+              size="md"
+              isDisabled={!user}
+              onPress={() => router.push("/ev-charging/new")}
+            >
+              <Icon name="Plus" size="sm" />
+              <span>Add EV Station</span>
+            </Button>
+          </div>
         </div>
         <div className="flex-1 flex items-center justify-center">
           <Loader size={32} />
@@ -341,11 +354,22 @@ export default function EVChargingPage() {
       paddingXClass="px-4"
     >
       <div className="flex-none">
-        <PageLayout.Header
-          title="EV Charging Stations"
-          subtitle={`${meta.totalCount.toLocaleString()} stations`}
-          sticky={true}
-        />
+        <div className="flex items-center justify-between">
+          <PageLayout.Header
+            title="EV Charging Stations"
+            subtitle={`${meta.totalCount.toLocaleString()} stations`}
+            sticky={true}
+          />
+          <Button
+            variant={user ? "primary" : "secondary"}
+            size="md"
+            isDisabled={!user}
+            onPress={() => router.push("/ev-charging/new")}
+          >
+            <Icon name="Plus" size="sm" />
+            <span>Add EV Station</span>
+          </Button>
+        </div>
         <DataSourceLink paths={["data/ev-charging.json"]} className="px-1 pb-2" />
       </div>
       <div className="flex-none px-1 pb-3">
