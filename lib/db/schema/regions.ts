@@ -17,6 +17,9 @@ export const regions = pgTable(
     state: text("state"),
     customers: integer("customers"),
 
+    /** NULL | 'semi_locked' | 'fully_locked' — denormalized cache from entity_locks table */
+    lockedStatus: text("locked_status"),
+
     // Provenance & audit
     source: text("source"),
     sourceUrl: text("source_url"),

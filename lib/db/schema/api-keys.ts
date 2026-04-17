@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { users } from "./users";
 
 /**
  * API Keys
@@ -13,6 +14,8 @@ import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
  *
  * Scope format: resource:action (e.g., 'utilities:read', 'utilities:write',
  * 'admin:api-keys', '*:read', '*:*').
+ *
+ * Key count limit: max 10 active keys per user, enforced at application layer.
  */
 export const apiKeys = pgTable(
   "api_keys",
@@ -28,11 +31,24 @@ export const apiKeys = pgTable(
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+
+    // Developer API columns (ERD §3.16)
+    /** FK to users; ON DELETE CASCADE */
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    /** 'registered' | 'bulk' */
+    tier: text("tier").notNull().default("registered"),
+    appName: text("app_name"),
+    appUrl: text("app_url"),
+    useCase: text("use_case"),
+    description: text("description"),
+    lastUsedEndpoint: text("last_used_endpoint"),
   },
   (table) => [
     index("idx_api_keys_hash").on(table.keyHash),
     index("idx_api_keys_active").on(table.isActive),
     index("idx_api_keys_rotation").on(table.rotationGroup),
+    index("idx_api_keys_user").on(table.userId),
+    index("idx_api_keys_tier").on(table.tier),
   ]
 );
 

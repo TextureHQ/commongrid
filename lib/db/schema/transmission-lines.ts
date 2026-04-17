@@ -24,6 +24,9 @@ export const transmissionLines = pgTable(
     lengthMiles: doublePrecision("length_miles").notNull(),
     naicsCode: text("naics_code").notNull(),
 
+    /** NULL | 'semi_locked' | 'fully_locked' — denormalized cache from entity_locks table */
+    lockedStatus: text("locked_status"),
+
     // Provenance & audit
     source: text("source").notNull().default("HIFLD"),
     sourceUrl: text("source_url"),
