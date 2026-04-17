@@ -1,8 +1,8 @@
 "use client";
 
 import { Button, Icon, Tooltip } from "@texturehq/edges";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { DeleteEntityDialog } from "./DeleteEntityDialog";
 import { EditEntityPanel } from "./EditEntityPanel";
@@ -24,7 +24,22 @@ interface EntityActionsProps {
 export function EntityActions({ entityType, entityId, entitySlug, entityName, currentValues }: EntityActionsProps) {
   const { user, isLoading } = useCurrentUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+
+  // Auto-open edit panel when ?edit=true is in the URL
+  const didAutoOpen = useRef(false);
+  useEffect(() => {
+    if (didAutoOpen.current) return;
+    if (searchParams.get("edit") === "true" && user && !isLoading) {
+      didAutoOpen.current = true;
+      setIsPanelOpen(true);
+      // Clean up the URL param without navigation
+      const url = new URL(window.location.href);
+      url.searchParams.delete("edit");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams, user, isLoading]);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

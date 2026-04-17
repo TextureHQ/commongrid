@@ -4,6 +4,7 @@ import {
   Avatar,
   addFilterCondition,
   Badge,
+  Button,
   type Column,
   createEmptyFilter,
   DataControls,
@@ -13,9 +14,13 @@ import {
   FilterDialog,
   type FilterState,
   getFilterFields,
+  Icon,
   Loader,
+  Tooltip,
 } from "@texturehq/edges";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
 import { type Utility, UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
 import { useExplorer } from "../ExplorerContext";
@@ -183,6 +188,8 @@ function buildApiParams(
 
 export function UtilityListPanel() {
   const { state, setSearch, setSegment, setJurisdictions, navigateToDetail } = useExplorer();
+  const router = useRouter();
+  const { user } = useCurrentUser();
 
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [sortValue, setSortValue] = useState("name:asc");
@@ -374,6 +381,22 @@ export function UtilityListPanel() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-none px-4">
+        <div className="flex items-center justify-between py-2">
+          <span className="text-sm font-medium text-text-heading">Utilities</span>
+          {user ? (
+            <Button variant="primary" size="sm" onPress={() => router.push("/grid-operators/new")}>
+              <Icon name="Plus" size="sm" />
+              <span>Add New</span>
+            </Button>
+          ) : (
+            <Tooltip content="Sign in to add entities">
+              <Button variant="secondary" size="sm" isDisabled>
+                <Icon name="Plus" size="sm" />
+                <span>Add New</span>
+              </Button>
+            </Tooltip>
+          )}
+        </div>
         <DataControls
           resultsCount={{ count: meta.total, label: "utilities" }}
           search={{

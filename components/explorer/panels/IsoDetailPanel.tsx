@@ -1,8 +1,20 @@
 "use client";
 
-import { Badge, Card, type Column, DataControls, DataTable, EmptyState, Section } from "@texturehq/edges";
+import {
+  Badge,
+  Card,
+  type Column,
+  DataControls,
+  DataTable,
+  EmptyState,
+  Icon,
+  Section,
+  Tooltip,
+} from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getBalancingAuthoritiesByIso, getIsoBySlug } from "@/lib/data";
 import { formatCustomerCount, formatStates, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
@@ -27,6 +39,7 @@ interface BalancingAuthorityRow extends Record<string, unknown> {
 
 export function IsoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
+  const { user } = useCurrentUser();
 
   const iso = getIsoBySlug(slug);
 
@@ -199,6 +212,26 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
         <div>
           <h2 className="text-lg font-semibold text-text-heading">{iso.name}</h2>
           <div className="text-sm text-text-muted">{iso.shortName}</div>
+        </div>
+
+        {/* Suggest Edit link */}
+        <div>
+          {user ? (
+            <Link
+              href={`/grid-operators/${slug}?edit=true`}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-primary hover:underline"
+            >
+              <Icon name="PencilSimple" size="sm" />
+              Suggest Edit
+            </Link>
+          ) : (
+            <Tooltip content="Sign in to suggest edits">
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted cursor-not-allowed">
+                <Icon name="PencilSimple" size="sm" />
+                Suggest Edit
+              </span>
+            </Tooltip>
+          )}
         </div>
 
         <Section id="overview" title="Overview">

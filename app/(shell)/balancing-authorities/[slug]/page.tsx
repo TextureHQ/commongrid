@@ -19,6 +19,7 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { EntityActions } from "@/components/contributions/EntityActions";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { getBalancingAuthorityBySlug, getIsoById } from "@/lib/data";
 import {
@@ -157,6 +158,15 @@ export default function BADetailPage() {
           { label: "Grid Operators", href: "/explore?view=grid-operators" },
           { label: ba.slug, copyable: true, copyValue: ba.slug },
         ]}
+        actions={
+          <EntityActions
+            entityType="balancing_authority"
+            entityId={ba.id ?? ba.slug}
+            entitySlug={ba.slug}
+            entityName={ba.name}
+            currentValues={ba as unknown as Record<string, unknown>}
+          />
+        }
       />
       <DataSourceLink paths={["data/balancing-authorities.json"]} className="px-4 sm:px-6 pb-2" />
       <PageLayout.Content>
