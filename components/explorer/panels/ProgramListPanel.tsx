@@ -1,8 +1,9 @@
 "use client";
 
-import { Badge, type Column, DataControls, DataTable, EmptyState } from "@texturehq/edges";
+import { Badge, Button, type Column, DataControls, DataTable, EmptyState, Icon, Tooltip } from "@texturehq/edges";
+import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
-// Note: Programs don't have a /new page yet, so no Add New button
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getAllPrograms, searchEntities, sortByName } from "@/lib/data";
 import { useUtilities } from "@/lib/utilities-client";
 import { AssetTypeLabel, CompensationTypeLabel, CompensationUnitLabel, type Program } from "@/types/programs";
@@ -40,6 +41,8 @@ function getPrimaryCompensationSummary(program: Program): string {
 
 export function ProgramListPanel() {
   const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
+  const router = useRouter();
+  const { user } = useCurrentUser();
 
   const { utilities } = useUtilities();
 
@@ -171,6 +174,19 @@ export function ProgramListPanel() {
       <div className="flex-none px-4">
         <div className="flex items-center justify-between py-2">
           <span className="text-sm font-medium text-text-heading">Programs</span>
+          {user ? (
+            <Button variant="primary" size="sm" onPress={() => router.push("/programs/new")}>
+              <Icon name="Plus" size="sm" />
+              <span>Add New</span>
+            </Button>
+          ) : (
+            <Tooltip content="Sign in to add entities">
+              <Button variant="secondary" size="sm" isDisabled>
+                <Icon name="Plus" size="sm" />
+                <span>Add New</span>
+              </Button>
+            </Tooltip>
+          )}
         </div>
         <DataControls
           resultsCount={{ count: filtered.length, label: "programs" }}
