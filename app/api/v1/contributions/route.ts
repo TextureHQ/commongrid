@@ -176,6 +176,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
 
   // --- Entity existence check (skip for creates) ---
   const entityTable = getEntityTable(entity_type as EntityType);
+  // biome-ignore lint/suspicious/noExplicitAny: Entity type varies by entityType
   let entity: any = null;
   let entitySlug: string;
   let entityState: string | null = null;
@@ -269,7 +270,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
 
     // If create was auto-approved, we need to insert the entity
     if (isCreate && autoApproveResult.autoApproved) {
-      const newEntityId = await createEntity(
+      await createEntity(
         db,
         entity_type as EntityType,
         entity_id,

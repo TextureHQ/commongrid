@@ -84,9 +84,7 @@ export default function CreatePricingNodePage() {
         const res = await fetch(`/api/v1/pricing-nodes?q=${encodeURIComponent(name.trim())}&limit=5`);
         if (res.ok) {
           const json = await res.json();
-          const matches = json.data?.filter((n: { name: string }) =>
-            n.name.toLowerCase().includes(name.toLowerCase())
-          );
+          const matches = json.data?.filter((n: { name: string }) => n.name.toLowerCase().includes(name.toLowerCase()));
           if (matches && matches.length > 0) {
             setDuplicateWarning(
               `A pricing node named "${matches[0].name}" already exists. Did you mean to edit it instead?`

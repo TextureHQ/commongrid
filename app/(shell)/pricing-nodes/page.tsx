@@ -1,6 +1,16 @@
 "use client";
 
-import { Badge, Button, type Column, DataControls, DataTable, Icon, Loader, PageLayout, TextCell } from "@texturehq/edges";
+import {
+  Badge,
+  Button,
+  type Column,
+  DataControls,
+  DataTable,
+  Icon,
+  Loader,
+  PageLayout,
+  TextCell,
+} from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";

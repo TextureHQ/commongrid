@@ -3,12 +3,7 @@
 import { Button, Drawer, Icon, Loader } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import {
-  type EditableField,
-  EditSummaryField,
-  EntityFormFields,
-  SourceCitationFields,
-} from "./EntityFormFields";
+import { type EditableField, EditSummaryField, EntityFormFields, SourceCitationFields } from "./EntityFormFields";
 
 interface EditEntityPanelProps {
   entityType: string;

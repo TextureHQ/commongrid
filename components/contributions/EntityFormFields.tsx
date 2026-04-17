@@ -143,9 +143,7 @@ export function EditSummaryField({ value, onChange, minLength = 25, placeholder 
         <span>
           Edit Summary <span className="text-feedback-error">*</span>
         </span>
-        <span
-          className={`text-xs ${value.trim().length >= minLength ? "text-feedback-success" : "text-text-muted"}`}
-        >
+        <span className={`text-xs ${value.trim().length >= minLength ? "text-feedback-success" : "text-text-muted"}`}>
           {value.trim().length}/{minLength}
         </span>
       </label>
