@@ -13,7 +13,7 @@ import {
 } from "@texturehq/edges";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
-import { type EditableField, EntityActions } from "@/components/contributions";
+import { EntityActions } from "@/components/contributions/EntityActions";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { useEvStation } from "@/lib/ev-charging";
 import {
@@ -49,48 +49,7 @@ function getOwnerTypeLabel(code: string | null): string {
   return map[code] ?? code;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: EV station data shape varies
-function getEvStationEditableFields(station: any): EditableField[] {
-  return [
-    {
-      name: "station_name",
-      label: "Station Name",
-      section: "General",
-      type: "text",
-      currentValue: station.stationName,
-    },
-    {
-      name: "street_address",
-      label: "Street Address",
-      section: "Location",
-      type: "text",
-      currentValue: station.streetAddress,
-    },
-    { name: "city", label: "City", section: "Location", type: "text", currentValue: station.city },
-    { name: "ev_pricing", label: "EV Pricing", section: "Charging", type: "text", currentValue: station.evPricing },
-    {
-      name: "ev_level1_evse_num",
-      label: "Level 1 Ports",
-      section: "Charging",
-      type: "number",
-      currentValue: station.evLevel1EvseNum,
-    },
-    {
-      name: "ev_level2_evse_num",
-      label: "Level 2 Ports",
-      section: "Charging",
-      type: "number",
-      currentValue: station.evLevel2EvseNum,
-    },
-    {
-      name: "ev_dc_fast_num",
-      label: "DC Fast Ports",
-      section: "Charging",
-      type: "number",
-      currentValue: station.evDcFastNum,
-    },
-  ];
-}
+
 
 export default function EVStationDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -179,10 +138,8 @@ export default function EVStationDetailPage() {
             entityType="ev_station"
             entityId={station.id ?? station.slug}
             entitySlug={station.slug}
-            entityVersion={1}
             entityName={station.stationName}
-            versionApiEntityType="ev-station"
-            editableFields={getEvStationEditableFields(station)}
+            currentValues={station as unknown as Record<string, unknown>}
           />
         }
       />

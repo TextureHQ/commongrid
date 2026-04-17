@@ -12,7 +12,7 @@ import {
   StatList,
 } from "@texturehq/edges";
 import { notFound, useParams } from "next/navigation";
-import { type EditableField, EntityActions } from "@/components/contributions";
+import { EntityActions } from "@/components/contributions/EntityActions";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { getBalancingAuthorityById } from "@/lib/data";
 import {
@@ -26,35 +26,7 @@ import {
 import { usePowerPlant } from "@/lib/power-plants";
 import { useUtilities } from "@/lib/utilities-client";
 
-// biome-ignore lint/suspicious/noExplicitAny: Power plant data shape varies
-function getPowerPlantEditableFields(plant: any): EditableField[] {
-  return [
-    { name: "name", label: "Plant Name", section: "General", type: "text", currentValue: plant.name },
-    { name: "sector", label: "Sector", section: "General", type: "text", currentValue: plant.sector },
-    { name: "county", label: "County", section: "Location", type: "text", currentValue: plant.county },
-    {
-      name: "total_capacity_mw",
-      label: "Total Capacity (MW)",
-      section: "Technical",
-      type: "number",
-      currentValue: plant.totalCapacityMw,
-    },
-    {
-      name: "grid_voltage_kv",
-      label: "Grid Voltage (kV)",
-      section: "Technical",
-      type: "number",
-      currentValue: plant.gridVoltageKv,
-    },
-    {
-      name: "nerc_region",
-      label: "NERC Region",
-      section: "Grid",
-      type: "text",
-      currentValue: plant.nercRegion,
-    },
-  ];
-}
+
 
 export default function PowerPlantDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -163,10 +135,8 @@ export default function PowerPlantDetailPage() {
             entityType="power_plant"
             entityId={plant.id ?? plant.slug}
             entitySlug={plant.slug}
-            entityVersion={1}
             entityName={plant.name}
-            versionApiEntityType="power-plant"
-            editableFields={getPowerPlantEditableFields(plant)}
+            currentValues={plant as unknown as Record<string, unknown>}
           />
         }
       />
