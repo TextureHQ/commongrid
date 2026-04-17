@@ -3,10 +3,12 @@
 import {
   Avatar,
   Badge,
+  Button,
   type Column,
   DataControls,
   DataTable,
   EmptyState,
+  Icon,
   PageLayout,
   TextCell,
 } from "@texturehq/edges";
@@ -15,6 +17,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { sortByName } from "@/lib/data";
 import {
   formatCustomerCount,
@@ -78,6 +81,7 @@ const FUSE_OPTIONS = {
 function GridOperatorsPageInner() {
   const router = useRouter();
   const { utilities: allUtilities } = useUtilities();
+  const { user } = useCurrentUser();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
   const [sortValue, setSortValue] = useState("customers:desc");
@@ -216,7 +220,18 @@ function GridOperatorsPageInner() {
       paddingXClass="px-4"
     >
       <div className="flex-none">
-        <PageLayout.Header title="Grid Operators" sticky={true} />
+        <div className="flex items-center justify-between">
+          <PageLayout.Header title="Grid Operators" sticky={true} />
+          <Button
+            variant={user ? "primary" : "secondary"}
+            size="md"
+            isDisabled={!user}
+            onPress={() => router.push("/grid-operators/new")}
+          >
+            <Icon name="Plus" size="sm" />
+            <span>Add Utility</span>
+          </Button>
+        </div>
         <DataSourceLink paths={["data/utilities.json"]} className="px-1 pb-2" />
       </div>
       <div className="flex-none px-1 pb-3">

@@ -31,6 +31,7 @@ interface AutoApproveResult {
  * @param contributionId - ID of the contribution to check
  * @param entityType     - The entity type being edited
  * @param changes        - The changes JSONB (field_name → {old, new})
+ * @param isCreate       - Whether this is a create (vs edit) contribution
  */
 export async function tryAutoApprove(
   // biome-ignore lint/suspicious/noExplicitAny: Drizzle db/tx types are complex
@@ -38,11 +39,19 @@ export async function tryAutoApprove(
   user: UserSelect,
   contributionId: string,
   entityType: string,
-  changes: Record<string, unknown>
+  changes: Record<string, unknown>,
+  isCreate = false
 ): Promise<AutoApproveResult> {
-  // Only trusted_contributor role qualifies
-  if (user.role !== "trusted_contributor") {
-    return { autoApproved: false, reason: "User is not a trusted contributor" };
+  // For creates, require moderator or admin role
+  if (isCreate) {
+    if (user.role !== "moderator" && user.role !== "admin") {
+      return { autoApproved: false, reason: "Creates require moderator approval" };
+    }
+  } else {
+    // For edits, only trusted_contributor role qualifies
+    if (user.role !== "trusted_contributor" && user.role !== "moderator" && user.role !== "admin") {
+      return { autoApproved: false, reason: "User is not a trusted contributor" };
+    }
   }
 
   // Get the field names being edited

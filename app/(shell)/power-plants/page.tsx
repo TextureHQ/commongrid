@@ -2,10 +2,12 @@
 
 import {
   Badge,
+  Button,
   type Column,
   DataControls,
   DataTable,
   EmptyState,
+  Icon,
   Loader,
   PageLayout,
   TextCell,
@@ -15,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { sortByName } from "@/lib/data";
 import {
   formatCapacity,
@@ -63,6 +66,7 @@ const statusFilterOptions = [
 export default function PowerPlantsPage() {
   const router = useRouter();
   const { plants: allPlants, isLoading } = usePowerPlants();
+  const { user } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortValue, setSortValue] = useState("capacity:desc");
   const [fuelFilter, setFuelFilter] = useState("all");
@@ -237,7 +241,18 @@ export default function PowerPlantsPage() {
       paddingXClass="px-4"
     >
       <div className="flex-none">
-        <PageLayout.Header title="Power Plants" sticky={true} />
+        <div className="flex items-center justify-between">
+          <PageLayout.Header title="Power Plants" sticky={true} />
+          <Button
+            variant={user ? "primary" : "secondary"}
+            size="md"
+            isDisabled={!user}
+            onPress={() => router.push("/power-plants/new")}
+          >
+            <Icon name="Plus" size="sm" />
+            <span>Add Power Plant</span>
+          </Button>
+        </div>
         <DataSourceLink paths={["data/power-plants.json"]} className="px-1 pb-2" />
       </div>
       <div className="flex-none px-1 pb-3">
