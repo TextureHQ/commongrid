@@ -129,7 +129,7 @@ const TABS: TabDef[] = [
   { id: "programs", label: "Programs", shortLabel: "Programs", icon: <ProgramIcon /> },
   { id: "transmission-lines", label: "Transmission", shortLabel: "Lines", icon: <TransmissionIcon /> },
   { id: "ev-charging", label: "EV Charging", shortLabel: "EV", icon: <EVChargingIcon /> },
-  { id: "pricing-nodes", label: "Pricing Nodes", shortLabel: "Nodes", icon: <PricingNodeIcon /> },
+  { id: "pricing-nodes", label: "Pricing Nodes", shortLabel: "Pricing", icon: <PricingNodeIcon /> },
 ];
 
 export function ExplorerTabBar() {
