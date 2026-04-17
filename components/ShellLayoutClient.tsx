@@ -1,9 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { GlobalSearchModal, GlobalSearchProvider, useGlobalSearch } from "@/components/GlobalSearch";
 import { type NavigationItem, TopBar } from "@/components/TopBar";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface ShellLayoutClientProps {
   children: ReactNode;
@@ -16,6 +17,34 @@ interface ShellLayoutClientProps {
  */
 function ShellInner({ children, navigation }: ShellLayoutClientProps) {
   const { open } = useGlobalSearch();
+  const { user } = useCurrentUser();
+
+  // Add Moderation nav item if user is admin or moderator
+  const enhancedNavigation = useMemo(() => {
+    if (!user || (user.role !== "admin" && user.role !== "moderator")) {
+      return navigation;
+    }
+
+    // Check if moderation item already exists
+    const hasMod = navigation.some((item) => item.id === "moderation");
+    if (hasMod) {
+      return navigation;
+    }
+
+    // Insert moderation item after contributions
+    const contribIndex = navigation.findIndex((item) => item.id === "contributions");
+    if (contribIndex === -1) {
+      // No contributions item, append at end
+      return [...navigation, { id: "moderation", label: "Moderation", href: "/mod" }];
+    }
+
+    // Insert after contributions
+    return [
+      ...navigation.slice(0, contribIndex + 1),
+      { id: "moderation", label: "Moderation", href: "/mod" },
+      ...navigation.slice(contribIndex + 1),
+    ];
+  }, [user, navigation]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -30,7 +59,7 @@ function ShellInner({ children, navigation }: ShellLayoutClientProps) {
 
   return (
     <div className="flex flex-col h-dvh">
-      <TopBar navigation={navigation} />
+      <TopBar navigation={enhancedNavigation} />
       <main className="flex-1 min-h-0 pt-14">{children}</main>
       <GlobalSearchModal />
     </div>

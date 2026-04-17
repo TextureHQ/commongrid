@@ -1,10 +1,11 @@
 "use client";
 
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
-import { Button, Icon, useColorMode } from "@texturehq/edges";
+import { Badge, Button, Icon, useColorMode } from "@texturehq/edges";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export type NavigationItem = {
   id: string;
@@ -30,6 +31,7 @@ export function TopBar({ navigation }: TopBarProps) {
   const pathname = usePathname();
   const { isDarkTheme, toggleTheme } = useColorMode();
   const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useCurrentUser();
 
   useEffect(() => {
     setMounted(true);
@@ -142,13 +144,20 @@ export function TopBar({ navigation }: TopBarProps) {
             </SignInButton>
           )}
           {showAuth && isSignedIn && (
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "h-8 w-8",
-                },
-              }}
-            />
+            <div className="flex items-center gap-2">
+              {user && (user.role === "admin" || user.role === "moderator") && (
+                <Badge size="sm" shape="pill" variant={user.role === "admin" ? "error" : "info"}>
+                  {user.role === "admin" ? "Admin" : "Moderator"}
+                </Badge>
+              )}
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "h-8 w-8",
+                  },
+                }}
+              />
+            </div>
           )}
         </div>
 
@@ -165,13 +174,20 @@ export function TopBar({ navigation }: TopBarProps) {
             </SignInButton>
           )}
           {showAuth && isSignedIn && (
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "h-7 w-7",
-                },
-              }}
-            />
+            <div className="flex items-center gap-1">
+              {user && (user.role === "admin" || user.role === "moderator") && (
+                <Badge size="sm" shape="pill" variant={user.role === "admin" ? "error" : "info"}>
+                  {user.role === "admin" ? "Admin" : "Mod"}
+                </Badge>
+              )}
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "h-7 w-7",
+                  },
+                }}
+              />
+            </div>
           )}
           {mounted && (
             <Button variant="icon" onClick={toggleTheme} aria-label="Toggle color mode">
