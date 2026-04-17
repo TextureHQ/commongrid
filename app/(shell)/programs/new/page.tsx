@@ -84,9 +84,7 @@ export default function CreateProgramPage() {
         const res = await fetch(`/api/v1/programs?q=${encodeURIComponent(name.trim())}&limit=5`);
         if (res.ok) {
           const json = await res.json();
-          const matches = json.data?.filter((p: { name: string }) =>
-            p.name.toLowerCase().includes(name.toLowerCase())
-          );
+          const matches = json.data?.filter((p: { name: string }) => p.name.toLowerCase().includes(name.toLowerCase()));
           if (matches && matches.length > 0) {
             setDuplicateWarning(
               `A program named "${matches[0].name}" already exists. Did you mean to edit it instead?`
