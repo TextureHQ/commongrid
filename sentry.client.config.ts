@@ -23,11 +23,9 @@ Sentry.init({
 
   // Filter out noisy errors
   ignoreErrors: [
-    // Browser extensions
+    // Browser extension noise
     "ResizeObserver loop",
-    // Network errors
-    "Failed to fetch",
-    "NetworkError",
-    "Load failed",
+    // Lazy chunk loading (transient network issues)
+    /Loading chunk \d+ failed/,
   ],
 });
