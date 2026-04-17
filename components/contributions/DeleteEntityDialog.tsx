@@ -173,11 +173,16 @@ export function DeleteEntityDialog({
 
         {/* Justification */}
         <div className="space-y-1">
-          <label htmlFor="justification" className="flex items-center justify-between text-sm font-medium text-text-body">
+          <label
+            htmlFor="justification"
+            className="flex items-center justify-between text-sm font-medium text-text-body"
+          >
             <span>
               Justification <span className="text-feedback-error">*</span>
             </span>
-            <span className={`text-xs ${justification.trim().length >= 50 ? "text-feedback-success" : "text-text-muted"}`}>
+            <span
+              className={`text-xs ${justification.trim().length >= 50 ? "text-feedback-success" : "text-text-muted"}`}
+            >
               {justification.trim().length}/50
             </span>
           </label>
@@ -238,8 +243,8 @@ export function DeleteEntityDialog({
 
         {/* Info notice */}
         <div className="p-3 rounded-lg bg-background-muted text-text-muted text-xs">
-          Deletion requests require moderation review. Admins can approve deletions immediately, but all
-          other deletions must be reviewed by a moderator to ensure data integrity.
+          Deletion requests require moderation review. Admins can approve deletions immediately, but all other deletions
+          must be reviewed by a moderator to ensure data integrity.
         </div>
       </div>
     </Dialog>
