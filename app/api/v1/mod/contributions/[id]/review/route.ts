@@ -39,6 +39,8 @@ import {
   utilities,
 } from "@/lib/db/schema";
 import { requireModerator } from "@/lib/mod/require-moderator";
+import { createNotification } from "@/lib/notifications/create-notification";
+import { notifyEntityFollowers } from "@/lib/notifications/notify-followers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -270,6 +272,64 @@ async function handlePost(req: Request, ctx: RouteContext) {
       entity_id: contribution.entityId,
     },
   });
+
+  // --- Notify the contributor ---
+  if (contribution.userId) {
+    const notifType =
+      action === "approve"
+        ? ("contribution_approved" as const)
+        : action === "return"
+          ? ("contribution_returned" as const)
+          : ("changes_requested" as const);
+
+    const notifTitle =
+      action === "approve"
+        ? "Your contribution was approved"
+        : action === "return"
+          ? "Your contribution was returned"
+          : "Changes requested on your contribution";
+
+    const notifBody = comment ?? (action === "approve" ? "Your edit has been applied." : undefined);
+
+    createNotification({
+      userId: contribution.userId,
+      type: notifType,
+      refType: "contribution",
+      refId: contributionId,
+      title: notifTitle,
+      body: notifBody,
+      url: `/contributions/${contributionId}`,
+      data: {
+        entity_type: contribution.entityType,
+        entity_id: contribution.entityId,
+        action,
+      },
+    }).catch((err) => console.error("Failed to notify contributor:", err));
+  }
+
+  // --- Notify entity followers on approval ---
+  if (action === "approve") {
+    notifyEntityFollowers(
+      contribution.entityType,
+      contribution.entityId,
+      "entity_change",
+      {
+        type: "entity_followed_update",
+        refType: "entity",
+        refId: contribution.entityId,
+        title: `${contribution.entityType} updated`,
+        body: contribution.editSummary,
+        url: `/${contribution.entityType}s/${contribution.entitySlug ?? contribution.entityId}`,
+        data: {
+          entity_type: contribution.entityType,
+          entity_id: contribution.entityId,
+          contribution_id: contributionId,
+        },
+      },
+      // Exclude the contributor (they get their own notification)
+      contribution.userId ? [contribution.userId] : []
+    ).catch((err) => console.error("Failed to notify entity followers:", err));
+  }
 
   // Fetch the updated contribution
   const [updated] = await db.select().from(contributions).where(eq(contributions.id, contributionId)).limit(1);
