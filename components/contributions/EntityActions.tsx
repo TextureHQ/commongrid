@@ -1,62 +1,73 @@
 "use client";
 
+import { Button, Icon, Tooltip } from "@texturehq/edges";
 import { useState } from "react";
-import { type EditableField, EditPanel } from "./EditPanel";
-import { SuggestEditButton } from "./SuggestEditButton";
-import { VersionHistory } from "./VersionHistory";
-import { VersionHistoryButton } from "./VersionHistoryButton";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { EditEntityPanel } from "./EditEntityPanel";
 
 interface EntityActionsProps {
   entityType: string;
   entityId: string;
   entitySlug: string;
-  entityVersion: number;
   entityName: string;
-  editableFields: EditableField[];
-  /** URL-friendly entity type plural for the versions API, e.g. "power-plant" → used to build /api/v1/{type}s/{slug}/versions */
-  versionApiEntityType?: string;
+  currentValues: Record<string, unknown>;
 }
 
 /**
- * Combined Suggest Edit + Version History buttons for entity detail pages.
- * Renders both buttons and manages the slide-over panel state.
+ * EntityActions
+ *
+ * Action buttons for entity detail pages, including "Suggest Edit".
+ * Disabled for anonymous users with a tooltip prompt to sign in.
  */
-export function EntityActions({
-  entityType,
-  entityId,
-  entitySlug,
-  entityVersion,
-  entityName,
-  editableFields,
-  versionApiEntityType,
-}: EntityActionsProps) {
-  const [editOpen, setEditOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+export function EntityActions({ entityType, entityId, entitySlug, entityName, currentValues }: EntityActionsProps) {
+  const { user, isLoading } = useCurrentUser();
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+
+  const isSignedIn = !!user;
+
+  const handleOpenPanel = () => {
+    if (isSignedIn) {
+      setIsPanelOpen(true);
+    }
+  };
+
+  const editButton = (
+    <Button
+      variant="secondary"
+      size="md"
+      onPress={handleOpenPanel}
+      isDisabled={!isSignedIn || isLoading}
+      className="gap-2"
+    >
+      <Icon name="PencilSimple" size="sm" />
+      <span>Suggest Edit</span>
+    </Button>
+  );
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <SuggestEditButton onClick={() => setEditOpen(true)} />
-        <VersionHistoryButton onClick={() => setHistoryOpen(true)} />
-      </div>
+      {!isSignedIn && !isLoading ? (
+        <Tooltip content="Sign in to suggest edits" placement="bottom">
+          {editButton}
+        </Tooltip>
+      ) : (
+        editButton
+      )}
 
-      <EditPanel
-        isOpen={editOpen}
-        onClose={() => setEditOpen(false)}
-        entityType={entityType}
-        entityId={entityId}
-        entitySlug={entitySlug}
-        entityVersion={entityVersion}
-        entityName={entityName}
-        fields={editableFields}
-      />
-
-      <VersionHistory
-        entityType={versionApiEntityType ?? entityType}
-        entitySlug={entitySlug}
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-      />
+      {isPanelOpen && (
+        <EditEntityPanel
+          entityType={entityType}
+          entityId={entityId}
+          entitySlug={entitySlug}
+          entityName={entityName}
+          currentValues={currentValues}
+          onClose={() => setIsPanelOpen(false)}
+          onSubmitted={() => {
+            setIsPanelOpen(false);
+            // Optionally trigger a page refresh or refetch
+          }}
+        />
+      )}
     </>
   );
 }

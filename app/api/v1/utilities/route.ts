@@ -249,6 +249,7 @@ async function handleDatabaseMode(params: DbFilterParams) {
   if (params.search) {
     const searchTerm = params.search.trim();
     conditions.push(
+      // biome-ignore lint/style/noNonNullAssertion: or() with 2+ args never returns undefined
       or(
         sql`${utilities.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
         ilike(utilities.name, `%${searchTerm}%`)

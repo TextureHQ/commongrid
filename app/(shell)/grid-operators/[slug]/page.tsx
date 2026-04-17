@@ -19,6 +19,7 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { EntityActions } from "@/components/contributions/EntityActions";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
 import {
@@ -318,7 +319,7 @@ export default function UtilityDetailPage() {
           shape="square"
           variant="organization"
         />
-        <div>
+        <div className="flex-1">
           <div className="text-xl font-semibold text-text-heading">{utility.name}</div>
           {utility.shortName && <div className="text-sm text-text-muted">{utility.shortName}</div>}
           {utility.website && (
@@ -332,6 +333,13 @@ export default function UtilityDetailPage() {
             </a>
           )}
         </div>
+        <EntityActions
+          entityType="utility"
+          entityId={utility.id}
+          entitySlug={utility.slug}
+          entityName={utility.name}
+          currentValues={utility as unknown as Record<string, unknown>}
+        />
       </div>
 
       <PageLayout.Content>
