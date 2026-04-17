@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { discussionThreads } from "./discussion-threads";
 import { users } from "./users";
 
@@ -27,10 +27,7 @@ export const discussionPosts = pgTable(
      * ON DELETE SET NULL — reply becomes a root post if its parent is deleted.
      * Cycle prevention enforced by prevent_reply_cycles() trigger.
      */
-    replyToId: text("reply_to_id").references(
-      (): AnyPgColumn => discussionPosts.id,
-      { onDelete: "set null" }
-    ),
+    replyToId: text("reply_to_id").references((): AnyPgColumn => discussionPosts.id, { onDelete: "set null" }),
 
     body: text("body").notNull(),
 

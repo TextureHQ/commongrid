@@ -27,7 +27,5 @@ export const moderationResponseTemplates = pgTable(
   (table) => [index("idx_mod_templates_category").on(table.category)]
 );
 
-export type ModerationResponseTemplateSelect =
-  typeof moderationResponseTemplates.$inferSelect;
-export type ModerationResponseTemplateInsert =
-  typeof moderationResponseTemplates.$inferInsert;
+export type ModerationResponseTemplateSelect = typeof moderationResponseTemplates.$inferSelect;
+export type ModerationResponseTemplateInsert = typeof moderationResponseTemplates.$inferInsert;

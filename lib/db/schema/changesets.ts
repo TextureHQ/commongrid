@@ -28,10 +28,7 @@ export const changesets = pgTable(
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
     closedAt: timestamp("closed_at", { withTimezone: true }),
   },
-  (table) => [
-    index("idx_changesets_user").on(table.userId),
-    index("idx_changesets_status").on(table.status),
-  ]
+  (table) => [index("idx_changesets_user").on(table.userId), index("idx_changesets_status").on(table.status)]
 );
 
 export type ChangesetSelect = typeof changesets.$inferSelect;

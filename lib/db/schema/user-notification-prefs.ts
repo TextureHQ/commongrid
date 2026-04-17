@@ -16,18 +16,10 @@ export const userNotificationPrefs = pgTable("user_notification_prefs", {
 
   // Per-event-type delivery preferences
   /** 'email_immediate' | 'email_daily' | 'in_app' | 'off' */
-  contributionStatusDelivery: text("contribution_status_delivery")
-    .notNull()
-    .default("email_immediate"),
-  followedChangesDelivery: text("followed_changes_delivery")
-    .notNull()
-    .default("email_daily"),
-  discussionActivityDelivery: text("discussion_activity_delivery")
-    .notNull()
-    .default("in_app"),
-  appealResolvedDelivery: text("appeal_resolved_delivery")
-    .notNull()
-    .default("email_immediate"),
+  contributionStatusDelivery: text("contribution_status_delivery").notNull().default("email_immediate"),
+  followedChangesDelivery: text("followed_changes_delivery").notNull().default("email_daily"),
+  discussionActivityDelivery: text("discussion_activity_delivery").notNull().default("in_app"),
+  appealResolvedDelivery: text("appeal_resolved_delivery").notNull().default("email_immediate"),
 
   // Global toggles
   emailPaused: boolean("email_paused").notNull().default(false),

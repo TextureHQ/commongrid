@@ -1,4 +1,15 @@
-import { bigint, bigserial, customType, doublePrecision, index, integer, pgTable, text, timestamp, unique } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  bigserial,
+  customType,
+  doublePrecision,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
 import { contributions } from "./contributions";
 import { entityVersions } from "./entity-versions";
 
@@ -58,10 +69,9 @@ export const entityGeometryVersions = pgTable(
     centroidLng: doublePrecision("centroid_lng"),
 
     /** FK to entity_versions; ON DELETE CASCADE */
-    entityVersionId: bigint("entity_version_id", { mode: "number" }).references(
-      () => entityVersions.id,
-      { onDelete: "cascade" }
-    ),
+    entityVersionId: bigint("entity_version_id", { mode: "number" }).references(() => entityVersions.id, {
+      onDelete: "cascade",
+    }),
 
     /** FK to contributions; ON DELETE SET NULL — preserved when contribution is removed */
     contributionId: text("contribution_id").references(() => contributions.id, {
@@ -71,9 +81,11 @@ export const entityGeometryVersions = pgTable(
     changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    unique(
-      "entity_geometry_versions_entity_type_entity_id_version_number_unique"
-    ).on(table.entityType, table.entityId, table.versionNumber),
+    unique("entity_geometry_versions_entity_type_entity_id_version_number_unique").on(
+      table.entityType,
+      table.entityId,
+      table.versionNumber
+    ),
     index("idx_egv_entity").on(table.entityType, table.entityId),
     index("idx_egv_version").on(table.entityVersionId),
     // Spatial index — defined in migration DDL:

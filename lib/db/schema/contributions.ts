@@ -1,15 +1,5 @@
 import { sql } from "drizzle-orm";
-import {
-  boolean,
-  customType,
-  date,
-  index,
-  integer,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { boolean, customType, date, index, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { changesets } from "./changesets";
 import { users } from "./users";
 
