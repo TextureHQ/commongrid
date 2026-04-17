@@ -41,13 +41,12 @@ export function EditEntityPanel({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  // Convert snake_case to camelCase for field name lookups
-  const snakeToCamel = (str: string): string => {
-    return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-  };
-
   // Fetch editable fields on mount
   useEffect(() => {
+    // Convert snake_case to camelCase for field name lookups
+    const snakeToCamel = (str: string): string => {
+      return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    };
     const fetchFields = async () => {
       try {
         setIsLoadingFields(true);

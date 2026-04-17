@@ -2,7 +2,6 @@
 
 import { SignInButton } from "@clerk/nextjs";
 import { Avatar, Badge, Button, Card, type Column, DataTable, Icon, Loader, PageLayout } from "@texturehq/edges";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -39,35 +38,11 @@ function formatDate(iso: string | null): string {
   });
 }
 
-function getRoleBadgeVariant(role: string): "default" | "info" | "warning" | "error" | "success" {
-  switch (role) {
-    case "admin":
-      return "error";
-    case "moderator":
-      return "warning";
-    case "trusted_contributor":
-      return "info";
-    default:
-      return "default";
-  }
-}
-
-function getRoleLabel(role: string): string {
-  const labels: Record<string, string> = {
-    contributor: "Contributor",
-    trusted_contributor: "Trusted Contributor",
-    moderator: "Moderator",
-    admin: "Admin",
-  };
-  return labels[role] ?? role;
-}
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export default function UserManagementPage() {
-  const router = useRouter();
   const { user: currentUser, isLoading: userLoading } = useCurrentUser();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,33 +70,28 @@ export default function UserManagementPage() {
   }, [currentUser]);
 
   // Handle role change
-  const handleRoleChange = useCallback(
-    async (userId: string, newRole: string) => {
-      setUpdatingUserId(userId);
-      try {
-        const res = await fetch(`/api/v1/mod/users/${userId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ role: newRole }),
-        });
+  const handleRoleChange = useCallback(async (userId: string, newRole: string) => {
+    setUpdatingUserId(userId);
+    try {
+      const res = await fetch(`/api/v1/mod/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
 
-        if (!res.ok) {
-          const json = await res.json();
-          throw new Error(json.error ?? "Failed to update user");
-        }
-
-        // Update the user in the local state
-        setUsers((prevUsers) =>
-          prevUsers.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
-        );
-      } catch (err) {
-        alert(err instanceof Error ? err.message : "Failed to update user");
-      } finally {
-        setUpdatingUserId(null);
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error ?? "Failed to update user");
       }
-    },
-    []
-  );
+
+      // Update the user in the local state
+      setUsers((prevUsers) => prevUsers.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update user");
+    } finally {
+      setUpdatingUserId(null);
+    }
+  }, []);
 
   // Filter users by search query
   const filteredUsers = useMemo(() => {
@@ -301,6 +271,7 @@ export default function UserManagementPage() {
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery("")}
                   className="text-text-muted hover:text-text-body transition-colors"
                 >
@@ -325,12 +296,7 @@ export default function UserManagementPage() {
           </Card>
         ) : (
           <Card className="p-0 overflow-hidden">
-            <DataTable
-              data={filteredUsers}
-              columns={columns}
-              mobileBreakpoint="md"
-              isLoading={false}
-            />
+            <DataTable data={filteredUsers} columns={columns} mobileBreakpoint="md" isLoading={false} />
           </Card>
         )}
       </div>
