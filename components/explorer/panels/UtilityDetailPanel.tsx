@@ -1,9 +1,21 @@
 "use client";
 
-import { Avatar, Badge, Card, type Column, DataControls, DataTable, Loader, Section } from "@texturehq/edges";
+import {
+  Avatar,
+  Badge,
+  Card,
+  type Column,
+  DataControls,
+  DataTable,
+  Icon,
+  Loader,
+  Section,
+  Tooltip,
+} from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
 import {
   formatCapacity,
@@ -31,6 +43,7 @@ interface ServedUtilityRow extends Record<string, unknown> {
 
 export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
+  const { user } = useCurrentUser();
 
   const { utilities, isLoading: utilitiesLoading } = useUtilities();
 
@@ -251,10 +264,30 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
             shape="square"
             variant="organization"
           />
-          <div>
+          <div className="flex-1 min-w-0">
             <h2 className="text-lg font-semibold text-text-heading">{utility.name}</h2>
             {utility.shortName && <div className="text-sm text-text-muted">{utility.shortName}</div>}
           </div>
+        </div>
+
+        {/* Suggest Edit link */}
+        <div>
+          {user ? (
+            <Link
+              href={`/grid-operators/${slug}?edit=true`}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-primary hover:underline"
+            >
+              <Icon name="PencilSimple" size="sm" />
+              Suggest Edit
+            </Link>
+          ) : (
+            <Tooltip content="Sign in to suggest edits">
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted cursor-not-allowed">
+                <Icon name="PencilSimple" size="sm" />
+                Suggest Edit
+              </span>
+            </Tooltip>
+          )}
         </div>
 
         {/* Overview */}

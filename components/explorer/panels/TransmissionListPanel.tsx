@@ -185,6 +185,9 @@ export function TransmissionListPanel() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-none px-4">
+        <div className="flex items-center justify-between py-2">
+          <span className="text-sm font-medium text-text-heading">Transmission Lines</span>
+        </div>
         <DataControls
           resultsCount={{ count: filtered.length, label: "lines" }}
           search={{

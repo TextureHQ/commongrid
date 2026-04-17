@@ -2,6 +2,7 @@
 
 import { Badge, type Column, DataControls, DataTable, EmptyState } from "@texturehq/edges";
 import { useCallback, useMemo } from "react";
+// Note: Programs don't have a /new page yet, so no Add New button
 import { getAllPrograms, searchEntities, sortByName } from "@/lib/data";
 import { useUtilities } from "@/lib/utilities-client";
 import { AssetTypeLabel, CompensationTypeLabel, CompensationUnitLabel, type Program } from "@/types/programs";
@@ -168,6 +169,9 @@ export function ProgramListPanel() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-none px-4">
+        <div className="flex items-center justify-between py-2">
+          <span className="text-sm font-medium text-text-heading">Programs</span>
+        </div>
         <DataControls
           resultsCount={{ count: filtered.length, label: "programs" }}
           search={{
