@@ -39,6 +39,7 @@ import {
   users,
   utilities,
 } from "@/lib/db/schema";
+import { detectChangeType } from "@/lib/mod/detect-change-type";
 import { requireModerator } from "@/lib/mod/require-moderator";
 import { createNotification } from "@/lib/notifications/create-notification";
 import { notifyEntityFollowers } from "@/lib/notifications/notify-followers";
@@ -88,25 +89,43 @@ function getEntityTable(entityType: EntityType): any {
 }
 
 /**
- * Detect the change type of a contribution.
- * Uses the stored changeType column if available (new contributions);
- * falls back to entityVersion===0 for creates (legacy) and checks for
- * _deletion key in changes for deletes (legacy).
+ * Convert snake_case field names (from community_editable_fields) to camelCase
+ * Drizzle property names. e.g., "customer_count" → "customerCount"
  */
-function detectChangeType(contribution: {
-  changeType: string | null;
-  entityVersion: number;
-  changes: unknown;
-}): "create" | "update" | "delete" {
-  if (contribution.changeType === "create") return "create";
-  if (contribution.changeType === "delete") return "delete";
-  if (contribution.changeType === "update") return "update";
-  // Legacy fallback: creates were submitted with entityVersion=0
-  if (contribution.entityVersion === 0) return "create";
-  // Legacy fallback: deletes have a _deletion key in changes
-  const changes = contribution.changes as Record<string, unknown>;
-  if (changes && typeof changes === "object" && "_deletion" in changes) return "delete";
-  return "update";
+function snakeToCamel(str: string): string {
+  return str.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
+}
+
+/**
+ * Normalize a contribution's changes to { field: { old, new } } format.
+ * Handles both the canonical format and the flat { field: value } format
+ * that the EditEntityPanel might send.
+ */
+function normalizeChanges(changes: Record<string, unknown>): Record<string, { old: unknown; new: unknown }> {
+  const result: Record<string, { old: unknown; new: unknown }> = {};
+  for (const [key, value] of Object.entries(changes)) {
+    if (
+      value !== null &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      "new" in (value as Record<string, unknown>)
+    ) {
+      // Already in { old, new } format
+      result[key] = value as { old: unknown; new: unknown };
+    } else {
+      // Flat format: wrap into { old: null, new: value }
+      result[key] = { old: null, new: value };
+    }
+  }
+  return result;
+}
+
+/**
+ * Check whether a Drizzle table schema has a specific column.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Drizzle table types vary
+function tableHasColumn(table: any, columnProp: string): boolean {
+  return table[columnProp] !== undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -168,20 +187,30 @@ async function handlePost(req: Request, ctx: RouteContext) {
 
     if (changeType === "create") {
       // --- Handle create: INSERT a new entity ---
-      const changes = contribution.changes as Record<string, { old: null; new: unknown }>;
+      const rawChanges = contribution.changes as Record<string, unknown>;
+      const changes = normalizeChanges(rawChanges);
 
       const insertValues: Record<string, unknown> = {
         id: contribution.entityId,
-        slug: contribution.entitySlug,
-        version: 1,
-        submittedBy: contribution.userId,
         createdAt: now,
         updatedAt: now,
       };
 
-      // Extract field values from changes { field: { old: null, new: value } }
+      // Only set slug/version if the entity table supports them
+      if (tableHasColumn(entityTable, "slug")) {
+        insertValues.slug = contribution.entitySlug;
+      }
+      if (tableHasColumn(entityTable, "version")) {
+        insertValues.version = 1;
+      }
+      if (tableHasColumn(entityTable, "submittedBy")) {
+        insertValues.submittedBy = contribution.userId;
+      }
+
+      // Extract field values from changes, converting snake_case → camelCase
       for (const [field, change] of Object.entries(changes)) {
-        insertValues[field] = change.new;
+        const camelField = snakeToCamel(field);
+        insertValues[camelField] = change.new;
       }
 
       await db.insert(entityTable).values(insertValues);
@@ -223,15 +252,54 @@ async function handlePost(req: Request, ctx: RouteContext) {
         throw new ApiError("NOT_FOUND", `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`);
       }
 
+      // Optimistic concurrency check (same as update path — ERD §5)
       const currentVersion = entity.version ?? 0;
+      if (currentVersion !== contribution.entityVersion) {
+        await db
+          .update(contributions)
+          .set({
+            status: "version_conflict",
+            reviewedBy: moderator.id,
+            reviewedAt: now,
+            moderatorComment:
+              comment ??
+              `Version conflict: entity was at version ${currentVersion}, contribution was based on version ${contribution.entityVersion}.`,
+            updatedAt: now,
+          })
+          .where(eq(contributions.id, contributionId));
+
+        await db.insert(moderationActions).values({
+          moderatorId: moderator.id,
+          actionType: "approve",
+          targetType: "contribution",
+          targetId: contributionId,
+          comment: `Version conflict detected during delete. Entity version ${currentVersion} != contribution version ${contribution.entityVersion}.`,
+          internalNote: internal_note ?? null,
+          metadata: {
+            result: "version_conflict",
+            entity_version: currentVersion,
+            contribution_version: contribution.entityVersion,
+            change_type: "delete",
+          },
+        });
+
+        throw new ApiError(
+          "CONFLICT",
+          `Version conflict: the entity was modified since this delete was submitted (entity v${currentVersion}, contribution based on v${contribution.entityVersion}).`
+        );
+      }
+
       const newVersion = currentVersion + 1;
 
-      // Soft-delete: set deletedAt (only bump version for entities that have versioning)
-      const deleteUpdates: Record<string, unknown> = { deletedAt: now, updatedAt: now };
-      if (entity.version !== undefined) {
-        deleteUpdates.version = newVersion;
-      }
-      await db.update(entityTable).set(deleteUpdates).where(eq(entityTable.id, contribution.entityId));
+      // Soft-delete: set deletedAt + bump version
+      await db
+        .update(entityTable)
+        .set({
+          deletedAt: now,
+          updatedAt: now,
+          version: newVersion,
+        })
+        .where(eq(entityTable.id, contribution.entityId));
 
       // Create entity_versions record for the deletion
       await db.insert(entityVersions).values({
@@ -271,8 +339,10 @@ async function handlePost(req: Request, ctx: RouteContext) {
       }
 
       // Check if entity version still matches (optimistic concurrency)
+      // Skip version check for entity tables without version column (e.g., territories)
       const currentVersion = entity.version ?? 0;
-      if (currentVersion !== contribution.entityVersion) {
+      const hasVersioning = tableHasColumn(entityTable, "version");
+      if (hasVersioning && currentVersion !== contribution.entityVersion) {
         // Mark as version_conflict
         await db
           .update(contributions)
@@ -311,23 +381,22 @@ async function handlePost(req: Request, ctx: RouteContext) {
         );
       }
 
-      // Apply changes to the entity table
-      const changes = contribution.changes as Record<string, { old: unknown; new: unknown }>;
+      // Apply changes to the entity table, converting snake_case → camelCase
+      const rawChanges = contribution.changes as Record<string, unknown>;
+      const changes = normalizeChanges(rawChanges);
       const entityUpdates: Record<string, unknown> = {};
       for (const [fieldName, change] of Object.entries(changes)) {
-        entityUpdates[fieldName] = change.new;
+        const camelField = snakeToCamel(fieldName);
+        entityUpdates[camelField] = change.new;
       }
 
       // Update entity with version bump
       if (Object.keys(entityUpdates).length > 0) {
-        await db
-          .update(entityTable)
-          .set({
-            ...entityUpdates,
-            version: currentVersion + 1,
-            updatedAt: now,
-          })
-          .where(eq(entityTable.id, contribution.entityId));
+        entityUpdates.updatedAt = now;
+        if (tableHasColumn(entityTable, "version")) {
+          entityUpdates.version = currentVersion + 1;
+        }
+        await db.update(entityTable).set(entityUpdates).where(eq(entityTable.id, contribution.entityId));
       }
 
       // Create entity_versions record for the update
