@@ -235,6 +235,26 @@ async function handlePost(req: Request, ctx: RouteContext) {
     }
   }
 
+  // --- Normalize changes to { field: { old, new } } format ---
+  // The EditEntityPanel may send flat { field: value } format;
+  // we normalize here so the review handler always gets { field: { old, new } }
+  const normalizedChanges: Record<string, { old: unknown; new: unknown }> = {};
+  for (const [key, value] of Object.entries(changes as Record<string, unknown>)) {
+    if (
+      value !== null &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      "new" in (value as Record<string, unknown>)
+    ) {
+      // Already in { old, new } format
+      normalizedChanges[key] = value as { old: unknown; new: unknown };
+    } else {
+      // Flat format: look up old value from entity if available
+      const oldValue = entity ? (entity[key] ?? null) : null;
+      normalizedChanges[key] = { old: oldValue, new: value };
+    }
+  }
+
   // --- Insert the contribution ---
   const [contribution] = await db
     .insert(contributions)
@@ -246,7 +266,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
       entityVersion: entity_version,
       entitySlug: entitySlug,
       entityState: entityState,
-      changes,
+      changes: normalizedChanges,
       geometryChangeType: geometry_change_type ?? null,
       editSummary: edit_summary.trim(),
       sourceType: source_type,
