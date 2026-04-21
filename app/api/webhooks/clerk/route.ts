@@ -20,7 +20,7 @@ import { Webhook } from "svix";
 import { getDb } from "@/lib/db/client";
 import { userNotificationPrefs } from "@/lib/db/schema/user-notification-prefs";
 import { users } from "@/lib/db/schema/users";
-import { identifyKnockUser, deleteKnockUser } from "@/lib/knock/sync";
+import { deleteKnockUser, identifyKnockUser } from "@/lib/knock/sync";
 
 type ClerkEmailAddress = {
   email_address: string;
@@ -154,11 +154,7 @@ export async function POST(req: Request) {
         const data = event.data;
 
         // Get user ID before soft-deleting
-        const [user] = await db
-          .select({ id: users.id })
-          .from(users)
-          .where(eq(users.clerkUserId, data.id))
-          .limit(1);
+        const [user] = await db.select({ id: users.id }).from(users).where(eq(users.clerkUserId, data.id)).limit(1);
 
         // Soft-delete: set banned_at, preserve contribution history
         await db

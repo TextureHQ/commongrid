@@ -19,8 +19,6 @@
 
 export type { ApiKeyInsert, ApiKeySelect } from "./api-keys";
 export { apiKeys } from "./api-keys";
-export type { KnockDeliveryLogInsert, KnockDeliveryLogSelect } from "./knock-delivery-log";
-export { knockDeliveryLog } from "./knock-delivery-log";
 export type { ApiUsageEventInsert, ApiUsageEventSelect } from "./api-usage-events";
 export { apiUsageEvents } from "./api-usage-events";
 export type {
@@ -74,6 +72,8 @@ export { evStations } from "./ev-stations";
 export type { IsoInsert, IsoSelect } from "./isos";
 // Core Entity Tables
 export { isos } from "./isos";
+export type { KnockDeliveryLogInsert, KnockDeliveryLogSelect } from "./knock-delivery-log";
+export { knockDeliveryLog } from "./knock-delivery-log";
 export type {
   ModerationActionInsert,
   ModerationActionSelect,
