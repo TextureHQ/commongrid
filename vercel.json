@@ -6,6 +6,10 @@
     {
       "path": "/api/cron/keep-alive",
       "schedule": "*/4 7-19 * * 1-5"
+    },
+    {
+      "path": "/api/cron/notification-retry",
+      "schedule": "*/30 * * * *"
     }
   ]
 }

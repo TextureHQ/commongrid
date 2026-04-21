@@ -508,6 +508,11 @@ async function handlePost(req: Request, ctx: RouteContext) {
       data: {
         entity_type: contribution.entityType,
         entity_id: contribution.entityId,
+        entity_slug: contribution.entitySlug,
+        entity_url: `/${contribution.entityType}s/${contribution.entitySlug ?? contribution.entityId}`,
+        contribution_id: contributionId,
+        contribution_url: `/contributions/${contributionId}`,
+        moderator_comment: comment ?? null,
         action,
       },
     }).catch((err) => console.error("Failed to notify contributor:", err));

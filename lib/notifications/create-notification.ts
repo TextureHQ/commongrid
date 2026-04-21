@@ -10,6 +10,7 @@
  */
 
 import type { ExtractTablesWithRelations } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { NeonHttpQueryResultHKT } from "drizzle-orm/neon-http";
 import type { PgTransaction } from "drizzle-orm/pg-core";
 import { getDb } from "@/lib/db/client";
@@ -82,11 +83,19 @@ export async function createNotification(params: CreateNotificationParams, db?: 
     })
     .returning();
 
-  // Trigger Knock workflow (fire-and-forget)
+  // Trigger Knock workflow (fire-and-forget) and store workflow_run_id
   if (isKnockConfigured() && notification) {
-    triggerKnockForNotification(params).catch((err) =>
-      console.error("[knock] Failed to trigger workflow for notification", notification.id, err)
-    );
+    const notifId = notification.id;
+    triggerKnockForNotification(params)
+      .then(async (workflowRunId) => {
+        if (workflowRunId) {
+          await database
+            .update(notifications)
+            .set({ knockWorkflowRunId: workflowRunId })
+            .where(eq(notifications.id, notifId));
+        }
+      })
+      .catch((err) => console.error("[knock] Failed to trigger workflow for notification", notifId, err));
   }
 
   return notification;
@@ -140,13 +149,14 @@ export async function createNotifications(
 
 /**
  * Map a notification type to the corresponding Knock workflow trigger.
+ * Returns the workflow_run_id or null when no workflow is triggered.
  */
-async function triggerKnockForNotification(params: CreateNotificationParams): Promise<void> {
+async function triggerKnockForNotification(params: CreateNotificationParams): Promise<string | null> {
   const d = params.data ?? {};
 
   switch (params.type) {
     case "contribution_approved":
-      await triggerContributionApproved(params.userId, {
+      return triggerContributionApproved(params.userId, {
         contributionId: (d.contribution_id as string) ?? params.refId,
         entityType: (d.entity_type as string) ?? "",
         entitySlug: (d.entity_slug as string) ?? "",
@@ -155,9 +165,8 @@ async function triggerKnockForNotification(params: CreateNotificationParams): Pr
         moderatorComment: (d.moderator_comment as string) ?? null,
         changeSummary: params.body ?? null,
       });
-      break;
     case "contribution_returned":
-      await triggerContributionReturned(params.userId, {
+      return triggerContributionReturned(params.userId, {
         contributionId: (d.contribution_id as string) ?? params.refId,
         entityType: (d.entity_type as string) ?? "",
         entitySlug: (d.entity_slug as string) ?? "",
@@ -166,9 +175,8 @@ async function triggerKnockForNotification(params: CreateNotificationParams): Pr
         moderatorComment: (d.moderator_comment as string) ?? null,
         changeSummary: params.body ?? null,
       });
-      break;
     case "changes_requested":
-      await triggerChangesRequested(params.userId, {
+      return triggerChangesRequested(params.userId, {
         contributionId: (d.contribution_id as string) ?? params.refId,
         entityType: (d.entity_type as string) ?? "",
         entitySlug: (d.entity_slug as string) ?? "",
@@ -177,10 +185,9 @@ async function triggerKnockForNotification(params: CreateNotificationParams): Pr
         moderatorComment: (d.moderator_comment as string) ?? null,
         changeSummary: params.body ?? null,
       });
-      break;
     default:
       // Other types don't have Knock workflows yet
-      break;
+      return null;
   }
 }
 
