@@ -1,6 +1,6 @@
 {
-  "id": "a0871eb9-f814-4fe7-a633-50055b2e6b5e",
-  "prevId": "6eff3575-f057-45cd-8bdc-f10c22ea4202",
+  "id": "c393d960-2176-474d-b212-6791a244cfdb",
+  "prevId": "a0871eb9-f814-4fe7-a633-50055b2e6b5e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -511,6 +511,12 @@
           "notNull": true,
           "default": "now()"
         },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "version": {
           "name": "version",
           "type": "integer",
@@ -835,45 +841,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "section": {
-          "name": "section",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "validation_rules": {
           "name": "validation_rules",
           "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "precision": {
-          "name": "precision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "unit": {
-          "name": "unit",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "min_value": {
-          "name": "min_value",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "max_value": {
-          "name": "max_value",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "enum_source": {
-          "name": "enum_source",
-          "type": "text",
           "primaryKey": false,
           "notNull": false
         }
@@ -1209,6 +1179,12 @@
         "applied_version": {
           "name": "applied_version",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "change_type": {
+          "name": "change_type",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -2466,6 +2442,12 @@
           "notNull": true,
           "default": "now()"
         },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "version": {
           "name": "version",
           "type": "integer",
@@ -2668,6 +2650,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "version": {
           "name": "version",
@@ -3340,6 +3328,12 @@
           "notNull": true,
           "default": "now()"
         },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "version": {
           "name": "version",
           "type": "integer",
@@ -3628,6 +3622,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "version": {
           "name": "version",
@@ -3933,6 +3933,12 @@
           "notNull": true,
           "default": "now()"
         },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "version": {
           "name": "version",
           "type": "integer",
@@ -4089,6 +4095,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "version": {
           "name": "version",
@@ -4277,6 +4289,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "version": {
           "name": "version",
@@ -4511,6 +4529,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -4692,6 +4716,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "version": {
           "name": "version",
@@ -5329,6 +5359,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "version": {
           "name": "version",

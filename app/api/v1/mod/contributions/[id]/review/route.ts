@@ -217,33 +217,27 @@ async function handlePost(req: Request, ctx: RouteContext) {
       // --- Handle delete: soft-delete the entity ---
 
       // Read entity to verify it exists
-      const [entity] = await db
-        .select()
-        .from(entityTable)
-        .where(eq(entityTable.id, contribution.entityId))
-        .limit(1);
+      const [entity] = await db.select().from(entityTable).where(eq(entityTable.id, contribution.entityId)).limit(1);
 
       if (!entity) {
         throw new ApiError("NOT_FOUND", `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`);
       }
 
       const currentVersion = entity.version ?? 0;
+      const newVersion = currentVersion + 1;
 
-      // Soft-delete: set deletedAt
-      await db
-        .update(entityTable)
-        .set({
-          deletedAt: now,
-          updatedAt: now,
-          version: currentVersion + 1,
-        })
-        .where(eq(entityTable.id, contribution.entityId));
+      // Soft-delete: set deletedAt (only bump version for entities that have versioning)
+      const deleteUpdates: Record<string, unknown> = { deletedAt: now, updatedAt: now };
+      if (entity.version !== undefined) {
+        deleteUpdates.version = newVersion;
+      }
+      await db.update(entityTable).set(deleteUpdates).where(eq(entityTable.id, contribution.entityId));
 
       // Create entity_versions record for the deletion
       await db.insert(entityVersions).values({
         entityType: contribution.entityType,
         entityId: contribution.entityId,
-        versionNumber: currentVersion + 1,
+        versionNumber: newVersion,
         snapshot: null,
         delta: { deletedAt: { old: null, new: now.toISOString() } },
         changedBy: moderator.id,
@@ -262,7 +256,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
           reviewedBy: moderator.id,
           reviewedAt: now,
           moderatorComment: comment ?? null,
-          appliedVersion: currentVersion + 1,
+          appliedVersion: newVersion,
           updatedAt: now,
         })
         .where(eq(contributions.id, contributionId));
@@ -270,17 +264,10 @@ async function handlePost(req: Request, ctx: RouteContext) {
       // --- Handle update: apply field changes ---
 
       // Read entity to check version — optimistic concurrency (ERD §5)
-      const [entity] = await db
-        .select()
-        .from(entityTable)
-        .where(eq(entityTable.id, contribution.entityId))
-        .limit(1);
+      const [entity] = await db.select().from(entityTable).where(eq(entityTable.id, contribution.entityId)).limit(1);
 
       if (!entity) {
-        throw new ApiError(
-          "NOT_FOUND",
-          `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`
-        );
+        throw new ApiError("NOT_FOUND", `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`);
       }
 
       // Check if entity version still matches (optimistic concurrency)
