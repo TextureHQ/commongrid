@@ -19,6 +19,8 @@
 
 export type { ApiKeyInsert, ApiKeySelect } from "./api-keys";
 export { apiKeys } from "./api-keys";
+export type { KnockDeliveryLogInsert, KnockDeliveryLogSelect } from "./knock-delivery-log";
+export { knockDeliveryLog } from "./knock-delivery-log";
 export type { ApiUsageEventInsert, ApiUsageEventSelect } from "./api-usage-events";
 export { apiUsageEvents } from "./api-usage-events";
 export type {

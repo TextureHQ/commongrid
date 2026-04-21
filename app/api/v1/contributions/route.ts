@@ -33,6 +33,9 @@ import {
   utilities,
 } from "@/lib/db/schema";
 import { tryAutoApprove } from "@/lib/mod/auto-approve";
+import { triggerModNewContribution, triggerContributionSubmitted } from "@/lib/knock/workflows";
+import { users } from "@/lib/db/schema/users";
+import { isKnockConfigured } from "@/lib/knock/client";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -309,6 +312,45 @@ async function handlePost(req: Request, ctx: RouteContext) {
   const responseData = autoApproveResult.autoApproved
     ? ((await db.select().from(contributions).where(eq(contributions.id, contribution.id)).limit(1))[0] ?? contribution)
     : contribution;
+
+  // Notify moderators of new contribution (if not auto-approved)
+  if (isKnockConfigured() && !autoApproveResult.autoApproved) {
+    const moderators = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(sql`${users.role} IN ('moderator', 'admin')`);
+
+    const moderatorIds = moderators.map((m) => m.id);
+
+    if (moderatorIds.length > 0) {
+      void triggerModNewContribution(
+        moderatorIds,
+        {
+          contributionId: contribution.id,
+          contributorId: user.id,
+          contributorName: user.displayName,
+          entityType: entity_type,
+          entitySlug: entitySlug,
+          contributionUrl: `${process.env.NEXT_PUBLIC_APP_URL}/contributions/${contribution.id}`,
+          changeType: change_type ?? "update",
+          fieldSummary: edit_summary.substring(0, 100),
+        },
+        contribution.id
+      );
+    }
+
+    void triggerContributionSubmitted(
+      user.id,
+      {
+        contributionId: contribution.id,
+        entityType: entity_type,
+        entitySlug: entitySlug,
+        entityUrl: `${process.env.NEXT_PUBLIC_APP_URL}/${entity_type}s/${entitySlug}`,
+        contributionUrl: `${process.env.NEXT_PUBLIC_APP_URL}/contributions/${contribution.id}`,
+      },
+      `${contribution.id}-submitted`
+    );
+  }
 
   return jsonResponse(
     {

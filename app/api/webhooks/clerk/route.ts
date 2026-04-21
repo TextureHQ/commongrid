@@ -20,6 +20,7 @@ import { Webhook } from "svix";
 import { getDb } from "@/lib/db/client";
 import { userNotificationPrefs } from "@/lib/db/schema/user-notification-prefs";
 import { users } from "@/lib/db/schema/users";
+import { identifyKnockUser, deleteKnockUser } from "@/lib/knock/sync";
 
 type ClerkEmailAddress = {
   email_address: string;
@@ -109,12 +110,15 @@ export async function POST(req: Request) {
             email,
             avatarUrl: data.image_url,
           })
-          .returning({ id: users.id });
+          .returning();
 
         if (newUser) {
           await db.insert(userNotificationPrefs).values({
             userId: newUser.id,
           });
+
+          // Sync user to Knock (fire-and-forget)
+          void identifyKnockUser(newUser);
         }
 
         console.log(`User created: ${data.id} → ${newUser?.id}`);
@@ -126,7 +130,7 @@ export async function POST(req: Request) {
         const displayName = getDisplayName(data);
         const email = getPrimaryEmail(data);
 
-        await db
+        const [updatedUser] = await db
           .update(users)
           .set({
             displayName,
@@ -134,7 +138,13 @@ export async function POST(req: Request) {
             avatarUrl: data.image_url,
             updatedAt: new Date(),
           })
-          .where(eq(users.clerkUserId, data.id));
+          .where(eq(users.clerkUserId, data.id))
+          .returning();
+
+        if (updatedUser) {
+          // Sync updated user data to Knock (fire-and-forget)
+          void identifyKnockUser(updatedUser);
+        }
 
         console.log(`User updated: ${data.id}`);
         break;
@@ -142,6 +152,13 @@ export async function POST(req: Request) {
 
       case "user.deleted": {
         const data = event.data;
+
+        // Get user ID before soft-deleting
+        const [user] = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.clerkUserId, data.id))
+          .limit(1);
 
         // Soft-delete: set banned_at, preserve contribution history
         await db
@@ -152,6 +169,11 @@ export async function POST(req: Request) {
             updatedAt: new Date(),
           })
           .where(eq(users.clerkUserId, data.id));
+
+        // Remove user from Knock (fire-and-forget)
+        if (user) {
+          void deleteKnockUser(user.id);
+        }
 
         console.log(`User soft-deleted: ${data.id}`);
         break;
