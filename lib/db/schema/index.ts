@@ -72,6 +72,8 @@ export { evStations } from "./ev-stations";
 export type { IsoInsert, IsoSelect } from "./isos";
 // Core Entity Tables
 export { isos } from "./isos";
+export type { KnockDeliveryLogInsert, KnockDeliveryLogSelect } from "./knock-delivery-log";
+export { knockDeliveryLog } from "./knock-delivery-log";
 export type {
   ModerationActionInsert,
   ModerationActionSelect,

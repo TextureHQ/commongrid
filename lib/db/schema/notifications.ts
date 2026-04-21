@@ -59,9 +59,16 @@ export const notifications = pgTable(
     deliveryAttempts: integer("delivery_attempts").notNull().default(0),
 
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+
+    // Knock integration — populated after triggering a Knock workflow
+    /** Knock message ID returned by the Knock API */
+    knockMessageId: text("knock_message_id"),
+    /** Knock workflow run ID returned by workflows.trigger() */
+    knockWorkflowRunId: text("knock_workflow_run_id"),
   },
   (table) => [
     index("idx_notifications_user").on(table.userId, table.createdAt),
+    index("idx_notifications_knock_message_id").on(table.knockMessageId),
     // Partial indexes — defined in migration DDL:
     // CREATE INDEX idx_notifications_user_unread ON notifications(user_id, created_at DESC)
     //   WHERE read_at IS NULL;
