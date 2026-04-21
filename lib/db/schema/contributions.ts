@@ -114,6 +114,9 @@ export const contributions = pgTable(
     /** If approved, the resulting entity version number */
     appliedVersion: integer("applied_version"),
 
+    /** Type of contribution: 'create' | 'update' | 'delete' */
+    changeType: text("change_type"),
+
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

@@ -105,13 +105,15 @@ function dbRowToEVStation(row: Record<string, unknown>): EVStation {
 async function loadFromDb(options?: EVStationQueryOptions): Promise<EVStation[]> {
   const { getDb } = await import("@/lib/db/client");
   const { evStations } = await import("@/lib/db/schema");
-  const { eq, ilike, and, or, sql, desc, asc } = await import("drizzle-orm");
+  const { eq, ilike, and, or, sql, desc, asc, isNull } = await import("drizzle-orm");
   type DrizzleSQL = ReturnType<typeof eq>;
 
   const db = getDb();
   const conditions: DrizzleSQL[] = [];
   const filters = options?.filters;
 
+  // Exclude soft-deleted entities
+  conditions.push(isNull(evStations.deletedAt));
   if (filters?.state) conditions.push(eq(evStations.state, filters.state));
   if (filters?.city) conditions.push(ilike(evStations.city, filters.city));
   if (filters?.network) conditions.push(eq(evStations.evNetwork, filters.network));
@@ -240,12 +242,14 @@ export async function countEVStations(filters?: EVStationFilters): Promise<numbe
   if (getDataSource("evStations") === "db") {
     const { getDb } = await import("@/lib/db/client");
     const { evStations } = await import("@/lib/db/schema");
-    const { eq, ilike, and, or, sql, count } = await import("drizzle-orm");
+    const { eq, ilike, and, or, sql, count, isNull } = await import("drizzle-orm");
     type DrizzleSQL = ReturnType<typeof eq>;
 
     const db = getDb();
     const conditions: DrizzleSQL[] = [];
 
+    // Exclude soft-deleted entities
+    conditions.push(isNull(evStations.deletedAt));
     if (filters?.state) conditions.push(eq(evStations.state, filters.state));
     if (filters?.city) conditions.push(ilike(evStations.city, filters.city));
     if (filters?.network) conditions.push(eq(evStations.evNetwork, filters.network));
@@ -264,7 +268,7 @@ export async function countEVStations(filters?: EVStationFilters): Promise<numbe
     const result = await db
       .select({ count: count() })
       .from(evStations)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .where(and(...conditions));
 
     return result[0]?.count ?? 0;
   }

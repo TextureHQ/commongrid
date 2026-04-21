@@ -25,6 +25,7 @@ import { getDb } from "@/lib/db/client";
 import {
   balancingAuthorities,
   contributions,
+  entityVersions,
   evStations,
   isos,
   moderationActions,
@@ -86,6 +87,28 @@ function getEntityTable(entityType: EntityType): any {
   return tableMap[entityType];
 }
 
+/**
+ * Detect the change type of a contribution.
+ * Uses the stored changeType column if available (new contributions);
+ * falls back to entityVersion===0 for creates (legacy) and checks for
+ * _deletion key in changes for deletes (legacy).
+ */
+function detectChangeType(contribution: {
+  changeType: string | null;
+  entityVersion: number;
+  changes: unknown;
+}): "create" | "update" | "delete" {
+  if (contribution.changeType === "create") return "create";
+  if (contribution.changeType === "delete") return "delete";
+  if (contribution.changeType === "update") return "update";
+  // Legacy fallback: creates were submitted with entityVersion=0
+  if (contribution.entityVersion === 0) return "create";
+  // Legacy fallback: deletes have a _deletion key in changes
+  const changes = contribution.changes as Record<string, unknown>;
+  if (changes && typeof changes === "object" && "_deletion" in changes) return "delete";
+  return "update";
+}
+
 // ---------------------------------------------------------------------------
 // POST handler
 // ---------------------------------------------------------------------------
@@ -141,88 +164,202 @@ async function handlePost(req: Request, ctx: RouteContext) {
       throw new ApiError("INTERNAL_ERROR", `Unknown entity type: ${contribution.entityType}`);
     }
 
-    // Read entity to check version — optimistic concurrency (ERD §5)
-    const [entity] = await db.select().from(entityTable).where(eq(entityTable.id, contribution.entityId)).limit(1);
+    const changeType = detectChangeType(contribution);
 
-    if (!entity) {
-      throw new ApiError("NOT_FOUND", `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`);
-    }
+    if (changeType === "create") {
+      // --- Handle create: INSERT a new entity ---
+      const changes = contribution.changes as Record<string, { old: null; new: unknown }>;
 
-    // Check if entity version still matches (optimistic concurrency)
-    const currentVersion = entity.version ?? 0;
-    if (currentVersion !== contribution.entityVersion) {
-      // Mark as version_conflict
+      const insertValues: Record<string, unknown> = {
+        id: contribution.entityId,
+        slug: contribution.entitySlug,
+        version: 1,
+        submittedBy: contribution.userId,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      // Extract field values from changes { field: { old: null, new: value } }
+      for (const [field, change] of Object.entries(changes)) {
+        insertValues[field] = change.new;
+      }
+
+      await db.insert(entityTable).values(insertValues);
+
+      // Create entity_versions record (v1 = full snapshot)
+      await db.insert(entityVersions).values({
+        entityType: contribution.entityType,
+        entityId: contribution.entityId,
+        versionNumber: 1,
+        snapshot: insertValues,
+        delta: null,
+        changedBy: moderator.id,
+        changedAt: now,
+        changeType: "create",
+        changeSummary: contribution.editSummary,
+        contributionId: contributionId,
+        sourceType: "community",
+      });
+
+      // Update contribution status
       await db
         .update(contributions)
         .set({
-          status: "version_conflict",
+          status: newStatus,
           reviewedBy: moderator.id,
           reviewedAt: now,
-          moderatorComment:
-            comment ??
-            `Version conflict: entity was at version ${currentVersion}, contribution was based on version ${contribution.entityVersion}.`,
+          moderatorComment: comment ?? null,
+          appliedVersion: 1,
           updatedAt: now,
         })
-        .where(
-          // Optimistic lock: only update if status hasn't changed
-          eq(contributions.id, contributionId)
-        );
+        .where(eq(contributions.id, contributionId));
+    } else if (changeType === "delete") {
+      // --- Handle delete: soft-delete the entity ---
 
-      // Log the conflict action
-      await db.insert(moderationActions).values({
-        moderatorId: moderator.id,
-        actionType: "approve",
-        targetType: "contribution",
-        targetId: contributionId,
-        comment: `Version conflict detected. Entity version ${currentVersion} != contribution version ${contribution.entityVersion}.`,
-        internalNote: internal_note ?? null,
-        metadata: {
-          result: "version_conflict",
-          entity_version: currentVersion,
-          contribution_version: contribution.entityVersion,
-        },
+      // Read entity to verify it exists
+      const [entity] = await db.select().from(entityTable).where(eq(entityTable.id, contribution.entityId)).limit(1);
+
+      if (!entity) {
+        throw new ApiError("NOT_FOUND", `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`);
+      }
+
+      const currentVersion = entity.version ?? 0;
+      const newVersion = currentVersion + 1;
+
+      // Soft-delete: set deletedAt (only bump version for entities that have versioning)
+      const deleteUpdates: Record<string, unknown> = { deletedAt: now, updatedAt: now };
+      if (entity.version !== undefined) {
+        deleteUpdates.version = newVersion;
+      }
+      await db.update(entityTable).set(deleteUpdates).where(eq(entityTable.id, contribution.entityId));
+
+      // Create entity_versions record for the deletion
+      await db.insert(entityVersions).values({
+        entityType: contribution.entityType,
+        entityId: contribution.entityId,
+        versionNumber: newVersion,
+        snapshot: null,
+        delta: { deletedAt: { old: null, new: now.toISOString() } },
+        changedBy: moderator.id,
+        changedAt: now,
+        changeType: "delete",
+        changeSummary: contribution.editSummary,
+        contributionId: contributionId,
+        sourceType: "community",
       });
 
-      throw new ApiError(
-        "CONFLICT",
-        `Version conflict: the entity was modified since this contribution was submitted (entity v${currentVersion}, contribution based on v${contribution.entityVersion}).`
-      );
-    }
-
-    // Apply changes to the entity table
-    const changes = contribution.changes as Record<string, { old: unknown; new: unknown }>;
-    const entityUpdates: Record<string, unknown> = {};
-    for (const [fieldName, change] of Object.entries(changes)) {
-      // Convert snake_case field names to the entity's column format
-      entityUpdates[fieldName] = change.new;
-    }
-
-    // Update entity with version bump
-    if (Object.keys(entityUpdates).length > 0) {
+      // Update contribution status
       await db
-        .update(entityTable)
+        .update(contributions)
         .set({
-          ...entityUpdates,
-          version: currentVersion + 1,
+          status: newStatus,
+          reviewedBy: moderator.id,
+          reviewedAt: now,
+          moderatorComment: comment ?? null,
+          appliedVersion: newVersion,
           updatedAt: now,
         })
-        .where(eq(entityTable.id, contribution.entityId));
+        .where(eq(contributions.id, contributionId));
+    } else {
+      // --- Handle update: apply field changes ---
+
+      // Read entity to check version — optimistic concurrency (ERD §5)
+      const [entity] = await db.select().from(entityTable).where(eq(entityTable.id, contribution.entityId)).limit(1);
+
+      if (!entity) {
+        throw new ApiError("NOT_FOUND", `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`);
+      }
+
+      // Check if entity version still matches (optimistic concurrency)
+      const currentVersion = entity.version ?? 0;
+      if (currentVersion !== contribution.entityVersion) {
+        // Mark as version_conflict
+        await db
+          .update(contributions)
+          .set({
+            status: "version_conflict",
+            reviewedBy: moderator.id,
+            reviewedAt: now,
+            moderatorComment:
+              comment ??
+              `Version conflict: entity was at version ${currentVersion}, contribution was based on version ${contribution.entityVersion}.`,
+            updatedAt: now,
+          })
+          .where(
+            // Optimistic lock: only update if status hasn't changed
+            eq(contributions.id, contributionId)
+          );
+
+        // Log the conflict action
+        await db.insert(moderationActions).values({
+          moderatorId: moderator.id,
+          actionType: "approve",
+          targetType: "contribution",
+          targetId: contributionId,
+          comment: `Version conflict detected. Entity version ${currentVersion} != contribution version ${contribution.entityVersion}.`,
+          internalNote: internal_note ?? null,
+          metadata: {
+            result: "version_conflict",
+            entity_version: currentVersion,
+            contribution_version: contribution.entityVersion,
+          },
+        });
+
+        throw new ApiError(
+          "CONFLICT",
+          `Version conflict: the entity was modified since this contribution was submitted (entity v${currentVersion}, contribution based on v${contribution.entityVersion}).`
+        );
+      }
+
+      // Apply changes to the entity table
+      const changes = contribution.changes as Record<string, { old: unknown; new: unknown }>;
+      const entityUpdates: Record<string, unknown> = {};
+      for (const [fieldName, change] of Object.entries(changes)) {
+        entityUpdates[fieldName] = change.new;
+      }
+
+      // Update entity with version bump
+      if (Object.keys(entityUpdates).length > 0) {
+        await db
+          .update(entityTable)
+          .set({
+            ...entityUpdates,
+            version: currentVersion + 1,
+            updatedAt: now,
+          })
+          .where(eq(entityTable.id, contribution.entityId));
+      }
+
+      // Create entity_versions record for the update
+      await db.insert(entityVersions).values({
+        entityType: contribution.entityType,
+        entityId: contribution.entityId,
+        versionNumber: currentVersion + 1,
+        snapshot: null,
+        delta: changes,
+        changedBy: moderator.id,
+        changedAt: now,
+        changeType: "update",
+        changeSummary: contribution.editSummary,
+        contributionId: contributionId,
+        sourceType: "community",
+      });
+
+      // Update contribution status
+      await db
+        .update(contributions)
+        .set({
+          status: newStatus,
+          reviewedBy: moderator.id,
+          reviewedAt: now,
+          moderatorComment: comment ?? null,
+          appliedVersion: currentVersion + 1,
+          updatedAt: now,
+        })
+        .where(eq(contributions.id, contributionId));
     }
 
-    // Update contribution status
-    await db
-      .update(contributions)
-      .set({
-        status: newStatus,
-        reviewedBy: moderator.id,
-        reviewedAt: now,
-        moderatorComment: comment ?? null,
-        appliedVersion: currentVersion + 1,
-        updatedAt: now,
-      })
-      .where(eq(contributions.id, contributionId));
-
-    // Update contributor stats
+    // Update contributor stats (shared for all approve paths)
     if (contribution.userId) {
       await db
         .update(users)
