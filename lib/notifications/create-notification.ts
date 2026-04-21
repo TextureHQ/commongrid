@@ -16,17 +16,12 @@ import { getDb } from "@/lib/db/client";
 import { notifications } from "@/lib/db/schema";
 import { isKnockConfigured } from "@/lib/knock/client";
 import {
+  triggerChangesRequested,
   triggerContributionApproved,
   triggerContributionReturned,
-  triggerChangesRequested,
-  triggerEntityUpdated,
   triggerDiscussionActivity,
+  triggerEntityUpdated,
 } from "@/lib/knock/workflows";
-import type {
-  ContributionNotificationData,
-  EntityUpdateNotificationData,
-  DiscussionNotificationData,
-} from "@/lib/knock/types";
 
 // ---------------------------------------------------------------------------
 // Types

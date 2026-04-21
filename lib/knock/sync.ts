@@ -25,8 +25,6 @@ export function deliveryToKnockChannelTypes(delivery: string): string[] {
     case "email_immediate":
     case "email_daily":
       return ["email"];
-    case "in_app":
-    case "off":
     default:
       return [];
   }
@@ -87,10 +85,7 @@ export async function deleteKnockUser(userId: string): Promise<void> {
  * Push CommonGrid notification preferences to Knock as channel-type preferences
  * per category.  Knock uses this to gate email sends at the workflow level.
  */
-export async function syncKnockPreferences(
-  userId: string,
-  prefs: UserNotificationPrefSelect
-): Promise<void> {
+export async function syncKnockPreferences(userId: string, prefs: UserNotificationPrefSelect): Promise<void> {
   if (!isKnockConfigured()) return;
 
   try {

@@ -11,9 +11,9 @@
  * - Idempotent (safe to receive the same event multiple times)
  */
 
-import { NextResponse, type NextRequest } from "next/server";
-import { verifyKnockWebhook, processKnockWebhookEvent } from "@/lib/knock";
+import { type NextRequest, NextResponse } from "next/server";
 import type { KnockWebhookPayload } from "@/lib/knock";
+import { processKnockWebhookEvent, verifyKnockWebhook } from "@/lib/knock";
 
 export async function POST(req: NextRequest) {
   // 1. Read raw body for signature verification

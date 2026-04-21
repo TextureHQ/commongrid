@@ -32,10 +32,10 @@ import {
   transmissionLines,
   utilities,
 } from "@/lib/db/schema";
-import { tryAutoApprove } from "@/lib/mod/auto-approve";
-import { triggerModNewContribution, triggerContributionSubmitted } from "@/lib/knock/workflows";
 import { users } from "@/lib/db/schema/users";
 import { isKnockConfigured } from "@/lib/knock/client";
+import { triggerContributionSubmitted, triggerModNewContribution } from "@/lib/knock/workflows";
+import { tryAutoApprove } from "@/lib/mod/auto-approve";
 
 // ---------------------------------------------------------------------------
 // Constants

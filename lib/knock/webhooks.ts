@@ -8,7 +8,7 @@
  * when our DB is temporarily unavailable (Knock will retry on 5xx).
  */
 
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { knockDeliveryLog, notifications } from "@/lib/db/schema";
@@ -30,11 +30,7 @@ import type { KnockWebhookEventType, KnockWebhookPayload } from "./types";
  * @param signingKey - The webhook signing key (defaults to KNOCK_SIGNING_KEY env var).
  * @returns true when the signature is valid.
  */
-export function verifyKnockWebhook(
-  rawBody: Buffer | string,
-  signature: string,
-  signingKey?: string
-): boolean {
+export function verifyKnockWebhook(rawBody: Buffer | string, signature: string, signingKey?: string): boolean {
   const key = signingKey ?? process.env.KNOCK_SIGNING_KEY;
   if (!key) return false;
   if (!signature) return false;
@@ -103,10 +99,7 @@ export async function processKnockWebhookEvent(payload: KnockWebhookPayload): Pr
   try {
     if (EVENT_TO_EMAIL_STATUS[eventType]) {
       const emailStatus = EVENT_TO_EMAIL_STATUS[eventType] as string;
-      await db
-        .update(notifications)
-        .set({ emailStatus })
-        .where(eq(notifications.knockMessageId, knockMessageId));
+      await db.update(notifications).set({ emailStatus }).where(eq(notifications.knockMessageId, knockMessageId));
     }
 
     if (eventType === "message.read" && payload.data.read_at) {

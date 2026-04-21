@@ -221,10 +221,7 @@ export async function triggerModFlaggedContribution(
 // Admin notifications (batch)
 // ---------------------------------------------------------------------------
 
-export async function triggerAdminNewUser(
-  adminIds: string[],
-  data: AdminNewUserData
-): Promise<string | null> {
+export async function triggerAdminNewUser(adminIds: string[], data: AdminNewUserData): Promise<string | null> {
   if (adminIds.length === 0) return null;
   return triggerWorkflow({
     workflow: "admin-new-user",
