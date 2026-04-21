@@ -80,12 +80,14 @@ function dbRowToPricingNode(row: Record<string, unknown>): PricingNode {
 async function loadFromDb(filters?: PricingNodeFilters): Promise<PricingNode[]> {
   const { getDb } = await import("@/lib/db/client");
   const { pricingNodes } = await import("@/lib/db/schema");
-  const { eq, ilike, and } = await import("drizzle-orm");
+  const { eq, ilike, and, isNull } = await import("drizzle-orm");
   type DrizzleSQL = ReturnType<typeof eq>;
 
   const db = getDb();
   const conditions: DrizzleSQL[] = [];
 
+  // Exclude soft-deleted entities
+  conditions.push(isNull(pricingNodes.deletedAt));
   if (filters?.iso) conditions.push(eq(pricingNodes.iso, filters.iso));
   if (filters?.nodeType) conditions.push(eq(pricingNodes.nodeType, filters.nodeType));
   if (filters?.state) conditions.push(eq(pricingNodes.state, filters.state));
@@ -107,7 +109,7 @@ async function loadFromDb(filters?: PricingNodeFilters): Promise<PricingNode[]> 
       source: pricingNodes.source,
     })
     .from(pricingNodes)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   return rows.map(dbRowToPricingNode);
 }

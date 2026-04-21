@@ -1,4 +1,4 @@
-import { asc, desc, gt, lt, sql } from "drizzle-orm";
+import { and, asc, desc, gt, isNull, lt, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
@@ -29,6 +29,8 @@ async function handleGet(req: Request, _ctx: RouteContext) {
   const sortColumn = sort === "name" ? rtos.name : sort === "shortName" ? rtos.shortName : rtos.slug;
   const orderFn = order === "desc" ? desc : asc;
 
+  const notDeletedCondition = isNull(rtos.deletedAt);
+
   let query = db
     .select()
     .from(rtos)
@@ -37,7 +39,9 @@ async function handleGet(req: Request, _ctx: RouteContext) {
 
   if (cursor) {
     const op = order === "desc" ? lt : gt;
-    query = query.where(op(sortColumn, cursor.s.value as string)) as typeof query;
+    query = query.where(and(notDeletedCondition, op(sortColumn, cursor.s.value as string))) as typeof query;
+  } else {
+    query = query.where(notDeletedCondition) as typeof query;
   }
 
   const rows = await query;
@@ -55,7 +59,7 @@ async function handleGet(req: Request, _ctx: RouteContext) {
         })
       : null;
 
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(rtos);
+  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(rtos).where(notDeletedCondition);
 
   return jsonResponse(paginatedResponse(data, Number(count), nextCursor, limit), 200, corsHeaders());
 }

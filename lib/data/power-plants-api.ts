@@ -101,13 +101,15 @@ function dbRowToPowerPlant(row: Record<string, unknown>): PowerPlant {
 async function loadFromDb(options?: PowerPlantQueryOptions): Promise<PowerPlant[]> {
   const { getDb } = await import("@/lib/db/client");
   const { powerPlants } = await import("@/lib/db/schema");
-  const { eq, ilike, and, or, sql, desc, asc } = await import("drizzle-orm");
+  const { eq, ilike, and, or, sql, desc, asc, isNull } = await import("drizzle-orm");
   type DrizzleSQL = ReturnType<typeof eq>;
 
   const db = getDb();
   const conditions: DrizzleSQL[] = [];
   const filters = options?.filters;
 
+  // Exclude soft-deleted entities
+  conditions.push(isNull(powerPlants.deletedAt));
   if (filters?.state) conditions.push(eq(powerPlants.state, filters.state));
   if (filters?.fuelCategory) conditions.push(eq(powerPlants.fuelCategory, filters.fuelCategory));
   if (filters?.status) conditions.push(eq(powerPlants.status, filters.status));
@@ -244,12 +246,14 @@ export async function countPowerPlants(filters?: PowerPlantFilters): Promise<num
   if (getDataSource("powerPlants") === "db") {
     const { getDb } = await import("@/lib/db/client");
     const { powerPlants } = await import("@/lib/db/schema");
-    const { eq, ilike, and, or, sql, count } = await import("drizzle-orm");
+    const { eq, ilike, and, or, sql, count, isNull } = await import("drizzle-orm");
     type DrizzleSQL = ReturnType<typeof eq>;
 
     const db = getDb();
     const conditions: DrizzleSQL[] = [];
 
+    // Exclude soft-deleted entities
+    conditions.push(isNull(powerPlants.deletedAt));
     if (filters?.state) conditions.push(eq(powerPlants.state, filters.state));
     if (filters?.fuelCategory) conditions.push(eq(powerPlants.fuelCategory, filters.fuelCategory));
     if (filters?.status) conditions.push(eq(powerPlants.status, filters.status));
@@ -266,7 +270,7 @@ export async function countPowerPlants(filters?: PowerPlantFilters): Promise<num
     const result = await db
       .select({ count: count() })
       .from(powerPlants)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .where(and(...conditions));
 
     return result[0]?.count ?? 0;
   }

@@ -89,13 +89,15 @@ function dbRowToTransmissionLine(row: Record<string, unknown>): TransmissionLine
 async function loadFromDb(options?: TransmissionLineQueryOptions): Promise<TransmissionLine[]> {
   const { getDb } = await import("@/lib/db/client");
   const { transmissionLines } = await import("@/lib/db/schema");
-  const { eq, ilike, and, desc, asc } = await import("drizzle-orm");
+  const { eq, ilike, and, desc, asc, isNull } = await import("drizzle-orm");
   type DrizzleSQL = ReturnType<typeof eq>;
 
   const db = getDb();
   const conditions: DrizzleSQL[] = [];
   const filters = options?.filters;
 
+  // Exclude soft-deleted entities
+  conditions.push(isNull(transmissionLines.deletedAt));
   if (filters?.voltageClass) conditions.push(eq(transmissionLines.voltageClass, filters.voltageClass));
   if (filters?.owner) conditions.push(eq(transmissionLines.owner, filters.owner));
   if (filters?.status) conditions.push(eq(transmissionLines.status, filters.status));
@@ -200,12 +202,14 @@ export async function countTransmissionLines(filters?: TransmissionLineFilters):
   if (getDataSource("transmissionLines") === "db") {
     const { getDb } = await import("@/lib/db/client");
     const { transmissionLines } = await import("@/lib/db/schema");
-    const { eq, ilike, and, count } = await import("drizzle-orm");
+    const { eq, ilike, and, count, isNull } = await import("drizzle-orm");
     type DrizzleSQL = ReturnType<typeof eq>;
 
     const db = getDb();
     const conditions: DrizzleSQL[] = [];
 
+    // Exclude soft-deleted entities
+    conditions.push(isNull(transmissionLines.deletedAt));
     if (filters?.voltageClass) conditions.push(eq(transmissionLines.voltageClass, filters.voltageClass));
     if (filters?.owner) conditions.push(eq(transmissionLines.owner, filters.owner));
     if (filters?.status) conditions.push(eq(transmissionLines.status, filters.status));
@@ -214,7 +218,7 @@ export async function countTransmissionLines(filters?: TransmissionLineFilters):
     const result = await db
       .select({ count: count() })
       .from(transmissionLines)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .where(and(...conditions));
 
     return result[0]?.count ?? 0;
   }

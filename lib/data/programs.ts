@@ -99,12 +99,14 @@ function dbRowToProgram(row: Record<string, unknown>): Program {
 async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
   const { getDb } = await import("@/lib/db/client");
   const { programs } = await import("@/lib/db/schema");
-  const { eq, ilike, and } = await import("drizzle-orm");
+  const { eq, ilike, and, isNull } = await import("drizzle-orm");
   type DrizzleSQL = ReturnType<typeof eq>;
 
   const db = getDb();
   const conditions: DrizzleSQL[] = [];
 
+  // Exclude soft-deleted entities
+  conditions.push(isNull(programs.deletedAt));
   if (filters?.status) conditions.push(eq(programs.status, filters.status));
   if (filters?.search) conditions.push(ilike(programs.name, `%${filters.search}%`));
 
@@ -139,7 +141,7 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
       updatedAt: programs.updatedAt,
     })
     .from(programs)
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+    .where(and(...conditions));
 
   let result = rows.map(dbRowToProgram);
 

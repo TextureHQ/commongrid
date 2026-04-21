@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, ilike, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ilike, isNull, lt, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
@@ -217,6 +217,8 @@ async function handleDatabaseMode(params: DbFilterParams) {
 
   // Build WHERE conditions
   const conditions = [];
+  // Exclude soft-deleted entities
+  conditions.push(isNull(utilities.deletedAt));
   if (params.segment) {
     conditions.push(eq(utilities.segment, params.segment));
   }

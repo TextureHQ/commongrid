@@ -253,6 +253,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
       sourceUrl: source_url ?? null,
       sourceDate: source_date ?? null,
       status: "pending",
+      changeType: change_type ?? "update",
     })
     .returning();
 

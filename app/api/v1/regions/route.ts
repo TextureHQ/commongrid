@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, lt, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
@@ -55,6 +55,8 @@ async function handleGet(req: Request, _ctx: RouteContext) {
   const orderFn = order === "desc" ? desc : asc;
 
   const conditions = [];
+  // Exclude soft-deleted entities
+  conditions.push(isNull(regions.deletedAt));
   if (type) {
     conditions.push(eq(regions.type, type));
   }
@@ -95,6 +97,7 @@ async function handleGet(req: Request, _ctx: RouteContext) {
 
   // Count with same filters
   const countConditions = [];
+  countConditions.push(isNull(regions.deletedAt));
   if (type) {
     countConditions.push(eq(regions.type, type));
   }
