@@ -43,7 +43,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
             `
     );
 
-    const rows = ((result as unknown as { rows: Array<{ geojson: string }> }).rows ?? result) as Array<{ geojson: string }>;
+    const rows = ((result as unknown as { rows: Array<{ geojson: string }> }).rows ?? result) as Array<{
+      geojson: string;
+    }>;
     if (!rows.length) {
       throw new ApiError("NOT_FOUND", `Territory '${slug}' not found`);
     }
