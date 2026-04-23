@@ -8,7 +8,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 // Types
 // ---------------------------------------------------------------------------
 
-export type LayoutMode = "hybrid" | "list" | "map";
+export type LayoutMode = "map" | "list";
 export type EntityTab =
   | "utilities"
   | "grid-operators"
@@ -25,6 +25,7 @@ export type EntityView = EntityTab | DetailView;
 export interface ExplorerState {
   layout: LayoutMode;
   tab: EntityTab;
+  listSource: EntityTab; // which entity type to show in the map view panel
   mode: ViewMode;
   slug: string | null;
   // List filters (persisted in URL)
@@ -43,6 +44,7 @@ type ExplorerAction =
   | { type: "NAVIGATE_TAB"; tab: EntityTab }
   | { type: "NAVIGATE_DETAIL"; view: DetailView; slug: string }
   | { type: "SET_LAYOUT"; layout: LayoutMode }
+  | { type: "SET_LIST_SOURCE"; listSource: EntityTab }
   | { type: "SET_SEARCH"; q: string }
   | { type: "SET_SEGMENT"; segment: string }
   | { type: "SET_TYPE"; typeFilter: string }
@@ -65,6 +67,7 @@ interface ExplorerContextValue {
   navigateToTab: (tab: EntityTab) => void;
   navigateToDetail: (view: DetailView, slug: string) => void;
   setLayout: (layout: LayoutMode) => void;
+  setListSource: (listSource: EntityTab) => void;
   setSearch: (q: string) => void;
   setSegment: (segment: string) => void;
   setTypeFilter: (type: string) => void;
@@ -79,8 +82,9 @@ interface ExplorerContextValue {
 // ---------------------------------------------------------------------------
 
 const initialState: ExplorerState = {
-  layout: "hybrid",
+  layout: "map",
   tab: "utilities",
+  listSource: "utilities",
   mode: "list",
   slug: null,
   q: "",
@@ -120,6 +124,9 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
 
     case "SET_LAYOUT":
       return { ...state, layout: action.layout };
+
+    case "SET_LIST_SOURCE":
+      return { ...state, listSource: action.listSource };
 
     case "SET_SEARCH":
       return { ...state, q: action.q };
@@ -164,7 +171,7 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
 function stateToSearchParams(state: ExplorerState): string {
   const params = new URLSearchParams();
   params.set("tab", state.tab);
-  if (state.layout !== "hybrid") params.set("layout", state.layout);
+  if (state.layout !== "map") params.set("layout", state.layout);
   if (state.slug) params.set("slug", state.slug);
   if (state.q) params.set("q", state.q);
   if (state.segment && state.segment !== "all") params.set("segment", state.segment);
@@ -191,8 +198,10 @@ function parseTab(value: string | null): EntityTab {
 }
 
 function parseLayout(value: string | null): LayoutMode {
-  if (value === "list" || value === "map" || value === "hybrid") return value;
-  return "hybrid";
+  if (value === "list") return "list";
+  // "hybrid" was the old map+panel mode — maps to new "map" layout
+  // "map" was the old map-only mode — also maps to new "map" layout
+  return "map";
 }
 
 // ---------------------------------------------------------------------------
@@ -290,6 +299,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     []
   );
   const setLayout = useCallback((layout: LayoutMode) => dispatch({ type: "SET_LAYOUT", layout }), []);
+  const setListSource = useCallback((listSource: EntityTab) => dispatch({ type: "SET_LIST_SOURCE", listSource }), []);
   const setSearch = useCallback((q: string) => dispatch({ type: "SET_SEARCH", q }), []);
   const setSegment = useCallback((segment: string) => dispatch({ type: "SET_SEGMENT", segment }), []);
   const setTypeFilter = useCallback((type: string) => dispatch({ type: "SET_TYPE", typeFilter: type }), []);
@@ -318,6 +328,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       navigateToTab,
       navigateToDetail,
       setLayout,
+      setListSource,
       setSearch,
       setSegment,
       setTypeFilter,
@@ -331,6 +342,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       navigateToTab,
       navigateToDetail,
       setLayout,
+      setListSource,
       setSearch,
       setSegment,
       setTypeFilter,

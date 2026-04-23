@@ -1,6 +1,6 @@
 "use client";
 
-import { useExplorer } from "./ExplorerContext";
+import { type EntityTab, useExplorer } from "./ExplorerContext";
 import { BADetailPanel } from "./panels/BADetailPanel";
 import { EVChargingListPanel } from "./panels/EVChargingListPanel";
 import { GridOperatorListPanel } from "./panels/GridOperatorListPanel";
@@ -14,12 +14,21 @@ import { TransmissionListPanel } from "./panels/TransmissionListPanel";
 import { UtilityDetailPanel } from "./panels/UtilityDetailPanel";
 import { UtilityListPanel } from "./panels/UtilityListPanel";
 
-export function ExplorerPanel() {
+interface ExplorerPanelProps {
+  // In map view, listSource overrides state.tab to control which list is shown.
+  // In list view, leave undefined and the tab bar controls it via state.tab.
+  listSource?: EntityTab;
+}
+
+export function ExplorerPanel({ listSource }: ExplorerPanelProps = {}) {
   const { state } = useExplorer();
 
-  // Detail views (slug-based, tab tells us entity type context)
+  // activeTab: use listSource (map view) or state.tab (list view)
+  const activeTab = listSource ?? state.tab;
+
+  // Detail views (slug-based, activeTab tells us entity type context)
   if (state.mode === "detail" && state.slug) {
-    switch (state.tab) {
+    switch (activeTab) {
       case "utilities":
         return <UtilityDetailPanel slug={state.slug} />;
       case "grid-operators":
@@ -31,8 +40,8 @@ export function ExplorerPanel() {
     }
   }
 
-  // List views — one per tab
-  switch (state.tab) {
+  // List views — one per activeTab
+  switch (activeTab) {
     case "utilities":
       return <UtilityListPanel />;
     case "grid-operators":

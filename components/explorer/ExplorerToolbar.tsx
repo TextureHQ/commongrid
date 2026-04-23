@@ -4,7 +4,6 @@ import { type LayoutMode, useExplorer } from "./ExplorerContext";
 
 const VIEW_OPTIONS: { id: LayoutMode; label: string }[] = [
   { id: "map", label: "Map" },
-  { id: "hybrid", label: "Hybrid" },
   { id: "list", label: "List" },
 ];
 
