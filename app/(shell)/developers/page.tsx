@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import {
   Badge,
   Banner,
@@ -18,6 +18,7 @@ import {
   KpiGroup,
   Loader,
   PageLayout,
+  Select,
   TextField,
 } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
@@ -55,7 +56,7 @@ type DashboardStats = {
 
 export default function DevelopersPage() {
   const { isLoaded, isSignedIn } = useAuth();
-  const { user } = useUser();
+
   const router = useRouter();
 
   const [keys, setKeys] = useState<ApiKey[]>([]);
@@ -64,6 +65,7 @@ export default function DevelopersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Create key form state
   const [isCreating, setIsCreating] = useState(false);
@@ -226,8 +228,14 @@ export default function DevelopersPage() {
             title="API Keys"
             subtitle="Create and manage API keys for your applications"
             actions={
-              <DialogTrigger>
-                <Button variant="primary" size="sm" icon="Plus">
+              <DialogTrigger
+                isOpen={isDialogOpen}
+                onOpenChange={(open) => {
+                  setIsDialogOpen(open);
+                  if (open) setNewKey(null);
+                }}
+              >
+                <Button variant="primary" size="sm" icon="Plus" onPress={() => setIsDialogOpen(true)}>
                   Create API Key
                 </Button>
                 <Dialog title="Create API Key">
@@ -242,7 +250,14 @@ export default function DevelopersPage() {
                             <code className="text-sm font-mono break-all">{newKey}</code>
                           </CopyToClipboard>
                         </div>
-                        <Button variant="primary" onPress={() => setNewKey(null)} className="w-full">
+                        <Button
+                          variant="primary"
+                          onPress={() => {
+                            setNewKey(null);
+                            setIsDialogOpen(false);
+                          }}
+                          className="w-full"
+                        >
                           Done
                         </Button>
                       </div>
@@ -267,11 +282,19 @@ export default function DevelopersPage() {
                           value={formData.app_url}
                           onChange={(value) => setFormData({ ...formData, app_url: value })}
                         />
-                        <TextField
+                        <Select
                           label="Use Case"
-                          value={formData.use_case}
-                          onChange={(value) => setFormData({ ...formData, use_case: value })}
-                          description="research, commercial, nonprofit, government, education, personal, or other"
+                          items={[
+                            { id: "research", label: "Research", value: "research" },
+                            { id: "commercial", label: "Commercial", value: "commercial" },
+                            { id: "nonprofit", label: "Nonprofit", value: "nonprofit" },
+                            { id: "government", label: "Government", value: "government" },
+                            { id: "education", label: "Education", value: "education" },
+                            { id: "personal", label: "Personal", value: "personal" },
+                            { id: "other", label: "Other", value: "other" },
+                          ]}
+                          selectedKey={formData.use_case}
+                          onSelectionChange={(key) => setFormData({ ...formData, use_case: key as string })}
                         />
                         <TextField
                           label="Description"
@@ -397,6 +420,19 @@ export default function DevelopersPage() {
           <CardHeader title="Rate Limits" subtitle="Your current tier and request limits" />
           <CardContent>
             <div className="space-y-6">
+              {isSignedIn && !keys.find((k) => k.isActive) && (
+                <Banner variant="info" title="No API key yet">
+                  You are registered but have not created an API key yet. Create an API key to unlock the Registered
+                  tier (5,000 requests/hr).{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsDialogOpen(true)}
+                    className="underline font-medium hover:opacity-80"
+                  >
+                    Create API Key
+                  </button>
+                </Banner>
+              )}
               <div className="p-4 bg-brand-light/10 border border-brand-light rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-text-heading">Current Tier</span>
@@ -464,7 +500,7 @@ export default function DevelopersPage() {
                   Explore endpoints, request/response formats, and integration guides
                 </p>
               </div>
-              <Button variant="secondary" icon="ArrowRight" href="https://commongrid.info/api" target="_blank">
+              <Button variant="secondary" icon="ArrowRight" href="/api">
                 View Docs
               </Button>
             </div>
