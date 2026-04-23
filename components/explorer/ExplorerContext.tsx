@@ -299,10 +299,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     []
   );
   const setLayout = useCallback((layout: LayoutMode) => dispatch({ type: "SET_LAYOUT", layout }), []);
-  const setListSource = useCallback(
-    (listSource: EntityTab) => dispatch({ type: "SET_LIST_SOURCE", listSource }),
-    []
-  );
+  const setListSource = useCallback((listSource: EntityTab) => dispatch({ type: "SET_LIST_SOURCE", listSource }), []);
   const setSearch = useCallback((q: string) => dispatch({ type: "SET_SEARCH", q }), []);
   const setSegment = useCallback((segment: string) => dispatch({ type: "SET_SEGMENT", segment }), []);
   const setTypeFilter = useCallback((type: string) => dispatch({ type: "SET_TYPE", typeFilter: type }), []);
