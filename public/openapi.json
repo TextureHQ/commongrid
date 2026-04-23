@@ -20,7 +20,7 @@
       "description": "Production"
     }
   ],
-  "security": [],
+  "security": [{ "bearerAuth": [] }],
   "components": {
     "securitySchemes": {
       "bearerAuth": {
