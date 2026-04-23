@@ -2,7 +2,6 @@
  * GET /api/v1/pricing-nodes/:slug
  *
  * Fetch a single pricing node by slug. Returns 404 if not found.
- * Data source is controlled by NEXT_PUBLIC_FF_DB_PRICING_NODES.
  */
 
 import {

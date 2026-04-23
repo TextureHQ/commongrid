@@ -2,7 +2,7 @@
  * GET /api/v1/power-plants
  *
  * List power plants with filtering, sorting, cursor pagination, and sparse
- * field projection. Data source is controlled by NEXT_PUBLIC_FF_DB_POWER_PLANTS.
+ * field projection.
  */
 
 import { z } from "zod";
@@ -194,19 +194,14 @@ async function handler(req: Request): Promise<Response> {
     cursor = decodeCursor(rawCursor);
   }
 
-  // When using DB mode, delegate sorting + pagination to SQL for performance
-  const { getDataSource } = await import("@/lib/feature-flags");
-  const useDb = getDataSource("powerPlants") === "db";
+  const filters = { state, fuelCategory, status, utilityId, baId, search };
 
   let items: PowerPlant[];
   let totalCount: number;
   let hasMore: boolean;
 
-  if (useDb && !cursor) {
-    // DB mode: use SQL-level pagination with accurate count
-    const filters = { state, fuelCategory, status, utilityId, baId, search };
-
-    // Parallel: fetch page + total count
+  if (!cursor) {
+    // Use SQL-level pagination with accurate count
     const [results, count] = await Promise.all([
       loadPowerPlants({
         filters,
@@ -222,17 +217,15 @@ async function handler(req: Request): Promise<Response> {
     items = hasMore ? results.slice(0, limit) : results;
     totalCount = count;
   } else {
-    // JSON mode OR cursor-based pagination: use in-memory sort/pagination
-    const allPlants = await loadPowerPlants({
-      filters: { state, fuelCategory, status, utilityId, baId, search },
-    });
+    // Cursor-based pagination: use in-memory sort/pagination
+    const allPlants = await loadPowerPlants({ filters });
 
     // Sort
     const sorted = sortPlants(allPlants, sort, order);
     totalCount = sorted.length;
 
     // Apply cursor offset for next-page traversal
-    const afterCursor = cursor ? applyCursor(sorted, cursor, sort, order) : sorted;
+    const afterCursor = applyCursor(sorted, cursor, sort, order);
 
     // Slice page (fetch one extra to detect hasMore)
     const page = afterCursor.slice(0, limit + 1);

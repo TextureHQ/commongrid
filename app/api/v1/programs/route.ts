@@ -2,7 +2,7 @@
  * GET /api/v1/programs
  *
  * List programs with filtering, sorting, cursor pagination, and sparse
- * field projection. Data source is controlled by NEXT_PUBLIC_FF_DB_PROGRAMS.
+ * field projection.
  */
 
 import { z } from "zod";

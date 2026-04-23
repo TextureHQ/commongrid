@@ -7,7 +7,6 @@ import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { rtos } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/rtos — List all RTOs
@@ -15,14 +14,7 @@ import { getDataSource } from "@/lib/feature-flags";
 
 async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
-  const source = getDataSource("rtos");
 
-  if (source === "json") {
-    const allRtos = (await import("@/data/rtos.json")).default;
-    return jsonResponse(paginatedResponse(allRtos, allRtos.length, null, allRtos.length), 200, corsHeaders());
-  }
-
-  // Database mode
   const db = getDb();
   const { cursor, limit, sort, order } = parsePaginationParams(url.searchParams);
 

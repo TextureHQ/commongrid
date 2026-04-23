@@ -1,14 +1,9 @@
 /**
  * Data loading abstraction for programs.
  *
- * Reads from static JSON (default) or Postgres via Drizzle, controlled by
- * the NEXT_PUBLIC_FF_DB_PROGRAMS feature flag.
+ * Reads from Postgres via Drizzle.
  */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
-import { getDataSource } from "@/lib/feature-flags";
 import type { AssetType, GridService, MarketSegment, Program, ProgramStatus } from "@/types/programs";
 
 // ---------------------------------------------------------------------------
@@ -22,42 +17,6 @@ export interface ProgramFilters {
   gridService?: string;
   /** Min 2 chars. Matches against name and slug (case-insensitive). */
   search?: string;
-}
-
-// ---------------------------------------------------------------------------
-// JSON source
-// ---------------------------------------------------------------------------
-
-let _jsonCache: Program[] | null = null;
-
-function loadJson(): Program[] {
-  if (_jsonCache) return _jsonCache;
-  const filePath = join(process.cwd(), "data", "programs.json");
-  _jsonCache = JSON.parse(readFileSync(filePath, "utf-8")) as Program[];
-  return _jsonCache;
-}
-
-function applyJsonFilters(programs: Program[], filters: ProgramFilters): Program[] {
-  let result = programs;
-
-  if (filters.status) {
-    result = result.filter((p) => p.status === filters.status);
-  }
-  if (filters.assetType) {
-    result = result.filter((p) => p.assetTypes.includes(filters.assetType as AssetType));
-  }
-  if (filters.marketSegment) {
-    result = result.filter((p) => p.marketSegments.includes(filters.marketSegment as MarketSegment));
-  }
-  if (filters.gridService) {
-    result = result.filter((p) => p.gridServices.includes(filters.gridService as GridService));
-  }
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    result = result.filter((p) => p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q));
-  }
-
-  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -208,15 +167,9 @@ async function loadBySlugFromDb(slug: string): Promise<Program | null> {
 
 /**
  * Load programs, optionally filtered.
- * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_PROGRAMS flag.
  */
 export async function loadPrograms(filters?: ProgramFilters): Promise<Program[]> {
-  if (getDataSource("programs") === "db") {
-    return loadFromDb(filters);
-  }
-
-  const programs = loadJson();
-  return filters ? applyJsonFilters(programs, filters) : programs;
+  return loadFromDb(filters);
 }
 
 /**
@@ -224,10 +177,5 @@ export async function loadPrograms(filters?: ProgramFilters): Promise<Program[]>
  * Returns null if not found.
  */
 export async function loadProgramBySlug(slug: string): Promise<Program | null> {
-  if (getDataSource("programs") === "db") {
-    return loadBySlugFromDb(slug);
-  }
-
-  const programs = loadJson();
-  return programs.find((p) => p.slug === slug) ?? null;
+  return loadBySlugFromDb(slug);
 }

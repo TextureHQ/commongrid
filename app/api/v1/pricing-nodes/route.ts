@@ -2,7 +2,7 @@
  * GET /api/v1/pricing-nodes
  *
  * List pricing nodes with filtering, sorting, cursor pagination, and sparse
- * field projection. Data source is controlled by NEXT_PUBLIC_FF_DB_PRICING_NODES.
+ * field projection.
  */
 
 import { z } from "zod";

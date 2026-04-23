@@ -7,7 +7,6 @@ import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { balancingAuthorities } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/balancing-authorities — List balancing authorities
@@ -15,27 +14,11 @@ import { getDataSource } from "@/lib/feature-flags";
 
 async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
-  const source = getDataSource("balancingAuthorities");
 
   // Filter params
   const isoId = url.searchParams.get("isoId");
   const state = url.searchParams.get("state");
 
-  if (source === "json") {
-    const allBAs = (await import("@/data/balancing-authorities.json")).default;
-    let filtered = allBAs;
-
-    if (isoId) {
-      filtered = filtered.filter((ba: { isoId: string | null }) => ba.isoId === isoId);
-    }
-    if (state) {
-      filtered = filtered.filter((ba: { states: string[] }) => ba.states.includes(state.toUpperCase()));
-    }
-
-    return jsonResponse(paginatedResponse(filtered, filtered.length, null, filtered.length), 200, corsHeaders());
-  }
-
-  // Database mode
   const db = getDb();
   const { cursor, limit, sort, order } = parsePaginationParams(url.searchParams);
 
