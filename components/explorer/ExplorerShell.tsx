@@ -1,8 +1,8 @@
 "use client";
 
 import "@/app/(shell)/explore/explore.css";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { ExplorerProvider, useExplorer } from "./ExplorerContext";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type EntityTab, ExplorerProvider, useExplorer } from "./ExplorerContext";
 import { ExplorerMap, type MapOverlays, type MapRegion } from "./ExplorerMap";
 import { ExplorerPanel } from "./ExplorerPanel";
 import { ExplorerTabBar } from "./ExplorerTabBar";
@@ -101,6 +101,17 @@ const DEFAULT_MAP_OVERLAYS: MapOverlays = {
   "transmission-lines": true,
   "ev-charging": false,
   "pricing-nodes": false,
+};
+
+// Labels for entity tabs — used by ListSourceSelector
+const ENTITY_LABELS: Record<EntityTab, string> = {
+  utilities: "Utilities",
+  "grid-operators": "Grid Operators",
+  "power-plants": "Power Plants",
+  programs: "Programs",
+  "transmission-lines": "Transmission",
+  "ev-charging": "EV Charging",
+  "pricing-nodes": "Pricing Nodes",
 };
 
 // ---------------------------------------------------------------------------
@@ -212,20 +223,122 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
 }
 
 // ---------------------------------------------------------------------------
-// Manual resizable split — panel LEFT, map RIGHT
+// ListSourceSelector — shown at top of list panel in map view
+// Controls which entity type populates the panel list
+// ---------------------------------------------------------------------------
+
+function ListSourceSelector({
+  mapRegion,
+  mapOverlays,
+}: {
+  mapRegion: MapRegion;
+  mapOverlays: MapOverlays;
+}) {
+  const { state, setListSource } = useExplorer();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Build ordered options: region first, then active overlays (deduped)
+  const options = useMemo<EntityTab[]>(() => {
+    const seen = new Set<EntityTab>();
+    const result: EntityTab[] = [];
+    const addIfNew = (t: EntityTab) => {
+      if (!seen.has(t)) {
+        seen.add(t);
+        result.push(t);
+      }
+    };
+    addIfNew(mapRegion as EntityTab);
+    for (const opt of OVERLAY_OPTIONS) {
+      if (mapOverlays[opt.key]) addIfNew(opt.key as EntityTab);
+    }
+    return result;
+  }, [mapRegion, mapOverlays]);
+
+  // If current listSource was toggled off, fall back to mapRegion
+  const activeSource: EntityTab = options.includes(state.listSource)
+    ? state.listSource
+    : (mapRegion as EntityTab);
+
+  useEffect(() => {
+    if (!options.includes(state.listSource)) {
+      setListSource(mapRegion as EntityTab);
+    }
+  }, [options, state.listSource, mapRegion, setListSource]);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "8px 12px",
+        borderBottom: "1px solid var(--cg-rule)",
+        flexShrink: 0,
+      }}
+    >
+      <span style={{ fontSize: 12, color: "var(--cg-muted)", whiteSpace: "nowrap" }}>Showing:</span>
+      <div ref={ref} style={{ position: "relative" }}>
+        <button
+          type="button"
+          className="cg-explore-icon-btn"
+          onClick={() => setOpen(!open)}
+          style={{ gap: 6, fontWeight: 500 }}
+        >
+          {ENTITY_LABELS[activeSource]}
+          <ChevronDownIcon />
+        </button>
+        {open && (
+          <div className="cg-explore-dropdown">
+            {options.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                className="cg-explore-dropdown-item"
+                data-active={activeSource === opt}
+                onClick={() => {
+                  setListSource(opt);
+                  setOpen(false);
+                }}
+              >
+                <span className="cg-explore-dropdown-check">{activeSource === opt && <CheckIcon />}</span>
+                {ENTITY_LABELS[opt]}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Manual resizable split — panel LEFT, map RIGHT (the "map" layout)
 // ---------------------------------------------------------------------------
 
 const DEFAULT_PANEL_WIDTH = 480;
 const MIN_PANEL_WIDTH = 380;
 const MIN_MAP_WIDTH = 400;
 
-interface HybridLayoutProps {
+interface MapLayoutProps {
   mapboxAccessToken?: string;
   mapRegion: MapRegion;
   mapOverlays: MapOverlays;
 }
 
-function HybridLayout({ mapboxAccessToken, mapRegion, mapOverlays }: HybridLayoutProps) {
+function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays }: MapLayoutProps) {
+  const { state } = useExplorer();
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
   const dragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -260,7 +373,8 @@ function HybridLayout({ mapboxAccessToken, mapRegion, mapOverlays }: HybridLayou
         className="flex-none h-full overflow-hidden flex flex-col"
         style={{ width: panelWidth, borderRight: "1px solid var(--cg-rule)", background: "var(--cg-card)" }}
       >
-        <ExplorerPanel />
+        <ListSourceSelector mapRegion={mapRegion} mapOverlays={mapOverlays} />
+        <ExplorerPanel listSource={state.listSource} />
       </div>
 
       {/* Resize handle */}
@@ -364,17 +478,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
             />
           )}
 
-          {/* Row 2 (hybrid view): region + overlays + filter */}
-          {layout === "hybrid" && (
-            <MapFilterBar
-              mapRegion={mapRegion}
-              setMapRegion={setMapRegion}
-              mapOverlays={mapOverlays}
-              toggleOverlay={toggleOverlay}
-            />
-          )}
-
-          {/* Row 2 (list view): entity tabs */}
+          {/* Row 2 (list view): entity tabs + list filter bar */}
           {layout === "list" && (
             <>
               <div style={{ borderTop: "1px solid var(--cg-rule)" }}>
@@ -386,29 +490,26 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
         </div>
       </div>
 
-      {/* Mobile: simplified tab bar + floating toggle */}
-      <div
-        className="md:hidden"
-        style={{ flexShrink: 0, borderBottom: "1px solid var(--cg-rule)", background: "var(--cg-card)" }}
-      >
-        <ExplorerTabBar />
-      </div>
+      {/* Mobile: simplified tab bar (list view only) + floating toggle */}
+      {layout === "list" && (
+        <div
+          className="md:hidden"
+          style={{ flexShrink: 0, borderBottom: "1px solid var(--cg-rule)", background: "var(--cg-card)" }}
+        >
+          <ExplorerTabBar />
+        </div>
+      )}
 
       {/* Body */}
       <div className="flex-1 min-h-0 relative">
         {/* Desktop layouts */}
         <div className="hidden md:block h-full">
-          {layout === "hybrid" && (
-            <HybridLayout mapboxAccessToken={mapboxAccessToken} mapRegion={mapRegion} mapOverlays={mapOverlays} />
+          {layout === "map" && (
+            <MapLayout mapboxAccessToken={mapboxAccessToken} mapRegion={mapRegion} mapOverlays={mapOverlays} />
           )}
           {layout === "list" && (
             <div className="h-full" style={{ background: "var(--cg-card)" }}>
               <ExplorerPanel />
-            </div>
-          )}
-          {layout === "map" && (
-            <div className="h-full">
-              <ExplorerMap mapboxAccessToken={mapboxAccessToken} mapRegion={mapRegion} mapOverlays={mapOverlays} />
             </div>
           )}
         </div>
@@ -425,7 +526,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
           {/* Floating toggle button */}
           <button
             type="button"
-            onClick={() => setLayout(layout === "map" ? "hybrid" : "map")}
+            onClick={() => setLayout(layout === "map" ? "list" : "map")}
             className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium shadow-lg"
             style={{
               background: "var(--cg-ink)",
