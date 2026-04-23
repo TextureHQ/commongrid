@@ -51,7 +51,11 @@ const handler = withApiMiddleware(async (r: Request, _ctx: RouteContext) => {
       LIMIT 10
     `);
 
-  return jsonResponse({ data: result }, 200, {
+  // Extract rows only — raw db.execute() returns the full Neon driver
+  // result object which leaks internal metadata (field types, parsers, etc.)
+  const rows = (result as unknown as { rows: Array<Record<string, unknown>> }).rows ?? result;
+
+  return jsonResponse({ data: rows }, 200, {
     "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=3600",
   });
 });
