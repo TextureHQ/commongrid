@@ -131,6 +131,8 @@ const endpointGroups: Group[] = [
             example: "solar",
           },
           { name: "status", in: "query", description: "Filter by operational status" },
+          { name: "utilityId", in: "query", description: "Filter by utility ID" },
+          { name: "baId", in: "query", description: "Filter by balancing authority ID" },
           { name: "search", in: "query", description: "Search by plant name (min 2 chars)" },
           { name: "sort", in: "query", description: "Sort field: name, totalCapacityMw, state (default: name)" },
           { name: "order", in: "query", description: "Sort order: asc, desc (default: asc)" },

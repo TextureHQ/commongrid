@@ -19,6 +19,10 @@ export interface PowerPlantFilters {
   state?: string;
   fuelCategory?: string;
   status?: string;
+  /** Filter by utility ID (exact match on utilityId field). */
+  utilityId?: string;
+  /** Filter by balancing authority ID (exact match on balancingAuthorityId field). */
+  baId?: string;
   /** Min 2 chars. Matches against name and utilityName (case-insensitive). */
   search?: string;
 }
@@ -55,6 +59,12 @@ function applyJsonFilters(plants: PowerPlant[], filters: PowerPlantFilters): Pow
   }
   if (filters.status) {
     result = result.filter((p) => p.status === filters.status);
+  }
+  if (filters.utilityId) {
+    result = result.filter((p) => p.utilityId === filters.utilityId);
+  }
+  if (filters.baId) {
+    result = result.filter((p) => p.balancingAuthorityId === filters.baId);
   }
   if (filters.search) {
     const q = filters.search.toLowerCase();
@@ -113,6 +123,8 @@ async function loadFromDb(options?: PowerPlantQueryOptions): Promise<PowerPlant[
   if (filters?.state) conditions.push(eq(powerPlants.state, filters.state));
   if (filters?.fuelCategory) conditions.push(eq(powerPlants.fuelCategory, filters.fuelCategory));
   if (filters?.status) conditions.push(eq(powerPlants.status, filters.status));
+  if (filters?.utilityId) conditions.push(eq(powerPlants.utilityId, filters.utilityId));
+  if (filters?.baId) conditions.push(eq(powerPlants.balancingAuthorityId, filters.baId));
   if (filters?.search) {
     const searchTerm = filters.search.trim();
     conditions.push(
@@ -257,6 +269,8 @@ export async function countPowerPlants(filters?: PowerPlantFilters): Promise<num
     if (filters?.state) conditions.push(eq(powerPlants.state, filters.state));
     if (filters?.fuelCategory) conditions.push(eq(powerPlants.fuelCategory, filters.fuelCategory));
     if (filters?.status) conditions.push(eq(powerPlants.status, filters.status));
+    if (filters?.utilityId) conditions.push(eq(powerPlants.utilityId, filters.utilityId));
+    if (filters?.baId) conditions.push(eq(powerPlants.balancingAuthorityId, filters.baId));
     if (filters?.search) {
       const searchTerm = filters.search.trim();
       conditions.push(
