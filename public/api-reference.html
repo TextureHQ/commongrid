@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CommonGrid API Reference</title>
+  <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements@8.5.2/styles.min.css" />
+  <script src="https://unpkg.com/@stoplight/elements@8.5.2/web-components.min.js" type="module" async></script>
+  <style>
+    body { margin: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
+    .sl-elements { min-height: 100vh; }
+    /* Override Stoplight's light gray nav background to white */
+    .sl-elements .sl-panel { background: #fff; }
+    .sl-elements .sl-stack--vertical { background: #fff; }
+    .sl-elements [class*="TableOfContents"] { background: #fff; }
+    /* Clean up sidebar styling */
+    .sl-elements .sl-sidebar { background: #fff; border-right: 1px solid #e5e7eb; }
+  </style>
+</head>
+<body>
+  <elements-api
+    apiDescriptionUrl="/openapi.json"
+    layout="responsive"
+    router="hash"
+  />
+  <script>
+    // Notify the parent page whenever the iframe hash changes so the
+    // parent URL bar stays in sync with the selected endpoint.
+    (function () {
+      function postHash() {
+        if (window.parent !== window) {
+          window.parent.postMessage(
+            { type: "api-hash-update", hash: window.location.hash },
+            window.location.origin
+          );
+        }
+      }
+
+      window.addEventListener("hashchange", postHash);
+
+      // Stoplight Elements may update the hash after initial render;
+      // poll briefly to catch the first programmatic update.
+      var checks = 0;
+      var lastHash = window.location.hash;
+      var interval = setInterval(function () {
+        if (window.location.hash !== lastHash) {
+          lastHash = window.location.hash;
+          postHash();
+        }
+        if (++checks > 40) clearInterval(interval);
+      }, 250);
+    })();
+  </script>
+</body>
+</html>
