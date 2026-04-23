@@ -301,6 +301,8 @@
           { "name": "state", "in": "query", "description": "Filter by 2-letter US state code", "schema": { "type": "string" } },
           { "name": "fuelCategory", "in": "query", "description": "Filter by fuel category (solar, wind, nuclear, gas, coal, hydro, etc.)", "schema": { "type": "string" } },
           { "name": "status", "in": "query", "description": "Filter by operational status", "schema": { "type": "string" } },
+          { "name": "utilityId", "in": "query", "description": "Filter by utility ID", "schema": { "type": "string" } },
+          { "name": "baId", "in": "query", "description": "Filter by balancing authority ID", "schema": { "type": "string" } },
           { "name": "search", "in": "query", "description": "Search by plant name (min 2 chars)", "schema": { "type": "string" } },
           { "name": "sort", "in": "query", "description": "Sort field", "schema": { "type": "string", "enum": ["name", "totalCapacityMw", "state"], "default": "name" } },
           { "name": "order", "in": "query", "description": "Sort order", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "asc" } }

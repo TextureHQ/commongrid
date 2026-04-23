@@ -30,6 +30,8 @@ const querySchema = z.object({
   state: z.string().optional(),
   fuelCategory: z.string().optional(),
   status: z.string().optional(),
+  utilityId: z.string().optional(),
+  baId: z.string().optional(),
   search: z.string().min(2).max(200).optional(),
   fields: z.string().optional(),
   sort: z.enum(["name", "totalCapacityMw", "state"]).default("name"),
@@ -172,7 +174,19 @@ async function handler(req: Request): Promise<Response> {
     });
   }
 
-  const { state, fuelCategory, status, search, fields, sort, order, limit, cursor: rawCursor } = parsed.data;
+  const {
+    state,
+    fuelCategory,
+    status,
+    utilityId,
+    baId,
+    search,
+    fields,
+    sort,
+    order,
+    limit,
+    cursor: rawCursor,
+  } = parsed.data;
 
   // Decode cursor if provided
   let cursor: CursorV1 | null = null;
@@ -190,7 +204,7 @@ async function handler(req: Request): Promise<Response> {
 
   if (useDb && !cursor) {
     // DB mode: use SQL-level pagination with accurate count
-    const filters = { state, fuelCategory, status, search };
+    const filters = { state, fuelCategory, status, utilityId, baId, search };
 
     // Parallel: fetch page + total count
     const [results, count] = await Promise.all([
@@ -210,7 +224,7 @@ async function handler(req: Request): Promise<Response> {
   } else {
     // JSON mode OR cursor-based pagination: use in-memory sort/pagination
     const allPlants = await loadPowerPlants({
-      filters: { state, fuelCategory, status, search },
+      filters: { state, fuelCategory, status, utilityId, baId, search },
     });
 
     // Sort
