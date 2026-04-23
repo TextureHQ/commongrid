@@ -1,41 +1,26 @@
 "use client";
 
-import {
-  Badge,
-  Card,
-  type Column,
-  DataControls,
-  DataTable,
-  EmptyState,
-  Icon,
-  Section,
-  Tooltip,
-} from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getBalancingAuthoritiesByIso, getIsoBySlug } from "@/lib/data";
-import { formatCustomerCount, formatStates, getSegmentBadgeVariant, getSegmentLabel } from "@/lib/formatting";
+import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "../ExplorerContext";
 
-interface UtilityRow extends Record<string, unknown> {
-  slug: string;
-  name: string;
-  segment: string;
-  customerCount: number | null;
-  jurisdiction: string | null;
-}
+const BackIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M19 12H5m5-5-5 5 5 5" />
+  </svg>
+);
 
-interface BalancingAuthorityRow extends Record<string, unknown> {
-  slug: string;
-  name: string;
-  shortName: string;
-  eiaCode: string | null;
-  states: string[];
-}
+const ArrowIcon = () => (
+  <svg className="cg-explore-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M5 12h14m-5-5 5 5-5 5" />
+  </svg>
+);
 
 export function IsoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
@@ -43,7 +28,6 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
 
   const iso = getIsoBySlug(slug);
 
-  // Load boundary GeoJSON for map highlight
   useEffect(() => {
     if (!iso?.shortName) {
       setHighlight(null);
@@ -54,7 +38,6 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setHighlight(data as FeatureCollection | null))
       .catch(() => setHighlight(null));
-
     return () => setHighlight(null);
   }, [iso?.shortName, setHighlight]);
 
@@ -62,253 +45,109 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
   const utilities = useMemo(() => (iso ? allUtilities.filter((u) => u.isoId === iso.id) : []), [iso, allUtilities]);
   const balancingAuthorities = useMemo(() => (iso ? getBalancingAuthoritiesByIso(iso.id) : []), [iso]);
 
-  const utilityRows: UtilityRow[] = useMemo(
-    () =>
-      utilities.map((u) => ({
-        slug: u.slug,
-        name: u.name,
-        segment: u.segment,
-        customerCount: u.customerCount,
-        jurisdiction: u.jurisdiction,
-      })),
-    [utilities]
-  );
-
-  const baRows: BalancingAuthorityRow[] = useMemo(
-    () =>
-      balancingAuthorities.map((ba) => ({
-        slug: ba.slug,
-        name: ba.name,
-        shortName: ba.shortName,
-        eiaCode: ba.eiaCode,
-        states: ba.states,
-      })),
-    [balancingAuthorities]
-  );
-
-  const handleUtilityRowClick = useCallback(
-    (row: UtilityRow) => navigateToDetail("utility", row.slug),
-    [navigateToDetail]
-  );
-
-  const handleBARowClick = useCallback(
-    (row: BalancingAuthorityRow) => navigateToDetail("ba", row.slug),
-    [navigateToDetail]
-  );
-
-  const utilityColumns: Column<UtilityRow>[] = useMemo(
-    () => [
-      {
-        id: "name",
-        label: "Name",
-        accessor: "name",
-        render: (_value: unknown, row: UtilityRow) => (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToDetail("utility", row.slug);
-            }}
-            className="font-medium text-text-body hover:text-brand-primary"
-          >
-            {row.name}
-          </button>
-        ),
-        mobile: { priority: 1, format: "primary" },
-      },
-      {
-        id: "segment",
-        label: "Segment",
-        accessor: "segment",
-        render: (_value: unknown, row: UtilityRow) => (
-          <Badge size="sm" shape="pill" variant={getSegmentBadgeVariant(row.segment)}>
-            {getSegmentLabel(row.segment)}
-          </Badge>
-        ),
-        mobile: { priority: 2, format: "badge" },
-      },
-      {
-        id: "customerCount",
-        label: "Customers",
-        accessor: "customerCount",
-        render: (_value: unknown, row: UtilityRow) => (
-          <span className="text-text-body">{formatCustomerCount(row.customerCount)}</span>
-        ),
-        mobile: false,
-      },
-    ],
-    [navigateToDetail]
-  );
-
-  const baColumns: Column<BalancingAuthorityRow>[] = useMemo(
-    () => [
-      {
-        id: "name",
-        label: "Name",
-        accessor: "name",
-        render: (_value: unknown, row: BalancingAuthorityRow) => (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToDetail("ba", row.slug);
-            }}
-            className="font-medium text-text-body hover:text-brand-primary"
-          >
-            {row.name}
-          </button>
-        ),
-        mobile: { priority: 1, format: "primary" },
-      },
-      {
-        id: "shortName",
-        label: "Short Name",
-        accessor: "shortName",
-        mobile: { priority: 2, format: "secondary" },
-      },
-      {
-        id: "eiaCode",
-        label: "EIA Code",
-        accessor: "eiaCode",
-        render: (_value: unknown, row: BalancingAuthorityRow) => (
-          <span className="font-mono text-text-body">{row.eiaCode ?? "\u2014"}</span>
-        ),
-        mobile: false,
-      },
-    ],
-    [navigateToDetail]
-  );
-
   if (!iso) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex-none px-4 pt-4 pb-2">
-          <button
-            type="button"
-            onClick={goBack}
-            className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
-          >
-            &larr; Back
+        <div className="cg-explore-breadcrumb">
+          <button type="button" className="cg-explore-breadcrumb-back" onClick={goBack}>
+            <BackIcon /> Back
           </button>
         </div>
-        <div className="flex-1 flex items-center justify-center text-text-muted">ISO not found</div>
+        <div className="cg-explore-empty">ISO not found</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
-      <div className="flex-none px-4 pt-4 pb-2">
-        <button
-          type="button"
-          onClick={goBack}
-          className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
-        >
-          &larr; Back
+    <div className="flex flex-col h-full">
+      <div className="cg-explore-breadcrumb">
+        <button type="button" className="cg-explore-breadcrumb-back" onClick={goBack}>
+          <BackIcon /> Grid Operators
         </button>
+        <span className="cg-explore-breadcrumb-sep">/</span>
+        <span className="cg-explore-breadcrumb-current">{iso.shortName}</span>
       </div>
 
-      <div className="px-4 pb-6 space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold text-text-heading">{iso.name}</h2>
-          <div className="text-sm text-text-muted">{iso.shortName}</div>
-        </div>
+      <div className="cg-explore-detail">
+        <div className="cg-explore-detail-type">ISO</div>
+        <div className="cg-explore-detail-name">{iso.name}</div>
+        <div className="cg-explore-detail-sub">{iso.shortName} · {formatStates(iso.states)}</div>
 
-        {/* Suggest Edit link */}
-        <div>
-          {user ? (
-            <Link
-              href={`/grid-operators/${slug}?edit=true`}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-primary hover:underline"
-            >
-              <Icon name="PencilSimple" size="sm" />
-              Suggest Edit
-            </Link>
-          ) : (
-            <Tooltip content="Sign in to suggest edits">
-              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted cursor-not-allowed">
-                <Icon name="PencilSimple" size="sm" />
-                Suggest Edit
+        <div className="cg-explore-kv-table">
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Short Name</span>
+            <span className="cg-explore-kv-val">{iso.shortName}</span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">States</span>
+            <span className="cg-explore-kv-val">{formatStates(iso.states)}</span>
+          </div>
+          {iso.website && (
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">Website</span>
+              <span className="cg-explore-kv-val">
+                <a href={iso.website} target="_blank" rel="noopener noreferrer">
+                  {safeHostname(iso.website)}
+                </a>
               </span>
-            </Tooltip>
+            </div>
           )}
         </div>
 
-        <Section id="overview" title="Overview">
-          <Card variant="outlined">
-            <Card.Content>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">Short Name</div>
-                  <div className="text-sm font-medium">{iso.shortName}</div>
+        {/* Utilities */}
+        {utilities.length > 0 && (
+          <>
+            <div className="cg-explore-related-heading">Utilities ({utilities.length})</div>
+            {utilities.slice(0, 15).map((u) => (
+              <div
+                key={u.id}
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("utility", u.slug)}
+              >
+                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{u.name}</div>
+                  <div className="cg-explore-related-type">{getSegmentLabel(u.segment)} · {formatCustomerCount(u.customerCount)}</div>
                 </div>
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">States</div>
-                  <div className="text-sm font-medium">{formatStates(iso.states)}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">Website</div>
-                  <div className="text-sm font-medium">
-                    {iso.website ? (
-                      <a
-                        href={iso.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-brand-primary hover:underline"
-                      >
-                        {safeHostname(iso.website)}
-                      </a>
-                    ) : (
-                      "\u2014"
-                    )}
-                  </div>
-                </div>
+                <ArrowIcon />
               </div>
-            </Card.Content>
-          </Card>
-        </Section>
+            ))}
+            {utilities.length > 15 && (
+              <div style={{ fontSize: 11, color: "var(--cg-muted)", textAlign: "center", marginTop: 4 }}>
+                + {utilities.length - 15} more
+              </div>
+            )}
+          </>
+        )}
 
-        <Section id="utilities" title="Utilities">
-          {utilityRows.length > 0 ? (
-            <>
-              <DataControls resultsCount={{ count: utilityRows.length }} />
-              <Card className="p-0 overflow-hidden">
-                <DataTable
-                  data={utilityRows}
-                  columns={utilityColumns}
-                  mobileBreakpoint="md"
-                  isLoading={false}
-                  onRowClick={handleUtilityRowClick}
-                />
-              </Card>
-            </>
-          ) : (
-            <EmptyState icon="Lightning" title="No utilities" description="No utilities are linked to this ISO." />
-          )}
-        </Section>
+        {/* Balancing Authorities */}
+        {balancingAuthorities.length > 0 && (
+          <>
+            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+              Balancing Authorities ({balancingAuthorities.length})
+            </div>
+            {balancingAuthorities.map((ba) => (
+              <div
+                key={ba.id}
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("ba", ba.slug)}
+              >
+                <span className="cg-explore-related-dot" style={{ background: "var(--cg-blue)" }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{ba.name}</div>
+                  <div className="cg-explore-related-type">{ba.shortName}{ba.eiaCode ? ` · ${ba.eiaCode}` : ""}</div>
+                </div>
+                <ArrowIcon />
+              </div>
+            ))}
+          </>
+        )}
 
-        <Section id="balancing-authorities" title="Balancing Authorities">
-          {baRows.length > 0 ? (
-            <>
-              <DataControls resultsCount={{ count: baRows.length }} />
-              <Card className="p-0 overflow-hidden">
-                <DataTable
-                  data={baRows}
-                  columns={baColumns}
-                  mobileBreakpoint="md"
-                  isLoading={false}
-                  onRowClick={handleBARowClick}
-                />
-              </Card>
-            </>
-          ) : (
-            <EmptyState
-              icon="Scales"
-              title="No balancing authorities"
-              description="No balancing authorities are linked to this ISO."
-            />
-          )}
-        </Section>
+        <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
+          <Link href={`/grid-operators/${slug}`} className="cg-explore-fullpage-link" style={{ textDecoration: "none" }}>
+            Full page →
+          </Link>
+        </div>
       </div>
     </div>
   );

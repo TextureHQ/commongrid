@@ -1,31 +1,16 @@
 "use client";
 
-import {
-  Avatar,
-  Badge,
-  Card,
-  type Column,
-  DataControls,
-  DataTable,
-  Icon,
-  Loader,
-  Section,
-  Tooltip,
-} from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
-  getFuelBadgeVariant,
   getFuelCategoryColor,
   getFuelCategoryLabel,
-  getSegmentBadgeVariant,
   getSegmentLabel,
-  getStatusBadgeVariant,
   getStatusLabel,
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
@@ -33,13 +18,17 @@ import { filterByUtility, usePowerPlants } from "@/lib/power-plants";
 import { useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "../ExplorerContext";
 
-interface ServedUtilityRow extends Record<string, unknown> {
-  slug: string;
-  name: string;
-  segment: string;
-  customerCount: number | null;
-  jurisdiction: string | null;
-}
+const BackIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M19 12H5m5-5-5 5 5 5" />
+  </svg>
+);
+
+const ArrowIcon = () => (
+  <svg className="cg-explore-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M5 12h14m-5-5 5 5-5 5" />
+  </svg>
+);
 
 export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
@@ -57,16 +46,6 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   );
   const parent = useMemo(
     () => (utility?.parentId ? (utilities.find((u) => u.id === utility.parentId) ?? null) : null),
-    [utility, utilities]
-  );
-  const generationProvider = useMemo(
-    () =>
-      utility?.generationProviderId ? (utilities.find((u) => u.id === utility.generationProviderId) ?? null) : null,
-    [utility, utilities]
-  );
-  const transmissionProvider = useMemo(
-    () =>
-      utility?.transmissionProviderId ? (utilities.find((u) => u.id === utility.transmissionProviderId) ?? null) : null,
     [utility, utilities]
   );
   const successor = useMemo(
@@ -103,47 +82,9 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     return () => setHighlight(null);
   }, [territoryFileKey, setHighlight]);
 
-  const generationMembers = useMemo(
-    () => (utility ? utilities.filter((u) => u.generationProviderId === utility.id) : []),
-    [utility, utilities]
-  );
-  const transmissionMembers = useMemo(
-    () => (utility ? utilities.filter((u) => u.transmissionProviderId === utility.id) : []),
-    [utility, utilities]
-  );
   const childUtilities = useMemo(
     () => (utility ? utilities.filter((u) => u.parentId === utility.id) : []),
     [utility, utilities]
-  );
-
-  const servedRows: ServedUtilityRow[] = useMemo(() => {
-    const seen = new Set<string>();
-    const combined = [...generationMembers, ...transmissionMembers];
-    return combined
-      .filter((u) => {
-        if (seen.has(u.id)) return false;
-        seen.add(u.id);
-        return true;
-      })
-      .map((u) => ({
-        slug: u.slug,
-        name: u.name,
-        segment: u.segment,
-        customerCount: u.customerCount,
-        jurisdiction: u.jurisdiction,
-      }));
-  }, [generationMembers, transmissionMembers]);
-
-  const childRows: ServedUtilityRow[] = useMemo(
-    () =>
-      childUtilities.map((u) => ({
-        slug: u.slug,
-        name: u.name,
-        segment: u.segment,
-        customerCount: u.customerCount,
-        jurisdiction: u.jurisdiction,
-      })),
-    [childUtilities]
   );
 
   const { plants: allPlants } = usePowerPlants();
@@ -152,460 +93,224 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     [utility, allPlants]
   );
 
-  const handleServedRowClick = useCallback(
-    (row: ServedUtilityRow) => {
-      navigateToDetail("utility", row.slug);
-    },
-    [navigateToDetail]
-  );
-
-  const servedColumns: Column<ServedUtilityRow>[] = useMemo(
-    () => [
-      {
-        id: "name",
-        label: "Name",
-        accessor: "name",
-        render: (_value: unknown, row: ServedUtilityRow) => (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToDetail("utility", row.slug);
-            }}
-            className="font-medium text-text-body hover:text-brand-primary"
-          >
-            {row.name}
-          </button>
-        ),
-        mobile: { priority: 1, format: "primary" },
-      },
-      {
-        id: "segment",
-        label: "Segment",
-        accessor: "segment",
-        render: (_value: unknown, row: ServedUtilityRow) => (
-          <Badge size="sm" shape="pill" variant={getSegmentBadgeVariant(row.segment)}>
-            {getSegmentLabel(row.segment)}
-          </Badge>
-        ),
-        mobile: { priority: 2, format: "badge" },
-      },
-      {
-        id: "customerCount",
-        label: "Customers",
-        accessor: "customerCount",
-        render: (_value: unknown, row: ServedUtilityRow) => (
-          <span className="text-text-body">{formatCustomerCount(row.customerCount)}</span>
-        ),
-        mobile: false,
-      },
-    ],
-    [navigateToDetail]
-  );
-
   if (utilitiesLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Loader />
-      </div>
-    );
+    return <div className="cg-explore-loading">Loading…</div>;
   }
 
   if (!utility) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex-none px-4 pt-4 pb-2">
-          <button
-            type="button"
-            onClick={goBack}
-            className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
-          >
-            &larr; Back
+        <div className="cg-explore-breadcrumb">
+          <button type="button" className="cg-explore-breadcrumb-back" onClick={goBack}>
+            <BackIcon /> Back
           </button>
         </div>
-        <div className="flex-1 flex items-center justify-center text-text-muted">Utility not found</div>
+        <div className="cg-explore-empty">Utility not found</div>
       </div>
     );
   }
 
-  const hasOperationsData =
-    utility.peakDemandMw !== null ||
-    utility.winterPeakDemandMw !== null ||
-    utility.totalRevenueDollars !== null ||
-    utility.totalSalesMwh !== null ||
-    utility.amiMeterCount !== null ||
-    utility.totalMeterCount !== null ||
-    utility.nercRegion !== null ||
-    utility.baCode !== null ||
-    utility.hasGeneration !== null;
-
   const hasGridRelationships = iso || rto || ba;
-  const hasUtilityRelationships = parent || generationProvider || transmissionProvider || successor;
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
-      <div className="flex-none px-4 pt-4 pb-2">
-        <button
-          type="button"
-          onClick={goBack}
-          className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
-        >
-          &larr; Back
+    <div className="flex flex-col h-full">
+      {/* Breadcrumb */}
+      <div className="cg-explore-breadcrumb">
+        <button type="button" className="cg-explore-breadcrumb-back" onClick={goBack}>
+          <BackIcon /> Utilities
         </button>
+        <span className="cg-explore-breadcrumb-sep">/</span>
+        <span className="cg-explore-breadcrumb-current">{utility.name}</span>
       </div>
 
-      <div className="px-4 pb-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <Avatar
-            {...(utility.logo ? { src: utility.logo } : {})}
-            fullName={utility.name}
-            size="xl"
-            shape="square"
-            variant="organization"
-          />
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-text-heading">{utility.name}</h2>
-            {utility.shortName && <div className="text-sm text-text-muted">{utility.shortName}</div>}
-          </div>
+      {/* Detail content */}
+      <div className="cg-explore-detail">
+        <div className="cg-explore-detail-type">Utility</div>
+        <div className="cg-explore-detail-name">{utility.name}</div>
+        <div className="cg-explore-detail-sub">
+          {getSegmentLabel(utility.segment)} · {formatCustomerCount(utility.customerCount)} customers · {getStatusLabel(utility.status)}
         </div>
 
-        {/* Suggest Edit link */}
-        <div>
-          {user ? (
-            <Link
-              href={`/grid-operators/${slug}?edit=true`}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-primary hover:underline"
-            >
-              <Icon name="PencilSimple" size="sm" />
-              Suggest Edit
-            </Link>
-          ) : (
-            <Tooltip content="Sign in to suggest edits">
-              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted cursor-not-allowed">
-                <Icon name="PencilSimple" size="sm" />
-                Suggest Edit
+        {/* Registry data KV table */}
+        <div className="cg-explore-kv-table">
+          {utility.jurisdiction && (
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">Jurisdiction</span>
+              <span className="cg-explore-kv-val">{utility.jurisdiction}</span>
+            </div>
+          )}
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Segment</span>
+            <span className="cg-explore-kv-val">{getSegmentLabel(utility.segment)}</span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Customers</span>
+            <span className="cg-explore-kv-val">{formatCustomerCount(utility.customerCount)}</span>
+          </div>
+          {utility.eiaId && (
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">EIA ID</span>
+              <span className="cg-explore-kv-val">{utility.eiaId}</span>
+            </div>
+          )}
+          {utility.website && (
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">Website</span>
+              <span className="cg-explore-kv-val">
+                <a href={utility.website} target="_blank" rel="noopener noreferrer">
+                  {safeHostname(utility.website)}
+                </a>
               </span>
-            </Tooltip>
+            </div>
+          )}
+          {utility.peakDemandMw !== null && (
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">Summer Peak</span>
+              <span className="cg-explore-kv-val">{utility.peakDemandMw.toLocaleString()} MW</span>
+            </div>
+          )}
+          {utility.nercRegion && (
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">NERC Region</span>
+              <span className="cg-explore-kv-val">{utility.nercRegion}</span>
+            </div>
           )}
         </div>
 
-        {/* Overview */}
-        <Section id="overview" title="Overview">
-          <Card variant="outlined">
-            <Card.Content>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">Segment</div>
-                  <Badge variant={getSegmentBadgeVariant(utility.segment)}>{getSegmentLabel(utility.segment)}</Badge>
-                </div>
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">Status</div>
-                  <Badge variant={getStatusBadgeVariant(utility.status)}>{getStatusLabel(utility.status)}</Badge>
-                </div>
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">Customers</div>
-                  <div className="text-sm font-medium">{formatCustomerCount(utility.customerCount)}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">Jurisdiction</div>
-                  <div className="text-sm font-medium">{utility.jurisdiction || "\u2014"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">EIA ID</div>
-                  <div className="text-sm font-medium font-mono">{utility.eiaId ?? "\u2014"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">Website</div>
-                  <div className="text-sm font-medium">
-                    {utility.website ? (
-                      <a
-                        href={utility.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-brand-primary hover:underline"
-                      >
-                        {safeHostname(utility.website)}
-                      </a>
-                    ) : (
-                      "\u2014"
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Card.Content>
-          </Card>
-        </Section>
-
-        {/* Operations */}
-        {hasOperationsData && (
-          <Section id="operations" title="Operations">
-            <Card variant="outlined">
-              <Card.Content>
-                <div className="grid grid-cols-2 gap-4">
-                  {utility.peakDemandMw !== null && (
-                    <div>
-                      <div className="text-xs text-text-muted mb-0.5">Summer Peak</div>
-                      <div className="text-sm font-medium">{utility.peakDemandMw.toLocaleString()} MW</div>
-                    </div>
-                  )}
-                  {utility.winterPeakDemandMw !== null && (
-                    <div>
-                      <div className="text-xs text-text-muted mb-0.5">Winter Peak</div>
-                      <div className="text-sm font-medium">{utility.winterPeakDemandMw.toLocaleString()} MW</div>
-                    </div>
-                  )}
-                  {utility.totalRevenueDollars !== null && (
-                    <div>
-                      <div className="text-xs text-text-muted mb-0.5">Revenue</div>
-                      <div className="text-sm font-medium">
-                        {utility.totalRevenueDollars >= 1_000_000_000
-                          ? `$${(utility.totalRevenueDollars / 1_000_000_000).toFixed(1)}B`
-                          : utility.totalRevenueDollars >= 1_000_000
-                            ? `$${(utility.totalRevenueDollars / 1_000_000).toFixed(1)}M`
-                            : `$${utility.totalRevenueDollars.toLocaleString()}`}
-                      </div>
-                    </div>
-                  )}
-                  {utility.totalSalesMwh !== null && (
-                    <div>
-                      <div className="text-xs text-text-muted mb-0.5">Sales</div>
-                      <div className="text-sm font-medium">
-                        {utility.totalSalesMwh >= 1_000_000
-                          ? `${(utility.totalSalesMwh / 1_000_000).toFixed(1)}M MWh`
-                          : `${utility.totalSalesMwh.toLocaleString()} MWh`}
-                      </div>
-                    </div>
-                  )}
-                  {utility.totalMeterCount !== null && (
-                    <div>
-                      <div className="text-xs text-text-muted mb-0.5">Meters</div>
-                      <div className="text-sm font-medium">{utility.totalMeterCount.toLocaleString()}</div>
-                    </div>
-                  )}
-                  {utility.amiMeterCount !== null && (
-                    <div>
-                      <div className="text-xs text-text-muted mb-0.5">AMI Meters</div>
-                      <div className="text-sm font-medium">
-                        {utility.amiMeterCount.toLocaleString()}
-                        {utility.totalMeterCount
-                          ? ` (${Math.round((utility.amiMeterCount / utility.totalMeterCount) * 100)}%)`
-                          : ""}
-                      </div>
-                    </div>
-                  )}
-                  {utility.nercRegion !== null && (
-                    <div>
-                      <div className="text-xs text-text-muted mb-0.5">NERC Region</div>
-                      <div className="text-sm font-medium font-mono">{utility.nercRegion}</div>
-                    </div>
-                  )}
-                  {utility.hasGeneration !== null && (
-                    <div className="col-span-2">
-                      <div className="text-xs text-text-muted mb-0.5">Activities</div>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {utility.hasGeneration && (
-                          <Badge size="sm" shape="pill" variant="info">
-                            Generation
-                          </Badge>
-                        )}
-                        {utility.hasTransmission && (
-                          <Badge size="sm" shape="pill" variant="info">
-                            Transmission
-                          </Badge>
-                        )}
-                        {utility.hasDistribution && (
-                          <Badge size="sm" shape="pill" variant="info">
-                            Distribution
-                          </Badge>
-                        )}
-                        {!utility.hasGeneration && !utility.hasTransmission && !utility.hasDistribution && (
-                          <span className="text-text-muted">{"\u2014"}</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </Card.Content>
-            </Card>
-          </Section>
-        )}
-
-        {/* Grid Relationships */}
+        {/* Related grid entities */}
         {hasGridRelationships && (
-          <Section id="grid-relationships" title="Grid Relationships">
-            <Card variant="outlined">
-              <Card.Content>
-                <div className="grid grid-cols-1 gap-3">
-                  {iso && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-text-muted">ISO</span>
-                      <button
-                        type="button"
-                        onClick={() => navigateToDetail("iso", iso.slug)}
-                        className="text-sm font-medium text-brand-primary hover:underline"
-                      >
-                        {iso.shortName}
-                      </button>
-                    </div>
-                  )}
-                  {rto && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-text-muted">RTO</span>
-                      <button
-                        type="button"
-                        onClick={() => navigateToDetail("rto", rto.slug)}
-                        className="text-sm font-medium text-brand-primary hover:underline"
-                      >
-                        {rto.shortName}
-                      </button>
-                    </div>
-                  )}
-                  {ba && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-text-muted">Balancing Authority</span>
-                      <button
-                        type="button"
-                        onClick={() => navigateToDetail("ba", ba.slug)}
-                        className="text-sm font-medium text-brand-primary hover:underline"
-                      >
-                        {ba.shortName}
-                      </button>
-                    </div>
-                  )}
+          <>
+            <div className="cg-explore-related-heading">Related</div>
+            {iso && (
+              <div className="cg-explore-related-row" onClick={() => navigateToDetail("iso", iso.slug)}>
+                <span className="cg-explore-related-dot" style={{ background: "var(--cg-blue)" }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{iso.shortName}</div>
+                  <div className="cg-explore-related-type">ISO</div>
                 </div>
-              </Card.Content>
-            </Card>
-          </Section>
+                <ArrowIcon />
+              </div>
+            )}
+            {rto && (
+              <div className="cg-explore-related-row" onClick={() => navigateToDetail("rto", rto.slug)}>
+                <span className="cg-explore-related-dot" style={{ background: "var(--cg-blue)" }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{rto.shortName}</div>
+                  <div className="cg-explore-related-type">RTO</div>
+                </div>
+                <ArrowIcon />
+              </div>
+            )}
+            {ba && (
+              <div className="cg-explore-related-row" onClick={() => navigateToDetail("ba", ba.slug)}>
+                <span className="cg-explore-related-dot" style={{ background: "var(--cg-blue)" }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{ba.shortName}</div>
+                  <div className="cg-explore-related-type">Balancing Authority</div>
+                </div>
+                <ArrowIcon />
+              </div>
+            )}
+          </>
         )}
 
-        {/* Utility Relationships */}
-        {hasUtilityRelationships && (
-          <Section id="utility-relationships" title="Utility Relationships">
-            <Card variant="outlined">
-              <Card.Content>
-                <div className="grid grid-cols-1 gap-3">
-                  {parent && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-text-muted">Parent</span>
-                      <button
-                        type="button"
-                        onClick={() => navigateToDetail("utility", parent.slug)}
-                        className="text-sm font-medium text-brand-primary hover:underline"
-                      >
-                        {parent.name}
-                      </button>
-                    </div>
-                  )}
-                  {generationProvider && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-text-muted">Generation Provider</span>
-                      <button
-                        type="button"
-                        onClick={() => navigateToDetail("utility", generationProvider.slug)}
-                        className="text-sm font-medium text-brand-primary hover:underline"
-                      >
-                        {generationProvider.name}
-                      </button>
-                    </div>
-                  )}
-                  {transmissionProvider && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-text-muted">Transmission Provider</span>
-                      <button
-                        type="button"
-                        onClick={() => navigateToDetail("utility", transmissionProvider.slug)}
-                        className="text-sm font-medium text-brand-primary hover:underline"
-                      >
-                        {transmissionProvider.name}
-                      </button>
-                    </div>
-                  )}
-                  {successor && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-text-muted">Successor</span>
-                      <button
-                        type="button"
-                        onClick={() => navigateToDetail("utility", successor.slug)}
-                        className="text-sm font-medium text-brand-primary hover:underline"
-                      >
-                        {successor.name}
-                      </button>
-                    </div>
-                  )}
+        {/* Parent / Successor */}
+        {(parent || successor) && (
+          <>
+            {!hasGridRelationships && <div className="cg-explore-related-heading">Related</div>}
+            {parent && (
+              <div className="cg-explore-related-row" onClick={() => navigateToDetail("utility", parent.slug)}>
+                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{parent.name}</div>
+                  <div className="cg-explore-related-type">Parent</div>
                 </div>
-              </Card.Content>
-            </Card>
-          </Section>
-        )}
-
-        {/* Served Utilities */}
-        {servedRows.length > 0 && (
-          <Section id="served-utilities" title="Served Utilities">
-            <DataControls resultsCount={{ count: servedRows.length }} />
-            <Card className="p-0 overflow-hidden">
-              <DataTable
-                data={servedRows}
-                columns={servedColumns}
-                mobileBreakpoint="md"
-                isLoading={false}
-                onRowClick={handleServedRowClick}
-              />
-            </Card>
-          </Section>
+                <ArrowIcon />
+              </div>
+            )}
+            {successor && (
+              <div className="cg-explore-related-row" onClick={() => navigateToDetail("utility", successor.slug)}>
+                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{successor.name}</div>
+                  <div className="cg-explore-related-type">Successor</div>
+                </div>
+                <ArrowIcon />
+              </div>
+            )}
+          </>
         )}
 
         {/* Subsidiaries */}
-        {childRows.length > 0 && (
-          <Section id="subsidiaries" title="Subsidiary Utilities">
-            <DataControls resultsCount={{ count: childRows.length }} />
-            <Card className="p-0 overflow-hidden">
-              <DataTable
-                data={childRows}
-                columns={servedColumns}
-                mobileBreakpoint="md"
-                isLoading={false}
-                onRowClick={handleServedRowClick}
-              />
-            </Card>
-          </Section>
+        {childUtilities.length > 0 && (
+          <>
+            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+              Subsidiaries ({childUtilities.length})
+            </div>
+            {childUtilities.slice(0, 15).map((child) => (
+              <div
+                key={child.id}
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("utility", child.slug)}
+              >
+                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{child.name}</div>
+                  <div className="cg-explore-related-type">
+                    {getSegmentLabel(child.segment)} · {formatCustomerCount(child.customerCount)} customers
+                  </div>
+                </div>
+                <ArrowIcon />
+              </div>
+            ))}
+            {childUtilities.length > 15 && (
+              <div style={{ fontSize: 11, color: "var(--cg-muted)", textAlign: "center", marginTop: 4 }}>
+                + {childUtilities.length - 15} more
+              </div>
+            )}
+          </>
         )}
 
         {/* Power Plants */}
         {utilityPowerPlants.length > 0 && (
-          <Section id="power-plants" title="Power Plants">
-            <div className="text-sm text-text-muted mb-3">
-              {utilityPowerPlants.length} power plant{utilityPowerPlants.length !== 1 ? "s" : ""} ·{" "}
-              {formatCapacity(utilityPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0))} total capacity
+          <>
+            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+              Power Plants ({utilityPowerPlants.length})
             </div>
-            <div className="space-y-2">
-              {utilityPowerPlants.slice(0, 20).map((plant) => (
-                <Link
-                  key={plant.id}
-                  href={`/power-plants/${plant.slug}`}
-                  className="flex items-center justify-between p-2 rounded-md hover:bg-background-surface-hover transition-colors"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: getFuelCategoryColor(plant.fuelCategory) }}
-                    />
-                    <span className="text-sm font-medium text-text-body truncate">{plant.name}</span>
+            {utilityPowerPlants.slice(0, 15).map((plant) => (
+              <Link
+                key={plant.id}
+                href={`/power-plants/${plant.slug}`}
+                className="cg-explore-related-row"
+                style={{ textDecoration: "none" }}
+              >
+                <span
+                  className="cg-explore-related-dot"
+                  style={{ background: getFuelCategoryColor(plant.fuelCategory), borderRadius: "50%" }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{plant.name}</div>
+                  <div className="cg-explore-related-type">
+                    {getFuelCategoryLabel(plant.fuelCategory)} · {formatCapacity(plant.totalCapacityMw)}
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                    <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(plant.fuelCategory)}>
-                      {getFuelCategoryLabel(plant.fuelCategory)}
-                    </Badge>
-                    <span className="text-xs text-text-muted">{formatCapacity(plant.totalCapacityMw)}</span>
-                  </div>
-                </Link>
-              ))}
-              {utilityPowerPlants.length > 20 && (
-                <div className="text-xs text-text-muted text-center pt-1">+ {utilityPowerPlants.length - 20} more</div>
-              )}
-            </div>
-          </Section>
+                </div>
+                <ArrowIcon />
+              </Link>
+            ))}
+            {utilityPowerPlants.length > 15 && (
+              <div style={{ fontSize: 11, color: "var(--cg-muted)", textAlign: "center", marginTop: 4 }}>
+                + {utilityPowerPlants.length - 15} more
+              </div>
+            )}
+          </>
         )}
+
+        {/* Full page link */}
+        <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
+          <Link href={`/grid-operators/${slug}`} className="cg-explore-fullpage-link" style={{ textDecoration: "none" }}>
+            Full page →
+          </Link>
+        </div>
       </div>
     </div>
   );

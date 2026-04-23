@@ -1,29 +1,16 @@
 "use client";
 
-import {
-  Badge,
-  Card,
-  type Column,
-  DataControls,
-  DataTable,
-  EmptyState,
-  Icon,
-  Section,
-  Tooltip,
-} from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getBalancingAuthorityBySlug, getIsoById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
   formatStates,
-  getFuelBadgeVariant,
   getFuelCategoryColor,
   getFuelCategoryLabel,
-  getSegmentBadgeVariant,
   getSegmentLabel,
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
@@ -31,13 +18,17 @@ import { filterByBA, usePowerPlants } from "@/lib/power-plants";
 import { useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "../ExplorerContext";
 
-interface UtilityRow extends Record<string, unknown> {
-  slug: string;
-  name: string;
-  segment: string;
-  customerCount: number | null;
-  jurisdiction: string | null;
-}
+const BackIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M19 12H5m5-5-5 5 5 5" />
+  </svg>
+);
+
+const ArrowIcon = () => (
+  <svg className="cg-explore-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M5 12h14m-5-5 5 5-5 5" />
+  </svg>
+);
 
 export function BADetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
@@ -55,7 +46,6 @@ export function BADetailPanel({ slug }: { slug: string }) {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setHighlight(data as FeatureCollection | null))
       .catch(() => setHighlight(null));
-
     return () => setHighlight(null);
   }, [ba?.slug, ba?.regionId, setHighlight]);
 
@@ -67,229 +57,139 @@ export function BADetailPanel({ slug }: { slug: string }) {
   const { plants: allPlants } = usePowerPlants();
   const baPowerPlants = useMemo(() => (ba ? filterByBA(allPlants, ba.id) : []), [ba, allPlants]);
 
-  const utilityRows: UtilityRow[] = useMemo(
-    () =>
-      utilities.map((u) => ({
-        slug: u.slug,
-        name: u.name,
-        segment: u.segment,
-        customerCount: u.customerCount,
-        jurisdiction: u.jurisdiction,
-      })),
-    [utilities]
-  );
-
-  const handleUtilityRowClick = useCallback(
-    (row: UtilityRow) => navigateToDetail("utility", row.slug),
-    [navigateToDetail]
-  );
-
-  const utilityColumns: Column<UtilityRow>[] = useMemo(
-    () => [
-      {
-        id: "name",
-        label: "Name",
-        accessor: "name",
-        render: (_value: unknown, row: UtilityRow) => (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToDetail("utility", row.slug);
-            }}
-            className="font-medium text-text-body hover:text-brand-primary"
-          >
-            {row.name}
-          </button>
-        ),
-        mobile: { priority: 1, format: "primary" },
-      },
-      {
-        id: "segment",
-        label: "Segment",
-        accessor: "segment",
-        render: (_value: unknown, row: UtilityRow) => (
-          <Badge size="sm" shape="pill" variant={getSegmentBadgeVariant(row.segment)}>
-            {getSegmentLabel(row.segment)}
-          </Badge>
-        ),
-        mobile: { priority: 2, format: "badge" },
-      },
-      {
-        id: "customerCount",
-        label: "Customers",
-        accessor: "customerCount",
-        render: (_value: unknown, row: UtilityRow) => (
-          <span className="text-text-body">{formatCustomerCount(row.customerCount)}</span>
-        ),
-        mobile: false,
-      },
-    ],
-    [navigateToDetail]
-  );
-
   if (!ba) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex-none px-4 pt-4 pb-2">
-          <button
-            type="button"
-            onClick={goBack}
-            className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
-          >
-            &larr; Back
+        <div className="cg-explore-breadcrumb">
+          <button type="button" className="cg-explore-breadcrumb-back" onClick={goBack}>
+            <BackIcon /> Back
           </button>
         </div>
-        <div className="flex-1 flex items-center justify-center text-text-muted">Balancing Authority not found</div>
+        <div className="cg-explore-empty">Balancing Authority not found</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
-      <div className="flex-none px-4 pt-4 pb-2">
-        <button
-          type="button"
-          onClick={goBack}
-          className="text-sm text-text-muted hover:text-text-body transition-colors mb-2"
-        >
-          &larr; Back
+    <div className="flex flex-col h-full">
+      <div className="cg-explore-breadcrumb">
+        <button type="button" className="cg-explore-breadcrumb-back" onClick={goBack}>
+          <BackIcon /> Grid Operators
         </button>
+        <span className="cg-explore-breadcrumb-sep">/</span>
+        <span className="cg-explore-breadcrumb-current">{ba.shortName}</span>
       </div>
 
-      <div className="px-4 pb-6 space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold text-text-heading">{ba.name}</h2>
-          <div className="text-sm text-text-muted">{ba.shortName}</div>
-        </div>
+      <div className="cg-explore-detail">
+        <div className="cg-explore-detail-type">Balancing Authority</div>
+        <div className="cg-explore-detail-name">{ba.name}</div>
+        <div className="cg-explore-detail-sub">{ba.shortName} · {formatStates(ba.states)}</div>
 
-        {/* Suggest Edit link */}
-        <div>
-          {user ? (
-            <Link
-              href={`/balancing-authorities/${slug}?edit=true`}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-primary hover:underline"
-            >
-              <Icon name="PencilSimple" size="sm" />
-              Suggest Edit
-            </Link>
-          ) : (
-            <Tooltip content="Sign in to suggest edits">
-              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted cursor-not-allowed">
-                <Icon name="PencilSimple" size="sm" />
-                Suggest Edit
-              </span>
-            </Tooltip>
-          )}
-        </div>
-
-        <Section id="overview" title="Overview">
-          <Card variant="outlined">
-            <Card.Content>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">Short Name</div>
-                  <div className="text-sm font-medium">{ba.shortName}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">EIA Code</div>
-                  <div className="text-sm font-medium font-mono">{ba.eiaCode ?? "\u2014"}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">States</div>
-                  <div className="text-sm font-medium">{formatStates(ba.states)}</div>
-                </div>
-                {iso && (
-                  <div>
-                    <div className="text-xs text-text-muted mb-0.5">ISO</div>
-                    <button
-                      type="button"
-                      onClick={() => navigateToDetail("iso", iso.slug)}
-                      className="text-sm font-medium text-brand-primary hover:underline"
-                    >
-                      {iso.shortName}
-                    </button>
-                  </div>
-                )}
-                <div>
-                  <div className="text-xs text-text-muted mb-0.5">Website</div>
-                  <div className="text-sm font-medium">
-                    {ba.website ? (
-                      <a
-                        href={ba.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-brand-primary hover:underline"
-                      >
-                        {safeHostname(ba.website)}
-                      </a>
-                    ) : (
-                      "\u2014"
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Card.Content>
-          </Card>
-        </Section>
-
-        <Section id="utilities" title="Utilities">
-          {utilityRows.length > 0 ? (
-            <>
-              <DataControls resultsCount={{ count: utilityRows.length }} />
-              <Card className="p-0 overflow-hidden">
-                <DataTable
-                  data={utilityRows}
-                  columns={utilityColumns}
-                  mobileBreakpoint="md"
-                  isLoading={false}
-                  onRowClick={handleUtilityRowClick}
-                />
-              </Card>
-            </>
-          ) : (
-            <EmptyState
-              icon="Lightning"
-              title="No utilities"
-              description="No utilities are linked to this balancing authority."
-            />
-          )}
-        </Section>
-
-        {baPowerPlants.length > 0 && (
-          <Section id="power-plants" title="Power Plants">
-            <div className="text-sm text-text-muted mb-3">
-              {baPowerPlants.length} power plant{baPowerPlants.length !== 1 ? "s" : ""} ·{" "}
-              {formatCapacity(baPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0))} total capacity
+        <div className="cg-explore-kv-table">
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Short Name</span>
+            <span className="cg-explore-kv-val">{ba.shortName}</span>
+          </div>
+          {ba.eiaCode && (
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">EIA Code</span>
+              <span className="cg-explore-kv-val">{ba.eiaCode}</span>
             </div>
-            <div className="space-y-2">
-              {baPowerPlants.slice(0, 20).map((plant) => (
-                <Link
-                  key={plant.id}
-                  href={`/power-plants/${plant.slug}`}
-                  className="flex items-center justify-between p-2 rounded-md hover:bg-background-surface-hover transition-colors"
+          )}
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">States</span>
+            <span className="cg-explore-kv-val">{formatStates(ba.states)}</span>
+          </div>
+          {iso && (
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">ISO</span>
+              <span className="cg-explore-kv-val">
+                <a
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); navigateToDetail("iso", iso.slug); }}
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: getFuelCategoryColor(plant.fuelCategory) }}
-                    />
-                    <span className="text-sm font-medium text-text-body truncate">{plant.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                    <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(plant.fuelCategory)}>
-                      {getFuelCategoryLabel(plant.fuelCategory)}
-                    </Badge>
-                    <span className="text-xs text-text-muted">{formatCapacity(plant.totalCapacityMw)}</span>
-                  </div>
-                </Link>
-              ))}
-              {baPowerPlants.length > 20 && (
-                <div className="text-xs text-text-muted text-center pt-1">+ {baPowerPlants.length - 20} more</div>
-              )}
+                  {iso.shortName}
+                </a>
+              </span>
             </div>
-          </Section>
+          )}
+          {ba.website && (
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">Website</span>
+              <span className="cg-explore-kv-val">
+                <a href={ba.website} target="_blank" rel="noopener noreferrer">
+                  {safeHostname(ba.website)}
+                </a>
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Utilities */}
+        {utilities.length > 0 && (
+          <>
+            <div className="cg-explore-related-heading">Utilities ({utilities.length})</div>
+            {utilities.slice(0, 15).map((u) => (
+              <div
+                key={u.id}
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("utility", u.slug)}
+              >
+                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{u.name}</div>
+                  <div className="cg-explore-related-type">{getSegmentLabel(u.segment)} · {formatCustomerCount(u.customerCount)}</div>
+                </div>
+                <ArrowIcon />
+              </div>
+            ))}
+            {utilities.length > 15 && (
+              <div style={{ fontSize: 11, color: "var(--cg-muted)", textAlign: "center", marginTop: 4 }}>
+                + {utilities.length - 15} more
+              </div>
+            )}
+          </>
         )}
+
+        {/* Power Plants */}
+        {baPowerPlants.length > 0 && (
+          <>
+            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+              Power Plants ({baPowerPlants.length})
+            </div>
+            {baPowerPlants.slice(0, 15).map((plant) => (
+              <Link
+                key={plant.id}
+                href={`/power-plants/${plant.slug}`}
+                className="cg-explore-related-row"
+                style={{ textDecoration: "none" }}
+              >
+                <span
+                  className="cg-explore-related-dot"
+                  style={{ background: getFuelCategoryColor(plant.fuelCategory), borderRadius: "50%" }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{plant.name}</div>
+                  <div className="cg-explore-related-type">
+                    {getFuelCategoryLabel(plant.fuelCategory)} · {formatCapacity(plant.totalCapacityMw)}
+                  </div>
+                </div>
+                <ArrowIcon />
+              </Link>
+            ))}
+            {baPowerPlants.length > 15 && (
+              <div style={{ fontSize: 11, color: "var(--cg-muted)", textAlign: "center", marginTop: 4 }}>
+                + {baPowerPlants.length - 15} more
+              </div>
+            )}
+          </>
+        )}
+
+        <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
+          <Link href={`/balancing-authorities/${slug}`} className="cg-explore-fullpage-link" style={{ textDecoration: "none" }}>
+            Full page →
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -228,33 +228,54 @@ function useGridOperatorBoundaries(isActive: boolean) {
   return data;
 }
 
-// Layers that can be toggled via the layers control
-// Key = layer id, value = whether it's currently visible
-const DEFAULT_TOGGLEABLE_LAYER_VISIBILITY: Record<string, boolean> = {
-  "transmission-lines": true,
+// Region = which fill/territory layer is shown on the map
+export type MapRegion = "utilities" | "grid-operators" | "programs" | "pricing-nodes";
+
+// Overlay toggles for point/line layers
+export interface MapOverlays {
+  "power-plants": boolean;
+  "transmission-lines": boolean;
+  "ev-charging": boolean;
+  "pricing-nodes": boolean;
+}
+
+interface ExplorerMapProps {
+  mapboxAccessToken?: string;
+  mapRegion?: MapRegion;
+  mapOverlays?: MapOverlays;
+}
+
+const DEFAULT_OVERLAYS: MapOverlays = {
   "power-plants": true,
+  "transmission-lines": true,
   "ev-charging": false,
   "pricing-nodes": false,
 };
 
-interface ExplorerMapProps {
-  mapboxAccessToken?: string;
-}
-
-export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
+export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOverlays }: ExplorerMapProps = {}) {
   const effectiveToken = mapboxAccessToken ?? process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
   const hasMapboxToken = !!effectiveToken;
   const { state, navigateToDetail } = useExplorer();
   const router = useRouter();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
-  const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>(DEFAULT_TOGGLEABLE_LAYER_VISIBILITY);
   const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
 
-  const handleLayerToggle = useCallback((layerId: string) => {
-    setLayerVisibility((prev) => ({ ...prev, [layerId]: !prev[layerId] }));
+  const overlays = mapOverlays ?? DEFAULT_OVERLAYS;
+
+  // Derive layer visibility from overlays prop (for the Edges layers control)
+  const layerVisibility: Record<string, boolean> = {
+    "transmission-lines": overlays["transmission-lines"],
+    "power-plants": overlays["power-plants"],
+    "ev-charging": overlays["ev-charging"],
+    "pricing-nodes": overlays["pricing-nodes"],
+  };
+
+  const handleLayerToggle = useCallback((_layerId: string) => {
+    // Layer toggles are now managed by the shell via mapOverlays prop
+    // This callback is kept for the Edges layers control compatibility
   }, []);
 
-  const isGridOperatorView = state.tab === "grid-operators";
+  const isGridOperatorView = mapRegion === "grid-operators";
   const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView);
 
   const handleClick = useCallback(
@@ -697,10 +718,10 @@ export function ExplorerMap({ mapboxAccessToken }: ExplorerMapProps = {}) {
           data: state.highlightGeoJSON,
           renderAs: "fill",
           style: {
-            color: { token: "brand-primary" },
-            fillOpacity: 0.25,
-            borderWidth: 3,
-            borderColor: { token: "brand-primary" },
+            color: { hex: "#2fa3b0" },
+            fillOpacity: 0.35,
+            borderWidth: 2.5,
+            borderColor: { hex: "#2fa3b0" },
           },
         })
       );
