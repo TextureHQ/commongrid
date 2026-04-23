@@ -7,7 +7,6 @@ import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { regions, territories } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/territories — List territories with filtering
@@ -15,12 +14,8 @@ import { getDataSource } from "@/lib/feature-flags";
 
 async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
-  const source = getDataSource("territories");
-
-  if (source === "json") {
-    throw new Error("JSON mode not implemented for territories");
-  }
-
+  // Territories are database-only — ignore the feature flag.
+  // JSON mode was never implemented; fall through to DB.
   return handleDatabaseMode(url);
 }
 

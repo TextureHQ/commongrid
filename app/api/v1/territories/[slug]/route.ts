@@ -7,7 +7,6 @@ import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { regions, territories } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/territories/[slug] — Get territory by slug
@@ -19,12 +18,8 @@ async function handleGet(_req: Request, ctx: RouteContext) {
     throw new ApiError("BAD_REQUEST", "Missing slug parameter");
   }
 
-  const source = getDataSource("territories");
-
-  if (source === "json") {
-    throw new Error("JSON mode not implemented for territories");
-  }
-
+  // Territories are database-only — ignore the feature flag.
+  // JSON mode was never implemented; fall through to DB.
   return handleDatabaseDetail(slug);
 }
 
