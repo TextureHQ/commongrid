@@ -243,6 +243,7 @@ interface ExplorerMapProps {
   mapboxAccessToken?: string;
   mapRegion?: MapRegion;
   mapOverlays?: MapOverlays;
+  onOverlayToggle?: (key: keyof MapOverlays) => void;
 }
 
 const DEFAULT_OVERLAYS: MapOverlays = {
@@ -252,7 +253,12 @@ const DEFAULT_OVERLAYS: MapOverlays = {
   "pricing-nodes": false,
 };
 
-export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOverlays }: ExplorerMapProps = {}) {
+export function ExplorerMap({
+  mapboxAccessToken,
+  mapRegion = "utilities",
+  mapOverlays,
+  onOverlayToggle,
+}: ExplorerMapProps = {}) {
   const effectiveToken = mapboxAccessToken ?? process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
   const hasMapboxToken = !!effectiveToken;
   const { state, navigateToDetail } = useExplorer();
@@ -273,10 +279,14 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
     [overlays]
   );
 
-  const handleLayerToggle = useCallback((_layerId: string) => {
-    // Layer toggles are now managed by the shell via mapOverlays prop
-    // This callback is kept for the Edges layers control compatibility
-  }, []);
+  const handleLayerToggle = useCallback(
+    (layerId: string) => {
+      if (onOverlayToggle && layerId in (mapOverlays ?? DEFAULT_OVERLAYS)) {
+        onOverlayToggle(layerId as keyof MapOverlays);
+      }
+    },
+    [onOverlayToggle, mapOverlays]
+  );
 
   const isGridOperatorView = mapRegion === "grid-operators";
   const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView);

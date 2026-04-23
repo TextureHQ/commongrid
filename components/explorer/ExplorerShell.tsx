@@ -327,9 +327,10 @@ interface MapLayoutProps {
   mapboxAccessToken?: string;
   mapRegion: MapRegion;
   mapOverlays: MapOverlays;
+  onOverlayToggle?: (key: keyof MapOverlays) => void;
 }
 
-function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays }: MapLayoutProps) {
+function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays, onOverlayToggle }: MapLayoutProps) {
   const { state } = useExplorer();
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
   const dragging = useRef(false);
@@ -375,7 +376,12 @@ function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays }: MapLayoutProps
 
       {/* Map — RIGHT */}
       <div className="flex-1 min-w-0 h-full">
-        <ExplorerMap mapboxAccessToken={mapboxAccessToken} mapRegion={mapRegion} mapOverlays={mapOverlays} />
+        <ExplorerMap
+          mapboxAccessToken={mapboxAccessToken}
+          mapRegion={mapRegion}
+          mapOverlays={mapOverlays}
+          onOverlayToggle={onOverlayToggle}
+        />
       </div>
     </div>
   );
@@ -497,7 +503,12 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
         {/* Desktop layouts */}
         <div className="hidden md:block h-full">
           {layout === "map" && (
-            <MapLayout mapboxAccessToken={mapboxAccessToken} mapRegion={mapRegion} mapOverlays={mapOverlays} />
+            <MapLayout
+              mapboxAccessToken={mapboxAccessToken}
+              mapRegion={mapRegion}
+              mapOverlays={mapOverlays}
+              onOverlayToggle={toggleOverlay}
+            />
           )}
           {layout === "list" && (
             <div className="h-full" style={{ background: "var(--cg-card)" }}>
@@ -509,7 +520,12 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
         {/* Mobile layouts */}
         <div className="md:hidden h-full relative">
           {layout === "map" ? (
-            <ExplorerMap mapboxAccessToken={mapboxAccessToken} mapRegion={mapRegion} mapOverlays={mapOverlays} />
+            <ExplorerMap
+              mapboxAccessToken={mapboxAccessToken}
+              mapRegion={mapRegion}
+              mapOverlays={mapOverlays}
+              onOverlayToggle={toggleOverlay}
+            />
           ) : (
             <div className="h-full" style={{ background: "var(--cg-card)" }}>
               <ExplorerPanel />
