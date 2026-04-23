@@ -22,7 +22,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <link href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&family=Inter:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for theme initialization
           dangerouslySetInnerHTML={{

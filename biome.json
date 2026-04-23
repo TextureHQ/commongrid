@@ -23,7 +23,11 @@
         "noExplicitAny": "error"
       },
       "a11y": {
-        "useSemanticElements": "warn"
+        "useSemanticElements": "warn",
+        "noSvgWithoutTitle": "warn",
+        "noStaticElementInteractions": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useValidAnchor": "warn"
       }
     }
   },

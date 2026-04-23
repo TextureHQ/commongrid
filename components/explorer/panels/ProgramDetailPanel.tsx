@@ -26,7 +26,15 @@ const BackIcon = () => (
 );
 
 const ArrowIcon = () => (
-  <svg className="cg-explore-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
@@ -79,7 +87,13 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   const adminUtilities = adminOrgs.map((o) => utilities.find((u) => u.slug === o.entityId)).filter(Boolean);
 
   const statusLabel = (s: string) => {
-    const labels: Record<string, string> = { ACTIVE: "Active", PAUSED: "Paused", FULL: "Full", DRAFT: "Draft", ARCHIVED: "Archived" };
+    const labels: Record<string, string> = {
+      ACTIVE: "Active",
+      PAUSED: "Paused",
+      FULL: "Full",
+      DRAFT: "Draft",
+      ARCHIVED: "Archived",
+    };
     return labels[s] ?? s;
   };
   const statusColor = (s: string) =>
@@ -100,7 +114,8 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
         <div className="cg-explore-detail-name">{program.name}</div>
         <div className="cg-explore-detail-sub">
           <span style={{ color: statusColor(program.status), fontWeight: 500 }}>{statusLabel(program.status)}</span>
-          {program.description && ` · ${program.description.slice(0, 100)}${program.description.length > 100 ? "…" : ""}`}
+          {program.description &&
+            ` · ${program.description.slice(0, 100)}${program.description.length > 100 ? "…" : ""}`}
         </div>
 
         {/* Overview KV table */}
@@ -109,15 +124,21 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Administrator</span>
               <span className="cg-explore-kv-val">
-                {adminUtilities.map((u) => u && (
-                  <a
-                    key={u.slug}
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); navigateToDetail("utility", u.slug); }}
-                  >
-                    {u.name}
-                  </a>
-                ))}
+                {adminUtilities.map(
+                  (u) =>
+                    u && (
+                      <a
+                        key={u.slug}
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigateToDetail("utility", u.slug);
+                        }}
+                      >
+                        {u.name}
+                      </a>
+                    )
+                )}
               </span>
             </div>
           )}
@@ -131,7 +152,9 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Market Segments</span>
               <span className="cg-explore-kv-val" style={{ fontFamily: "var(--cg-font-sans)", fontSize: 12 }}>
-                {program.marketSegments.map((ms) => MarketSegmentLabel[ms as keyof typeof MarketSegmentLabel] ?? ms).join(", ")}
+                {program.marketSegments
+                  .map((ms) => MarketSegmentLabel[ms as keyof typeof MarketSegmentLabel] ?? ms)
+                  .join(", ")}
               </span>
             </div>
           )}
@@ -139,7 +162,9 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Grid Services</span>
               <span className="cg-explore-kv-val" style={{ fontFamily: "var(--cg-font-sans)", fontSize: 12 }}>
-                {program.gridServices.map((gs) => GridServiceLabel[gs as keyof typeof GridServiceLabel] ?? gs).join(", ")}
+                {program.gridServices
+                  .map((gs) => GridServiceLabel[gs as keyof typeof GridServiceLabel] ?? gs)
+                  .join(", ")}
               </span>
             </div>
           )}
@@ -147,7 +172,9 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Participation</span>
               <span className="cg-explore-kv-val" style={{ fontFamily: "var(--cg-font-sans)", fontSize: 12 }}>
-                {program.participationModels.map((pm) => ParticipationModelLabel[pm as keyof typeof ParticipationModelLabel] ?? pm).join(", ")}
+                {program.participationModels
+                  .map((pm) => ParticipationModelLabel[pm as keyof typeof ParticipationModelLabel] ?? pm)
+                  .join(", ")}
               </span>
             </div>
           )}
@@ -185,28 +212,35 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
         {/* Related: administrator utilities */}
         {adminUtilities.length > 0 && (
           <>
-            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>Related</div>
-            {adminUtilities.map((u) => u && (
-              <div
-                key={u.slug}
-                className="cg-explore-related-row"
-                onClick={() => navigateToDetail("utility", u.slug)}
-              >
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
-                <div style={{ flex: 1 }}>
-                  <div className="cg-explore-related-name">{u.name}</div>
-                  <div className="cg-explore-related-type">Administrator</div>
-                </div>
-                <ArrowIcon />
-              </div>
-            ))}
+            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+              Related
+            </div>
+            {adminUtilities.map(
+              (u) =>
+                u && (
+                  <div
+                    key={u.slug}
+                    className="cg-explore-related-row"
+                    onClick={() => navigateToDetail("utility", u.slug)}
+                  >
+                    <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="cg-explore-related-name">{u.name}</div>
+                      <div className="cg-explore-related-type">Administrator</div>
+                    </div>
+                    <ArrowIcon />
+                  </div>
+                )
+            )}
           </>
         )}
 
         {/* Links */}
         {(program.faqUrl || program.termsUrl || program.contactUrl) && (
           <>
-            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>Links</div>
+            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+              Links
+            </div>
             <div className="cg-explore-kv-table">
               {program.faqUrl && (
                 <div className="cg-explore-kv-row">
@@ -245,11 +279,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
         {/* Suggest Edit */}
         {user && (
           <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
-            <button
-              type="button"
-              className="cg-explore-fullpage-link"
-              onClick={() => setIsEditOpen(true)}
-            >
+            <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsEditOpen(true)}>
               Suggest Edit
             </button>
           </div>

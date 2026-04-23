@@ -36,11 +36,16 @@ const voltageClassFilterOptions = [
 
 function getVoltageShortLabel(vc: VoltageClass): string {
   switch (vc) {
-    case "extra-high": return "345kV+";
-    case "high": return "230–344kV";
-    case "medium": return "115–229kV";
-    case "sub-trans": return "69–114kV";
-    default: return "Unknown";
+    case "extra-high":
+      return "345kV+";
+    case "high":
+      return "230–344kV";
+    case "medium":
+      return "115–229kV";
+    case "sub-trans":
+      return "69–114kV";
+    default:
+      return "Unknown";
   }
 }
 
@@ -52,7 +57,15 @@ const SearchIcon = () => (
 );
 
 const ArrowIcon = () => (
-  <svg className="cg-explore-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
@@ -118,11 +131,7 @@ export function TransmissionListPanel() {
             <strong>{filtered.length.toLocaleString()}</strong> lines
           </span>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <select
-              className="cg-explore-select"
-              value={state.type}
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
+            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
               {voltageClassFilterOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>
                   {opt.label}
@@ -153,7 +162,14 @@ export function TransmissionListPanel() {
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--cg-muted)", fontSize: 14, padding: 0 }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--cg-muted)",
+                  fontSize: 14,
+                  padding: 0,
+                }}
               >
                 ✕
               </button>
@@ -174,10 +190,7 @@ export function TransmissionListPanel() {
           </div>
         ) : (
           rows.map((row) => (
-            <div
-              key={row.objectId}
-              className="cg-explore-entity-row"
-            >
+            <div key={row.objectId} className="cg-explore-entity-row">
               <span
                 className="cg-explore-entity-dot"
                 data-shape="line"
@@ -190,7 +203,9 @@ export function TransmissionListPanel() {
                   {row.voltage != null && row.voltage > 0 ? ` (${row.voltage} kV)` : ""}
                 </div>
               </div>
-              <span style={{ fontSize: 11, fontFamily: "var(--cg-font-mono)", color: "var(--cg-muted)", flexShrink: 0 }}>
+              <span
+                style={{ fontSize: 11, fontFamily: "var(--cg-font-mono)", color: "var(--cg-muted)", flexShrink: 0 }}
+              >
                 {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
               </span>
               <ArrowIcon />

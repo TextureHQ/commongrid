@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useGlobalSearch } from "@/components/GlobalSearch";
 import "./homepage.css";
 
 // ---------------------------------------------------------------------------
@@ -233,13 +232,21 @@ const ENDPOINT_DEFS = [
 ];
 
 const ArrowIcon = () => (
-  <svg className="entity-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg
+    aria-hidden="true"
+    className="entity-arrow"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
 
 export default function LandingPage() {
-  const { open: openSearch } = useGlobalSearch();
   const counts = useEntityCounts();
 
   const gridOperatorCount =
@@ -268,9 +275,7 @@ export default function LandingPage() {
                 <span className="pulse" />
                 An open data commons &middot; continuously updated
               </span>
-              <h1 className="hero-h1">
-                The open registry of U.S. energy infrastructure.
-              </h1>
+              <h1 className="hero-h1">The open registry of U.S. energy infrastructure.</h1>
               <p className="hero-lede">
                 CommonGrid is a public, citable database of every U.S. electric utility, territory, ISO, market node,
                 and major asset &mdash; maintained by the people who work with this data every day. Free to read, edit,
@@ -279,7 +284,15 @@ export default function LandingPage() {
               <div className="hero-cta">
                 <Link href="/explore" className="btn btn-primary btn-lg">
                   Browse the registry
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    aria-hidden="true"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M5 12h14m-5-5 5 5-5 5" />
                   </svg>
                 </Link>
@@ -291,120 +304,654 @@ export default function LandingPage() {
                 <div className="map">
                   <svg viewBox="-51.7 -56.0 740.8 448.0" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
                     <g className="hex-states">
-                      <polygon data-st="ME" points="582.0,-16.0 582.0,16.0 554.3,32.0 526.5,16.0 526.5,-16.0 554.3,-32.0" fill="#88b828" fillOpacity="0.55" stroke="#5a7d14" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="AK" points="55.4,32.0 55.4,64.0 27.7,80.0 -0.0,64.0 0.0,32.0 27.7,16.0" fill="#b8b0a0" fillOpacity="0.55" stroke="#807868" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="VT" points="554.3,32.0 554.3,64.0 526.5,80.0 498.8,64.0 498.8,32.0 526.5,16.0" fill="#88b828" fillOpacity="0.55" stroke="#5a7d14" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="NH" points="609.7,32.0 609.7,64.0 582.0,80.0 554.3,64.0 554.3,32.0 582.0,16.0" fill="#88b828" fillOpacity="0.55" stroke="#5a7d14" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="WA" points="83.1,80.0 83.1,112.0 55.4,128.0 27.7,112.0 27.7,80.0 55.4,64.0" fill="#c9c3b4" fillOpacity="0.55" stroke="#8a8470" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="MT" points="138.6,80.0 138.6,112.0 110.9,128.0 83.1,112.0 83.1,80.0 110.9,64.0" fill="#c9c3b4" fillOpacity="0.55" stroke="#8a8470" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="ND" points="194.0,80.0 194.0,112.0 166.3,128.0 138.6,112.0 138.6,80.0 166.3,64.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="MN" points="249.4,80.0 249.4,112.0 221.7,128.0 194.0,112.0 194.0,80.0 221.7,64.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="WI" points="304.8,80.0 304.8,112.0 277.1,128.0 249.4,112.0 249.4,80.0 277.1,64.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="MI" points="415.7,80.0 415.7,112.0 388.0,128.0 360.3,112.0 360.3,80.0 388.0,64.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="NY" points="471.1,80.0 471.1,112.0 443.4,128.0 415.7,112.0 415.7,80.0 443.4,64.0" fill="#3db8c8" fillOpacity="0.55" stroke="#207985" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="MA" points="526.5,80.0 526.5,112.0 498.8,128.0 471.1,112.0 471.1,80.0 498.8,64.0" fill="#88b828" fillOpacity="0.55" stroke="#5a7d14" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="OR" points="110.9,128.0 110.9,160.0 83.1,176.0 55.4,160.0 55.4,128.0 83.1,112.0" fill="#c9c3b4" fillOpacity="0.55" stroke="#8a8470" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="ID" points="166.3,128.0 166.3,160.0 138.6,176.0 110.9,160.0 110.9,128.0 138.6,112.0" fill="#c9c3b4" fillOpacity="0.55" stroke="#8a8470" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="SD" points="221.7,128.0 221.7,160.0 194.0,176.0 166.3,160.0 166.3,128.0 194.0,112.0" fill="#d88420" fillOpacity="0.55" stroke="#8f5410" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="IA" points="277.1,128.0 277.1,160.0 249.4,176.0 221.7,160.0 221.7,128.0 249.4,112.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="IL" points="332.6,128.0 332.6,160.0 304.8,176.0 277.1,160.0 277.1,128.0 304.8,112.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="IN" points="388.0,128.0 388.0,160.0 360.3,176.0 332.6,160.0 332.6,128.0 360.3,112.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="OH" points="443.4,128.0 443.4,160.0 415.7,176.0 388.0,160.0 388.0,128.0 415.7,112.0" fill="#5f5aa8" fillOpacity="0.55" stroke="#34306f" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="PA" points="498.8,128.0 498.8,160.0 471.1,176.0 443.4,160.0 443.4,128.0 471.1,112.0" fill="#5f5aa8" fillOpacity="0.55" stroke="#34306f" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="NJ" points="554.3,128.0 554.3,160.0 526.5,176.0 498.8,160.0 498.8,128.0 526.5,112.0" fill="#5f5aa8" fillOpacity="0.55" stroke="#34306f" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="CT" points="609.7,128.0 609.7,160.0 582.0,176.0 554.3,160.0 554.3,128.0 582.0,112.0" fill="#88b828" fillOpacity="0.55" stroke="#5a7d14" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="RI" points="665.1,128.0 665.1,160.0 637.4,176.0 609.7,160.0 609.7,128.0 637.4,112.0" fill="#88b828" fillOpacity="0.55" stroke="#5a7d14" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="CA" points="83.1,176.0 83.1,208.0 55.4,224.0 27.7,208.0 27.7,176.0 55.4,160.0" fill="#e8b24a" fillOpacity="0.55" stroke="#a47818" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="NV" points="138.6,176.0 138.6,208.0 110.9,224.0 83.1,208.0 83.1,176.0 110.9,160.0" fill="#c9c3b4" fillOpacity="0.55" stroke="#8a8470" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="UT" points="194.0,176.0 194.0,208.0 166.3,224.0 138.6,208.0 138.6,176.0 166.3,160.0" fill="#c9c3b4" fillOpacity="0.55" stroke="#8a8470" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="WY" points="249.4,176.0 249.4,208.0 221.7,224.0 194.0,208.0 194.0,176.0 221.7,160.0" fill="#c9c3b4" fillOpacity="0.55" stroke="#8a8470" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="NE" points="304.8,176.0 304.8,208.0 277.1,224.0 249.4,208.0 249.4,176.0 277.1,160.0" fill="#d88420" fillOpacity="0.55" stroke="#8f5410" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="MO" points="360.3,176.0 360.3,208.0 332.6,224.0 304.8,208.0 304.8,176.0 332.6,160.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="KY" points="415.7,176.0 415.7,208.0 388.0,224.0 360.3,208.0 360.3,176.0 388.0,160.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="WV" points="471.1,176.0 471.1,208.0 443.4,224.0 415.7,208.0 415.7,176.0 443.4,160.0" fill="#5f5aa8" fillOpacity="0.55" stroke="#34306f" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="VA" points="526.5,176.0 526.5,208.0 498.8,224.0 471.1,208.0 471.1,176.0 498.8,160.0" fill="#5f5aa8" fillOpacity="0.55" stroke="#34306f" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="MD" points="582.0,176.0 582.0,208.0 554.3,224.0 526.5,208.0 526.5,176.0 554.3,160.0" fill="#5f5aa8" fillOpacity="0.55" stroke="#34306f" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="DE" points="637.4,176.0 637.4,208.0 609.7,224.0 582.0,208.0 582.0,176.0 609.7,160.0" fill="#5f5aa8" fillOpacity="0.55" stroke="#34306f" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="AZ" points="166.3,224.0 166.3,256.0 138.6,272.0 110.9,256.0 110.9,224.0 138.6,208.0" fill="#c9c3b4" fillOpacity="0.55" stroke="#8a8470" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="CO" points="221.7,224.0 221.7,256.0 194.0,272.0 166.3,256.0 166.3,224.0 194.0,208.0" fill="#c9c3b4" fillOpacity="0.55" stroke="#8a8470" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="NM" points="277.1,224.0 277.1,256.0 249.4,272.0 221.7,256.0 221.7,224.0 249.4,208.0" fill="#c9c3b4" fillOpacity="0.55" stroke="#8a8470" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="KS" points="332.6,224.0 332.6,256.0 304.8,272.0 277.1,256.0 277.1,224.0 304.8,208.0" fill="#d88420" fillOpacity="0.55" stroke="#8f5410" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="AR" points="388.0,224.0 388.0,256.0 360.3,272.0 332.6,256.0 332.6,224.0 360.3,208.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="TN" points="443.4,224.0 443.4,256.0 415.7,272.0 388.0,256.0 388.0,224.0 415.7,208.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="NC" points="498.8,224.0 498.8,256.0 471.1,272.0 443.4,256.0 443.4,224.0 471.1,208.0" fill="#c07860" fillOpacity="0.55" stroke="#8a4e38" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="SC" points="554.3,224.0 554.3,256.0 526.5,272.0 498.8,256.0 498.8,224.0 526.5,208.0" fill="#c07860" fillOpacity="0.55" stroke="#8a4e38" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="HI" points="27.7,272.0 27.7,304.0 0.0,320.0 -27.7,304.0 -27.7,272.0 -0.0,256.0" fill="#b8b0a0" fillOpacity="0.55" stroke="#807868" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="OK" points="249.4,272.0 249.4,304.0 221.7,320.0 194.0,304.0 194.0,272.0 221.7,256.0" fill="#d88420" fillOpacity="0.55" stroke="#8f5410" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="TX" points="304.8,272.0 304.8,304.0 277.1,320.0 249.4,304.0 249.4,272.0 277.1,256.0" fill="#d93d72" fillOpacity="0.95" stroke="#9a1f4c" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="LA" points="360.3,272.0 360.3,304.0 332.6,320.0 304.8,304.0 304.8,272.0 332.6,256.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="MS" points="415.7,272.0 415.7,304.0 388.0,320.0 360.3,304.0 360.3,272.0 388.0,256.0" fill="#6b88cc" fillOpacity="0.55" stroke="#3f5aa0" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="AL" points="471.1,272.0 471.1,304.0 443.4,320.0 415.7,304.0 415.7,272.0 443.4,256.0" fill="#c07860" fillOpacity="0.55" stroke="#8a4e38" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="GA" points="526.5,272.0 526.5,304.0 498.8,320.0 471.1,304.0 471.1,272.0 498.8,256.0" fill="#c07860" fillOpacity="0.55" stroke="#8a4e38" strokeOpacity="0.7" strokeWidth="1" />
-                      <polygon data-st="FL" points="498.8,320.0 498.8,352.0 471.1,368.0 443.4,352.0 443.4,320.0 471.1,304.0" fill="#e18bb3" fillOpacity="0.55" stroke="#a24e78" strokeOpacity="0.7" strokeWidth="1" />
+                      <polygon
+                        data-st="ME"
+                        points="582.0,-16.0 582.0,16.0 554.3,32.0 526.5,16.0 526.5,-16.0 554.3,-32.0"
+                        fill="#88b828"
+                        fillOpacity="0.55"
+                        stroke="#5a7d14"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="AK"
+                        points="55.4,32.0 55.4,64.0 27.7,80.0 -0.0,64.0 0.0,32.0 27.7,16.0"
+                        fill="#b8b0a0"
+                        fillOpacity="0.55"
+                        stroke="#807868"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="VT"
+                        points="554.3,32.0 554.3,64.0 526.5,80.0 498.8,64.0 498.8,32.0 526.5,16.0"
+                        fill="#88b828"
+                        fillOpacity="0.55"
+                        stroke="#5a7d14"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="NH"
+                        points="609.7,32.0 609.7,64.0 582.0,80.0 554.3,64.0 554.3,32.0 582.0,16.0"
+                        fill="#88b828"
+                        fillOpacity="0.55"
+                        stroke="#5a7d14"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="WA"
+                        points="83.1,80.0 83.1,112.0 55.4,128.0 27.7,112.0 27.7,80.0 55.4,64.0"
+                        fill="#c9c3b4"
+                        fillOpacity="0.55"
+                        stroke="#8a8470"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="MT"
+                        points="138.6,80.0 138.6,112.0 110.9,128.0 83.1,112.0 83.1,80.0 110.9,64.0"
+                        fill="#c9c3b4"
+                        fillOpacity="0.55"
+                        stroke="#8a8470"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="ND"
+                        points="194.0,80.0 194.0,112.0 166.3,128.0 138.6,112.0 138.6,80.0 166.3,64.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="MN"
+                        points="249.4,80.0 249.4,112.0 221.7,128.0 194.0,112.0 194.0,80.0 221.7,64.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="WI"
+                        points="304.8,80.0 304.8,112.0 277.1,128.0 249.4,112.0 249.4,80.0 277.1,64.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="MI"
+                        points="415.7,80.0 415.7,112.0 388.0,128.0 360.3,112.0 360.3,80.0 388.0,64.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="NY"
+                        points="471.1,80.0 471.1,112.0 443.4,128.0 415.7,112.0 415.7,80.0 443.4,64.0"
+                        fill="#3db8c8"
+                        fillOpacity="0.55"
+                        stroke="#207985"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="MA"
+                        points="526.5,80.0 526.5,112.0 498.8,128.0 471.1,112.0 471.1,80.0 498.8,64.0"
+                        fill="#88b828"
+                        fillOpacity="0.55"
+                        stroke="#5a7d14"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="OR"
+                        points="110.9,128.0 110.9,160.0 83.1,176.0 55.4,160.0 55.4,128.0 83.1,112.0"
+                        fill="#c9c3b4"
+                        fillOpacity="0.55"
+                        stroke="#8a8470"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="ID"
+                        points="166.3,128.0 166.3,160.0 138.6,176.0 110.9,160.0 110.9,128.0 138.6,112.0"
+                        fill="#c9c3b4"
+                        fillOpacity="0.55"
+                        stroke="#8a8470"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="SD"
+                        points="221.7,128.0 221.7,160.0 194.0,176.0 166.3,160.0 166.3,128.0 194.0,112.0"
+                        fill="#d88420"
+                        fillOpacity="0.55"
+                        stroke="#8f5410"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="IA"
+                        points="277.1,128.0 277.1,160.0 249.4,176.0 221.7,160.0 221.7,128.0 249.4,112.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="IL"
+                        points="332.6,128.0 332.6,160.0 304.8,176.0 277.1,160.0 277.1,128.0 304.8,112.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="IN"
+                        points="388.0,128.0 388.0,160.0 360.3,176.0 332.6,160.0 332.6,128.0 360.3,112.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="OH"
+                        points="443.4,128.0 443.4,160.0 415.7,176.0 388.0,160.0 388.0,128.0 415.7,112.0"
+                        fill="#5f5aa8"
+                        fillOpacity="0.55"
+                        stroke="#34306f"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="PA"
+                        points="498.8,128.0 498.8,160.0 471.1,176.0 443.4,160.0 443.4,128.0 471.1,112.0"
+                        fill="#5f5aa8"
+                        fillOpacity="0.55"
+                        stroke="#34306f"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="NJ"
+                        points="554.3,128.0 554.3,160.0 526.5,176.0 498.8,160.0 498.8,128.0 526.5,112.0"
+                        fill="#5f5aa8"
+                        fillOpacity="0.55"
+                        stroke="#34306f"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="CT"
+                        points="609.7,128.0 609.7,160.0 582.0,176.0 554.3,160.0 554.3,128.0 582.0,112.0"
+                        fill="#88b828"
+                        fillOpacity="0.55"
+                        stroke="#5a7d14"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="RI"
+                        points="665.1,128.0 665.1,160.0 637.4,176.0 609.7,160.0 609.7,128.0 637.4,112.0"
+                        fill="#88b828"
+                        fillOpacity="0.55"
+                        stroke="#5a7d14"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="CA"
+                        points="83.1,176.0 83.1,208.0 55.4,224.0 27.7,208.0 27.7,176.0 55.4,160.0"
+                        fill="#e8b24a"
+                        fillOpacity="0.55"
+                        stroke="#a47818"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="NV"
+                        points="138.6,176.0 138.6,208.0 110.9,224.0 83.1,208.0 83.1,176.0 110.9,160.0"
+                        fill="#c9c3b4"
+                        fillOpacity="0.55"
+                        stroke="#8a8470"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="UT"
+                        points="194.0,176.0 194.0,208.0 166.3,224.0 138.6,208.0 138.6,176.0 166.3,160.0"
+                        fill="#c9c3b4"
+                        fillOpacity="0.55"
+                        stroke="#8a8470"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="WY"
+                        points="249.4,176.0 249.4,208.0 221.7,224.0 194.0,208.0 194.0,176.0 221.7,160.0"
+                        fill="#c9c3b4"
+                        fillOpacity="0.55"
+                        stroke="#8a8470"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="NE"
+                        points="304.8,176.0 304.8,208.0 277.1,224.0 249.4,208.0 249.4,176.0 277.1,160.0"
+                        fill="#d88420"
+                        fillOpacity="0.55"
+                        stroke="#8f5410"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="MO"
+                        points="360.3,176.0 360.3,208.0 332.6,224.0 304.8,208.0 304.8,176.0 332.6,160.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="KY"
+                        points="415.7,176.0 415.7,208.0 388.0,224.0 360.3,208.0 360.3,176.0 388.0,160.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="WV"
+                        points="471.1,176.0 471.1,208.0 443.4,224.0 415.7,208.0 415.7,176.0 443.4,160.0"
+                        fill="#5f5aa8"
+                        fillOpacity="0.55"
+                        stroke="#34306f"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="VA"
+                        points="526.5,176.0 526.5,208.0 498.8,224.0 471.1,208.0 471.1,176.0 498.8,160.0"
+                        fill="#5f5aa8"
+                        fillOpacity="0.55"
+                        stroke="#34306f"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="MD"
+                        points="582.0,176.0 582.0,208.0 554.3,224.0 526.5,208.0 526.5,176.0 554.3,160.0"
+                        fill="#5f5aa8"
+                        fillOpacity="0.55"
+                        stroke="#34306f"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="DE"
+                        points="637.4,176.0 637.4,208.0 609.7,224.0 582.0,208.0 582.0,176.0 609.7,160.0"
+                        fill="#5f5aa8"
+                        fillOpacity="0.55"
+                        stroke="#34306f"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="AZ"
+                        points="166.3,224.0 166.3,256.0 138.6,272.0 110.9,256.0 110.9,224.0 138.6,208.0"
+                        fill="#c9c3b4"
+                        fillOpacity="0.55"
+                        stroke="#8a8470"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="CO"
+                        points="221.7,224.0 221.7,256.0 194.0,272.0 166.3,256.0 166.3,224.0 194.0,208.0"
+                        fill="#c9c3b4"
+                        fillOpacity="0.55"
+                        stroke="#8a8470"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="NM"
+                        points="277.1,224.0 277.1,256.0 249.4,272.0 221.7,256.0 221.7,224.0 249.4,208.0"
+                        fill="#c9c3b4"
+                        fillOpacity="0.55"
+                        stroke="#8a8470"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="KS"
+                        points="332.6,224.0 332.6,256.0 304.8,272.0 277.1,256.0 277.1,224.0 304.8,208.0"
+                        fill="#d88420"
+                        fillOpacity="0.55"
+                        stroke="#8f5410"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="AR"
+                        points="388.0,224.0 388.0,256.0 360.3,272.0 332.6,256.0 332.6,224.0 360.3,208.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="TN"
+                        points="443.4,224.0 443.4,256.0 415.7,272.0 388.0,256.0 388.0,224.0 415.7,208.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="NC"
+                        points="498.8,224.0 498.8,256.0 471.1,272.0 443.4,256.0 443.4,224.0 471.1,208.0"
+                        fill="#c07860"
+                        fillOpacity="0.55"
+                        stroke="#8a4e38"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="SC"
+                        points="554.3,224.0 554.3,256.0 526.5,272.0 498.8,256.0 498.8,224.0 526.5,208.0"
+                        fill="#c07860"
+                        fillOpacity="0.55"
+                        stroke="#8a4e38"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="HI"
+                        points="27.7,272.0 27.7,304.0 0.0,320.0 -27.7,304.0 -27.7,272.0 -0.0,256.0"
+                        fill="#b8b0a0"
+                        fillOpacity="0.55"
+                        stroke="#807868"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="OK"
+                        points="249.4,272.0 249.4,304.0 221.7,320.0 194.0,304.0 194.0,272.0 221.7,256.0"
+                        fill="#d88420"
+                        fillOpacity="0.55"
+                        stroke="#8f5410"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="TX"
+                        points="304.8,272.0 304.8,304.0 277.1,320.0 249.4,304.0 249.4,272.0 277.1,256.0"
+                        fill="#d93d72"
+                        fillOpacity="0.95"
+                        stroke="#9a1f4c"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="LA"
+                        points="360.3,272.0 360.3,304.0 332.6,320.0 304.8,304.0 304.8,272.0 332.6,256.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="MS"
+                        points="415.7,272.0 415.7,304.0 388.0,320.0 360.3,304.0 360.3,272.0 388.0,256.0"
+                        fill="#6b88cc"
+                        fillOpacity="0.55"
+                        stroke="#3f5aa0"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="AL"
+                        points="471.1,272.0 471.1,304.0 443.4,320.0 415.7,304.0 415.7,272.0 443.4,256.0"
+                        fill="#c07860"
+                        fillOpacity="0.55"
+                        stroke="#8a4e38"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="GA"
+                        points="526.5,272.0 526.5,304.0 498.8,320.0 471.1,304.0 471.1,272.0 498.8,256.0"
+                        fill="#c07860"
+                        fillOpacity="0.55"
+                        stroke="#8a4e38"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        data-st="FL"
+                        points="498.8,320.0 498.8,352.0 471.1,368.0 443.4,352.0 443.4,320.0 471.1,304.0"
+                        fill="#e18bb3"
+                        fillOpacity="0.55"
+                        stroke="#a24e78"
+                        strokeOpacity="0.7"
+                        strokeWidth="1"
+                      />
                     </g>
-                    <g fontFamily="'Fira Code', ui-monospace, monospace" fontSize="11" fontWeight="600" textAnchor="middle" fill="currentColor" style={{ pointerEvents: "none" }}>
-                      <text x="554.3" y="4.0" opacity="0.72">ME</text>
-                      <text x="27.7" y="52.0" opacity="0.72">AK</text>
-                      <text x="526.5" y="52.0" opacity="0.72">VT</text>
-                      <text x="582.0" y="52.0" opacity="0.72">NH</text>
-                      <text x="55.4" y="100.0" opacity="0.72">WA</text>
-                      <text x="110.9" y="100.0" opacity="0.72">MT</text>
-                      <text x="166.3" y="100.0" opacity="0.72">ND</text>
-                      <text x="221.7" y="100.0" opacity="0.72">MN</text>
-                      <text x="277.1" y="100.0" opacity="0.72">WI</text>
-                      <text x="388.0" y="100.0" opacity="0.72">MI</text>
-                      <text x="443.4" y="100.0" opacity="0.72">NY</text>
-                      <text x="498.8" y="100.0" opacity="0.72">MA</text>
-                      <text x="83.1" y="148.0" opacity="0.72">OR</text>
-                      <text x="138.6" y="148.0" opacity="0.72">ID</text>
-                      <text x="194.0" y="148.0" opacity="0.72">SD</text>
-                      <text x="249.4" y="148.0" opacity="0.72">IA</text>
-                      <text x="304.8" y="148.0" opacity="0.72">IL</text>
-                      <text x="360.3" y="148.0" opacity="0.72">IN</text>
-                      <text x="415.7" y="148.0" opacity="0.72">OH</text>
-                      <text x="471.1" y="148.0" opacity="0.72">PA</text>
-                      <text x="526.5" y="148.0" opacity="0.72">NJ</text>
-                      <text x="582.0" y="148.0" opacity="0.72">CT</text>
-                      <text x="637.4" y="148.0" opacity="0.72">RI</text>
-                      <text x="55.4" y="196.0" opacity="0.72">CA</text>
-                      <text x="110.9" y="196.0" opacity="0.72">NV</text>
-                      <text x="166.3" y="196.0" opacity="0.72">UT</text>
-                      <text x="221.7" y="196.0" opacity="0.72">WY</text>
-                      <text x="277.1" y="196.0" opacity="0.72">NE</text>
-                      <text x="332.6" y="196.0" opacity="0.72">MO</text>
-                      <text x="388.0" y="196.0" opacity="0.72">KY</text>
-                      <text x="443.4" y="196.0" opacity="0.72">WV</text>
-                      <text x="498.8" y="196.0" opacity="0.72">VA</text>
-                      <text x="554.3" y="196.0" opacity="0.72">MD</text>
-                      <text x="609.7" y="196.0" opacity="0.72">DE</text>
-                      <text x="138.6" y="244.0" opacity="0.72">AZ</text>
-                      <text x="194.0" y="244.0" opacity="0.72">CO</text>
-                      <text x="249.4" y="244.0" opacity="0.72">NM</text>
-                      <text x="304.8" y="244.0" opacity="0.72">KS</text>
-                      <text x="360.3" y="244.0" opacity="0.72">AR</text>
-                      <text x="415.7" y="244.0" opacity="0.72">TN</text>
-                      <text x="471.1" y="244.0" opacity="0.72">NC</text>
-                      <text x="526.5" y="244.0" opacity="0.72">SC</text>
-                      <text x="0.0" y="292.0" opacity="0.72">HI</text>
-                      <text x="221.7" y="292.0" opacity="0.72">OK</text>
-                      <text x="277.1" y="292.0" opacity="1">TX</text>
-                      <text x="332.6" y="292.0" opacity="0.72">LA</text>
-                      <text x="388.0" y="292.0" opacity="0.72">MS</text>
-                      <text x="443.4" y="292.0" opacity="0.72">AL</text>
-                      <text x="498.8" y="292.0" opacity="0.72">GA</text>
-                      <text x="471.1" y="340.0" opacity="0.72">FL</text>
+                    <g
+                      fontFamily="'Fira Code', ui-monospace, monospace"
+                      fontSize="11"
+                      fontWeight="600"
+                      textAnchor="middle"
+                      fill="currentColor"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      <text x="554.3" y="4.0" opacity="0.72">
+                        ME
+                      </text>
+                      <text x="27.7" y="52.0" opacity="0.72">
+                        AK
+                      </text>
+                      <text x="526.5" y="52.0" opacity="0.72">
+                        VT
+                      </text>
+                      <text x="582.0" y="52.0" opacity="0.72">
+                        NH
+                      </text>
+                      <text x="55.4" y="100.0" opacity="0.72">
+                        WA
+                      </text>
+                      <text x="110.9" y="100.0" opacity="0.72">
+                        MT
+                      </text>
+                      <text x="166.3" y="100.0" opacity="0.72">
+                        ND
+                      </text>
+                      <text x="221.7" y="100.0" opacity="0.72">
+                        MN
+                      </text>
+                      <text x="277.1" y="100.0" opacity="0.72">
+                        WI
+                      </text>
+                      <text x="388.0" y="100.0" opacity="0.72">
+                        MI
+                      </text>
+                      <text x="443.4" y="100.0" opacity="0.72">
+                        NY
+                      </text>
+                      <text x="498.8" y="100.0" opacity="0.72">
+                        MA
+                      </text>
+                      <text x="83.1" y="148.0" opacity="0.72">
+                        OR
+                      </text>
+                      <text x="138.6" y="148.0" opacity="0.72">
+                        ID
+                      </text>
+                      <text x="194.0" y="148.0" opacity="0.72">
+                        SD
+                      </text>
+                      <text x="249.4" y="148.0" opacity="0.72">
+                        IA
+                      </text>
+                      <text x="304.8" y="148.0" opacity="0.72">
+                        IL
+                      </text>
+                      <text x="360.3" y="148.0" opacity="0.72">
+                        IN
+                      </text>
+                      <text x="415.7" y="148.0" opacity="0.72">
+                        OH
+                      </text>
+                      <text x="471.1" y="148.0" opacity="0.72">
+                        PA
+                      </text>
+                      <text x="526.5" y="148.0" opacity="0.72">
+                        NJ
+                      </text>
+                      <text x="582.0" y="148.0" opacity="0.72">
+                        CT
+                      </text>
+                      <text x="637.4" y="148.0" opacity="0.72">
+                        RI
+                      </text>
+                      <text x="55.4" y="196.0" opacity="0.72">
+                        CA
+                      </text>
+                      <text x="110.9" y="196.0" opacity="0.72">
+                        NV
+                      </text>
+                      <text x="166.3" y="196.0" opacity="0.72">
+                        UT
+                      </text>
+                      <text x="221.7" y="196.0" opacity="0.72">
+                        WY
+                      </text>
+                      <text x="277.1" y="196.0" opacity="0.72">
+                        NE
+                      </text>
+                      <text x="332.6" y="196.0" opacity="0.72">
+                        MO
+                      </text>
+                      <text x="388.0" y="196.0" opacity="0.72">
+                        KY
+                      </text>
+                      <text x="443.4" y="196.0" opacity="0.72">
+                        WV
+                      </text>
+                      <text x="498.8" y="196.0" opacity="0.72">
+                        VA
+                      </text>
+                      <text x="554.3" y="196.0" opacity="0.72">
+                        MD
+                      </text>
+                      <text x="609.7" y="196.0" opacity="0.72">
+                        DE
+                      </text>
+                      <text x="138.6" y="244.0" opacity="0.72">
+                        AZ
+                      </text>
+                      <text x="194.0" y="244.0" opacity="0.72">
+                        CO
+                      </text>
+                      <text x="249.4" y="244.0" opacity="0.72">
+                        NM
+                      </text>
+                      <text x="304.8" y="244.0" opacity="0.72">
+                        KS
+                      </text>
+                      <text x="360.3" y="244.0" opacity="0.72">
+                        AR
+                      </text>
+                      <text x="415.7" y="244.0" opacity="0.72">
+                        TN
+                      </text>
+                      <text x="471.1" y="244.0" opacity="0.72">
+                        NC
+                      </text>
+                      <text x="526.5" y="244.0" opacity="0.72">
+                        SC
+                      </text>
+                      <text x="0.0" y="292.0" opacity="0.72">
+                        HI
+                      </text>
+                      <text x="221.7" y="292.0" opacity="0.72">
+                        OK
+                      </text>
+                      <text x="277.1" y="292.0" opacity="1">
+                        TX
+                      </text>
+                      <text x="332.6" y="292.0" opacity="0.72">
+                        LA
+                      </text>
+                      <text x="388.0" y="292.0" opacity="0.72">
+                        MS
+                      </text>
+                      <text x="443.4" y="292.0" opacity="0.72">
+                        AL
+                      </text>
+                      <text x="498.8" y="292.0" opacity="0.72">
+                        GA
+                      </text>
+                      <text x="471.1" y="340.0" opacity="0.72">
+                        FL
+                      </text>
                     </g>
                   </svg>
                   <div className="map-legend">
-                    <div className="row"><span className="sw" style={{ background: "#d93d72", opacity: 0.9 }} /><span>ERCOT</span></div>
-                    <div className="row"><span className="sw" style={{ background: "#5f5aa8", opacity: 0.55 }} /><span>PJM</span></div>
-                    <div className="row"><span className="sw" style={{ background: "#6b88cc", opacity: 0.55 }} /><span>MISO</span></div>
-                    <div className="row"><span className="sw" style={{ background: "#88b828", opacity: 0.55 }} /><span>ISO-NE</span></div>
-                    <div className="row"><span className="sw" style={{ background: "#3db8c8", opacity: 0.55 }} /><span>NYISO</span></div>
-                    <div className="row"><span className="sw" style={{ background: "#e8b24a", opacity: 0.55 }} /><span>CAISO</span></div>
-                    <div className="row"><span className="sw" style={{ background: "#d88420", opacity: 0.55 }} /><span>SPP</span></div>
-                    <div className="row"><span className="sw" style={{ background: "#c07860", opacity: 0.55 }} /><span>SERC &middot; FRCC</span></div>
-                    <div className="row" style={{ gridColumn: "span 2" }}><span className="sw" style={{ background: "#c9c3b4", opacity: 0.7 }} /><span>WECC &middot; other</span></div>
+                    <div className="row">
+                      <span className="sw" style={{ background: "#d93d72", opacity: 0.9 }} />
+                      <span>ERCOT</span>
+                    </div>
+                    <div className="row">
+                      <span className="sw" style={{ background: "#5f5aa8", opacity: 0.55 }} />
+                      <span>PJM</span>
+                    </div>
+                    <div className="row">
+                      <span className="sw" style={{ background: "#6b88cc", opacity: 0.55 }} />
+                      <span>MISO</span>
+                    </div>
+                    <div className="row">
+                      <span className="sw" style={{ background: "#88b828", opacity: 0.55 }} />
+                      <span>ISO-NE</span>
+                    </div>
+                    <div className="row">
+                      <span className="sw" style={{ background: "#3db8c8", opacity: 0.55 }} />
+                      <span>NYISO</span>
+                    </div>
+                    <div className="row">
+                      <span className="sw" style={{ background: "#e8b24a", opacity: 0.55 }} />
+                      <span>CAISO</span>
+                    </div>
+                    <div className="row">
+                      <span className="sw" style={{ background: "#d88420", opacity: 0.55 }} />
+                      <span>SPP</span>
+                    </div>
+                    <div className="row">
+                      <span className="sw" style={{ background: "#c07860", opacity: 0.55 }} />
+                      <span>SERC &middot; FRCC</span>
+                    </div>
+                    <div className="row" style={{ gridColumn: "span 2" }}>
+                      <span className="sw" style={{ background: "#c9c3b4", opacity: 0.7 }} />
+                      <span>WECC &middot; other</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -412,28 +959,28 @@ export default function LandingPage() {
           </div>
 
           {/* Stats band */}
-          <div className="stats" role="list" aria-label="Registry contents">
-            <div className="stat">
+          <ul className="stats" aria-label="Registry contents">
+            <li className="stat">
               <span className="stat-n">{formatCount(counts.utilities)}</span>
               <span className="stat-l">Utilities</span>
-            </div>
-            <div className="stat">
+            </li>
+            <li className="stat">
               <span className="stat-n">{formatCount(gridOperatorCount)}</span>
               <span className="stat-l">Grid operators</span>
-            </div>
-            <div className="stat">
+            </li>
+            <li className="stat">
               <span className="stat-n">{formatCount(counts.powerPlants)}</span>
               <span className="stat-l">Power plants</span>
-            </div>
-            <div className="stat">
+            </li>
+            <li className="stat">
               <span className="stat-n">{formatCount(counts.transmissionLines)}</span>
               <span className="stat-l">Transmission lines</span>
-            </div>
-            <div className="stat">
+            </li>
+            <li className="stat">
               <span className="stat-n">{formatCount(counts.evStations)}</span>
               <span className="stat-l">EV stations</span>
-            </div>
-          </div>
+            </li>
+          </ul>
         </div>
       </header>
 
@@ -446,18 +993,20 @@ export default function LandingPage() {
               <h2 className="section-title">Eight entry points, one connected graph.</h2>
             </div>
             <p className="section-desc">
-              Every utility links to its territory, every territory to its operator, every plant to its
-              interconnection. Start anywhere.
+              Every utility links to its territory, every territory to its operator, every plant to its interconnection.
+              Start anywhere.
             </p>
           </div>
 
           <div className="entities">
             {ENTITY_CARDS.map((card) => {
-              const count = card.count ?? dynamicCounts[card.countKey!];
+              const count = card.count ?? (card.countKey ? dynamicCounts[card.countKey] : undefined);
               return (
                 <Link key={card.num} href={card.href} className="entity">
                   <div className="entity-head">
-                    <span>{card.num} &middot; {card.cat}</span>
+                    <span>
+                      {card.num} &middot; {card.cat}
+                    </span>
                     <span className="entity-count tabular">{count}</span>
                   </div>
                   <div className="entity-name">{card.name}</div>
@@ -465,7 +1014,9 @@ export default function LandingPage() {
                   <div className="entity-foot">
                     <div className="entity-tags">
                       {card.tags.map((tag) => (
-                        <span key={tag} className="entity-tag">{tag}</span>
+                        <span key={tag} className="entity-tag">
+                          {tag}
+                        </span>
                       ))}
                     </div>
                     <ArrowIcon />
@@ -491,7 +1042,8 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="ledger" aria-label="Recent changes">
+          {/* biome-ignore lint/a11y/useSemanticElements: CSS grid layout, not a semantic table */}
+          <div className="ledger" role="table" aria-label="Recent changes">
             <div className="ledger-head">
               <span>Change</span>
               <span>Entity</span>
@@ -648,12 +1200,30 @@ export default function LandingPage() {
                 Open Database License &mdash; the same license as OpenStreetMap. Use it anywhere, including commercial
                 products. Attribute CommonGrid, and share improvements back.
               </p>
-              <div className="license-row"><span>Use commercially</span><span>&#10003; allowed</span></div>
-              <div className="license-row"><span>Redistribute</span><span>&#10003; allowed</span></div>
-              <div className="license-row"><span>Modify &amp; derive</span><span>&#10003; allowed</span></div>
-              <div className="license-row"><span>Attribution required</span><span>yes</span></div>
-              <div className="license-row"><span>Share-alike for derivatives</span><span>yes</span></div>
-              <div className="license-row"><span>License</span><span>ODbL 1.0</span></div>
+              <div className="license-row">
+                <span>Use commercially</span>
+                <span>&#10003; allowed</span>
+              </div>
+              <div className="license-row">
+                <span>Redistribute</span>
+                <span>&#10003; allowed</span>
+              </div>
+              <div className="license-row">
+                <span>Modify &amp; derive</span>
+                <span>&#10003; allowed</span>
+              </div>
+              <div className="license-row">
+                <span>Attribution required</span>
+                <span>yes</span>
+              </div>
+              <div className="license-row">
+                <span>Share-alike for derivatives</span>
+                <span>yes</span>
+              </div>
+              <div className="license-row">
+                <span>License</span>
+                <span>ODbL 1.0</span>
+              </div>
               <div style={{ marginTop: "18px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 <a
                   href="https://opendatacommons.org/licenses/odbl/"
@@ -663,7 +1233,11 @@ export default function LandingPage() {
                 >
                   Full license text
                 </a>
-                <Link href="/about" className="btn" style={{ background: "var(--cg-ink)", color: "var(--cg-paper)", borderColor: "var(--cg-ink)" }}>
+                <Link
+                  href="/about"
+                  className="btn"
+                  style={{ background: "var(--cg-ink)", color: "var(--cg-paper)", borderColor: "var(--cg-ink)" }}
+                >
                   Governance charter &rarr;
                 </Link>
               </div>
@@ -681,8 +1255,8 @@ export default function LandingPage() {
               <h2 className="section-title">REST API, vector tiles, weekly snapshot.</h2>
             </div>
             <p className="section-desc">
-              60 requests/hour unauthenticated. 5,000/hour with a free key. Geo endpoints serve MVT tiles. Full
-              database dumps published weekly under ODbL.
+              60 requests/hour unauthenticated. 5,000/hour with a free key. Geo endpoints serve MVT tiles. Full database
+              dumps published weekly under ODbL.
             </p>
           </div>
 

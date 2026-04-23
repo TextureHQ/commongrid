@@ -25,7 +25,15 @@ const BackIcon = () => (
 );
 
 const ArrowIcon = () => (
-  <svg className="cg-explore-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
@@ -83,7 +91,9 @@ export function BADetailPanel({ slug }: { slug: string }) {
       <div className="cg-explore-detail">
         <div className="cg-explore-detail-type">Balancing Authority</div>
         <div className="cg-explore-detail-name">{ba.name}</div>
-        <div className="cg-explore-detail-sub">{ba.shortName} · {formatStates(ba.states)}</div>
+        <div className="cg-explore-detail-sub">
+          {ba.shortName} · {formatStates(ba.states)}
+        </div>
 
         <div className="cg-explore-kv-table">
           <div className="cg-explore-kv-row">
@@ -106,7 +116,10 @@ export function BADetailPanel({ slug }: { slug: string }) {
               <span className="cg-explore-kv-val">
                 <a
                   href="#"
-                  onClick={(e) => { e.preventDefault(); navigateToDetail("iso", iso.slug); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigateToDetail("iso", iso.slug);
+                  }}
                 >
                   {iso.shortName}
                 </a>
@@ -130,15 +143,13 @@ export function BADetailPanel({ slug }: { slug: string }) {
           <>
             <div className="cg-explore-related-heading">Utilities ({utilities.length})</div>
             {utilities.slice(0, 15).map((u) => (
-              <div
-                key={u.id}
-                className="cg-explore-related-row"
-                onClick={() => navigateToDetail("utility", u.slug)}
-              >
+              <div key={u.id} className="cg-explore-related-row" onClick={() => navigateToDetail("utility", u.slug)}>
                 <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{u.name}</div>
-                  <div className="cg-explore-related-type">{getSegmentLabel(u.segment)} · {formatCustomerCount(u.customerCount)}</div>
+                  <div className="cg-explore-related-type">
+                    {getSegmentLabel(u.segment)} · {formatCustomerCount(u.customerCount)}
+                  </div>
                 </div>
                 <ArrowIcon />
               </div>
@@ -186,7 +197,11 @@ export function BADetailPanel({ slug }: { slug: string }) {
         )}
 
         <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
-          <Link href={`/balancing-authorities/${slug}`} className="cg-explore-fullpage-link" style={{ textDecoration: "none" }}>
+          <Link
+            href={`/balancing-authorities/${slug}`}
+            className="cg-explore-fullpage-link"
+            style={{ textDecoration: "none" }}
+          >
             Full page →
           </Link>
         </div>

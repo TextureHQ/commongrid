@@ -45,7 +45,15 @@ const SearchIcon = () => (
 );
 
 const ArrowIcon = () => (
-  <svg className="cg-explore-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
@@ -104,11 +112,7 @@ export function ProgramListPanel() {
             <strong>{filtered.length}</strong> programs
           </span>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <select
-              className="cg-explore-select"
-              value={state.type}
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
+            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
               {assetTypeFilterOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>
                   {opt.label}
@@ -116,11 +120,7 @@ export function ProgramListPanel() {
               ))}
             </select>
             {user && (
-              <button
-                type="button"
-                className="cg-explore-icon-btn"
-                onClick={() => router.push("/programs/new")}
-              >
+              <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/programs/new")}>
                 + Add
               </button>
             )}
@@ -139,7 +139,14 @@ export function ProgramListPanel() {
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--cg-muted)", fontSize: 14, padding: 0 }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--cg-muted)",
+                  fontSize: 14,
+                  padding: 0,
+                }}
               >
                 ✕
               </button>
@@ -156,20 +163,13 @@ export function ProgramListPanel() {
           </div>
         ) : (
           filtered.map((row) => (
-            <div
-              key={row.slug}
-              className="cg-explore-entity-row"
-              onClick={() => handleRowClick(row)}
-            >
-              <span
-                className="cg-explore-entity-dot"
-                data-shape="square"
-                style={{ background: "var(--cg-purple)" }}
-              />
+            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
+              <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-purple)" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="cg-explore-entity-name">{row.name}</div>
                 <div className="cg-explore-entity-sub">
-                  {row.utilityName} · {row.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", ")}
+                  {row.utilityName} ·{" "}
+                  {row.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", ")}
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>

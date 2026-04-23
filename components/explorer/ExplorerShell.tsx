@@ -45,13 +45,31 @@ const MapIcon = () => (
 );
 
 const ChevronDownIcon = () => (
-  <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="10"
+    height="6"
+    viewBox="0 0 10 6"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M1 1l4 4 4-4" />
   </svg>
 );
 
 const CheckIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="3"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M20 6 9 17l-5-5" />
   </svg>
 );
@@ -114,12 +132,7 @@ function OverlayDropdown({
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button
-        type="button"
-        className="cg-explore-icon-btn"
-        onClick={() => setOpen(!open)}
-        style={{ gap: 6 }}
-      >
+      <button type="button" className="cg-explore-icon-btn" onClick={() => setOpen(!open)} style={{ gap: 6 }}>
         + Points &amp; lines{activeCount > 0 ? ` (${activeCount})` : ""}
         <ChevronDownIcon />
       </button>
@@ -133,9 +146,7 @@ function OverlayDropdown({
               data-active={overlays[opt.key]}
               onClick={() => onToggle(opt.key)}
             >
-              <span className="cg-explore-dropdown-check">
-                {overlays[opt.key] && <CheckIcon />}
-              </span>
+              <span className="cg-explore-dropdown-check">{overlays[opt.key] && <CheckIcon />}</span>
               {opt.label}
             </button>
           ))}
@@ -149,13 +160,7 @@ function OverlayDropdown({
 // Region dropdown (custom, matching prototype style)
 // ---------------------------------------------------------------------------
 
-function RegionDropdown({
-  value,
-  onChange,
-}: {
-  value: MapRegion;
-  onChange: (v: MapRegion) => void;
-}) {
+function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: MapRegion) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -196,9 +201,7 @@ function RegionDropdown({
                 setOpen(false);
               }}
             >
-              <span className="cg-explore-dropdown-check">
-                {value === opt.value && <CheckIcon />}
-              </span>
+              <span className="cg-explore-dropdown-check">{value === opt.value && <CheckIcon />}</span>
               {opt.label}
             </button>
           ))}
@@ -384,7 +387,10 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
       </div>
 
       {/* Mobile: simplified tab bar + floating toggle */}
-      <div className="md:hidden" style={{ flexShrink: 0, borderBottom: "1px solid var(--cg-rule)", background: "var(--cg-card)" }}>
+      <div
+        className="md:hidden"
+        style={{ flexShrink: 0, borderBottom: "1px solid var(--cg-rule)", background: "var(--cg-card)" }}
+      >
         <ExplorerTabBar />
       </div>
 

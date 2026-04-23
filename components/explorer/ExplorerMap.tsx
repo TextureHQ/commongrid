@@ -263,12 +263,15 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
   const overlays = mapOverlays ?? DEFAULT_OVERLAYS;
 
   // Derive layer visibility from overlays prop (for the Edges layers control)
-  const layerVisibility: Record<string, boolean> = {
-    "transmission-lines": overlays["transmission-lines"],
-    "power-plants": overlays["power-plants"],
-    "ev-charging": overlays["ev-charging"],
-    "pricing-nodes": overlays["pricing-nodes"],
-  };
+  const layerVisibility: Record<string, boolean> = useMemo(
+    () => ({
+      "transmission-lines": overlays["transmission-lines"],
+      "power-plants": overlays["power-plants"],
+      "ev-charging": overlays["ev-charging"],
+      "pricing-nodes": overlays["pricing-nodes"],
+    }),
+    [overlays]
+  );
 
   const handleLayerToggle = useCallback((_layerId: string) => {
     // Layer toggles are now managed by the shell via mapOverlays prop

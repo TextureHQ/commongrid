@@ -34,7 +34,15 @@ const SearchIcon = () => (
 );
 
 const ArrowIcon = () => (
-  <svg className="cg-explore-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
@@ -50,24 +58,39 @@ export function GridOperatorListPanel() {
     const isos: GridOperatorRow[] = getAllIsos().map((iso) => {
       seen.add(iso.slug);
       return {
-        slug: iso.slug, name: iso.name, shortName: iso.shortName,
-        logo: iso.logo, type: "ISO" as const, states: iso.states,
-        website: iso.website, detailView: "iso" as const,
+        slug: iso.slug,
+        name: iso.name,
+        shortName: iso.shortName,
+        logo: iso.logo,
+        type: "ISO" as const,
+        states: iso.states,
+        website: iso.website,
+        detailView: "iso" as const,
       };
     });
 
     const rtos: GridOperatorRow[] = getAllRtos()
       .filter((rto) => !seen.has(rto.slug))
       .map((rto) => ({
-        slug: rto.slug, name: rto.name, shortName: rto.shortName,
-        logo: rto.logo, type: "RTO" as const, states: rto.states,
-        website: rto.website, detailView: "rto" as const,
+        slug: rto.slug,
+        name: rto.name,
+        shortName: rto.shortName,
+        logo: rto.logo,
+        type: "RTO" as const,
+        states: rto.states,
+        website: rto.website,
+        detailView: "rto" as const,
       }));
 
     const bas: GridOperatorRow[] = getAllBalancingAuthorities().map((ba) => ({
-      slug: ba.slug, name: ba.name, shortName: ba.shortName,
-      logo: ba.logo, type: "BA" as const, states: ba.states,
-      website: ba.website, detailView: "ba" as const,
+      slug: ba.slug,
+      name: ba.name,
+      shortName: ba.shortName,
+      logo: ba.logo,
+      type: "BA" as const,
+      states: ba.states,
+      website: ba.website,
+      detailView: "ba" as const,
     }));
 
     return [...isos, ...rtos, ...bas];
@@ -100,11 +123,7 @@ export function GridOperatorListPanel() {
             <strong>{filtered.length}</strong> grid operators
           </span>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <select
-              className="cg-explore-select"
-              value={state.type}
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
+            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
               {typeFilterOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>
                   {opt.label}
@@ -112,11 +131,7 @@ export function GridOperatorListPanel() {
               ))}
             </select>
             {user && (
-              <button
-                type="button"
-                className="cg-explore-icon-btn"
-                onClick={() => router.push("/grid-operators/new")}
-              >
+              <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/grid-operators/new")}>
                 + Add
               </button>
             )}
@@ -135,7 +150,14 @@ export function GridOperatorListPanel() {
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--cg-muted)", fontSize: 14, padding: 0 }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--cg-muted)",
+                  fontSize: 14,
+                  padding: 0,
+                }}
               >
                 ✕
               </button>
@@ -152,20 +174,13 @@ export function GridOperatorListPanel() {
           </div>
         ) : (
           filtered.map((row) => (
-            <div
-              key={row.slug}
-              className="cg-explore-entity-row"
-              onClick={() => handleRowClick(row)}
-            >
-              <span
-                className="cg-explore-entity-dot"
-                data-shape="square"
-                style={{ background: "var(--cg-blue)" }}
-              />
+            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
+              <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-blue)" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="cg-explore-entity-name">{row.name}</div>
                 <div className="cg-explore-entity-sub">
-                  {row.shortName} · {row.type} · {row.states.slice(0, 3).join(", ")}{row.states.length > 3 ? ` +${row.states.length - 3}` : ""}
+                  {row.shortName} · {row.type} · {row.states.slice(0, 3).join(", ")}
+                  {row.states.length > 3 ? ` +${row.states.length - 3}` : ""}
                 </div>
               </div>
               <ArrowIcon />

@@ -38,11 +38,7 @@ export function ExplorerTabBar() {
             }}
             onClick={() => navigateToTab(tab.id)}
           >
-            <span
-              className="cg-explore-tab-dot"
-              data-shape={tab.dotShape}
-              style={{ background: tab.color }}
-            />
+            <span className="cg-explore-tab-dot" data-shape={tab.dotShape} style={{ background: tab.color }} />
             {tab.label}
           </button>
         );

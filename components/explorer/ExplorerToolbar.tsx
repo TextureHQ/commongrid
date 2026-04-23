@@ -14,12 +14,7 @@ export function ExplorerToolbar() {
   return (
     <div className="cg-explore-view-toggle">
       {VIEW_OPTIONS.map((v) => (
-        <button
-          key={v.id}
-          type="button"
-          data-active={state.layout === v.id}
-          onClick={() => setLayout(v.id)}
-        >
+        <button key={v.id} type="button" data-active={state.layout === v.id} onClick={() => setLayout(v.id)}>
           {v.label}
         </button>
       ))}

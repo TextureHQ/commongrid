@@ -25,7 +25,15 @@ const BackIcon = () => (
 );
 
 const ArrowIcon = () => (
-  <svg className="cg-explore-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
@@ -128,7 +136,8 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
         <div className="cg-explore-detail-type">Utility</div>
         <div className="cg-explore-detail-name">{utility.name}</div>
         <div className="cg-explore-detail-sub">
-          {getSegmentLabel(utility.segment)} · {formatCustomerCount(utility.customerCount)} customers · {getStatusLabel(utility.status)}
+          {getSegmentLabel(utility.segment)} · {formatCustomerCount(utility.customerCount)} customers ·{" "}
+          {getStatusLabel(utility.status)}
         </div>
 
         {/* Registry data KV table */}
@@ -307,7 +316,11 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
 
         {/* Full page link */}
         <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
-          <Link href={`/grid-operators/${slug}`} className="cg-explore-fullpage-link" style={{ textDecoration: "none" }}>
+          <Link
+            href={`/grid-operators/${slug}`}
+            className="cg-explore-fullpage-link"
+            style={{ textDecoration: "none" }}
+          >
             Full page →
           </Link>
         </div>

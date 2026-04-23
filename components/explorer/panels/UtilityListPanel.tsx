@@ -1,11 +1,11 @@
 "use client";
 
 import {
+  addFilterCondition,
+  createEmptyFilter,
   type FacetConfig,
   FilterDialog,
   type FilterState,
-  addFilterCondition,
-  createEmptyFilter,
   getFilterFields,
 } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
@@ -38,9 +38,57 @@ const sortOptions = [
 ];
 
 const ALL_STATE_CODES = [
-  "AK","AL","AR","AZ","CA","CO","CT","DC","DE","FL","GA","HI","IA","ID","IL","IN","KS","KY","LA",
-  "MA","MD","ME","MI","MN","MO","MS","MT","NC","ND","NE","NH","NJ","NM","NV","NY","OH","OK","OR",
-  "PA","RI","SC","SD","TN","TX","UT","VA","VT","WA","WI","WV","WY",
+  "AK",
+  "AL",
+  "AR",
+  "AZ",
+  "CA",
+  "CO",
+  "CT",
+  "DC",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "IA",
+  "ID",
+  "IL",
+  "IN",
+  "KS",
+  "KY",
+  "LA",
+  "MA",
+  "MD",
+  "ME",
+  "MI",
+  "MN",
+  "MO",
+  "MS",
+  "MT",
+  "NC",
+  "ND",
+  "NE",
+  "NH",
+  "NJ",
+  "NM",
+  "NV",
+  "NY",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VA",
+  "VT",
+  "WA",
+  "WI",
+  "WV",
+  "WY",
 ];
 
 const FACET_CONFIGS: FacetConfig[] = [
@@ -135,7 +183,15 @@ const FilterIcon = () => (
 );
 
 const ArrowIcon = () => (
-  <svg className="cg-explore-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
@@ -268,11 +324,7 @@ export function UtilityListPanel() {
             >
               <FilterIcon /> Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
             </button>
-            <select
-              className="cg-explore-select"
-              value={sortValue}
-              onChange={(e) => setSortValue(e.target.value)}
-            >
+            <select className="cg-explore-select" value={sortValue} onChange={(e) => setSortValue(e.target.value)}>
               {sortOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>
                   {opt.label}
@@ -280,11 +332,7 @@ export function UtilityListPanel() {
               ))}
             </select>
             {user && (
-              <button
-                type="button"
-                className="cg-explore-icon-btn"
-                onClick={() => router.push("/grid-operators/new")}
-              >
+              <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/grid-operators/new")}>
                 + Add
               </button>
             )}
@@ -303,7 +351,14 @@ export function UtilityListPanel() {
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--cg-muted)", fontSize: 14, padding: 0 }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--cg-muted)",
+                  fontSize: 14,
+                  padding: 0,
+                }}
               >
                 ✕
               </button>
@@ -325,16 +380,8 @@ export function UtilityListPanel() {
           </div>
         ) : (
           rows.map((row) => (
-            <div
-              key={row.slug}
-              className="cg-explore-entity-row"
-              onClick={() => navigateToDetail("utility", row.slug)}
-            >
-              <span
-                className="cg-explore-entity-dot"
-                data-shape="square"
-                style={{ background: "var(--cg-teal)" }}
-              />
+            <div key={row.slug} className="cg-explore-entity-row" onClick={() => navigateToDetail("utility", row.slug)}>
+              <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-teal)" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="cg-explore-entity-name">{row.name}</div>
                 <div className="cg-explore-entity-sub">
