@@ -7,7 +7,6 @@ import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { isos } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/isos/[slug] — Get ISO by slug
@@ -19,18 +18,6 @@ async function handleGet(_req: Request, ctx: RouteContext) {
     throw new ApiError("BAD_REQUEST", "Missing slug parameter");
   }
 
-  const source = getDataSource("isos");
-
-  if (source === "json") {
-    const allIsos = (await import("@/data/isos.json")).default;
-    const iso = allIsos.find((i: { slug: string }) => i.slug === slug);
-    if (!iso) {
-      throw new ApiError("NOT_FOUND", `ISO '${slug}' not found`);
-    }
-    return jsonResponse({ data: iso }, 200, corsHeaders());
-  }
-
-  // Database mode
   const db = getDb();
   const [iso] = await db.select().from(isos).where(eq(isos.slug, slug)).limit(1);
 

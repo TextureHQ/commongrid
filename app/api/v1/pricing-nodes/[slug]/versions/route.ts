@@ -2,8 +2,7 @@
  * GET /api/v1/pricing-nodes/:slug/versions
  *
  * Return the version history for a pricing node. Queries the entity_versions
- * table when the DB flag is active; returns an empty list in JSON mode
- * (no version history is stored in static JSON files).
+ * table in the database.
  */
 
 import {
@@ -16,7 +15,6 @@ import {
   withTiming,
 } from "@/lib/api";
 import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,16 +82,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
           throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
         }
 
-        // Version history is only available in database mode
-        let versions: VersionEntry[] = [];
-        if (getDataSource("pricingNodes") === "db") {
-          versions = await loadVersionsFromDb(node.id);
-        }
+        const versions = await loadVersionsFromDb(node.id);
 
         return jsonResponse(
           {
             data: versions,
-            meta: { source: getDataSource("pricingNodes") },
           },
           200,
           {

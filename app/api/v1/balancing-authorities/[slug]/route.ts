@@ -7,7 +7,6 @@ import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { balancingAuthorities } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/balancing-authorities/[slug] — Get BA by slug
@@ -19,18 +18,6 @@ async function handleGet(_req: Request, ctx: RouteContext) {
     throw new ApiError("BAD_REQUEST", "Missing slug parameter");
   }
 
-  const source = getDataSource("balancingAuthorities");
-
-  if (source === "json") {
-    const allBAs = (await import("@/data/balancing-authorities.json")).default;
-    const ba = allBAs.find((b: { slug: string }) => b.slug === slug);
-    if (!ba) {
-      throw new ApiError("NOT_FOUND", `Balancing authority '${slug}' not found`);
-    }
-    return jsonResponse({ data: ba }, 200, corsHeaders());
-  }
-
-  // Database mode
   const db = getDb();
   const [ba] = await db.select().from(balancingAuthorities).where(eq(balancingAuthorities.slug, slug)).limit(1);
 

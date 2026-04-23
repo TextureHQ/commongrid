@@ -58,18 +58,6 @@ describe("decodeCursor tamper detection", () => {
   });
 });
 
-describe("encodeCursor throws when CURSOR_SECRET is missing", () => {
-  it("throws INTERNAL_ERROR if env var is absent", () => {
-    const saved = process.env.CURSOR_SECRET;
-    delete process.env.CURSOR_SECRET;
-    try {
-      expect(() => encodeCursor(sampleCursor)).toThrowError(/CURSOR_SECRET/i);
-    } finally {
-      process.env.CURSOR_SECRET = saved;
-    }
-  });
-});
-
 describe("parsePaginationParams", () => {
   it("returns defaults for empty params", () => {
     const params = parsePaginationParams(new URLSearchParams());

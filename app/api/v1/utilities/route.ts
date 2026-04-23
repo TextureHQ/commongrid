@@ -7,29 +7,6 @@ import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { balancingAuthorities, isos, rtos, utilities } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
-
-// ---------------------------------------------------------------------------
-// Types for JSON data
-// ---------------------------------------------------------------------------
-
-interface JsonUtility {
-  id: string;
-  slug: string;
-  name: string;
-  eiaName: string | null;
-  shortName: string | null;
-  segment: string;
-  status: string;
-  jurisdiction: string | null;
-  isoId: string | null;
-  rtoId: string | null;
-  balancingAuthorityId: string | null;
-  hasGeneration: boolean | null;
-  hasTransmission: boolean | null;
-  hasDistribution: boolean | null;
-  [key: string]: unknown;
-}
 
 // ---------------------------------------------------------------------------
 // Sparse field selection helper
@@ -76,7 +53,6 @@ interface DbFilterParams extends FilterParams {
 
 async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
-  const source = getDataSource("utilities");
 
   // Common filter params
   const segment = url.searchParams.get("segment");
@@ -107,94 +83,7 @@ async function handleGet(req: Request, _ctx: RouteContext) {
     fields,
   };
 
-  if (source === "json") {
-    return handleJsonMode(filterParams);
-  }
-
   return handleDatabaseMode({ ...filterParams, include });
-}
-
-// ---------------------------------------------------------------------------
-// JSON mode
-// ---------------------------------------------------------------------------
-
-async function handleJsonMode(params: FilterParams) {
-  const allUtilities = (await import("@/data/utilities.json")).default as JsonUtility[];
-  let filtered = allUtilities;
-
-  if (params.segment) {
-    filtered = filtered.filter((u) => u.segment === params.segment);
-  }
-  if (params.status) {
-    filtered = filtered.filter((u) => u.status === params.status);
-  }
-  if (params.state) {
-    const stateUpper = params.state.toUpperCase();
-    filtered = filtered.filter((u) =>
-      u.jurisdiction
-        ?.split(",")
-        .map((s: string) => s.trim())
-        .includes(stateUpper)
-    );
-  }
-  if (params.iso) {
-    filtered = filtered.filter((u) => u.isoId === params.iso);
-  }
-  if (params.rto) {
-    filtered = filtered.filter((u) => u.rtoId === params.rto);
-  }
-  if (params.ba) {
-    filtered = filtered.filter((u) => u.balancingAuthorityId === params.ba);
-  }
-  if (params.search) {
-    const term = params.search.toLowerCase();
-    filtered = filtered.filter(
-      (u) =>
-        u.name.toLowerCase().includes(term) ||
-        u.eiaName?.toLowerCase().includes(term) ||
-        u.shortName?.toLowerCase().includes(term)
-    );
-  }
-  if (params.hasGeneration !== null) {
-    const val = params.hasGeneration === "true";
-    filtered = filtered.filter((u) => u.hasGeneration === val);
-  }
-  if (params.hasTransmission !== null) {
-    const val = params.hasTransmission === "true";
-    filtered = filtered.filter((u) => u.hasTransmission === val);
-  }
-  if (params.hasDistribution !== null) {
-    const val = params.hasDistribution === "true";
-    filtered = filtered.filter((u) => u.hasDistribution === val);
-  }
-
-  // Pagination
-  const { limit } = parsePaginationParams(params.url.searchParams);
-
-  // Extract page number from cursor (page:N) or page parameter
-  let page = 1;
-  const cursorParam = params.url.searchParams.get("cursor");
-  if (cursorParam?.startsWith("page:")) {
-    const pageNum = parseInt(cursorParam.slice(5), 10);
-    page = Math.max(1, pageNum || 1);
-  } else {
-    page = Math.max(1, parseInt(params.url.searchParams.get("page") ?? "1", 10) || 1);
-  }
-  const offset = (page - 1) * limit;
-  const paged = filtered.slice(offset, offset + limit);
-  const hasMore = offset + limit < filtered.length;
-
-  // Sparse fields
-  let result: Record<string, unknown>[] = paged;
-  if (params.fields) {
-    const fieldList = params.fields.split(",").map((f) => f.trim());
-    result = selectFields(paged, fieldList);
-  }
-
-  return jsonResponse(paginatedResponse(result, filtered.length, hasMore ? `page:${page + 1}` : null, limit), 200, {
-    ...corsHeaders(),
-    "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-  });
 }
 
 // ---------------------------------------------------------------------------

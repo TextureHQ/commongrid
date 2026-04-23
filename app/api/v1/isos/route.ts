@@ -7,7 +7,6 @@ import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { isos } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/isos — List all ISOs
@@ -15,14 +14,7 @@ import { getDataSource } from "@/lib/feature-flags";
 
 async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
-  const source = getDataSource("isos");
 
-  if (source === "json") {
-    const allIsos = (await import("@/data/isos.json")).default;
-    return jsonResponse(paginatedResponse(allIsos, allIsos.length, null, allIsos.length), 200, corsHeaders());
-  }
-
-  // Database mode
   const db = getDb();
   const { cursor, limit, sort, order } = parsePaginationParams(url.searchParams);
 

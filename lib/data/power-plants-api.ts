@@ -1,14 +1,9 @@
 /**
  * Data loading abstraction for power plants.
  *
- * Reads from static JSON (default) or Postgres via Drizzle, controlled by
- * the NEXT_PUBLIC_FF_DB_POWER_PLANTS feature flag.
+ * Reads from Postgres via Drizzle.
  */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
-import { getDataSource } from "@/lib/feature-flags";
 import type { FuelCategory, PowerPlant } from "@/types/entities";
 
 // ---------------------------------------------------------------------------
@@ -33,45 +28,6 @@ export interface PowerPlantQueryOptions {
   order?: "asc" | "desc";
   limit?: number;
   offset?: number;
-}
-
-// ---------------------------------------------------------------------------
-// JSON source
-// ---------------------------------------------------------------------------
-
-let _jsonCache: PowerPlant[] | null = null;
-
-function loadJson(): PowerPlant[] {
-  if (_jsonCache) return _jsonCache;
-  const filePath = join(process.cwd(), "data", "power-plants.json");
-  _jsonCache = JSON.parse(readFileSync(filePath, "utf-8")) as PowerPlant[];
-  return _jsonCache;
-}
-
-function applyJsonFilters(plants: PowerPlant[], filters: PowerPlantFilters): PowerPlant[] {
-  let result = plants;
-
-  if (filters.state) {
-    result = result.filter((p) => p.state === filters.state);
-  }
-  if (filters.fuelCategory) {
-    result = result.filter((p) => p.fuelCategory === (filters.fuelCategory as FuelCategory));
-  }
-  if (filters.status) {
-    result = result.filter((p) => p.status === filters.status);
-  }
-  if (filters.utilityId) {
-    result = result.filter((p) => p.utilityId === filters.utilityId);
-  }
-  if (filters.baId) {
-    result = result.filter((p) => p.balancingAuthorityId === filters.baId);
-  }
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    result = result.filter((p) => p.name.toLowerCase().includes(q) || p.utilityName.toLowerCase().includes(q));
-  }
-
-  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -238,61 +194,46 @@ async function loadBySlugFromDb(slug: string): Promise<PowerPlant | null> {
 
 /**
  * Load power plants with optional filters, sorting, and pagination.
- * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_POWER_PLANTS flag.
  */
 export async function loadPowerPlants(options?: PowerPlantQueryOptions): Promise<PowerPlant[]> {
-  if (getDataSource("powerPlants") === "db") {
-    return loadFromDb(options);
-  }
-
-  // JSON fallback (no pagination support — caller must handle in-memory)
-  const plants = loadJson();
-  return options?.filters ? applyJsonFilters(plants, options.filters) : plants;
+  return loadFromDb(options);
 }
 
 /**
  * Count power plants matching the given filters.
- * Uses accurate COUNT query when in DB mode, or counts JSON in-memory.
  */
 export async function countPowerPlants(filters?: PowerPlantFilters): Promise<number> {
-  if (getDataSource("powerPlants") === "db") {
-    const { getDb } = await import("@/lib/db/client");
-    const { powerPlants } = await import("@/lib/db/schema");
-    const { eq, ilike, and, or, sql, count, isNull } = await import("drizzle-orm");
-    type DrizzleSQL = ReturnType<typeof eq>;
+  const { getDb } = await import("@/lib/db/client");
+  const { powerPlants } = await import("@/lib/db/schema");
+  const { eq, ilike, and, or, sql, count, isNull } = await import("drizzle-orm");
+  type DrizzleSQL = ReturnType<typeof eq>;
 
-    const db = getDb();
-    const conditions: DrizzleSQL[] = [];
+  const db = getDb();
+  const conditions: DrizzleSQL[] = [];
 
-    // Exclude soft-deleted entities
-    conditions.push(isNull(powerPlants.deletedAt));
-    if (filters?.state) conditions.push(eq(powerPlants.state, filters.state));
-    if (filters?.fuelCategory) conditions.push(eq(powerPlants.fuelCategory, filters.fuelCategory));
-    if (filters?.status) conditions.push(eq(powerPlants.status, filters.status));
-    if (filters?.utilityId) conditions.push(eq(powerPlants.utilityId, filters.utilityId));
-    if (filters?.baId) conditions.push(eq(powerPlants.balancingAuthorityId, filters.baId));
-    if (filters?.search) {
-      const searchTerm = filters.search.trim();
-      conditions.push(
-        or(
-          sql`${powerPlants.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
-          ilike(powerPlants.name, `%${searchTerm}%`)
-        )!
-      );
-    }
-
-    const result = await db
-      .select({ count: count() })
-      .from(powerPlants)
-      .where(and(...conditions));
-
-    return result[0]?.count ?? 0;
+  // Exclude soft-deleted entities
+  conditions.push(isNull(powerPlants.deletedAt));
+  if (filters?.state) conditions.push(eq(powerPlants.state, filters.state));
+  if (filters?.fuelCategory) conditions.push(eq(powerPlants.fuelCategory, filters.fuelCategory));
+  if (filters?.status) conditions.push(eq(powerPlants.status, filters.status));
+  if (filters?.utilityId) conditions.push(eq(powerPlants.utilityId, filters.utilityId));
+  if (filters?.baId) conditions.push(eq(powerPlants.balancingAuthorityId, filters.baId));
+  if (filters?.search) {
+    const searchTerm = filters.search.trim();
+    conditions.push(
+      or(
+        sql`${powerPlants.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
+        ilike(powerPlants.name, `%${searchTerm}%`)
+      )!
+    );
   }
 
-  // JSON fallback
-  const plants = loadJson();
-  const filtered = filters ? applyJsonFilters(plants, filters) : plants;
-  return filtered.length;
+  const result = await db
+    .select({ count: count() })
+    .from(powerPlants)
+    .where(and(...conditions));
+
+  return result[0]?.count ?? 0;
 }
 
 /**
@@ -300,10 +241,5 @@ export async function countPowerPlants(filters?: PowerPlantFilters): Promise<num
  * Returns null if not found.
  */
 export async function loadPowerPlantBySlug(slug: string): Promise<PowerPlant | null> {
-  if (getDataSource("powerPlants") === "db") {
-    return loadBySlugFromDb(slug);
-  }
-
-  const plants = loadJson();
-  return plants.find((p) => p.slug === slug) ?? null;
+  return loadBySlugFromDb(slug);
 }

@@ -1,14 +1,9 @@
 /**
  * Data loading abstraction for transmission lines.
  *
- * Reads from static JSON (default) or Postgres via Drizzle, controlled by
- * the NEXT_PUBLIC_FF_DB_TRANSMISSION feature flag.
+ * Reads from Postgres via Drizzle.
  */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
-import { getDataSource } from "@/lib/feature-flags";
 import type { TransmissionLine, VoltageClass } from "@/types/transmission-lines";
 
 // ---------------------------------------------------------------------------
@@ -29,39 +24,6 @@ export interface TransmissionLineQueryOptions {
   order?: "asc" | "desc";
   limit?: number;
   offset?: number;
-}
-
-// ---------------------------------------------------------------------------
-// JSON source
-// ---------------------------------------------------------------------------
-
-let _jsonCache: TransmissionLine[] | null = null;
-
-function loadJson(): TransmissionLine[] {
-  if (_jsonCache) return _jsonCache;
-  const filePath = join(process.cwd(), "data", "transmission-lines.json");
-  _jsonCache = JSON.parse(readFileSync(filePath, "utf-8")) as TransmissionLine[];
-  return _jsonCache;
-}
-
-function applyJsonFilters(lines: TransmissionLine[], filters: TransmissionLineFilters): TransmissionLine[] {
-  let result = lines;
-
-  if (filters.voltageClass) {
-    result = result.filter((l) => l.voltageClass === filters.voltageClass);
-  }
-  if (filters.owner) {
-    result = result.filter((l) => l.owner === filters.owner);
-  }
-  if (filters.status) {
-    result = result.filter((l) => l.status === filters.status);
-  }
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    result = result.filter((l) => l.owner.toLowerCase().includes(q));
-  }
-
-  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -182,51 +144,36 @@ async function loadByIdFromDb(id: string): Promise<TransmissionLine | null> {
 
 /**
  * Load transmission lines with optional filters, sorting, and pagination.
- * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_TRANSMISSION flag.
  */
 export async function loadTransmissionLines(options?: TransmissionLineQueryOptions): Promise<TransmissionLine[]> {
-  if (getDataSource("transmissionLines") === "db") {
-    return loadFromDb(options);
-  }
-
-  // JSON fallback (no pagination support — caller must handle in-memory)
-  const lines = loadJson();
-  return options?.filters ? applyJsonFilters(lines, options.filters) : lines;
+  return loadFromDb(options);
 }
 
 /**
  * Count transmission lines matching the given filters.
- * Uses accurate COUNT query when in DB mode, or counts JSON in-memory.
  */
 export async function countTransmissionLines(filters?: TransmissionLineFilters): Promise<number> {
-  if (getDataSource("transmissionLines") === "db") {
-    const { getDb } = await import("@/lib/db/client");
-    const { transmissionLines } = await import("@/lib/db/schema");
-    const { eq, ilike, and, count, isNull } = await import("drizzle-orm");
-    type DrizzleSQL = ReturnType<typeof eq>;
+  const { getDb } = await import("@/lib/db/client");
+  const { transmissionLines } = await import("@/lib/db/schema");
+  const { eq, ilike, and, count, isNull } = await import("drizzle-orm");
+  type DrizzleSQL = ReturnType<typeof eq>;
 
-    const db = getDb();
-    const conditions: DrizzleSQL[] = [];
+  const db = getDb();
+  const conditions: DrizzleSQL[] = [];
 
-    // Exclude soft-deleted entities
-    conditions.push(isNull(transmissionLines.deletedAt));
-    if (filters?.voltageClass) conditions.push(eq(transmissionLines.voltageClass, filters.voltageClass));
-    if (filters?.owner) conditions.push(eq(transmissionLines.owner, filters.owner));
-    if (filters?.status) conditions.push(eq(transmissionLines.status, filters.status));
-    if (filters?.search) conditions.push(ilike(transmissionLines.owner, `%${filters.search}%`));
+  // Exclude soft-deleted entities
+  conditions.push(isNull(transmissionLines.deletedAt));
+  if (filters?.voltageClass) conditions.push(eq(transmissionLines.voltageClass, filters.voltageClass));
+  if (filters?.owner) conditions.push(eq(transmissionLines.owner, filters.owner));
+  if (filters?.status) conditions.push(eq(transmissionLines.status, filters.status));
+  if (filters?.search) conditions.push(ilike(transmissionLines.owner, `%${filters.search}%`));
 
-    const result = await db
-      .select({ count: count() })
-      .from(transmissionLines)
-      .where(and(...conditions));
+  const result = await db
+    .select({ count: count() })
+    .from(transmissionLines)
+    .where(and(...conditions));
 
-    return result[0]?.count ?? 0;
-  }
-
-  // JSON fallback
-  const lines = loadJson();
-  const filtered = filters ? applyJsonFilters(lines, filters) : lines;
-  return filtered.length;
+  return result[0]?.count ?? 0;
 }
 
 /**
@@ -234,10 +181,5 @@ export async function countTransmissionLines(filters?: TransmissionLineFilters):
  * Returns null if not found.
  */
 export async function loadTransmissionLineById(id: string): Promise<TransmissionLine | null> {
-  if (getDataSource("transmissionLines") === "db") {
-    return loadByIdFromDb(id);
-  }
-
-  const lines = loadJson();
-  return lines.find((l) => l.id === id) ?? null;
+  return loadByIdFromDb(id);
 }

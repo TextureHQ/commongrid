@@ -2,7 +2,7 @@
  * GET /api/v1/transmission-lines
  *
  * List transmission lines with filtering, sorting, cursor pagination, and sparse
- * field projection. Data source is controlled by NEXT_PUBLIC_FF_DB_TRANSMISSION.
+ * field projection.
  */
 
 import { z } from "zod";
@@ -168,19 +168,14 @@ async function handler(req: Request): Promise<Response> {
     cursor = decodeCursor(rawCursor);
   }
 
-  // When using DB mode, delegate sorting + pagination to SQL for performance
-  const { getDataSource } = await import("@/lib/feature-flags");
-  const useDb = getDataSource("transmissionLines") === "db";
+  const filters = { voltageClass, owner, status, search };
 
   let items: TransmissionLine[];
   let totalCount: number;
   let hasMore: boolean;
 
-  if (useDb && !cursor) {
-    // DB mode: use SQL-level pagination with accurate count
-    const filters = { voltageClass, owner, status, search };
-
-    // Parallel: fetch page + total count
+  if (!cursor) {
+    // Use SQL-level pagination with accurate count
     const [results, count] = await Promise.all([
       loadTransmissionLines({
         filters,
@@ -196,17 +191,15 @@ async function handler(req: Request): Promise<Response> {
     items = hasMore ? results.slice(0, limit) : results;
     totalCount = count;
   } else {
-    // JSON mode OR cursor-based pagination: use in-memory sort/pagination
-    const allLines = await loadTransmissionLines({
-      filters: { voltageClass, owner, status, search },
-    });
+    // Cursor-based pagination: use in-memory sort/pagination
+    const allLines = await loadTransmissionLines({ filters });
 
     // Sort
     const sorted = sortLines(allLines, sort, order);
     totalCount = sorted.length;
 
     // Apply cursor offset for next-page traversal
-    const afterCursor = cursor ? applyCursor(sorted, cursor, sort, order) : sorted;
+    const afterCursor = applyCursor(sorted, cursor, sort, order);
 
     // Slice page (fetch one extra to detect hasMore)
     const page = afterCursor.slice(0, limit + 1);

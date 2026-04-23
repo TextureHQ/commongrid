@@ -1,14 +1,9 @@
 /**
  * Data loading abstraction for pricing nodes.
  *
- * Reads from static JSON (default) or Postgres via Drizzle, controlled by
- * the NEXT_PUBLIC_FF_DB_PRICING_NODES feature flag.
+ * Reads from Postgres via Drizzle.
  */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
-import { getDataSource } from "@/lib/feature-flags";
 import type { IsoRto, PricingNode, PricingNodeType } from "@/types/pricing-nodes";
 
 // ---------------------------------------------------------------------------
@@ -21,39 +16,6 @@ export interface PricingNodeFilters {
   state?: string;
   /** Min 2 chars. Matches against name and slug (case-insensitive). */
   search?: string;
-}
-
-// ---------------------------------------------------------------------------
-// JSON source
-// ---------------------------------------------------------------------------
-
-let _jsonCache: PricingNode[] | null = null;
-
-function loadJson(): PricingNode[] {
-  if (_jsonCache) return _jsonCache;
-  const filePath = join(process.cwd(), "data", "pricing-nodes.json");
-  _jsonCache = JSON.parse(readFileSync(filePath, "utf-8")) as PricingNode[];
-  return _jsonCache;
-}
-
-function applyJsonFilters(nodes: PricingNode[], filters: PricingNodeFilters): PricingNode[] {
-  let result = nodes;
-
-  if (filters.iso) {
-    result = result.filter((n) => n.iso === filters.iso);
-  }
-  if (filters.nodeType) {
-    result = result.filter((n) => n.nodeType === filters.nodeType);
-  }
-  if (filters.state) {
-    result = result.filter((n) => n.state === filters.state);
-  }
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    result = result.filter((n) => n.name.toLowerCase().includes(q) || n.slug.toLowerCase().includes(q));
-  }
-
-  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -148,15 +110,9 @@ async function loadBySlugFromDb(slug: string): Promise<PricingNode | null> {
 
 /**
  * Load pricing nodes, optionally filtered.
- * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_PRICING_NODES flag.
  */
 export async function loadPricingNodes(filters?: PricingNodeFilters): Promise<PricingNode[]> {
-  if (getDataSource("pricingNodes") === "db") {
-    return loadFromDb(filters);
-  }
-
-  const nodes = loadJson();
-  return filters ? applyJsonFilters(nodes, filters) : nodes;
+  return loadFromDb(filters);
 }
 
 /**
@@ -164,10 +120,5 @@ export async function loadPricingNodes(filters?: PricingNodeFilters): Promise<Pr
  * Returns null if not found.
  */
 export async function loadPricingNodeBySlug(slug: string): Promise<PricingNode | null> {
-  if (getDataSource("pricingNodes") === "db") {
-    return loadBySlugFromDb(slug);
-  }
-
-  const nodes = loadJson();
-  return nodes.find((n) => n.slug === slug) ?? null;
+  return loadBySlugFromDb(slug);
 }

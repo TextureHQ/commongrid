@@ -10,7 +10,7 @@
  *   types   Comma-separated entity type filter
  *           (e.g. "utilities,power-plants"). Defaults to all types.
  *
- * Data source is controlled per-entity by NEXT_PUBLIC_FF_DB_* feature flags.
+ * Data is sourced from static JSON files with in-memory search.
  * JSON mode targets <500 ms (data loaded lazily, cached in-process).
  * DB mode stubs return empty results until pg_trgm/tsvector is implemented.
  */

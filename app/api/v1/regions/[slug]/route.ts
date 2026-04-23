@@ -7,7 +7,6 @@ import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { regions } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/regions/[slug] — Get region by slug
@@ -19,18 +18,6 @@ async function handleGet(_req: Request, ctx: RouteContext) {
     throw new ApiError("BAD_REQUEST", "Missing slug parameter");
   }
 
-  const source = getDataSource("regions");
-
-  if (source === "json") {
-    const allRegions = (await import("@/data/regions.json")).default;
-    const region = allRegions.find((r: { slug: string }) => r.slug === slug);
-    if (!region) {
-      throw new ApiError("NOT_FOUND", `Region '${slug}' not found`);
-    }
-    return jsonResponse({ data: region }, 200, corsHeaders());
-  }
-
-  // Database mode
   const db = getDb();
   const [region] = await db.select().from(regions).where(eq(regions.slug, slug)).limit(1);
 

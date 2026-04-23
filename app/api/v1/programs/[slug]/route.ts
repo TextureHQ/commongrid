@@ -2,7 +2,6 @@
  * GET /api/v1/programs/:slug
  *
  * Fetch a single program by slug. Returns 404 if not found.
- * Data source is controlled by NEXT_PUBLIC_FF_DB_PROGRAMS.
  */
 
 import {

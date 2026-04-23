@@ -7,7 +7,6 @@ import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { balancingAuthorities, isos, rtos, utilities } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/utilities/[slug] — Get utility by slug with optional includes
@@ -21,55 +20,7 @@ async function handleGet(req: Request, ctx: RouteContext) {
 
   const url = new URL(req.url);
   const include = url.searchParams.get("include");
-  const source = getDataSource("utilities");
 
-  if (source === "json") {
-    return handleJsonDetail(slug, include);
-  }
-
-  return handleDatabaseDetail(slug, include);
-}
-
-// ---------------------------------------------------------------------------
-// JSON mode
-// ---------------------------------------------------------------------------
-
-async function handleJsonDetail(slug: string, include: string | null) {
-  const allUtilities = (await import("@/data/utilities.json")).default;
-  const utility = allUtilities.find((u: { slug: string }) => u.slug === slug);
-
-  if (!utility) {
-    throw new ApiError("NOT_FOUND", `Utility '${slug}' not found`);
-  }
-
-  if (include) {
-    const includes = include.split(",").map((i) => i.trim());
-    const result: Record<string, unknown> = { ...utility };
-
-    if (includes.includes("iso") && utility.isoId) {
-      const allIsos = (await import("@/data/isos.json")).default;
-      result._iso = allIsos.find((i: { id: string }) => i.id === utility.isoId) ?? null;
-    }
-    if (includes.includes("rto") && utility.rtoId) {
-      const allRtos = (await import("@/data/rtos.json")).default;
-      result._rto = allRtos.find((r: { id: string }) => r.id === utility.rtoId) ?? null;
-    }
-    if (includes.includes("ba") && utility.balancingAuthorityId) {
-      const allBAs = (await import("@/data/balancing-authorities.json")).default;
-      result._ba = allBAs.find((b: { id: string }) => b.id === utility.balancingAuthorityId) ?? null;
-    }
-
-    return jsonResponse({ data: result }, 200, corsHeaders());
-  }
-
-  return jsonResponse({ data: utility }, 200, corsHeaders());
-}
-
-// ---------------------------------------------------------------------------
-// Database mode
-// ---------------------------------------------------------------------------
-
-async function handleDatabaseDetail(slug: string, include: string | null) {
   const db = getDb();
   const [utility] = await db.select().from(utilities).where(eq(utilities.slug, slug)).limit(1);
 

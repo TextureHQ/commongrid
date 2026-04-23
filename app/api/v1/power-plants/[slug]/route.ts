@@ -2,7 +2,6 @@
  * GET /api/v1/power-plants/:slug
  *
  * Fetch a single power plant by slug. Returns 404 if not found.
- * Data source is controlled by NEXT_PUBLIC_FF_DB_POWER_PLANTS.
  */
 
 import {

@@ -2,7 +2,6 @@
  * GET /api/v1/transmission-lines/:id
  *
  * Fetch a single transmission line by ID. Returns 404 if not found.
- * Data source is controlled by NEXT_PUBLIC_FF_DB_TRANSMISSION.
  */
 
 import {

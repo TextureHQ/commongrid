@@ -2,8 +2,7 @@
  * GET /api/v1/programs/:slug/versions
  *
  * Return the version history for a program. Queries the entity_versions
- * table when the DB flag is active; returns an empty list in JSON mode
- * (no version history is stored in static JSON files).
+ * table in the database.
  */
 
 import {
@@ -16,7 +15,6 @@ import {
   withTiming,
 } from "@/lib/api";
 import { loadProgramBySlug } from "@/lib/data/programs";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -85,16 +83,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
             throw new ApiError("NOT_FOUND", `Program '${slug}' not found`);
           }
 
-          // Version history is only available in database mode
-          let versions: VersionEntry[] = [];
-          if (getDataSource("programs") === "db") {
-            versions = await loadVersionsFromDb(program.id);
-          }
+          const versions = await loadVersionsFromDb(program.id);
 
           return jsonResponse(
             {
               data: versions,
-              meta: { source: getDataSource("programs") },
             },
             200,
             {

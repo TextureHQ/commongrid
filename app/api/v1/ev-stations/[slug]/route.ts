@@ -2,7 +2,6 @@
  * GET /api/v1/ev-stations/:slug
  *
  * Fetch a single EV station by slug. Returns 404 if not found.
- * Data source is controlled by NEXT_PUBLIC_FF_DB_EV_STATIONS.
  */
 
 import {

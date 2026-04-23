@@ -7,7 +7,6 @@ import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { regions } from "@/lib/db/schema";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/regions — List regions
@@ -15,38 +14,11 @@ import { getDataSource } from "@/lib/feature-flags";
 
 async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
-  const source = getDataSource("regions");
 
   // Filter params
   const type = url.searchParams.get("type");
   const state = url.searchParams.get("state");
 
-  if (source === "json") {
-    const allRegions = (await import("@/data/regions.json")).default;
-    let filtered = allRegions;
-
-    if (type) {
-      filtered = filtered.filter((r: { type: string }) => r.type === type);
-    }
-    if (state) {
-      filtered = filtered.filter((r: { state: string | null }) => r.state?.toUpperCase() === state.toUpperCase());
-    }
-
-    // Apply pagination for JSON mode (regions can be ~3K records)
-    const { limit } = parsePaginationParams(url.searchParams);
-    const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10) || 1);
-    const offset = (page - 1) * limit;
-    const paged = filtered.slice(offset, offset + limit);
-    const hasMore = offset + limit < filtered.length;
-
-    return jsonResponse(
-      paginatedResponse(paged, filtered.length, hasMore ? `page:${page + 1}` : null, limit),
-      200,
-      corsHeaders()
-    );
-  }
-
-  // Database mode
   const db = getDb();
   const { cursor, limit, sort, order } = parsePaginationParams(url.searchParams);
 

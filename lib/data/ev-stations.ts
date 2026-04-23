@@ -1,14 +1,9 @@
 /**
  * Data loading abstraction for EV charging stations.
  *
- * Reads from static JSON (default) or Postgres via Drizzle, controlled by
- * the NEXT_PUBLIC_FF_DB_EV_STATIONS feature flag.
+ * Reads from Postgres via Drizzle.
  */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
-import { getDataSource } from "@/lib/feature-flags";
 import type { EVAccessCode, EVOwnerTypeCode, EVStation, EVStatusCode } from "@/types/ev-charging";
 
 // ---------------------------------------------------------------------------
@@ -31,46 +26,6 @@ export interface EVStationQueryOptions {
   order?: "asc" | "desc";
   limit?: number;
   offset?: number;
-}
-
-// ---------------------------------------------------------------------------
-// JSON source
-// ---------------------------------------------------------------------------
-
-let _jsonCache: EVStation[] | null = null;
-
-function loadJson(): EVStation[] {
-  if (_jsonCache) return _jsonCache;
-  const filePath = join(process.cwd(), "data", "ev-charging.json");
-  _jsonCache = JSON.parse(readFileSync(filePath, "utf-8")) as EVStation[];
-  return _jsonCache;
-}
-
-function applyJsonFilters(stations: EVStation[], filters: EVStationFilters): EVStation[] {
-  let result = stations;
-
-  if (filters.state) {
-    result = result.filter((s) => s.state === filters.state);
-  }
-  if (filters.city) {
-    const c = filters.city.toLowerCase();
-    result = result.filter((s) => s.city.toLowerCase() === c);
-  }
-  if (filters.network) {
-    result = result.filter((s) => s.evNetwork === filters.network);
-  }
-  if (filters.accessCode) {
-    result = result.filter((s) => s.accessCode === (filters.accessCode as EVAccessCode));
-  }
-  if (filters.statusCode) {
-    result = result.filter((s) => s.statusCode === (filters.statusCode as EVStatusCode));
-  }
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    result = result.filter((s) => s.stationName.toLowerCase().includes(q) || s.city.toLowerCase().includes(q));
-  }
-
-  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -222,61 +177,46 @@ async function loadBySlugFromDb(slug: string): Promise<EVStation | null> {
 
 /**
  * Load EV stations with optional filters, sorting, and pagination.
- * Uses JSON or DB depending on the NEXT_PUBLIC_FF_DB_EV_STATIONS flag.
  */
 export async function loadEVStations(options?: EVStationQueryOptions): Promise<EVStation[]> {
-  if (getDataSource("evStations") === "db") {
-    return loadFromDb(options);
-  }
-
-  // JSON fallback (no pagination support — caller must handle in-memory)
-  const stations = loadJson();
-  return options?.filters ? applyJsonFilters(stations, options.filters) : stations;
+  return loadFromDb(options);
 }
 
 /**
  * Count EV stations matching the given filters.
- * Uses accurate COUNT query when in DB mode, or counts JSON in-memory.
  */
 export async function countEVStations(filters?: EVStationFilters): Promise<number> {
-  if (getDataSource("evStations") === "db") {
-    const { getDb } = await import("@/lib/db/client");
-    const { evStations } = await import("@/lib/db/schema");
-    const { eq, ilike, and, or, sql, count, isNull } = await import("drizzle-orm");
-    type DrizzleSQL = ReturnType<typeof eq>;
+  const { getDb } = await import("@/lib/db/client");
+  const { evStations } = await import("@/lib/db/schema");
+  const { eq, ilike, and, or, sql, count, isNull } = await import("drizzle-orm");
+  type DrizzleSQL = ReturnType<typeof eq>;
 
-    const db = getDb();
-    const conditions: DrizzleSQL[] = [];
+  const db = getDb();
+  const conditions: DrizzleSQL[] = [];
 
-    // Exclude soft-deleted entities
-    conditions.push(isNull(evStations.deletedAt));
-    if (filters?.state) conditions.push(eq(evStations.state, filters.state));
-    if (filters?.city) conditions.push(ilike(evStations.city, filters.city));
-    if (filters?.network) conditions.push(eq(evStations.evNetwork, filters.network));
-    if (filters?.accessCode) conditions.push(eq(evStations.accessCode, filters.accessCode));
-    if (filters?.statusCode) conditions.push(eq(evStations.statusCode, filters.statusCode));
-    if (filters?.search) {
-      const searchTerm = filters.search.trim();
-      conditions.push(
-        or(
-          sql`${evStations.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
-          ilike(evStations.stationName, `%${searchTerm}%`)
-        )!
-      );
-    }
-
-    const result = await db
-      .select({ count: count() })
-      .from(evStations)
-      .where(and(...conditions));
-
-    return result[0]?.count ?? 0;
+  // Exclude soft-deleted entities
+  conditions.push(isNull(evStations.deletedAt));
+  if (filters?.state) conditions.push(eq(evStations.state, filters.state));
+  if (filters?.city) conditions.push(ilike(evStations.city, filters.city));
+  if (filters?.network) conditions.push(eq(evStations.evNetwork, filters.network));
+  if (filters?.accessCode) conditions.push(eq(evStations.accessCode, filters.accessCode));
+  if (filters?.statusCode) conditions.push(eq(evStations.statusCode, filters.statusCode));
+  if (filters?.search) {
+    const searchTerm = filters.search.trim();
+    conditions.push(
+      or(
+        sql`${evStations.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
+        ilike(evStations.stationName, `%${searchTerm}%`)
+      )!
+    );
   }
 
-  // JSON fallback
-  const stations = loadJson();
-  const filtered = filters ? applyJsonFilters(stations, filters) : stations;
-  return filtered.length;
+  const result = await db
+    .select({ count: count() })
+    .from(evStations)
+    .where(and(...conditions));
+
+  return result[0]?.count ?? 0;
 }
 
 /**
@@ -284,10 +224,5 @@ export async function countEVStations(filters?: EVStationFilters): Promise<numbe
  * Returns null if not found.
  */
 export async function loadEVStationBySlug(slug: string): Promise<EVStation | null> {
-  if (getDataSource("evStations") === "db") {
-    return loadBySlugFromDb(slug);
-  }
-
-  const stations = loadJson();
-  return stations.find((s) => s.slug === slug) ?? null;
+  return loadBySlugFromDb(slug);
 }

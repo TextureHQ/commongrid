@@ -2,7 +2,7 @@
  * GET /api/v1/territories/lookup
  *
  * Point-in-polygon lookup — find which territories contain a given lat/lng.
- * Requires database mode (PostGIS ST_Covers).
+ * Uses PostGIS ST_Covers.
  *
  * Query params:
  *   ?lat=40.7128&lng=-74.0060
@@ -11,7 +11,6 @@
  */
 
 import { ApiError, jsonResponse, type RouteContext, withApiMiddleware } from "@/lib/api";
-import { getDataSource } from "@/lib/feature-flags";
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -35,14 +34,6 @@ const handler = withApiMiddleware(async (r: Request, _ctx: RouteContext) => {
 
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     throw new ApiError("VALIDATION_ERROR", "lat must be between -90 and 90, lng between -180 and 180");
-  }
-
-  // JSON mode doesn't support spatial queries
-  if (getDataSource("regions") === "json") {
-    throw new ApiError(
-      "BAD_REQUEST",
-      "Territory lookup requires database mode. Set NEXT_PUBLIC_FF_DB_REGIONS=database"
-    );
   }
 
   const { db } = await import("@/lib/db/client");
