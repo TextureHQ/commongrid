@@ -47,6 +47,11 @@ export default withSentryConfig(nextConfig, {
   // Suppress source map upload logs
   silent: !process.env.CI,
 
+  // Don't fail the build if source map upload fails (e.g. missing auth token)
+  errorHandler: (err) => {
+    console.warn('Sentry source map upload warning:', err.message);
+  },
+
   // Automatically tree-shake Sentry logger statements
   disableLogger: true,
 
