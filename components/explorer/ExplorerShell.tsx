@@ -227,13 +227,7 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
 // Controls which entity type populates the panel list
 // ---------------------------------------------------------------------------
 
-function ListSourceSelector({
-  mapRegion,
-  mapOverlays,
-}: {
-  mapRegion: MapRegion;
-  mapOverlays: MapOverlays;
-}) {
+function ListSourceSelector({ mapRegion, mapOverlays }: { mapRegion: MapRegion; mapOverlays: MapOverlays }) {
   const { state, setListSource } = useExplorer();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -256,9 +250,7 @@ function ListSourceSelector({
   }, [mapRegion, mapOverlays]);
 
   // If current listSource was toggled off, fall back to mapRegion
-  const activeSource: EntityTab = options.includes(state.listSource)
-    ? state.listSource
-    : (mapRegion as EntityTab);
+  const activeSource: EntityTab = options.includes(state.listSource) ? state.listSource : (mapRegion as EntityTab);
 
   useEffect(() => {
     if (!options.includes(state.listSource)) {
