@@ -438,6 +438,19 @@
         }
       }
     },
+    "/isos/{slug}/geometry": {
+      "get": {
+        "operationId": "getIsoGeometry",
+        "summary": "Get ISO boundary geometry",
+        "description": "Returns GeoJSON boundary polygon for an ISO.",
+        "tags": ["Grid Operators"],
+        "parameters": [{ "$ref": "#/components/parameters/slug" }],
+        "responses": {
+          "200": { "description": "GeoJSON geometry", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object" } } } } } },
+          "404": { "description": "Boundary not found" }
+        }
+      }
+    },
     "/rtos": {
       "get": {
         "operationId": "listRtos",
@@ -462,6 +475,19 @@
         }
       }
     },
+    "/rtos/{slug}/geometry": {
+      "get": {
+        "operationId": "getRtoGeometry",
+        "summary": "Get RTO boundary geometry",
+        "description": "Returns GeoJSON boundary polygon for an RTO.",
+        "tags": ["Grid Operators"],
+        "parameters": [{ "$ref": "#/components/parameters/slug" }],
+        "responses": {
+          "200": { "description": "GeoJSON geometry", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object" } } } } } },
+          "404": { "description": "Boundary not found" }
+        }
+      }
+    },
     "/balancing-authorities": {
       "get": {
         "operationId": "listBalancingAuthorities",
@@ -483,6 +509,19 @@
         "responses": {
           "200": { "description": "Balancing authority object", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/BalancingAuthority" } } } } } },
           "404": { "description": "Not found" }
+        }
+      }
+    },
+    "/balancing-authorities/{slug}/geometry": {
+      "get": {
+        "operationId": "getBalancingAuthorityGeometry",
+        "summary": "Get balancing authority boundary geometry",
+        "description": "Returns GeoJSON boundary polygon for a balancing authority.",
+        "tags": ["Grid Operators"],
+        "parameters": [{ "$ref": "#/components/parameters/slug" }],
+        "responses": {
+          "200": { "description": "GeoJSON geometry", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object" } } } } } },
+          "404": { "description": "Boundary not found" }
         }
       }
     },

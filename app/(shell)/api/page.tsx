@@ -238,6 +238,13 @@ const endpointGroups: Group[] = [
       },
       {
         method: "GET",
+        path: "/isos/{slug}/geometry",
+        summary: "Get ISO boundary geometry",
+        description: "Returns the GeoJSON boundary polygon for an ISO.",
+        params: [{ name: "slug", in: "path", required: true, description: "ISO slug", example: "caiso" }],
+      },
+      {
+        method: "GET",
         path: "/rtos",
         summary: "List RTOs",
         params: [
@@ -249,6 +256,13 @@ const endpointGroups: Group[] = [
         method: "GET",
         path: "/rtos/{slug}",
         summary: "Get RTO by slug",
+        params: [{ name: "slug", in: "path", required: true, description: "RTO slug" }],
+      },
+      {
+        method: "GET",
+        path: "/rtos/{slug}/geometry",
+        summary: "Get RTO boundary geometry",
+        description: "Returns the GeoJSON boundary polygon for an RTO.",
         params: [{ name: "slug", in: "path", required: true, description: "RTO slug" }],
       },
       {
@@ -265,6 +279,13 @@ const endpointGroups: Group[] = [
         path: "/balancing-authorities/{slug}",
         summary: "Get balancing authority by slug",
         params: [{ name: "slug", in: "path", required: true, description: "Balancing authority slug" }],
+      },
+      {
+        method: "GET",
+        path: "/balancing-authorities/{slug}/geometry",
+        summary: "Get BA boundary geometry",
+        description: "Returns the GeoJSON boundary polygon for a balancing authority.",
+        params: [{ name: "slug", in: "path", required: true, description: "BA slug", example: "caiso" }],
       },
     ],
   },
