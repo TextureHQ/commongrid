@@ -1,16 +1,5 @@
 "use client";
 
-import {
-  Badge,
-  Button,
-  type Column,
-  DataControls,
-  DataTable,
-  EmptyState,
-  Icon,
-  Loader,
-  Tooltip,
-} from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -20,7 +9,7 @@ import type { IsoRto, PricingNode, PricingNodeType } from "@/types/pricing-nodes
 import { getIsoColor, getNodeTypeLabel, ISO_LABELS, ISOS } from "@/types/pricing-nodes";
 import { useExplorer } from "../ExplorerContext";
 
-interface PricingNodeRow extends Record<string, unknown> {
+interface PricingNodeRow {
   slug: string;
   name: string;
   iso: IsoRto;
@@ -34,24 +23,26 @@ const isoFilterOptions = [
   ...ISOS.map((iso) => ({ id: iso, label: ISO_LABELS[iso], value: iso })),
 ];
 
-function getNodeTypeBadgeVariant(nodeType: PricingNodeType): "info" | "success" | "warning" | "error" | "neutral" {
-  switch (nodeType) {
-    case "hub":
-      return "warning";
-    case "zone":
-    case "lap":
-    case "sublap":
-      return "info";
-    case "gen":
-      return "success";
-    case "load":
-      return "error";
-    case "interface":
-      return "neutral";
-    default:
-      return "neutral";
-  }
-}
+const SearchIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3-3" />
+  </svg>
+);
+
+const ArrowIcon = () => (
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
+    <path d="M5 12h14m-5-5 5 5-5 5" />
+  </svg>
+);
 
 export function PricingNodeListPanel() {
   const { state, setSearch, setTypeFilter } = useExplorer();
@@ -81,7 +72,6 @@ export function PricingNodeListPanel() {
     if (state.type !== "all") {
       result = result.filter((n) => n.iso === state.type);
     }
-    // Sort hubs/zones first, then by name when no search
     if (!state.q.trim()) {
       const typeOrder: Record<string, number> = {
         hub: 0,
@@ -120,136 +110,90 @@ export function PricingNodeListPanel() {
     [router]
   );
 
-  const columns: Column<PricingNodeRow>[] = useMemo(
-    () => [
-      {
-        id: "name",
-        label: "Node",
-        accessor: "name",
-        render: (_value: unknown, row: PricingNodeRow) => (
-          <div className="flex items-center gap-2">
-            <span
-              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: getIsoColor(row.iso) }}
-            />
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="font-medium text-text-body truncate">{row.name}</span>
-              {row.zone && <span className="text-xs text-text-muted">{row.zone}</span>}
-            </div>
-          </div>
-        ),
-        mobile: { priority: 1, format: "primary" },
-      },
-      {
-        id: "iso",
-        label: "ISO/RTO",
-        accessor: "iso",
-        render: (_value: unknown, row: PricingNodeRow) => (
-          <Badge size="sm" shape="pill" variant="default">
-            {ISO_LABELS[row.iso]}
-          </Badge>
-        ),
-        mobile: { priority: 2, format: "badge" },
-      },
-      {
-        id: "nodeType",
-        label: "Type",
-        accessor: "nodeType",
-        render: (_value: unknown, row: PricingNodeRow) => (
-          <Badge size="sm" shape="pill" variant={getNodeTypeBadgeVariant(row.nodeType)}>
-            {getNodeTypeLabel(row.nodeType)}
-          </Badge>
-        ),
-        mobile: { priority: 3, format: "badge" },
-      },
-      {
-        id: "state",
-        label: "State",
-        accessor: "state",
-        render: (_value: unknown, row: PricingNodeRow) => (
-          <span className="text-text-body">{row.state ?? "\u2014"}</span>
-        ),
-        mobile: false,
-      },
-    ],
-    []
-  );
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader size={28} />
-      </div>
-    );
+    return <div className="cg-explore-loading">Loading pricing nodes…</div>;
   }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-none px-4">
-        <div className="flex items-center justify-between py-2">
-          <span className="text-sm font-medium text-text-heading">Pricing Nodes</span>
-          {user ? (
-            <Button variant="primary" size="sm" onPress={() => router.push("/pricing-nodes/new")}>
-              <Icon name="Plus" size="sm" />
-              <span>Add New</span>
-            </Button>
-          ) : (
-            <Tooltip content="Sign in to add entities">
-              <Button variant="secondary" size="sm" isDisabled>
-                <Icon name="Plus" size="sm" />
-                <span>Add New</span>
-              </Button>
-            </Tooltip>
-          )}
-        </div>
-        <DataControls
-          resultsCount={{ count: filtered.length, label: "pricing nodes" }}
-          search={{
-            value: state.q,
-            onChange: setSearch,
-            onClear: () => setSearch(""),
-            placeholder: "Search nodes, zones, ISOs...",
-          }}
-          customControls={
-            <select
-              value={state.type}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-            >
+      <div className="cg-explore-panel-header">
+        <div className="cg-explore-filter-row" style={{ justifyContent: "space-between" }}>
+          <span className="cg-explore-count">
+            <strong>{filtered.length.toLocaleString()}</strong> pricing nodes
+          </span>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
               {isoFilterOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
             </select>
-          }
-          sticky={true}
-        />
+            {user && (
+              <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/pricing-nodes/new")}>
+                + Add
+              </button>
+            )}
+          </div>
+        </div>
+        <div style={{ padding: "6px 14px 7px" }}>
+          <div className="cg-explore-search">
+            <SearchIcon />
+            <input
+              type="text"
+              placeholder="Search nodes, zones, ISOs…"
+              value={state.q}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {state.q && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--cg-muted)",
+                  fontSize: 14,
+                  padding: 0,
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex-1 min-h-0">
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {rows.length === 0 ? (
-          <EmptyState
-            icon="Lightning"
-            title="No pricing nodes found"
-            description={
-              state.q || state.type !== "all"
+          <div className="cg-explore-empty">
+            <div className="cg-explore-empty-title">No pricing nodes found</div>
+            <div>
+              {state.q || state.type !== "all"
                 ? "Try adjusting your search or filters."
-                : "No pricing nodes in the dataset."
-            }
-            fullHeight={true}
-          />
+                : "No pricing nodes in the dataset."}
+            </div>
+          </div>
         ) : (
-          <DataTable
-            data={rows}
-            columns={columns}
-            mobileBreakpoint="md"
-            isLoading={false}
-            height="100%"
-            stickyHeader={true}
-            onRowClick={handleRowClick}
-            enableVirtualization={true}
-            estimatedRowHeight={56}
-          />
+          rows.map((row) => (
+            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
+              <span
+                className="cg-explore-entity-dot"
+                data-shape="circle"
+                style={{ background: getIsoColor(row.iso) }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="cg-explore-entity-name">{row.name}</div>
+                <div className="cg-explore-entity-sub">
+                  {ISO_LABELS[row.iso]} · {getNodeTypeLabel(row.nodeType)}
+                  {row.zone ? ` · ${row.zone}` : ""}
+                  {row.state ? ` · ${row.state}` : ""}
+                </div>
+              </div>
+              <ArrowIcon />
+            </div>
+          ))
         )}
       </div>
     </div>

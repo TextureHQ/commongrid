@@ -1,16 +1,5 @@
 "use client";
 
-import {
-  Avatar,
-  Badge,
-  Button,
-  type Column,
-  DataControls,
-  DataTable,
-  EmptyState,
-  Icon,
-  Tooltip,
-} from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -19,7 +8,7 @@ import { type DetailView, useExplorer } from "../ExplorerContext";
 
 type GridOperatorType = "ISO" | "RTO" | "BA";
 
-interface GridOperatorRow extends Record<string, unknown> {
+interface GridOperatorRow {
   slug: string;
   name: string;
   shortName: string;
@@ -37,17 +26,26 @@ const typeFilterOptions = [
   { id: "BA", label: "Balancing Authority", value: "BA" },
 ];
 
-const typeBadgeVariant: Record<GridOperatorType, "info" | "success" | "warning" | "default"> = {
-  ISO: "info",
-  RTO: "warning",
-  BA: "default",
-};
+const SearchIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3-3" />
+  </svg>
+);
 
-const _typeToDetailView: Record<GridOperatorType, DetailView> = {
-  ISO: "iso",
-  RTO: "rto",
-  BA: "ba",
-};
+const ArrowIcon = () => (
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
+    <path d="M5 12h14m-5-5 5 5-5 5" />
+  </svg>
+);
 
 export function GridOperatorListPanel() {
   const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
@@ -117,102 +115,77 @@ export function GridOperatorListPanel() {
     [navigateToDetail]
   );
 
-  const columns: Column<GridOperatorRow>[] = useMemo(
-    () => [
-      {
-        id: "name",
-        label: "Name",
-        accessor: "name",
-        render: (_value: unknown, row: GridOperatorRow) => (
-          <span className="flex items-center gap-2 font-medium text-text-body">
-            <Avatar
-              {...(row.logo ? { src: row.logo } : {})}
-              fullName={row.name}
-              size="sm"
-              shape="square"
-              variant="organization"
-            />
-            {row.name}
-          </span>
-        ),
-        mobile: { priority: 1, format: "primary" },
-      },
-      {
-        id: "type",
-        label: "Type",
-        accessor: "type",
-        render: (_value: unknown, row: GridOperatorRow) => (
-          <Badge size="sm" shape="pill" variant={typeBadgeVariant[row.type]}>
-            {row.type}
-          </Badge>
-        ),
-        mobile: { priority: 2, format: "badge" },
-      },
-    ],
-    []
-  );
-
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-none px-4">
-        <div className="flex items-center justify-between py-2">
-          <span className="text-sm font-medium text-text-heading">Grid Operators</span>
-          {user ? (
-            <Button variant="primary" size="sm" onPress={() => router.push("/grid-operators/new")}>
-              <Icon name="Plus" size="sm" />
-              <span>Add New</span>
-            </Button>
-          ) : (
-            <Tooltip content="Sign in to add entities">
-              <Button variant="secondary" size="sm" isDisabled>
-                <Icon name="Plus" size="sm" />
-                <span>Add New</span>
-              </Button>
-            </Tooltip>
-          )}
-        </div>
-        <DataControls
-          resultsCount={{ count: filtered.length, label: "grid operators" }}
-          search={{
-            value: state.q,
-            onChange: setSearch,
-            onClear: () => setSearch(""),
-            placeholder: "Search grid operators...",
-          }}
-          customControls={
-            <select
-              value={state.type}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-            >
+      <div className="cg-explore-panel-header">
+        <div className="cg-explore-filter-row" style={{ justifyContent: "space-between" }}>
+          <span className="cg-explore-count">
+            <strong>{filtered.length}</strong> grid operators
+          </span>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
               {typeFilterOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
             </select>
-          }
-          sticky={true}
-        />
+            {user && (
+              <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/grid-operators/new")}>
+                + Add
+              </button>
+            )}
+          </div>
+        </div>
+        <div style={{ padding: "6px 14px 7px" }}>
+          <div className="cg-explore-search">
+            <SearchIcon />
+            <input
+              type="text"
+              placeholder="Search grid operators…"
+              value={state.q}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {state.q && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--cg-muted)",
+                  fontSize: 14,
+                  padding: 0,
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex-1 min-h-0">
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {filtered.length === 0 ? (
-          <EmptyState
-            icon="Graph"
-            title="No grid operators found"
-            description={state.q ? "Try adjusting your search criteria." : "No grid operators in the dataset."}
-            fullHeight={true}
-          />
+          <div className="cg-explore-empty">
+            <div className="cg-explore-empty-title">No grid operators found</div>
+            <div>{state.q ? "Try adjusting your search criteria." : "No grid operators in the dataset."}</div>
+          </div>
         ) : (
-          <DataTable
-            data={filtered}
-            columns={columns}
-            mobileBreakpoint="md"
-            isLoading={false}
-            height="100%"
-            stickyHeader={true}
-            onRowClick={handleRowClick}
-          />
+          filtered.map((row) => (
+            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
+              <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-blue)" }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="cg-explore-entity-name">{row.name}</div>
+                <div className="cg-explore-entity-sub">
+                  {row.shortName} · {row.type} · {row.states.slice(0, 3).join(", ")}
+                  {row.states.length > 3 ? ` +${row.states.length - 3}` : ""}
+                </div>
+              </div>
+              <ArrowIcon />
+            </div>
+          ))
         )}
       </div>
     </div>

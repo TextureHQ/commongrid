@@ -1,26 +1,15 @@
 "use client";
 
-import {
-  Badge,
-  Button,
-  type Column,
-  DataControls,
-  DataTable,
-  EmptyState,
-  Icon,
-  Loader,
-  Tooltip,
-} from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { formatCapacity, getFuelBadgeVariant, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
+import { formatCapacity, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
 import { usePowerPlants } from "@/lib/power-plants";
 import { useFuseSearch } from "@/lib/search";
 import { FUEL_CATEGORIES, FuelCategoryLabel, type PowerPlant } from "@/types/entities";
 import { useExplorer } from "../ExplorerContext";
 
-interface PowerPlantRow extends Record<string, unknown> {
+interface PowerPlantRow {
   slug: string;
   name: string;
   fuelCategory: string;
@@ -39,6 +28,27 @@ const fuelFilterOptions = [
     value: cat,
   })),
 ];
+
+const SearchIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3-3" />
+  </svg>
+);
+
+const ArrowIcon = () => (
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
+    <path d="M5 12h14m-5-5 5 5-5 5" />
+  </svg>
+);
 
 export function PowerPlantListPanel() {
   const { state, setSearch, setTypeFilter } = useExplorer();
@@ -68,7 +78,6 @@ export function PowerPlantListPanel() {
     if (state.type !== "all") {
       result = result.filter((p) => p.fuelCategory === state.type);
     }
-    // Sort by capacity desc when no search query
     if (!state.q.trim()) {
       result = [...result].sort((a, b) => {
         const capA = a.status === "operable" ? a.totalCapacityMw : (a.proposedCapacityMw ?? 0);
@@ -101,131 +110,94 @@ export function PowerPlantListPanel() {
     [router]
   );
 
-  const columns: Column<PowerPlantRow>[] = useMemo(
-    () => [
-      {
-        id: "name",
-        label: "Name",
-        accessor: "name",
-        render: (_value: unknown, row: PowerPlantRow) => (
-          <span className="flex items-center gap-2 font-medium text-text-body">
-            <span
-              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: getFuelCategoryColor(row.fuelCategory) }}
-            />
-            {row.name}
-          </span>
-        ),
-        mobile: { priority: 1, format: "primary" },
-      },
-      {
-        id: "fuelCategory",
-        label: "Fuel",
-        accessor: "fuelCategory",
-        render: (_value: unknown, row: PowerPlantRow) => (
-          <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(row.fuelCategory)}>
-            {getFuelCategoryLabel(row.fuelCategory)}
-          </Badge>
-        ),
-        mobile: { priority: 2, format: "badge" },
-      },
-      {
-        id: "capacity",
-        label: "Capacity",
-        accessor: "totalCapacityMw",
-        render: (_value: unknown, row: PowerPlantRow) => (
-          <span className="text-text-body">
-            {row.status === "operable" ? formatCapacity(row.totalCapacityMw) : formatCapacity(row.proposedCapacityMw)}
-          </span>
-        ),
-        mobile: { priority: 3, format: "secondary" },
-      },
-      {
-        id: "state",
-        label: "State",
-        accessor: "state",
-        render: (_value: unknown, row: PowerPlantRow) => <span className="text-text-body">{row.state}</span>,
-        mobile: false,
-      },
-    ],
-    []
-  );
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader size={28} />
-      </div>
-    );
+    return <div className="cg-explore-loading">Loading power plants…</div>;
   }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-none px-4">
-        <div className="flex items-center justify-between py-2">
-          <span className="text-sm font-medium text-text-heading">Power Plants</span>
-          {user ? (
-            <Button variant="primary" size="sm" onPress={() => router.push("/power-plants/new")}>
-              <Icon name="Plus" size="sm" />
-              <span>Add New</span>
-            </Button>
-          ) : (
-            <Tooltip content="Sign in to add entities">
-              <Button variant="secondary" size="sm" isDisabled>
-                <Icon name="Plus" size="sm" />
-                <span>Add New</span>
-              </Button>
-            </Tooltip>
-          )}
-        </div>
-        <DataControls
-          resultsCount={{ count: filtered.length, label: "power plants" }}
-          search={{
-            value: state.q,
-            onChange: setSearch,
-            onClear: () => setSearch(""),
-            placeholder: "Search plants, utilities, states...",
-          }}
-          customControls={
-            <select
-              value={state.type}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-            >
+      <div className="cg-explore-panel-header">
+        <div className="cg-explore-filter-row" style={{ justifyContent: "space-between" }}>
+          <span className="cg-explore-count">
+            <strong>{filtered.length.toLocaleString()}</strong> power plants
+          </span>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
               {fuelFilterOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
             </select>
-          }
-          sticky={true}
-        />
+            {user && (
+              <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/power-plants/new")}>
+                + Add
+              </button>
+            )}
+          </div>
+        </div>
+        <div style={{ padding: "6px 14px 7px" }}>
+          <div className="cg-explore-search">
+            <SearchIcon />
+            <input
+              type="text"
+              placeholder="Search plants, utilities, states…"
+              value={state.q}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {state.q && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--cg-muted)",
+                  fontSize: 14,
+                  padding: 0,
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex-1 min-h-0">
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {rows.length === 0 ? (
-          <EmptyState
-            icon="Lightning"
-            title="No power plants found"
-            description={
-              state.q || state.type !== "all"
+          <div className="cg-explore-empty">
+            <div className="cg-explore-empty-title">No power plants found</div>
+            <div>
+              {state.q || state.type !== "all"
                 ? "Try adjusting your search or filters."
-                : "No power plants in the dataset."
-            }
-            fullHeight={true}
-          />
+                : "No power plants in the dataset."}
+            </div>
+          </div>
         ) : (
-          <DataTable
-            data={rows}
-            columns={columns}
-            mobileBreakpoint="md"
-            isLoading={false}
-            height="100%"
-            stickyHeader={true}
-            onRowClick={handleRowClick}
-            enableVirtualization={true}
-            estimatedRowHeight={56}
-          />
+          rows.map((row) => (
+            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
+              <span
+                className="cg-explore-entity-dot"
+                data-shape="circle"
+                style={{ background: getFuelCategoryColor(row.fuelCategory) }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="cg-explore-entity-name">{row.name}</div>
+                <div className="cg-explore-entity-sub">
+                  {row.state} · {getFuelCategoryLabel(row.fuelCategory)} ·{" "}
+                  {row.status === "operable"
+                    ? formatCapacity(row.totalCapacityMw)
+                    : formatCapacity(row.proposedCapacityMw)}
+                </div>
+              </div>
+              <span style={{ fontSize: 11, color: "var(--cg-teal)", fontFamily: "var(--cg-font-mono)", flexShrink: 0 }}>
+                {row.utilityName}
+              </span>
+              <ArrowIcon />
+            </div>
+          ))
         )}
       </div>
     </div>

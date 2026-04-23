@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge, Button, type Column, DataControls, DataTable, EmptyState, Icon, Tooltip } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -21,14 +20,13 @@ const assetTypeFilterOptions = [
   { id: "GENERATOR", label: "Generator", value: "GENERATOR" },
 ];
 
-interface ProgramRow extends Record<string, unknown> {
+interface ProgramRow {
   slug: string;
   name: string;
   utilityName: string;
   assetTypes: string[];
   status: string;
   compensationSummary: string;
-  programWebsite: string | null | undefined;
 }
 
 function getPrimaryCompensationSummary(program: Program): string {
@@ -39,11 +37,31 @@ function getPrimaryCompensationSummary(program: Program): string {
   return `$${tier.amount} ${typeLabel.toLowerCase()} ${unitLabel}`;
 }
 
+const SearchIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3-3" />
+  </svg>
+);
+
+const ArrowIcon = () => (
+  <svg
+    className="cg-explore-arrow"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+  >
+    <path d="M5 12h14m-5-5 5 5-5 5" />
+  </svg>
+);
+
 export function ProgramListPanel() {
   const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
-
   const { utilities } = useUtilities();
 
   const allPrograms = useMemo((): ProgramRow[] => {
@@ -58,7 +76,6 @@ export function ProgramListPanel() {
         assetTypes: prog.assetTypes,
         status: prog.status,
         compensationSummary: getPrimaryCompensationSummary(prog),
-        programWebsite: prog.programWebsite,
       };
     });
   }, [utilities]);
@@ -69,7 +86,7 @@ export function ProgramListPanel() {
       result = searchEntities(result, state.q);
     }
     if (state.type !== "all") {
-      result = result.filter((p) => (p.assetTypes as string[]).includes(state.type));
+      result = result.filter((p) => p.assetTypes.includes(state.type));
     }
     result = sortByName(result, "asc");
     return result;
@@ -82,156 +99,92 @@ export function ProgramListPanel() {
     [navigateToDetail]
   );
 
-  const columns: Column<ProgramRow>[] = useMemo(
-    () => [
-      {
-        id: "name",
-        label: "Program",
-        accessor: "name",
-        render: (_value: unknown, row: ProgramRow) => (
-          <div className="flex flex-col gap-0.5">
-            <span className="font-medium text-text-body">{row.name}</span>
-            <span className="text-xs text-text-muted">{row.utilityName}</span>
-          </div>
-        ),
-        mobile: { priority: 1, format: "primary" },
-      },
-      {
-        id: "assetTypes",
-        label: "Assets",
-        accessor: "assetTypes",
-        render: (_value: unknown, row: ProgramRow) => (
-          <div className="flex flex-wrap gap-1">
-            {(row.assetTypes as string[]).map((at) => (
-              <Badge key={at} size="sm" shape="pill" variant="info">
-                {AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at}
-              </Badge>
-            ))}
-          </div>
-        ),
-        mobile: { priority: 2, format: "badge" },
-      },
-      {
-        id: "status",
-        label: "Status",
-        accessor: "status",
-        render: (_value: unknown, row: ProgramRow) => (
-          <Badge
-            size="sm"
-            shape="pill"
-            variant={row.status === "ACTIVE" ? "success" : row.status === "PAUSED" ? "warning" : "default"}
-          >
-            {row.status === "ACTIVE"
-              ? "Active"
-              : row.status === "PAUSED"
-                ? "Paused"
-                : row.status === "FULL"
-                  ? "Full"
-                  : row.status}
-          </Badge>
-        ),
-        mobile: false,
-      },
-      {
-        id: "compensation",
-        label: "Compensation",
-        accessor: "compensationSummary",
-        render: (_value: unknown, row: ProgramRow) => (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-text-body">{row.compensationSummary as string}</span>
-            {row.programWebsite && (
-              <a
-                href={row.programWebsite as string}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-text-muted hover:text-brand-primary transition-colors"
-                title="Program website"
-              >
-                <span className="sr-only">Program website</span>
-                <svg
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 16 16"
-                  fill="currentColor"
-                  className="w-3.5 h-3.5"
-                >
-                  <path d="M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69L6.22 8.72Z" />
-                  <path d="M3.5 6.75c0-.69.56-1.25 1.25-1.25H7A.75.75 0 0 0 7 4H4.75A2.75 2.75 0 0 0 2 6.75v4.5A2.75 2.75 0 0 0 4.75 14h4.5A2.75 2.75 0 0 0 12 11.25V9a.75.75 0 0 0-1.5 0v2.25c0 .69-.56 1.25-1.25 1.25h-4.5c-.69 0-1.25-.56-1.25-1.25v-4.5Z" />
-                </svg>
-              </a>
-            )}
-          </div>
-        ),
-        mobile: false,
-      },
-    ],
-    []
-  );
+  const statusLabel = (s: string) =>
+    s === "ACTIVE" ? "Active" : s === "PAUSED" ? "Paused" : s === "FULL" ? "Full" : s;
+  const statusColor = (s: string) =>
+    s === "ACTIVE" ? "var(--cg-lime)" : s === "PAUSED" ? "var(--cg-amber)" : "var(--cg-muted)";
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-none px-4">
-        <div className="flex items-center justify-between py-2">
-          <span className="text-sm font-medium text-text-heading">Programs</span>
-          {user ? (
-            <Button variant="primary" size="sm" onPress={() => router.push("/programs/new")}>
-              <Icon name="Plus" size="sm" />
-              <span>Add New</span>
-            </Button>
-          ) : (
-            <Tooltip content="Sign in to add entities">
-              <Button variant="secondary" size="sm" isDisabled>
-                <Icon name="Plus" size="sm" />
-                <span>Add New</span>
-              </Button>
-            </Tooltip>
-          )}
-        </div>
-        <DataControls
-          resultsCount={{ count: filtered.length, label: "programs" }}
-          search={{
-            value: state.q,
-            onChange: setSearch,
-            onClear: () => setSearch(""),
-            placeholder: "Search programs...",
-          }}
-          customControls={
-            <select
-              value={state.type}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-            >
+      <div className="cg-explore-panel-header">
+        <div className="cg-explore-filter-row" style={{ justifyContent: "space-between" }}>
+          <span className="cg-explore-count">
+            <strong>{filtered.length}</strong> programs
+          </span>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
               {assetTypeFilterOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
             </select>
-          }
-          sticky={true}
-        />
+            {user && (
+              <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/programs/new")}>
+                + Add
+              </button>
+            )}
+          </div>
+        </div>
+        <div style={{ padding: "6px 14px 7px" }}>
+          <div className="cg-explore-search">
+            <SearchIcon />
+            <input
+              type="text"
+              placeholder="Search programs…"
+              value={state.q}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {state.q && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--cg-muted)",
+                  fontSize: 14,
+                  padding: 0,
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex-1 min-h-0">
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {filtered.length === 0 ? (
-          <EmptyState
-            icon="Lightning"
-            title="No programs found"
-            description={state.q ? "Try adjusting your search criteria." : "No programs in the dataset."}
-            fullHeight={true}
-          />
+          <div className="cg-explore-empty">
+            <div className="cg-explore-empty-title">No programs found</div>
+            <div>{state.q ? "Try adjusting your search criteria." : "No programs in the dataset."}</div>
+          </div>
         ) : (
-          <DataTable
-            data={filtered}
-            columns={columns}
-            mobileBreakpoint="md"
-            isLoading={false}
-            height="100%"
-            stickyHeader={true}
-            onRowClick={handleRowClick}
-            enableVirtualization={true}
-            estimatedRowHeight={72}
-          />
+          filtered.map((row) => (
+            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
+              <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-purple)" }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="cg-explore-entity-name">{row.name}</div>
+                <div className="cg-explore-entity-sub">
+                  {row.utilityName} ·{" "}
+                  {row.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", ")}
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                <span style={{ fontSize: 11, fontFamily: "var(--cg-font-mono)", color: statusColor(row.status) }}>
+                  {statusLabel(row.status)}
+                </span>
+                {row.compensationSummary && (
+                  <span style={{ fontSize: 11, fontFamily: "var(--cg-font-mono)", color: "var(--cg-muted)" }}>
+                    {row.compensationSummary}
+                  </span>
+                )}
+              </div>
+              <ArrowIcon />
+            </div>
+          ))
         )}
       </div>
     </div>
