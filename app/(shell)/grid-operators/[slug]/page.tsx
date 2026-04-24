@@ -1,26 +1,22 @@
 "use client";
 
-import {
-  Avatar,
-  Badge,
-  Card,
-  type Column,
-  DataControls,
-  DataTable,
-  InteractiveMap,
-  Loader,
-  layer,
-  PageLayout,
-  Section,
-  type StatItem,
-  StatList,
-} from "@texturehq/edges";
+import "../../detail-page.css";
+
+import { Avatar, Badge, type Column, DataTable, InteractiveMap, Loader, layer } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
-import { DataSourceLink } from "@/components/DataSourceLink";
+import {
+  DetailEntityList,
+  DetailFieldList,
+  DetailMap,
+  DetailPageShell,
+  DetailRelationships,
+  DetailSection,
+  DetailStatGrid,
+} from "@/components/detail";
 import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
 import {
   formatCapacity,
@@ -45,9 +41,19 @@ interface UtilityRow extends Record<string, unknown> {
   jurisdiction: string | null;
 }
 
+function formatRevenue(v: number): string {
+  if (v >= 1_000_000_000) return `$${(v / 1_000_000_000).toFixed(1)}B`;
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  return `$${v.toLocaleString()}`;
+}
+
+function formatSales(v: number): string {
+  return v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M MWh` : `${v.toLocaleString()} MWh`;
+}
+
 export default function UtilityDetailPage() {
   const params = useParams<{ slug: string }>();
-  const { utilities } = useUtilities();
+  const { utilities, isLoading: utilitiesLoading } = useUtilities();
   const utility = useMemo(() => utilities.find((u) => u.slug === params.slug) ?? null, [utilities, params.slug]);
 
   const [territoryGeoJSON, setTerritoryGeoJSON] = useState<FeatureCollection | null>(null);
@@ -179,9 +185,7 @@ export default function UtilityDetailPage() {
         id: "customerCount",
         label: "Customers",
         accessor: "customerCount",
-        render: (_value: unknown, row: UtilityRow) => (
-          <span className="text-text-body">{formatCustomerCount(row.customerCount)}</span>
-        ),
+        render: (_value: unknown, row: UtilityRow) => <span>{formatCustomerCount(row.customerCount)}</span>,
         mobile: false,
       },
     ],
@@ -198,6 +202,17 @@ export default function UtilityDetailPage() {
     }
     return { longitude: -98.58, latitude: 39.83, zoom: 4 };
   }, [territoryGeoJSON]);
+
+  if (utilitiesLoading) {
+    return (
+      <div
+        className="cg-detail"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}
+      >
+        <Loader size={32} />
+      </div>
+    );
+  }
 
   if (!utility) {
     notFound();
@@ -216,102 +231,35 @@ export default function UtilityDetailPage() {
   const hasGridRelationships = iso || rto || ba;
   const hasUtilityRelationships = parent || generationProvider || transmissionProvider || successor;
 
-  const overviewItems: StatItem[] = [
-    {
-      id: "segment",
-      label: "Segment",
-      value: <Badge variant={getSegmentBadgeVariant(utility.segment)}>{getSegmentLabel(utility.segment)}</Badge>,
-    },
-    {
-      id: "status",
-      label: "Status",
-      value: <Badge variant={getStatusBadgeVariant(utility.status)}>{getStatusLabel(utility.status)}</Badge>,
-    },
-    {
-      id: "customers",
-      label: "Customers",
-      value: utility.customerCount ? formatCustomerCount(utility.customerCount) : null,
-    },
-    {
-      id: "jurisdiction",
-      label: "Jurisdiction",
-      value: utility.jurisdiction ?? null,
-    },
-    {
-      id: "eiaId",
-      label: "EIA ID",
-      value: utility.eiaId ?? null,
-      copyable: true,
-    },
-    {
-      id: "website",
-      label: "Website",
-      value: utility.website ? safeHostname(utility.website) : null,
-      href: utility.website ?? undefined,
-    },
-  ];
-
-  const operationsItems: StatItem[] = [
-    ...(utility.peakDemandMw !== null
-      ? [{ id: "summerPeak", label: "Summer Peak", value: `${utility.peakDemandMw.toLocaleString()} MW` }]
-      : []),
-    ...(utility.winterPeakDemandMw !== null
-      ? [{ id: "winterPeak", label: "Winter Peak", value: `${utility.winterPeakDemandMw.toLocaleString()} MW` }]
-      : []),
-    ...(utility.totalRevenueDollars !== null
-      ? [
-          {
-            id: "revenue",
-            label: "Revenue",
-            value:
-              utility.totalRevenueDollars >= 1_000_000_000
-                ? `$${(utility.totalRevenueDollars / 1_000_000_000).toFixed(1)}B`
-                : utility.totalRevenueDollars >= 1_000_000
-                  ? `$${(utility.totalRevenueDollars / 1_000_000).toFixed(1)}M`
-                  : `$${utility.totalRevenueDollars.toLocaleString()}`,
-          },
-        ]
-      : []),
-    ...(utility.totalSalesMwh !== null
-      ? [
-          {
-            id: "sales",
-            label: "Sales",
-            value:
-              utility.totalSalesMwh >= 1_000_000
-                ? `${(utility.totalSalesMwh / 1_000_000).toFixed(1)}M MWh`
-                : `${utility.totalSalesMwh.toLocaleString()} MWh`,
-          },
-        ]
-      : []),
-    ...(utility.totalMeterCount !== null
-      ? [{ id: "meters", label: "Meters", value: utility.totalMeterCount.toLocaleString() }]
-      : []),
-    ...(utility.amiMeterCount !== null
-      ? [
-          {
-            id: "amiMeters",
-            label: "AMI Meters",
-            value: `${utility.amiMeterCount.toLocaleString()}${utility.totalMeterCount ? ` (${Math.round((utility.amiMeterCount / utility.totalMeterCount) * 100)}%)` : ""}`,
-          },
-        ]
-      : []),
-    ...(utility.nercRegion !== null ? [{ id: "nercRegion", label: "NERC Region", value: utility.nercRegion }] : []),
-  ];
+  let sectionNum = 1;
 
   return (
-    <PageLayout maxWidth={896}>
-      <PageLayout.Header
-        title={utility.name}
-        breadcrumbs={[
-          { label: "Grid Operators", href: "/grid-operators" },
-          { label: utility.slug, copyable: true, copyValue: utility.slug },
-        ]}
-      />
-      <DataSourceLink paths={["data/utilities.json"]} className="px-4 sm:px-6 pb-2" />
-
-      {/* Entity header */}
-      <div className="flex items-center gap-4 px-4 sm:px-6 py-5 border-b border-border-default bg-background-surface">
+    <DetailPageShell
+      kicker={getSegmentLabel(utility.segment)}
+      entityName={utility.name}
+      subtitle={
+        <>
+          {utility.shortName && <span>{utility.shortName}</span>}
+          {utility.shortName && (utility.website || utility.jurisdiction) && <span className="sep">·</span>}
+          {utility.website && (
+            <a href={utility.website} target="_blank" rel="noopener noreferrer">
+              {safeHostname(utility.website)}
+            </a>
+          )}
+          {utility.jurisdiction && (
+            <>
+              {utility.website && <span className="sep">·</span>}
+              <span>{utility.jurisdiction}</span>
+            </>
+          )}
+        </>
+      }
+      breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Grid Operators", href: "/grid-operators" },
+        { label: utility.slug },
+      ]}
+      avatar={
         <Avatar
           {...(utility.logo ? { src: utility.logo } : {})}
           fullName={utility.name}
@@ -319,20 +267,8 @@ export default function UtilityDetailPage() {
           shape="square"
           variant="organization"
         />
-        <div className="flex-1">
-          <div className="text-xl font-semibold text-text-heading">{utility.name}</div>
-          {utility.shortName && <div className="text-sm text-text-muted">{utility.shortName}</div>}
-          {utility.website && (
-            <a
-              href={utility.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-brand-primary hover:underline"
-            >
-              {safeHostname(utility.website)}
-            </a>
-          )}
-        </div>
+      }
+      actions={
         <EntityActions
           entityType="utility"
           entityId={utility.id}
@@ -340,260 +276,260 @@ export default function UtilityDetailPage() {
           entityName={utility.name}
           currentValues={utility as unknown as Record<string, unknown>}
         />
-      </div>
+      }
+      dataSourcePaths={["data/utilities.json"]}
+    >
+      <DetailStatGrid
+        stats={[
+          {
+            value: utility.customerCount ? formatCustomerCount(utility.customerCount) : null,
+            label: "Customers",
+          },
+          {
+            value: utility.peakDemandMw !== null ? `${utility.peakDemandMw.toLocaleString()} MW` : null,
+            label: "Summer Peak",
+          },
+          {
+            value: utility.totalSalesMwh !== null ? formatSales(utility.totalSalesMwh) : null,
+            label: "Annual Sales",
+          },
+          {
+            value: utility.totalRevenueDollars !== null ? formatRevenue(utility.totalRevenueDollars) : null,
+            label: "Revenue",
+          },
+        ]}
+      />
 
-      <PageLayout.Content>
-        {/* Overview */}
-        <Section id="overview" navLabel="Overview" title="Overview" withDivider>
-          <Card variant="outlined">
-            <Card.Content>
-              <StatList layout="two-column" showDividers items={overviewItems} />
-            </Card.Content>
-          </Card>
-        </Section>
+      <DetailSection id="overview" kicker={`0${sectionNum++} · Overview`} title="Overview">
+        <DetailFieldList
+          items={[
+            {
+              id: "segment",
+              label: "Segment",
+              value: (
+                <Badge variant={getSegmentBadgeVariant(utility.segment)}>{getSegmentLabel(utility.segment)}</Badge>
+              ),
+            },
+            {
+              id: "status",
+              label: "Status",
+              value: <Badge variant={getStatusBadgeVariant(utility.status)}>{getStatusLabel(utility.status)}</Badge>,
+            },
+            {
+              id: "customers",
+              label: "Customers",
+              value: utility.customerCount ? formatCustomerCount(utility.customerCount) : null,
+            },
+            { id: "jurisdiction", label: "Jurisdiction", value: utility.jurisdiction ?? null },
+            { id: "eiaId", label: "EIA ID", value: utility.eiaId ?? null, copyable: true },
+            {
+              id: "website",
+              label: "Website",
+              value: utility.website ? safeHostname(utility.website) : null,
+              href: utility.website ?? undefined,
+            },
+          ]}
+        />
+      </DetailSection>
 
-        {/* Operations */}
-        {hasOperationsData && (
-          <Section id="operations" navLabel="Operations" title="Operations" withDivider>
-            <Card variant="outlined">
-              <Card.Content>
-                <StatList layout="two-column" showDividers items={operationsItems} />
-                {utility.hasGeneration !== null && (
-                  <div className="mt-4">
-                    <div className="text-sm text-text-muted mb-2">Activities</div>
-                    <div className="flex gap-1.5 flex-wrap">
-                      {utility.hasGeneration && (
-                        <Badge size="sm" shape="pill" variant="info">
-                          Generation
-                        </Badge>
-                      )}
-                      {utility.hasTransmission && (
-                        <Badge size="sm" shape="pill" variant="info">
-                          Transmission
-                        </Badge>
-                      )}
-                      {utility.hasDistribution && (
-                        <Badge size="sm" shape="pill" variant="info">
-                          Distribution
-                        </Badge>
-                      )}
-                      {!utility.hasGeneration && !utility.hasTransmission && !utility.hasDistribution && (
-                        <span className="text-text-muted">{"\u2014"}</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </Card.Content>
-            </Card>
-          </Section>
-        )}
-
-        {/* Service Territory Map */}
-        <Section id="territory" navLabel="Territory" title="Service Territory" withDivider>
-          <Card variant="outlined" className="p-0 overflow-hidden">
-            <div className="h-[280px] sm:h-[400px]">
-              {territoryLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader size={32} />
-                </div>
-              ) : (
-                <InteractiveMap
-                  {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
-                    mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
-                  })}
-                  initialViewState={mapViewState}
-                  mapType="neutral"
-                  controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
-                  layers={
-                    territoryGeoJSON
-                      ? [
-                          layer.geojson({
-                            id: "territory-fill",
-                            data: territoryGeoJSON,
-                            renderAs: "fill",
-                            style: {
-                              color: { token: "brand-primary" },
-                              fillOpacity: 0.25,
-                              borderWidth: 3,
-                              borderColor: { token: "brand-primary" },
-                            },
-                          }),
-                        ]
-                      : []
-                  }
-                />
-              )}
-            </div>
-          </Card>
-        </Section>
-
-        {/* Grid Relationships */}
-        {hasGridRelationships && (
-          <Section id="grid" navLabel="Grid" title="Grid Relationships" withDivider>
-            <Card variant="outlined">
-              <Card.Content>
-                <StatList
-                  showDividers
-                  items={[
-                    ...(iso
-                      ? [
-                          {
-                            id: "iso",
-                            label: "ISO",
-                            value: iso.shortName,
-                            href: `/explore?view=iso&slug=${iso.slug}`,
-                          },
-                        ]
-                      : []),
-                    ...(rto
-                      ? [
-                          {
-                            id: "rto",
-                            label: "RTO",
-                            value: rto.shortName,
-                            href: `/explore?view=rto&slug=${rto.slug}`,
-                          },
-                        ]
-                      : []),
-                    ...(ba
-                      ? [
-                          {
-                            id: "ba",
-                            label: "Balancing Authority",
-                            value: ba.shortName,
-                            href: `/balancing-authorities/${ba.slug}`,
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              </Card.Content>
-            </Card>
-          </Section>
-        )}
-
-        {/* Utility Relationships */}
-        {hasUtilityRelationships && (
-          <Section id="relationships" navLabel="Relationships" title="Utility Relationships" withDivider>
-            <Card variant="outlined">
-              <Card.Content>
-                <StatList
-                  showDividers
-                  items={[
-                    ...(parent
-                      ? [{ id: "parent", label: "Parent", value: parent.name, href: `/grid-operators/${parent.slug}` }]
-                      : []),
-                    ...(generationProvider
-                      ? [
-                          {
-                            id: "genProvider",
-                            label: "Generation Provider",
-                            value: generationProvider.name,
-                            href: `/grid-operators/${generationProvider.slug}`,
-                          },
-                        ]
-                      : []),
-                    ...(transmissionProvider
-                      ? [
-                          {
-                            id: "txProvider",
-                            label: "Transmission Provider",
-                            value: transmissionProvider.name,
-                            href: `/grid-operators/${transmissionProvider.slug}`,
-                          },
-                        ]
-                      : []),
-                    ...(successor
-                      ? [
-                          {
-                            id: "successor",
-                            label: "Successor",
-                            value: successor.name,
-                            href: `/grid-operators/${successor.slug}`,
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              </Card.Content>
-            </Card>
-          </Section>
-        )}
-
-        {/* Served Utilities */}
-        {servedRows.length > 0 && (
-          <Section id="served" navLabel="Served" title="Served Utilities" withDivider>
-            <DataControls resultsCount={{ count: servedRows.length }} />
-            <Card className="p-0 overflow-hidden">
-              <DataTable
-                data={servedRows}
-                columns={utilityColumns}
-                mobileBreakpoint="md"
-                isLoading={false}
-                onRowClick={handleRowClick}
-              />
-            </Card>
-          </Section>
-        )}
-
-        {/* Subsidiaries */}
-        {childRows.length > 0 && (
-          <Section id="subsidiaries" navLabel="Subsidiaries" title="Subsidiary Utilities" withDivider>
-            <DataControls resultsCount={{ count: childRows.length }} />
-            <Card className="p-0 overflow-hidden">
-              <DataTable
-                data={childRows}
-                columns={utilityColumns}
-                mobileBreakpoint="md"
-                isLoading={false}
-                onRowClick={handleRowClick}
-              />
-            </Card>
-          </Section>
-        )}
-
-        {/* Power Plants */}
-        {!plantsLoading && utilityPowerPlants.length > 0 && (
-          <Section id="power-plants" navLabel="Plants" title="Power Plants" withDivider>
-            <div className="text-sm text-text-muted mb-3">
-              {utilityPowerPlants.length} power plant{utilityPowerPlants.length !== 1 ? "s" : ""} ·{" "}
-              {formatCapacity(utilityPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0))} total capacity
-            </div>
-            <Card variant="outlined">
-              <Card.Content>
-                <div className="space-y-2">
-                  {utilityPowerPlants.slice(0, 30).map((plant) => (
-                    <Link
-                      key={plant.id}
-                      href={`/power-plants/${plant.slug}`}
-                      className="flex items-center justify-between p-2 rounded-md hover:bg-background-surface-hover transition-colors"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: getFuelCategoryColor(plant.fuelCategory) }}
-                        />
-                        <span className="text-sm font-medium text-text-body truncate">{plant.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                        <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(plant.fuelCategory)}>
-                          {getFuelCategoryLabel(plant.fuelCategory)}
-                        </Badge>
-                        <span className="text-xs text-text-muted">{formatCapacity(plant.totalCapacityMw)}</span>
-                      </div>
-                    </Link>
-                  ))}
-                  {utilityPowerPlants.length > 30 && (
-                    <div className="text-xs text-text-muted text-center pt-2">
-                      + {utilityPowerPlants.length - 30} more power plants
-                    </div>
+      {hasOperationsData && (
+        <DetailSection id="operations" kicker={`0${sectionNum++} · Operations`} title="Operations">
+          <DetailFieldList
+            items={[
+              ...(utility.peakDemandMw !== null
+                ? [
+                    {
+                      id: "summerPeak",
+                      label: "Summer Peak Demand",
+                      value: `${utility.peakDemandMw.toLocaleString()} MW`,
+                    },
+                  ]
+                : []),
+              ...(utility.winterPeakDemandMw !== null
+                ? [
+                    {
+                      id: "winterPeak",
+                      label: "Winter Peak Demand",
+                      value: `${utility.winterPeakDemandMw.toLocaleString()} MW`,
+                    },
+                  ]
+                : []),
+              ...(utility.totalRevenueDollars !== null
+                ? [{ id: "revenue", label: "Total Revenue", value: formatRevenue(utility.totalRevenueDollars) }]
+                : []),
+              ...(utility.totalSalesMwh !== null
+                ? [{ id: "sales", label: "Total Sales", value: formatSales(utility.totalSalesMwh) }]
+                : []),
+              ...(utility.totalMeterCount !== null
+                ? [{ id: "meters", label: "Total Meters", value: utility.totalMeterCount.toLocaleString() }]
+                : []),
+              ...(utility.amiMeterCount !== null
+                ? [
+                    {
+                      id: "amiMeters",
+                      label: "AMI Meters",
+                      value: `${utility.amiMeterCount.toLocaleString()}${utility.totalMeterCount ? ` (${Math.round((utility.amiMeterCount / utility.totalMeterCount) * 100)}%)` : ""}`,
+                    },
+                  ]
+                : []),
+              ...(utility.nercRegion !== null
+                ? [{ id: "nercRegion", label: "NERC Region", value: utility.nercRegion }]
+                : []),
+            ]}
+          />
+          {utility.hasGeneration !== null &&
+            (utility.hasGeneration || utility.hasTransmission || utility.hasDistribution) && (
+              <div style={{ marginTop: 16 }}>
+                <div className="detail-list-meta">Activities</div>
+                <div className="detail-activities">
+                  {utility.hasGeneration && (
+                    <Badge size="sm" shape="pill" variant="info">
+                      Generation
+                    </Badge>
+                  )}
+                  {utility.hasTransmission && (
+                    <Badge size="sm" shape="pill" variant="info">
+                      Transmission
+                    </Badge>
+                  )}
+                  {utility.hasDistribution && (
+                    <Badge size="sm" shape="pill" variant="info">
+                      Distribution
+                    </Badge>
                   )}
                 </div>
-              </Card.Content>
-            </Card>
-          </Section>
-        )}
-      </PageLayout.Content>
-    </PageLayout>
+              </div>
+            )}
+        </DetailSection>
+      )}
+
+      <DetailSection id="territory" kicker={`0${sectionNum++} · Territory`} title="Service Territory">
+        <DetailMap loading={territoryLoading}>
+          <InteractiveMap
+            {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
+              mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+            })}
+            initialViewState={mapViewState}
+            mapType="neutral"
+            controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+            layers={
+              territoryGeoJSON
+                ? [
+                    layer.geojson({
+                      id: "territory-fill",
+                      data: territoryGeoJSON,
+                      renderAs: "fill",
+                      style: {
+                        color: { token: "brand-primary" },
+                        fillOpacity: 0.25,
+                        borderWidth: 3,
+                        borderColor: { token: "brand-primary" },
+                      },
+                    }),
+                  ]
+                : []
+            }
+          />
+        </DetailMap>
+      </DetailSection>
+
+      {hasGridRelationships && (
+        <DetailSection id="grid" kicker={`0${sectionNum++} · Grid`} title="Grid Relationships">
+          <DetailRelationships
+            items={[
+              ...(iso ? [{ label: "ISO", name: iso.shortName, href: `/explore?view=iso&slug=${iso.slug}` }] : []),
+              ...(rto ? [{ label: "RTO", name: rto.shortName, href: `/explore?view=rto&slug=${rto.slug}` }] : []),
+              ...(ba
+                ? [{ label: "Balancing Authority", name: ba.shortName, href: `/balancing-authorities/${ba.slug}` }]
+                : []),
+            ]}
+          />
+        </DetailSection>
+      )}
+
+      {hasUtilityRelationships && (
+        <DetailSection id="relationships" kicker={`0${sectionNum++} · Relationships`} title="Utility Relationships">
+          <DetailRelationships
+            items={[
+              ...(parent ? [{ label: "Parent", name: parent.name, href: `/grid-operators/${parent.slug}` }] : []),
+              ...(generationProvider
+                ? [
+                    {
+                      label: "Generation Provider",
+                      name: generationProvider.name,
+                      href: `/grid-operators/${generationProvider.slug}`,
+                    },
+                  ]
+                : []),
+              ...(transmissionProvider
+                ? [
+                    {
+                      label: "Transmission Provider",
+                      name: transmissionProvider.name,
+                      href: `/grid-operators/${transmissionProvider.slug}`,
+                    },
+                  ]
+                : []),
+              ...(successor
+                ? [{ label: "Successor", name: successor.name, href: `/grid-operators/${successor.slug}` }]
+                : []),
+            ]}
+          />
+        </DetailSection>
+      )}
+
+      {servedRows.length > 0 && (
+        <DetailSection id="served" kicker={`0${sectionNum++} · Served`} title="Served Utilities">
+          <div className="detail-table-meta">
+            {servedRows.length} utilit{servedRows.length !== 1 ? "ies" : "y"}
+          </div>
+          <div className="detail-table-wrap">
+            <DataTable
+              data={servedRows}
+              columns={utilityColumns}
+              mobileBreakpoint="md"
+              isLoading={false}
+              onRowClick={handleRowClick}
+            />
+          </div>
+        </DetailSection>
+      )}
+
+      {childRows.length > 0 && (
+        <DetailSection id="subsidiaries" kicker={`0${sectionNum++} · Subsidiaries`} title="Subsidiary Utilities">
+          <div className="detail-table-meta">
+            {childRows.length} subsidiar{childRows.length !== 1 ? "ies" : "y"}
+          </div>
+          <div className="detail-table-wrap">
+            <DataTable
+              data={childRows}
+              columns={utilityColumns}
+              mobileBreakpoint="md"
+              isLoading={false}
+              onRowClick={handleRowClick}
+            />
+          </div>
+        </DetailSection>
+      )}
+
+      {!plantsLoading && utilityPowerPlants.length > 0 && (
+        <DetailSection id="power-plants" kicker={`0${sectionNum++} · Power Plants`} title="Power Plants">
+          <DetailEntityList
+            items={utilityPowerPlants.map((plant) => ({
+              href: `/power-plants/${plant.slug}`,
+              name: plant.name,
+              dotColor: getFuelCategoryColor(plant.fuelCategory),
+              badge: (
+                <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(plant.fuelCategory)}>
+                  {getFuelCategoryLabel(plant.fuelCategory)}
+                </Badge>
+              ),
+              meta: formatCapacity(plant.totalCapacityMw),
+            }))}
+            headerMeta={`${utilityPowerPlants.length} plant${utilityPowerPlants.length !== 1 ? "s" : ""} · ${formatCapacity(utilityPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0))} total`}
+          />
+        </DetailSection>
+      )}
+    </DetailPageShell>
   );
 }
