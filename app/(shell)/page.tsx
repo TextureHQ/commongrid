@@ -1330,10 +1330,10 @@ export default function LandingPage() {
               </div>
 
               <div className="dev-snapshot">
-                <span>Weekly snapshot &middot; 1.2 GB &middot; .sql.gz + .geojson</span>
-                <a href="https://github.com/TextureHQ/commongrid" target="_blank" rel="noopener noreferrer">
+                <span>Weekly snapshot &middot; .sql.gz + .geojson layers</span>
+                <Link href="/snapshots">
                   Download &rarr;
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -1398,7 +1398,7 @@ export default function LandingPage() {
               <h5>Build with it</h5>
               <Link href="/developers">REST API</Link>
               <Link href="/developers">Vector tiles</Link>
-              <Link href="/developers">Weekly snapshots</Link>
+              <Link href="/snapshots">Weekly snapshots</Link>
               <Link href="/developers">API keys</Link>
               <a href="https://github.com/TextureHQ/commongrid" target="_blank" rel="noopener noreferrer">
                 GitHub
