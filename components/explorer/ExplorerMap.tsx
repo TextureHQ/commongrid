@@ -259,6 +259,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
   const { state, navigateToDetail } = useExplorer();
   const router = useRouter();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
+  const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
 
   const overlays = mapOverlays ?? DEFAULT_OVERLAYS;
 
@@ -761,8 +762,16 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         // biome-ignore lint/style/noNonNullAssertion: effectiveToken is guaranteed non-null when map renders (checked in parent)
         mapboxAccessToken={effectiveToken!}
         initialViewState={US_CENTER}
-        mapType="neutral"
-        controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+        mapType={mapType}
+        controls={[
+          { type: "navigation", position: "bottom-right", showResetZoom: true },
+          {
+            type: "layers",
+            position: "bottom-right",
+            currentMapType: mapType,
+            onMapTypeChange: setMapType,
+          },
+        ]}
         layers={layers}
       />
     </div>
