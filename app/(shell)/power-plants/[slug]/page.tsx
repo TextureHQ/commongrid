@@ -2,9 +2,11 @@
 
 import "../../detail-page.css";
 
-import { InteractiveMap, Loader, layer } from "@texturehq/edges";
+import { Badge, InteractiveMap, Loader, layer } from "@texturehq/edges";
 import { notFound, useParams } from "next/navigation";
+import { useMemo } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
+import { DetailEntityList } from "@/components/detail/DetailEntityList";
 import { DetailFieldList } from "@/components/detail/DetailFieldList";
 import { DetailMap } from "@/components/detail/DetailMap";
 import { DetailPageShell } from "@/components/detail/DetailPageShell";
@@ -12,14 +14,44 @@ import { DetailRelationships } from "@/components/detail/DetailRelationships";
 import { DetailSection } from "@/components/detail/DetailSection";
 import { DetailStatGrid } from "@/components/detail/DetailStatGrid";
 import { getBalancingAuthorityById } from "@/lib/data";
-import { formatCapacity, formatStateName, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
-import { usePowerPlant } from "@/lib/power-plants";
+import {
+  formatCapacity,
+  formatStateName,
+  getFuelBadgeVariant,
+  getFuelCategoryColor,
+  getFuelCategoryLabel,
+} from "@/lib/formatting";
+import { usePowerPlant, usePowerPlants } from "@/lib/power-plants";
 import { useUtilities } from "@/lib/utilities-client";
+
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3959; // miles
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 export default function PowerPlantDetailPage() {
   const params = useParams<{ slug: string }>();
   const { plant, isLoading } = usePowerPlant(params.slug);
   const { utilities } = useUtilities();
+  const { plants: allPlants, isLoading: plantsLoading } = usePowerPlants();
+
+  const nearbyPlants = useMemo(() => {
+    if (!plant || allPlants.length === 0) return [];
+    return allPlants
+      .filter((p) => p.slug !== plant.slug)
+      .map((p) => ({
+        ...p,
+        distance: haversineDistance(plant.latitude, plant.longitude, p.latitude, p.longitude),
+      }))
+      .filter((p) => p.distance < 50) // within 50 miles
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 10);
+  }, [plant, allPlants]);
 
   if (isLoading) {
     return (
@@ -241,6 +273,26 @@ export default function PowerPlantDetailPage() {
       {hasRelationships && (
         <DetailSection id="relationships" kicker={`${nextNum()} · Grid`} title="Grid Relationships">
           <DetailRelationships items={relationshipItems} />
+        </DetailSection>
+      )}
+
+      {/* 05 · Nearby Plants */}
+      {!plantsLoading && nearbyPlants.length > 0 && (
+        <DetailSection id="nearby" kicker={`${nextNum()} · Nearby`} title="Nearby Power Plants">
+          <DetailEntityList
+            items={nearbyPlants.map((p) => ({
+              href: `/power-plants/${p.slug}`,
+              name: p.name,
+              dotColor: getFuelCategoryColor(p.fuelCategory),
+              badge: (
+                <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(p.fuelCategory)}>
+                  {getFuelCategoryLabel(p.fuelCategory)}
+                </Badge>
+              ),
+              meta: `${formatCapacity(p.totalCapacityMw)} · ${Math.round(p.distance)} mi`,
+            }))}
+            headerMeta={`${nearbyPlants.length} plants within 50 miles`}
+          />
         </DetailSection>
       )}
     </DetailPageShell>
