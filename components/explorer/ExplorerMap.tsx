@@ -322,10 +322,15 @@ export function ExplorerMap({
       conditions.push(["==", ["get", "segment"], state.segment]);
     }
 
+    // When viewing programs with active filters, only show territories for matching utilities
+    if (mapRegion === "programs" && state.filteredUtilitySlugs !== null) {
+      conditions.push(["in", ["get", "slug"], ["literal", state.filteredUtilitySlugs]]);
+    }
+
     if (conditions.length === 0) return undefined;
     if (conditions.length === 1) return conditions[0];
     return ["all", ...conditions];
-  }, [state.segment]);
+  }, [state.segment, mapRegion, state.filteredUtilitySlugs]);
 
   // Filter grid operator GeoJSON by type and search
   const filteredGridBoundaryData = useMemo(() => {

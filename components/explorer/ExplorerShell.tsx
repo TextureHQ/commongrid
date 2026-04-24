@@ -227,7 +227,17 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
 // Controls which entity type populates the panel list
 // ---------------------------------------------------------------------------
 
-function ListSourceSelector({ mapRegion, mapOverlays }: { mapRegion: MapRegion; mapOverlays: MapOverlays }) {
+const VALID_MAP_REGIONS: MapRegion[] = ["utilities", "grid-operators", "programs", "pricing-nodes"];
+
+function ListSourceSelector({
+  mapRegion,
+  mapOverlays,
+  onMapRegionChange,
+}: {
+  mapRegion: MapRegion;
+  mapOverlays: MapOverlays;
+  onMapRegionChange?: (region: MapRegion) => void;
+}) {
   const { state, setListSource } = useExplorer();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -301,6 +311,10 @@ function ListSourceSelector({ mapRegion, mapOverlays }: { mapRegion: MapRegion; 
                 data-active={activeSource === opt}
                 onClick={() => {
                   setListSource(opt);
+                  // Sync map region when list source changes to a valid map region
+                  if (onMapRegionChange && VALID_MAP_REGIONS.includes(opt as MapRegion)) {
+                    onMapRegionChange(opt as MapRegion);
+                  }
                   setOpen(false);
                 }}
               >
@@ -328,9 +342,10 @@ interface MapLayoutProps {
   mapRegion: MapRegion;
   mapOverlays: MapOverlays;
   onOverlayToggle?: (key: keyof MapOverlays) => void;
+  onMapRegionChange?: (region: MapRegion) => void;
 }
 
-function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays, onOverlayToggle }: MapLayoutProps) {
+function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays, onOverlayToggle, onMapRegionChange }: MapLayoutProps) {
   const { state } = useExplorer();
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
   const dragging = useRef(false);
@@ -366,7 +381,7 @@ function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays, onOverlayToggle 
         className="flex-none h-full overflow-hidden flex flex-col"
         style={{ width: panelWidth, borderRight: "1px solid var(--cg-rule)", background: "var(--cg-card)" }}
       >
-        <ListSourceSelector mapRegion={mapRegion} mapOverlays={mapOverlays} />
+        <ListSourceSelector mapRegion={mapRegion} mapOverlays={mapOverlays} onMapRegionChange={onMapRegionChange} />
         <ExplorerPanel listSource={state.listSource} />
       </div>
 
@@ -445,11 +460,20 @@ interface ExplorerLayoutProps {
 }
 
 function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
-  const { state, setLayout } = useExplorer();
+  const { state, setLayout, setListSource } = useExplorer();
   const { layout } = state;
 
   // Map-specific state: region layer + overlay toggles
   const [mapRegion, setMapRegion] = useState<MapRegion>("utilities");
+
+  // Sync listSource when mapRegion changes via the Region dropdown
+  const handleMapRegionChange = useCallback(
+    (region: MapRegion) => {
+      setMapRegion(region);
+      setListSource(region as EntityTab);
+    },
+    [setListSource]
+  );
   const [mapOverlays, setMapOverlays] = useState<MapOverlays>(DEFAULT_MAP_OVERLAYS);
 
   const toggleOverlay = useCallback((key: keyof MapOverlays) => {
@@ -470,7 +494,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
           {layout === "map" && (
             <MapFilterBar
               mapRegion={mapRegion}
-              setMapRegion={setMapRegion}
+              setMapRegion={handleMapRegionChange}
               mapOverlays={mapOverlays}
               toggleOverlay={toggleOverlay}
             />
@@ -508,6 +532,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
               mapRegion={mapRegion}
               mapOverlays={mapOverlays}
               onOverlayToggle={toggleOverlay}
+              onMapRegionChange={setMapRegion}
             />
           )}
           {layout === "list" && (

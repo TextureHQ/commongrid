@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getAllPrograms, searchEntities, sortByName } from "@/lib/data";
 import { useUtilities } from "@/lib/utilities-client";
@@ -24,6 +24,7 @@ interface ProgramRow {
   slug: string;
   name: string;
   utilityName: string;
+  utilitySlug: string | null;
   assetTypes: string[];
   status: string;
   compensationSummary: string;
@@ -59,7 +60,7 @@ const ArrowIcon = () => (
 );
 
 export function ProgramListPanel() {
-  const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
+  const { state, setSearch, setTypeFilter, navigateToDetail, setFilteredUtilitySlugs } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
   const { utilities } = useUtilities();
@@ -73,6 +74,7 @@ export function ProgramListPanel() {
         slug: prog.slug,
         name: prog.name,
         utilityName: utility?.name ?? adminOrg?.entityId ?? "—",
+        utilitySlug: adminOrg?.entityId ?? null,
         assetTypes: prog.assetTypes,
         status: prog.status,
         compensationSummary: getPrimaryCompensationSummary(prog),
@@ -91,6 +93,22 @@ export function ProgramListPanel() {
     result = sortByName(result, "asc");
     return result;
   }, [allPrograms, state.q, state.type]);
+
+  // Push filtered utility slugs to context for map filtering
+  useEffect(() => {
+    const hasFilter = state.q !== "" || state.type !== "all";
+    if (!hasFilter) {
+      setFilteredUtilitySlugs(null);
+      return;
+    }
+    const slugs = [...new Set(filtered.map((p) => p.utilitySlug).filter((s): s is string => s !== null))];
+    setFilteredUtilitySlugs(slugs);
+  }, [filtered, state.q, state.type, setFilteredUtilitySlugs]);
+
+  // Clear filtered slugs on unmount (e.g. switching away from programs)
+  useEffect(() => {
+    return () => setFilteredUtilitySlugs(null);
+  }, [setFilteredUtilitySlugs]);
 
   const handleRowClick = useCallback(
     (row: ProgramRow) => {

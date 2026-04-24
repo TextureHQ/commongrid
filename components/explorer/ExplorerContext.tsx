@@ -22,6 +22,15 @@ export type DetailView = "utility" | "iso" | "rto" | "ba" | "program";
 export type ListView = EntityTab;
 export type EntityView = EntityTab | DetailView;
 
+export interface PreviousView {
+  tab: EntityTab;
+  slug: string | null;
+  q: string;
+  segment: string;
+  type: string;
+  jurisdictions: string[];
+}
+
 export interface ExplorerState {
   layout: LayoutMode;
   tab: EntityTab;
@@ -37,7 +46,9 @@ export interface ExplorerState {
   highlightGeoJSON: FeatureCollection | null;
   hoveredSlug: string | null;
   // Navigation history for back button
-  previousView: { tab: EntityTab; slug: string | null } | null;
+  previousView: PreviousView | null;
+  // Filtered utility slugs for map filtering (programs view)
+  filteredUtilitySlugs: string[] | null;
 }
 
 type ExplorerAction =
@@ -51,6 +62,8 @@ type ExplorerAction =
   | { type: "SET_JURISDICTIONS"; jurisdictions: string[] }
   | { type: "SET_HIGHLIGHT"; geoJSON: FeatureCollection | null }
   | { type: "SET_HOVERED_SLUG"; slug: string | null }
+  | { type: "SET_FILTERED_UTILITY_SLUGS"; slugs: string[] | null }
+  | { type: "RESTORE_PREVIOUS" }
   | {
       type: "SYNC_FROM_URL";
       layout: LayoutMode;
@@ -74,6 +87,7 @@ interface ExplorerContextValue {
   setJurisdictions: (jurisdictions: string[]) => void;
   setHighlight: (geoJSON: FeatureCollection | null) => void;
   setHoveredSlug: (slug: string | null) => void;
+  setFilteredUtilitySlugs: (slugs: string[] | null) => void;
   goBack: () => void;
 }
 
@@ -94,6 +108,7 @@ const initialState: ExplorerState = {
   highlightGeoJSON: null,
   hoveredSlug: null,
   previousView: null,
+  filteredUtilitySlugs: null,
 };
 
 function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
@@ -111,6 +126,7 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
         highlightGeoJSON: null,
         hoveredSlug: null,
         previousView: null,
+        filteredUtilitySlugs: null,
       };
 
     case "NAVIGATE_DETAIL":
@@ -119,7 +135,14 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
         mode: "detail",
         slug: action.slug,
         hoveredSlug: null,
-        previousView: { tab: state.tab, slug: state.slug },
+        previousView: {
+          tab: state.tab,
+          slug: state.slug,
+          q: state.q,
+          segment: state.segment,
+          type: state.type,
+          jurisdictions: state.jurisdictions,
+        },
       };
 
     case "SET_LAYOUT":
@@ -145,6 +168,36 @@ function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
 
     case "SET_HOVERED_SLUG":
       return { ...state, hoveredSlug: action.slug };
+
+    case "SET_FILTERED_UTILITY_SLUGS":
+      return { ...state, filteredUtilitySlugs: action.slugs };
+
+    case "RESTORE_PREVIOUS": {
+      const prev = state.previousView;
+      if (!prev) {
+        return {
+          ...state,
+          mode: "list",
+          slug: null,
+          highlightGeoJSON: null,
+          hoveredSlug: null,
+          previousView: null,
+        };
+      }
+      return {
+        ...state,
+        tab: prev.tab,
+        mode: "list",
+        slug: null,
+        q: prev.q,
+        segment: prev.segment,
+        type: prev.type,
+        jurisdictions: prev.jurisdictions,
+        highlightGeoJSON: null,
+        hoveredSlug: null,
+        previousView: null,
+      };
+    }
 
     case "SYNC_FROM_URL":
       return {
@@ -312,6 +365,10 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     []
   );
   const setHoveredSlug = useCallback((slug: string | null) => dispatch({ type: "SET_HOVERED_SLUG", slug }), []);
+  const setFilteredUtilitySlugs = useCallback(
+    (slugs: string[] | null) => dispatch({ type: "SET_FILTERED_UTILITY_SLUGS", slugs }),
+    []
+  );
 
   const goBack = useCallback(() => {
     const prev = state.previousView;
@@ -319,7 +376,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "NAVIGATE_TAB", tab: state.tab });
       return;
     }
-    dispatch({ type: "NAVIGATE_TAB", tab: prev.tab });
+    dispatch({ type: "RESTORE_PREVIOUS" });
   }, [state.previousView, state.tab]);
 
   const value = useMemo<ExplorerContextValue>(
@@ -335,6 +392,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       setJurisdictions,
       setHighlight,
       setHoveredSlug,
+      setFilteredUtilitySlugs,
       goBack,
     }),
     [
@@ -349,6 +407,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       setJurisdictions,
       setHighlight,
       setHoveredSlug,
+      setFilteredUtilitySlugs,
       goBack,
     ]
   );
