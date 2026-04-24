@@ -283,7 +283,7 @@ export default function LandingPage() {
               </p>
               <div className="hero-cta">
                 <Link href="/explore" className="btn btn-primary btn-lg">
-                  Browse the registry
+                  Explore the registry
                   <svg
                     aria-hidden="true"
                     width="14"
