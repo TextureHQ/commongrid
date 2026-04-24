@@ -1,32 +1,25 @@
 "use client";
 
-import {
-  Badge,
-  Card,
-  type Column,
-  DataControls,
-  DataTable,
-  EmptyState,
-  InteractiveMap,
-  Loader,
-  layer,
-  PageLayout,
-  Section,
-  type StatItem,
-  StatList,
-} from "@texturehq/edges";
+import "../../detail-page.css";
+
+import { Badge, type Column, DataTable, InteractiveMap, layer } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
-import { DataSourceLink } from "@/components/DataSourceLink";
+import { DetailEntityList } from "@/components/detail/DetailEntityList";
+import { DetailFieldList } from "@/components/detail/DetailFieldList";
+import { DetailMap } from "@/components/detail/DetailMap";
+import { DetailPageShell } from "@/components/detail/DetailPageShell";
+import { DetailRelationships } from "@/components/detail/DetailRelationships";
+import { DetailSection } from "@/components/detail/DetailSection";
+import { DetailStatGrid } from "@/components/detail/DetailStatGrid";
 import { getBalancingAuthorityBySlug, getIsoById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
   formatStates,
-  getFuelBadgeVariant,
   getFuelCategoryColor,
   getFuelCategoryLabel,
   getSegmentBadgeVariant,
@@ -137,157 +130,153 @@ export default function BADetailPage() {
     notFound();
   }
 
-  const overviewItems: StatItem[] = [
+  // Header stats band
+  const headerStats = [
+    ...(utilities.length > 0 ? [{ value: String(utilities.length), label: "Utilities" }] : []),
+    ...(!plantsLoading && baPowerPlants.length > 0
+      ? [{ value: String(baPowerPlants.length), label: "Power Plants" }]
+      : []),
+    ...(!plantsLoading && baPowerPlants.length > 0
+      ? [
+          {
+            value: formatCapacity(baPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0)),
+            label: "Total Capacity",
+          },
+        ]
+      : []),
+    ...(ba.states.length > 0 ? [{ value: String(ba.states.length), label: "States" }] : []),
+  ] as { value: string; label: string }[];
+
+  // Overview fields
+  const overviewFields = [
     { id: "shortName", label: "Short Name", value: ba.shortName },
     { id: "eiaCode", label: "EIA Code", value: ba.eiaCode ?? null, copyable: true },
     { id: "states", label: "States", value: formatStates(ba.states) },
-    ...(iso ? [{ id: "iso", label: "ISO", value: iso.shortName, href: `/explore?view=iso&slug=${iso.slug}` }] : []),
-    {
-      id: "website",
-      label: "Website",
-      value: ba.website ? safeHostname(ba.website) : null,
-      href: ba.website ?? undefined,
-    },
+    ...(ba.website ? [{ id: "website", label: "Website", value: safeHostname(ba.website), href: ba.website }] : []),
   ];
 
+  // Grid relationships
+  const gridRelItems = [
+    ...(iso ? [{ label: "ISO", name: iso.shortName, href: `/explore?view=iso&slug=${iso.slug}` }] : []),
+  ];
+
+  // Power plant entity list items
+  const plantListItems = baPowerPlants.slice(0, 30).map((plant) => ({
+    href: `/power-plants/${plant.slug}`,
+    name: plant.name,
+    dotColor: getFuelCategoryColor(plant.fuelCategory),
+    badge: <span className="cg-tag">{getFuelCategoryLabel(plant.fuelCategory)}</span>,
+    meta: formatCapacity(plant.totalCapacityMw),
+  }));
+
+  const totalPlantCapacity = baPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0);
+
+  let sectionNum = 1;
+  const nextNum = () => String(sectionNum++).padStart(2, "0");
+
   return (
-    <PageLayout maxWidth={896}>
-      <PageLayout.Header
-        title={ba.name}
-        breadcrumbs={[
-          { label: "Grid Operators", href: "/explore?view=grid-operators" },
-          { label: ba.slug, copyable: true, copyValue: ba.slug },
-        ]}
-        actions={
-          <EntityActions
-            entityType="balancing_authority"
-            entityId={ba.id ?? ba.slug}
-            entitySlug={ba.slug}
-            entityName={ba.name}
-            currentValues={ba as unknown as Record<string, unknown>}
-          />
-        }
-      />
-      <DataSourceLink paths={["data/balancing-authorities.json"]} className="px-4 sm:px-6 pb-2" />
-      <PageLayout.Content>
-        {/* Overview */}
-        <Section id="overview" navLabel="Overview" title="Overview" withDivider>
-          <Card variant="outlined">
-            <Card.Content>
-              <div className="mb-6">
-                <div className="text-lg font-semibold">{ba.name}</div>
-                <div className="text-sm text-text-muted">{ba.shortName}</div>
-              </div>
-              <StatList showDividers items={overviewItems} />
-            </Card.Content>
-          </Card>
-        </Section>
-
-        {/* Territory Map */}
-        <Section id="territory" navLabel="Territory" title="Balancing Authority Region" withDivider>
-          <Card variant="outlined" className="p-0 overflow-hidden">
-            <div className="h-[280px] sm:h-[400px]">
-              {territoryLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader size={32} />
-                </div>
-              ) : (
-                <InteractiveMap
-                  {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
-                    mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
-                  })}
-                  initialViewState={mapViewState}
-                  mapType="neutral"
-                  controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
-                  layers={
-                    territoryGeoJSON
-                      ? [
-                          layer.geojson({
-                            id: "ba-territory",
-                            data: territoryGeoJSON,
-                            renderAs: "fill",
-                            style: {
-                              color: { token: "brand-primary" },
-                              fillOpacity: 0.25,
-                              borderWidth: 3,
-                              borderColor: { token: "brand-primary" },
-                            },
-                          }),
-                        ]
-                      : []
-                  }
-                />
-              )}
-            </div>
-          </Card>
-        </Section>
-
-        {/* Utilities */}
-        <Section id="utilities" navLabel="Utilities" title="Utilities" withDivider>
-          {utilityRows.length > 0 ? (
+    <DetailPageShell
+      kicker="Balancing Authority"
+      entityName={ba.name}
+      subtitle={
+        <>
+          <span>{ba.shortName}</span>
+          {ba.website && (
             <>
-              <DataControls resultsCount={{ count: utilityRows.length }} />
-              <Card className="p-0 overflow-hidden">
-                <DataTable
-                  data={utilityRows}
-                  columns={utilityColumns}
-                  mobileBreakpoint="md"
-                  isLoading={false}
-                  onRowClick={handleRowClick}
-                />
-              </Card>
+              <span className="sep">·</span>
+              <a href={ba.website} target="_blank" rel="noopener noreferrer">
+                {safeHostname(ba.website)}
+              </a>
             </>
-          ) : (
-            <EmptyState
-              icon="Lightning"
-              title="No utilities"
-              description="No utilities are linked to this balancing authority."
-            />
           )}
-        </Section>
+        </>
+      }
+      breadcrumbs={[{ label: "Grid Operators", href: "/explore?view=grid-operators" }, { label: ba.slug }]}
+      actions={
+        <EntityActions
+          entityType="balancing_authority"
+          entityId={ba.id ?? ba.slug}
+          entitySlug={ba.slug}
+          entityName={ba.name}
+          currentValues={ba as unknown as Record<string, unknown>}
+        />
+      }
+      dataSourcePaths={["data/balancing-authorities.json"]}
+    >
+      {/* Key stats band */}
+      {headerStats.length > 0 && <DetailStatGrid stats={headerStats} />}
 
-        {/* Power Plants */}
-        {!plantsLoading && baPowerPlants.length > 0 && (
-          <Section id="power-plants" navLabel="Plants" title="Power Plants" withDivider>
-            <div className="text-sm text-text-muted mb-3">
-              {baPowerPlants.length} power plant{baPowerPlants.length !== 1 ? "s" : ""} ·{" "}
-              {formatCapacity(baPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0))} total capacity
-            </div>
-            <Card variant="outlined">
-              <Card.Content>
-                <div className="space-y-2">
-                  {baPowerPlants.slice(0, 30).map((plant) => (
-                    <Link
-                      key={plant.id}
-                      href={`/power-plants/${plant.slug}`}
-                      className="flex items-center justify-between p-2 rounded-md hover:bg-background-surface-hover transition-colors"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: getFuelCategoryColor(plant.fuelCategory) }}
-                        />
-                        <span className="text-sm font-medium text-text-body truncate">{plant.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                        <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(plant.fuelCategory)}>
-                          {getFuelCategoryLabel(plant.fuelCategory)}
-                        </Badge>
-                        <span className="text-xs text-text-muted">{formatCapacity(plant.totalCapacityMw)}</span>
-                      </div>
-                    </Link>
-                  ))}
-                  {baPowerPlants.length > 30 && (
-                    <div className="text-xs text-text-muted text-center pt-2">
-                      + {baPowerPlants.length - 30} more power plants
-                    </div>
-                  )}
-                </div>
-              </Card.Content>
-            </Card>
-          </Section>
-        )}
-      </PageLayout.Content>
-    </PageLayout>
+      {/* 01 · Overview */}
+      <DetailSection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
+        <DetailFieldList items={overviewFields} columns={2} />
+      </DetailSection>
+
+      {/* 02 · Territory */}
+      <DetailSection id="territory" kicker={`${nextNum()} · Territory`} title="Balancing Authority Region">
+        <DetailMap loading={territoryLoading}>
+          <InteractiveMap
+            {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
+              mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+            })}
+            initialViewState={mapViewState}
+            mapType="neutral"
+            controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+            layers={
+              territoryGeoJSON
+                ? [
+                    layer.geojson({
+                      id: "ba-territory",
+                      data: territoryGeoJSON,
+                      renderAs: "fill",
+                      style: {
+                        color: { token: "brand-primary" },
+                        fillOpacity: 0.25,
+                        borderWidth: 3,
+                        borderColor: { token: "brand-primary" },
+                      },
+                    }),
+                  ]
+                : []
+            }
+          />
+        </DetailMap>
+      </DetailSection>
+
+      {/* 03 · Grid Relationships */}
+      {gridRelItems.length > 0 && (
+        <DetailSection id="grid" kicker={`${nextNum()} · Grid`} title="Grid Relationships">
+          <DetailRelationships items={gridRelItems} />
+        </DetailSection>
+      )}
+
+      {/* 04 · Utilities */}
+      {utilityRows.length > 0 && (
+        <DetailSection id="utilities" kicker={`${nextNum()} · Utilities`} title="Utilities">
+          <div className="detail-table-meta">
+            {utilityRows.length} utilit{utilityRows.length === 1 ? "y" : "ies"}
+          </div>
+          <div className="detail-table-wrap">
+            <DataTable
+              data={utilityRows}
+              columns={utilityColumns}
+              mobileBreakpoint="md"
+              isLoading={false}
+              onRowClick={handleRowClick}
+            />
+          </div>
+        </DetailSection>
+      )}
+
+      {/* 05 · Power Plants */}
+      {!plantsLoading && baPowerPlants.length > 0 && (
+        <DetailSection id="power-plants" kicker={`${nextNum()} · Generation`} title="Power Plants">
+          <DetailEntityList
+            items={plantListItems}
+            maxItems={30}
+            headerMeta={`${baPowerPlants.length} plant${baPowerPlants.length !== 1 ? "s" : ""} · ${formatCapacity(totalPlantCapacity)} total capacity`}
+          />
+        </DetailSection>
+      )}
+    </DetailPageShell>
   );
 }
