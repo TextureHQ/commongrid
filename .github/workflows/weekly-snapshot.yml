@@ -1,0 +1,276 @@
+name: Weekly Database Snapshot
+
+on:
+  schedule:
+    - cron: '0 4 * * 0' # Sunday 4:00 AM UTC
+  workflow_dispatch: {} # Manual trigger
+
+permissions:
+  contents: write
+
+env:
+  SNAPSHOT_DIR: /tmp/commongrid-snapshot
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Set snapshot tag
+        id: tag
+        run: |
+          YEAR=$(date -u +%Y)
+          WEEK=$(date -u +%V)
+          TAG="snapshot/${YEAR}-W${WEEK}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "year=${YEAR}" >> "$GITHUB_OUTPUT"
+          echo "week=${WEEK}" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          echo "Snapshot tag: ${TAG}"
+
+      - name: Create snapshot directory
+        run: mkdir -p "$SNAPSHOT_DIR"
+
+      - name: Export full database (SQL)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Dumping database..."
+          pg_dump "$DATABASE_URL" \
+            --no-owner \
+            --no-privileges \
+            --clean \
+            --if-exists \
+            --format=plain \
+            | gzip -9 > "$SNAPSHOT_DIR/commongrid-${{ steps.tag.outputs.date }}.sql.gz"
+          echo "SQL dump size: $(du -h "$SNAPSHOT_DIR/commongrid-${{ steps.tag.outputs.date }}.sql.gz" | cut -f1)"
+
+      - name: Export GeoJSON — Utilities
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          psql "$DATABASE_URL" -t -A -c "
+            SELECT json_build_object(
+              'type', 'FeatureCollection',
+              'features', COALESCE(json_agg(
+                json_build_object(
+                  'type', 'Feature',
+                  'properties', json_build_object(
+                    'id', u.id,
+                    'name', u.name,
+                    'slug', u.slug,
+                    'eia_id', u.eia_id,
+                    'ownership_type', u.ownership_type,
+                    'state', r.state,
+                    'customers', r.customers
+                  ),
+                  'geometry', ST_AsGeoJSON(t.geom)::json
+                )
+              ), '[]'::json)
+            )
+            FROM utilities u
+            JOIN regions r ON u.service_territory_id = r.id
+            LEFT JOIN territories t ON t.region_id = r.id AND t.deleted_at IS NULL
+            WHERE u.deleted_at IS NULL
+          " | gzip -9 > "$SNAPSHOT_DIR/utilities.geojson.gz"
+          echo "Utilities GeoJSON size: $(du -h "$SNAPSHOT_DIR/utilities.geojson.gz" | cut -f1)"
+
+      - name: Export GeoJSON — EV Stations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          psql "$DATABASE_URL" -t -A -c "
+            SELECT json_build_object(
+              'type', 'FeatureCollection',
+              'features', COALESCE(json_agg(
+                json_build_object(
+                  'type', 'Feature',
+                  'properties', json_build_object(
+                    'id', id,
+                    'name', station_name,
+                    'network', ev_network,
+                    'connector_types', ev_connector_types,
+                    'level2_count', ev_level2_evse_num,
+                    'dcfast_count', ev_dc_fast_num,
+                    'city', city,
+                    'state', state,
+                    'zip', zip,
+                    'status', status_code
+                  ),
+                  'geometry', json_build_object(
+                    'type', 'Point',
+                    'coordinates', json_build_array(longitude, latitude)
+                  )
+                )
+              ), '[]'::json)
+            )
+            FROM ev_stations
+            WHERE deleted_at IS NULL
+          " | gzip -9 > "$SNAPSHOT_DIR/ev-stations.geojson.gz"
+          echo "EV stations GeoJSON size: $(du -h "$SNAPSHOT_DIR/ev-stations.geojson.gz" | cut -f1)"
+
+      - name: Export GeoJSON — Power Plants
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          psql "$DATABASE_URL" -t -A -c "
+            SELECT json_build_object(
+              'type', 'FeatureCollection',
+              'features', COALESCE(json_agg(
+                json_build_object(
+                  'type', 'Feature',
+                  'properties', json_build_object(
+                    'id', id,
+                    'name', plant_name,
+                    'slug', slug,
+                    'utility_id', utility_id,
+                    'state', state,
+                    'primary_fuel', primary_fuel,
+                    'nameplate_capacity_mw', nameplate_capacity_mw,
+                    'status', status
+                  ),
+                  'geometry', json_build_object(
+                    'type', 'Point',
+                    'coordinates', json_build_array(longitude, latitude)
+                  )
+                )
+              ), '[]'::json)
+            )
+            FROM power_plants
+            WHERE deleted_at IS NULL
+          " | gzip -9 > "$SNAPSHOT_DIR/power-plants.geojson.gz"
+          echo "Power plants GeoJSON size: $(du -h "$SNAPSHOT_DIR/power-plants.geojson.gz" | cut -f1)"
+
+      - name: Export GeoJSON — Transmission Lines
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          psql "$DATABASE_URL" -t -A -c "
+            SELECT json_build_object(
+              'type', 'FeatureCollection',
+              'features', COALESCE(json_agg(
+                json_build_object(
+                  'type', 'Feature',
+                  'properties', json_build_object(
+                    'id', id,
+                    'name', name,
+                    'slug', slug,
+                    'owner', owner,
+                    'voltage_kv', voltage_kv,
+                    'type', type,
+                    'status', status
+                  ),
+                  'geometry', ST_AsGeoJSON(geom)::json
+                )
+              ), '[]'::json)
+            )
+            FROM transmission_lines
+            WHERE deleted_at IS NULL
+          " | gzip -9 > "$SNAPSHOT_DIR/transmission-lines.geojson.gz"
+          echo "Transmission lines GeoJSON size: $(du -h "$SNAPSHOT_DIR/transmission-lines.geojson.gz" | cut -f1)"
+
+      - name: Export GeoJSON — Pricing Nodes
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          psql "$DATABASE_URL" -t -A -c "
+            SELECT json_build_object(
+              'type', 'FeatureCollection',
+              'features', COALESCE(json_agg(
+                json_build_object(
+                  'type', 'Feature',
+                  'properties', json_build_object(
+                    'id', id,
+                    'name', name,
+                    'slug', slug,
+                    'iso_id', iso_id,
+                    'node_type', node_type,
+                    'zone', zone,
+                    'status', status
+                  ),
+                  'geometry', json_build_object(
+                    'type', 'Point',
+                    'coordinates', json_build_array(longitude, latitude)
+                  )
+                )
+              ), '[]'::json)
+            )
+            FROM pricing_nodes
+            WHERE deleted_at IS NULL
+          " | gzip -9 > "$SNAPSHOT_DIR/pricing-nodes.geojson.gz"
+          echo "Pricing nodes GeoJSON size: $(du -h "$SNAPSHOT_DIR/pricing-nodes.geojson.gz" | cut -f1)"
+
+      - name: Generate manifest
+        run: |
+          cd "$SNAPSHOT_DIR"
+          echo "# CommonGrid Snapshot — ${{ steps.tag.outputs.date }} (W${{ steps.tag.outputs.week }})" > MANIFEST.md
+          echo "" >> MANIFEST.md
+          echo "## Files" >> MANIFEST.md
+          echo "" >> MANIFEST.md
+          for f in *.gz; do
+            SIZE=$(du -h "$f" | cut -f1)
+            echo "- \`$f\` — $SIZE" >> MANIFEST.md
+          done
+          echo "" >> MANIFEST.md
+          echo "## License" >> MANIFEST.md
+          echo "" >> MANIFEST.md
+          echo "Released under [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/)." >> MANIFEST.md
+          echo "" >> MANIFEST.md
+          echo "Generated automatically by [CommonGrid](https://commongrid.info) weekly snapshot workflow." >> MANIFEST.md
+          cat MANIFEST.md
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          DATE="${{ steps.tag.outputs.date }}"
+          WEEK="${{ steps.tag.outputs.week }}"
+          YEAR="${{ steps.tag.outputs.year }}"
+
+          # Build release notes
+          NOTES="## CommonGrid Weekly Snapshot
+
+          **Date:** ${DATE} (Week ${WEEK}, ${YEAR})
+          **License:** [ODbL 1.0](https://opendatacommons.org/licenses/odbl/)
+
+          ### Contents
+
+          | File | Description |
+          |------|-------------|
+          | \`commongrid-${DATE}.sql.gz\` | Full database dump (pg_dump, gzipped) |
+          | \`utilities.geojson.gz\` | All utilities with service territory geometry |
+          | \`ev-stations.geojson.gz\` | EV charging stations (point locations) |
+          | \`power-plants.geojson.gz\` | Power plants (point locations) |
+          | \`transmission-lines.geojson.gz\` | Transmission lines (line geometry) |
+          | \`pricing-nodes.geojson.gz\` | ISO/RTO pricing nodes (point locations) |
+
+          ### Usage
+
+          \`\`\`bash
+          # Restore the SQL dump
+          gunzip -c commongrid-${DATE}.sql.gz | psql your_database
+
+          # Load GeoJSON into ogr2ogr / QGIS / tippecanoe
+          gunzip utilities.geojson.gz
+          ogr2ogr -f PostgreSQL PG:dbname=mydb utilities.geojson
+          \`\`\`
+
+          ---
+          Generated automatically by CommonGrid. Browse the data at https://commongrid.info"
+
+          gh release create "$TAG" \
+            --title "Weekly Snapshot — ${DATE}" \
+            --notes "$NOTES" \
+            "$SNAPSHOT_DIR"/commongrid-*.sql.gz \
+            "$SNAPSHOT_DIR"/utilities.geojson.gz \
+            "$SNAPSHOT_DIR"/ev-stations.geojson.gz \
+            "$SNAPSHOT_DIR"/power-plants.geojson.gz \
+            "$SNAPSHOT_DIR"/transmission-lines.geojson.gz \
+            "$SNAPSHOT_DIR"/pricing-nodes.geojson.gz
