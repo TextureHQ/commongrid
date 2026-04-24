@@ -52,7 +52,5 @@ export function usePrograms(): UseProgramsResult {
 
 /** Filter programs that belong to a given utility slug */
 export function filterProgramsByUtility(programs: ClientProgram[], utilitySlug: string): ClientProgram[] {
-  return programs.filter((p) =>
-    p.organizations.some((o) => o.entityId === utilitySlug)
-  );
+  return programs.filter((p) => p.organizations.some((o) => o.entityId === utilitySlug));
 }

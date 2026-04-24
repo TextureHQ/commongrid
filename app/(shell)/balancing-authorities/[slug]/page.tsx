@@ -28,7 +28,7 @@ import {
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
 import { filterByBA, usePowerPlants } from "@/lib/power-plants";
-import { filterProgramsByUtility, usePrograms } from "@/lib/programs-client";
+import { usePrograms } from "@/lib/programs-client";
 import { useUtilities } from "@/lib/utilities-client";
 
 interface UtilityRow extends Record<string, unknown> {
@@ -75,10 +75,7 @@ export default function BADetailPage() {
     return allPrograms.filter((p) => p.organizations.some((o) => o.entityId && slugs.has(o.entityId)));
   }, [utilities, allPrograms]);
 
-  const totalCustomers = useMemo(
-    () => utilities.reduce((sum, u) => sum + (u.customerCount ?? 0), 0),
-    [utilities]
-  );
+  const totalCustomers = useMemo(() => utilities.reduce((sum, u) => sum + (u.customerCount ?? 0), 0), [utilities]);
 
   const fuelMix = useMemo(() => {
     if (baPowerPlants.length === 0) return [];
@@ -324,7 +321,8 @@ export default function BADetailPage() {
                   {getFuelCategoryLabel(item.fuel)}
                 </div>
                 <div className="detail-field-value">
-                  {formatCapacity(item.capacity)} · {item.count} plant{item.count !== 1 ? "s" : ""} · {item.pct.toFixed(1)}%
+                  {formatCapacity(item.capacity)} · {item.count} plant{item.count !== 1 ? "s" : ""} ·{" "}
+                  {item.pct.toFixed(1)}%
                 </div>
               </div>
             ))}

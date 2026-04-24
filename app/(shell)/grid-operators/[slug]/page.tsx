@@ -166,14 +166,8 @@ export default function UtilityDetailPage() {
   );
 
   const { lines: allLines, isLoading: linesLoading } = useTransmissionLines();
-  const utilityLines = useMemo(
-    () => (utility ? filterLinesByOwner(allLines, utility.name) : []),
-    [utility, allLines]
-  );
-  const linesTotalMiles = useMemo(
-    () => utilityLines.reduce((sum, l) => sum + (l.lengthMiles || 0), 0),
-    [utilityLines]
-  );
+  const utilityLines = useMemo(() => (utility ? filterLinesByOwner(allLines, utility.name) : []), [utility, allLines]);
+  const linesTotalMiles = useMemo(() => utilityLines.reduce((sum, l) => sum + (l.lengthMiles || 0), 0), [utilityLines]);
 
   const utilityColumns: Column<UtilityRow>[] = useMemo(
     () => [
