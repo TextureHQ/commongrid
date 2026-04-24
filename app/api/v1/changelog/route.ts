@@ -97,10 +97,7 @@ async function handleGet(req: Request, _ctx: RouteContext) {
 
       const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-      const countResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(entityVersions)
-        .where(where);
+      const countResult = await db.select({ count: sql<number>`count(*)` }).from(entityVersions).where(where);
 
       const total = Number(countResult[0]?.count ?? 0);
 
@@ -123,11 +120,10 @@ async function handleGet(req: Request, _ctx: RouteContext) {
           isoTimestamp: (row.changedAt ?? new Date()).toISOString(),
         }));
 
-        return jsonResponse(
-          { entries, total, hasMore: offset + limit < total, source: "database" },
-          200,
-          { ...cors, "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" },
-        );
+        return jsonResponse({ entries, total, hasMore: offset + limit < total, source: "database" }, 200, {
+          ...cors,
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        });
       }
     } catch {
       // Database unavailable or empty — fall through to static

@@ -1,5 +1,5 @@
-import { unstable_cache } from 'next/cache';
-import Link from 'next/link';
+import { unstable_cache } from "next/cache";
+import Link from "next/link";
 
 interface GHRelease {
   tag_name: string;
@@ -16,51 +16,48 @@ interface GHRelease {
 const fetchSnapshots = unstable_cache(
   async () => {
     // Fetch all releases with snapshot/ tag prefix
-    const response = await fetch(
-      'https://api.github.com/repos/TextureHQ/commongrid/releases',
-      {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          // GitHub API requires User-Agent
-          'User-Agent': 'commongrid-app',
-        },
-        // Cache for 1 hour
-        next: { revalidate: 3600 },
-      }
-    );
+    const response = await fetch("https://api.github.com/repos/TextureHQ/commongrid/releases", {
+      headers: {
+        Accept: "application/vnd.github.v3+json",
+        // GitHub API requires User-Agent
+        "User-Agent": "commongrid-app",
+      },
+      // Cache for 1 hour
+      next: { revalidate: 3600 },
+    });
 
     if (!response.ok) {
       throw new Error(`GitHub API error: ${response.status}`);
     }
 
     const releases: GHRelease[] = await response.json();
-    
+
     // Filter to snapshot releases only and sort by date (newest first)
     return releases
-      .filter(r => r.tag_name.startsWith('snapshot/'))
+      .filter((r) => r.tag_name.startsWith("snapshot/"))
       .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
   },
-  ['snapshots'],
+  ["snapshots"],
   {
-    tags: ['snapshots'],
+    tags: ["snapshots"],
     revalidate: 3600, // 1 hour
   }
 );
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / Math.pow(k, i)) * 10) / 10 + ' ' + sizes[i];
+  return `${Math.round((bytes / k ** i) * 10) / 10} ${sizes[i]}`;
 }
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 }
 
@@ -68,7 +65,7 @@ function parseWeekTag(tag: string): { year: number; week: number } {
   // snapshot/YYYY-WNN
   const match = tag.match(/snapshot\/(\d{4})-W(\d{2})/);
   if (!match) return { year: 2026, week: 0 };
-  return { year: parseInt(match[1]), week: parseInt(match[2]) };
+  return { year: parseInt(match[1], 10), week: parseInt(match[2], 10) };
 }
 
 export default async function SnapshotsPage() {
@@ -78,7 +75,7 @@ export default async function SnapshotsPage() {
   try {
     snapshots = await fetchSnapshots();
   } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load snapshots';
+    error = err instanceof Error ? err.message : "Failed to load snapshots";
   }
 
   return (
@@ -86,9 +83,7 @@ export default async function SnapshotsPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-            Database Snapshots
-          </h1>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900 dark:text-white">Database Snapshots</h1>
           <p className="text-lg text-gray-600 dark:text-gray-300">
             Download weekly backups of the CommonGrid database in SQL and GeoJSON formats.
           </p>
@@ -101,7 +96,7 @@ export default async function SnapshotsPage() {
               <strong>Error:</strong> {error}
             </p>
             <p className="text-sm text-red-700 dark:text-red-400 mt-2">
-              Please try again later or{' '}
+              Please try again later or{" "}
               <Link href="/" className="underline hover:no-underline">
                 return home
               </Link>
@@ -125,8 +120,8 @@ export default async function SnapshotsPage() {
           <div className="space-y-6">
             {snapshots.map((release) => {
               const { year, week } = parseWeekTag(release.tag_name);
-              const sqlAsset = release.assets.find(a => a.name.endsWith('.sql.gz'));
-              const geoJsonAssets = release.assets.filter(a => a.name.endsWith('.geojson.gz'));
+              const sqlAsset = release.assets.find((a) => a.name.endsWith(".sql.gz"));
+              const geoJsonAssets = release.assets.filter((a) => a.name.endsWith(".geojson.gz"));
               const totalSize = release.assets.reduce((sum, a) => sum + a.size, 0);
 
               return (
@@ -140,16 +135,12 @@ export default async function SnapshotsPage() {
                       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
                         Week {week}, {year}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {formatDate(release.published_at)}
-                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(release.published_at)}</p>
                     </div>
                     <div className="mt-2 sm:mt-0 flex items-center gap-4">
                       <div className="text-right">
                         <p className="text-sm text-gray-500 dark:text-gray-400">Total size</p>
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          {formatBytes(totalSize)}
-                        </p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{formatBytes(totalSize)}</p>
                       </div>
                     </div>
                   </div>
@@ -160,9 +151,7 @@ export default async function SnapshotsPage() {
                     {sqlAsset && (
                       <div className="bg-gray-50 dark:bg-gray-800 rounded p-4 flex items-center justify-between">
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white text-sm">
-                            💾 {sqlAsset.name}
-                          </p>
+                          <p className="font-medium text-gray-900 dark:text-white text-sm">💾 {sqlAsset.name}</p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
                             {formatBytes(sqlAsset.size)} • PostgreSQL custom format
                           </p>
@@ -190,11 +179,9 @@ export default async function SnapshotsPage() {
                             >
                               <div>
                                 <p className="font-medium text-gray-900 dark:text-white text-sm">
-                                  🗺️ {asset.name.replace('.geojson.gz', '')}
+                                  🗺️ {asset.name.replace(".geojson.gz", "")}
                                 </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400">
-                                  {formatBytes(asset.size)}
-                                </p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400">{formatBytes(asset.size)}</p>
                               </div>
                               <a
                                 href={asset.download_url}
@@ -216,15 +203,14 @@ export default async function SnapshotsPage() {
 
         {/* Info section */}
         <div className="mt-12 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-3">
-            About these snapshots
-          </h3>
+          <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-3">About these snapshots</h3>
           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
             <li>
               <strong>SQL backups:</strong> Full database dumps in PostgreSQL custom format (.sql.gz)
             </li>
             <li>
-              <strong>GeoJSON layers:</strong> Spatial data for utilities, charging stations, power plants, transmission lines, and pricing nodes
+              <strong>GeoJSON layers:</strong> Spatial data for utilities, charging stations, power plants, transmission
+              lines, and pricing nodes
             </li>
             <li>
               <strong>Frequency:</strong> New snapshots every Sunday at 4:00 AM UTC

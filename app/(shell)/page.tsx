@@ -1331,9 +1331,7 @@ export default function LandingPage() {
 
               <div className="dev-snapshot">
                 <span>Weekly snapshot &middot; .sql.gz + .geojson layers</span>
-                <Link href="/snapshots">
-                  Download &rarr;
-                </Link>
+                <Link href="/snapshots">Download &rarr;</Link>
               </div>
             </div>
           </div>
