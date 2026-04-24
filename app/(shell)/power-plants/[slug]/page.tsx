@@ -1,28 +1,18 @@
 "use client";
 
-import {
-  Badge,
-  Card,
-  InteractiveMap,
-  Loader,
-  layer,
-  PageLayout,
-  Section,
-  type StatItem,
-  StatList,
-} from "@texturehq/edges";
+import "../../detail-page.css";
+
+import { InteractiveMap, Loader, layer } from "@texturehq/edges";
 import { notFound, useParams } from "next/navigation";
 import { EntityActions } from "@/components/contributions/EntityActions";
-import { DataSourceLink } from "@/components/DataSourceLink";
+import { DetailFieldList } from "@/components/detail/DetailFieldList";
+import { DetailMap } from "@/components/detail/DetailMap";
+import { DetailPageShell } from "@/components/detail/DetailPageShell";
+import { DetailRelationships } from "@/components/detail/DetailRelationships";
+import { DetailSection } from "@/components/detail/DetailSection";
+import { DetailStatGrid } from "@/components/detail/DetailStatGrid";
 import { getBalancingAuthorityById } from "@/lib/data";
-import {
-  formatCapacity,
-  formatStateName,
-  getFuelBadgeVariant,
-  getFuelCategoryColor,
-  getFuelCategoryLabel,
-  getPlantStatusBadgeVariant,
-} from "@/lib/formatting";
+import { formatCapacity, formatStateName, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
 import { usePowerPlant } from "@/lib/power-plants";
 import { useUtilities } from "@/lib/utilities-client";
 
@@ -33,12 +23,11 @@ export default function PowerPlantDetailPage() {
 
   if (isLoading) {
     return (
-      <PageLayout maxWidth={896}>
-        <PageLayout.Header title="Power Plant" breadcrumbs={[{ label: "Power Plants", href: "/power-plants" }]} />
-        <div className="flex items-center justify-center py-24">
+      <div className="cg-detail">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "96px 0" }}>
           <Loader size={32} />
         </div>
-      </PageLayout>
+      </div>
     );
   }
 
@@ -66,23 +55,33 @@ export default function PowerPlantDetailPage() {
   const isProposedOnly = plant.status === "proposed";
   const effectiveCapacity = isProposedOnly ? plant.proposedCapacityMw : plant.totalCapacityMw;
 
-  const overviewItems: StatItem[] = [
+  // Header stats band
+  const headerStats = [
+    {
+      value: formatCapacity(effectiveCapacity),
+      label: isProposedOnly ? "Proposed Capacity" : "Nameplate Capacity",
+    },
+    ...(!isProposedOnly && plant.generatorCount ? [{ value: String(plant.generatorCount), label: "Generators" }] : []),
+    ...(!isProposedOnly && plant.operatingYear
+      ? [{ value: String(plant.operatingYear), label: "Operating Since" }]
+      : []),
+    ...(isProposedOnly && plant.proposedOnlineYear
+      ? [{ value: String(plant.proposedOnlineYear), label: "Expected Online" }]
+      : []),
+  ].filter((s) => s.value !== null && s.value !== undefined) as { value: string; label: string }[];
+
+  // Overview fields
+  const overviewFields = [
     { id: "plantCode", label: "Plant Code", value: plant.plantCode, copyable: true },
     {
       id: "fuelType",
       label: "Fuel Type",
-      value: (
-        <Badge variant={getFuelBadgeVariant(plant.fuelCategory)}>{getFuelCategoryLabel(plant.fuelCategory)}</Badge>
-      ),
+      value: <span className="cg-tag">{getFuelCategoryLabel(plant.fuelCategory)}</span>,
     },
     {
       id: "status",
       label: "Status",
-      value: (
-        <Badge variant={getPlantStatusBadgeVariant(plant.status)}>
-          {plant.status === "operable" ? "Operable" : "Proposed"}
-        </Badge>
-      ),
+      value: <span className="cg-tag">{plant.status === "operable" ? "Operable" : "Proposed"}</span>,
     },
     {
       id: "capacity",
@@ -120,136 +119,130 @@ export default function PowerPlantDetailPage() {
     },
   ];
 
+  // Grid relationships
+  const hasRelationships = utility || plant.utilityName || ba || plant.baCode;
+  const relationshipItems = [
+    ...(utility || plant.utilityName
+      ? [
+          {
+            label: "Utility / Operator",
+            name: utility ? utility.name : plant.utilityName,
+            href: utility
+              ? `/grid-operators/${utility.slug}`
+              : `/grid-operators?q=${encodeURIComponent(plant.utilityName)}`,
+          },
+        ]
+      : []),
+    ...(ba || plant.baCode
+      ? [
+          {
+            label: "Balancing Authority",
+            name: ba ? ba.shortName : (plant.baCode ?? ""),
+            ...(ba ? { href: `/balancing-authorities/${ba.slug}` } : {}),
+          },
+        ]
+      : []),
+  ];
+
+  let sectionNum = 1;
+  const nextNum = () => String(sectionNum++).padStart(2, "0");
+
   return (
-    <PageLayout maxWidth={896}>
-      <PageLayout.Header
-        title={plant.name}
-        breadcrumbs={[
-          { label: "Power Plants", href: "/power-plants" },
-          { label: plant.slug, copyable: true, copyValue: plant.slug },
-        ]}
-        actions={
-          <EntityActions
-            entityType="power_plant"
-            entityId={plant.id ?? plant.slug}
-            entitySlug={plant.slug}
-            entityName={plant.name}
-            currentValues={plant as unknown as Record<string, unknown>}
-          />
-        }
-      />
-      <DataSourceLink paths={["data/power-plants.json"]} className="px-4 sm:px-6 pb-2" />
-      <PageLayout.Content>
-        <Section id="overview" navLabel="Overview" title="Overview" withDivider>
-          <Card variant="outlined">
-            <Card.Content>
-              <div className="flex items-center gap-3 mb-6">
-                <span
-                  className="w-4 h-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: getFuelCategoryColor(plant.fuelCategory) }}
-                />
-                <div>
-                  <div className="text-lg font-semibold">{plant.name}</div>
-                  <div className="text-sm text-text-muted">{plant.utilityName}</div>
-                </div>
+    <DetailPageShell
+      kicker="Power Plant"
+      kickerDotColor={getFuelCategoryColor(plant.fuelCategory)}
+      entityName={plant.name}
+      subtitle={
+        <>
+          {plant.utilityName && <span>{plant.utilityName}</span>}
+          {plant.utilityName && <span className="sep">·</span>}
+          <span className="cg-tag">{plant.status === "operable" ? "Operable" : "Proposed"}</span>
+          <span className="sep">·</span>
+          <span className="cg-tag">{getFuelCategoryLabel(plant.fuelCategory)}</span>
+        </>
+      }
+      breadcrumbs={[{ label: "Power Plants", href: "/power-plants" }, { label: plant.slug }]}
+      actions={
+        <EntityActions
+          entityType="power_plant"
+          entityId={plant.id ?? plant.slug}
+          entitySlug={plant.slug}
+          entityName={plant.name}
+          currentValues={plant as unknown as Record<string, unknown>}
+        />
+      }
+      dataSourcePaths={["data/power-plants.json"]}
+    >
+      {/* Key stats band */}
+      {headerStats.length > 0 && <DetailStatGrid stats={headerStats} />}
+
+      {/* 01 · Overview */}
+      <DetailSection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
+        <DetailFieldList items={overviewFields} columns={2} />
+      </DetailSection>
+
+      {/* 02 · Technologies */}
+      {plant.technologies.length > 0 && (
+        <DetailSection id="technologies" kicker={`${nextNum()} · Technologies`} title="Technologies">
+          <div className="cg-tags">
+            {plant.technologies.map((tech) => (
+              <span key={tech} className="cg-tag">
+                {tech}
+              </span>
+            ))}
+          </div>
+          {plant.energySources.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <div className="detail-list-meta">Energy Sources</div>
+              <div className="cg-tags">
+                {plant.energySources.map((source) => (
+                  <span key={source} className="cg-tag">
+                    {source}
+                  </span>
+                ))}
               </div>
-              <StatList layout="two-column" showDividers items={overviewItems} />
-            </Card.Content>
-          </Card>
-        </Section>
-
-        {plant.technologies.length > 0 && (
-          <Section id="technologies" navLabel="Technologies" title="Technologies" withDivider>
-            <Card variant="outlined">
-              <Card.Content>
-                <div className="flex flex-wrap gap-2">
-                  {plant.technologies.map((tech) => (
-                    <Badge key={tech} size="sm" shape="pill" variant="default">
-                      {tech}
-                    </Badge>
-                  ))}
-                </div>
-                {plant.energySources.length > 0 && (
-                  <div className="mt-4">
-                    <div className="text-sm text-text-muted mb-2">Energy Sources</div>
-                    <div className="flex flex-wrap gap-2">
-                      {plant.energySources.map((source) => (
-                        <Badge key={source} size="sm" shape="pill" variant="info">
-                          {source}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </Card.Content>
-            </Card>
-          </Section>
-        )}
-
-        <Section id="location" navLabel="Location" title="Location" withDivider>
-          <Card variant="outlined" className="p-0 overflow-hidden">
-            <div className="h-[280px] sm:h-[400px]">
-              <InteractiveMap
-                {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
-                  mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
-                })}
-                initialViewState={{
-                  longitude: plant.longitude,
-                  latitude: plant.latitude,
-                  zoom: 10,
-                }}
-                mapType="neutral"
-                controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
-                layers={[
-                  layer.geojson({
-                    id: "plant-location",
-                    data: pointGeoJSON,
-                    renderAs: "circle",
-                    style: {
-                      color: { hex: getFuelCategoryColor(plant.fuelCategory) },
-                      radius: 8,
-                      borderWidth: 2,
-                      borderColor: { hex: "#ffffff" },
-                    },
-                  }),
-                ]}
-              />
             </div>
-          </Card>
-        </Section>
+          )}
+        </DetailSection>
+      )}
 
-        {(utility || plant.utilityName || ba || plant.baCode) && (
-          <Section id="relationships" navLabel="Relationships" title="Grid Relationships" withDivider>
-            <Card variant="outlined">
-              <Card.Content>
-                <StatList
-                  showDividers
-                  items={[
-                    ...(utility || plant.utilityName
-                      ? [
-                          {
-                            id: "utility",
-                            label: "Utility / Operator",
-                            value: utility ? utility.name : plant.utilityName,
-                            href: utility
-                              ? `/grid-operators/${utility.slug}`
-                              : `/grid-operators?q=${encodeURIComponent(plant.utilityName)}`,
-                          },
-                        ]
-                      : []),
-                    {
-                      id: "ba",
-                      label: "Balancing Authority",
-                      value: ba ? ba.shortName : (plant.baCode ?? null),
-                      ...(ba ? { href: `/balancing-authorities/${ba.slug}` } : {}),
-                    },
-                  ]}
-                />
-              </Card.Content>
-            </Card>
-          </Section>
-        )}
-      </PageLayout.Content>
-    </PageLayout>
+      {/* 03 · Location */}
+      <DetailSection id="location" kicker={`${nextNum()} · Location`} title="Location">
+        <DetailMap>
+          <InteractiveMap
+            {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
+              mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+            })}
+            initialViewState={{
+              longitude: plant.longitude,
+              latitude: plant.latitude,
+              zoom: 10,
+            }}
+            mapType="neutral"
+            controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+            layers={[
+              layer.geojson({
+                id: "plant-location",
+                data: pointGeoJSON,
+                renderAs: "circle",
+                style: {
+                  color: { hex: getFuelCategoryColor(plant.fuelCategory) },
+                  radius: 8,
+                  borderWidth: 2,
+                  borderColor: { hex: "#ffffff" },
+                },
+              }),
+            ]}
+          />
+        </DetailMap>
+      </DetailSection>
+
+      {/* 04 · Grid Relationships */}
+      {hasRelationships && (
+        <DetailSection id="relationships" kicker={`${nextNum()} · Grid`} title="Grid Relationships">
+          <DetailRelationships items={relationshipItems} />
+        </DetailSection>
+      )}
+    </DetailPageShell>
   );
 }
