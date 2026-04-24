@@ -47,7 +47,7 @@ export function DetailPageShell({
           {/* Breadcrumb */}
           <nav className="detail-breadcrumb" aria-label="Breadcrumb">
             {breadcrumbs.map((crumb, i) => (
-              <span key={i} style={{ display: "contents" }}>
+              <span key={crumb.label} style={{ display: "contents" }}>
                 {i > 0 && <span className="sep">/</span>}
                 {crumb.href ? (
                   <Link href={crumb.href}>{crumb.label}</Link>

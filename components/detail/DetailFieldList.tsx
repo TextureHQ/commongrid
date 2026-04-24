@@ -45,7 +45,7 @@ function FieldValue({ item }: { item: FieldItem }) {
       {item.value}
     </a>
   ) : (
-    <>{item.value}</>
+    item.value
   );
 
   return (
