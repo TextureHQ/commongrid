@@ -31,6 +31,8 @@ import {
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
 import { filterByUtility, usePowerPlants } from "@/lib/power-plants";
+import { filterProgramsByUtility, usePrograms } from "@/lib/programs-client";
+import { filterLinesByOwner, useTransmissionLines } from "@/lib/transmission-lines-client";
 import { useUtilities } from "@/lib/utilities-client";
 
 interface UtilityRow extends Record<string, unknown> {
@@ -156,6 +158,16 @@ export default function UtilityDetailPage() {
     () => (utility ? filterByUtility(allPlants, utility.id) : []),
     [utility, allPlants]
   );
+
+  const { programs: allPrograms, isLoading: programsLoading } = usePrograms();
+  const utilityPrograms = useMemo(
+    () => (utility ? filterProgramsByUtility(allPrograms, utility.slug) : []),
+    [utility, allPrograms]
+  );
+
+  const { lines: allLines, isLoading: linesLoading } = useTransmissionLines();
+  const utilityLines = useMemo(() => (utility ? filterLinesByOwner(allLines, utility.name) : []), [utility, allLines]);
+  const linesTotalMiles = useMemo(() => utilityLines.reduce((sum, l) => sum + (l.lengthMiles || 0), 0), [utilityLines]);
 
   const utilityColumns: Column<UtilityRow>[] = useMemo(
     () => [
@@ -509,6 +521,49 @@ export default function UtilityDetailPage() {
               onRowClick={handleRowClick}
             />
           </div>
+        </DetailSection>
+      )}
+
+      {!programsLoading && utilityPrograms.length > 0 && (
+        <DetailSection id="programs" kicker={`0${sectionNum++} · Programs`} title="Programs">
+          <div className="detail-list-meta">
+            {utilityPrograms.length} program{utilityPrograms.length !== 1 ? "s" : ""}
+          </div>
+          <DetailEntityList
+            items={utilityPrograms.map((prog) => ({
+              href: `/programs/${prog.slug}`,
+              name: prog.name,
+              badge: (
+                <Badge size="sm" shape="pill" variant={prog.status === "ACTIVE" ? "success" : "neutral"}>
+                  {prog.status}
+                </Badge>
+              ),
+              meta: prog.assetTypes.join(", "),
+            }))}
+          />
+        </DetailSection>
+      )}
+
+      {!linesLoading && utilityLines.length > 0 && (
+        <DetailSection id="transmission" kicker={`0${sectionNum++} · Transmission`} title="Transmission Lines">
+          <DetailFieldList
+            items={[
+              { id: "lineCount", label: "Total Lines", value: utilityLines.length.toLocaleString() },
+              { id: "totalMiles", label: "Total Miles", value: Math.round(linesTotalMiles).toLocaleString() },
+              {
+                id: "voltageRange",
+                label: "Voltage Range",
+                value: (() => {
+                  const voltages = utilityLines.map((l) => l.voltage).filter((v): v is number => v !== null && v > 0);
+                  if (voltages.length === 0) return null;
+                  const min = Math.min(...voltages);
+                  const max = Math.max(...voltages);
+                  return min === max ? `${min} kV` : `${min}–${max} kV`;
+                })(),
+              },
+            ]}
+            columns={2}
+          />
         </DetailSection>
       )}
 

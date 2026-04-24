@@ -20,6 +20,7 @@ import {
   formatCapacity,
   formatCustomerCount,
   formatStates,
+  getFuelBadgeVariant,
   getFuelCategoryColor,
   getFuelCategoryLabel,
   getSegmentBadgeVariant,
@@ -27,6 +28,7 @@ import {
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
 import { filterByBA, usePowerPlants } from "@/lib/power-plants";
+import { usePrograms } from "@/lib/programs-client";
 import { useUtilities } from "@/lib/utilities-client";
 
 interface UtilityRow extends Record<string, unknown> {
@@ -65,6 +67,35 @@ export default function BADetailPage() {
   );
   const { plants: allPlants, isLoading: plantsLoading } = usePowerPlants();
   const baPowerPlants = useMemo(() => (ba ? filterByBA(allPlants, ba.id) : []), [ba, allPlants]);
+
+  const { programs: allPrograms, isLoading: programsLoading } = usePrograms();
+  const baPrograms = useMemo(() => {
+    if (!utilities.length || !allPrograms.length) return [];
+    const slugs = new Set(utilities.map((u) => u.slug));
+    return allPrograms.filter((p) => p.organizations.some((o) => o.entityId && slugs.has(o.entityId)));
+  }, [utilities, allPrograms]);
+
+  const totalCustomers = useMemo(() => utilities.reduce((sum, u) => sum + (u.customerCount ?? 0), 0), [utilities]);
+
+  const fuelMix = useMemo(() => {
+    if (baPowerPlants.length === 0) return [];
+    const byFuel: Record<string, { capacity: number; count: number }> = {};
+    for (const plant of baPowerPlants) {
+      const cat = plant.fuelCategory;
+      if (!byFuel[cat]) byFuel[cat] = { capacity: 0, count: 0 };
+      byFuel[cat].capacity += plant.totalCapacityMw;
+      byFuel[cat].count++;
+    }
+    const total = Object.values(byFuel).reduce((s, v) => s + v.capacity, 0);
+    return Object.entries(byFuel)
+      .map(([fuel, data]) => ({
+        fuel: fuel as import("@/types/entities").FuelCategory,
+        capacity: data.capacity,
+        count: data.count,
+        pct: total > 0 ? (data.capacity / total) * 100 : 0,
+      }))
+      .sort((a, b) => b.capacity - a.capacity);
+  }, [baPowerPlants]);
 
   const utilityRows: UtilityRow[] = useMemo(
     () =>
@@ -132,6 +163,7 @@ export default function BADetailPage() {
 
   // Header stats band
   const headerStats = [
+    ...(totalCustomers > 0 ? [{ value: formatCustomerCount(totalCustomers), label: "Total Customers" }] : []),
     ...(utilities.length > 0 ? [{ value: String(utilities.length), label: "Utilities" }] : []),
     ...(!plantsLoading && baPowerPlants.length > 0
       ? [{ value: String(baPowerPlants.length), label: "Power Plants" }]
@@ -144,7 +176,6 @@ export default function BADetailPage() {
           },
         ]
       : []),
-    ...(ba.states.length > 0 ? [{ value: String(ba.states.length), label: "States" }] : []),
   ] as { value: string; label: string }[];
 
   // Overview fields
@@ -165,7 +196,11 @@ export default function BADetailPage() {
     href: `/power-plants/${plant.slug}`,
     name: plant.name,
     dotColor: getFuelCategoryColor(plant.fuelCategory),
-    badge: <span className="cg-tag">{getFuelCategoryLabel(plant.fuelCategory)}</span>,
+    badge: (
+      <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(plant.fuelCategory)}>
+        {getFuelCategoryLabel(plant.fuelCategory)}
+      </Badge>
+    ),
     meta: formatCapacity(plant.totalCapacityMw),
   }));
 
@@ -267,7 +302,56 @@ export default function BADetailPage() {
         </DetailSection>
       )}
 
-      {/* 05 · Power Plants */}
+      {/* 05 · Fuel Mix */}
+      {!plantsLoading && fuelMix.length > 0 && (
+        <DetailSection id="fuel-mix" kicker={`${nextNum()} · Fuel Mix`} title="Generation Fuel Mix">
+          <div className="detail-fields">
+            {fuelMix.map((item) => (
+              <div key={item.fuel} className="detail-field">
+                <div className="detail-field-label" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      backgroundColor: getFuelCategoryColor(item.fuel),
+                      flexShrink: 0,
+                    }}
+                  />
+                  {getFuelCategoryLabel(item.fuel)}
+                </div>
+                <div className="detail-field-value">
+                  {formatCapacity(item.capacity)} · {item.count} plant{item.count !== 1 ? "s" : ""} ·{" "}
+                  {item.pct.toFixed(1)}%
+                </div>
+              </div>
+            ))}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* 06 · Programs */}
+      {!programsLoading && baPrograms.length > 0 && (
+        <DetailSection id="programs" kicker={`${nextNum()} · Programs`} title="Programs">
+          <div className="detail-list-meta">
+            {baPrograms.length} program{baPrograms.length !== 1 ? "s" : ""} across member utilities
+          </div>
+          <DetailEntityList
+            items={baPrograms.map((prog) => ({
+              href: `/programs/${prog.slug}`,
+              name: prog.name,
+              badge: (
+                <Badge size="sm" shape="pill" variant={prog.status === "ACTIVE" ? "success" : "neutral"}>
+                  {prog.status}
+                </Badge>
+              ),
+              meta: prog.gridServices.join(", "),
+            }))}
+          />
+        </DetailSection>
+      )}
+
+      {/* 07 · Power Plants */}
       {!plantsLoading && baPowerPlants.length > 0 && (
         <DetailSection id="power-plants" kicker={`${nextNum()} · Generation`} title="Power Plants">
           <DetailEntityList

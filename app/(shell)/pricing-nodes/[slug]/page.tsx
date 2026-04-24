@@ -2,20 +2,36 @@
 
 import "../../detail-page.css";
 
-import { InteractiveMap, Loader, layer } from "@texturehq/edges";
+import { Badge, InteractiveMap, Loader, layer } from "@texturehq/edges";
 import { notFound, useParams } from "next/navigation";
+import { useMemo } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
+import { DetailEntityList } from "@/components/detail/DetailEntityList";
 import { DetailFieldList } from "@/components/detail/DetailFieldList";
 import { DetailMap } from "@/components/detail/DetailMap";
 import { DetailPageShell } from "@/components/detail/DetailPageShell";
+import { DetailRelationships } from "@/components/detail/DetailRelationships";
 import { DetailSection } from "@/components/detail/DetailSection";
 import { DetailStatGrid } from "@/components/detail/DetailStatGrid";
-import { usePricingNode } from "@/lib/pricing-nodes";
+import { usePricingNode, usePricingNodes } from "@/lib/pricing-nodes";
 import { getIsoColor, ISO_FULL_NAMES, ISO_LABELS, NODE_TYPE_LABELS } from "@/types/pricing-nodes";
 
 export default function PricingNodeDetailPage() {
   const params = useParams<{ slug: string }>();
   const { node, isLoading } = usePricingNode(params.slug);
+  const { nodes: allNodes, isLoading: nodesLoading } = usePricingNodes();
+
+  const nearbyNodes = useMemo(() => {
+    if (!node || allNodes.length === 0) return [];
+    return allNodes
+      .filter((n) => n.slug !== node.slug && n.iso === node.iso)
+      .filter((n) => {
+        const dLat = Math.abs(n.latitude - node.latitude);
+        const dLon = Math.abs(n.longitude - node.longitude);
+        return dLat < 1 && dLon < 1; // roughly within ~70 miles
+      })
+      .slice(0, 10);
+  }, [node, allNodes]);
 
   if (isLoading) {
     return (
@@ -158,6 +174,34 @@ export default function PricingNodeDetailPage() {
               ]}
             />
           </DetailMap>
+        </DetailSection>
+      )}
+      {/* 04 · Linked Power Plant */}
+      {node.eiaPlantCode && (
+        <DetailSection id="linked-plant" kicker={`${nextNum()} · Generation`} title="Linked Power Plant">
+          <DetailRelationships
+            items={[{ label: "EIA Plant Code", name: node.eiaPlantCode, href: `/power-plants/${node.eiaPlantCode}` }]}
+          />
+        </DetailSection>
+      )}
+
+      {/* 05 · Nearby Nodes */}
+      {!nodesLoading && nearbyNodes.length > 0 && (
+        <DetailSection id="nearby" kicker={`${nextNum()} · Nearby`} title="Nearby Pricing Nodes">
+          <DetailEntityList
+            items={nearbyNodes.map((n) => ({
+              href: `/pricing-nodes/${n.slug}`,
+              name: n.name,
+              dotColor: getIsoColor(n.iso),
+              badge: (
+                <Badge size="sm" shape="pill" variant="neutral">
+                  {NODE_TYPE_LABELS[n.nodeType]}
+                </Badge>
+              ),
+              meta: n.zone ?? undefined,
+            }))}
+            headerMeta={`${nearbyNodes.length} nodes in ${ISO_LABELS[node.iso]}`}
+          />
         </DetailSection>
       )}
     </DetailPageShell>
