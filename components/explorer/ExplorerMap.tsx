@@ -253,18 +253,12 @@ const DEFAULT_OVERLAYS: MapOverlays = {
   "pricing-nodes": false,
 };
 
-export function ExplorerMap({
-  mapboxAccessToken,
-  mapRegion = "utilities",
-  mapOverlays,
-  onOverlayToggle,
-}: ExplorerMapProps = {}) {
+export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOverlays }: ExplorerMapProps = {}) {
   const effectiveToken = mapboxAccessToken ?? process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
   const hasMapboxToken = !!effectiveToken;
   const { state, navigateToDetail } = useExplorer();
   const router = useRouter();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
-  const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
 
   const overlays = mapOverlays ?? DEFAULT_OVERLAYS;
 
@@ -277,15 +271,6 @@ export function ExplorerMap({
       "pricing-nodes": overlays["pricing-nodes"],
     }),
     [overlays]
-  );
-
-  const handleLayerToggle = useCallback(
-    (layerId: string) => {
-      if (onOverlayToggle && layerId in (mapOverlays ?? DEFAULT_OVERLAYS)) {
-        onOverlayToggle(layerId as keyof MapOverlays);
-      }
-    },
-    [onOverlayToggle, mapOverlays]
   );
 
   const isGridOperatorView = mapRegion === "grid-operators";
@@ -776,18 +761,8 @@ export function ExplorerMap({
         // biome-ignore lint/style/noNonNullAssertion: effectiveToken is guaranteed non-null when map renders (checked in parent)
         mapboxAccessToken={effectiveToken!}
         initialViewState={US_CENTER}
-        mapType={mapType}
-        controls={[
-          { type: "navigation", position: "bottom-right", showResetZoom: true },
-          {
-            type: "layers",
-            position: "bottom-right",
-            currentMapType: mapType,
-            onMapTypeChange: setMapType,
-            layers,
-            onLayerToggle: handleLayerToggle,
-          },
-        ]}
+        mapType="neutral"
+        controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
         layers={layers}
       />
     </div>
