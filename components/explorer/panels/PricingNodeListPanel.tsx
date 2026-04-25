@@ -153,7 +153,7 @@ export function PricingNodeListPanel() {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "var(--cg-muted)",
+                  color: "var(--color-text-muted)",
                   fontSize: 14,
                   padding: 0,
                 }}

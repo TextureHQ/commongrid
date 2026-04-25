@@ -286,11 +286,11 @@ function ListSourceSelector({
         alignItems: "center",
         gap: 6,
         padding: "8px 12px",
-        borderBottom: "1px solid var(--cg-rule)",
+        borderBottom: "1px solid var(--color-border-default)",
         flexShrink: 0,
       }}
     >
-      <span style={{ fontSize: 12, color: "var(--cg-muted)", whiteSpace: "nowrap" }}>Showing:</span>
+      <span style={{ fontSize: 12, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>Showing:</span>
       <div ref={ref} style={{ position: "relative" }}>
         <button
           type="button"
@@ -379,7 +379,11 @@ function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays, onOverlayToggle,
       {/* Panel — LEFT */}
       <div
         className="flex-none h-full overflow-hidden flex flex-col"
-        style={{ width: panelWidth, borderRight: "1px solid var(--cg-rule)", background: "var(--cg-card)" }}
+        style={{
+          width: panelWidth,
+          borderRight: "1px solid var(--color-border-default)",
+          background: "var(--color-background-surface)",
+        }}
       >
         <ListSourceSelector mapRegion={mapRegion} mapOverlays={mapOverlays} onMapRegionChange={onMapRegionChange} />
         <ExplorerPanel listSource={state.listSource} />
@@ -503,7 +507,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
           {/* Row 2 (list view): entity tabs + list filter bar */}
           {layout === "list" && (
             <>
-              <div style={{ borderTop: "1px solid var(--cg-rule)" }}>
+              <div style={{ borderTop: "1px solid var(--color-border-default)" }}>
                 <ExplorerTabBar />
               </div>
               <ListFilterBar />
@@ -516,7 +520,11 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
       {layout === "list" && (
         <div
           className="md:hidden"
-          style={{ flexShrink: 0, borderBottom: "1px solid var(--cg-rule)", background: "var(--cg-card)" }}
+          style={{
+            flexShrink: 0,
+            borderBottom: "1px solid var(--color-border-default)",
+            background: "var(--color-background-surface)",
+          }}
         >
           <ExplorerTabBar />
         </div>
@@ -536,7 +544,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
             />
           )}
           {layout === "list" && (
-            <div className="h-full" style={{ background: "var(--cg-card)" }}>
+            <div className="h-full" style={{ background: "var(--color-background-surface)" }}>
               <ExplorerPanel />
             </div>
           )}
@@ -552,7 +560,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
               onOverlayToggle={toggleOverlay}
             />
           ) : (
-            <div className="h-full" style={{ background: "var(--cg-card)" }}>
+            <div className="h-full" style={{ background: "var(--color-background-surface)" }}>
               <ExplorerPanel />
             </div>
           )}
@@ -562,7 +570,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
             onClick={() => setLayout(layout === "map" ? "list" : "map")}
             className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium shadow-lg"
             style={{
-              background: "var(--cg-ink)",
+              background: "var(--color-text-heading)",
               color: "#fff",
             }}
           >

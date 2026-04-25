@@ -121,7 +121,7 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
               </div>
             ))}
             {utilities.length > 15 && (
-              <div style={{ fontSize: 11, color: "var(--cg-muted)", textAlign: "center", marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
                 + {utilities.length - 15} more
               </div>
             )}

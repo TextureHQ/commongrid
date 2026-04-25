@@ -1146,8 +1146,8 @@ export default function LandingPage() {
                       className="mono"
                       style={{
                         fontSize: "12px",
-                        background: "var(--cg-accent-pastel)",
-                        color: "var(--cg-accent-dark)",
+                        background: "color-mix(in srgb, var(--color-brand-primary) 12%, transparent)",
+                        color: "var(--color-brand-dark)",
                         padding: "1px 5px",
                         borderRadius: "3px",
                       }}
@@ -1236,7 +1236,11 @@ export default function LandingPage() {
                 <Link
                   href="/about"
                   className="btn"
-                  style={{ background: "var(--cg-ink)", color: "var(--cg-paper)", borderColor: "var(--cg-ink)" }}
+                  style={{
+                    background: "var(--color-text-heading)",
+                    color: "var(--color-background-body)",
+                    borderColor: "var(--color-text-heading)",
+                  }}
                 >
                   Governance charter &rarr;
                 </Link>
@@ -1353,7 +1357,7 @@ export default function LandingPage() {
                   fontWeight: 700,
                   fontSize: "16px",
                   letterSpacing: "-.015em",
-                  color: "var(--cg-ink)",
+                  color: "var(--color-text-heading)",
                   textDecoration: "none",
                 }}
               >

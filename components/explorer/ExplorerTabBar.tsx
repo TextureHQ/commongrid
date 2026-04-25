@@ -12,9 +12,9 @@ interface TabDef {
 const TABS: TabDef[] = [
   { id: "utilities", label: "Utilities", color: "var(--cg-teal)", dotShape: "square" },
   { id: "grid-operators", label: "Grid Operators", color: "var(--cg-blue)", dotShape: "square" },
-  { id: "power-plants", label: "Power Plants", color: "var(--cg-accent)", dotShape: "circle" },
+  { id: "power-plants", label: "Power Plants", color: "var(--color-brand-primary)", dotShape: "circle" },
   { id: "programs", label: "Programs", color: "var(--cg-purple)", dotShape: "square" },
-  { id: "transmission-lines", label: "Transmission", color: "var(--cg-muted)", dotShape: "line" },
+  { id: "transmission-lines", label: "Transmission", color: "var(--color-text-muted)", dotShape: "line" },
   { id: "ev-charging", label: "EV Charging", color: "var(--cg-lime)", dotShape: "circle" },
   { id: "pricing-nodes", label: "Pricing Nodes", color: "var(--cg-amber)", dotShape: "circle" },
 ];
