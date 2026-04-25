@@ -82,6 +82,26 @@ const SignOutIcon = () => (
 
 /* ── Component ─────────────────────────────────────────────────────────────── */
 
+/**
+ * Clerk always provides an `imageUrl` — even for users who never uploaded a
+ * photo.  The auto-generated default is a colourful gradient avatar hosted on
+ * `img.clerk.com`.  We want to show our own warm-neutral initials instead of
+ * Clerk's purple/blue default, so we detect that pattern here.
+ */
+function isRealAvatar(url: string | null | undefined): boolean {
+  if (!url) return false;
+  // User-uploaded photos via Clerk
+  if (url.includes("/uploaded/")) return true;
+  // OAuth-sourced avatars (GitHub, Google, etc.)
+  if (url.includes("githubusercontent.com")) return true;
+  if (url.includes("googleusercontent.com")) return true;
+  if (url.includes("gravatar.com")) return true;
+  // If it's NOT on Clerk's image CDN, assume it's real (e.g. cgUser.avatarUrl)
+  if (!url.includes("img.clerk.com")) return true;
+  // Everything else is Clerk's auto-generated default — skip it
+  return false;
+}
+
 export function UserMenu() {
   const { user: clerkUser } = useUser();
   const { signOut, openUserProfile } = useClerk();
@@ -117,7 +137,9 @@ export function UserMenu() {
 
   const displayName = cgUser?.displayName || clerkUser.fullName || clerkUser.firstName || "User";
   const email = clerkUser.primaryEmailAddress?.emailAddress ?? cgUser?.email ?? null;
-  const avatarUrl = clerkUser.imageUrl ?? cgUser?.avatarUrl ?? null;
+  const rawAvatarUrl = clerkUser.imageUrl ?? cgUser?.avatarUrl ?? null;
+  // Only use the avatar if it's a real user upload, not Clerk's default
+  const avatarUrl = isRealAvatar(rawAvatarUrl) ? rawAvatarUrl : null;
   const initials = displayName
     .split(" ")
     .map((n) => n[0])
