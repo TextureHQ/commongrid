@@ -153,7 +153,7 @@ export function PowerPlantListPanel() {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "var(--cg-muted)",
+                  color: "var(--color-text-muted)",
                   fontSize: 14,
                   padding: 0,
                 }}
@@ -192,7 +192,9 @@ export function PowerPlantListPanel() {
                     : formatCapacity(row.proposedCapacityMw)}
                 </div>
               </div>
-              <span style={{ fontSize: 11, color: "var(--cg-teal)", fontFamily: "var(--cg-font-mono)", flexShrink: 0 }}>
+              <span
+                style={{ fontSize: 11, color: "var(--cg-teal)", fontFamily: "var(--font-family-mono)", flexShrink: 0 }}
+              >
                 {row.utilityName}
               </span>
               <ArrowIcon />

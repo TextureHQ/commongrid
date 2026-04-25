@@ -37,7 +37,7 @@ function CopyButton({ value }: { value: string }) {
 
 function FieldValue({ item }: { item: FieldItem }) {
   if (item.value === null || item.value === undefined) {
-    return <span style={{ color: "var(--cg-faint)" }}>—</span>;
+    return <span style={{ color: "var(--color-text-caption)" }}>—</span>;
   }
 
   const content = item.href ? (

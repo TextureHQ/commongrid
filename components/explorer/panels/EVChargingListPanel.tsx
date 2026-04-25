@@ -147,7 +147,7 @@ export function EVChargingListPanel() {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "var(--cg-muted)",
+                  color: "var(--color-text-muted)",
                   fontSize: 14,
                   padding: 0,
                 }}
@@ -185,12 +185,16 @@ export function EVChargingListPanel() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1, flexShrink: 0 }}>
                 {row.evDcFastNum > 0 && (
-                  <span style={{ fontSize: 11, fontFamily: "var(--cg-font-mono)", color: "var(--cg-ink)" }}>
+                  <span
+                    style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-heading)" }}
+                  >
                     {row.evDcFastNum} DC Fast
                   </span>
                 )}
                 {row.evLevel2EvseNum > 0 && (
-                  <span style={{ fontSize: 10.5, fontFamily: "var(--cg-font-mono)", color: "var(--cg-muted)" }}>
+                  <span
+                    style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-muted)" }}
+                  >
                     {row.evLevel2EvseNum} L2
                   </span>
                 )}

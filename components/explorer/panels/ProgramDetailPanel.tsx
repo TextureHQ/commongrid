@@ -97,7 +97,11 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
     return labels[s] ?? s;
   };
   const statusColor = (s: string) =>
-    s === ProgramStatus.ACTIVE ? "var(--cg-lime)" : s === ProgramStatus.PAUSED ? "var(--cg-amber)" : "var(--cg-muted)";
+    s === ProgramStatus.ACTIVE
+      ? "var(--cg-lime)"
+      : s === ProgramStatus.PAUSED
+        ? "var(--cg-amber)"
+        : "var(--color-text-muted)";
 
   return (
     <div className="flex flex-col h-full">
@@ -144,14 +148,14 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           )}
           <div className="cg-explore-kv-row">
             <span className="cg-explore-kv-key">Asset Types</span>
-            <span className="cg-explore-kv-val" style={{ fontFamily: "var(--cg-font-sans)", fontSize: 12 }}>
+            <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
               {program.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", ")}
             </span>
           </div>
           {program.marketSegments.length > 0 && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Market Segments</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--cg-font-sans)", fontSize: 12 }}>
+              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
                 {program.marketSegments
                   .map((ms) => MarketSegmentLabel[ms as keyof typeof MarketSegmentLabel] ?? ms)
                   .join(", ")}
@@ -161,7 +165,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           {program.gridServices.length > 0 && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Grid Services</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--cg-font-sans)", fontSize: 12 }}>
+              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
                 {program.gridServices
                   .map((gs) => GridServiceLabel[gs as keyof typeof GridServiceLabel] ?? gs)
                   .join(", ")}
@@ -171,7 +175,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           {program.participationModels.length > 0 && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Participation</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--cg-font-sans)", fontSize: 12 }}>
+              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
                 {program.participationModels
                   .map((pm) => ParticipationModelLabel[pm as keyof typeof ParticipationModelLabel] ?? pm)
                   .join(", ")}

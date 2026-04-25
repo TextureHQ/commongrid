@@ -166,7 +166,7 @@ export function TransmissionListPanel() {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "var(--cg-muted)",
+                  color: "var(--color-text-muted)",
                   fontSize: 14,
                   padding: 0,
                 }}
@@ -194,7 +194,7 @@ export function TransmissionListPanel() {
               <span
                 className="cg-explore-entity-dot"
                 data-shape="line"
-                style={{ background: "var(--cg-muted)", width: 8, height: 2 }}
+                style={{ background: "var(--color-text-muted)", width: 8, height: 2 }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="cg-explore-entity-name">{row.owner || "Unknown owner"}</div>
@@ -204,7 +204,12 @@ export function TransmissionListPanel() {
                 </div>
               </div>
               <span
-                style={{ fontSize: 11, fontFamily: "var(--cg-font-mono)", color: "var(--cg-muted)", flexShrink: 0 }}
+                style={{
+                  fontSize: 11,
+                  fontFamily: "var(--font-family-mono)",
+                  color: "var(--color-text-muted)",
+                  flexShrink: 0,
+                }}
               >
                 {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
               </span>

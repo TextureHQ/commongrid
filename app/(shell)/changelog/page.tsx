@@ -206,14 +206,14 @@ export default function ChangelogPage() {
 
       {/* Feed */}
       {allEntries.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "48px 0", color: "var(--cg-muted)", fontSize: "14px" }}>
+        <div style={{ textAlign: "center", padding: "48px 0", color: "var(--color-text-muted)", fontSize: "14px" }}>
           <p>
             No changes recorded yet. Run{" "}
             <code
               style={{
                 fontFamily: "var(--font-family-mono)",
                 fontSize: "12px",
-                background: "var(--cg-rule)",
+                background: "var(--color-border-default)",
                 padding: "2px 6px",
                 borderRadius: "3px",
               }}

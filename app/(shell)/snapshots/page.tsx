@@ -83,8 +83,8 @@ export default async function SnapshotsPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900 dark:text-white">Database Snapshots</h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-text-heading">Database Snapshots</h1>
+          <p className="text-lg text-text-body">
             Download weekly backups of the CommonGrid database in SQL and GeoJSON formats.
           </p>
         </div>
@@ -107,11 +107,9 @@ export default async function SnapshotsPage() {
 
         {/* Empty state */}
         {!error && snapshots.length === 0 && (
-          <div className="p-8 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
-            <p className="text-gray-600 dark:text-gray-400 mb-2">No snapshots available yet.</p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              Weekly snapshots will start on Sunday. Check back soon.
-            </p>
+          <div className="p-8 bg-background-muted border border-border-default rounded-lg text-center">
+            <p className="text-text-body mb-2">No snapshots available yet.</p>
+            <p className="text-sm text-text-caption">Weekly snapshots will start on Sunday. Check back soon.</p>
           </div>
         )}
 
@@ -127,20 +125,20 @@ export default async function SnapshotsPage() {
               return (
                 <div
                   key={release.tag_name}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg dark:hover:shadow-xl dark:hover:shadow-black/50 transition-shadow"
+                  className="border border-border-default rounded-lg p-6 hover:shadow-lg transition-shadow"
                 >
                   {/* Title & metadata */}
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                      <h3 className="text-xl font-semibold text-text-heading mb-1">
                         Week {week}, {year}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(release.published_at)}</p>
+                      <p className="text-sm text-text-caption">{formatDate(release.published_at)}</p>
                     </div>
                     <div className="mt-2 sm:mt-0 flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Total size</p>
-                        <p className="font-semibold text-gray-900 dark:text-white">{formatBytes(totalSize)}</p>
+                        <p className="text-sm text-text-caption">Total size</p>
+                        <p className="font-semibold text-text-heading">{formatBytes(totalSize)}</p>
                       </div>
                     </div>
                   </div>
@@ -149,10 +147,10 @@ export default async function SnapshotsPage() {
                   <div className="space-y-3">
                     {/* SQL backup */}
                     {sqlAsset && (
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded p-4 flex items-center justify-between">
+                      <div className="bg-background-muted rounded p-4 flex items-center justify-between">
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white text-sm">💾 {sqlAsset.name}</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                          <p className="font-medium text-text-heading text-sm">💾 {sqlAsset.name}</p>
+                          <p className="text-xs text-text-muted">
                             {formatBytes(sqlAsset.size)} • PostgreSQL custom format
                           </p>
                         </div>
@@ -168,24 +166,22 @@ export default async function SnapshotsPage() {
                     {/* GeoJSON assets */}
                     {geoJsonAssets.length > 0 && (
                       <div>
-                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                          GeoJSON DATA LAYERS
-                        </p>
+                        <p className="text-xs font-semibold text-text-muted mb-2">GeoJSON DATA LAYERS</p>
                         <div className="space-y-2">
                           {geoJsonAssets.map((asset) => (
                             <div
                               key={asset.name}
-                              className="bg-gray-50 dark:bg-gray-800 rounded p-3 flex items-center justify-between"
+                              className="bg-background-muted rounded p-3 flex items-center justify-between"
                             >
                               <div>
-                                <p className="font-medium text-gray-900 dark:text-white text-sm">
+                                <p className="font-medium text-text-heading text-sm">
                                   🗺️ {asset.name.replace(".geojson.gz", "")}
                                 </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400">{formatBytes(asset.size)}</p>
+                                <p className="text-xs text-text-muted">{formatBytes(asset.size)}</p>
                               </div>
                               <a
                                 href={asset.download_url}
-                                className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded font-medium text-xs transition-colors"
+                                className="px-3 py-1.5 bg-background-muted hover:bg-background-hover text-text-heading rounded font-medium text-xs transition-colors"
                               >
                                 Download
                               </a>

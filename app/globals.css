@@ -94,7 +94,7 @@ html, body {
 }
 .cg-nav-links a {
   padding: 6px 10px;
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--_nav-muted);
   border-radius: 6px;
   text-decoration: none;
@@ -178,7 +178,7 @@ html, body {
   height: 34px;
   padding: 0 14px;
   border-radius: 8px;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   background: var(--_nav-ink);
   color: var(--_nav-paper);
@@ -325,7 +325,7 @@ html, body {
 }
 
 .cg-user-header-name {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--_nav-ink);
   line-height: 1.2;

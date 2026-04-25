@@ -8,42 +8,14 @@
   --font-family-mono: "Fira Code", ui-monospace, "SF Mono", Menlo, monospace;
   --font-family-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --cg-ink: #111111;
-  --cg-ink-2: #2c2a26;
-  --cg-paper: #ffffff;
-  --cg-card: #ffffff;
-  --cg-rule: #e6dfd6;
-  --cg-rule-dashed: rgba(44, 42, 38, 0.14);
-  --cg-muted: #6f6a60;
-  --cg-subtle: #9a9488;
-  --cg-faint: #c4beb4;
-  --cg-accent: #3945a8;
-  --cg-accent-pastel: #e3e6f5;
-  --cg-success: #278a4a;
-
   font-family: var(--font-family-sans);
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
-  color: var(--cg-ink-2);
-  background: var(--cg-paper);
+  color: var(--color-text-body);
+  background: var(--color-background-body);
   max-width: 960px;
   margin: 0 auto;
   padding: clamp(32px, 5vw, 64px) clamp(20px, 4vw, 56px);
-}
-
-/* Dark theme */
-.theme-dark .cg-changelog {
-  --cg-ink: #faf7f0;
-  --cg-ink-2: #e5dfd3;
-  --cg-paper: #111111;
-  --cg-card: #111111;
-  --cg-rule: #2f2b24;
-  --cg-rule-dashed: rgba(240, 236, 228, 0.10);
-  --cg-muted: #9a9488;
-  --cg-subtle: #6f6a60;
-  --cg-faint: #4a463e;
-  --cg-accent: #7a86d4;
-  --cg-accent-pastel: #1e2248;
 }
 
 /* ── Header ── */
@@ -52,7 +24,7 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -63,7 +35,7 @@
   content: "";
   width: 20px;
   height: 1px;
-  background: var(--cg-accent);
+  background: var(--color-brand-primary);
 }
 
 .cg-changelog .cl-title {
@@ -72,7 +44,7 @@
   font-size: clamp(36px, 4vw, 52px);
   letter-spacing: -0.035em;
   line-height: 1;
-  color: var(--cg-ink);
+  color: var(--color-text-heading);
   margin: 0 0 16px;
 }
 
@@ -90,21 +62,21 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: var(--cg-muted);
+  color: var(--color-text-muted);
 }
 
 .cg-changelog .cl-sync-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--cg-success);
+  background: var(--color-feedback-success);
   flex-shrink: 0;
 }
 
 .cg-changelog .cl-last-updated {
   font-family: var(--font-family-mono);
   font-size: 12px;
-  color: var(--cg-faint);
+  color: var(--color-text-caption);
   letter-spacing: 0.02em;
 }
 
@@ -112,14 +84,14 @@
 .cg-changelog .cl-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid var(--cg-rule);
-  border-bottom: 1px solid var(--cg-rule);
+  border-top: 1px solid var(--color-border-default);
+  border-bottom: 1px solid var(--color-border-default);
   margin-bottom: clamp(32px, 5vw, 56px);
 }
 
 .cg-changelog .cl-stat {
   padding: 20px 16px;
-  border-right: 1px solid var(--cg-rule);
+  border-right: 1px solid var(--color-border-default);
 }
 
 .cg-changelog .cl-stat:last-child {
@@ -133,13 +105,13 @@
   letter-spacing: -0.03em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--cg-ink);
+  color: var(--color-text-heading);
 }
 
 .cg-changelog .cl-stat-l {
   font-family: var(--font-family-mono);
-  font-size: 10px;
-  color: var(--cg-faint);
+  font-size: 11px;
+  color: var(--color-text-caption);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 500;
@@ -156,7 +128,7 @@
   align-items: baseline;
   justify-content: space-between;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--cg-rule);
+  border-bottom: 1px solid var(--color-border-default);
   margin-bottom: 0;
 }
 
@@ -165,14 +137,14 @@
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   font-weight: 500;
 }
 
 .cg-changelog .cl-date-count {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  color: var(--cg-faint);
+  color: var(--color-text-caption);
 }
 
 /* ── Entry row ── */
@@ -181,7 +153,7 @@
   grid-template-columns: 12px 1fr auto;
   gap: 0 16px;
   padding: 16px 0;
-  border-bottom: 1px solid var(--cg-rule);
+  border-bottom: 1px solid var(--color-border-default);
   align-items: start;
 }
 
@@ -227,8 +199,8 @@
 
 .cg-changelog .cl-entry-name {
   font-weight: 600;
-  font-size: 14.5px;
-  color: var(--cg-ink);
+  font-size: 15px;
+  color: var(--color-text-heading);
   line-height: 1.2;
 }
 
@@ -237,7 +209,7 @@
   display: inline-flex;
   align-items: center;
   font-family: var(--font-family-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -287,8 +259,8 @@
 }
 
 .cg-changelog .cl-entry-detail {
-  font-size: 13.5px;
-  color: var(--cg-muted);
+  font-size: 14px;
+  color: var(--color-text-muted);
   line-height: 1.5;
   margin-bottom: 6px;
 }
@@ -302,10 +274,10 @@
 
 .cg-changelog .cl-source-tag {
   font-family: var(--font-family-mono);
-  font-size: 10px;
-  color: var(--cg-subtle);
+  font-size: 11px;
+  color: var(--color-text-caption);
   padding: 2px 6px;
-  border: 1px solid var(--cg-rule);
+  border: 1px solid var(--color-border-default);
   border-radius: 3px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -315,13 +287,13 @@
 .cg-changelog .cl-author {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  color: var(--cg-faint);
+  color: var(--color-text-caption);
 }
 
 .cg-changelog .cl-entry-time {
   font-family: var(--font-family-mono);
   font-size: 12px;
-  color: var(--cg-faint);
+  color: var(--color-text-caption);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   align-self: start;
@@ -342,19 +314,19 @@
   height: 40px;
   padding: 0 20px;
   border-radius: 8px;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
-  border: 1px solid var(--cg-rule);
-  background: var(--cg-card);
-  color: var(--cg-ink);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-background-surface);
+  color: var(--color-text-heading);
   cursor: pointer;
   transition: all 0.15s;
   font-family: var(--font-family-sans);
 }
 
 .cg-changelog .cl-load-more button:hover {
-  border-color: var(--cg-ink);
-  color: var(--cg-ink);
+  border-color: var(--color-text-heading);
+  color: var(--color-text-heading);
 }
 
 /* ── Responsive ── */

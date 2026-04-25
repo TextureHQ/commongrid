@@ -273,7 +273,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
               </div>
             ))}
             {childUtilities.length > 15 && (
-              <div style={{ fontSize: 11, color: "var(--cg-muted)", textAlign: "center", marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
                 + {childUtilities.length - 15} more
               </div>
             )}
@@ -307,7 +307,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
               </Link>
             ))}
             {utilityPowerPlants.length > 15 && (
-              <div style={{ fontSize: 11, color: "var(--cg-muted)", textAlign: "center", marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
                 + {utilityPowerPlants.length - 15} more
               </div>
             )}

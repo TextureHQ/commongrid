@@ -120,7 +120,7 @@ export function ProgramListPanel() {
   const statusLabel = (s: string) =>
     s === "ACTIVE" ? "Active" : s === "PAUSED" ? "Paused" : s === "FULL" ? "Full" : s;
   const statusColor = (s: string) =>
-    s === "ACTIVE" ? "var(--cg-lime)" : s === "PAUSED" ? "var(--cg-amber)" : "var(--cg-muted)";
+    s === "ACTIVE" ? "var(--cg-lime)" : s === "PAUSED" ? "var(--cg-amber)" : "var(--color-text-muted)";
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -161,7 +161,7 @@ export function ProgramListPanel() {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "var(--cg-muted)",
+                  color: "var(--color-text-muted)",
                   fontSize: 14,
                   padding: 0,
                 }}
@@ -191,11 +191,13 @@ export function ProgramListPanel() {
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                <span style={{ fontSize: 11, fontFamily: "var(--cg-font-mono)", color: statusColor(row.status) }}>
+                <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: statusColor(row.status) }}>
                   {statusLabel(row.status)}
                 </span>
                 {row.compensationSummary && (
-                  <span style={{ fontSize: 11, fontFamily: "var(--cg-font-mono)", color: "var(--cg-muted)" }}>
+                  <span
+                    style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-muted)" }}
+                  >
                     {row.compensationSummary}
                   </span>
                 )}
