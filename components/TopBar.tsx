@@ -86,118 +86,119 @@ export function TopBar({ navigation }: TopBarProps) {
 
   return (
     <>
-    <header className="cg-nav">
-      <div className="cg-nav-inner">
-        {/* Logo */}
-        <Link href="/" className="cg-brand-lockup" aria-label="CommonGrid home">
-          <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-            <circle cx="4" cy="4" r="1.8" fill="currentColor" />
-            <circle cx="12" cy="4" r="1.8" fill="currentColor" />
-            <circle cx="20" cy="4" r="1.8" fill="currentColor" />
-            <circle cx="28" cy="4" r="1.8" fill="currentColor" />
-            <circle cx="4" cy="12" r="1.8" fill="currentColor" />
-            <circle cx="4" cy="20" r="1.8" fill="currentColor" />
-            <circle cx="28" cy="12" r="1.8" fill="currentColor" />
-            <circle cx="28" cy="20" r="1.8" fill="currentColor" />
-            <circle cx="4" cy="28" r="1.8" fill="currentColor" />
-            <circle cx="12" cy="28" r="1.8" fill="currentColor" />
-            <circle cx="20" cy="28" r="1.8" fill="currentColor" />
-            <circle cx="28" cy="28" r="1.8" fill="currentColor" />
-            <rect x="11" y="11" width="10" height="10" rx="1.5" fill="currentColor" />
-          </svg>
-          <span>CommonGrid</span>
-        </Link>
+      <header className="cg-nav">
+        <div className="cg-nav-inner">
+          {/* Logo */}
+          <Link href="/" className="cg-brand-lockup" aria-label="CommonGrid home">
+            <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <circle cx="4" cy="4" r="1.8" fill="currentColor" />
+              <circle cx="12" cy="4" r="1.8" fill="currentColor" />
+              <circle cx="20" cy="4" r="1.8" fill="currentColor" />
+              <circle cx="28" cy="4" r="1.8" fill="currentColor" />
+              <circle cx="4" cy="12" r="1.8" fill="currentColor" />
+              <circle cx="4" cy="20" r="1.8" fill="currentColor" />
+              <circle cx="28" cy="12" r="1.8" fill="currentColor" />
+              <circle cx="28" cy="20" r="1.8" fill="currentColor" />
+              <circle cx="4" cy="28" r="1.8" fill="currentColor" />
+              <circle cx="12" cy="28" r="1.8" fill="currentColor" />
+              <circle cx="20" cy="28" r="1.8" fill="currentColor" />
+              <circle cx="28" cy="28" r="1.8" fill="currentColor" />
+              <rect x="11" y="11" width="10" height="10" rx="1.5" fill="currentColor" />
+            </svg>
+            <span>CommonGrid</span>
+          </Link>
 
-        {/* Nav links */}
-        <nav className="cg-nav-links">
-          {navigation.map((item) =>
-            item.external ? (
-              <a key={item.id} href={item.href} target="_blank" rel="noopener noreferrer">
-                {item.label}
-              </a>
-            ) : (
-              <Link key={item.id} href={item.href} className={isActive(item) ? "active" : undefined}>
-                {item.label}
-              </Link>
-            )
-          )}
-        </nav>
+          {/* Nav links */}
+          <nav className="cg-nav-links">
+            {navigation.map((item) =>
+              item.external ? (
+                <a key={item.id} href={item.href} target="_blank" rel="noopener noreferrer">
+                  {item.label}
+                </a>
+              ) : (
+                <Link key={item.id} href={item.href} className={isActive(item) ? "active" : undefined}>
+                  {item.label}
+                </Link>
+              )
+            )}
+          </nav>
 
-        {/* Right side */}
-        <div className="cg-nav-right">
-          {/* Search */}
-          <button type="button" className="cg-nav-search" onClick={openSearch} aria-label="Search">
-            <SearchIcon />
-            <span>Search</span>
-            <span className="cg-nav-kbd">&thinsp;&#8984;K</span>
-          </button>
-
-          {/* GitHub */}
-          <a
-            href="https://github.com/TextureHQ/commongrid"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="cg-icon-btn"
-            aria-label="GitHub"
-          >
-            <GitHubIcon />
-          </a>
-
-          {/* Dark mode */}
-          {mounted && (
-            <button type="button" className="cg-icon-btn" onClick={toggleTheme} aria-label="Toggle dark mode">
-              {isDarkTheme ? <SunIcon /> : <MoonIcon />}
+          {/* Right side */}
+          <div className="cg-nav-right">
+            {/* Search */}
+            <button type="button" className="cg-nav-search" onClick={openSearch} aria-label="Search">
+              <SearchIcon />
+              <span>Search</span>
+              <span className="cg-nav-kbd">&thinsp;&#8984;K</span>
             </button>
-          )}
 
-          {/* Auth */}
-          {showAuth && !isSignedIn && (
-            <SignInButton mode="modal">
-              <button type="button" className="cg-nav-signin">
-                Sign In
-              </button>
-            </SignInButton>
-          )}
-          {showAuth && isSignedIn && <UserMenu />}
-        </div>
+            {/* GitHub */}
+            <a
+              href="https://github.com/TextureHQ/commongrid"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cg-icon-btn"
+              aria-label="GitHub"
+            >
+              <GitHubIcon />
+            </a>
 
-        {/* Mobile right */}
-        <div className="cg-nav-mobile-right">
-          {showAuth && !isSignedIn && (
-            <SignInButton mode="modal">
-              <button type="button" className="cg-nav-signin">
-                Sign In
+            {/* Dark mode */}
+            {mounted && (
+              <button type="button" className="cg-icon-btn" onClick={toggleTheme} aria-label="Toggle dark mode">
+                {isDarkTheme ? <SunIcon /> : <MoonIcon />}
               </button>
-            </SignInButton>
-          )}
-          {showAuth && isSignedIn && <UserMenu />}
-          {mounted && (
-            <button type="button" className="cg-icon-btn" onClick={toggleTheme} aria-label="Toggle color mode">
-              {isDarkTheme ? <SunIcon /> : <MoonIcon />}
+            )}
+
+            {/* Auth */}
+            {showAuth && !isSignedIn && (
+              <SignInButton mode="modal">
+                <button type="button" className="cg-nav-signin">
+                  Sign In
+                </button>
+              </SignInButton>
+            )}
+            {showAuth && isSignedIn && <UserMenu />}
+          </div>
+
+          {/* Mobile right */}
+          <div className="cg-nav-mobile-right">
+            {showAuth && !isSignedIn && (
+              <SignInButton mode="modal">
+                <button type="button" className="cg-nav-signin">
+                  Sign In
+                </button>
+              </SignInButton>
+            )}
+            {showAuth && isSignedIn && <UserMenu />}
+            {mounted && (
+              <button type="button" className="cg-icon-btn" onClick={toggleTheme} aria-label="Toggle color mode">
+                {isDarkTheme ? <SunIcon /> : <MoonIcon />}
+              </button>
+            )}
+            <button
+              type="button"
+              className="cg-icon-btn"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
             </button>
-          )}
-          <button
-            type="button"
-            className="cg-icon-btn"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
-          </button>
+          </div>
         </div>
-      </div>
-
-    </header>
-    {/* Mobile slide-over — portaled to body to escape sticky header stacking context */}
-    {mounted && <MobileDrawer
-      open={mobileMenuOpen}
-      onClose={() => setMobileMenuOpen(false)}
-      navigation={navigation}
-      isActive={isActive}
-      isDarkTheme={isDarkTheme}
-      toggleTheme={toggleTheme}
-      mounted={mounted}
-    />}
+      </header>
+      {/* Mobile slide-over — portaled to body to escape sticky header stacking context */}
+      {mounted && (
+        <MobileDrawer
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          navigation={navigation}
+          isActive={isActive}
+          isDarkTheme={isDarkTheme}
+          toggleTheme={toggleTheme}
+          mounted={mounted}
+        />
+      )}
     </>
   );
 }
@@ -227,7 +228,9 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   // Close on Escape
@@ -290,7 +293,13 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
 
         {/* Search button */}
         <div className="cg-drawer-search">
-          <button type="button" className="cg-nav-search" style={{ width: "100%", minWidth: 0 }} onClick={handleSearchClick} aria-label="Search">
+          <button
+            type="button"
+            className="cg-nav-search"
+            style={{ width: "100%", minWidth: 0 }}
+            onClick={handleSearchClick}
+            aria-label="Search"
+          >
             <SearchIcon />
             <span>Search</span>
           </button>
@@ -309,7 +318,15 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
                 onClick={onClose}
               >
                 {item.label}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3" />
                 </svg>
               </a>
