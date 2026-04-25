@@ -74,9 +74,10 @@ export default function DevelopersPage() {
     name: "",
     app_name: "",
     app_url: "",
-    use_case: "personal",
+    use_case: "",
     description: "",
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Fetch data
   useEffect(() => {
@@ -110,8 +111,29 @@ export default function DevelopersPage() {
     fetchData();
   }, [isSignedIn]);
 
+  // Validate form and return errors object (empty = valid)
+  function validateForm(): Record<string, string> {
+    const errors: Record<string, string> = {};
+    if (!formData.app_name.trim()) {
+      errors.app_name = "Application name is required.";
+    }
+    if (!formData.use_case) {
+      errors.use_case = "Please select a use case.";
+    }
+    if (!formData.description.trim()) {
+      errors.description = "Description is required.";
+    } else if (formData.description.trim().length < 10) {
+      errors.description = `Description must be at least 10 characters (currently ${formData.description.trim().length}).`;
+    }
+    return errors;
+  }
+
   // Handle create key
   async function handleCreateKey() {
+    const errors = validateForm();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setIsCreating(true);
     setCreateError(null);
 
@@ -134,9 +156,10 @@ export default function DevelopersPage() {
         name: "",
         app_name: "",
         app_url: "",
-        use_case: "personal",
+        use_case: "",
         description: "",
       });
+      setFieldErrors({});
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -264,7 +287,7 @@ export default function DevelopersPage() {
                     ) : (
                       <Form>
                         <TextField
-                          label="Key Name (optional)"
+                          label="Key Name"
                           placeholder="My App API Key"
                           value={formData.name}
                           onChange={(value) => setFormData({ ...formData, name: value })}
@@ -273,17 +296,23 @@ export default function DevelopersPage() {
                           label="Application Name"
                           placeholder="My Application"
                           value={formData.app_name}
-                          onChange={(value) => setFormData({ ...formData, app_name: value })}
+                          onChange={(value) => {
+                            setFormData({ ...formData, app_name: value });
+                            if (fieldErrors.app_name) setFieldErrors((prev) => ({ ...prev, app_name: "" }));
+                          }}
                           isRequired
+                          isInvalid={!!fieldErrors.app_name}
+                          errorMessage={fieldErrors.app_name}
                         />
                         <TextField
-                          label="Application URL (optional)"
+                          label="Application URL"
                           placeholder="https://myapp.com"
                           value={formData.app_url}
                           onChange={(value) => setFormData({ ...formData, app_url: value })}
                         />
                         <Select
                           label="Use Case"
+                          placeholder="Select a use case"
                           items={[
                             { id: "research", label: "Research", value: "research" },
                             { id: "commercial", label: "Commercial", value: "commercial" },
@@ -293,15 +322,28 @@ export default function DevelopersPage() {
                             { id: "personal", label: "Personal", value: "personal" },
                             { id: "other", label: "Other", value: "other" },
                           ]}
-                          selectedKey={formData.use_case}
-                          onSelectionChange={(key) => setFormData({ ...formData, use_case: key as string })}
+                          selectedKey={formData.use_case || undefined}
+                          onSelectionChange={(key) => {
+                            setFormData({ ...formData, use_case: key as string });
+                            if (fieldErrors.use_case) setFieldErrors((prev) => ({ ...prev, use_case: "" }));
+                          }}
+                          isRequired
+                          isInvalid={!!fieldErrors.use_case}
+                          errorMessage={fieldErrors.use_case}
+                          useMobileTray={false}
                         />
                         <TextField
                           label="Description"
-                          placeholder="Describe how you'll use the API (at least 10 characters)"
+                          placeholder="Describe how you'll use the API"
                           value={formData.description}
-                          onChange={(value) => setFormData({ ...formData, description: value })}
+                          onChange={(value) => {
+                            setFormData({ ...formData, description: value });
+                            if (fieldErrors.description) setFieldErrors((prev) => ({ ...prev, description: "" }));
+                          }}
                           isRequired
+                          isInvalid={!!fieldErrors.description}
+                          errorMessage={fieldErrors.description}
+                          description="Minimum 10 characters"
                         />
                         {createError && (
                           <Banner variant="error" title="Error">
@@ -309,16 +351,7 @@ export default function DevelopersPage() {
                           </Banner>
                         )}
                         <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="primary"
-                            onPress={handleCreateKey}
-                            isDisabled={
-                              isCreating ||
-                              !formData.app_name ||
-                              !formData.description ||
-                              formData.description.length < 10
-                            }
-                          >
+                          <Button variant="primary" onPress={handleCreateKey} isDisabled={isCreating}>
                             {isCreating ? "Creating..." : "Create Key"}
                           </Button>
                         </div>
