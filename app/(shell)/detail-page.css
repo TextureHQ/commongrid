@@ -10,11 +10,11 @@
   --font-family-sans:  "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --cg-chip-teal-bg:   #d9edf1;
-  --cg-chip-teal-text: #4f7f8a;
+  --cg-chip-teal-text: #2b6570;
   --cg-chip-green-bg:  #e3efc8;
-  --cg-chip-green-text:#5f7e2b;
+  --cg-chip-green-text:#3d5c12;
   --cg-chip-neutral-bg:#eae7e0;
-  --cg-chip-neutral-text:#6f6a60;
+  --cg-chip-neutral-text:#56514a;
 
   --cg-gutter:    clamp(16px, 4vw, 48px);
   --cg-section-y: clamp(28px, 4vw, 48px);
@@ -120,7 +120,7 @@
 }
 
 .cg-detail .detail-sub {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--color-text-muted);
   display: flex;
   align-items: center;
@@ -476,7 +476,7 @@
   flex-shrink: 0;
 }
 .cg-detail .detail-entity-name {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--color-text-body);
   overflow: hidden;
@@ -532,7 +532,7 @@
 
 /* ---------- Meta text ---------- */
 .cg-detail .detail-list-meta {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--color-text-muted);
   margin-bottom: 10px;
   font-family: var(--font-family-mono);

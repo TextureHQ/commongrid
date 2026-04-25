@@ -199,7 +199,7 @@
 
 .cg-changelog .cl-entry-name {
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: 15px;
   color: var(--color-text-heading);
   line-height: 1.2;
 }
@@ -259,7 +259,7 @@
 }
 
 .cg-changelog .cl-entry-detail {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--color-text-muted);
   line-height: 1.5;
   margin-bottom: 6px;
@@ -314,7 +314,7 @@
   height: 40px;
   padding: 0 20px;
   border-radius: 8px;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   border: 1px solid var(--color-border-default);
   background: var(--color-background-surface);
