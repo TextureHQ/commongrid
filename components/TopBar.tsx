@@ -1,12 +1,12 @@
 "use client";
 
-import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
-import { Badge, useColorMode } from "@texturehq/edges";
+import { SignInButton, useAuth } from "@clerk/nextjs";
+import { useColorMode } from "@texturehq/edges";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useGlobalSearch } from "@/components/GlobalSearch";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { UserMenu } from "@/components/UserMenu";
 
 export type NavigationItem = {
   id: string;
@@ -64,7 +64,6 @@ export function TopBar({ navigation }: TopBarProps) {
   const pathname = usePathname();
   const { isDarkTheme, toggleTheme } = useColorMode();
   const { isSignedIn, isLoaded } = useAuth();
-  const { user } = useCurrentUser();
   const { open: openSearch } = useGlobalSearch();
 
   useEffect(() => {
@@ -157,16 +156,7 @@ export function TopBar({ navigation }: TopBarProps) {
               </button>
             </SignInButton>
           )}
-          {showAuth && isSignedIn && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {user && (user.role === "admin" || user.role === "moderator") && (
-                <Badge size="sm" shape="pill" variant={user.role === "admin" ? "error" : "info"}>
-                  {user.role === "admin" ? "Admin" : "Moderator"}
-                </Badge>
-              )}
-              <UserButton appearance={{ elements: { avatarBox: "h-8 w-8" } }} />
-            </div>
-          )}
+          {showAuth && isSignedIn && <UserMenu />}
         </div>
 
         {/* Mobile right */}
@@ -178,16 +168,7 @@ export function TopBar({ navigation }: TopBarProps) {
               </button>
             </SignInButton>
           )}
-          {showAuth && isSignedIn && (
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              {user && (user.role === "admin" || user.role === "moderator") && (
-                <Badge size="sm" shape="pill" variant={user.role === "admin" ? "error" : "info"}>
-                  {user.role === "admin" ? "Admin" : "Mod"}
-                </Badge>
-              )}
-              <UserButton appearance={{ elements: { avatarBox: "h-7 w-7" } }} />
-            </div>
-          )}
+          {showAuth && isSignedIn && <UserMenu />}
           {mounted && (
             <button type="button" className="cg-icon-btn" onClick={toggleTheme} aria-label="Toggle color mode">
               {isDarkTheme ? <SunIcon /> : <MoonIcon />}
