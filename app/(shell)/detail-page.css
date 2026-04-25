@@ -82,7 +82,7 @@
   font-family: var(--font-family-mono);
   font-size: 11px;
   letter-spacing: .04em;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -90,13 +90,13 @@
   margin-bottom: 20px;
 }
 .cg-detail .detail-breadcrumb a {
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   text-decoration: none;
   transition: color .12s;
 }
 .cg-detail .detail-breadcrumb a:hover { color: var(--cg-accent); }
 .cg-detail .detail-breadcrumb .sep { color: var(--cg-faint); }
-.cg-detail .detail-breadcrumb .current { color: var(--cg-muted); }
+.cg-detail .detail-breadcrumb .current { color: var(--color-text-muted); }
 
 /* Header main row */
 .cg-detail .detail-header-main {
@@ -127,10 +127,10 @@
 /* Kicker: small mono label above name */
 .cg-detail .detail-kicker {
   font-family: var(--font-family-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: .10em;
   text-transform: uppercase;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -156,7 +156,7 @@
 
 .cg-detail .detail-sub {
   font-size: 13.5px;
-  color: var(--cg-muted);
+  color: var(--color-text-muted);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -176,8 +176,8 @@
 }
 .cg-detail .detail-source a {
   font-family: var(--font-family-mono);
-  font-size: 10px;
-  color: var(--cg-faint);
+  font-size: 11px;
+  color: var(--color-text-caption);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -223,8 +223,8 @@
 }
 .cg-detail .detail-stat-l {
   font-family: var(--font-family-mono);
-  font-size: 10px;
-  color: var(--cg-subtle);
+  font-size: 11px;
+  color: var(--color-text-caption);
   letter-spacing: .08em;
   text-transform: uppercase;
   margin-top: 4px;
@@ -280,9 +280,9 @@
 
 .cg-detail .detail-field-label {
   font-family: var(--font-family-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: .06em;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   text-transform: uppercase;
   flex-shrink: 0;
 }
@@ -368,15 +368,15 @@
 }
 .cg-detail .detail-port-label {
   font-family: var(--font-family-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--cg-muted);
+  color: var(--color-text-muted);
   margin-top: 6px;
 }
 .cg-detail .detail-port-sub {
   font-size: 11px;
-  color: var(--cg-faint);
+  color: var(--color-text-caption);
   margin-top: 2px;
 }
 
@@ -426,10 +426,10 @@
 
 .cg-detail .detail-rel-label {
   font-family: var(--font-family-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
 }
 .cg-detail .detail-rel-name {
   font-family: var(--font-family-brand);
@@ -442,7 +442,7 @@
 }
 .cg-detail .detail-rel-meta {
   font-size: 12px;
-  color: var(--cg-muted);
+  color: var(--color-text-muted);
   margin-top: 2px;
 }
 .cg-detail .detail-rel-foot {
@@ -480,7 +480,7 @@
   border-bottom: 1px solid var(--cg-rule);
   font-family: var(--font-family-mono);
   font-size: 11px;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   letter-spacing: .04em;
 }
 .cg-detail .detail-entity-row {
@@ -527,14 +527,14 @@
 .cg-detail .detail-entity-meta {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  color: var(--cg-muted);
+  color: var(--color-text-muted);
   white-space: nowrap;
 }
 .cg-detail .detail-entity-more {
   padding: 10px 16px;
   font-family: var(--font-family-mono);
   font-size: 11px;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   text-align: center;
   letter-spacing: .04em;
 }
@@ -568,7 +568,7 @@
 /* ---------- Meta text ---------- */
 .cg-detail .detail-list-meta {
   font-size: 12.5px;
-  color: var(--cg-muted);
+  color: var(--color-text-muted);
   margin-bottom: 10px;
   font-family: var(--font-family-mono);
   letter-spacing: .02em;
@@ -603,7 +603,7 @@
 .cg-detail .detail-table-meta {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   letter-spacing: .04em;
   margin-bottom: 10px;
 }
@@ -616,15 +616,15 @@
 }
 .cg-detail .detail-pricing-label {
   font-family: var(--font-family-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   margin-bottom: 5px;
 }
 .cg-detail .detail-pricing-text {
   font-size: 13px;
-  color: var(--cg-muted);
+  color: var(--color-text-muted);
   line-height: 1.55;
 }
 

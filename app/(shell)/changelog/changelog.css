@@ -52,7 +52,7 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -90,7 +90,7 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: var(--cg-muted);
+  color: var(--color-text-muted);
 }
 
 .cg-changelog .cl-sync-dot {
@@ -104,7 +104,7 @@
 .cg-changelog .cl-last-updated {
   font-family: var(--font-family-mono);
   font-size: 12px;
-  color: var(--cg-faint);
+  color: var(--color-text-caption);
   letter-spacing: 0.02em;
 }
 
@@ -138,8 +138,8 @@
 
 .cg-changelog .cl-stat-l {
   font-family: var(--font-family-mono);
-  font-size: 10px;
-  color: var(--cg-faint);
+  font-size: 11px;
+  color: var(--color-text-caption);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 500;
@@ -165,14 +165,14 @@
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--cg-subtle);
+  color: var(--color-text-caption);
   font-weight: 500;
 }
 
 .cg-changelog .cl-date-count {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  color: var(--cg-faint);
+  color: var(--color-text-caption);
 }
 
 /* ── Entry row ── */
@@ -237,7 +237,7 @@
   display: inline-flex;
   align-items: center;
   font-family: var(--font-family-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -288,7 +288,7 @@
 
 .cg-changelog .cl-entry-detail {
   font-size: 13.5px;
-  color: var(--cg-muted);
+  color: var(--color-text-muted);
   line-height: 1.5;
   margin-bottom: 6px;
 }
@@ -302,8 +302,8 @@
 
 .cg-changelog .cl-source-tag {
   font-family: var(--font-family-mono);
-  font-size: 10px;
-  color: var(--cg-subtle);
+  font-size: 11px;
+  color: var(--color-text-caption);
   padding: 2px 6px;
   border: 1px solid var(--cg-rule);
   border-radius: 3px;
@@ -315,13 +315,13 @@
 .cg-changelog .cl-author {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  color: var(--cg-faint);
+  color: var(--color-text-caption);
 }
 
 .cg-changelog .cl-entry-time {
   font-family: var(--font-family-mono);
   font-size: 12px;
-  color: var(--cg-faint);
+  color: var(--color-text-caption);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   align-self: start;
