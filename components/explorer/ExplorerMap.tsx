@@ -5,9 +5,16 @@ import type { Feature, FeatureCollection } from "geojson";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAllBalancingAuthorities, getAllIsos } from "@/lib/data";
-import { getSegmentLabel } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
 import { useExplorer } from "./ExplorerContext";
+import {
+  EVChargingTooltip,
+  GridOperatorTooltip,
+  PowerPlantTooltip,
+  PricingNodeTooltip,
+  TerritoryTooltip,
+  TransmissionTooltip,
+} from "./MapTooltip";
 
 function getTileUrl() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -494,10 +501,13 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           tooltip: {
             trigger: "hover",
             content: (feature: LayerFeature) => (
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium text-sm">{feature.properties.name}</span>
-                <span className="text-xs text-gray-500">{getSegmentLabel(feature.properties.segment)}</span>
-              </div>
+              <TerritoryTooltip
+                name={feature.properties.name}
+                segment={feature.properties.segment}
+                state={feature.properties.state}
+                customerCount={feature.properties.customerCount}
+                baCode={feature.properties.baCode}
+              />
             ),
           },
           events: { onClick: handleClick },
@@ -518,10 +528,10 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           tooltip: {
             trigger: "hover",
             content: (feature: LayerFeature) => (
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium text-sm">{feature.properties.operatorName}</span>
-                <span className="text-xs text-gray-500">{feature.properties.operatorType}</span>
-              </div>
+              <GridOperatorTooltip
+                operatorName={feature.properties.operatorName}
+                operatorType={feature.properties.operatorType}
+              />
             ),
           },
         })
@@ -553,13 +563,11 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         tooltip: {
           trigger: "hover",
           content: (feature: LayerFeature) => (
-            <div className="flex flex-col gap-0.5">
-              <span className="font-medium text-sm">{feature.properties.owner || "Unknown Owner"}</span>
-              <span className="text-xs text-gray-500">
-                {feature.properties.voltage != null ? `${feature.properties.voltage} kV` : "Voltage unknown"}
-                {feature.properties.status ? ` · ${feature.properties.status}` : ""}
-              </span>
-            </div>
+            <TransmissionTooltip
+              owner={feature.properties.owner}
+              voltage={feature.properties.voltage}
+              status={feature.properties.status}
+            />
           ),
         },
       })
@@ -592,15 +600,14 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         tooltip: {
           trigger: "hover",
           content: (feature: LayerFeature) => (
-            <div className="flex flex-col gap-0.5">
-              <span className="font-medium text-sm">{feature.properties.name}</span>
-              <span className="text-xs text-gray-500">
-                {feature.properties.network || "Non-Networked"}
-                {feature.properties.dcFastCount > 0 ? ` · ${feature.properties.dcFastCount} DC Fast` : ""}
-                {feature.properties.level2Count > 0 ? ` · ${feature.properties.level2Count} L2` : ""}
-              </span>
-              <span className="text-xs text-gray-400 capitalize">{feature.properties.accessCode}</span>
-            </div>
+            <EVChargingTooltip
+              name={feature.properties.name}
+              network={feature.properties.network}
+              dcFastCount={feature.properties.dcFastCount}
+              level2Count={feature.properties.level2Count}
+              level1Count={feature.properties.level1Count ?? 0}
+              accessCode={feature.properties.accessCode}
+            />
           ),
         },
         events: {
@@ -637,28 +644,14 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         },
         tooltip: {
           trigger: "hover",
-          content: (feature: LayerFeature) => {
-            const nodeTypeLabels: Record<string, string> = {
-              gen: "Generation",
-              load: "Load",
-              hub: "Trading Hub",
-              zone: "Load Zone",
-              sublap: "Sub-LAP",
-              lap: "LAP",
-              interface: "Interface",
-              bus: "Bus",
-            };
-            return (
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium text-sm">{feature.properties.name}</span>
-                <span className="text-xs text-gray-500">
-                  {feature.properties.iso} ·{" "}
-                  {nodeTypeLabels[feature.properties.nodeType] ?? feature.properties.nodeType}
-                  {feature.properties.zone ? ` · ${feature.properties.zone}` : ""}
-                </span>
-              </div>
-            );
-          },
+          content: (feature: LayerFeature) => (
+            <PricingNodeTooltip
+              name={feature.properties.name}
+              iso={feature.properties.iso}
+              nodeType={feature.properties.nodeType}
+              zone={feature.properties.zone}
+            />
+          ),
         },
         events: {
           onClick: (feature: LayerFeature) => {
@@ -696,13 +689,12 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         tooltip: {
           trigger: "hover",
           content: (feature: LayerFeature) => (
-            <div className="flex flex-col gap-0.5">
-              <span className="font-medium text-sm">{feature.properties.name}</span>
-              <span className="text-xs text-gray-500">
-                {feature.properties.fuelCategory} · {Math.round(feature.properties.capacityMw)} MW
-                {feature.properties.status === "proposed" ? " (Proposed)" : ""}
-              </span>
-            </div>
+            <PowerPlantTooltip
+              name={feature.properties.name}
+              fuelCategory={feature.properties.fuelCategory}
+              capacityMw={feature.properties.capacityMw}
+              status={feature.properties.status}
+            />
           ),
         },
         events: {
