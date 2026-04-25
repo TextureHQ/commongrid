@@ -27,7 +27,11 @@
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   color: var(--color-text-body);
-  background: var(--color-background-body);
+  background: #faf7f0;
+}
+
+.theme-dark .cg-home {
+  background: #121110;
 }
 
 /* ---------- Layout ---------- */
