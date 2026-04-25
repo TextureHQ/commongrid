@@ -191,11 +191,11 @@ export function ProgramListPanel() {
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                <span style={{ fontSize: 11, fontFamily: "var(--cg-font-mono)", color: statusColor(row.status) }}>
+                <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: statusColor(row.status) }}>
                   {statusLabel(row.status)}
                 </span>
                 {row.compensationSummary && (
-                  <span style={{ fontSize: 11, fontFamily: "var(--cg-font-mono)", color: "var(--color-text-muted)" }}>
+                  <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-muted)" }}>
                     {row.compensationSummary}
                   </span>
                 )}

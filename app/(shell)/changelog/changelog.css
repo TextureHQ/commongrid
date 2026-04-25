@@ -8,8 +8,6 @@
   --font-family-mono: "Fira Code", ui-monospace, "SF Mono", Menlo, monospace;
   --font-family-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --cg-success: #278a4a;
-
   font-family: var(--font-family-sans);
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
