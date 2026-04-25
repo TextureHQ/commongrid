@@ -224,7 +224,9 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   // Close on Escape
@@ -287,7 +289,13 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
 
         {/* Search button */}
         <div className="cg-drawer-search">
-          <button type="button" className="cg-nav-search" style={{ width: "100%", minWidth: 0 }} onClick={handleSearchClick} aria-label="Search">
+          <button
+            type="button"
+            className="cg-nav-search"
+            style={{ width: "100%", minWidth: 0 }}
+            onClick={handleSearchClick}
+            aria-label="Search"
+          >
             <SearchIcon />
             <span>Search</span>
           </button>
@@ -306,7 +314,15 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
                 onClick={onClose}
               >
                 {item.label}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3" />
                 </svg>
               </a>
