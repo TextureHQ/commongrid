@@ -10,7 +10,6 @@ import {
   CardHeader,
   CopyToClipboard,
   Dialog,
-  DialogTrigger,
   Form,
   Heading,
   Icon,
@@ -121,7 +120,7 @@ export default function DevelopersPage() {
       errors.use_case = "Please select a use case.";
     }
     if (!formData.description.trim()) {
-      errors.description = "Description is required.";
+      errors.description = "Description is required (minimum 10 characters).";
     } else if (formData.description.trim().length < 10) {
       errors.description = `Description must be at least 10 characters (currently ${formData.description.trim().length}).`;
     }
@@ -222,6 +221,8 @@ export default function DevelopersPage() {
 
   const currentTier = keys.find((k) => k.isActive)?.tier || "anonymous";
 
+  const descriptionCharCount = formData.description.trim().length;
+
   return (
     <PageLayout>
       <div className="max-w-6xl mx-auto space-y-8">
@@ -251,115 +252,17 @@ export default function DevelopersPage() {
             title="API Keys"
             subtitle="Create and manage API keys for your applications"
             actions={
-              <DialogTrigger
-                isOpen={isDialogOpen}
-                onOpenChange={(open) => {
-                  setIsDialogOpen(open);
-                  if (open) setNewKey(null);
+              <Button
+                variant="primary"
+                size="sm"
+                icon="Plus"
+                onPress={() => {
+                  setIsDialogOpen(true);
+                  setNewKey(null);
                 }}
               >
-                <Button variant="primary" size="sm" icon="Plus" onPress={() => setIsDialogOpen(true)}>
-                  Create API Key
-                </Button>
-                <Dialog title="Create API Key">
-                  <div className="space-y-4">
-                    {newKey ? (
-                      <div className="space-y-4">
-                        <Banner variant="success" title="API Key Created">
-                          Store this key securely. It will not be shown again.
-                        </Banner>
-                        <div className="bg-background-muted p-4 rounded-lg">
-                          <CopyToClipboard value={newKey}>
-                            <code className="text-sm font-mono break-all">{newKey}</code>
-                          </CopyToClipboard>
-                        </div>
-                        <Button
-                          variant="primary"
-                          onPress={() => {
-                            setNewKey(null);
-                            setIsDialogOpen(false);
-                          }}
-                          className="w-full"
-                        >
-                          Done
-                        </Button>
-                      </div>
-                    ) : (
-                      <Form>
-                        <TextField
-                          label="Key Name"
-                          placeholder="My App API Key"
-                          value={formData.name}
-                          onChange={(value) => setFormData({ ...formData, name: value })}
-                        />
-                        <TextField
-                          label="Application Name"
-                          placeholder="My Application"
-                          value={formData.app_name}
-                          onChange={(value) => {
-                            setFormData({ ...formData, app_name: value });
-                            if (fieldErrors.app_name) setFieldErrors((prev) => ({ ...prev, app_name: "" }));
-                          }}
-                          isRequired
-                          isInvalid={!!fieldErrors.app_name}
-                          errorMessage={fieldErrors.app_name}
-                        />
-                        <TextField
-                          label="Application URL"
-                          placeholder="https://myapp.com"
-                          value={formData.app_url}
-                          onChange={(value) => setFormData({ ...formData, app_url: value })}
-                        />
-                        <Select
-                          label="Use Case"
-                          placeholder="Select a use case"
-                          items={[
-                            { id: "research", label: "Research", value: "research" },
-                            { id: "commercial", label: "Commercial", value: "commercial" },
-                            { id: "nonprofit", label: "Nonprofit", value: "nonprofit" },
-                            { id: "government", label: "Government", value: "government" },
-                            { id: "education", label: "Education", value: "education" },
-                            { id: "personal", label: "Personal", value: "personal" },
-                            { id: "other", label: "Other", value: "other" },
-                          ]}
-                          selectedKey={formData.use_case || undefined}
-                          onSelectionChange={(key) => {
-                            setFormData({ ...formData, use_case: key as string });
-                            if (fieldErrors.use_case) setFieldErrors((prev) => ({ ...prev, use_case: "" }));
-                          }}
-                          isRequired
-                          isInvalid={!!fieldErrors.use_case}
-                          errorMessage={fieldErrors.use_case}
-                          useMobileTray={false}
-                        />
-                        <TextField
-                          label="Description"
-                          placeholder="Describe how you'll use the API"
-                          value={formData.description}
-                          onChange={(value) => {
-                            setFormData({ ...formData, description: value });
-                            if (fieldErrors.description) setFieldErrors((prev) => ({ ...prev, description: "" }));
-                          }}
-                          isRequired
-                          isInvalid={!!fieldErrors.description}
-                          errorMessage={fieldErrors.description}
-                          description="Minimum 10 characters"
-                        />
-                        {createError && (
-                          <Banner variant="error" title="Error">
-                            {createError}
-                          </Banner>
-                        )}
-                        <div className="flex gap-2 justify-end">
-                          <Button variant="primary" onPress={handleCreateKey} isDisabled={isCreating}>
-                            {isCreating ? "Creating..." : "Create Key"}
-                          </Button>
-                        </div>
-                      </Form>
-                    )}
-                  </div>
-                </Dialog>
-              </DialogTrigger>
+                Create API Key
+              </Button>
             }
           />
           <CardContent>
@@ -404,6 +307,105 @@ export default function DevelopersPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Create API Key Dialog — controlled mode, rendered outside Card to avoid z-index/popover conflicts */}
+        <Dialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} title="Create API Key">
+          <div className="space-y-4">
+            {newKey ? (
+              <div className="space-y-4">
+                <Banner variant="success" title="API Key Created">
+                  Store this key securely. It will not be shown again.
+                </Banner>
+                <div className="bg-background-muted p-4 rounded-lg">
+                  <CopyToClipboard value={newKey}>
+                    <code className="text-sm font-mono break-all">{newKey}</code>
+                  </CopyToClipboard>
+                </div>
+                <Button
+                  variant="primary"
+                  onPress={() => {
+                    setNewKey(null);
+                    setIsDialogOpen(false);
+                  }}
+                  className="w-full"
+                >
+                  Done
+                </Button>
+              </div>
+            ) : (
+              <Form>
+                <TextField
+                  label="Key Name"
+                  placeholder="My App API Key"
+                  value={formData.name}
+                  onChange={(value) => setFormData({ ...formData, name: value })}
+                />
+                <TextField
+                  label="Application Name"
+                  placeholder="My Application"
+                  value={formData.app_name}
+                  onChange={(value) => {
+                    setFormData({ ...formData, app_name: value });
+                    if (fieldErrors.app_name) setFieldErrors((prev) => ({ ...prev, app_name: "" }));
+                  }}
+                  isRequired
+                  isInvalid={!!fieldErrors.app_name}
+                  errorMessage={fieldErrors.app_name}
+                />
+                <TextField
+                  label="Application URL"
+                  placeholder="https://myapp.com"
+                  value={formData.app_url}
+                  onChange={(value) => setFormData({ ...formData, app_url: value })}
+                />
+                <Select
+                  label="Use Case"
+                  placeholder="Select a use case"
+                  items={[
+                    { id: "research", label: "Research", value: "research" },
+                    { id: "commercial", label: "Commercial", value: "commercial" },
+                    { id: "nonprofit", label: "Nonprofit", value: "nonprofit" },
+                    { id: "government", label: "Government", value: "government" },
+                    { id: "education", label: "Education", value: "education" },
+                    { id: "personal", label: "Personal", value: "personal" },
+                    { id: "other", label: "Other", value: "other" },
+                  ]}
+                  selectedKey={formData.use_case || undefined}
+                  onSelectionChange={(key) => {
+                    setFormData({ ...formData, use_case: key as string });
+                    if (fieldErrors.use_case) setFieldErrors((prev) => ({ ...prev, use_case: "" }));
+                  }}
+                  isRequired
+                  isInvalid={!!fieldErrors.use_case}
+                  errorMessage={fieldErrors.use_case}
+                />
+                <TextField
+                  label="Description"
+                  placeholder="Describe how you'll use the API"
+                  value={formData.description}
+                  onChange={(value) => {
+                    setFormData({ ...formData, description: value });
+                    if (fieldErrors.description) setFieldErrors((prev) => ({ ...prev, description: "" }));
+                  }}
+                  isRequired
+                  isInvalid={!!fieldErrors.description}
+                  errorMessage={fieldErrors.description}
+                  description={`${descriptionCharCount}/10 characters minimum`}
+                />
+                {createError && (
+                  <Banner variant="error" title="Error">
+                    {createError}
+                  </Banner>
+                )}
+                <div className="flex gap-2 justify-end">
+                  <Button variant="primary" onPress={handleCreateKey} isLoading={isCreating}>
+                    Create Key
+                  </Button>
+                </div>
+              </Form>
+            )}
+          </div>
+        </Dialog>
 
         {/* Usage Chart */}
         {usage && usage.totalRequests > 0 && (
