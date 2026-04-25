@@ -190,7 +190,7 @@ export function EVChargingListPanel() {
                   </span>
                 )}
                 {row.evLevel2EvseNum > 0 && (
-                  <span style={{ fontSize: 10.5, fontFamily: "var(--font-family-mono)", color: "var(--color-text-muted)" }}>
+                  <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-muted)" }}>
                     {row.evLevel2EvseNum} L2
                   </span>
                 )}
