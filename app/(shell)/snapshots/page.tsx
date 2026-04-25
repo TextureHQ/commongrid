@@ -109,9 +109,7 @@ export default async function SnapshotsPage() {
         {!error && snapshots.length === 0 && (
           <div className="p-8 bg-background-muted border border-border-default rounded-lg text-center">
             <p className="text-text-body mb-2">No snapshots available yet.</p>
-            <p className="text-sm text-text-caption">
-              Weekly snapshots will start on Sunday. Check back soon.
-            </p>
+            <p className="text-sm text-text-caption">Weekly snapshots will start on Sunday. Check back soon.</p>
           </div>
         )}
 
@@ -168,9 +166,7 @@ export default async function SnapshotsPage() {
                     {/* GeoJSON assets */}
                     {geoJsonAssets.length > 0 && (
                       <div>
-                        <p className="text-xs font-semibold text-text-muted mb-2">
-                          GeoJSON DATA LAYERS
-                        </p>
+                        <p className="text-xs font-semibold text-text-muted mb-2">GeoJSON DATA LAYERS</p>
                         <div className="space-y-2">
                           {geoJsonAssets.map((asset) => (
                             <div

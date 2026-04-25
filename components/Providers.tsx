@@ -9,9 +9,9 @@ const COMMONGRID_BRAND_VARIABLES = {
   // Warm neutral text — all pass WCAG AA on white
   "--color-text-heading": "#111111",
   "--color-text-body": "#2c2a26",
-  "--color-text-muted": "#5c5549",       // ~6.5:1 — secondary text, meta
-  "--color-text-caption": "#6b6155",     // ~6.1:1 — labels, timestamps, eyebrows
-  "--color-text-subtle": "#6b6155",      // ~6.1:1 — field labels, breadcrumbs
+  "--color-text-muted": "#5c5549", // ~6.5:1 — secondary text, meta
+  "--color-text-caption": "#6b6155", // ~6.1:1 — labels, timestamps, eyebrows
+  "--color-text-subtle": "#6b6155", // ~6.1:1 — field labels, breadcrumbs
   // Warm borders
   "--color-border-default": "#e5dfd3",
   "--color-border-muted": "#e5dfd3",
