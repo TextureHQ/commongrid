@@ -5,6 +5,7 @@ import { useColorMode } from "@texturehq/edges";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useGlobalSearch } from "@/components/GlobalSearch";
 import { UserMenu } from "@/components/UserMenu";
 
@@ -84,6 +85,7 @@ export function TopBar({ navigation }: TopBarProps) {
   const showAuth = mounted && isLoaded;
 
   return (
+    <>
     <header className="cg-nav">
       <div className="cg-nav-inner">
         {/* Logo */}
@@ -185,17 +187,18 @@ export function TopBar({ navigation }: TopBarProps) {
         </div>
       </div>
 
-      {/* Mobile slide-over menu */}
-      <MobileDrawer
-        open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        navigation={navigation}
-        isActive={isActive}
-        isDarkTheme={isDarkTheme}
-        toggleTheme={toggleTheme}
-        mounted={mounted}
-      />
     </header>
+    {/* Mobile slide-over — portaled to body to escape sticky header stacking context */}
+    {mounted && <MobileDrawer
+      open={mobileMenuOpen}
+      onClose={() => setMobileMenuOpen(false)}
+      navigation={navigation}
+      isActive={isActive}
+      isDarkTheme={isDarkTheme}
+      toggleTheme={toggleTheme}
+      mounted={mounted}
+    />}
+    </>
   );
 }
 
@@ -243,7 +246,7 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
     setTimeout(() => openSearch(), 150);
   }, [onClose, openSearch]);
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -349,6 +352,7 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
           )}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
