@@ -204,7 +204,12 @@ export function TransmissionListPanel() {
                 </div>
               </div>
               <span
-                style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-muted)", flexShrink: 0 }}
+                style={{
+                  fontSize: 11,
+                  fontFamily: "var(--font-family-mono)",
+                  color: "var(--color-text-muted)",
+                  flexShrink: 0,
+                }}
               >
                 {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
               </span>

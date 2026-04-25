@@ -195,7 +195,9 @@ export function ProgramListPanel() {
                   {statusLabel(row.status)}
                 </span>
                 {row.compensationSummary && (
-                  <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-muted)" }}>
+                  <span
+                    style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-muted)" }}
+                  >
                     {row.compensationSummary}
                   </span>
                 )}

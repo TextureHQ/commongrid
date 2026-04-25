@@ -97,7 +97,11 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
     return labels[s] ?? s;
   };
   const statusColor = (s: string) =>
-    s === ProgramStatus.ACTIVE ? "var(--cg-lime)" : s === ProgramStatus.PAUSED ? "var(--cg-amber)" : "var(--color-text-muted)";
+    s === ProgramStatus.ACTIVE
+      ? "var(--cg-lime)"
+      : s === ProgramStatus.PAUSED
+        ? "var(--cg-amber)"
+        : "var(--color-text-muted)";
 
   return (
     <div className="flex flex-col h-full">
