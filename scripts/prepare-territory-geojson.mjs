@@ -53,6 +53,7 @@ async function main() {
         segment: utility.segment,
         state: geojson.features[0]?.properties?.state ?? null,
         customerCount: utility.customerCount ?? 0,
+        baCode: utility.baCode ?? null,
       };
 
       for (const feature of geojson.features) {
