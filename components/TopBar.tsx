@@ -4,7 +4,7 @@ import { SignInButton, useAuth } from "@clerk/nextjs";
 import { useColorMode } from "@texturehq/edges";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useGlobalSearch } from "@/components/GlobalSearch";
 import { UserMenu } from "@/components/UserMenu";
 
@@ -185,24 +185,170 @@ export function TopBar({ navigation }: TopBarProps) {
         </div>
       </div>
 
-      {mobileMenuOpen && (
-        <nav className="cg-nav-mobile-menu">
+      {/* Mobile slide-over menu */}
+      <MobileDrawer
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        navigation={navigation}
+        isActive={isActive}
+        isDarkTheme={isDarkTheme}
+        toggleTheme={toggleTheme}
+        mounted={mounted}
+      />
+    </header>
+  );
+}
+
+/* ── Mobile Drawer ── */
+
+interface MobileDrawerProps {
+  open: boolean;
+  onClose: () => void;
+  navigation: NavigationItem[];
+  isActive: (item: NavigationItem) => boolean;
+  isDarkTheme: boolean;
+  toggleTheme: () => void;
+  mounted: boolean;
+}
+
+function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggleTheme, mounted }: MobileDrawerProps) {
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const { isSignedIn, isLoaded } = useAuth();
+  const showAuth = mounted && isLoaded;
+  const { open: openSearch } = useGlobalSearch();
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, onClose]);
+
+  const handleSearchClick = useCallback(() => {
+    onClose();
+    // Small delay so drawer close animation doesn't conflict
+    setTimeout(() => openSearch(), 150);
+  }, [onClose, openSearch]);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className={`cg-drawer-backdrop ${open ? "cg-drawer-backdrop--open" : ""}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Drawer panel */}
+      <div
+        ref={drawerRef}
+        className={`cg-drawer ${open ? "cg-drawer--open" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
+      >
+        {/* Drawer header */}
+        <div className="cg-drawer-header">
+          <Link href="/" className="cg-brand-lockup" onClick={onClose} aria-label="CommonGrid home">
+            <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <circle cx="4" cy="4" r="1.8" fill="currentColor" />
+              <circle cx="12" cy="4" r="1.8" fill="currentColor" />
+              <circle cx="20" cy="4" r="1.8" fill="currentColor" />
+              <circle cx="28" cy="4" r="1.8" fill="currentColor" />
+              <circle cx="4" cy="12" r="1.8" fill="currentColor" />
+              <circle cx="4" cy="20" r="1.8" fill="currentColor" />
+              <circle cx="28" cy="12" r="1.8" fill="currentColor" />
+              <circle cx="28" cy="20" r="1.8" fill="currentColor" />
+              <circle cx="4" cy="28" r="1.8" fill="currentColor" />
+              <circle cx="12" cy="28" r="1.8" fill="currentColor" />
+              <circle cx="20" cy="28" r="1.8" fill="currentColor" />
+              <circle cx="28" cy="28" r="1.8" fill="currentColor" />
+              <rect x="11" y="11" width="10" height="10" rx="1.5" fill="currentColor" />
+            </svg>
+            <span>CommonGrid</span>
+          </Link>
+          <button type="button" className="cg-icon-btn" onClick={onClose} aria-label="Close menu">
+            <CloseIcon />
+          </button>
+        </div>
+
+        {/* Search button */}
+        <div className="cg-drawer-search">
+          <button type="button" className="cg-nav-search" style={{ width: "100%", minWidth: 0 }} onClick={handleSearchClick} aria-label="Search">
+            <SearchIcon />
+            <span>Search</span>
+          </button>
+        </div>
+
+        {/* Nav links */}
+        <nav className="cg-drawer-nav">
           {navigation.map((item) =>
             item.external ? (
-              <a key={item.id} href={item.href} target="_blank" rel="noopener noreferrer">
+              <a
+                key={item.id}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cg-drawer-link"
+                onClick={onClose}
+              >
                 {item.label}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3" />
+                </svg>
               </a>
             ) : (
-              <Link key={item.id} href={item.href} className={isActive(item) ? "active" : undefined}>
+              <Link
+                key={item.id}
+                href={item.href}
+                className={`cg-drawer-link ${isActive(item) ? "cg-drawer-link--active" : ""}`}
+                onClick={onClose}
+              >
                 {item.label}
               </Link>
             )
           )}
-          <a href="https://github.com/TextureHQ/commongrid" target="_blank" rel="noopener noreferrer">
-            GitHub
+          <a
+            href="https://github.com/TextureHQ/commongrid"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cg-drawer-link"
+            onClick={onClose}
+          >
+            <GitHubIcon /> GitHub
           </a>
         </nav>
-      )}
-    </header>
+
+        {/* Footer: theme + auth */}
+        <div className="cg-drawer-footer">
+          {mounted && (
+            <button type="button" className="cg-drawer-link" onClick={toggleTheme}>
+              {isDarkTheme ? <SunIcon /> : <MoonIcon />}
+              {isDarkTheme ? "Light mode" : "Dark mode"}
+            </button>
+          )}
+          {showAuth && !isSignedIn && (
+            <SignInButton mode="modal">
+              <button type="button" className="cg-nav-signin" style={{ width: "100%", justifyContent: "center" }}>
+                Sign In
+              </button>
+            </SignInButton>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
