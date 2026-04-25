@@ -10,20 +10,13 @@ interface BreadcrumbItem {
 }
 
 interface DetailPageShellProps {
-  /** Mono uppercase kicker text, e.g. "Electric Utility" */
   kicker: React.ReactNode;
-  /** Optional colored dot to show in the kicker */
   kickerDotColor?: string;
-  /** Large brand-font entity name */
   entityName: string;
-  /** Subtitle row under the name (short name, website, etc.) */
   subtitle?: React.ReactNode;
   breadcrumbs: BreadcrumbItem[];
-  /** EntityActions component */
   actions?: React.ReactNode;
-  /** Avatar/logo element */
   avatar?: React.ReactNode;
-  /** Source data file paths to link on GitHub */
   dataSourcePaths?: string[];
   children: React.ReactNode;
 }
@@ -41,32 +34,27 @@ export function DetailPageShell({
 }: DetailPageShellProps) {
   return (
     <div className="cg-detail">
-      {/* ── Page header (above card) ── */}
       <div className="detail-header">
         <div className="wrap">
           {/* Breadcrumb */}
           <nav className="detail-breadcrumb" aria-label="Breadcrumb">
-            {breadcrumbs.map((crumb, i) => (
+            {breadcrumbs.map((crumb) => (
               <span key={crumb.label} style={{ display: "contents" }}>
-                {i > 0 && <span className="sep">/</span>}
                 {crumb.href ? (
                   <Link href={crumb.href}>{crumb.label}</Link>
                 ) : (
                   <span className="current">{crumb.label}</span>
                 )}
+                <span className="sep">›</span>
               </span>
             ))}
           </nav>
 
-          {/* Main header row */}
+          {/* Header: identity left, actions right */}
           <div className="detail-header-main">
             <div className="detail-header-identity">
               {avatar && <div className="detail-avatar-wrap">{avatar}</div>}
               <div style={{ minWidth: 0 }}>
-                <div className="detail-kicker">
-                  {kickerDotColor && <span className="kicker-dot" style={{ backgroundColor: kickerDotColor }} />}
-                  {kicker}
-                </div>
                 <h1 className="detail-name">{entityName}</h1>
                 {subtitle && <div className="detail-sub">{subtitle}</div>}
               </div>
@@ -106,11 +94,9 @@ export function DetailPageShell({
         </div>
       </div>
 
-      {/* ── Body (card) ── */}
+      {/* Body */}
       <div className="detail-body">
-        <div className="wrap">
-          <div className="detail-card">{children}</div>
-        </div>
+        <div className="wrap">{children}</div>
       </div>
     </div>
   );
