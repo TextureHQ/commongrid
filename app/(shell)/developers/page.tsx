@@ -77,6 +77,7 @@ export default function DevelopersPage() {
     description: "",
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   // Fetch data
   useEffect(() => {
@@ -114,21 +115,23 @@ export default function DevelopersPage() {
   function validateForm(): Record<string, string> {
     const errors: Record<string, string> = {};
     if (!formData.app_name.trim()) {
-      errors.app_name = "Application name is required.";
+      errors.app_name = "Application name is required";
     }
     if (!formData.use_case) {
-      errors.use_case = "Please select a use case.";
+      errors.use_case = "Use case is required. Please select an option from the dropdown";
     }
-    if (!formData.description.trim()) {
-      errors.description = "Description is required (minimum 10 characters).";
-    } else if (formData.description.trim().length < 10) {
-      errors.description = `Description must be at least 10 characters (currently ${formData.description.trim().length}).`;
+    const descLength = formData.description.trim().length;
+    if (descLength === 0) {
+      errors.description = "Description is required";
+    } else if (descLength < 10) {
+      errors.description = `Description must be at least 10 characters. You have ${descLength}, need ${10 - descLength} more`;
     }
     return errors;
   }
 
   // Handle create key
   async function handleCreateKey() {
+    setAttemptedSubmit(true);
     const errors = validateForm();
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
@@ -159,6 +162,7 @@ export default function DevelopersPage() {
         description: "",
       });
       setFieldErrors({});
+      setAttemptedSubmit(false);
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -309,7 +313,16 @@ export default function DevelopersPage() {
         </Card>
 
         {/* Create API Key Dialog — controlled mode, rendered outside Card to avoid z-index/popover conflicts */}
-        <Dialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} title="Create API Key">
+        <Dialog
+          isOpen={isDialogOpen}
+          onClose={() => {
+            setIsDialogOpen(false);
+            setAttemptedSubmit(false);
+            setFieldErrors({});
+            setCreateError(null);
+          }}
+          title="Create API Key"
+        >
           <div className="space-y-4">
             {newKey ? (
               <div className="space-y-4">
@@ -339,6 +352,7 @@ export default function DevelopersPage() {
                   placeholder="My App API Key"
                   value={formData.name}
                   onChange={(value) => setFormData({ ...formData, name: value })}
+                  description="Optional: Give this key a friendly name for reference"
                 />
                 <TextField
                   label="Application Name"
@@ -349,14 +363,15 @@ export default function DevelopersPage() {
                     if (fieldErrors.app_name) setFieldErrors((prev) => ({ ...prev, app_name: "" }));
                   }}
                   isRequired
-                  isInvalid={!!fieldErrors.app_name}
-                  errorMessage={fieldErrors.app_name}
+                  isInvalid={attemptedSubmit && !!fieldErrors.app_name}
+                  errorMessage={attemptedSubmit ? fieldErrors.app_name : undefined}
                 />
                 <TextField
                   label="Application URL"
                   placeholder="https://myapp.com"
                   value={formData.app_url}
                   onChange={(value) => setFormData({ ...formData, app_url: value })}
+                  description="Optional: The URL where you'll use this API key"
                 />
                 <Select
                   label="Use Case"
@@ -376,8 +391,8 @@ export default function DevelopersPage() {
                     if (fieldErrors.use_case) setFieldErrors((prev) => ({ ...prev, use_case: "" }));
                   }}
                   isRequired
-                  isInvalid={!!fieldErrors.use_case}
-                  errorMessage={fieldErrors.use_case}
+                  isInvalid={attemptedSubmit && !!fieldErrors.use_case}
+                  errorMessage={attemptedSubmit ? fieldErrors.use_case : undefined}
                 />
                 <TextField
                   label="Description"
@@ -388,9 +403,9 @@ export default function DevelopersPage() {
                     if (fieldErrors.description) setFieldErrors((prev) => ({ ...prev, description: "" }));
                   }}
                   isRequired
-                  isInvalid={!!fieldErrors.description}
-                  errorMessage={fieldErrors.description}
-                  description={`${descriptionCharCount}/10 characters minimum`}
+                  isInvalid={attemptedSubmit && !!fieldErrors.description}
+                  errorMessage={attemptedSubmit ? fieldErrors.description : undefined}
+                  description={`${descriptionCharCount} characters (${descriptionCharCount < 10 ? "minimum 10 required" : "ready to submit"})`}
                 />
                 {createError && (
                   <Banner variant="error" title="Error">
@@ -398,6 +413,9 @@ export default function DevelopersPage() {
                   </Banner>
                 )}
                 <div className="flex gap-2 justify-end">
+                  <Button variant="secondary" onPress={() => setIsDialogOpen(false)} isDisabled={isCreating}>
+                    Cancel
+                  </Button>
                   <Button variant="primary" onPress={handleCreateKey} isLoading={isCreating}>
                     Create Key
                   </Button>
