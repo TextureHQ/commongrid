@@ -19,6 +19,8 @@ export type NavigationItem = {
 
 interface TopBarProps {
   navigation: NavigationItem[];
+  /** When false, nav links are hidden to prevent flash while user role resolves */
+  navigationReady?: boolean;
 }
 
 const GitHubIcon = () => (
@@ -59,12 +61,12 @@ const CloseIcon = () => (
   </svg>
 );
 
-export function TopBar({ navigation }: TopBarProps) {
+export function TopBar({ navigation, navigationReady = true }: TopBarProps) {
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { isDarkTheme, toggleTheme } = useColorMode();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
   const { open: openSearch } = useGlobalSearch();
 
   useEffect(() => {
@@ -106,8 +108,8 @@ export function TopBar({ navigation }: TopBarProps) {
             <span>CommonGrid</span>
           </Link>
 
-          {/* Nav links */}
-          <nav className="cg-nav-links">
+          {/* Nav links — invisible until navigation is settled to prevent flash */}
+          <nav className="cg-nav-links" style={navigationReady ? undefined : { visibility: "hidden" }}>
             {navigation.map((item) =>
               item.external ? (
                 <a key={item.id} href={item.href} target="_blank" rel="noopener noreferrer">
@@ -148,8 +150,10 @@ export function TopBar({ navigation }: TopBarProps) {
               </button>
             )}
 
-            {/* Auth */}
-            {isSignedIn ? (
+            {/* Auth — hidden until Clerk resolves to prevent flash */}
+            {!isAuthLoaded ? (
+              <div style={{ width: 32, height: 32 }} />
+            ) : isSignedIn ? (
               <UserMenu />
             ) : (
               <SignInButton mode="modal">
@@ -162,7 +166,7 @@ export function TopBar({ navigation }: TopBarProps) {
 
           {/* Mobile right */}
           <div className="cg-nav-mobile-right">
-            {isSignedIn && <UserMenu />}
+            {isAuthLoaded && isSignedIn && <UserMenu />}
             {mounted && (
               <button type="button" className="cg-icon-btn" onClick={toggleTheme} aria-label="Toggle color mode">
                 {isDarkTheme ? <SunIcon /> : <MoonIcon />}
@@ -211,7 +215,7 @@ interface MobileDrawerProps {
 
 function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggleTheme, mounted }: MobileDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
   const { open: openSearch } = useGlobalSearch();
 
   // Lock body scroll when drawer is open
@@ -338,21 +342,23 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
 
         {/* Footer: auth + theme */}
         <div className="cg-drawer-footer">
-          {isSignedIn ? (
-            <UserMenu />
-          ) : (
-            <div className="cg-drawer-auth">
-              <SignUpButton mode="modal">
-                <button type="button" className="cg-drawer-signup-btn">
-                  Sign Up
-                </button>
-              </SignUpButton>
-              <SignInButton mode="modal">
-                <button type="button" className="cg-drawer-signin-link">
-                  Sign In
-                </button>
-              </SignInButton>
-            </div>
+          {isAuthLoaded && (
+            isSignedIn ? (
+              <UserMenu />
+            ) : (
+              <div className="cg-drawer-auth">
+                <SignUpButton mode="modal">
+                  <button type="button" className="cg-drawer-signup-btn">
+                    Sign Up
+                  </button>
+                </SignUpButton>
+                <SignInButton mode="modal">
+                  <button type="button" className="cg-drawer-signin-link">
+                    Sign In
+                  </button>
+                </SignInButton>
+              </div>
+            )
           )}
           <div className="cg-drawer-footer-row">
             {mounted && (

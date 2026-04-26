@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useMemo } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { GlobalSearchModal, GlobalSearchProvider, useGlobalSearch } from "@/components/GlobalSearch";
 import { type NavigationItem, TopBar } from "@/components/TopBar";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -17,7 +18,15 @@ interface ShellLayoutClientProps {
  */
 function ShellInner({ children, navigation }: ShellLayoutClientProps) {
   const { open } = useGlobalSearch();
-  const { user } = useCurrentUser();
+  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
+  const { user, isLoading: isUserLoading } = useCurrentUser();
+
+  // Navigation is "settled" once we know the final link set:
+  // - Auth not loaded yet → not settled
+  // - Not signed in → settled (no moderation link possible)
+  // - Signed in but user profile still loading → not settled
+  // - Signed in and user loaded → settled
+  const isNavSettled = isAuthLoaded && (!isSignedIn || !isUserLoading);
 
   // Add Moderation nav item if user is admin or moderator
   const enhancedNavigation = useMemo(() => {
@@ -34,11 +43,9 @@ function ShellInner({ children, navigation }: ShellLayoutClientProps) {
     // Insert moderation item after contributions
     const contribIndex = navigation.findIndex((item) => item.id === "contributions");
     if (contribIndex === -1) {
-      // No contributions item, append at end
       return [...navigation, { id: "moderation", label: "Moderation", href: "/mod" }];
     }
 
-    // Insert after contributions
     return [
       ...navigation.slice(0, contribIndex + 1),
       { id: "moderation", label: "Moderation", href: "/mod" },
@@ -59,7 +66,7 @@ function ShellInner({ children, navigation }: ShellLayoutClientProps) {
 
   return (
     <div className="flex flex-col h-dvh">
-      <TopBar navigation={enhancedNavigation} />
+      <TopBar navigation={enhancedNavigation} navigationReady={isNavSettled} />
       <main className="flex-1 min-h-0">{children}</main>
       <GlobalSearchModal />
     </div>
