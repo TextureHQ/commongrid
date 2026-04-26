@@ -1,249 +1,284 @@
 "use client";
 
-import { Badge, Card, Section } from "@texturehq/edges";
 import Link from "next/link";
 import { ContentPage } from "@/components/ContentPage";
+import { useEntityCounts, formatCount } from "@/hooks/useEntityCounts";
+import "./about.css";
 
-const dataSources = [
-  {
-    name: "EIA-860",
-    description:
-      "Annual Electric Generator Report — 15,082 power plants, generator details, fuel types, and capacity data",
-  },
-  {
-    name: "EIA-861",
-    description: "Annual electric power industry report — utility ownership, customers, sales, and revenue data",
-  },
-  {
-    name: "HIFLD",
-    description:
-      "Homeland Infrastructure Foundation-Level Data — electric service territory boundaries and 52,000+ transmission line segments",
-  },
-  {
-    name: "DOE AFDC",
-    description:
-      "Alternative Fuels Data Center — 85,000+ US EV charging stations with network, connector, and access data. Updated weekly.",
-  },
-  {
-    name: "CEC",
-    description: "California Energy Commission — CCA territory data and California-specific utility information",
-  },
-  {
-    name: "CAISO OASIS",
-    description:
-      "California ISO Open Access Same-time Information System — pricing node definitions and wholesale market reference data",
-  },
-  {
-    name: "ISO/RTO Public Data",
-    description: "Public pricing node, zone, and hub data from CAISO, PJM, ERCOT, MISO, NYISO, ISO-NE, and SPP",
-  },
-  { name: "FERC", description: "Federal Energy Regulatory Commission — ISO/RTO boundaries and wholesale market data" },
-  {
-    name: "State PUC Records",
-    description: "State Public Utility Commission filings — rate structures and regulatory data",
-  },
+const DATA_SOURCES = [
+  { name: "EIA-860", desc: "Annual Electric Generator Report \u2014 power plants, generator details, fuel types, capacity data" },
+  { name: "EIA-861", desc: "Annual Electric Power Industry report \u2014 utility ownership, customers, sales, revenue data" },
+  { name: "HIFLD", desc: "Homeland Infrastructure Foundation \u2014 electric utility boundaries, 52,000+ transmission lines" },
+  { name: "DOE AFDC", desc: "Alternative Fuels Data Center \u2014 85,000+ EV charging stations, network, connector, access data" },
+  { name: "CAISO / ERCOT / MISO / SPP / PJM / ISO-NE / NYISO", desc: "ISO/RTO open data systems \u2014 pricing nodes, market participants, interconnection queues" },
+  { name: "FERC", desc: "Federal Energy Regulatory Commission \u2014 ISO/RTO boundaries and wholesale market data" },
+  { name: "State PUC Records", desc: "State Public Utility Commission filings \u2014 rate structures and regulatory data" },
 ];
 
-const dataHighlights = [
-  { label: "Utilities", value: "3,000+", icon: "🏢", href: "/grid-operators" },
-  { label: "Grid Operators", value: "3,132", icon: "⚡", href: "/grid-operators" },
-  { label: "Territory Boundaries", value: "4,841", icon: "🗺️", href: "/explore" },
-  { label: "Power Plants", value: "15,082", icon: "🏭", href: "/power-plants" },
-  { label: "Transmission Lines", value: "52,000+", icon: "🔌", href: "/transmission-lines" },
-  { label: "EV Charging Stations", value: "85,425", icon: "🔋", href: "/ev-charging" },
-  { label: "Pricing Nodes", value: "4,065", icon: "💰", href: "/pricing-nodes" },
-  { label: "Programs & Incentives", value: "500+", icon: "📋", href: "/explore?view=programs" },
-  { label: "Rates & Tariffs", value: "~12k", icon: "📄", href: "/explore?view=rates" },
+const CONTRIBUTION_ROLES = [
+  { term: "Public user", desc: "View data, download exports, browse change history. No account required." },
+  { term: "Contributor", desc: "Propose edits, attach sources and rationale, participate in discussion." },
+  { term: "Trusted editor", desc: "Review and approve changesets from contributors." },
+  { term: "Domain moderator", desc: "Moderate specific utilities, regions, or data classes." },
+  { term: "System admin", desc: "Override policies, handle escalations and abuse." },
+];
+
+const HOW_STEPS = [
+  { num: "01", title: "Find something wrong", desc: "Spot incorrect or missing data while browsing any entity." },
+  { num: "02", title: "Propose a change", desc: "Submit a versioned changeset with a diff, source citation, and rationale." },
+  { num: "03", title: "Review", desc: "Moderators review for accuracy, sourcing, and consistency with schema." },
+  { num: "04", title: "Merge & publish", desc: "Approved changes merge into the canonical dataset. Full history stays visible." },
 ];
 
 export default function AboutPage() {
-  return (
-    <ContentPage>
-      <ContentPage.Header title="About CommonGrid" kicker="About" />
-      <ContentPage.Body>
-        {/* Hero */}
-        <Section id="mission" navLabel="Mission" title="The open-source energy infrastructure dataset" withDivider>
-          <Card variant="outlined">
-            <Card.Content>
-              <div className="space-y-4 text-text-body leading-relaxed">
-                <p className="text-lg">
-                  <strong className="text-text-heading">CommonGrid</strong> is the open-source energy infrastructure
-                  dataset built by{" "}
-                  <a
-                    href="https://texturehq.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand-primary hover:underline"
-                  >
-                    Texture
-                  </a>
-                  . It exists because the data that powers America&rsquo;s energy system shouldn&rsquo;t be this hard to
-                  find.
-                </p>
-                <p>
-                  Utility territories are buried in PDFs. Rate structures are scattered across regulatory filings. Grid
-                  operator boundaries? Nobody agrees on those. If you&rsquo;ve ever tried to answer a simple question
-                  like <em>&ldquo;which utility serves this address?&rdquo;</em> — you know the pain.
-                </p>
-                <p>
-                  Texture spent years pulling data from EIA, NOAA, HIFLD, FERC, and hundreds of public sources to build
-                  the most comprehensive energy infrastructure dataset available. Now we&rsquo;re open-sourcing it:
-                  browse it, build on it, contribute back.
-                </p>
-              </div>
-            </Card.Content>
-          </Card>
-        </Section>
+  const counts = useEntityCounts();
 
-        {/* Data at a Glance */}
-        <Section id="data" navLabel="Data" title="What's in CommonGrid" withDivider>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4">
-            {dataHighlights.map((item) => (
-              <Link key={item.label} href={item.href} className="block group">
-                <Card
-                  variant="outlined"
-                  className="h-full group-hover:border-brand-primary/50 group-hover:shadow-sm transition-all"
-                >
-                  <Card.Content>
-                    <div className="text-2xl mb-2">{item.icon}</div>
-                    <div className="text-sm text-text-muted mb-1">{item.label}</div>
-                    <div className="text-lg font-semibold text-text-heading mb-3">{item.value}</div>
-                    <div className="text-xs text-brand-primary font-medium group-hover:underline">
-                      Browse {item.label} →
-                    </div>
-                  </Card.Content>
-                </Card>
-              </Link>
+  const gridOperatorCount =
+    counts.isos !== null && counts.rtos !== null && counts.balancingAuthorities !== null
+      ? counts.isos + counts.rtos + counts.balancingAuthorities
+      : null;
+
+  return (
+    <ContentPage className="cg-about">
+      <ContentPage.Header
+        kicker="Open data commons"
+        title="The energy industry's shared infrastructure record."
+        subtitle="CommonGrid is a public, citable, community-maintained registry of U.S. energy infrastructure — utilities, territories, grid operators, programs, rates, and assets. Free to read, download, cite, and build on."
+        actions={
+          <div className="flex gap-2 flex-wrap">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide uppercase font-mono border border-border-default text-text-caption">
+              Active &middot; continuously updated
+            </span>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide uppercase font-mono border border-border-default text-text-caption">
+              GitHub
+            </span>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide uppercase font-mono border border-border-default text-text-caption">
+              ODbL License
+            </span>
+          </div>
+        }
+      />
+      <ContentPage.Body>
+        {/* ── 01 THE PROBLEM ── */}
+        <div className="ab-section">
+          <div className="ab-kicker">01 &middot; The problem</div>
+          <h2 className="ab-section-title">Energy data is public. Finding it shouldn&rsquo;t be a career.</h2>
+          <div className="ab-prose">
+            <p>
+              Utility territories are buried in PDFs. Rate structures are scattered across regulatory filings.
+              Grid operator boundaries shift without notice. Service territory maps live in state PUC filing
+              systems that require case-by-case requests. Nobody agrees on primary identifiers.
+            </p>
+            <p>
+              Anyone building software, research, or policy analysis that touches energy infrastructure
+              eventually confronts the same fragmented landscape. The data exists &mdash; it&rsquo;s just never been
+              assembled, normalized, and kept current in one place anyone can use.
+            </p>
+          </div>
+        </div>
+
+        {/* ── 02 WHY COMMONGRID ── */}
+        <div className="ab-section">
+          <div className="ab-kicker">02 &middot; Why CommonGrid is</div>
+          <h2 className="ab-section-title">A connected graph, not a collection of spreadsheets.</h2>
+          <div className="ab-prose">
+            <p>
+              CommonGrid is structured around entities and their relationships &mdash; not flat datasets. A utility
+              links to its service territory. A territory links to its grid operator. A program links to the utilities
+              offering it. A rate links to the territory it applies in. Every entity is a node in the same
+              connected graph.
+            </p>
+            <p>
+              That structure means you can start anywhere &mdash; a zip code, a co-op name, an ISO &mdash; and
+              navigate outward to everything related. No manual joins. No spreadsheet archaeology.
+            </p>
+          </div>
+          <div className="ab-stats">
+            <div className="ab-stat">
+              <div className="ab-stat-n">{formatCount(counts.utilities)}</div>
+              <div className="ab-stat-l">Utilities</div>
+            </div>
+            <div className="ab-stat">
+              <div className="ab-stat-n">{formatCount(gridOperatorCount)}</div>
+              <div className="ab-stat-l">Grid operators</div>
+            </div>
+            <div className="ab-stat">
+              <div className="ab-stat-n">{formatCount(counts.territories)}</div>
+              <div className="ab-stat-l">Territories</div>
+            </div>
+            <div className="ab-stat">
+              <div className="ab-stat-n">{formatCount(counts.powerPlants)}</div>
+              <div className="ab-stat-l">Power plants</div>
+            </div>
+            <div className="ab-stat">
+              <div className="ab-stat-n">{formatCount(counts.programs)}</div>
+              <div className="ab-stat-l">Programs</div>
+            </div>
+            <div className="ab-stat">
+              <div className="ab-stat-n">{formatCount(counts.evStations)}</div>
+              <div className="ab-stat-l">EV stations</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── 03 ORIGIN ── */}
+        <div className="ab-section">
+          <div className="ab-kicker">03 &middot; Origin</div>
+          <h2 className="ab-section-title">Built by Texture. Opened to everyone.</h2>
+          <div className="ab-prose">
+            <p>
+              CommonGrid was created by{" "}
+              <a href="https://texturehq.com" target="_blank" rel="noopener noreferrer" className="text-text-heading underline">
+                Texture
+              </a>
+              , an energy software company. In building our platform,
+              we spent years normalizing data from EIA, FERC, HIFLD, NOAA, state PUC filings, and
+              hundreds of other sources. The result was a structured, relational model of the U.S. energy
+              landscape.
+            </p>
+            <p>
+              We decided to open it. Not because we had to &mdash; the underlying sources are public &mdash; but
+              because the normalization work is genuinely unglamorous, and doing it once for the whole
+              industry makes more sense than having every team do it independently.
+            </p>
+            <p>
+              Texture&rsquo;s competitive advantages live in what happens when this context combines with real
+              operational data: device telemetry, customer accounts, control systems. That layer stays
+              proprietary. The registry layer &mdash; what every energy software team needs to function &mdash; is the
+              commons.
+            </p>
+          </div>
+        </div>
+
+        {/* ── 04 CONTRIBUTION MODEL ── */}
+        <div className="ab-section">
+          <div className="ab-kicker">04 &middot; Contribution model</div>
+          <h2 className="ab-section-title">Open, transparent, community-maintained.</h2>
+          <div className="ab-prose" style={{ marginBottom: 20 }}>
+            <p>
+              CommonGrid uses an open contribution model: anyone can view and download the data,
+              account-based editing, transparent version history, and community governance. Anyone can
+              propose a change. Every change is attributable, reviewable, and reversible.
+            </p>
+          </div>
+          <dl className="ab-defs">
+            {CONTRIBUTION_ROLES.map((role) => (
+              <div key={role.term} className="ab-def">
+                <dt>{role.term}</dt>
+                <dd>{role.desc}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        {/* ── 05 HOW CHANGES WORK ── */}
+        <div className="ab-section">
+          <div className="ab-kicker">05 &middot; How changes work</div>
+          <h2 className="ab-section-title">Propose, review, merge &mdash; not edit and ship.</h2>
+          <div className="ab-prose" style={{ marginBottom: 20 }}>
+            <p>
+              Energy data errors can be costly and hard to detect. A wrong territory boundary, an outdated
+              rate schedule, a misclassified ISO assignment &mdash; these aren&rsquo;t typos. So CommonGrid uses a
+              changeset model: edits are proposed as versioned diffs, reviewed by moderators or trusted
+              editors, and merged into the canonical dataset only when approved.
+            </p>
+          </div>
+          <div className="ab-flow">
+            {HOW_STEPS.map((step) => (
+              <div key={step.num} className="ab-step">
+                <div className="ab-step-num">{step.num}</div>
+                <div>
+                  <h4>{step.title}</h4>
+                  <p>{step.desc}</p>
+                </div>
+              </div>
             ))}
           </div>
-        </Section>
+        </div>
 
-        {/* Data Sources */}
-        <Section id="sources" navLabel="Sources" title="Data Sources" withDivider>
-          <Card variant="outlined">
-            <Card.Content>
-              <div className="space-y-4">
-                {dataSources.map((source) => (
-                  <div key={source.name} className="flex flex-col gap-1">
-                    <div className="font-semibold text-text-heading font-mono text-sm">{source.name}</div>
-                    <div className="text-text-body text-sm">{source.description}</div>
-                  </div>
-                ))}
+        {/* ── 06 DATA SOURCES ── */}
+        <div className="ab-section">
+          <div className="ab-kicker">06 &middot; Data sources</div>
+          <h2 className="ab-section-title">Seeded from authoritative public records.</h2>
+          <div className="ab-prose" style={{ marginBottom: 20 }}>
+            <p>
+              CommonGrid is seeded from government and regulatory sources, then maintained by
+              community contributions. Every field traces back to a citable origin.
+            </p>
+          </div>
+          <dl className="ab-defs">
+            {DATA_SOURCES.map((source) => (
+              <div key={source.name} className="ab-def">
+                <dt>{source.name}</dt>
+                <dd>{source.desc}</dd>
               </div>
-            </Card.Content>
-          </Card>
-        </Section>
+            ))}
+          </dl>
+        </div>
 
-        {/* Contribute */}
-        <Section id="contribute" navLabel="Contribute" title="Help Build CommonGrid" withDivider>
-          <Card variant="outlined">
-            <Card.Content>
-              <div className="space-y-4 text-text-body leading-relaxed">
-                <p className="text-lg">
-                  <strong className="text-text-heading">
-                    CommonGrid isn&rsquo;t just our project — it&rsquo;s yours.
-                  </strong>
-                </p>
-                <p>
-                  The best open datasets are built by communities. Like OpenStreetMap proved that millions of
-                  contributors can map the world better than any single company, we believe the energy industry&rsquo;s
-                  data should be just as accessible and community-maintained.
-                </p>
-                <p>
-                  We need your help. Whether you work at a utility, a research lab, a state PUC, or you&rsquo;re just a
-                  data nerd who cares about the grid — there&rsquo;s a way to contribute:
-                </p>
-                <ul className="space-y-2 ml-1">
-                  <li className="flex gap-2">
-                    <span className="flex-none">📊</span>
-                    <span>
-                      <strong>Submit data corrections</strong> — spot a wrong address, outdated customer count, or
-                      missing utility? Open an issue or PR.
-                    </span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="flex-none">🗺️</span>
-                    <span>
-                      <strong>Contribute new data sources</strong> — know of a public dataset we&rsquo;re missing?
-                      State-level data, municipal records, international grids? We want it.
-                    </span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="flex-none">🔧</span>
-                    <span>
-                      <strong>Improve the tools</strong> — better sync scripts, new visualizations, data validation —
-                      all contributions welcome.
-                    </span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="flex-none">🐛</span>
-                    <span>
-                      <strong>Report issues</strong> — even just flagging that something looks wrong is incredibly
-                      valuable.
-                    </span>
-                  </li>
-                </ul>
-                <div className="flex flex-wrap gap-3 pt-2">
-                  <a
-                    href="https://github.com/TextureHQ/commongrid/issues/new"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-primary text-white text-sm font-medium hover:opacity-90 transition-opacity"
-                  >
-                    Open an Issue →
-                  </a>
-                  <a
-                    href="https://github.com/TextureHQ/commongrid"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border-default text-text-body text-sm font-medium hover:border-brand-primary/50 transition-colors"
-                  >
-                    Fork on GitHub →
-                  </a>
-                </div>
-              </div>
-            </Card.Content>
-          </Card>
-        </Section>
+        {/* ── 07 LICENSE ── */}
+        <div className="ab-section">
+          <div className="ab-kicker">07 &middot; License</div>
+          <h2 className="ab-section-title">Open Database License (ODbL).</h2>
+          <div className="ab-prose">
+            <p>
+              CommonGrid is published under the{" "}
+              <a
+                href="https://opendatacommons.org/licenses/odbl/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-heading underline"
+              >
+                Open Database License (ODbL)
+              </a>
+              . You can freely use,
+              modify, and redistribute the data. If you publicly distribute a derivative database, you must
+              attribute CommonGrid and share it under the same terms. This protects the commons from
+              being absorbed into closed products.
+            </p>
+          </div>
+          <div className="flex gap-2.5 mt-5 flex-wrap">
+            <a
+              href="https://opendatacommons.org/licenses/odbl/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 h-[34px] px-3.5 rounded-lg text-sm font-medium border border-border-default text-text-heading hover:border-text-heading transition-colors no-underline"
+            >
+              Read the ODbL &nearr;
+            </a>
+            <a
+              href="https://github.com/TextureHQ/commongrid"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 h-[34px] px-3.5 rounded-lg text-sm font-medium bg-text-heading text-background-body border border-text-heading hover:opacity-90 transition-opacity no-underline"
+            >
+              View on GitHub
+            </a>
+          </div>
+        </div>
 
-        {/* Status */}
-        <Section id="status" navLabel="Status" title="Status" withDivider>
-          <Card variant="outlined">
-            <Card.Content>
-              <div className="space-y-4 text-text-body leading-relaxed">
-                <div className="flex items-center gap-2">
-                  <Badge size="sm" shape="pill" variant="warning">
-                    Early Access
-                  </Badge>
-                  <span className="text-text-muted text-sm">Actively growing</span>
-                </div>
-                <p>
-                  CommonGrid is under active development. We&rsquo;re continuously adding new data sources, improving
-                  data quality, and expanding coverage. Contributions are welcome — whether that&rsquo;s reporting data
-                  issues, adding new sources, or improving the explorer.
-                </p>
-                <div className="flex flex-wrap gap-3 pt-2">
-                  <a
-                    href="https://github.com/TextureHQ/commongrid"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand-primary hover:underline text-sm font-medium"
-                  >
-                    GitHub Repository →
-                  </a>
-                  <a
-                    href="https://github.com/TextureHQ/commongrid/issues"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand-primary hover:underline text-sm font-medium"
-                  >
-                    Report an Issue →
-                  </a>
-                </div>
-              </div>
-            </Card.Content>
-          </Card>
-        </Section>
+        {/* ── Footer CTA ── */}
+        <div className="ab-cta">
+          <h2>Start contributing.</h2>
+          <p>
+            Something is missing or incorrect? Create an account and propose a change &mdash; every edit is
+            reviewed, attributed, and reversible.
+          </p>
+          <div className="flex gap-2.5 flex-wrap">
+            <Link
+              href="/explore"
+              className="inline-flex items-center gap-1.5 h-[34px] px-3.5 rounded-lg text-sm font-medium bg-text-heading text-background-body border border-text-heading hover:opacity-90 transition-opacity no-underline"
+            >
+              Browse the registry &rarr;
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="inline-flex items-center h-[34px] px-3.5 rounded-lg text-sm font-medium border border-border-default text-text-heading hover:border-text-heading transition-colors no-underline"
+            >
+              Create account
+            </Link>
+          </div>
+        </div>
       </ContentPage.Body>
     </ContentPage>
   );

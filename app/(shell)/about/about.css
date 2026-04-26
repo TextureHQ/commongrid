@@ -1,0 +1,216 @@
+/* ═══════════════════════════════════════════
+   About page — editorial layout components
+   Outer layout + header handled by ContentPage
+   ═══════════════════════════════════════════ */
+
+/* ── Section dividers ── */
+.cg-about .ab-section {
+  padding: clamp(32px, 5vw, 56px) 0 0;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.cg-about .ab-kicker {
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-caption);
+  margin-bottom: 12px;
+}
+
+.cg-about .ab-section-title {
+  font-weight: 600;
+  font-size: clamp(20px, 2.4vw, 28px);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--color-text-heading);
+  margin: 0 0 12px;
+}
+
+/* ── Prose ── */
+.cg-about .ab-prose {
+  max-width: 65ch;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-text-muted);
+}
+
+.cg-about .ab-prose p {
+  margin: 0 0 14px;
+}
+
+.cg-about .ab-prose p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Stats grid ── */
+.cg-about .ab-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--color-border-default);
+  border-bottom: 1px solid var(--color-border-default);
+  margin-top: 24px;
+}
+
+.cg-about .ab-stat {
+  padding: 20px 16px;
+  border-right: 1px solid var(--color-border-default);
+}
+
+.cg-about .ab-stat:nth-child(3n) {
+  border-right: 0;
+}
+
+.cg-about .ab-stat-n {
+  font-family: var(--font-family-brand);
+  font-weight: 600;
+  font-size: clamp(24px, 2.5vw, 32px);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-heading);
+}
+
+.cg-about .ab-stat-l {
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  color: var(--color-text-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cg-about .ab-stat-l::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-brand-primary);
+  flex-shrink: 0;
+}
+
+/* ── Definition rows ── */
+.cg-about .ab-defs {
+  border-top: 1px solid var(--color-border-default);
+  margin-top: 20px;
+}
+
+.cg-about .ab-def {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border-default);
+  align-items: baseline;
+}
+
+.cg-about .ab-def dt {
+  font-family: var(--font-family-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+
+.cg-about .ab-def dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+/* ── Numbered flow steps ── */
+.cg-about .ab-flow {
+  border-top: 1px solid var(--color-border-default);
+  margin-top: 20px;
+}
+
+.cg-about .ab-step {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--color-border-default);
+  align-items: start;
+}
+
+.cg-about .ab-step-num {
+  font-family: var(--font-family-mono);
+  font-size: 13px;
+  color: var(--color-text-caption);
+  line-height: 1.4;
+}
+
+.cg-about .ab-step h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+
+.cg-about .ab-step p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* ── CTA band ── */
+.cg-about .ab-cta {
+  padding: clamp(32px, 5vw, 56px) 0;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.cg-about .ab-cta h2 {
+  font-weight: 600;
+  font-size: clamp(20px, 2.4vw, 28px);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--color-text-heading);
+  margin: 0 0 8px;
+}
+
+.cg-about .ab-cta > p {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 0 0 20px;
+  max-width: 56ch;
+  line-height: 1.6;
+}
+
+/* ── Responsive ── */
+@media (max-width: 820px) {
+  .cg-about .ab-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cg-about .ab-stat:nth-child(3n) {
+    border-right: 1px solid var(--color-border-default);
+  }
+
+  .cg-about .ab-stat:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .cg-about .ab-def {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 560px) {
+  .cg-about .ab-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .cg-about .ab-stat {
+    border-right: 0;
+  }
+
+  .cg-about .ab-stat:not(:last-child) {
+    border-bottom: 1px solid var(--color-border-default);
+  }
+}
