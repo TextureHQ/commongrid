@@ -254,6 +254,7 @@ export function EditPanel({
                   selectedKey={sourceType}
                   onSelectionChange={(key) => setSourceType(String(key))}
                   items={SOURCE_TYPES.map((st) => ({ id: st.id, label: st.label, value: st.id }))}
+                  renderItem={(item) => item.label}
                   size="sm"
                 />
                 <TextField
