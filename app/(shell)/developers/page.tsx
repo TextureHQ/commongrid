@@ -380,6 +380,7 @@ export default function DevelopersPage() {
                       { id: "personal", label: "Personal", value: "personal" },
                       { id: "other", label: "Other", value: "other" },
                     ]}
+                    renderItem={(item) => item.label}
                     selectedKey={formData.use_case || undefined}
                     onSelectionChange={(key) => {
                       setFormData({ ...formData, use_case: key as string });
