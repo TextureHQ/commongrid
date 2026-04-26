@@ -64,7 +64,7 @@ export function TopBar({ navigation }: TopBarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { isDarkTheme, toggleTheme } = useColorMode();
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn } = useAuth();
   const { open: openSearch } = useGlobalSearch();
 
   useEffect(() => {
@@ -81,8 +81,6 @@ export function TopBar({ navigation }: TopBarProps) {
     if (item.href !== "/" && pathname.startsWith(`${item.href}/`)) return true;
     return item.activePatterns?.some((p) => pathname.startsWith(p)) ?? false;
   };
-
-  const showAuth = mounted && isLoaded;
 
   return (
     <>
@@ -151,26 +149,28 @@ export function TopBar({ navigation }: TopBarProps) {
             )}
 
             {/* Auth */}
-            {showAuth && !isSignedIn && (
+            {isSignedIn ? (
+              <UserMenu />
+            ) : (
               <SignInButton mode="modal">
                 <button type="button" className="cg-nav-signin">
                   Sign In
                 </button>
               </SignInButton>
             )}
-            {showAuth && isSignedIn && <UserMenu />}
           </div>
 
           {/* Mobile right */}
           <div className="cg-nav-mobile-right">
-            {showAuth && !isSignedIn && (
+            {isSignedIn ? (
+              <UserMenu />
+            ) : (
               <SignInButton mode="modal">
                 <button type="button" className="cg-nav-signin">
                   Sign In
                 </button>
               </SignInButton>
             )}
-            {showAuth && isSignedIn && <UserMenu />}
             {mounted && (
               <button type="button" className="cg-icon-btn" onClick={toggleTheme} aria-label="Toggle color mode">
                 {isDarkTheme ? <SunIcon /> : <MoonIcon />}
@@ -219,8 +219,7 @@ interface MobileDrawerProps {
 
 function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggleTheme, mounted }: MobileDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
-  const { isSignedIn, isLoaded } = useAuth();
-  const showAuth = mounted && isLoaded;
+  const { isSignedIn } = useAuth();
   const { open: openSearch } = useGlobalSearch();
 
   // Lock body scroll when drawer is open
@@ -345,8 +344,17 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
           )}
         </nav>
 
-        {/* Footer: theme + auth */}
+        {/* Footer: auth + theme */}
         <div className="cg-drawer-footer">
+          {isSignedIn ? (
+            <UserMenu />
+          ) : (
+            <SignInButton mode="modal">
+              <button type="button" className="cg-drawer-signin-btn">
+                Sign In
+              </button>
+            </SignInButton>
+          )}
           <div className="cg-drawer-footer-row">
             {mounted && (
               <button type="button" className="cg-drawer-theme-btn" onClick={toggleTheme}>
@@ -364,21 +372,6 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
               <GitHubIcon /> GitHub
             </a>
           </div>
-          {showAuth && isSignedIn && <UserMenu />}
-          {showAuth && !isSignedIn && (
-            <SignInButton mode="modal">
-              <button type="button" className="cg-drawer-signin-btn">
-                Sign In
-              </button>
-            </SignInButton>
-          )}
-          {!showAuth && (
-            <SignInButton mode="modal">
-              <button type="button" className="cg-drawer-signin-btn">
-                Sign In
-              </button>
-            </SignInButton>
-          )}
         </div>
       </div>
     </>,
