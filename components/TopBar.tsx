@@ -364,7 +364,15 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
               <GitHubIcon /> GitHub
             </a>
           </div>
+          {showAuth && isSignedIn && <UserMenu />}
           {showAuth && !isSignedIn && (
+            <SignInButton mode="modal">
+              <button type="button" className="cg-drawer-signin-btn">
+                Sign In
+              </button>
+            </SignInButton>
+          )}
+          {!showAuth && (
             <SignInButton mode="modal">
               <button type="button" className="cg-drawer-signin-btn">
                 Sign In
