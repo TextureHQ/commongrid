@@ -499,7 +499,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
             fillOpacity: 0.2,
           },
           tooltip: {
-            trigger: "hover",
+            trigger: "click",
             content: (feature: LayerFeature) => (
               <TerritoryTooltip
                 name={feature.properties.name}
@@ -526,7 +526,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
             fillOpacity: 0.18,
           },
           tooltip: {
-            trigger: "hover",
+            trigger: "click",
             content: (feature: LayerFeature) => (
               <GridOperatorTooltip
                 operatorName={feature.properties.operatorName}
@@ -560,16 +560,18 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           width: 1.5,
           opacity: 0.75,
         },
-        tooltip: {
-          trigger: "hover",
-          content: (feature: LayerFeature) => (
-            <TransmissionTooltip
-              owner={feature.properties.owner}
-              voltage={feature.properties.voltage}
-              status={feature.properties.status}
-            />
-          ),
-        },
+        ...(visible["transmission-lines"] !== false && {
+          tooltip: {
+            trigger: "hover",
+            content: (feature: LayerFeature) => (
+              <TransmissionTooltip
+                owner={feature.properties.owner}
+                voltage={feature.properties.voltage}
+                status={feature.properties.status}
+              />
+            ),
+          },
+        }),
       })
     );
 
@@ -597,19 +599,21 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           borderColor: { hex: "#ffffff" },
           fillOpacity: 0.85,
         },
-        tooltip: {
-          trigger: "hover",
-          content: (feature: LayerFeature) => (
-            <EVChargingTooltip
-              name={feature.properties.name}
-              network={feature.properties.network}
-              dcFastCount={feature.properties.dcFastCount}
-              level2Count={feature.properties.level2Count}
-              level1Count={feature.properties.level1Count ?? 0}
-              accessCode={feature.properties.accessCode}
-            />
-          ),
-        },
+        ...(visible["ev-charging"] === true && {
+          tooltip: {
+            trigger: "hover",
+            content: (feature: LayerFeature) => (
+              <EVChargingTooltip
+                name={feature.properties.name}
+                network={feature.properties.network}
+                dcFastCount={feature.properties.dcFastCount}
+                level2Count={feature.properties.level2Count}
+                level1Count={feature.properties.level1Count ?? 0}
+                accessCode={feature.properties.accessCode}
+              />
+            ),
+          },
+        }),
         events: {
           onClick: (feature: LayerFeature) => {
             const slug = feature.properties.slug;
@@ -642,17 +646,19 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           borderColor: { hex: "#ffffff" },
           fillOpacity: 0.8,
         },
-        tooltip: {
-          trigger: "hover",
-          content: (feature: LayerFeature) => (
-            <PricingNodeTooltip
-              name={feature.properties.name}
-              iso={feature.properties.iso}
-              nodeType={feature.properties.nodeType}
-              zone={feature.properties.zone}
-            />
-          ),
-        },
+        ...(visible["pricing-nodes"] === true && {
+          tooltip: {
+            trigger: "hover",
+            content: (feature: LayerFeature) => (
+              <PricingNodeTooltip
+                name={feature.properties.name}
+                iso={feature.properties.iso}
+                nodeType={feature.properties.nodeType}
+                zone={feature.properties.zone}
+              />
+            ),
+          },
+        }),
         events: {
           onClick: (feature: LayerFeature) => {
             const slug = feature.properties.slug;
@@ -686,17 +692,19 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           borderColor: { hex: "#ffffff" },
           fillOpacity: 0.9,
         },
-        tooltip: {
-          trigger: "hover",
-          content: (feature: LayerFeature) => (
-            <PowerPlantTooltip
-              name={feature.properties.name}
-              fuelCategory={feature.properties.fuelCategory}
-              capacityMw={feature.properties.capacityMw}
-              status={feature.properties.status}
-            />
-          ),
-        },
+        ...(visible["power-plants"] !== false && {
+          tooltip: {
+            trigger: "hover",
+            content: (feature: LayerFeature) => (
+              <PowerPlantTooltip
+                name={feature.properties.name}
+                fuelCategory={feature.properties.fuelCategory}
+                capacityMw={feature.properties.capacityMw}
+                status={feature.properties.status}
+              />
+            ),
+          },
+        }),
         events: {
           onClick: (feature: LayerFeature) => {
             const slug = feature.properties.slug;
