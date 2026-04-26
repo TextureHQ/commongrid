@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
-import { ContentPage } from "@/components/ContentPage";
+import { ContentPage, ContentPageBody, ContentPageHeader } from "@/components/ContentPage";
 
 interface GHRelease {
   tag_name: string;
@@ -81,12 +81,12 @@ export default async function SnapshotsPage() {
 
   return (
     <ContentPage>
-      <ContentPage.Header
+      <ContentPageHeader
         title="Database Snapshots"
         kicker="Data"
         subtitle="Download the complete CommonGrid dataset as a PostgreSQL dump."
       />
-      <ContentPage.Body>
+      <ContentPageBody>
         {/* Error state */}
         {error && (
           <div className="mb-8 p-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -214,7 +214,7 @@ export default async function SnapshotsPage() {
             </li>
           </ul>
         </div>
-      </ContentPage.Body>
+      </ContentPageBody>
     </ContentPage>
   );
 }
