@@ -1,7 +1,8 @@
 "use client";
 
-import { Badge, Card, PageLayout, Section } from "@texturehq/edges";
+import { Badge, Card, Section } from "@texturehq/edges";
 import Link from "next/link";
+import { ContentPage } from "@/components/ContentPage";
 
 const dataSources = [
   {
@@ -57,9 +58,9 @@ const dataHighlights = [
 
 export default function AboutPage() {
   return (
-    <PageLayout maxWidth={900}>
-      <PageLayout.Header title="About CommonGrid" />
-      <PageLayout.Content>
+    <ContentPage>
+      <ContentPage.Header title="About CommonGrid" kicker="About" />
+      <ContentPage.Body>
         {/* Hero */}
         <Section id="mission" navLabel="Mission" title="The open-source energy infrastructure dataset" withDivider>
           <Card variant="outlined">
@@ -243,7 +244,7 @@ export default function AboutPage() {
             </Card.Content>
           </Card>
         </Section>
-      </PageLayout.Content>
-    </PageLayout>
+      </ContentPage.Body>
+    </ContentPage>
   );
 }

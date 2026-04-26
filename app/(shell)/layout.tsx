@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ShellLayoutClient } from "@/components/ShellLayoutClient";
+import "@/components/ContentPage.css";
 
 export default function ShellLayout({ children }: { children: ReactNode }) {
   const navigation = [

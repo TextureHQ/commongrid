@@ -1,10 +1,11 @@
 "use client";
 
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { Badge, Button, Card, Icon, Loader, PageLayout, SegmentedControl } from "@texturehq/edges";
+import { Badge, Button, Card, Icon, Loader, SegmentedControl } from "@texturehq/edges";
 import Link from "next/link";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { ContentPage } from "@/components/ContentPage";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -162,20 +163,20 @@ export default function ContributionsDashboard() {
 
   if (!userLoaded) {
     return (
-      <PageLayout maxWidth={896}>
+      <ContentPage>
         <div className="flex items-center justify-center py-24">
           <Loader size={32} />
         </div>
-      </PageLayout>
+      </ContentPage>
     );
   }
 
   // Show sign-in prompt for unauthenticated users
   if (!user) {
     return (
-      <PageLayout maxWidth={896}>
-        <PageLayout.Header title="My Contributions" breadcrumbs={[{ label: "Contributions" }]} />
-        <PageLayout.Content>
+      <ContentPage>
+        <ContentPage.Header title="My Contributions" breadcrumbs={[{ label: "Contributions" }]} />
+        <ContentPage.Body>
           <div className="px-4 sm:px-6 py-12">
             <Card variant="outlined">
               <Card.Content className="py-16 text-center">
@@ -192,14 +193,14 @@ export default function ContributionsDashboard() {
               </Card.Content>
             </Card>
           </div>
-        </PageLayout.Content>
-      </PageLayout>
+        </ContentPage.Body>
+      </ContentPage>
     );
   }
 
   return (
-    <PageLayout maxWidth={896}>
-      <PageLayout.Header
+    <ContentPage>
+      <ContentPage.Header
         title="My Contributions"
         breadcrumbs={[{ label: "Contributions" }]}
         actions={
@@ -209,7 +210,7 @@ export default function ContributionsDashboard() {
         }
       />
 
-      <PageLayout.Content>
+      <ContentPage.Body>
         {/* Stats */}
         <div className="px-4 sm:px-6 pb-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -330,7 +331,7 @@ export default function ContributionsDashboard() {
             </div>
           )}
         </div>
-      </PageLayout.Content>
-    </PageLayout>
+      </ContentPage.Body>
+    </ContentPage>
   );
 }
