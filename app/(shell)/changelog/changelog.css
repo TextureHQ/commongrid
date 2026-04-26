@@ -3,82 +3,10 @@
    Matches homepage warm civic aesthetic.
    ═══════════════════════════════════════════ */
 
-.cg-changelog {
-  --font-family-brand: "Rethink Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
-  --font-family-mono: "Fira Code", ui-monospace, "SF Mono", Menlo, monospace;
-  --font-family-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-
-  font-family: var(--font-family-sans);
-  font-feature-settings: "ss01", "cv11";
-  -webkit-font-smoothing: antialiased;
-  color: var(--color-text-body);
-  background: var(--color-background-body);
-  max-width: 960px;
-  margin: 0 auto;
-  padding: clamp(32px, 5vw, 64px) clamp(20px, 4vw, 56px);
-}
-
-/* ── Header ── */
-.cg-changelog .cl-kicker {
-  font-family: var(--font-family-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-text-caption);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.cg-changelog .cl-kicker::before {
-  content: "";
-  width: 20px;
-  height: 1px;
-  background: var(--color-brand-primary);
-}
-
-.cg-changelog .cl-title {
-  font-family: var(--font-family-brand);
-  font-weight: 600;
-  font-size: clamp(36px, 4vw, 52px);
-  letter-spacing: -0.035em;
-  line-height: 1;
-  color: var(--color-text-heading);
-  margin: 0 0 16px;
-}
-
-.cg-changelog .cl-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: clamp(24px, 4vw, 40px);
-}
-
-.cg-changelog .cl-sync-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-.cg-changelog .cl-sync-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--color-feedback-success);
-  flex-shrink: 0;
-}
-
-.cg-changelog .cl-last-updated {
-  font-family: var(--font-family-mono);
-  font-size: 12px;
-  color: var(--color-text-caption);
-  letter-spacing: 0.02em;
-}
+/* ═══════════════════════════════════════════
+   Changelog — feed-specific styles
+   Outer layout + header handled by ContentPage
+   ═══════════════════════════════════════════ */
 
 /* ── Stats band ── */
 .cg-changelog .cl-stats {
@@ -350,9 +278,4 @@
     font-size: 11px;
   }
 
-  .cg-changelog .cl-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
 }

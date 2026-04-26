@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
+import { ContentPage } from "@/components/ContentPage";
 
 interface GHRelease {
   tag_name: string;
@@ -79,16 +80,13 @@ export default async function SnapshotsPage() {
   }
 
   return (
-    <div className="container py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-text-heading">Database Snapshots</h1>
-          <p className="text-lg text-text-body">
-            Download weekly backups of the CommonGrid database in SQL and GeoJSON formats.
-          </p>
-        </div>
-
+    <ContentPage>
+      <ContentPage.Header
+        title="Database Snapshots"
+        kicker="Data"
+        subtitle="Download the complete CommonGrid dataset as a PostgreSQL dump."
+      />
+      <ContentPage.Body>
         {/* Error state */}
         {error && (
           <div className="mb-8 p-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -216,7 +214,7 @@ export default async function SnapshotsPage() {
             </li>
           </ul>
         </div>
-      </div>
-    </div>
+      </ContentPage.Body>
+    </ContentPage>
   );
 }

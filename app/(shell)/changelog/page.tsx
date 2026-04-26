@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ContentPage } from "@/components/ContentPage";
 import { getChangelog } from "@/lib/data";
 import type { ChangelogEntry, ChangelogOperation } from "@/types/changelog";
 import "./changelog.css";
@@ -174,70 +175,65 @@ export default function ChangelogPage() {
   const lastUpdated = changelog.updatedAt ? formatLastUpdated(changelog.updatedAt) : null;
 
   return (
-    <div className="cg-changelog">
-      {/* Header */}
-      <header>
-        <div className="cl-kicker">Registry Updates</div>
-        <h1 className="cl-title">Changelog</h1>
-        <div className="cl-meta">
-          <div className="cl-sync-label">
-            <span className="cl-sync-dot" />
-            Synced from authoritative sources daily
+    <ContentPage className="cg-changelog">
+      <ContentPage.Header
+        kicker="Registry Updates"
+        title="Changelog"
+        subtitle="Synced from authoritative sources daily"
+      />
+
+      <ContentPage.Body>
+        {/* Stats band */}
+        <div className="cl-stats">
+          <div className="cl-stat">
+            <div className="cl-stat-n">{updatedCount}</div>
+            <div className="cl-stat-l">Updated</div>
           </div>
-          {lastUpdated && <span className="cl-last-updated">Last updated {lastUpdated}</span>}
+          <div className="cl-stat">
+            <div className="cl-stat-n">{newCount}</div>
+            <div className="cl-stat-l">Newly added</div>
+          </div>
+          <div className="cl-stat">
+            <div className="cl-stat-n">{totalCount}</div>
+            <div className="cl-stat-l">Total changes this week</div>
+          </div>
         </div>
-      </header>
 
-      {/* Stats band */}
-      <div className="cl-stats">
-        <div className="cl-stat">
-          <div className="cl-stat-n">{updatedCount}</div>
-          <div className="cl-stat-l">Updated</div>
-        </div>
-        <div className="cl-stat">
-          <div className="cl-stat-n">{newCount}</div>
-          <div className="cl-stat-l">Newly added</div>
-        </div>
-        <div className="cl-stat">
-          <div className="cl-stat-n">{totalCount}</div>
-          <div className="cl-stat-l">Total changes this week</div>
-        </div>
-      </div>
+        {/* Feed */}
+        {allEntries.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "48px 0", color: "var(--color-text-muted)", fontSize: "14px" }}>
+            <p>
+              No changes recorded yet. Run{" "}
+              <code
+                style={{
+                  fontFamily: "var(--font-family-mono)",
+                  fontSize: "12px",
+                  background: "var(--color-border-default)",
+                  padding: "2px 6px",
+                  borderRadius: "3px",
+                }}
+              >
+                npm run generate:changelog
+              </code>{" "}
+              after a sync to populate this feed.
+            </p>
+          </div>
+        ) : (
+          <>
+            {groups.slice(0, visibleGroups).map(({ date, entries }) => (
+              <DateGroup key={date} date={date} entries={entries} />
+            ))}
 
-      {/* Feed */}
-      {allEntries.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "48px 0", color: "var(--color-text-muted)", fontSize: "14px" }}>
-          <p>
-            No changes recorded yet. Run{" "}
-            <code
-              style={{
-                fontFamily: "var(--font-family-mono)",
-                fontSize: "12px",
-                background: "var(--color-border-default)",
-                padding: "2px 6px",
-                borderRadius: "3px",
-              }}
-            >
-              npm run generate:changelog
-            </code>{" "}
-            after a sync to populate this feed.
-          </p>
-        </div>
-      ) : (
-        <>
-          {groups.slice(0, visibleGroups).map(({ date, entries }) => (
-            <DateGroup key={date} date={date} entries={entries} />
-          ))}
-
-          {hasMore && (
-            <div className="cl-load-more">
-              <button type="button" onClick={() => setVisibleGroups((v) => v + LOAD_MORE_GROUPS)}>
-                Load older changes
-              </button>
-            </div>
-          )}
-        </>
-      )}
-    </div>
+            {hasMore && (
+              <div className="cl-load-more">
+                <button type="button" onClick={() => setVisibleGroups((v) => v + LOAD_MORE_GROUPS)}>
+                  Load older changes
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </ContentPage.Body>
+    </ContentPage>
   );
 }
