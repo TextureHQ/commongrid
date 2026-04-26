@@ -499,7 +499,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
             fillOpacity: 0.2,
           },
           tooltip: {
-            trigger: "click",
+            trigger: "hover",
             content: (feature: LayerFeature) => (
               <TerritoryTooltip
                 name={feature.properties.name}
@@ -526,7 +526,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
             fillOpacity: 0.18,
           },
           tooltip: {
-            trigger: "click",
+            trigger: "hover",
             content: (feature: LayerFeature) => (
               <GridOperatorTooltip
                 operatorName={feature.properties.operatorName}
