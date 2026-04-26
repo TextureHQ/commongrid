@@ -82,7 +82,6 @@ export function TopBar({ navigation }: TopBarProps) {
     return item.activePatterns?.some((p) => pathname.startsWith(p)) ?? false;
   };
 
-
   return (
     <>
       <header className="cg-nav">
