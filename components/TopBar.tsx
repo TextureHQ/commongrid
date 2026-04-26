@@ -342,8 +342,8 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
 
         {/* Footer: auth + theme */}
         <div className="cg-drawer-footer">
-          {isAuthLoaded && (
-            isSignedIn ? (
+          {isAuthLoaded &&
+            (isSignedIn ? (
               <UserMenu />
             ) : (
               <div className="cg-drawer-auth">
@@ -358,8 +358,7 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
                   </button>
                 </SignInButton>
               </div>
-            )
-          )}
+            ))}
           <div className="cg-drawer-footer-row">
             {mounted && (
               <button type="button" className="cg-drawer-footer-link" onClick={toggleTheme}>

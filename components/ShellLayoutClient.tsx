@@ -1,8 +1,8 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import type { ReactNode } from "react";
 import { useEffect, useMemo } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { GlobalSearchModal, GlobalSearchProvider, useGlobalSearch } from "@/components/GlobalSearch";
 import { type NavigationItem, TopBar } from "@/components/TopBar";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
