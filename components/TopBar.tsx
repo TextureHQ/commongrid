@@ -343,28 +343,30 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
               </Link>
             )
           )}
-          <a
-            href="https://github.com/TextureHQ/commongrid"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="cg-drawer-link"
-            onClick={onClose}
-          >
-            <GitHubIcon /> GitHub
-          </a>
         </nav>
 
         {/* Footer: theme + auth */}
         <div className="cg-drawer-footer">
-          {mounted && (
-            <button type="button" className="cg-drawer-link" onClick={toggleTheme}>
-              {isDarkTheme ? <SunIcon /> : <MoonIcon />}
-              {isDarkTheme ? "Light mode" : "Dark mode"}
-            </button>
-          )}
+          <div className="cg-drawer-footer-row">
+            {mounted && (
+              <button type="button" className="cg-drawer-theme-btn" onClick={toggleTheme}>
+                {isDarkTheme ? <SunIcon /> : <MoonIcon />}
+                {isDarkTheme ? "Light" : "Dark"}
+              </button>
+            )}
+            <a
+              href="https://github.com/TextureHQ/commongrid"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cg-drawer-theme-btn"
+              onClick={onClose}
+            >
+              <GitHubIcon /> GitHub
+            </a>
+          </div>
           {showAuth && !isSignedIn && (
             <SignInButton mode="modal">
-              <button type="button" className="cg-nav-signin" style={{ width: "100%", justifyContent: "center" }}>
+              <button type="button" className="cg-drawer-signin-btn">
                 Sign In
               </button>
             </SignInButton>

@@ -287,11 +287,68 @@ html, body {
 
 .cg-drawer-footer {
   border-top: 1px solid var(--_nav-rule);
-  padding: 12px;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   flex-shrink: 0;
+  background: color-mix(in srgb, var(--_nav-ink) 3%, #faf7f0);
+}
+.theme-dark .cg-drawer-footer {
+  background: color-mix(in srgb, var(--_nav-ink) 5%, #1b1915);
+}
+
+.cg-drawer-footer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cg-drawer-theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  border: 1px solid var(--_nav-rule);
+  background: #faf7f0;
+  color: var(--_nav-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.cg-drawer-theme-btn:hover {
+  border-color: var(--_nav-ink);
+  color: var(--_nav-ink);
+}
+.theme-dark .cg-drawer-theme-btn {
+  background: #1b1915;
+}
+
+.cg-drawer-signin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--_nav-ink);
+  color: #faf7f0;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.cg-drawer-signin-btn:hover {
+  opacity: 0.88;
 }
 
 /* Hide drawer on desktop */
