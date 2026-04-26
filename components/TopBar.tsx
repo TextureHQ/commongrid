@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInButton, useAuth } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { useColorMode } from "@texturehq/edges";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -152,11 +152,9 @@ export function TopBar({ navigation }: TopBarProps) {
             {isSignedIn ? (
               <UserMenu />
             ) : (
-              <SignInButton mode="modal">
-                <button type="button" className="cg-nav-signin">
-                  Sign In
-                </button>
-              </SignInButton>
+              <Link href="/sign-in" className="cg-nav-signin">
+                Sign In
+              </Link>
             )}
           </div>
 
@@ -165,11 +163,9 @@ export function TopBar({ navigation }: TopBarProps) {
             {isSignedIn ? (
               <UserMenu />
             ) : (
-              <SignInButton mode="modal">
-                <button type="button" className="cg-nav-signin">
-                  Sign In
-                </button>
-              </SignInButton>
+              <Link href="/sign-in" className="cg-nav-signin">
+                Sign In
+              </Link>
             )}
             {mounted && (
               <button type="button" className="cg-icon-btn" onClick={toggleTheme} aria-label="Toggle color mode">
@@ -349,11 +345,9 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
           {isSignedIn ? (
             <UserMenu />
           ) : (
-            <SignInButton mode="modal">
-              <button type="button" className="cg-drawer-signin-btn">
-                Sign In
-              </button>
-            </SignInButton>
+            <Link href="/sign-in" className="cg-drawer-signin-btn" onClick={onClose}>
+              Sign In
+            </Link>
           )}
           <div className="cg-drawer-footer-row">
             {mounted && (

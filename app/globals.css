@@ -186,6 +186,7 @@ html, body {
   cursor: pointer;
   transition: all .15s;
   font-family: inherit;
+  text-decoration: none;
 }
 .cg-nav-signin:hover {
   opacity: .88;
@@ -346,6 +347,7 @@ html, body {
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.15s;
+  text-decoration: none;
 }
 .cg-drawer-signin-btn:hover {
   opacity: 0.88;
