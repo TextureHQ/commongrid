@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEntityCounts, formatCount } from "@/hooks/useEntityCounts";
+import { formatCount, useEntityCounts } from "@/hooks/useEntityCounts";
 import "./homepage.css";
 
 const RATE_SCHEDULE_COUNT = "~12k";

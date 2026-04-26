@@ -2,17 +2,35 @@
 
 import Link from "next/link";
 import { ContentPage } from "@/components/ContentPage";
-import { useEntityCounts, formatCount } from "@/hooks/useEntityCounts";
+import { formatCount, useEntityCounts } from "@/hooks/useEntityCounts";
 import "./about.css";
 
 const DATA_SOURCES = [
-  { name: "EIA-860", desc: "Annual Electric Generator Report \u2014 power plants, generator details, fuel types, capacity data" },
-  { name: "EIA-861", desc: "Annual Electric Power Industry report \u2014 utility ownership, customers, sales, revenue data" },
-  { name: "HIFLD", desc: "Homeland Infrastructure Foundation \u2014 electric utility boundaries, 52,000+ transmission lines" },
-  { name: "DOE AFDC", desc: "Alternative Fuels Data Center \u2014 85,000+ EV charging stations, network, connector, access data" },
-  { name: "CAISO / ERCOT / MISO / SPP / PJM / ISO-NE / NYISO", desc: "ISO/RTO open data systems \u2014 pricing nodes, market participants, interconnection queues" },
+  {
+    name: "EIA-860",
+    desc: "Annual Electric Generator Report \u2014 power plants, generator details, fuel types, capacity data",
+  },
+  {
+    name: "EIA-861",
+    desc: "Annual Electric Power Industry report \u2014 utility ownership, customers, sales, revenue data",
+  },
+  {
+    name: "HIFLD",
+    desc: "Homeland Infrastructure Foundation \u2014 electric utility boundaries, 52,000+ transmission lines",
+  },
+  {
+    name: "DOE AFDC",
+    desc: "Alternative Fuels Data Center \u2014 85,000+ EV charging stations, network, connector, access data",
+  },
+  {
+    name: "CAISO / ERCOT / MISO / SPP / PJM / ISO-NE / NYISO",
+    desc: "ISO/RTO open data systems \u2014 pricing nodes, market participants, interconnection queues",
+  },
   { name: "FERC", desc: "Federal Energy Regulatory Commission \u2014 ISO/RTO boundaries and wholesale market data" },
-  { name: "State PUC Records", desc: "State Public Utility Commission filings \u2014 rate structures and regulatory data" },
+  {
+    name: "State PUC Records",
+    desc: "State Public Utility Commission filings \u2014 rate structures and regulatory data",
+  },
 ];
 
 const CONTRIBUTION_ROLES = [
@@ -25,9 +43,17 @@ const CONTRIBUTION_ROLES = [
 
 const HOW_STEPS = [
   { num: "01", title: "Find something wrong", desc: "Spot incorrect or missing data while browsing any entity." },
-  { num: "02", title: "Propose a change", desc: "Submit a versioned changeset with a diff, source citation, and rationale." },
+  {
+    num: "02",
+    title: "Propose a change",
+    desc: "Submit a versioned changeset with a diff, source citation, and rationale.",
+  },
   { num: "03", title: "Review", desc: "Moderators review for accuracy, sourcing, and consistency with schema." },
-  { num: "04", title: "Merge & publish", desc: "Approved changes merge into the canonical dataset. Full history stays visible." },
+  {
+    num: "04",
+    title: "Merge & publish",
+    desc: "Approved changes merge into the canonical dataset. Full history stays visible.",
+  },
 ];
 
 export default function AboutPage() {
@@ -57,14 +83,14 @@ export default function AboutPage() {
           <h2 className="ab-section-title">Energy data is public. Finding it shouldn&rsquo;t be a career.</h2>
           <div className="ab-prose">
             <p>
-              Utility territories are buried in PDFs. Rate structures are scattered across regulatory filings.
-              Grid operator boundaries shift without notice. Service territory maps live in state PUC filing
-              systems that require case-by-case requests. Nobody agrees on primary identifiers.
+              Utility territories are buried in PDFs. Rate structures are scattered across regulatory filings. Grid
+              operator boundaries shift without notice. Service territory maps live in state PUC filing systems that
+              require case-by-case requests. Nobody agrees on primary identifiers.
             </p>
             <p>
-              Anyone building software, research, or policy analysis that touches energy infrastructure
-              eventually confronts the same fragmented landscape. The data exists &mdash; it&rsquo;s just never been
-              assembled, normalized, and kept current in one place anyone can use.
+              Anyone building software, research, or policy analysis that touches energy infrastructure eventually
+              confronts the same fragmented landscape. The data exists &mdash; it&rsquo;s just never been assembled,
+              normalized, and kept current in one place anyone can use.
             </p>
           </div>
         </div>
@@ -77,12 +103,12 @@ export default function AboutPage() {
             <p>
               CommonGrid is structured around entities and their relationships &mdash; not flat datasets. A utility
               links to its service territory. A territory links to its grid operator. A program links to the utilities
-              offering it. A rate links to the territory it applies in. Every entity is a node in the same
-              connected graph.
+              offering it. A rate links to the territory it applies in. Every entity is a node in the same connected
+              graph.
             </p>
             <p>
-              That structure means you can start anywhere &mdash; a zip code, a co-op name, an ISO &mdash; and
-              navigate outward to everything related. No manual joins. No spreadsheet archaeology.
+              That structure means you can start anywhere &mdash; a zip code, a co-op name, an ISO &mdash; and navigate
+              outward to everything related. No manual joins. No spreadsheet archaeology.
             </p>
           </div>
           <div className="ab-stats">
@@ -120,24 +146,27 @@ export default function AboutPage() {
           <div className="ab-prose">
             <p>
               CommonGrid was created by{" "}
-              <a href="https://texturehq.com" target="_blank" rel="noopener noreferrer" className="text-text-heading underline">
+              <a
+                href="https://texturehq.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-heading underline"
+              >
                 Texture
               </a>
-              , an energy software company. In building our platform,
-              we spent years normalizing data from EIA, FERC, HIFLD, NOAA, state PUC filings, and
-              hundreds of other sources. The result was a structured, relational model of the U.S. energy
-              landscape.
+              , an energy software company. In building our platform, we spent years normalizing data from EIA, FERC,
+              HIFLD, NOAA, state PUC filings, and hundreds of other sources. The result was a structured, relational
+              model of the U.S. energy landscape.
             </p>
             <p>
-              We decided to open it. Not because we had to &mdash; the underlying sources are public &mdash; but
-              because the normalization work is genuinely unglamorous, and doing it once for the whole
-              industry makes more sense than having every team do it independently.
+              We decided to open it. Not because we had to &mdash; the underlying sources are public &mdash; but because
+              the normalization work is genuinely unglamorous, and doing it once for the whole industry makes more sense
+              than having every team do it independently.
             </p>
             <p>
               Texture&rsquo;s competitive advantages live in what happens when this context combines with real
-              operational data: device telemetry, customer accounts, control systems. That layer stays
-              proprietary. The registry layer &mdash; what every energy software team needs to function &mdash; is the
-              commons.
+              operational data: device telemetry, customer accounts, control systems. That layer stays proprietary. The
+              registry layer &mdash; what every energy software team needs to function &mdash; is the commons.
             </p>
           </div>
         </div>
@@ -148,9 +177,9 @@ export default function AboutPage() {
           <h2 className="ab-section-title">Open, transparent, community-maintained.</h2>
           <div className="ab-prose" style={{ marginBottom: 20 }}>
             <p>
-              CommonGrid uses an open contribution model: anyone can view and download the data,
-              account-based editing, transparent version history, and community governance. Anyone can
-              propose a change. Every change is attributable, reviewable, and reversible.
+              CommonGrid uses an open contribution model: anyone can view and download the data, account-based editing,
+              transparent version history, and community governance. Anyone can propose a change. Every change is
+              attributable, reviewable, and reversible.
             </p>
           </div>
           <dl className="ab-defs">
@@ -169,10 +198,10 @@ export default function AboutPage() {
           <h2 className="ab-section-title">Propose, review, merge &mdash; not edit and ship.</h2>
           <div className="ab-prose" style={{ marginBottom: 20 }}>
             <p>
-              Energy data errors can be costly and hard to detect. A wrong territory boundary, an outdated
-              rate schedule, a misclassified ISO assignment &mdash; these aren&rsquo;t typos. So CommonGrid uses a
-              changeset model: edits are proposed as versioned diffs, reviewed by moderators or trusted
-              editors, and merged into the canonical dataset only when approved.
+              Energy data errors can be costly and hard to detect. A wrong territory boundary, an outdated rate
+              schedule, a misclassified ISO assignment &mdash; these aren&rsquo;t typos. So CommonGrid uses a changeset
+              model: edits are proposed as versioned diffs, reviewed by moderators or trusted editors, and merged into
+              the canonical dataset only when approved.
             </p>
           </div>
           <div className="ab-flow">
@@ -194,8 +223,8 @@ export default function AboutPage() {
           <h2 className="ab-section-title">Seeded from authoritative public records.</h2>
           <div className="ab-prose" style={{ marginBottom: 20 }}>
             <p>
-              CommonGrid is seeded from government and regulatory sources, then maintained by
-              community contributions. Every field traces back to a citable origin.
+              CommonGrid is seeded from government and regulatory sources, then maintained by community contributions.
+              Every field traces back to a citable origin.
             </p>
           </div>
           <dl className="ab-defs">
@@ -223,10 +252,9 @@ export default function AboutPage() {
               >
                 Open Database License (ODbL)
               </a>
-              . You can freely use,
-              modify, and redistribute the data. If you publicly distribute a derivative database, you must
-              attribute CommonGrid and share it under the same terms. This protects the commons from
-              being absorbed into closed products.
+              . You can freely use, modify, and redistribute the data. If you publicly distribute a derivative database,
+              you must attribute CommonGrid and share it under the same terms. This protects the commons from being
+              absorbed into closed products.
             </p>
           </div>
           <div className="flex gap-2.5 mt-5 flex-wrap">
@@ -253,8 +281,8 @@ export default function AboutPage() {
         <div className="ab-cta">
           <h2>Start contributing.</h2>
           <p>
-            Something is missing or incorrect? Create an account and propose a change &mdash; every edit is
-            reviewed, attributed, and reversible.
+            Something is missing or incorrect? Create an account and propose a change &mdash; every edit is reviewed,
+            attributed, and reversible.
           </p>
           <div className="flex gap-2.5 flex-wrap">
             <Link
