@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInButton, useAuth } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { useColorMode } from "@texturehq/edges";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -162,15 +162,7 @@ export function TopBar({ navigation }: TopBarProps) {
 
           {/* Mobile right */}
           <div className="cg-nav-mobile-right">
-            {isSignedIn ? (
-              <UserMenu />
-            ) : (
-              <SignInButton mode="modal">
-                <button type="button" className="cg-nav-signin">
-                  Sign In
-                </button>
-              </SignInButton>
-            )}
+            {isSignedIn && <UserMenu />}
             {mounted && (
               <button type="button" className="cg-icon-btn" onClick={toggleTheme} aria-label="Toggle color mode">
                 {isDarkTheme ? <SunIcon /> : <MoonIcon />}
@@ -349,24 +341,31 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
           {isSignedIn ? (
             <UserMenu />
           ) : (
-            <SignInButton mode="modal">
-              <button type="button" className="cg-drawer-signin-btn">
-                Sign In
-              </button>
-            </SignInButton>
+            <div className="cg-drawer-auth">
+              <SignUpButton mode="modal">
+                <button type="button" className="cg-drawer-signup-btn">
+                  Sign Up
+                </button>
+              </SignUpButton>
+              <SignInButton mode="modal">
+                <button type="button" className="cg-drawer-signin-link">
+                  Sign In
+                </button>
+              </SignInButton>
+            </div>
           )}
           <div className="cg-drawer-footer-row">
             {mounted && (
-              <button type="button" className="cg-drawer-theme-btn" onClick={toggleTheme}>
+              <button type="button" className="cg-drawer-footer-link" onClick={toggleTheme}>
                 {isDarkTheme ? <SunIcon /> : <MoonIcon />}
-                {isDarkTheme ? "Light" : "Dark"}
+                {isDarkTheme ? "Light mode" : "Dark mode"}
               </button>
             )}
             <a
               href="https://github.com/TextureHQ/commongrid"
               target="_blank"
               rel="noopener noreferrer"
-              className="cg-drawer-theme-btn"
+              className="cg-drawer-footer-link"
               onClick={onClose}
             >
               <GitHubIcon /> GitHub

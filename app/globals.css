@@ -209,6 +209,11 @@ html, body {
 }
 
 .cg-drawer {
+  --_nav-ink: #111111;
+  --_nav-paper: #faf7f0;
+  --_nav-rule: #e5dfd3;
+  --_nav-muted: #6b6155;
+
   position: fixed;
   top: 0;
   right: 0;
@@ -231,6 +236,11 @@ html, body {
   transform: translateX(0);
 }
 .theme-dark .cg-drawer {
+  --_nav-ink: #faf7f0;
+  --_nav-paper: #121110;
+  --_nav-rule: #2f2b24;
+  --_nav-muted: #a89f90;
+
   background: #1b1915;
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
 }
@@ -287,10 +297,10 @@ html, body {
 
 .cg-drawer-footer {
   border-top: 1px solid var(--_nav-rule);
-  padding: 16px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 20px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 20px;
   flex-shrink: 0;
   background: color-mix(in srgb, var(--_nav-ink) 3%, #faf7f0);
 }
@@ -301,36 +311,39 @@ html, body {
 .cg-drawer-footer-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-evenly;
 }
 
-.cg-drawer-theme-btn {
-  display: flex;
+.cg-drawer-footer-link {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex: 1;
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 8px;
+  gap: 6px;
   font-size: 13.5px;
   font-weight: 500;
-  border: 1px solid var(--_nav-rule);
-  background: #faf7f0;
   color: var(--_nav-muted);
+  background: none;
+  border: none;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.15s;
+  padding: 0;
+  transition: color 0.15s;
+  text-decoration: none;
 }
-.cg-drawer-theme-btn:hover {
-  border-color: var(--_nav-ink);
+.cg-drawer-footer-link:hover {
   color: var(--_nav-ink);
 }
-.theme-dark .cg-drawer-theme-btn {
-  background: #1b1915;
+
+.cg-drawer-auth {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 16px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--_nav-rule);
 }
 
-.cg-drawer-signin-btn {
+.cg-drawer-signup-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -341,14 +354,35 @@ html, body {
   font-size: 15px;
   font-weight: 600;
   background: var(--_nav-ink);
-  color: #faf7f0;
-  border: none;
+  color: var(--_nav-paper);
+  border: 1px solid var(--_nav-ink);
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.15s;
 }
-.cg-drawer-signin-btn:hover {
+.cg-drawer-signup-btn:hover {
   opacity: 0.88;
+}
+
+.cg-drawer-signin-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--_nav-ink);
+  background: none;
+  border: 1px solid var(--_nav-rule);
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0 14px;
+  transition: border-color 0.15s;
+}
+.cg-drawer-signin-link:hover {
+  border-color: var(--_nav-ink);
 }
 
 /* Hide drawer on desktop */
