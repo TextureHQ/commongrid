@@ -3,6 +3,35 @@
    Outer layout + header handled by ContentPage
    ═══════════════════════════════════════════ */
 
+/* ── Override ContentPage header sizes for the about page ── */
+.cg-about .cg-content-subtitle {
+  font-size: clamp(15px, 1.1vw, 17px);
+  line-height: 1.6;
+  max-width: 60ch;
+}
+
+/* ── Badge pills below header ── */
+.cg-about .ab-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: clamp(24px, 4vw, 40px);
+}
+
+.cg-about .ab-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-caption);
+}
+
 /* ── Section dividers ── */
 .cg-about .ab-section {
   padding: clamp(32px, 5vw, 56px) 0 0;
@@ -19,18 +48,19 @@
 }
 
 .cg-about .ab-section-title {
+  font-family: var(--font-family-brand);
   font-weight: 600;
-  font-size: clamp(20px, 2.4vw, 28px);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-size: clamp(24px, 3vw, 36px);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
   color: var(--color-text-heading);
-  margin: 0 0 12px;
+  margin: 0 0 14px;
 }
 
 /* ── Prose ── */
 .cg-about .ab-prose {
   max-width: 65ch;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.65;
   color: var(--color-text-muted);
 }
@@ -64,7 +94,7 @@
 .cg-about .ab-stat-n {
   font-family: var(--font-family-brand);
   font-weight: 600;
-  font-size: clamp(24px, 2.5vw, 32px);
+  font-size: clamp(26px, 2.8vw, 34px);
   letter-spacing: -0.03em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -117,7 +147,7 @@
 
 .cg-about .ab-def dd {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
   color: var(--color-text-muted);
 }
@@ -146,7 +176,7 @@
 
 .cg-about .ab-step h4 {
   margin: 0 0 4px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--color-text-heading);
 }
@@ -154,7 +184,7 @@
 .cg-about .ab-step p {
   margin: 0;
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
 }
 
@@ -165,16 +195,17 @@
 }
 
 .cg-about .ab-cta h2 {
+  font-family: var(--font-family-brand);
   font-weight: 600;
-  font-size: clamp(20px, 2.4vw, 28px);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-size: clamp(24px, 3vw, 36px);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
   color: var(--color-text-heading);
   margin: 0 0 8px;
 }
 
 .cg-about .ab-cta > p {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--color-text-muted);
   margin: 0 0 20px;
   max-width: 56ch;

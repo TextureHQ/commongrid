@@ -44,20 +44,12 @@ export default function AboutPage() {
         kicker="Open data commons"
         title="The energy industry's shared infrastructure record."
         subtitle="CommonGrid is a public, citable, community-maintained registry of U.S. energy infrastructure — utilities, territories, grid operators, programs, rates, and assets. Free to read, download, cite, and build on."
-        actions={
-          <div className="flex gap-2 flex-wrap">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide uppercase font-mono border border-border-default text-text-caption">
-              Active &middot; continuously updated
-            </span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide uppercase font-mono border border-border-default text-text-caption">
-              GitHub
-            </span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide uppercase font-mono border border-border-default text-text-caption">
-              ODbL License
-            </span>
-          </div>
-        }
       />
+      <div className="ab-badges">
+        <span className="ab-badge">Active &middot; continuously updated</span>
+        <span className="ab-badge">GitHub</span>
+        <span className="ab-badge">ODbL License</span>
+      </div>
       <ContentPage.Body>
         {/* ── 01 THE PROBLEM ── */}
         <div className="ab-section">
@@ -242,7 +234,7 @@ export default function AboutPage() {
               href="https://opendatacommons.org/licenses/odbl/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 h-[34px] px-3.5 rounded-lg text-sm font-medium border border-border-default text-text-heading hover:border-text-heading transition-colors no-underline"
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium border border-border-default text-text-heading hover:border-text-heading transition-colors no-underline"
             >
               Read the ODbL &nearr;
             </a>
@@ -250,7 +242,7 @@ export default function AboutPage() {
               href="https://github.com/TextureHQ/commongrid"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 h-[34px] px-3.5 rounded-lg text-sm font-medium bg-text-heading text-background-body border border-text-heading hover:opacity-90 transition-opacity no-underline"
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-text-heading text-background-body border border-text-heading hover:opacity-90 transition-opacity no-underline"
             >
               View on GitHub
             </a>
@@ -267,13 +259,13 @@ export default function AboutPage() {
           <div className="flex gap-2.5 flex-wrap">
             <Link
               href="/explore"
-              className="inline-flex items-center gap-1.5 h-[34px] px-3.5 rounded-lg text-sm font-medium bg-text-heading text-background-body border border-text-heading hover:opacity-90 transition-opacity no-underline"
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-text-heading text-background-body border border-text-heading hover:opacity-90 transition-opacity no-underline"
             >
               Browse the registry &rarr;
             </Link>
             <Link
               href="/auth/signup"
-              className="inline-flex items-center h-[34px] px-3.5 rounded-lg text-sm font-medium border border-border-default text-text-heading hover:border-text-heading transition-colors no-underline"
+              className="inline-flex items-center h-9 px-4 rounded-lg text-sm font-medium border border-border-default text-text-heading hover:border-text-heading transition-colors no-underline"
             >
               Create account
             </Link>
