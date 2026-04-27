@@ -83,7 +83,7 @@ const styles = {
   },
   statLabel: {
     fontFamily: FONTS.mono,
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: 500 as const,
     letterSpacing: "0.08em",
     textTransform: "uppercase" as const,
@@ -101,7 +101,7 @@ const styles = {
     borderRadius: 6,
     marginTop: 12,
     fontFamily: FONTS.sans,
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: 500 as const,
     color: COLORS.muted,
     letterSpacing: "-0.01em",
