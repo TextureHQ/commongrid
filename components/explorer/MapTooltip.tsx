@@ -39,6 +39,10 @@ const styles = {
     WebkitFontSmoothing: "antialiased" as const,
     minWidth: 220,
     maxWidth: 280,
+    border: `1px solid ${COLORS.rule}`,
+    borderRadius: 8,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.10), 0 0 1px rgba(0,0,0,0.08)",
+    padding: 14,
   },
   kicker: {
     fontFamily: FONTS.mono,
