@@ -4,7 +4,7 @@ import { InteractiveMap, type LayerFeature, type LayerSpec, layer } from "@textu
 import type { Feature, FeatureCollection } from "geojson";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getAllBalancingAuthorities, getAllIsos } from "@/lib/data";
+import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getRegionById } from "@/lib/data";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
 import { useExplorer } from "./ExplorerContext";
 import {
@@ -12,6 +12,7 @@ import {
   GridOperatorTooltip,
   PowerPlantTooltip,
   PricingNodeTooltip,
+  ProgramTerritoryTooltip,
   TerritoryTooltip,
   TransmissionTooltip,
 } from "./MapTooltip";
@@ -235,6 +236,112 @@ function useGridOperatorBoundaries(isActive: boolean) {
   return data;
 }
 
+interface ProgramBoundaryData {
+  geojson: FeatureCollection;
+  colorMapping: Record<string, { hex: string }>;
+}
+
+function useProgramBoundaries(isActive: boolean) {
+  const [data, setData] = useState<ProgramBoundaryData | null>(null);
+
+  useEffect(() => {
+    if (!isActive) {
+      setData(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function load() {
+      const programs = getAllPrograms();
+
+      let colorIdx = 0;
+      const colorMapping: Record<string, { hex: string }> = {};
+
+      // Build list of territory fetches, deduplicating by file key
+      const seenKeys = new Set<string>();
+      const entries: {
+        fileKey: string;
+        programSlug: string;
+        programName: string;
+        programStatus: string;
+        colorKey: string;
+      }[] = [];
+
+      for (const prog of programs) {
+        const colorKey = `prog-${prog.slug}`;
+        colorMapping[colorKey] = { hex: OPERATOR_PALETTE[colorIdx % OPERATOR_PALETTE.length] };
+        colorIdx++;
+
+        for (const regionId of prog.regions) {
+          const region = getRegionById(regionId);
+          if (!region) continue;
+
+          const fileKey =
+            region.type === "CCA_TERRITORY" || region.type === "ISO" || region.type === "CUSTOM"
+              ? region.slug
+              : region.eiaId;
+          if (!fileKey) continue;
+
+          // First program's color wins for shared territories
+          if (seenKeys.has(fileKey)) continue;
+          seenKeys.add(fileKey);
+
+          entries.push({
+            fileKey,
+            programSlug: prog.slug,
+            programName: prog.name,
+            programStatus: prog.status,
+            colorKey,
+          });
+        }
+      }
+
+      const allFeatures: Feature[] = [];
+
+      const results = await Promise.allSettled(
+        entries.map(async (entry) => {
+          const res = await fetch(`/data/territories/${entry.fileKey}.json`);
+          if (!res.ok) return null;
+          const geojson = (await res.json()) as FeatureCollection;
+          return { geojson, ...entry };
+        })
+      );
+
+      for (const result of results) {
+        if (result.status !== "fulfilled" || !result.value) continue;
+        const { geojson, programName, programSlug, programStatus, colorKey } = result.value;
+        for (const feature of geojson.features) {
+          allFeatures.push({
+            ...feature,
+            properties: {
+              ...feature.properties,
+              programName,
+              programSlug,
+              programStatus,
+              colorKey,
+            },
+          });
+        }
+      }
+
+      if (!cancelled) {
+        setData({
+          geojson: { type: "FeatureCollection", features: allFeatures },
+          colorMapping,
+        });
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [isActive]);
+
+  return data;
+}
+
 // Region = which fill/territory layer is shown on the map
 export type MapRegion = "utilities" | "grid-operators" | "programs" | "pricing-nodes";
 
@@ -282,7 +389,9 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
   );
 
   const isGridOperatorView = mapRegion === "grid-operators";
+  const isProgramView = mapRegion === "programs";
   const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView);
+  const programBoundaryData = useProgramBoundaries(isProgramView);
 
   const handleClick = useCallback(
     (feature: LayerFeature) => {
@@ -351,6 +460,41 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
     };
   }, [gridBoundaryData, state.type, state.q]);
 
+  // Filter program GeoJSON by search and asset type
+  const filteredProgramBoundaryData = useMemo(() => {
+    if (!programBoundaryData) return null;
+
+    const hasTypeFilter = state.type && state.type !== "all";
+    const hasSearch = !!state.q;
+
+    if (!hasTypeFilter && !hasSearch) return programBoundaryData;
+
+    // Build a set of matching program slugs by running the same filter logic as ProgramListPanel
+    const allPrograms = getAllPrograms();
+    const matchingSlugs = new Set<string>();
+
+    for (const prog of allPrograms) {
+      if (hasTypeFilter && !(prog.assetTypes as string[]).includes(state.type)) continue;
+      if (hasSearch) {
+        const name = prog.name.toLowerCase();
+        const slug = prog.slug.toLowerCase();
+        const q = state.q.toLowerCase();
+        if (!name.includes(q) && !slug.includes(q)) continue;
+      }
+      matchingSlugs.add(prog.slug);
+    }
+
+    const filteredFeatures = programBoundaryData.geojson.features.filter((f) => {
+      const slug = f.properties?.programSlug;
+      return slug && matchingSlugs.has(slug);
+    });
+
+    return {
+      geojson: { type: "FeatureCollection" as const, features: filteredFeatures },
+      colorMapping: programBoundaryData.colorMapping,
+    };
+  }, [programBoundaryData, state.type, state.q]);
+
   // FlyTo when highlight GeoJSON changes (entity selected), reset on back
   useEffect(() => {
     const map = mapRef.current?.getMap?.();
@@ -377,7 +521,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
 
   // Fit map bounds when filters change (utility territories)
   const hasActiveFilter =
-    !isGridOperatorView && !hasHighlight && !!((state.segment && state.segment !== "all") || state.q);
+    !isGridOperatorView && !isProgramView && !hasHighlight && !!((state.segment && state.segment !== "all") || state.q);
 
   useEffect(() => {
     if (!hasActiveFilter) return;
@@ -477,11 +621,41 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
     });
   }, [state.type, state.q, isGridOperatorView, hasHighlight, filteredGridBoundaryData]);
 
+  // Fit map bounds when program filters change
+  useEffect(() => {
+    if (!isProgramView || hasHighlight || !filteredProgramBoundaryData) return;
+
+    const hasFilter = (state.type && state.type !== "all") || state.q;
+    if (!hasFilter) {
+      const map = mapRef.current?.getMap?.();
+      if (map) {
+        map.flyTo({
+          center: [US_CENTER.longitude, US_CENTER.latitude],
+          zoom: US_CENTER.zoom,
+          duration: 1200,
+        });
+      }
+      return;
+    }
+
+    const viewState = computeViewStateFromGeoJSON(filteredProgramBoundaryData.geojson);
+    if (!viewState) return;
+
+    const map = mapRef.current?.getMap?.();
+    if (!map) return;
+
+    map.flyTo({
+      center: [viewState.longitude, viewState.latitude],
+      zoom: viewState.zoom,
+      duration: 1200,
+    });
+  }, [state.type, state.q, isProgramView, hasHighlight, filteredProgramBoundaryData]);
+
   const layers = useMemo(() => {
     const visible = layerVisibility;
     const result: LayerSpec[] = [];
 
-    if (!isGridOperatorView && !hasHighlight) {
+    if (!isGridOperatorView && !isProgramView && !hasHighlight) {
       // Utility territory tiles — single layer visible from zoom 0.
       // tippecanoe handles zoom-dependent simplification and tiny polygon
       // dropping at low zoom, so no client-side customerCount filtering needed.
@@ -512,6 +686,34 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           },
           events: { onClick: handleClick },
           ...(territoryFilter ? { filter: territoryFilter } : {}),
+        })
+      );
+    } else if (filteredProgramBoundaryData && !hasHighlight) {
+      // Program territory boundaries — visible from zoom 0
+      result.push(
+        layer.geojson({
+          id: "program-boundaries",
+          data: filteredProgramBoundaryData.geojson,
+          renderAs: "fill",
+          style: {
+            color: { by: "colorKey", mapping: filteredProgramBoundaryData.colorMapping },
+            fillOpacity: 0.18,
+          },
+          tooltip: {
+            trigger: "hover",
+            content: (feature: LayerFeature) => (
+              <ProgramTerritoryTooltip
+                programName={feature.properties.programName}
+                programStatus={feature.properties.programStatus}
+              />
+            ),
+          },
+          events: {
+            onClick: (feature: LayerFeature) => {
+              const slug = feature.properties.programSlug;
+              if (slug) navigateToDetail("program", slug);
+            },
+          },
         })
       );
     } else if (filteredGridBoundaryData && !hasHighlight) {
@@ -734,10 +936,13 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
     return result;
   }, [
     handleClick,
+    navigateToDetail,
     router,
     state.highlightGeoJSON,
     isGridOperatorView,
+    isProgramView,
     filteredGridBoundaryData,
+    filteredProgramBoundaryData,
     hasHighlight,
     territoryFilter,
     layerVisibility,

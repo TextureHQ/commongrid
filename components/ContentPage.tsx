@@ -62,4 +62,4 @@ function Body({ children }: { children: ReactNode }) {
 ContentPage.Header = Header;
 ContentPage.Body = Body;
 
-export { Header as ContentPageHeader, Body as ContentPageBody };
+export { Body as ContentPageBody, Header as ContentPageHeader };

@@ -1,6 +1,6 @@
 "use client";
 
-import type { FeatureCollection } from "geojson";
+import type { Feature, FeatureCollection } from "geojson";
 import { useEffect, useMemo, useState } from "react";
 import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -47,28 +47,63 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   const program = getProgramBySlug(slug);
   const { utilities } = useUtilities();
 
-  const primaryRegionId = program?.regions[0] ?? null;
-  const region = primaryRegionId ? getRegionById(primaryRegionId) : null;
-
-  const territoryFileKey = useMemo(() => {
-    if (!region) return null;
-    if (region.type === "CCA_TERRITORY" || region.type === "ISO" || region.type === "CUSTOM") {
-      return region.slug;
+  // Resolve territory file keys for all program regions
+  const territoryFileKeys = useMemo(() => {
+    if (!program) return [];
+    const keys: string[] = [];
+    const seen = new Set<string>();
+    for (const regionId of program.regions) {
+      const region = getRegionById(regionId);
+      if (!region) continue;
+      const key =
+        region.type === "CCA_TERRITORY" || region.type === "ISO" || region.type === "CUSTOM"
+          ? region.slug
+          : region.eiaId;
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      keys.push(key);
     }
-    return region.eiaId;
-  }, [region]);
+    return keys;
+  }, [program]);
 
   useEffect(() => {
-    if (!territoryFileKey) {
+    if (territoryFileKeys.length === 0) {
       setHighlight(null);
       return;
     }
-    fetch(`/data/territories/${territoryFileKey}.json`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setHighlight(data as FeatureCollection | null))
-      .catch(() => setHighlight(null));
-    return () => setHighlight(null);
-  }, [territoryFileKey, setHighlight]);
+
+    let cancelled = false;
+
+    async function loadAll() {
+      const results = await Promise.allSettled(
+        territoryFileKeys.map(async (key) => {
+          const res = await fetch(`/data/territories/${key}.json`);
+          if (!res.ok) return null;
+          return (await res.json()) as FeatureCollection;
+        })
+      );
+
+      if (cancelled) return;
+
+      const allFeatures: Feature[] = [];
+      for (const result of results) {
+        if (result.status !== "fulfilled" || !result.value) continue;
+        allFeatures.push(...result.value.features);
+      }
+
+      if (allFeatures.length > 0) {
+        setHighlight({ type: "FeatureCollection", features: allFeatures });
+      } else {
+        setHighlight(null);
+      }
+    }
+
+    loadAll();
+    return () => {
+      cancelled = true;
+      setHighlight(null);
+    };
+  }, [territoryFileKeys, setHighlight]);
 
   if (!program) {
     return (

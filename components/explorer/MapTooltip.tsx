@@ -303,6 +303,45 @@ export function PricingNodeTooltip({ name, iso, nodeType, zone }: PricingNodePro
   );
 }
 
+/* ── Program territory tooltip ─────────────────────────────────────────────── */
+
+interface ProgramTerritoryProps {
+  programName: string;
+  programStatus: string;
+}
+
+const programStatusLabels: Record<string, string> = {
+  ACTIVE: "Active",
+  PAUSED: "Paused",
+  FULL: "Full",
+  DRAFT: "Draft",
+  ARCHIVED: "Archived",
+};
+
+const programStatusColors: Record<string, string> = {
+  ACTIVE: "#65a30d",
+  PAUSED: "#d97706",
+  FULL: "#6b7280",
+  DRAFT: "#9ca3af",
+  ARCHIVED: "#9ca3af",
+};
+
+export function ProgramTerritoryTooltip({ programName, programStatus }: ProgramTerritoryProps) {
+  const statusLabel = programStatusLabels[programStatus] ?? programStatus;
+  const statusColor = programStatusColors[programStatus] ?? COLORS.muted;
+  return (
+    <div style={styles.container}>
+      <div style={styles.kicker}>Program</div>
+      <div style={styles.name}>{programName}</div>
+      <div style={styles.divider} />
+      <div style={styles.statGrid}>
+        <Stat value={<span style={{ color: statusColor }}>{statusLabel}</span>} label="Status" />
+      </div>
+      <div style={styles.cta}>View details →</div>
+    </div>
+  );
+}
+
 /* ── Power plant tooltip ───────────────────────────────────────────────────── */
 
 interface PowerPlantProps {
