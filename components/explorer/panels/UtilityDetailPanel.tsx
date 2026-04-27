@@ -133,6 +133,11 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
 
       {/* Detail content */}
       <div className="cg-explore-detail">
+        {utility.logo && (
+          <div className="cg-explore-detail-logo">
+            <img src={utility.logo} alt={`${utility.name} logo`} />
+          </div>
+        )}
         <div className="cg-explore-detail-type">Utility</div>
         <div className="cg-explore-detail-name">{utility.name}</div>
         <div className="cg-explore-detail-sub">
