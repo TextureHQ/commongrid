@@ -258,21 +258,22 @@ function useProgramBoundaries(isActive: boolean) {
       let colorIdx = 0;
       const colorMapping: Record<string, { hex: string }> = {};
 
-      // Build list of territory fetches, deduplicating by file key
-      const seenKeys = new Set<string>();
-      const entries: {
-        fileKey: string;
+      // Map each program to its color and territory file keys
+      const programEntries: {
         programSlug: string;
         programName: string;
         programStatus: string;
         colorKey: string;
+        fileKeys: string[];
       }[] = [];
+      const uniqueFileKeys = new Set<string>();
 
       for (const prog of programs) {
         const colorKey = `prog-${prog.slug}`;
         colorMapping[colorKey] = { hex: OPERATOR_PALETTE[colorIdx % OPERATOR_PALETTE.length] };
         colorIdx++;
 
+        const fileKeys: string[] = [];
         for (const regionId of prog.regions) {
           const region = getRegionById(regionId);
           if (!region) continue;
@@ -282,46 +283,55 @@ function useProgramBoundaries(isActive: boolean) {
               ? region.slug
               : region.eiaId;
           if (!fileKey) continue;
+          fileKeys.push(fileKey);
+          uniqueFileKeys.add(fileKey);
+        }
 
-          // First program's color wins for shared territories
-          if (seenKeys.has(fileKey)) continue;
-          seenKeys.add(fileKey);
-
-          entries.push({
-            fileKey,
+        if (fileKeys.length > 0) {
+          programEntries.push({
             programSlug: prog.slug,
             programName: prog.name,
             programStatus: prog.status,
             colorKey,
+            fileKeys,
           });
         }
       }
 
-      const allFeatures: Feature[] = [];
-
+      // Fetch each unique territory file once
+      const territoryCache = new Map<string, FeatureCollection>();
       const results = await Promise.allSettled(
-        entries.map(async (entry) => {
-          const res = await fetch(`/data/territories/${entry.fileKey}.json`);
+        [...uniqueFileKeys].map(async (key) => {
+          const res = await fetch(`/data/territories/${key}.json`);
           if (!res.ok) return null;
           const geojson = (await res.json()) as FeatureCollection;
-          return { geojson, ...entry };
+          return { key, geojson };
         })
       );
 
       for (const result of results) {
         if (result.status !== "fulfilled" || !result.value) continue;
-        const { geojson, programName, programSlug, programStatus, colorKey } = result.value;
-        for (const feature of geojson.features) {
-          allFeatures.push({
-            ...feature,
-            properties: {
-              ...feature.properties,
-              programName,
-              programSlug,
-              programStatus,
-              colorKey,
-            },
-          });
+        territoryCache.set(result.value.key, result.value.geojson);
+      }
+
+      // Stamp features for every program (same territory can appear under multiple programs)
+      const allFeatures: Feature[] = [];
+      for (const entry of programEntries) {
+        for (const fileKey of entry.fileKeys) {
+          const geojson = territoryCache.get(fileKey);
+          if (!geojson) continue;
+          for (const feature of geojson.features) {
+            allFeatures.push({
+              ...feature,
+              properties: {
+                ...feature.properties,
+                programName: entry.programName,
+                programSlug: entry.programSlug,
+                programStatus: entry.programStatus,
+                colorKey: entry.colorKey,
+              },
+            });
+          }
         }
       }
 
