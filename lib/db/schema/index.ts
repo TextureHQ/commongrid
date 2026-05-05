@@ -99,6 +99,8 @@ export type { RtoInsert, RtoSelect } from "./rtos";
 export { rtos } from "./rtos";
 export type { SourceCitationInsert, SourceCitationSelect } from "./source-citations";
 export { sourceCitations } from "./source-citations";
+export type { SubstationInsert, SubstationSelect } from "./substations";
+export { substations } from "./substations";
 export type { TerritoryInsert, TerritorySelect } from "./territories";
 // Spatial Table
 export { territories } from "./territories";
