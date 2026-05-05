@@ -31,6 +31,7 @@ import {
   programs,
   regions,
   rtos,
+  substations,
   transmissionLines,
   utilities,
 } from "../lib/db/schema";
@@ -422,6 +423,102 @@ async function seedPricingNodes(db: DrizzleDb): Promise<number> {
   return inserted;
 }
 
+async function seedSubstations(db: DrizzleDb): Promise<number> {
+  const data = loadJson<Array<Record<string, unknown>>>("substations.json");
+  let inserted = 0;
+
+  // US states + DC + territories. The EIA/HIFLD feed includes a small number of
+  // cross-border rows (BC, SK, AB, etc.) — filter them out to stay scoped to US.
+  const US_STATES = new Set([
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC",
+    "PR",
+    "GU",
+    "VI",
+    "AS",
+    "MP",
+  ]);
+
+  const usData = data.filter((r) => US_STATES.has(String(r.state ?? "").toUpperCase()));
+
+  for (const batch of chunk(usData, BATCH_SIZE)) {
+    const rows = batch.map((r) => ({
+      id: r.id as string,
+      slug: r.slug as string,
+      name: r.name as string,
+      ownerName: (r.ownerName as string) ?? null,
+      ownerUtilityId: null, // Not reconciled at sync time; future PR wires this up.
+      state: String(r.state as string).toUpperCase(),
+      county: (r.county as string) ?? null,
+      latitude: r.latitude as number,
+      longitude: r.longitude as number,
+      minVoltageKv: (r.minVoltageKv as number) ?? null,
+      maxVoltageKv: (r.maxVoltageKv as number) ?? null,
+      substationType: (r.substationType as string) ?? "unknown",
+      status: (r.status as string) ?? "unknown",
+      source: (r.source as string) ?? "manual",
+      sourceUrl: (r.sourceUrl as string) ?? null,
+      eiaId: (r.eiaId as string) ?? null,
+      osmId: (r.osmId as string) ?? null,
+      hifldLegacyId: (r.hifldLegacyId as string) ?? null,
+    }));
+
+    await db.insert(substations).values(rows).onConflictDoNothing();
+    inserted += batch.length;
+  }
+
+  return inserted;
+}
+
 async function seedTerritories(db: DrizzleDb): Promise<number> {
   const files = fs.readdirSync(TERRITORY_DIR).filter((f) => f.endsWith(".json"));
   let inserted = 0;
@@ -785,6 +882,12 @@ async function main(): Promise<void> {
     const pnCount = await seedPricingNodes(db);
     expectedCounts.pricing_nodes = pnCount;
     console.log(`✅ pricing_nodes: ${pnCount}/${pnCount} seeded (${elapsed(start)})`);
+
+    // --- Substations ---
+    start = Date.now();
+    const subCount = await seedSubstations(db);
+    expectedCounts.substations = subCount;
+    console.log(`✅ substations: ${subCount}/${subCount} seeded (${elapsed(start)})`);
 
     // --- Territories ---
     start = Date.now();
