@@ -24,7 +24,11 @@ interface SyncResult {
   statsGeojson?: Record<string, unknown>;
 }
 
-export const maxDuration = 1800; // 30 min timeout for Vercel
+// Vercel Pro plan caps serverless function maxDuration at 800s.
+// For longer syncs (full US sweep can exceed this), trigger the script via a
+// separate long-running job (e.g., GitHub Actions) and have this endpoint
+// return after a partial slice.
+export const maxDuration = 800; // 13m20s — Vercel Pro ceiling
 
 export async function GET(request: Request): Promise<Response> {
   const timestamp = new Date().toISOString();
@@ -93,7 +97,9 @@ export async function GET(request: Request): Promise<Response> {
 function runSyncScript(): Promise<string> {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
-    const maxTime = 28 * 60 * 1000; // 28 min
+    // Leave a small buffer under the 800s function ceiling so we can still
+    // respond with a proper error on timeout instead of being hard-killed.
+    const maxTime = 780 * 1000; // 13 min
 
     const proc = spawn("npx", ["tsx", "scripts/sync-substations.ts"], {
       cwd: process.cwd(),
