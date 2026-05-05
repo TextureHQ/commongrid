@@ -144,8 +144,8 @@ function DateGroup({ date, entries }: { date: string; entries: ChangelogEntry[] 
           {entries.length} change{entries.length !== 1 ? "s" : ""}
         </span>
       </div>
-      {entries.map((entry, i) => (
-        <EntryRow key={`${entry.kind}:${entry.slug}:${i}`} entry={entry} />
+      {entries.map((entry) => (
+        <EntryRow key={`${entry.kind}:${entry.slug}:${entry.isoTimestamp}`} entry={entry} />
       ))}
     </div>
   );
