@@ -244,4 +244,3 @@ export async function countSubstations(filters?: SubstationFilters): Promise<num
 export async function loadSubstationBySlug(slug: string): Promise<SubstationRecord | null> {
   return loadBySlugFromDb(slug);
 }
-
