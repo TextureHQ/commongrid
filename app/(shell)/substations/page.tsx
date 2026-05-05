@@ -4,8 +4,18 @@
  * Browse all US electric substations with filtering and search.
  */
 
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
+
+interface Substation {
+  id: string;
+  slug: string;
+  name: string;
+  state?: string | null;
+  owner?: string | null;
+  maxVoltageKv?: number | null;
+  voltageClass?: string | null;
+  status?: string | null;
+}
 
 interface SearchParams {
   state?: string;
@@ -49,28 +59,17 @@ async function SubstationsListContent({ searchParams }: Props) {
         <h1>US Electric Substations</h1>
         <p>{pagination.total} substations found</p>
 
-        <div style={{ marginBottom: "24px" }}>
-          {/* Filter UI would go here */}
-        </div>
+        <div style={{ marginBottom: "24px" }}>{/* Filter UI would go here */}</div>
 
         <div style={{ display: "grid", gap: "16px" }}>
-          {substations.map((substation: any) => (
+          {substations.map((substation: Substation) => (
             <a key={substation.id} href={`/substations/${substation.slug}`} style={{ textDecoration: "none" }}>
               <div
                 style={{
                   border: "1px solid #ddd",
                   borderRadius: "8px",
                   padding: "16px",
-                  cursor: "pointer",
                   transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-                  (e.currentTarget as HTMLElement).style.borderColor = "#999";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
-                  (e.currentTarget as HTMLElement).style.borderColor = "#ddd";
                 }}
               >
                 <div style={{ fontSize: "16px", fontWeight: "600" }}>{substation.name}</div>

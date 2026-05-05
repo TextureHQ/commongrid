@@ -188,7 +188,9 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
         )}
 
         {/* Source information */}
-        <div style={{ fontSize: "11px", color: "#999", padding: "16px", backgroundColor: "#f9f9f9", borderRadius: "4px" }}>
+        <div
+          style={{ fontSize: "11px", color: "#999", padding: "16px", backgroundColor: "#f9f9f9", borderRadius: "4px" }}
+        >
           <strong>Data attribution:</strong> {attributionText}
           {substation.sourceUrl && (
             <>
