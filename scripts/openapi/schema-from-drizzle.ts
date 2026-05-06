@@ -16,6 +16,7 @@
 
 import { getTableColumns } from "drizzle-orm";
 import { INTERNAL_FIELDS } from "../../lib/api/internal-fields";
+import type { FieldDescription, FieldDescriptionMap } from "./descriptions";
 
 // biome-ignore lint/suspicious/noExplicitAny: Drizzle column introspection is too generic to usefully type here
 type DrizzleColumn = any;
@@ -38,8 +39,12 @@ export interface SchemaOptions {
   stripAdditional?: string[];
   /** Fields to keep even if they're in the INTERNAL_FIELDS set. */
   keepInternal?: string[];
-  /** Per-field descriptions. Keys are camelCase field names. */
-  descriptions?: Record<string, string>;
+  /**
+   * Per-field descriptions. Keys are camelCase field names. Values may be
+   * plain strings (description only) or `{ description, enum }` objects for
+   * fields backed by a finite set of values (see `descriptions.ts`).
+   */
+  descriptions?: FieldDescriptionMap;
   /** Only include these fields (allowlist). Runs after strip logic. */
   onlyFields?: string[];
   /**
@@ -145,9 +150,14 @@ export function tableToSchema(table: DrizzleTable, opts: SchemaOptions = {}): Js
       required.push(fieldName);
     }
 
-    const desc = descriptions[fieldName];
+    const desc: FieldDescription | undefined = descriptions[fieldName];
     if (desc) {
-      base.description = desc;
+      if (typeof desc === "string") {
+        base.description = desc;
+      } else {
+        base.description = desc.description;
+        base.enum = desc.enum;
+      }
     }
 
     properties[fieldName] = base;
