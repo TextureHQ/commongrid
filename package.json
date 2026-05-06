@@ -19,6 +19,8 @@
     "sync:pricing-nodes": "tsx scripts/sync-pricing-nodes.ts",
     "sync:substations": "tsx scripts/sync-substations.ts",
     "generate:changelog": "npx tsx scripts/generate-changelog.ts",
+    "openapi": "tsx scripts/generate-openapi.ts",
+    "openapi:check": "tsx scripts/generate-openapi.ts --check",
     "sync:all": "npx tsx scripts/sync-all.ts",
     "seed": "tsx scripts/seed-database.ts",
     "test:api": "tsx scripts/test-api-endpoints.ts"

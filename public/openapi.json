@@ -3,7 +3,7 @@
   "info": {
     "title": "CommonGrid API",
     "version": "1.0.0",
-    "description": "The CommonGrid open-source energy infrastructure API. Access data on utilities, grid operators, power plants, EV charging stations, transmission lines, pricing nodes, and more.\n\n## Authentication\n\nAll endpoints are publicly accessible at the Anonymous tier (60 requests/hr). To unlock the Registered tier (5,000 requests/hr), create a free API key in the [Developer Dashboard](/developers) and include it as a Bearer token:\n\n```\nAuthorization: Bearer cg_your_api_key\n```\n\n## Rate Limits\n\n| Tier | Limit | Auth Required |\n|------|-------|---------------|\n| Anonymous | 60/hr | No |\n| Registered | 5,000/hr | API key |\n| Bulk | 50,000/hr | Contact us |\n\n## Pagination\n\nList endpoints return cursor-based pagination:\n\n```json\n{\n  \"data\": [...],\n  \"meta\": {\n    \"total\": 3000,\n    \"limit\": 50,\n    \"nextCursor\": \"eyJ2IjoxLCJzIjp7InZhbHVlIjoiYWNtZS11dGlsaXR5In0sImlkIjoiYWJjMTIzIn0\"\n  }\n}\n```\n\nPass `cursor=<nextCursor>` to fetch the next page. Use the `limit` parameter (max 200) to control page size.",
+    "description": "The CommonGrid open-source energy infrastructure API. Access data on utilities, grid operators, power plants, EV charging stations, transmission lines, pricing nodes, and more.\n\n## Authentication\n\nAll endpoints are publicly accessible at the Anonymous tier (60 requests/hr). To unlock the Registered tier (5,000 requests/hr), create a free API key in the [Developer Dashboard](/developers) and include it as a Bearer token:\n\n```\nAuthorization: Bearer cg_your_api_key\n```\n\n## Rate Limits\n\n| Tier | Limit | Auth Required |\n|------|-------|---------------|\n| Anonymous | 60/hr | No |\n| Registered | 5,000/hr | API key |\n| Bulk | 50,000/hr | Contact us |\n\n## Pagination\n\nList endpoints return cursor-based pagination:\n\n```json\n{\n  \"data\": [...],\n  \"meta\": {\n    \"total\": 3000,\n    \"limit\": 50,\n    \"nextCursor\": \"eyJ2IjoxLCJzIjp7InZhbHVlIjoiYWNtZS11dGlsaXR5In0sImlkIjoiYWJjMTIzIn0\"\n  }\n}\n```\n\nPass `cursor=<nextCursor>` to fetch the next page. Use the `limit` parameter (max 200) to control page size.\n\n## Spec generation\n\nThis OpenAPI document is auto-generated from the Drizzle schema via `npm run generate:openapi`. CI verifies the committed spec is up to date on every PR; if you change a table or route and the spec diverges, `npm run check:openapi` will fail.",
     "contact": {
       "name": "CommonGrid Support",
       "email": "hello@texturehq.com",
@@ -20,7 +20,11 @@
       "description": "Production"
     }
   ],
-  "security": [{ "bearerAuth": [] }],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
   "components": {
     "securitySchemes": {
       "bearerAuth": {
@@ -34,25 +38,37 @@
         "name": "limit",
         "in": "query",
         "description": "Maximum number of results to return (1–200, default 50)",
-        "schema": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 }
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 50
+        }
       },
       "cursor": {
         "name": "cursor",
         "in": "query",
         "description": "Pagination cursor from the previous response `meta.nextCursor`",
-        "schema": { "type": "string" }
+        "schema": {
+          "type": "string"
+        }
       },
       "search": {
         "name": "search",
         "in": "query",
         "description": "Full-text search query (min 2 characters)",
-        "schema": { "type": "string", "minLength": 2 }
+        "schema": {
+          "type": "string",
+          "minLength": 2
+        }
       },
       "fields": {
         "name": "fields",
         "in": "query",
         "description": "Comma-separated list of fields to include in the response (sparse fieldsets)",
-        "schema": { "type": "string" },
+        "schema": {
+          "type": "string"
+        },
         "example": "id,slug,name"
       },
       "slug": {
@@ -60,16 +76,28 @@
         "in": "path",
         "required": true,
         "description": "Unique URL-safe identifier for the resource",
-        "schema": { "type": "string" }
+        "schema": {
+          "type": "string"
+        }
       }
     },
     "schemas": {
       "PaginatedMeta": {
         "type": "object",
         "properties": {
-          "total": { "type": "integer", "description": "Total number of matching records" },
-          "limit": { "type": "integer", "description": "Page size used for this response" },
-          "nextCursor": { "type": "string", "nullable": true, "description": "Cursor for the next page, or null if no more pages" }
+          "total": {
+            "type": "integer",
+            "description": "Total number of matching records"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Page size used for this response"
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor for the next page, or null if no more pages"
+          }
         }
       },
       "ErrorResponse": {
@@ -78,8 +106,163 @@
           "error": {
             "type": "object",
             "properties": {
-              "code": { "type": "string", "example": "NOT_FOUND" },
-              "message": { "type": "string", "example": "Resource not found" }
+              "code": {
+                "type": "string",
+                "example": "NOT_FOUND"
+              },
+              "message": {
+                "type": "string",
+                "example": "Resource not found"
+              }
+            }
+          }
+        }
+      },
+      "GeoJsonFeature": {
+        "type": "object",
+        "description": "A GeoJSON Feature (RFC 7946)",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Feature"
+            ]
+          },
+          "geometry": {
+            "type": "object",
+            "description": "GeoJSON geometry object"
+          },
+          "properties": {
+            "type": "object",
+            "description": "Arbitrary feature properties"
+          }
+        }
+      },
+      "EntityVersion": {
+        "type": "object",
+        "description": "A single entry in an entity's version history (from `entity_versions`).",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "versionNumber": {
+            "type": "integer"
+          },
+          "changeType": {
+            "type": "string",
+            "description": "One of: create, update, delete"
+          },
+          "changeSummary": {
+            "type": "string",
+            "nullable": true
+          },
+          "changedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "delta": {
+            "type": "object",
+            "nullable": true,
+            "description": "Field-level delta: { <fieldName>: { old, new } }",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ChangelogEntry": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "added",
+              "updated"
+            ]
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityTypeLabel": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "isoTimestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ChangelogResponse": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChangelogEntry"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "static",
+              "database"
+            ]
+          }
+        }
+      },
+      "SearchResults": {
+        "type": "object",
+        "description": "Grouped search results keyed by entity type (camelCase plural).",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "source": {
+                "type": "string"
+              }
             }
           }
         }
@@ -87,145 +270,1417 @@
       "Utility": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "name": { "type": "string" },
-          "eiaName": { "type": "string", "nullable": true },
-          "shortName": { "type": "string", "nullable": true },
-          "segment": { "type": "string", "description": "e.g. electric, gas, water" },
-          "status": { "type": "string" },
-          "jurisdiction": { "type": "string", "nullable": true, "description": "Comma-separated state codes" },
-          "isoId": { "type": "string", "nullable": true },
-          "rtoId": { "type": "string", "nullable": true },
-          "balancingAuthorityId": { "type": "string", "nullable": true },
-          "hasGeneration": { "type": "boolean", "nullable": true },
-          "hasTransmission": { "type": "boolean", "nullable": true },
-          "hasDistribution": { "type": "boolean", "nullable": true }
-        }
-      },
-      "PowerPlant": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "name": { "type": "string" },
-          "state": { "type": "string" },
-          "fuelCategory": { "type": "string" },
-          "status": { "type": "string" },
-          "totalCapacityMw": { "type": "number", "nullable": true },
-          "latitude": { "type": "number", "nullable": true },
-          "longitude": { "type": "number", "nullable": true }
-        }
-      },
-      "EvStation": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "stationName": { "type": "string" },
-          "streetAddress": { "type": "string" },
-          "city": { "type": "string" },
-          "state": { "type": "string" },
-          "zip": { "type": "string" },
-          "evNetwork": { "type": "string", "nullable": true },
-          "evConnectorTypes": { "type": "array", "items": { "type": "string" }, "nullable": true },
-          "latitude": { "type": "number" },
-          "longitude": { "type": "number" }
-        }
-      },
-      "Territory": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "name": { "type": "string" },
-          "utilityId": { "type": "string", "nullable": true },
-          "state": { "type": "string", "nullable": true }
-        }
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique identifier used in API paths"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "eiaName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Utility name as reported on EIA Form 861"
+          },
+          "shortName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short / display name variant"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL to the utility's logo"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary utility website"
+          },
+          "eiaId": {
+            "type": "string",
+            "nullable": true,
+            "description": "EIA utility identifier"
+          },
+          "segment": {
+            "type": "string",
+            "description": "One of: electric, gas, water, combined"
+          },
+          "status": {
+            "type": "string",
+            "description": "Operational status (active, inactive, merged, etc.)"
+          },
+          "customerCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of retail customers served (EIA-861)"
+          },
+          "peakDemandMw": {
+            "type": "number",
+            "nullable": true,
+            "description": "Summer peak demand in megawatts"
+          },
+          "winterPeakDemandMw": {
+            "type": "number",
+            "nullable": true,
+            "description": "Winter peak demand in megawatts"
+          },
+          "totalRevenueDollars": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total annual revenue in US dollars"
+          },
+          "totalSalesMwh": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total annual retail sales in MWh"
+          },
+          "baCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Balancing authority code (EIA-861)"
+          },
+          "nercRegion": {
+            "type": "string",
+            "nullable": true,
+            "description": "NERC reliability region"
+          },
+          "hasGeneration": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the utility owns generation assets"
+          },
+          "hasTransmission": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the utility owns transmission assets"
+          },
+          "hasDistribution": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the utility owns distribution assets"
+          },
+          "amiMeterCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of advanced (AMI) meters deployed"
+          },
+          "totalMeterCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Total meter count (AMI + traditional)"
+          },
+          "jurisdiction": {
+            "type": "string",
+            "nullable": true,
+            "description": "Comma-separated state codes the utility operates in"
+          },
+          "isoId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the ISO this utility operates under, if any"
+          },
+          "rtoId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the RTO this utility operates under, if any"
+          },
+          "balancingAuthorityId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the primary balancing authority"
+          },
+          "generationProviderId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the utility that supplies generation"
+          },
+          "transmissionProviderId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the utility that supplies transmission"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to parent utility (holding company)"
+          },
+          "successorId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to successor utility (post-merger)"
+          },
+          "serviceTerritoryId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the region describing the utility's service territory"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "segment",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
       },
       "Iso": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "name": { "type": "string" },
-          "shortName": { "type": "string", "nullable": true },
-          "website": { "type": "string", "nullable": true }
-        }
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique identifier used in API paths"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "shortName": {
+            "type": "string",
+            "description": "Short name (e.g. CAISO, PJM)"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Logo URL"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary website"
+          },
+          "states": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of two-letter US state codes covered"
+          },
+          "regionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the parent region"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "shortName",
+          "states",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
       },
       "Rto": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "name": { "type": "string" },
-          "shortName": { "type": "string", "nullable": true }
-        }
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique identifier used in API paths"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "shortName": {
+            "type": "string",
+            "description": "Short name / abbreviation"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Logo URL"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary website"
+          },
+          "states": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of two-letter US state codes covered"
+          },
+          "regionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the parent region"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "shortName",
+          "states",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
       },
       "BalancingAuthority": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "name": { "type": "string" },
-          "abbreviation": { "type": "string", "nullable": true }
-        }
-      },
-      "PricingNode": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "name": { "type": "string" },
-          "nodeType": { "type": "string", "nullable": true },
-          "isoId": { "type": "string", "nullable": true }
-        }
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique identifier used in API paths"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "shortName": {
+            "type": "string",
+            "description": "Short name / abbreviation"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Logo URL"
+          },
+          "eiaCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "EIA balancing authority code"
+          },
+          "eiaId": {
+            "type": "string",
+            "nullable": true,
+            "description": "EIA identifier"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary website"
+          },
+          "states": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of two-letter US state codes covered"
+          },
+          "isoId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the parent ISO, if any"
+          },
+          "regionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the region this BA sits inside"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "shortName",
+          "states",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
       },
       "Region": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "name": { "type": "string" },
-          "type": { "type": "string", "nullable": true }
-        }
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique identifier used in API paths"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Region type (state, county, iso, rto, ba, utility-service-territory, cca, etc.)"
+          },
+          "eiaId": {
+            "type": "string",
+            "nullable": true,
+            "description": "EIA identifier, if applicable"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "description": "Two-letter US state code, if applicable"
+          },
+          "customers": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Customer count associated with this region, if reported"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "sourceDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Source filing date (YYYY-MM-DD)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "type",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
+      },
+      "Territory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Matches the region id this territory is the geometry for"
+          },
+          "regionId": {
+            "type": "string",
+            "description": "FK to the region"
+          },
+          "areaSqKm": {
+            "type": "number",
+            "nullable": true,
+            "description": "Area in square kilometers (precomputed)"
+          },
+          "vertexCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Vertex count (precomputed, for perf monitoring)"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Upstream source of the boundary geometry"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the geometry was first ingested"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the geometry was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "regionId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PowerPlant": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique identifier used in API paths"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "plantCode": {
+            "type": "string",
+            "description": "EIA plant code"
+          },
+          "utilityId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the operating utility"
+          },
+          "utilityName": {
+            "type": "string",
+            "description": "Operator name as reported to EIA"
+          },
+          "balancingAuthorityId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the balancing authority"
+          },
+          "baCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Balancing authority code"
+          },
+          "state": {
+            "type": "string",
+            "description": "Two-letter US state code"
+          },
+          "county": {
+            "type": "string",
+            "nullable": true,
+            "description": "County name"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "WGS84 latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "WGS84 longitude"
+          },
+          "nercRegion": {
+            "type": "string",
+            "nullable": true,
+            "description": "NERC reliability region"
+          },
+          "sector": {
+            "type": "string",
+            "description": "EIA sector (electric utility, IPP, commercial, etc.)"
+          },
+          "primaryFuel": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary fuel code (EIA)"
+          },
+          "fuelCategory": {
+            "type": "string",
+            "description": "Normalized fuel category (solar, wind, gas, coal, etc.)"
+          },
+          "technologies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of generator technology codes"
+          },
+          "energySources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of energy source codes"
+          },
+          "totalCapacityMw": {
+            "type": "number",
+            "description": "Total nameplate capacity in megawatts"
+          },
+          "generatorCount": {
+            "type": "integer",
+            "description": "Number of generators at the plant"
+          },
+          "operatingYear": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Earliest generator operating year"
+          },
+          "gridVoltageKv": {
+            "type": "number",
+            "nullable": true,
+            "description": "Grid interconnection voltage in kV"
+          },
+          "status": {
+            "type": "string",
+            "description": "One of: operable, proposed"
+          },
+          "proposedCapacityMw": {
+            "type": "number",
+            "nullable": true,
+            "description": "Proposed capacity in megawatts (for proposed plants)"
+          },
+          "proposedOnlineYear": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Expected online year (for proposed plants)"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "plantCode",
+          "utilityName",
+          "state",
+          "latitude",
+          "longitude",
+          "sector",
+          "fuelCategory",
+          "technologies",
+          "energySources",
+          "totalCapacityMw",
+          "generatorCount",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
+      },
+      "Substation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique identifier used in API paths"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "ownerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Owner name (free-text)"
+          },
+          "ownerUtilityId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the owning utility, if matched"
+          },
+          "state": {
+            "type": "string",
+            "description": "Two-letter US state code"
+          },
+          "county": {
+            "type": "string",
+            "nullable": true,
+            "description": "County name"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "WGS84 latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "WGS84 longitude"
+          },
+          "minVoltageKv": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Minimum voltage in kV"
+          },
+          "maxVoltageKv": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum voltage in kV"
+          },
+          "substationType": {
+            "type": "string",
+            "description": "One of: transmission, distribution, hybrid, unknown"
+          },
+          "status": {
+            "type": "string",
+            "description": "One of: in_service, out_of_service, planned, retired, unknown"
+          },
+          "source": {
+            "type": "string",
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "eiaId": {
+            "type": "string",
+            "nullable": true,
+            "description": "EIA substation identifier"
+          },
+          "osmId": {
+            "type": "string",
+            "nullable": true,
+            "description": "OpenStreetMap element id (e.g. node/123, way/456)"
+          },
+          "hifldLegacyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Legacy HIFLD substation id"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "state",
+          "latitude",
+          "longitude",
+          "substationType",
+          "status",
+          "source",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
+      },
+      "TransmissionLine": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
+          },
+          "objectId": {
+            "type": "integer",
+            "description": "HIFLD object identifier"
+          },
+          "type": {
+            "type": "string",
+            "description": "Line type (overhead, underground, etc.)"
+          },
+          "status": {
+            "type": "string",
+            "description": "Operational status"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Owner name"
+          },
+          "voltage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Nominal voltage in kV (may be 0 for unknown)"
+          },
+          "voltClass": {
+            "type": "string",
+            "description": "HIFLD voltage class text"
+          },
+          "voltageClass": {
+            "type": "string",
+            "description": "Normalized voltage class (UNDER_100, 100_200, 345, 500, 735_AND_ABOVE, DC, NOT_AVAILABLE)"
+          },
+          "sub1": {
+            "type": "string",
+            "description": "First substation endpoint name"
+          },
+          "sub2": {
+            "type": "string",
+            "description": "Second substation endpoint name"
+          },
+          "lengthMiles": {
+            "type": "number",
+            "description": "Line length in miles"
+          },
+          "naicsCode": {
+            "type": "string",
+            "description": "NAICS industry code"
+          },
+          "source": {
+            "type": "string",
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
+          }
+        },
+        "required": [
+          "id",
+          "objectId",
+          "type",
+          "status",
+          "owner",
+          "voltClass",
+          "voltageClass",
+          "sub1",
+          "sub2",
+          "lengthMiles",
+          "naicsCode",
+          "source",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
+      },
+      "EvStation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique identifier used in API paths"
+          },
+          "stationName": {
+            "type": "string",
+            "description": "Display name of the station"
+          },
+          "streetAddress": {
+            "type": "string",
+            "description": "Street address"
+          },
+          "city": {
+            "type": "string",
+            "description": "City"
+          },
+          "state": {
+            "type": "string",
+            "description": "Two-letter US state code"
+          },
+          "zip": {
+            "type": "string",
+            "description": "ZIP code"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "WGS84 latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "WGS84 longitude"
+          },
+          "evNetwork": {
+            "type": "string",
+            "nullable": true,
+            "description": "Charging network (e.g. Tesla, ChargePoint, EVgo)"
+          },
+          "evLevel1EvseNum": {
+            "type": "integer",
+            "description": "Number of Level 1 EVSE ports"
+          },
+          "evLevel2EvseNum": {
+            "type": "integer",
+            "description": "Number of Level 2 EVSE ports"
+          },
+          "evDcFastNum": {
+            "type": "integer",
+            "description": "Number of DC fast chargers"
+          },
+          "evConnectorTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of connector types (J1772, CCS, CHAdeMO, TESLA)"
+          },
+          "accessCode": {
+            "type": "string",
+            "description": "One of: public, private"
+          },
+          "statusCode": {
+            "type": "string",
+            "description": "One of: E (available), P (planned), T (temporarily unavailable)"
+          },
+          "openDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Date the station opened (YYYY-MM-DD)"
+          },
+          "facilityType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Facility type from AFDC"
+          },
+          "ownerTypeCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Owner type code from AFDC"
+          },
+          "evPricing": {
+            "type": "string",
+            "nullable": true,
+            "description": "Pricing information (free text)"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "stationName",
+          "streetAddress",
+          "city",
+          "state",
+          "zip",
+          "latitude",
+          "longitude",
+          "evLevel1EvseNum",
+          "evLevel2EvseNum",
+          "evDcFastNum",
+          "evConnectorTypes",
+          "accessCode",
+          "statusCode",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
+      },
+      "PricingNode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique identifier used in API paths"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "iso": {
+            "type": "string",
+            "description": "ISO/RTO identifier (CAISO, PJM, ERCOT, MISO, NYISO, ISONE, SPP)"
+          },
+          "nodeType": {
+            "type": "string",
+            "description": "Pricing node type (hub, gen, load, zone, etc.)"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "WGS84 latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "WGS84 longitude"
+          },
+          "zone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Pricing zone"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "description": "Two-letter US state code"
+          },
+          "voltageKv": {
+            "type": "number",
+            "nullable": true,
+            "description": "Voltage in kV"
+          },
+          "eiaPlantCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "EIA plant code, for nodes mapped to a generator"
+          },
+          "source": {
+            "type": "string",
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "iso",
+          "nodeType",
+          "latitude",
+          "longitude",
+          "source",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
       },
       "Program": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "name": { "type": "string" },
-          "programType": { "type": "string", "nullable": true },
-          "utilityId": { "type": "string", "nullable": true },
-          "state": { "type": "string", "nullable": true },
-          "status": { "type": "string", "nullable": true }
-        }
-      },
-      "SearchResults": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "object",
-            "properties": {
-              "utilities": { "type": "array", "items": { "$ref": "#/components/schemas/Utility" } },
-              "powerPlants": { "type": "array", "items": { "$ref": "#/components/schemas/PowerPlant" } },
-              "evStations": { "type": "array", "items": { "$ref": "#/components/schemas/EvStation" } },
-              "isos": { "type": "array", "items": { "$ref": "#/components/schemas/Iso" } },
-              "rtos": { "type": "array", "items": { "$ref": "#/components/schemas/Rto" } },
-              "balancingAuthorities": { "type": "array", "items": { "$ref": "#/components/schemas/BalancingAuthority" } },
-              "pricingNodes": { "type": "array", "items": { "$ref": "#/components/schemas/PricingNode" } }
-            }
+          "id": {
+            "type": "string",
+            "description": "Stable internal identifier"
           },
-          "meta": {
+          "slug": {
+            "type": "string",
+            "description": "URL-safe unique identifier used in API paths"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Full program description"
+          },
+          "organizations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Array of {entityId, role} objects describing involved organizations"
+          },
+          "assetTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of asset types (e.g. battery, thermostat, water-heater)"
+          },
+          "marketSegments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of market segments (residential, C&I, etc.)"
+          },
+          "participationModels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of participation model codes"
+          },
+          "incentiveStructures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of incentive structure codes"
+          },
+          "gridServices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of grid services the program provides"
+          },
+          "regions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of region IDs covered"
+          },
+          "compensationTiers": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Array of compensation tiers"
+          },
+          "capacityTarget": {
+            "type": "number",
+            "nullable": true,
+            "description": "Target capacity in MW"
+          },
+          "maxEnrollments": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Max enrollment count, if any"
+          },
+          "programSeason": {
             "type": "object",
-            "properties": {
-              "query": { "type": "string" },
-              "totalResults": { "type": "integer" },
-              "source": { "type": "string" }
-            }
+            "nullable": true,
+            "description": "Season object with startMonth, endMonth"
+          },
+          "launchedAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Launch date (YYYY-MM-DD)"
+          },
+          "enrollmentOpens": {
+            "type": "string",
+            "nullable": true,
+            "description": "Enrollment window open date"
+          },
+          "enrollmentCloses": {
+            "type": "string",
+            "nullable": true,
+            "description": "Enrollment window close date"
+          },
+          "endsAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Program end date"
+          },
+          "status": {
+            "type": "string",
+            "description": "Program status"
+          },
+          "programWebsite": {
+            "type": "string",
+            "nullable": true,
+            "description": "Program home page URL"
+          },
+          "faqUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "FAQ URL"
+          },
+          "termsUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Terms & conditions URL"
+          },
+          "contactUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Contact URL"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Array of program variants"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Upstream data source identifier (e.g. EIA, HIFLD, OSM)"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical source URL (filing PDF, dataset download, etc.)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was first ingested into CommonGrid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this record was last modified"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Soft-delete timestamp (null for active records)"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Monotonic version counter incremented on every edit"
           }
-        }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "organizations",
+          "assetTypes",
+          "marketSegments",
+          "participationModels",
+          "incentiveStructures",
+          "gridServices",
+          "regions",
+          "compensationTiers",
+          "status",
+          "variants",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
       }
     }
   },
@@ -234,34 +1689,183 @@
       "get": {
         "operationId": "listUtilities",
         "summary": "List utilities",
-        "description": "Returns a paginated list of electric, gas, and water utilities. Supports filtering by segment, status, state, ISO, RTO, balancing authority, and full-text search.",
-        "tags": ["Utilities"],
+        "description": "Returns a paginated list of US utilities with filtering and sorting.",
+        "tags": [
+          "Utilities"
+        ],
         "parameters": [
-          { "$ref": "#/components/parameters/limit" },
-          { "$ref": "#/components/parameters/cursor" },
-          { "$ref": "#/components/parameters/search" },
-          { "$ref": "#/components/parameters/fields" },
-          { "name": "segment", "in": "query", "description": "Filter by segment (electric, gas, water)", "schema": { "type": "string" } },
-          { "name": "status", "in": "query", "description": "Filter by operational status", "schema": { "type": "string" } },
-          { "name": "state", "in": "query", "description": "Filter by 2-letter US state code", "schema": { "type": "string" }, "example": "CA" },
-          { "name": "iso", "in": "query", "description": "Filter by ISO ID", "schema": { "type": "string" } },
-          { "name": "rto", "in": "query", "description": "Filter by RTO ID", "schema": { "type": "string" } },
-          { "name": "ba", "in": "query", "description": "Filter by Balancing Authority ID", "schema": { "type": "string" } },
-          { "name": "hasGeneration", "in": "query", "description": "Filter by generation capability", "schema": { "type": "boolean" } },
-          { "name": "hasTransmission", "in": "query", "description": "Filter by transmission capability", "schema": { "type": "boolean" } },
-          { "name": "hasDistribution", "in": "query", "description": "Filter by distribution capability", "schema": { "type": "boolean" } },
-          { "name": "include", "in": "query", "description": "Comma-separated related entities to embed (iso, rto, ba)", "schema": { "type": "string" }, "example": "iso,rto" }
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/fields"
+          },
+          {
+            "name": "segment",
+            "in": "query",
+            "description": "Filter by segment (electric, gas, water, combined)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by operational status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Filter by two-letter US state code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "iso",
+            "in": "query",
+            "description": "Filter by ISO id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rto",
+            "in": "query",
+            "description": "Filter by RTO id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ba",
+            "in": "query",
+            "description": "Filter by balancing authority id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Full-text search over name/eiaName/shortName/jurisdiction (min 2 chars)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "hasGeneration",
+            "in": "query",
+            "description": "Filter utilities that own generation assets",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "hasTransmission",
+            "in": "query",
+            "description": "Filter utilities that own transmission assets",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "hasDistribution",
+            "in": "query",
+            "description": "Filter utilities that own distribution assets",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "description": "Latitude for point-in-polygon service-territory lookup (pair with lng)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "description": "Longitude for point-in-polygon service-territory lookup (pair with lat)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field (slug, name, customerCount, segment)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "slug",
+                "name",
+                "customerCount",
+                "segment"
+              ],
+              "default": "slug"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "description": "Comma-separated related entities to embed (iso,rto,ba)",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of utilities",
+            "description": "Paginated list response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Utility" } },
-                    "meta": { "$ref": "#/components/schemas/PaginatedMeta" }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Utility"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
                   }
                 }
               }
@@ -274,17 +1878,761 @@
       "get": {
         "operationId": "getUtility",
         "summary": "Get utility by slug",
-        "tags": ["Utilities"],
+        "tags": [
+          "Utilities"
+        ],
         "parameters": [
-          { "$ref": "#/components/parameters/slug" },
-          { "name": "include", "in": "query", "description": "Comma-separated related entities to embed (iso, rto, ba)", "schema": { "type": "string" } }
+          {
+            "$ref": "#/components/parameters/slug"
+          }
         ],
         "responses": {
           "200": {
-            "description": "Utility object",
-            "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Utility" } } } } }
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Utility"
+                    }
+                  }
+                }
+              }
+            }
           },
-          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/isos": {
+      "get": {
+        "operationId": "listIsos",
+        "summary": "List ISOs",
+        "description": "Independent System Operators that manage wholesale electricity markets.",
+        "tags": [
+          "Grid Operators"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Iso"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/isos/{slug}": {
+      "get": {
+        "operationId": "getIso",
+        "summary": "Get ISO by slug",
+        "tags": [
+          "Grid Operators"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Iso"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/isos/{slug}/geometry": {
+      "get": {
+        "operationId": "getIsoGeometry",
+        "summary": "Get ISO boundary geometry",
+        "description": "Returns GeoJSON boundary geometry for the ISO.",
+        "tags": [
+          "Grid Operators"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GeoJSON geometry response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "description": "GeoJSON Feature or FeatureCollection"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rtos": {
+      "get": {
+        "operationId": "listRtos",
+        "summary": "List RTOs",
+        "description": "Regional Transmission Organizations that coordinate wholesale transmission.",
+        "tags": [
+          "Grid Operators"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Rto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rtos/{slug}": {
+      "get": {
+        "operationId": "getRto",
+        "summary": "Get RTO by slug",
+        "tags": [
+          "Grid Operators"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Rto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rtos/{slug}/geometry": {
+      "get": {
+        "operationId": "getRtoGeometry",
+        "summary": "Get RTO boundary geometry",
+        "description": "Returns GeoJSON boundary geometry for the RTO.",
+        "tags": [
+          "Grid Operators"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GeoJSON geometry response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "description": "GeoJSON Feature or FeatureCollection"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/balancing-authorities": {
+      "get": {
+        "operationId": "listBalancingAuthorities",
+        "summary": "List balancing authorities",
+        "description": "Balancing authorities that balance electricity supply and demand in real time.",
+        "tags": [
+          "Grid Operators"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BalancingAuthority"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/balancing-authorities/{slug}": {
+      "get": {
+        "operationId": "getBalancingAuthority",
+        "summary": "Get balancing authority by slug",
+        "tags": [
+          "Grid Operators"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BalancingAuthority"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/balancing-authorities/{slug}/geometry": {
+      "get": {
+        "operationId": "getBalancingAuthorityGeometry",
+        "summary": "Get balancing authority boundary geometry",
+        "description": "Returns GeoJSON boundary geometry for the balancing authority.",
+        "tags": [
+          "Grid Operators"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GeoJSON geometry response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "description": "GeoJSON Feature or FeatureCollection"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/regions": {
+      "get": {
+        "operationId": "listRegions",
+        "summary": "List regions",
+        "description": "Geographic regions (states, counties, ISO/RTO territories, utility service territories, CCAs).",
+        "tags": [
+          "Regions"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Region"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/regions/{slug}": {
+      "get": {
+        "operationId": "getRegion",
+        "summary": "Get region by slug",
+        "tags": [
+          "Regions"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Region"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/territories": {
+      "get": {
+        "operationId": "listTerritories",
+        "summary": "List territories",
+        "description": "Territory metadata for regions. Geometry is served via `/territories/{slug}/geometry`.",
+        "tags": [
+          "Territories"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Filter by two-letter US state code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by region type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "utilityId",
+            "in": "query",
+            "description": "Filter to the service territory of a specific utility",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Fuzzy name match (min 2 chars)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field (slug, name, state, type)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "slug",
+                "name",
+                "state",
+                "type"
+              ],
+              "default": "slug"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Territory"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/territories/{slug}": {
+      "get": {
+        "operationId": "getTerritory",
+        "summary": "Get territory metadata by slug",
+        "tags": [
+          "Territories"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Territory"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/territories/{slug}/geometry": {
+      "get": {
+        "operationId": "getTerritoryGeometry",
+        "summary": "Get territory geometry (GeoJSON)",
+        "description": "Returns the territory's MultiPolygon geometry as GeoJSON. Use `?simplify=0.01` to apply topology-preserving simplification.",
+        "tags": [
+          "Territories"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "description": "Simplification tolerance in degrees (higher = simpler)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GeoJSON geometry response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "description": "GeoJSON Feature or FeatureCollection"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/territories/lookup": {
+      "get": {
+        "operationId": "lookupTerritoriesByPoint",
+        "summary": "Point-in-polygon territory lookup",
+        "description": "Returns every territory whose geometry contains the supplied lat/lng point (up to 10, ordered by region type).",
+        "tags": [
+          "Territories"
+        ],
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "description": "Latitude in degrees (-90..90)",
+            "required": true,
+            "example": 40.7128,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "description": "Longitude in degrees (-180..180)",
+            "required": true,
+            "example": -74.006,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "state": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "slug": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -292,25 +2640,118 @@
       "get": {
         "operationId": "listPowerPlants",
         "summary": "List power plants",
-        "description": "Returns a paginated list of power plants sourced from EIA-860. Supports filtering by state, fuel category, and status.",
-        "tags": ["Power Plants"],
+        "description": "EIA-860 power generation facilities.",
+        "tags": [
+          "Power Plants"
+        ],
         "parameters": [
-          { "$ref": "#/components/parameters/limit" },
-          { "$ref": "#/components/parameters/cursor" },
-          { "$ref": "#/components/parameters/fields" },
-          { "name": "state", "in": "query", "description": "Filter by 2-letter US state code", "schema": { "type": "string" } },
-          { "name": "fuelCategory", "in": "query", "description": "Filter by fuel category (solar, wind, nuclear, gas, coal, hydro, etc.)", "schema": { "type": "string" } },
-          { "name": "status", "in": "query", "description": "Filter by operational status", "schema": { "type": "string" } },
-          { "name": "utilityId", "in": "query", "description": "Filter by utility ID", "schema": { "type": "string" } },
-          { "name": "baId", "in": "query", "description": "Filter by balancing authority ID", "schema": { "type": "string" } },
-          { "name": "search", "in": "query", "description": "Search by plant name (min 2 chars)", "schema": { "type": "string" } },
-          { "name": "sort", "in": "query", "description": "Sort field", "schema": { "type": "string", "enum": ["name", "totalCapacityMw", "state"], "default": "name" } },
-          { "name": "order", "in": "query", "description": "Sort order", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "asc" } }
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/fields"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Filter by two-letter US state code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fuelCategory",
+            "in": "query",
+            "description": "Filter by normalized fuel category",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status (operable, proposed)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "utilityId",
+            "in": "query",
+            "description": "Filter by operating utility id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "baId",
+            "in": "query",
+            "description": "Filter by balancing authority id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Name/utility/county search (min 2 chars)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "totalCapacityMw",
+                "state"
+              ],
+              "default": "name"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          }
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of power plants",
-            "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/PowerPlant" } }, "meta": { "$ref": "#/components/schemas/PaginatedMeta" } } } } }
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PowerPlant"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -319,11 +2760,527 @@
       "get": {
         "operationId": "getPowerPlant",
         "summary": "Get power plant by slug",
-        "tags": ["Power Plants"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
+        "tags": [
+          "Power Plants"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
         "responses": {
-          "200": { "description": "Power plant object", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/PowerPlant" } } } } } },
-          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PowerPlant"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/power-plants/{slug}/substations": {
+      "get": {
+        "operationId": "getPowerPlantSubstations",
+        "summary": "List substations connected to a power plant",
+        "description": "Returns interconnected substations from the `power_plant_interconnections` join table, ordered by primary-flag then distance.",
+        "tags": [
+          "Power Plants"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "substationId": {
+                            "type": "string"
+                          },
+                          "substationName": {
+                            "type": "string"
+                          },
+                          "substationType": {
+                            "type": "string"
+                          },
+                          "voltageClass": {
+                            "type": "string"
+                          },
+                          "owner": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "distanceKm": {
+                            "type": "number"
+                          },
+                          "isPrimary": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/substations": {
+      "get": {
+        "operationId": "listSubstations",
+        "summary": "List substations",
+        "description": "US substations from EIA and OpenStreetMap (ODbL attribution).",
+        "tags": [
+          "Substations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/fields"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Filter by two-letter US state code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "substationType",
+            "in": "query",
+            "description": "Filter by substation type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "transmission",
+                "distribution",
+                "hybrid",
+                "unknown"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "in_service",
+                "out_of_service",
+                "planned",
+                "retired",
+                "unknown"
+              ]
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "description": "Filter by upstream source",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "eia",
+                "osm",
+                "manual",
+                "hybrid"
+              ]
+            }
+          },
+          {
+            "name": "ownerUtilityId",
+            "in": "query",
+            "description": "Filter by owning utility id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minMaxVoltageKv",
+            "in": "query",
+            "description": "Minimum `maxVoltageKv` to include",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Name/owner/county search (min 2 chars)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "state",
+                "maxVoltageKv"
+              ],
+              "default": "name"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Substation"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/substations/{slug}": {
+      "get": {
+        "operationId": "getSubstation",
+        "summary": "Get substation by slug",
+        "tags": [
+          "Substations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Substation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/substations/{slug}/transmission-lines": {
+      "get": {
+        "operationId": "getSubstationTransmissionLines",
+        "summary": "List transmission lines connected to a substation",
+        "description": "Returns connected transmission lines from the `transmission_line_endpoints` join table.",
+        "tags": [
+          "Substations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "lineId": {
+                            "type": "string"
+                          },
+                          "lineName": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "lineVoltageClass": {
+                            "type": "string"
+                          },
+                          "lineVoltage": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "lineStatus": {
+                            "type": "string"
+                          },
+                          "lineOwner": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "from",
+                              "to"
+                            ]
+                          },
+                          "matchConfidence": {
+                            "type": "number",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transmission-lines": {
+      "get": {
+        "operationId": "listTransmissionLines",
+        "summary": "List transmission lines",
+        "description": "HIFLD transmission line metadata. Line geometries are served via PMTiles, not this endpoint.",
+        "tags": [
+          "Transmission Lines"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/fields"
+          },
+          {
+            "name": "voltageClass",
+            "in": "query",
+            "description": "Filter by normalized voltage class",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "description": "Filter by owner name (exact match)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Owner search (min 2 chars)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "owner",
+                "voltageClass",
+                "lengthMiles"
+              ],
+              "default": "owner"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TransmissionLine"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transmission-lines/{id}": {
+      "get": {
+        "operationId": "getTransmissionLine",
+        "summary": "Get transmission line by id",
+        "tags": [
+          "Transmission Lines"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Internal transmission line id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TransmissionLine"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -331,197 +3288,160 @@
       "get": {
         "operationId": "listEvStations",
         "summary": "List EV charging stations",
-        "description": "Returns a paginated list of EV charging stations sourced from DOE AFDC. Updated weekly.",
-        "tags": ["EV Stations"],
+        "description": "Public and private EV charging stations from the DOE AFDC dataset.",
+        "tags": [
+          "EV Stations"
+        ],
         "parameters": [
-          { "$ref": "#/components/parameters/limit" },
-          { "$ref": "#/components/parameters/cursor" },
-          { "$ref": "#/components/parameters/fields" },
-          { "name": "state", "in": "query", "description": "Filter by 2-letter US state code", "schema": { "type": "string" } },
-          { "name": "network", "in": "query", "description": "Filter by charging network (e.g. Tesla, ChargePoint)", "schema": { "type": "string" } },
-          { "name": "search", "in": "query", "description": "Search by station name or address (min 2 chars)", "schema": { "type": "string" } }
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/fields"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Filter by two-letter US state code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "description": "Filter by city",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "network",
+            "in": "query",
+            "description": "Filter by EV network (exact match)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accessCode",
+            "in": "query",
+            "description": "Filter by access code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "statusCode",
+            "in": "query",
+            "description": "Filter by status code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Station name/address/city search (min 2 chars)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stationName",
+                "city",
+                "state"
+              ],
+              "default": "stationName"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Paginated list of EV stations", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/EvStation" } }, "meta": { "$ref": "#/components/schemas/PaginatedMeta" } } } } } }
+          "200": {
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EvStation"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
     "/ev-stations/{slug}": {
       "get": {
         "operationId": "getEvStation",
-        "summary": "Get EV charging station by slug",
-        "tags": ["EV Stations"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
-        "responses": {
-          "200": { "description": "EV station object", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/EvStation" } } } } } },
-          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
-      }
-    },
-    "/territories": {
-      "get": {
-        "operationId": "listTerritories",
-        "summary": "List service territories",
-        "description": "Returns a paginated list of electric utility service territory boundaries.",
-        "tags": ["Territories"],
+        "summary": "Get EV station by slug",
+        "tags": [
+          "EV Stations"
+        ],
         "parameters": [
-          { "$ref": "#/components/parameters/limit" },
-          { "$ref": "#/components/parameters/cursor" },
-          { "$ref": "#/components/parameters/fields" }
+          {
+            "$ref": "#/components/parameters/slug"
+          }
         ],
         "responses": {
-          "200": { "description": "Paginated list of territories", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Territory" } }, "meta": { "$ref": "#/components/schemas/PaginatedMeta" } } } } } }
-        }
-      }
-    },
-    "/territories/lookup": {
-      "get": {
-        "operationId": "lookupTerritory",
-        "summary": "Look up territory by coordinates",
-        "description": "Returns the utility service territory containing the given latitude/longitude point.",
-        "tags": ["Territories"],
-        "parameters": [
-          { "name": "lat", "in": "query", "required": true, "description": "Latitude", "schema": { "type": "number" }, "example": 37.7749 },
-          { "name": "lng", "in": "query", "required": true, "description": "Longitude", "schema": { "type": "number" }, "example": -122.4194 }
-        ],
-        "responses": {
-          "200": { "description": "Matching territory (or null if none found)", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Territory", "nullable": true } } } } } }
-        }
-      }
-    },
-    "/territories/{slug}": {
-      "get": {
-        "operationId": "getTerritory",
-        "summary": "Get territory by slug",
-        "tags": ["Territories"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
-        "responses": {
-          "200": { "description": "Territory object", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Territory" } } } } } },
-          "404": { "description": "Not found" }
-        }
-      }
-    },
-    "/territories/{slug}/geometry": {
-      "get": {
-        "operationId": "getTerritoryGeometry",
-        "summary": "Get territory GeoJSON geometry",
-        "description": "Returns the GeoJSON polygon boundary for a territory.",
-        "tags": ["Territories"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
-        "responses": {
-          "200": { "description": "GeoJSON Feature", "content": { "application/json": { "schema": { "type": "object" } } } },
-          "404": { "description": "Not found" }
-        }
-      }
-    },
-    "/isos": {
-      "get": {
-        "operationId": "listIsos",
-        "summary": "List ISOs",
-        "description": "Returns all Independent System Operators (ISOs).",
-        "tags": ["Grid Operators"],
-        "parameters": [{ "$ref": "#/components/parameters/limit" }, { "$ref": "#/components/parameters/cursor" }],
-        "responses": {
-          "200": { "description": "List of ISOs", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Iso" } }, "meta": { "$ref": "#/components/schemas/PaginatedMeta" } } } } } }
-        }
-      }
-    },
-    "/isos/{slug}": {
-      "get": {
-        "operationId": "getIso",
-        "summary": "Get ISO by slug",
-        "tags": ["Grid Operators"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
-        "responses": {
-          "200": { "description": "ISO object", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Iso" } } } } } },
-          "404": { "description": "Not found" }
-        }
-      }
-    },
-    "/isos/{slug}/geometry": {
-      "get": {
-        "operationId": "getIsoGeometry",
-        "summary": "Get ISO boundary geometry",
-        "description": "Returns GeoJSON boundary polygon for an ISO.",
-        "tags": ["Grid Operators"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
-        "responses": {
-          "200": { "description": "GeoJSON geometry", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object" } } } } } },
-          "404": { "description": "Boundary not found" }
-        }
-      }
-    },
-    "/rtos": {
-      "get": {
-        "operationId": "listRtos",
-        "summary": "List RTOs",
-        "description": "Returns all Regional Transmission Organizations (RTOs).",
-        "tags": ["Grid Operators"],
-        "parameters": [{ "$ref": "#/components/parameters/limit" }, { "$ref": "#/components/parameters/cursor" }],
-        "responses": {
-          "200": { "description": "List of RTOs", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Rto" } }, "meta": { "$ref": "#/components/schemas/PaginatedMeta" } } } } } }
-        }
-      }
-    },
-    "/rtos/{slug}": {
-      "get": {
-        "operationId": "getRto",
-        "summary": "Get RTO by slug",
-        "tags": ["Grid Operators"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
-        "responses": {
-          "200": { "description": "RTO object", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Rto" } } } } } },
-          "404": { "description": "Not found" }
-        }
-      }
-    },
-    "/rtos/{slug}/geometry": {
-      "get": {
-        "operationId": "getRtoGeometry",
-        "summary": "Get RTO boundary geometry",
-        "description": "Returns GeoJSON boundary polygon for an RTO.",
-        "tags": ["Grid Operators"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
-        "responses": {
-          "200": { "description": "GeoJSON geometry", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object" } } } } } },
-          "404": { "description": "Boundary not found" }
-        }
-      }
-    },
-    "/balancing-authorities": {
-      "get": {
-        "operationId": "listBalancingAuthorities",
-        "summary": "List balancing authorities",
-        "description": "Returns all NERC Balancing Authorities.",
-        "tags": ["Grid Operators"],
-        "parameters": [{ "$ref": "#/components/parameters/limit" }, { "$ref": "#/components/parameters/cursor" }],
-        "responses": {
-          "200": { "description": "List of balancing authorities", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/BalancingAuthority" } }, "meta": { "$ref": "#/components/schemas/PaginatedMeta" } } } } } }
-        }
-      }
-    },
-    "/balancing-authorities/{slug}": {
-      "get": {
-        "operationId": "getBalancingAuthority",
-        "summary": "Get balancing authority by slug",
-        "tags": ["Grid Operators"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
-        "responses": {
-          "200": { "description": "Balancing authority object", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/BalancingAuthority" } } } } } },
-          "404": { "description": "Not found" }
-        }
-      }
-    },
-    "/balancing-authorities/{slug}/geometry": {
-      "get": {
-        "operationId": "getBalancingAuthorityGeometry",
-        "summary": "Get balancing authority boundary geometry",
-        "description": "Returns GeoJSON boundary polygon for a balancing authority.",
-        "tags": ["Grid Operators"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
-        "responses": {
-          "200": { "description": "GeoJSON geometry", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object" } } } } } },
-          "404": { "description": "Boundary not found" }
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/EvStation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -529,18 +3449,103 @@
       "get": {
         "operationId": "listPricingNodes",
         "summary": "List pricing nodes",
-        "description": "Returns pricing nodes (LMPs, hubs, zones) from CAISO, PJM, ERCOT, MISO, NYISO, ISO-NE, and SPP.",
-        "tags": ["Pricing Nodes"],
+        "description": "Wholesale electricity pricing nodes across all 7 US ISOs/RTOs.",
+        "tags": [
+          "Pricing Nodes"
+        ],
         "parameters": [
-          { "$ref": "#/components/parameters/limit" },
-          { "$ref": "#/components/parameters/cursor" },
-          { "$ref": "#/components/parameters/fields" },
-          { "name": "iso", "in": "query", "description": "Filter by ISO ID", "schema": { "type": "string" } },
-          { "name": "nodeType", "in": "query", "description": "Filter by node type", "schema": { "type": "string" } },
-          { "name": "search", "in": "query", "description": "Search by node name (min 2 chars)", "schema": { "type": "string" } }
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/fields"
+          },
+          {
+            "name": "iso",
+            "in": "query",
+            "description": "Filter by ISO (CAISO, PJM, ERCOT, MISO, NYISO, ISONE, SPP)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nodeType",
+            "in": "query",
+            "description": "Filter by pricing node type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Filter by two-letter US state code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Name/zone search (min 2 chars)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "iso",
+                "nodeType"
+              ],
+              "default": "name"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Paginated list of pricing nodes", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/PricingNode" } }, "meta": { "$ref": "#/components/schemas/PaginatedMeta" } } } } } }
+          "200": {
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PricingNode"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -548,35 +3553,85 @@
       "get": {
         "operationId": "getPricingNode",
         "summary": "Get pricing node by slug",
-        "tags": ["Pricing Nodes"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
+        "tags": [
+          "Pricing Nodes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
         "responses": {
-          "200": { "description": "Pricing node object", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/PricingNode" } } } } } },
-          "404": { "description": "Not found" }
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PricingNode"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
-    "/regions": {
+    "/pricing-nodes/{slug}/versions": {
       "get": {
-        "operationId": "listRegions",
-        "summary": "List regions",
-        "description": "Returns geographic regions used for data organization.",
-        "tags": ["Regions"],
-        "parameters": [{ "$ref": "#/components/parameters/limit" }, { "$ref": "#/components/parameters/cursor" }],
+        "operationId": "getPricingNodeVersions",
+        "summary": "Get pricing node version history",
+        "description": "Returns every version of the pricing node from the `entity_versions` audit table.",
+        "tags": [
+          "Pricing Nodes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
         "responses": {
-          "200": { "description": "Paginated list of regions", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Region" } }, "meta": { "$ref": "#/components/schemas/PaginatedMeta" } } } } } }
-        }
-      }
-    },
-    "/regions/{slug}": {
-      "get": {
-        "operationId": "getRegion",
-        "summary": "Get region by slug",
-        "tags": ["Regions"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
-        "responses": {
-          "200": { "description": "Region object", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Region" } } } } } },
-          "404": { "description": "Not found" }
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EntityVersion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -584,19 +3639,110 @@
       "get": {
         "operationId": "listPrograms",
         "summary": "List programs",
-        "description": "Returns utility programs and incentives (demand response, rebates, EV programs, etc.).",
-        "tags": ["Programs"],
+        "description": "Utility programs and incentives — demand response, virtual power plants, DER aggregation, rebates, etc.",
+        "tags": [
+          "Programs"
+        ],
         "parameters": [
-          { "$ref": "#/components/parameters/limit" },
-          { "$ref": "#/components/parameters/cursor" },
-          { "$ref": "#/components/parameters/fields" },
-          { "name": "state", "in": "query", "description": "Filter by 2-letter US state code", "schema": { "type": "string" } },
-          { "name": "programType", "in": "query", "description": "Filter by program type", "schema": { "type": "string" } },
-          { "name": "status", "in": "query", "description": "Filter by status (active, inactive)", "schema": { "type": "string" } },
-          { "name": "search", "in": "query", "description": "Search by program name (min 2 chars)", "schema": { "type": "string" } }
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/fields"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by program status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assetType",
+            "in": "query",
+            "description": "Filter by asset type (matches any element in program's `assetTypes` array)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "marketSegment",
+            "in": "query",
+            "description": "Filter by market segment",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "gridService",
+            "in": "query",
+            "description": "Filter by grid service",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Name/description search (min 2 chars)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "status"
+              ],
+              "default": "name"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Paginated list of programs", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Program" } }, "meta": { "$ref": "#/components/schemas/PaginatedMeta" } } } } } }
+          "200": {
+            "description": "Paginated list response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Program"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginatedMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -604,11 +3750,85 @@
       "get": {
         "operationId": "getProgram",
         "summary": "Get program by slug",
-        "tags": ["Programs"],
-        "parameters": [{ "$ref": "#/components/parameters/slug" }],
+        "tags": [
+          "Programs"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
         "responses": {
-          "200": { "description": "Program object", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Program" } } } } } },
-          "404": { "description": "Not found" }
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Program"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/programs/{slug}/versions": {
+      "get": {
+        "operationId": "getProgramVersions",
+        "summary": "Get program version history",
+        "description": "Returns every version of the program from the `entity_versions` audit table.",
+        "tags": [
+          "Programs"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EntityVersion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -616,31 +3836,181 @@
       "get": {
         "operationId": "search",
         "summary": "Global search",
-        "description": "Full-text search across all entity types. Returns grouped results by entity type.",
-        "tags": ["Search"],
+        "description": "Full-text search across every entity type. Returns grouped results.",
+        "tags": [
+          "Search"
+        ],
         "parameters": [
-          { "name": "q", "in": "query", "required": true, "description": "Search query (min 2, max 200 characters)", "schema": { "type": "string", "minLength": 2, "maxLength": 200 }, "example": "Pacific Gas" },
-          { "name": "limit", "in": "query", "description": "Max results per entity type (1–25, default 5)", "schema": { "type": "integer", "minimum": 1, "maximum": 25, "default": 5 } },
-          { "name": "types", "in": "query", "description": "Comma-separated entity types to search (utilities, power-plants, ev-stations, isos, rtos, balancing-authorities, pricing-nodes)", "schema": { "type": "string" }, "example": "utilities,isos" }
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Search query (min 2 chars, max 200)",
+            "required": true,
+            "example": "Pacific Gas",
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max results per entity type (1-25)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 25,
+              "default": 5
+            }
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "description": "Comma-separated entity types to search (utilities, programs, power-plants, ev-stations, pricing-nodes, transmission-lines, isos, rtos, balancing-authorities)",
+            "example": "utilities,isos",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
-            "description": "Grouped search results by entity type",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SearchResults" } } }
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/changelog": {
+      "get": {
+        "operationId": "getChangelog",
+        "summary": "Get changelog",
+        "description": "Recent additions and updates across every entity type. Backed by the `entity_versions` audit table with a static fallback.",
+        "tags": [
+          "Changelog"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max entries to return (1-200, default 50)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Offset for pagination (default 0)",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "description": "Filter by entity type (utility, iso, rto, balancing-authority, power_plant, ev_station, transmission_line, pricing_node, program)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "ISO timestamp — only return entries at or after this time",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "description": "Filter by kind (added, updated)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "added",
+                "updated"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangelogResponse"
+                }
+              }
+            }
           }
         }
       }
     }
   },
   "tags": [
-    { "name": "Utilities", "description": "Electric, gas, and water utilities" },
-    { "name": "Power Plants", "description": "Power generation facilities from EIA-860" },
-    { "name": "EV Stations", "description": "EV charging stations from DOE AFDC" },
-    { "name": "Territories", "description": "Utility service territory boundaries" },
-    { "name": "Grid Operators", "description": "ISOs, RTOs, and Balancing Authorities" },
-    { "name": "Pricing Nodes", "description": "Wholesale electricity pricing nodes and hubs" },
-    { "name": "Regions", "description": "Geographic regions" },
-    { "name": "Programs", "description": "Utility programs and incentives" },
-    { "name": "Search", "description": "Cross-entity full-text search" }
+    {
+      "name": "Utilities",
+      "description": "Electric, gas, and water utilities"
+    },
+    {
+      "name": "Grid Operators",
+      "description": "ISOs, RTOs, and Balancing Authorities"
+    },
+    {
+      "name": "Regions",
+      "description": "Geographic regions (states, counties, territories)"
+    },
+    {
+      "name": "Territories",
+      "description": "Utility and grid-operator service-territory geometry"
+    },
+    {
+      "name": "Power Plants",
+      "description": "Power generation facilities (EIA-860)"
+    },
+    {
+      "name": "Substations",
+      "description": "Substations from EIA + OSM"
+    },
+    {
+      "name": "Transmission Lines",
+      "description": "Transmission line metadata (HIFLD)"
+    },
+    {
+      "name": "EV Stations",
+      "description": "EV charging stations (DOE AFDC)"
+    },
+    {
+      "name": "Pricing Nodes",
+      "description": "Wholesale electricity pricing nodes and hubs"
+    },
+    {
+      "name": "Programs",
+      "description": "Utility programs and incentives"
+    },
+    {
+      "name": "Search",
+      "description": "Cross-entity full-text search"
+    },
+    {
+      "name": "Changelog",
+      "description": "Cross-entity change feed"
+    }
   ]
 }
