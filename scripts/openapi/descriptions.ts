@@ -2,15 +2,24 @@
  * Per-field descriptions for OpenAPI schemas.
  *
  * Keys are resource names (matching the keys in `resources.ts`) → camelCase
- * field name → short human description. Descriptions are optional; any field
- * without an entry here renders with no `description` in the spec.
+ * field name → either a plain description string OR an object with
+ * `{ description, enum }` for fields that should be emitted as an OpenAPI
+ * enum (e.g. `segment` with a finite set of values from the DB).
  *
  * Keep descriptions short and factual — think "docstring you'd read in a
- * tooltip", not "essay". If a value maps to an enum, use the enum form:
- *   `"One of: electric, gas, water"`
+ * tooltip", not "essay". For fields backed by a real enum in the data,
+ * prefer the object form — it lets codegen clients generate proper enum
+ * types instead of plain strings.
  */
 
-export type FieldDescriptionMap = Record<string, string>;
+export interface FieldDescriptionWithEnum {
+  description: string;
+  /** Complete list of allowed values, sourced from the live DB. */
+  enum: string[];
+}
+
+export type FieldDescription = string | FieldDescriptionWithEnum;
+export type FieldDescriptionMap = Record<string, FieldDescription>;
 
 export const SHARED_DESCRIPTIONS: FieldDescriptionMap = {
   id: "Stable internal identifier",
@@ -32,8 +41,27 @@ export const DESCRIPTIONS: Record<string, FieldDescriptionMap> = {
     logo: "URL to the utility's logo",
     website: "Primary utility website",
     eiaId: "EIA utility identifier",
-    segment: "One of: electric, gas, water, combined",
-    status: "Operational status (active, inactive, merged, etc.)",
+    segment: {
+      description:
+        "Ownership / structural category of the utility. Sourced from EIA Form 861 filings plus manual review.",
+      // Pulled from `SELECT DISTINCT segment FROM utilities WHERE deleted_at IS NULL`.
+      // Keep alphabetized. Re-run the query and update this list whenever a new
+      // segment is introduced (rare; a PR to this file + regenerate the spec).
+      enum: [
+        "COMMUNITY_CHOICE_AGGREGATOR",
+        "DISTRIBUTION_COOPERATIVE",
+        "GENERATION_AND_TRANSMISSION",
+        "INVESTOR_OWNED_UTILITY",
+        "MUNICIPAL_UTILITY",
+        "POLITICAL_SUBDIVISION",
+        "TRANSMISSION_OPERATOR",
+      ],
+    },
+    status: {
+      description: "Operational status of the utility.",
+      // Pulled from `SELECT DISTINCT status FROM utilities WHERE deleted_at IS NULL`.
+      enum: ["ACTIVE", "DEFUNCT", "MERGED"],
+    },
     customerCount: "Number of retail customers served (EIA-861)",
     peakDemandMw: "Summer peak demand in megawatts",
     winterPeakDemandMw: "Winter peak demand in megawatts",
