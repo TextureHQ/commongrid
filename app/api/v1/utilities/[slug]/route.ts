@@ -1,9 +1,8 @@
 import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
-import { corsHeaders } from "@/lib/api/cors";
 import { ApiError } from "@/lib/api/errors";
 import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
-import { jsonResponse } from "@/lib/api/response";
+import { publicJsonResponse } from "@/lib/api/public-response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { balancingAuthorities, isos, rtos, utilities } from "@/lib/db/schema";
@@ -72,10 +71,10 @@ async function handleGet(req: Request, ctx: RouteContext) {
     }
 
     await Promise.all(fetches);
-    return jsonResponse({ data: result }, 200, corsHeaders());
+    return publicJsonResponse(result, 200);
   }
 
-  return jsonResponse({ data: utility }, 200, corsHeaders());
+  return publicJsonResponse(utility, 200);
 }
 
 const handler = withRequestId(withErrorHandling(withTiming(handleGet)));

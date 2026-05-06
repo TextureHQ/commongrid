@@ -13,6 +13,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
+import { stripInternal } from "@/lib/api/public-response";
 import { loadPowerPlantBySlug } from "@/lib/data/power-plants-api";
 
 // ---------------------------------------------------------------------------
@@ -32,7 +33,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
             throw new ApiError("NOT_FOUND", `Power plant '${slug}' not found`);
           }
 
-          return jsonResponse({ data: plant }, 200, {
+          return jsonResponse({ data: stripInternal(plant) }, 200, {
             "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
             "Cache-Tag": `power-plant:${slug}`,
           });

@@ -15,6 +15,7 @@
  */
 
 import { getTableColumns } from "drizzle-orm";
+import { INTERNAL_FIELDS } from "../../lib/api/internal-fields";
 import type { FieldDescription, FieldDescriptionMap } from "./descriptions";
 
 // biome-ignore lint/suspicious/noExplicitAny: Drizzle column introspection is too generic to usefully type here
@@ -27,24 +28,11 @@ export type JsonSchema = Record<string, unknown>;
 /**
  * Fields that are never part of a public API response and are always stripped.
  *
- * These are internal / moderation / search-index fields. `geography` and
- * `geometry` are stripped here as well — callers that want geometry on a
- * geometry-specific endpoint should compose the response schema separately
- * (the geometry endpoints return `{ data: GeoJSON }`, not the raw row).
+ * Canonical definition lives in `lib/api/internal-fields.ts` so the OpenAPI
+ * generator and the API route handlers stay in lockstep. Re-exported here
+ * for backwards compatibility with existing imports.
  */
-export const INTERNAL_FIELDS = new Set<string>([
-  "submittedBy",
-  "reviewedAt",
-  "reviewedBy",
-  "lockedStatus",
-  "searchVector",
-  "notionPageId",
-  "geography",
-  "geometry",
-  "simplified1km",
-  "centroid",
-  "bbox",
-]);
+export { INTERNAL_FIELDS };
 
 export interface SchemaOptions {
   /** Fields to exclude in addition to the default internal set. */

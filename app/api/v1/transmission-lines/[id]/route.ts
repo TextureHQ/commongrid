@@ -13,6 +13,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
+import { stripInternal } from "@/lib/api/public-response";
 import { loadTransmissionLineById } from "@/lib/data/transmission-lines";
 
 // ---------------------------------------------------------------------------
@@ -32,7 +33,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             throw new ApiError("NOT_FOUND", `Transmission line '${id}' not found`);
           }
 
-          return jsonResponse({ data: line }, 200, {
+          return jsonResponse({ data: stripInternal(line) }, 200, {
             "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
             "Cache-Tag": `transmission-line:${id}`,
           });

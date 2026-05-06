@@ -41,7 +41,7 @@ export async function GET(request: Request): Promise<Response> {
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
-    if (!cronSecret || !authHeader || !authHeader.startsWith(`Bearer ${cronSecret}`)) {
+    if (!cronSecret || !authHeader?.startsWith(`Bearer ${cronSecret}`)) {
       console.warn(`[${timestamp}] Unauthorized cron attempt`);
       return Response.json({ status: "error", error: "Unauthorized" }, { status: 401 });
     }

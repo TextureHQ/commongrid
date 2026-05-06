@@ -14,6 +14,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
+import { stripInternal } from "@/lib/api/public-response";
 import { loadProgramBySlug } from "@/lib/data/programs";
 
 // ---------------------------------------------------------------------------
@@ -87,7 +88,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
           return jsonResponse(
             {
-              data: versions,
+              data: stripInternal(versions),
             },
             200,
             {

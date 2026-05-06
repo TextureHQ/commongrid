@@ -1,9 +1,8 @@
 import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
-import { corsHeaders } from "@/lib/api/cors";
 import { ApiError } from "@/lib/api/errors";
 import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
-import { jsonResponse } from "@/lib/api/response";
+import { publicJsonResponse } from "@/lib/api/public-response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { isos } from "@/lib/db/schema";
@@ -25,7 +24,7 @@ async function handleGet(_req: Request, ctx: RouteContext) {
     throw new ApiError("NOT_FOUND", `ISO '${slug}' not found`);
   }
 
-  return jsonResponse({ data: iso }, 200, corsHeaders());
+  return publicJsonResponse(iso, 200);
 }
 
 const handler = withRequestId(withErrorHandling(withTiming(handleGet)));

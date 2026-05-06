@@ -11,6 +11,7 @@
  */
 
 import { ApiError, jsonResponse, type RouteContext, withApiMiddleware } from "@/lib/api";
+import { stripInternal } from "@/lib/api/public-response";
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -55,7 +56,7 @@ const handler = withApiMiddleware(async (r: Request, _ctx: RouteContext) => {
   // result object which leaks internal metadata (field types, parsers, etc.)
   const rows = (result as unknown as { rows: Array<Record<string, unknown>> }).rows ?? result;
 
-  return jsonResponse({ data: rows }, 200, {
+  return jsonResponse({ data: stripInternal(rows) }, 200, {
     "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=3600",
   });
 });

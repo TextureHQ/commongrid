@@ -19,6 +19,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
+import { stripInternal } from "@/lib/api/public-response";
 import { loadPrograms } from "@/lib/data/programs";
 import type { Program } from "@/types/programs";
 
@@ -215,7 +216,7 @@ async function handler(req: Request): Promise<Response> {
 
   const data = requestedFields ? items.map((p) => projectFields(p, requestedFields)) : items;
 
-  const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
+  const envelope = paginatedResponse(stripInternal(data), totalCount, nextCursor, limit);
 
   return jsonResponse(envelope, 200, {
     "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",

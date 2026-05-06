@@ -13,6 +13,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
+import { stripInternal } from "@/lib/api/public-response";
 import { loadSubstationBySlug } from "@/lib/data/substations-api";
 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
@@ -28,7 +29,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
             throw new ApiError("NOT_FOUND", `Substation '${slug}' not found`);
           }
 
-          return jsonResponse({ data: row }, 200, {
+          return jsonResponse({ data: stripInternal(row) }, 200, {
             "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
             "Cache-Tag": `substation:${slug}`,
           });
