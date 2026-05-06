@@ -3,27 +3,11 @@ import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
 import { encodeCursor, parsePaginationParams } from "@/lib/api/pagination";
-import { stripInternal } from "@/lib/api/public-response";
+import { parseFieldsParam, selectFields, stripInternal } from "@/lib/api/public-response";
 import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { balancingAuthorities, isos, rtos, utilities } from "@/lib/db/schema";
-
-// ---------------------------------------------------------------------------
-// Sparse field selection helper
-// ---------------------------------------------------------------------------
-
-function selectFields(items: Record<string, unknown>[], fields: string[]): Record<string, unknown>[] {
-  return items.map((item) => {
-    const result: Record<string, unknown> = {};
-    for (const field of fields) {
-      if (field in item) {
-        result[field] = item[field];
-      }
-    }
-    return result;
-  });
-}
 
 // ---------------------------------------------------------------------------
 // Filter params interface
@@ -218,13 +202,18 @@ async function handleDatabaseMode(params: DbFilterParams) {
     resultData = await resolveIncludes(db, data, includes);
   }
 
-  // Sparse fields
-  if (params.fields) {
-    const fieldList = params.fields.split(",").map((f) => f.trim());
-    resultData = selectFields(resultData, fieldList);
+  // Sanitize internal fields first, then apply sparse-fieldset projection.
+  // Order matters: stripping must happen before projection so a field like
+  // `searchVector` can't be resurrected by an explicit `?fields=searchVector`
+  // request.
+  resultData = stripInternal(resultData) as Record<string, unknown>[];
+
+  const fieldList = parseFieldsParam(params.fields);
+  if (fieldList) {
+    resultData = resultData.map((item) => selectFields(item, fieldList));
   }
 
-  return jsonResponse(paginatedResponse(stripInternal(resultData), Number(count), nextCursor, limit), 200, {
+  return jsonResponse(paginatedResponse(resultData, Number(count), nextCursor, limit), 200, {
     ...corsHeaders(),
     "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
   });
