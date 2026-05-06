@@ -1,0 +1,1 @@
+ALTER TABLE "utilities" DROP COLUMN "notion_page_id";

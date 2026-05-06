@@ -68,7 +68,6 @@ export const utilities = pgTable(
     /** FK to utilities (self-ref); ON DELETE SET NULL */
     successorId: text("successor_id"),
     serviceTerritoryId: text("service_territory_id").references(() => regions.id, { onDelete: "set null" }),
-    notionPageId: text("notion_page_id"),
 
     /**
      * Full-text search vector — GENERATED ALWAYS AS in DDL:
