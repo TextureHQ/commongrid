@@ -14,7 +14,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export async function GET(
-  req: Request,
+  _req: Request,
   {
     params,
   }: {
@@ -54,7 +54,7 @@ export async function GET(
 }
 
 export async function HEAD(
-  req: Request,
+  _req: Request,
   {
     params,
   }: {

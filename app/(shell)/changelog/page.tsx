@@ -172,7 +172,7 @@ export default function ChangelogPage() {
   const newCount = allEntries.filter((e) => e.kind === "added").length;
   const totalCount = allEntries.length;
 
-  const lastUpdated = changelog.updatedAt ? formatLastUpdated(changelog.updatedAt) : null;
+  const _lastUpdated = changelog.updatedAt ? formatLastUpdated(changelog.updatedAt) : null;
 
   return (
     <ContentPage className="cg-changelog">
