@@ -13,8 +13,8 @@
  * to use `jsonResponse` / `paginatedResponse` directly.
  */
 import { corsHeaders } from "./cors";
-import { jsonResponse } from "./response";
 import { INTERNAL_FIELDS } from "./internal-fields";
+import { jsonResponse } from "./response";
 
 /**
  * Remove internal fields from an object in-place-safe fashion. Returns a new
@@ -53,11 +53,7 @@ export function stripInternal<T>(input: T, deep = true): T {
  * @param status  - HTTP status code (default 200).
  * @param headers - Additional headers to merge in (CORS already included).
  */
-export function publicJsonResponse<T>(
-  data: T,
-  status: number = 200,
-  headers: Record<string, string> = {}
-): Response {
+export function publicJsonResponse<T>(data: T, status: number = 200, headers: Record<string, string> = {}): Response {
   const sanitized = stripInternal(data);
   return jsonResponse({ data: sanitized }, status, { ...corsHeaders(), ...headers });
 }
