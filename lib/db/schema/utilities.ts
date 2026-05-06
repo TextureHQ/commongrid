@@ -70,7 +70,6 @@ export const utilities = pgTable(
     serviceTerritoryId: text("service_territory_id").references(() => regions.id, { onDelete: "set null" }),
     /** Domains served by this utility (e.g., ['example.com', 'company.org']). Backfilled from NRECA/EIA-861 and website-derived data. */
     domains: text("domains").array(),
-    notionPageId: text("notion_page_id"),
 
     /**
      * Full-text search vector — GENERATED ALWAYS AS in DDL:
