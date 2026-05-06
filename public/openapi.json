@@ -434,6 +434,14 @@
             "nullable": true,
             "description": "FK to the region describing the utility's service territory"
           },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Email / web domains associated with this utility (e.g. ['duke-energy.com']). Useful for CRM email scoping, communication tracking, and partner integrations. Backfilled from website + NRECA/EIA-861 where available; editable via the community contribution flow."
+          },
           "source": {
             "type": "string",
             "nullable": true,
