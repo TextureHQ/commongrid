@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
 import { encodeCursor, parsePaginationParams } from "@/lib/api/pagination";
+import { stripInternal } from "@/lib/api/public-response";
 import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
@@ -131,7 +132,7 @@ async function handleDatabaseMode(url: URL) {
 
   const [{ count }] = await countQuery;
 
-  return jsonResponse(paginatedResponse(data, Number(count), nextCursor, limit), 200, corsHeaders());
+  return jsonResponse(paginatedResponse(stripInternal(data), Number(count), nextCursor, limit), 200, corsHeaders());
 }
 
 const handler = withRequestId(withErrorHandling(withTiming(handleGet)));

@@ -18,6 +18,7 @@
 import { z } from "zod";
 
 import { ApiError, corsHeaders, jsonResponse, withErrorHandling, withRequestId, withTiming } from "@/lib/api";
+import { stripInternal } from "@/lib/api/public-response";
 import { type EntityType, type SearchResult, searchAll } from "@/lib/data/search";
 
 // ---------------------------------------------------------------------------
@@ -84,7 +85,7 @@ async function handler(req: Request): Promise<Response> {
 
   return jsonResponse(
     {
-      data,
+      data: stripInternal(data),
       meta: {
         query: q,
         totalResults,

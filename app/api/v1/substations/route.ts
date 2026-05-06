@@ -19,6 +19,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
+import { stripInternal } from "@/lib/api/public-response";
 import { countSubstations, loadSubstations } from "@/lib/data/substations-api";
 import type { SubstationRecord } from "@/types/substations";
 
@@ -225,7 +226,7 @@ async function handler(req: Request): Promise<Response> {
 
   const data = requestedFields ? items.map((r) => projectFields(r, requestedFields)) : items;
 
-  const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
+  const envelope = paginatedResponse(stripInternal(data), totalCount, nextCursor, limit);
 
   return jsonResponse(envelope, 200, {
     "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",

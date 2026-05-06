@@ -13,6 +13,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
+import { stripInternal } from "@/lib/api/public-response";
 import { loadProgramBySlug } from "@/lib/data/programs";
 
 // ---------------------------------------------------------------------------
@@ -32,7 +33,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
             throw new ApiError("NOT_FOUND", `Program '${slug}' not found`);
           }
 
-          return jsonResponse({ data: program }, 200, {
+          return jsonResponse({ data: stripInternal(program) }, 200, {
             "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
             "Cache-Tag": `program:${slug}`,
           });

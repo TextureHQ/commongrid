@@ -19,6 +19,7 @@ import {
   withRequestId,
   withTiming,
 } from "@/lib/api";
+import { stripInternal } from "@/lib/api/public-response";
 import { countTransmissionLines, loadTransmissionLines } from "@/lib/data/transmission-lines";
 import type { TransmissionLine } from "@/types/transmission-lines";
 
@@ -228,7 +229,7 @@ async function handler(req: Request): Promise<Response> {
 
   const data = requestedFields ? items.map((l) => projectFields(l, requestedFields)) : items;
 
-  const envelope = paginatedResponse(data, totalCount, nextCursor, limit);
+  const envelope = paginatedResponse(stripInternal(data), totalCount, nextCursor, limit);
 
   return jsonResponse(envelope, 200, {
     "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
