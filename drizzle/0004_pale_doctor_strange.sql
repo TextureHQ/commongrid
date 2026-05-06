@@ -1,0 +1,1 @@
+ALTER TABLE "utilities" ADD COLUMN "domains" text[];
