@@ -309,11 +309,25 @@
           },
           "segment": {
             "type": "string",
-            "description": "One of: electric, gas, water, combined"
+            "description": "Ownership / structural category of the utility. Sourced from EIA Form 861 filings plus manual review.",
+            "enum": [
+              "COMMUNITY_CHOICE_AGGREGATOR",
+              "DISTRIBUTION_COOPERATIVE",
+              "GENERATION_AND_TRANSMISSION",
+              "INVESTOR_OWNED_UTILITY",
+              "MUNICIPAL_UTILITY",
+              "POLITICAL_SUBDIVISION",
+              "TRANSMISSION_OPERATOR"
+            ]
           },
           "status": {
             "type": "string",
-            "description": "Operational status (active, inactive, merged, etc.)"
+            "description": "Operational status of the utility.",
+            "enum": [
+              "ACTIVE",
+              "DEFUNCT",
+              "MERGED"
+            ]
           },
           "customerCount": {
             "type": "integer",
