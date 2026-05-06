@@ -5603,275 +5603,269 @@
     "public.utilities": {
       "name": "utilities",
       "schema": "",
-      "columns": {
-        "id": {
+      "columns": [
+        {
           "name": "id",
           "type": "text",
           "primaryKey": true,
           "notNull": true
         },
-        "slug": {
+        {
           "name": "slug",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "name": {
+        {
           "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "eia_name": {
+        {
           "name": "eia_name",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "short_name": {
+        {
           "name": "short_name",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "logo": {
+        {
           "name": "logo",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "website": {
+        {
           "name": "website",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "eia_id": {
+        {
           "name": "eia_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "segment": {
+        {
           "name": "segment",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "status": {
+        {
           "name": "status",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "customer_count": {
+        {
           "name": "customer_count",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "peak_demand_mw": {
+        {
           "name": "peak_demand_mw",
           "type": "double precision",
           "primaryKey": false,
           "notNull": false
         },
-        "winter_peak_demand_mw": {
+        {
           "name": "winter_peak_demand_mw",
           "type": "double precision",
           "primaryKey": false,
           "notNull": false
         },
-        "total_revenue_dollars": {
+        {
           "name": "total_revenue_dollars",
           "type": "double precision",
           "primaryKey": false,
           "notNull": false
         },
-        "total_sales_mwh": {
+        {
           "name": "total_sales_mwh",
           "type": "double precision",
           "primaryKey": false,
           "notNull": false
         },
-        "ba_code": {
+        {
           "name": "ba_code",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "nerc_region": {
+        {
           "name": "nerc_region",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "has_generation": {
+        {
           "name": "has_generation",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
-        "has_transmission": {
+        {
           "name": "has_transmission",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
-        "has_distribution": {
+        {
           "name": "has_distribution",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
-        "ami_meter_count": {
+        {
           "name": "ami_meter_count",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "total_meter_count": {
+        {
           "name": "total_meter_count",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "jurisdiction": {
+        {
           "name": "jurisdiction",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "iso_id": {
+        {
           "name": "iso_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "rto_id": {
+        {
           "name": "rto_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "balancing_authority_id": {
+        {
           "name": "balancing_authority_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "generation_provider_id": {
+        {
           "name": "generation_provider_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "transmission_provider_id": {
+        {
           "name": "transmission_provider_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "parent_id": {
+        {
           "name": "parent_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "successor_id": {
+        {
           "name": "successor_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "service_territory_id": {
+        {
           "name": "service_territory_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "domains": {
+        {
           "name": "domains",
           "type": "text[]",
           "primaryKey": false,
           "notNull": false
         },
-        "notion_page_id": {
-          "name": "notion_page_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "search_vector": {
+        {
           "name": "search_vector",
           "type": "tsvector",
           "primaryKey": false,
           "notNull": false
         },
-        "locked_status": {
+        {
           "name": "locked_status",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "source": {
+        {
           "name": "source",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "source_url": {
+        {
           "name": "source_url",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "submitted_by": {
+        {
           "name": "submitted_by",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "reviewed_at": {
+        {
           "name": "reviewed_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "reviewed_by": {
+        {
           "name": "reviewed_by",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
+        {
           "name": "created_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
+        {
           "name": "updated_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "deleted_at": {
+        {
           "name": "deleted_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "version": {
+        {
           "name": "version",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 1
         }
-      },
+      ],
       "indexes": {
         "idx_utilities_slug": {
           "name": "idx_utilities_slug",
