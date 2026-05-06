@@ -19,6 +19,7 @@ async function handleGet(req: Request, ctx: RouteContext) {
 
   const url = new URL(req.url);
   const include = url.searchParams.get("include");
+  const fields = url.searchParams.get("fields");
 
   const db = getDb();
   const [utility] = await db.select().from(utilities).where(eq(utilities.slug, slug)).limit(1);
@@ -71,10 +72,10 @@ async function handleGet(req: Request, ctx: RouteContext) {
     }
 
     await Promise.all(fetches);
-    return publicJsonResponse(result, 200);
+    return publicJsonResponse(result, 200, {}, { fields });
   }
 
-  return publicJsonResponse(utility, 200);
+  return publicJsonResponse(utility, 200, {}, { fields });
 }
 
 const handler = withRequestId(withErrorHandling(withTiming(handleGet)));
