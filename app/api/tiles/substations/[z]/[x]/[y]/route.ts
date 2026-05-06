@@ -10,8 +10,8 @@
  * - Future: regenerate tiles on sync completion via CI
  */
 
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 export async function GET(
   req: Request,
