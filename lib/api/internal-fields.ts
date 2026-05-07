@@ -33,10 +33,14 @@
  *                       an index artifact. Exposing it implies it's part of
  *                       the schema, which it isn't.
  *
- *   notionPageId      — Historical field from a now-defunct Notion sync;
- *                       auto-populated from `id`, so the value is always a
- *                       duplicate and implies a cross-system link that
- *                       doesn't exist. Tracked for removal in ALL-735.
+ *   notionPageId      — Historical field from a now-defunct Notion sync.
+ *                       The column was dropped (ALL-735 / PR #209) and the
+ *                       field was removed from `data/utilities.json` and
+ *                       the Utility type (ALL-743). It's kept in this list
+ *                       as a defensive safety-net: if a stale column,
+ *                       legacy snapshot, or community fork still carries
+ *                       the field, it will never leak through the public
+ *                       API. Harmless no-op for current data.
  *
  * Geometry fields are also excluded from the default resource response —
  * geometry belongs on dedicated `/geometry` endpoints, not inline on every

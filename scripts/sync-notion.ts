@@ -334,7 +334,6 @@ interface UtilityRecord {
   parentId: string | null;
   successorId: string | null;
   serviceTerritoryId: string | null;
-  notionPageId: string | null;
 }
 
 async function syncUtilities(
@@ -419,7 +418,6 @@ async function syncUtilities(
         parentId: parentIds.length > 0 ? parentIds[0] : null,
         successorId: null,
         serviceTerritoryId: null, // Not available in Notion yet
-        notionPageId: page.id,
       };
     })
     .filter((u) => u.name)

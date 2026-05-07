@@ -40,7 +40,6 @@ interface Utility {
   parentId: string | null;
   successorId: string | null;
   serviceTerritoryId: string | null;
-  notionPageId: string | null;
 }
 
 interface EiaEntity {
@@ -156,7 +155,6 @@ function createUtility(entity: EiaEntity, segment: string): Utility {
     parentId: null,
     successorId: null,
     serviceTerritoryId: null,
-    notionPageId: null,
   };
 }
 
