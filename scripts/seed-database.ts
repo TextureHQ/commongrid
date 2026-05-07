@@ -242,7 +242,6 @@ async function seedUtilities(
         parentId: (r.parentId as string) ?? null,
         successorId: (r.successorId as string) ?? null,
         serviceTerritoryId: (r.serviceTerritoryId as string) ?? null,
-        notionPageId: (r.notionPageId as string) ?? null,
       };
     });
 

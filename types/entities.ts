@@ -70,7 +70,6 @@ export interface Utility {
   parentId: string | null;
   successorId: string | null;
   serviceTerritoryId: string | null;
-  notionPageId: string | null;
 }
 
 export enum RegionType {

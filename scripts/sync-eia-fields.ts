@@ -454,7 +454,6 @@ async function main() {
     "parentId",
     "successorId",
     "serviceTerritoryId",
-    "notionPageId",
   ];
 
   const ordered = utilities.map((u) => {
