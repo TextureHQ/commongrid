@@ -10,6 +10,7 @@ import { PricingNodeListPanel } from "./panels/PricingNodeListPanel";
 import { ProgramDetailPanel } from "./panels/ProgramDetailPanel";
 import { ProgramListPanel } from "./panels/ProgramListPanel";
 import { RtoDetailPanel } from "./panels/RtoDetailPanel";
+import { SubstationListPanel } from "./panels/SubstationListPanel";
 import { TransmissionListPanel } from "./panels/TransmissionListPanel";
 import { UtilityDetailPanel } from "./panels/UtilityDetailPanel";
 import { UtilityListPanel } from "./panels/UtilityListPanel";
@@ -56,6 +57,8 @@ export function ExplorerPanel({ listSource }: ExplorerPanelProps = {}) {
       return <EVChargingListPanel />;
     case "pricing-nodes":
       return <PricingNodeListPanel />;
+    case "substations":
+      return <SubstationListPanel />;
     default:
       return <UtilityListPanel />;
   }

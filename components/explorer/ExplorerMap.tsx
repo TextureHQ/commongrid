@@ -13,6 +13,7 @@ import {
   PowerPlantTooltip,
   PricingNodeTooltip,
   ProgramTerritoryTooltip,
+  SubstationTooltip,
   TerritoryTooltip,
   TransmissionTooltip,
 } from "./MapTooltip";
@@ -57,6 +58,11 @@ function getPricingNodesTileUrl() {
   return `${origin}/api/tiles/pricing-nodes/{z}/{x}/{y}`;
 }
 
+function getSubstationsTileUrl() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/api/tiles/substations/{z}/{x}/{y}`;
+}
+
 // Pricing node ISO color mapping
 const pricingNodeIsoColorMapping: Record<string, { hex: string }> = {
   CAISO: { hex: "#eab308" }, // gold
@@ -75,6 +81,15 @@ const voltageClassColorMapping = {
   medium: { hex: "#22c55e" }, // 115–229kV — green
   "sub-trans": { hex: "#60a5fa" }, // 69–114kV — light blue
   unknown: { hex: "#9ca3af" }, // unknown — gray
+};
+
+// Substations share the voltage class palette (voltageBand uses the same buckets).
+const substationVoltageBandColorMapping = {
+  "extra-high": { hex: "#ef4444" },
+  high: { hex: "#f97316" },
+  medium: { hex: "#22c55e" },
+  "sub-trans": { hex: "#60a5fa" },
+  unknown: { hex: "#9ca3af" },
 };
 
 const fuelCategoryColorMapping = {
@@ -359,6 +374,7 @@ export type MapRegion = "utilities" | "grid-operators" | "programs" | "pricing-n
 export interface MapOverlays {
   "power-plants": boolean;
   "transmission-lines": boolean;
+  substations: boolean;
   "ev-charging": boolean;
   "pricing-nodes": boolean;
 }
@@ -373,6 +389,7 @@ interface ExplorerMapProps {
 const DEFAULT_OVERLAYS: MapOverlays = {
   "power-plants": true,
   "transmission-lines": true,
+  substations: false,
   "ev-charging": false,
   "pricing-nodes": false,
 };
@@ -392,6 +409,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
     () => ({
       "transmission-lines": overlays["transmission-lines"],
       "power-plants": overlays["power-plants"],
+      substations: overlays.substations,
       "ev-charging": overlays["ev-charging"],
       "pricing-nodes": overlays["pricing-nodes"],
     }),
@@ -784,6 +802,55 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
             ),
           },
         }),
+      })
+    );
+
+    // Substations — visible from zoom 5+.
+    // Point layer colored by voltage band; click navigates to the substation
+    // detail page. Off by default because the dataset is large and can
+    // overwhelm other overlays at low zoom.
+    result.push(
+      layer.vector({
+        id: "substations",
+        tileset: getSubstationsTileUrl(),
+        sourceLayer: "substations",
+        renderAs: "circle",
+        minZoom: 5,
+        visible: visible.substations === true,
+        legend: {
+          label: "Substations",
+          swatch: "dot",
+          color: "#a94f2a",
+          group: "Overlays",
+        },
+        style: {
+          color: { by: "voltageBand", mapping: substationVoltageBandColorMapping },
+          radius: 3,
+          borderWidth: 1,
+          borderColor: { hex: "#ffffff" },
+          fillOpacity: 0.85,
+        },
+        ...(visible.substations === true && {
+          tooltip: {
+            trigger: "hover",
+            content: (feature: LayerFeature) => (
+              <SubstationTooltip
+                name={feature.properties.name}
+                state={feature.properties.state}
+                ownerName={feature.properties.ownerName}
+                minVoltageKv={feature.properties.minVoltageKv}
+                maxVoltageKv={feature.properties.maxVoltageKv}
+                substationType={feature.properties.substationType}
+              />
+            ),
+          },
+        }),
+        events: {
+          onClick: (feature: LayerFeature) => {
+            const slug = feature.properties.slug;
+            if (slug) router.push(`/substations/${slug}`);
+          },
+        },
       })
     );
 

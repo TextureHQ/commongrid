@@ -15,6 +15,7 @@ const TABS: TabDef[] = [
   { id: "power-plants", label: "Power Plants", color: "var(--color-brand-primary)", dotShape: "circle" },
   { id: "programs", label: "Programs", color: "var(--cg-purple)", dotShape: "square" },
   { id: "transmission-lines", label: "Transmission", color: "var(--color-text-muted)", dotShape: "line" },
+  { id: "substations", label: "Substations", color: "var(--cg-copper)", dotShape: "square" },
   { id: "ev-charging", label: "EV Charging", color: "var(--cg-lime)", dotShape: "circle" },
   { id: "pricing-nodes", label: "Pricing Nodes", color: "var(--cg-amber)", dotShape: "circle" },
 ];

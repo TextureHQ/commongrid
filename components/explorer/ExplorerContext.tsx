@@ -16,7 +16,8 @@ export type EntityTab =
   | "programs"
   | "transmission-lines"
   | "ev-charging"
-  | "pricing-nodes";
+  | "pricing-nodes"
+  | "substations";
 export type ViewMode = "landing" | "list" | "detail";
 export type DetailView = "utility" | "iso" | "rto" | "ba" | "program";
 export type ListView = EntityTab;
@@ -243,6 +244,7 @@ function parseTab(value: string | null): EntityTab {
     "transmission-lines",
     "ev-charging",
     "pricing-nodes",
+    "substations",
   ];
   // backwards-compat: old "view" param values that were list views
   if (value === "grid-operators" || value === "programs") return value;
