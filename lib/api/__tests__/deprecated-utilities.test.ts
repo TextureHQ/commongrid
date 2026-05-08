@@ -216,6 +216,31 @@ describe("GET /api/v1/utilities/deprecated", () => {
       expect(cc).toContain("stale-while-revalidate=86400");
     });
 
+    it("normalizes Postgres-format timestamps to ISO 8601", async () => {
+      // Postgres returns the `COALESCE(...)` expression as a raw text string
+      // (e.g. `2026-04-15 16:22:32.101053+00`), which is NOT valid ISO 8601.
+      // The route wraps every `deprecatedAt` in `new Date(...)` before
+      // `.toISOString()` precisely to coerce this form to the canonical
+      // `YYYY-MM-DDTHH:mm:ss.sssZ` layout every consumer expects.
+      const postgresFormatRow: StubRow = {
+        eiaId: "19791",
+        slug: "pg-format-utility",
+        name: "PG Format Utility",
+        state: "KS",
+        deprecatedAt: "2026-04-15 16:22:32.101053+00",
+        successorEiaId: null,
+        deprecationReason: null,
+      };
+      vi.mocked(getDb).mockReturnValue(stubDb({ count: 1 }, [postgresFormatRow]).db as never);
+
+      const res = await GET(makeRequest() as never);
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.data[0].deprecated_at).toBe("2026-04-15T16:22:32.101Z");
+      // Sanity-check: the output MUST be parseable as a Date again and round-trip.
+      expect(new Date(body.data[0].deprecated_at).toISOString()).toBe(body.data[0].deprecated_at);
+    });
+
     it("handles nullable fields (eia_id, successor_eia_id, deprecation_reason)", async () => {
       const rowWithNulls: StubRow = {
         eiaId: null,

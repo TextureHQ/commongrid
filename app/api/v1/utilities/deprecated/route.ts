@@ -214,15 +214,23 @@ async function handleGet(req: Request, _ctx: RouteContext): Promise<Response> {
     .limit(q.limit)
     .offset(q.offset)) as unknown as QueryRow[];
 
-  const data: DeprecatedRow[] = rows.map((r) => ({
-    eia_id: r.eiaId,
-    slug: r.slug,
-    name: r.name,
-    state: r.state,
-    deprecated_at: typeof r.deprecatedAt === "string" ? r.deprecatedAt : new Date(r.deprecatedAt).toISOString(),
-    successor_eia_id: r.successorEiaId,
-    deprecation_reason: r.deprecationReason,
-  }));
+  const data: DeprecatedRow[] = rows.map((r) => {
+    // Always normalize to ISO 8601 — Postgres returns `COALESCE(...)` as a
+    // raw string (`2026-04-15 16:22:32.101053+00`), which isn't valid
+    // ISO 8601. Wrapping in `new Date(...)` before `.toISOString()`
+    // coerces it into the canonical `YYYY-MM-DDTHH:mm:ss.sssZ` form
+    // every consumer expects.
+    const ts = r.deprecatedAt instanceof Date ? r.deprecatedAt : new Date(r.deprecatedAt);
+    return {
+      eia_id: r.eiaId,
+      slug: r.slug,
+      name: r.name,
+      state: r.state,
+      deprecated_at: ts.toISOString(),
+      successor_eia_id: r.successorEiaId,
+      deprecation_reason: r.deprecationReason,
+    };
+  });
 
   return jsonResponse(
     {
