@@ -72,6 +72,15 @@ export const utilities = pgTable(
     domains: text("domains").array(),
 
     /**
+     * Human-readable note describing why a utility was marked DEFUNCT or
+     * MERGED — e.g. "Retired 2020; assets transferred to NewCo". Free-form;
+     * present only for non-ACTIVE utilities. Complements `status` +
+     * `successorId` and is surfaced by the public
+     * `v_deprecated_utilities` view / `/api/v1/utilities/deprecated` endpoint.
+     */
+    deprecationReason: text("deprecation_reason"),
+
+    /**
      * Full-text search vector — GENERATED ALWAYS AS in DDL:
      * setweight(to_tsvector('english', coalesce(name, '')), 'A') ||
      * setweight(to_tsvector('english', coalesce(eia_name, '')), 'B') ||

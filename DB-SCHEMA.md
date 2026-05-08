@@ -229,6 +229,7 @@ The backbone of the grid — IOUs, munis, co-ops, CCAs, wholesale generators. **
 | `parent_id`, `successor_id` | `text` | Self-FK for ownership / merger chains |
 | `service_territory_id` | `text` | FK → `regions.id` ON DELETE SET NULL (joins to `territories` for geometry) |
 | `domains` | `text[]` | Utility web/email domains — powers the resolver's domain-match path |
+| `deprecation_reason` | `text` | Free-form note on why a non-ACTIVE utility was deprecated (retirement, merger, acquisition). Surfaced by `v_deprecated_utilities`. |
 | `search_vector` | `tsvector` | Weighted GIN index (name A, eia_name B, short_name B, jurisdiction C) |
 | `locked_status` | `text` | |
 | _provenance + audit + version_ | | |
@@ -247,6 +248,11 @@ utilities ──┬── iso_id               → isos
             ├── parent_id            → utilities (self)
             └── successor_id         → utilities (self)
 ```
+
+**Lifecycle view:** `v_deprecated_utilities` (below) exposes a normalized
+lifecycle shape (status ∈ `active`/`retired`/`merged`/`renamed`, plus
+`successor_eia_id`/`successor_slug`) for consumers reconciling historical
+names back to canonical IDs. Backs `GET /api/v1/utilities/deprecated`.
 
 ---
 
@@ -452,6 +458,49 @@ Grid-flexibility programs — demand response, VPPs, DER aggregation, BYOT/BYOD,
 
 **Indexes:** `idx_programs_slug`, `idx_programs_status`, plus GIN on `search_vector`, `name gin_trgm_ops`,
 and on each JSONB array field (`asset_types`, `grid_services`, `organizations`).
+
+---
+
+## Views
+
+### `v_deprecated_utilities`
+
+Lifecycle view (migration 0013). One row per historical or successor
+utility. Consumers use it — directly via SQL, or via
+`GET /api/v1/utilities/deprecated` — to reconcile an old utility name or
+EIA ID back to whatever entity replaced it.
+
+| Column | Type | Notes |
+|---|---|---|
+| `eia_id` | `text` | Canonical utility id (`utilities.id`). Name kept for historical spec consistency even though the column is not the EIA Utility ID number. |
+| `utility_slug` | `text` | Stable public slug on commongrid.info |
+| `name` | `text` | Display name |
+| `status` | `text` | One of `active` \| `retired` \| `merged` \| `renamed` |
+| `raw_status` | `text` | Underlying enum verbatim (`ACTIVE`/`DEFUNCT`/`MERGED`/`ACQUIRED`/`PENDING`) |
+| `effective_from` | `timestamptz` | When the record first entered CommonGrid |
+| `effective_to` | `timestamptz` | When it was deprecated (NULL for active) |
+| `successor_eia_id` | `text` | Replacement utility id, nullable |
+| `successor_slug` | `text` | Replacement utility slug, nullable |
+| `source` | `text` | `'EIA-861 + manual overrides'` |
+| `deprecation_reason` | `text` | Free-form note |
+| `notes` | `text` | Alias of `deprecation_reason` (spec compatibility) |
+
+**Status mapping:**
+- `ACTIVE`, `PENDING` → `active`
+- `DEFUNCT` without successor → `retired`
+- `DEFUNCT` with successor → `renamed`
+- `MERGED`, `ACQUIRED` → `merged`
+
+Row set: every non-ACTIVE utility, plus any ACTIVE utility that is
+referenced as a successor (so a single query covers both sides of the
+reconciliation).
+
+```sql
+-- Reconcile a legacy EIA ID → current canonical utility
+SELECT eia_id, status, successor_eia_id, successor_slug
+FROM v_deprecated_utilities
+WHERE utility_slug = 'gulf-power';
+```
 
 ---
 

@@ -350,6 +350,50 @@ curl "https://commongrid.info/api/v1/utilities/by-eia-id/3046?include=iso"
 See [Resolver endpoint (POST)](#resolver-endpoint-post) for the full contract. Resolves a free-form
 utility name (optionally scoped by state or email/web domain) to a canonical `eia_id`.
 
+#### `GET /utilities/deprecated`
+
+List utilities that have been retired, merged, or renamed, plus the ACTIVE utilities that
+replaced them. Backed by the `v_deprecated_utilities` SQL view. Use this to reconcile a
+historical utility name / EIA id back to the current canonical record — e.g. ingesting a
+2018 EIA-861 filing that still references "Gulf Power" when the entity has since been merged
+into Florida Power & Light.
+
+**Query params**
+
+| Param | Description |
+|---|---|
+| `status` | `active` \| `retired` \| `merged` \| `renamed` |
+| `successor` | Only rows whose `successor_eia_id` matches the given id |
+| `q` | Case-insensitive substring match on `name` or `utility_slug` |
+| `limit` | Page size (default 100, max 500) |
+| `cursor` | Opaque continuation token returned by the previous page |
+
+**Response row shape**
+
+```json
+{
+  "eia_id":             "util-gulf-power",
+  "utility_slug":       "gulf-power",
+  "name":               "Gulf Power",
+  "status":             "merged",
+  "raw_status":         "MERGED",
+  "effective_from":     "2015-01-01T00:00:00Z",
+  "effective_to":       "2019-01-01T00:00:00Z",
+  "successor_eia_id":   "util-fpl",
+  "successor_slug":     "florida-power-and-light",
+  "source":             "EIA-861 + manual overrides",
+  "deprecation_reason": "Acquired by NextEra; rolled into FPL",
+  "notes":              "Acquired by NextEra; rolled into FPL"
+}
+```
+
+```bash
+curl "https://commongrid.info/api/v1/utilities/deprecated?status=merged"
+```
+
+**Cache:** `public, s-maxage=3600, stale-while-revalidate=86400` (the underlying view changes
+at most a few times per year, when EIA-861 files or a manual override is recorded).
+
 ---
 
 ### Territories
