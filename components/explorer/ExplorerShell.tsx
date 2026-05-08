@@ -92,6 +92,7 @@ const REGION_OPTIONS: { value: MapRegion; label: string }[] = [
 const OVERLAY_OPTIONS: { key: keyof MapOverlays; label: string }[] = [
   { key: "power-plants", label: "Power plants" },
   { key: "transmission-lines", label: "Transmission lines" },
+  { key: "substations", label: "Substations" },
   { key: "ev-charging", label: "EV charging" },
   { key: "pricing-nodes", label: "Pricing nodes" },
 ];
@@ -99,6 +100,7 @@ const OVERLAY_OPTIONS: { key: keyof MapOverlays; label: string }[] = [
 const DEFAULT_MAP_OVERLAYS: MapOverlays = {
   "power-plants": true,
   "transmission-lines": true,
+  substations: false,
   "ev-charging": false,
   "pricing-nodes": false,
 };
@@ -112,6 +114,7 @@ const ENTITY_LABELS: Record<EntityTab, string> = {
   "transmission-lines": "Transmission",
   "ev-charging": "EV Charging",
   "pricing-nodes": "Pricing Nodes",
+  substations: "Substations",
 };
 
 // ---------------------------------------------------------------------------

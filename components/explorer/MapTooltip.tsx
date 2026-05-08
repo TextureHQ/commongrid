@@ -369,6 +369,59 @@ const fuelLabels: Record<string, string> = {
   other: "Other",
 };
 
+// ── Substation tooltip ─────────────────────────────────────────────
+// (declared before PowerPlantTooltip so it participates in the same module)
+
+interface SubstationProps {
+  name: string;
+  state?: string | null;
+  ownerName?: string | null;
+  minVoltageKv?: number | null;
+  maxVoltageKv?: number | null;
+  substationType?: string | null;
+}
+
+const substationTypeLabels: Record<string, string> = {
+  transmission: "Transmission",
+  distribution: "Distribution",
+  hybrid: "Hybrid",
+  unknown: "Unknown",
+};
+
+function fmtSubstationVoltage(min: number | null | undefined, max: number | null | undefined): string {
+  if (min != null && max != null) {
+    if (min === max) return `${max} kV`;
+    return `${min}–${max} kV`;
+  }
+  if (max != null) return `${max} kV`;
+  if (min != null) return `${min} kV`;
+  return "—";
+}
+
+export function SubstationTooltip({
+  name,
+  state,
+  ownerName,
+  minVoltageKv,
+  maxVoltageKv,
+  substationType,
+}: SubstationProps) {
+  const typeLabel = substationType ? (substationTypeLabels[substationType] ?? substationType) : "Substation";
+  return (
+    <div style={styles.container}>
+      <div style={styles.kicker}>{typeLabel} Substation</div>
+      <div style={styles.name}>{name}</div>
+      <div style={styles.divider} />
+      <div style={styles.statGrid}>
+        <Stat value={fmtSubstationVoltage(minVoltageKv, maxVoltageKv)} label="Voltage" />
+        <Stat value={state ?? "—"} label="State" />
+        {ownerName && <Stat value={ownerName} label="Owner" />}
+      </div>
+      <div style={styles.cta}>View details →</div>
+    </div>
+  );
+}
+
 export function PowerPlantTooltip({ name, fuelCategory, capacityMw, status }: PowerPlantProps) {
   const fuelLabel = fuelLabels[fuelCategory] ?? fuelCategory;
   return (
