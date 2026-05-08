@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { ApiError } from "@/lib/api/errors";
 import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
@@ -8,15 +8,28 @@ import { getDb } from "@/lib/db/client";
 import { balancingAuthorities, isos, rtos, utilities } from "@/lib/db/schema";
 
 // ---------------------------------------------------------------------------
-// GET /api/v1/utilities/[slug] — Get utility by slug with optional includes
+// GET /api/v1/utilities/by-eia-id/[eiaId] — Get utility by EIA Utility ID
+//
+// Sibling route to /api/v1/utilities/[slug]. Some consumers (especially
+// server-to-server integrations that hold the canonical EIA ID rather than
+// the Texture slug) find the slug route awkward; this route lets them look
+// up the same record via the numeric-ish EIA ID directly.
+//
+// Identical response shape and ?include=iso,rto,ba / ?fields semantics to
+// the slug route.
 // ---------------------------------------------------------------------------
 
+// Edge caching: utility records change at most a few times a year per row
+// (EIA Form 861 annual update, occasional admin edits). A 1 hour shared-
+// maxage with 24 hour SWR is generous enough for DataLoader-batched fan-out
+// from downstream consumers to be effectively free at steady state, while
+// still reflecting admin edits within the hour. Matches the slug route.
 const CACHE_CONTROL = "public, s-maxage=3600, stale-while-revalidate=86400";
 
 async function handleGet(req: Request, ctx: RouteContext) {
-  const slug = ctx.params?.slug;
-  if (!slug) {
-    throw new ApiError("BAD_REQUEST", "Missing slug parameter");
+  const eiaId = ctx.params?.eiaId;
+  if (!eiaId) {
+    throw new ApiError("BAD_REQUEST", "Missing eiaId parameter");
   }
 
   const url = new URL(req.url);
@@ -24,11 +37,17 @@ async function handleGet(req: Request, ctx: RouteContext) {
   const fields = url.searchParams.get("fields");
 
   const db = getDb();
-  const [utility] = await db.select().from(utilities).where(eq(utilities.slug, slug)).limit(1);
+  const [utility] = await db
+    .select()
+    .from(utilities)
+    .where(and(eq(utilities.eiaId, eiaId), isNull(utilities.deletedAt)))
+    .limit(1);
 
   if (!utility) {
-    throw new ApiError("NOT_FOUND", `Utility '${slug}' not found`);
+    throw new ApiError("NOT_FOUND", `Utility with EIA ID '${eiaId}' not found`);
   }
+
+  const headers = { "Cache-Control": CACHE_CONTROL };
 
   if (include) {
     const includes = include.split(",").map((i) => i.trim());
@@ -74,15 +93,15 @@ async function handleGet(req: Request, ctx: RouteContext) {
     }
 
     await Promise.all(fetches);
-    return publicJsonResponse(result, 200, { "Cache-Control": CACHE_CONTROL }, { fields });
+    return publicJsonResponse(result, 200, headers, { fields });
   }
 
-  return publicJsonResponse(utility, 200, { "Cache-Control": CACHE_CONTROL }, { fields });
+  return publicJsonResponse(utility, 200, headers, { fields });
 }
 
 const handler = withRequestId(withErrorHandling(withTiming(handleGet)));
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  return handler(req, { params: { slug }, requestId: generateRequestId() });
+export async function GET(req: NextRequest, { params }: { params: Promise<{ eiaId: string }> }) {
+  const { eiaId } = await params;
+  return handler(req, { params: { eiaId }, requestId: generateRequestId() });
 }
