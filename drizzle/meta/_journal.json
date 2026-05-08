@@ -57,6 +57,13 @@
       "when": 1778252377890,
       "tag": "0011_drop_enrichment_snapshot_contract",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778700000000,
+      "tag": "0012_remove_internal_surface_and_move_resolver_tables_to_public",
+      "breakpoints": true
     }
   ]
 }

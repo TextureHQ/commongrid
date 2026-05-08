@@ -35,18 +35,32 @@ export type ResponseShape =
   | { kind: "geojson" }
   | { kind: "raw"; schema: JsonSchema };
 
+/** OpenAPI request body definition for POST/PUT/PATCH routes. */
+export interface RequestBodyDef {
+  description?: string;
+  required?: boolean;
+  /** JSON-schema body (use $ref or inline). */
+  schema: JsonSchema;
+  /** Optional example payload rendered next to the schema. */
+  example?: unknown;
+}
+
 export interface EndpointDef {
   path: string;
-  method: "get";
+  method: "get" | "post";
   operationId: string;
   summary: string;
   description?: string;
   tag: string;
   parameters?: ParamDef[];
+  /** Request body (POST only). */
+  requestBody?: RequestBodyDef;
   /** Response shape for the 2xx reply. */
   response: ResponseShape;
   /** Include a 404 response entry. Defaults to true for `{slug}` endpoints. */
   has404?: boolean;
+  /** Include a 400 response entry (validation errors). Defaults to true for POST. */
+  has400?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -159,6 +173,26 @@ export const ENDPOINTS: EndpointDef[] = [
     tag: "Utilities",
     parameters: [SLUG_REF],
     response: { kind: "singleInData", schemaRef: "Utility" },
+  },
+  {
+    path: "/utilities/resolve",
+    method: "post",
+    operationId: "resolveUtility",
+    summary: "Resolve a utility name to an EIA id",
+    description:
+      "Resolves a free-form utility name (optionally scoped by state or an email domain) to a canonical EIA utility id. Useful for researchers, journalists, and anyone joining an external dataset (news articles, complaint databases, email sign-ups) against the utility registry. Cascades through a manual override table, an exact normalized-name match, a domain match when the input looks like an email, and a trigram fuzzy match. Returns the resolved id plus the top 5 candidates considered.",
+    tag: "Utilities",
+    requestBody: {
+      description: "Resolution query.",
+      required: true,
+      schema: { $ref: "#/components/schemas/ResolveUtilityRequest" },
+      example: {
+        name: "Vermont Electric Cooperative",
+        state: "VT",
+      },
+    },
+    response: { kind: "raw", schema: { $ref: "#/components/schemas/ResolveUtilityResponse" } },
+    has404: false,
   },
 
   // -----------------------

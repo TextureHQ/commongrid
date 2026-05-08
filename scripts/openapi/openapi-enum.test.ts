@@ -3,10 +3,9 @@
  *
  * Asserts that Utility.segment (and a handful of other enum-backed fields)
  * are emitted with a real `enum` array — not the generic "One of: electric,
- * gas, water" description they had before ALL-734.
- *
- * Origin: Morgan's Relay bug report (2026-05-06), bug #6.
- * See memory/specs/relay-commongrid-bugs-2026-05-06.md in the agent workspace.
+ * gas, water" description they used to carry. Downstream clients generate
+ * typed bindings from the spec; a free-form description forces every
+ * integrator to hand-type the allowed values.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -50,7 +49,7 @@ describe("OpenAPI spec — enum emission", () => {
     expect(segment.enum?.length).toBeGreaterThanOrEqual(4);
 
     // The key values that must be present — these are the ones consumers
-    // actually filter on and that tripped up Morgan's initial integration.
+    // actually filter on and that integrators routinely trip over.
     expect(segment.enum).toContain("DISTRIBUTION_COOPERATIVE");
     expect(segment.enum).toContain("MUNICIPAL_UTILITY");
     expect(segment.enum).toContain("INVESTOR_OWNED_UTILITY");

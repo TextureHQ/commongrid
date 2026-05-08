@@ -84,7 +84,7 @@ export const DESCRIPTIONS: Record<string, FieldDescriptionMap> = {
     successorId: "FK to successor utility (post-merger)",
     serviceTerritoryId: "FK to the region describing the utility's service territory",
     domains:
-      "Email / web domains associated with this utility (e.g. ['duke-energy.com']). Useful for CRM email scoping, communication tracking, and partner integrations. Backfilled from website + NRECA/EIA-861 where available; editable via the community contribution flow.",
+      "Email / web domains associated with this utility (e.g. ['duke-energy.com']). Useful for domain-scoped joins against external datasets (email sign-ups, news mentions, complaint logs). Backfilled from website + NRECA/EIA-861 where available; editable via the community contribution flow.",
   },
   powerPlant: {
     ...SHARED_DESCRIPTIONS,

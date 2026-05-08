@@ -7,8 +7,9 @@
  * notionPageId, etc.). If a future refactor accidentally bypasses the
  * sanitizer, these tests catch it before it ships.
  *
- * Origin: Morgan's Relay bug report (2026-05-06), bug #1 residual.
- * See memory/specs/relay-commongrid-bugs-2026-05-06.md in the agent workspace.
+ * Guards against a regression first observed 2026-05-06 where the API
+ * returned moderation / indexing fields that the OpenAPI spec correctly
+ * omitted. The sanitizer MUST strip them before serialization.
  */
 import { describe, expect, it } from "vitest";
 
@@ -177,9 +178,10 @@ describe("publicPaginatedResponse", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Sparse fieldsets (ALL-733)
+// Sparse fieldsets
 //
-// Origin: Morgan's Relay bug report (2026-05-06), bug #2.
+// Guards against the 2026-05-06 regression where list/detail responses
+// produced different per-record shapes for the same resource.
 // The list endpoint was dropping numeric fields and `?fields=` was ignored,
 // forcing list-then-detail access patterns (~3,150 API calls for a full
 // sync). These tests guard the fix.
@@ -319,7 +321,7 @@ describe("publicPaginatedResponse with sparse fieldsets", () => {
 });
 
 // ---------------------------------------------------------------------------
-// List/detail shape parity guard (ALL-733)
+// List/detail shape parity guard
 //
 // The core bug: list-endpoint rows had a narrower shape than detail-endpoint
 // rows, forcing clients into a 1+N access pattern. These tests are route-less

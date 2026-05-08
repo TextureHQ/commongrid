@@ -1,11 +1,11 @@
 /**
  * Backfill script: populate `utilities.domains` from available sources.
  *
- * Motivation (ALL-732): CommonGrid consumers building CRM / email-scoping
- * features (Relay, sales tooling, partner integrations) need a list of
- * web/email domains per utility. Previously only `website` existed, which
- * gave at most one domain per org and didn't capture multi-domain utilities
- * (e.g. `example-coop.com` + `example-coop.coop`).
+ * Motivation: researchers, journalists, and developers joining an external
+ * dataset to utilities (news mentions, email sign-ups, complaint logs) need
+ * a list of web/email domains per utility. Previously only `website`
+ * existed, which gave at most one domain per org and didn't capture
+ * multi-domain utilities (e.g. `example-coop.com` + `example-coop.coop`).
  *
  * Sources (in priority order):
  *   1. `KNOWN_UTILITY_DOMAINS` below — a curated seed list of multi-domain
@@ -72,7 +72,7 @@ interface NrecaEntry {
  * / subsidiaries" rollups, company "our brands" pages).
  *
  * Keep entries narrow and verifiable — this is not a marketing list, it's
- * the basis for CRM email scoping, so false positives matter more than
+ * the basis for domain-scoped lookups, so false positives matter more than
  * missing entries (missing is easily fixed later via community edit).
  */
 const KNOWN_UTILITY_DOMAINS: Record<string, string[]> = {
