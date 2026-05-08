@@ -43,6 +43,13 @@
       "when": 1778107557092,
       "tag": "0005_drop_notion_page_id",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778250226000,
+      "tag": "0007_internal_api_consumer_and_utilities_enriched_view",
+      "breakpoints": true
     }
   ]
 }
