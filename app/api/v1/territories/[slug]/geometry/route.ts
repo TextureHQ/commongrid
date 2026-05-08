@@ -3,6 +3,12 @@
  *
  * Returns GeoJSON geometry for a specific territory from PostGIS.
  *
+ * Accepts two slug forms (checked in this order for backward compatibility):
+ *   1. `territories.id`  — the internal territory row id (e.g. `territory-7601`).
+ *   2. `regions.slug`    — the human-friendly region slug
+ *      (e.g. `st-green-mountain-power-corp-7601`). This is the form documented
+ *      elsewhere in the API and is what consumers typically discover.
+ *
  * Query params:
  *   ?simplify=0.01  — Simplification tolerance
  *
@@ -27,20 +33,33 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     }
 
     const simplify = url.searchParams.get("simplify");
+    const tolerance = Number(simplify) || 0.01;
 
     const { sql } = await import("drizzle-orm");
+
+    // Try both slug forms in a single query. `territories.id = $slug` preserves
+    // the original behavior (internal territory row id); the LEFT JOIN on
+    // `regions.slug = $slug` covers the discoverable region-slug form.
     const result = await db.execute(
       simplify
         ? sql`
-              SELECT ST_AsGeoJSON(
-                ST_SimplifyPreserveTopology(geography::geometry, ${Number(simplify) || 0.01})
-              ) as geojson
-              FROM territories WHERE id = ${slug}
-            `
+            SELECT ST_AsGeoJSON(
+              ST_SimplifyPreserveTopology(t.geography::geometry, ${tolerance})
+            ) AS geojson
+            FROM territories t
+            LEFT JOIN regions r ON r.id = t.region_id AND r.deleted_at IS NULL
+            WHERE t.deleted_at IS NULL
+              AND (t.id = ${slug} OR r.slug = ${slug})
+            LIMIT 1
+          `
         : sql`
-              SELECT ST_AsGeoJSON(geography::geometry) as geojson
-              FROM territories WHERE id = ${slug}
-            `
+            SELECT ST_AsGeoJSON(t.geography::geometry) AS geojson
+            FROM territories t
+            LEFT JOIN regions r ON r.id = t.region_id AND r.deleted_at IS NULL
+            WHERE t.deleted_at IS NULL
+              AND (t.id = ${slug} OR r.slug = ${slug})
+            LIMIT 1
+          `
     );
 
     const rows = ((result as unknown as { rows: Array<{ geojson: string }> }).rows ?? result) as Array<{

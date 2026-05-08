@@ -333,6 +333,170 @@
           }
         }
       },
+      "UtilityGeometryFeatureCollection": {
+        "type": "object",
+        "description": "GeoJSON FeatureCollection returned by `/utilities/{slug}/geometry`. Always 200 when the utility exists; `metadata.geometry_status` tells the caller whether the polygon is loaded or still pending backfill.",
+        "required": [
+          "type",
+          "features",
+          "metadata"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "FeatureCollection"
+            ]
+          },
+          "features": {
+            "type": "array",
+            "description": "Zero or one `Feature<MultiPolygon>`. Empty when `metadata.geometry_status` is `pending_backfill`; contains one feature when `loaded`.",
+            "items": {
+              "type": "object",
+              "required": [
+                "type",
+                "geometry",
+                "properties"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "Feature"
+                  ]
+                },
+                "geometry": {
+                  "type": "object",
+                  "description": "GeoJSON MultiPolygon geometry.",
+                  "required": [
+                    "type",
+                    "coordinates"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "MultiPolygon"
+                      ]
+                    },
+                    "coordinates": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 2
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "properties": {
+                  "type": "object",
+                  "properties": {
+                    "utility_slug": {
+                      "type": "string"
+                    },
+                    "utility_name": {
+                      "type": "string"
+                    },
+                    "eia_id": {
+                      "type": "string"
+                    },
+                    "region_slug": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "territory_id": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "required": [
+              "utility_slug",
+              "eia_id",
+              "geometry_status"
+            ],
+            "properties": {
+              "utility_slug": {
+                "type": "string"
+              },
+              "utility_name": {
+                "type": "string"
+              },
+              "eia_id": {
+                "type": "string"
+              },
+              "region_slug": {
+                "type": "string",
+                "nullable": true
+              },
+              "territory_id": {
+                "type": "string",
+                "nullable": true
+              },
+              "geometry_status": {
+                "type": "string",
+                "enum": [
+                  "loaded",
+                  "pending_backfill"
+                ],
+                "description": "`loaded` when the territory polygon is available; `pending_backfill` when the utility exists in the registry but its polygon has not been ingested yet (known data gap)."
+              },
+              "source": {
+                "type": "string",
+                "nullable": true,
+                "description": "Data source for the polygon (e.g. `HIFLD`, `EIA-861`). `null` when `geometry_status` is `pending_backfill`."
+              },
+              "source_url": {
+                "type": "string",
+                "nullable": true
+              },
+              "area_sq_km": {
+                "type": "number",
+                "nullable": true
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "When the territory row was last updated. Present on `loaded` responses."
+              }
+            }
+          }
+        }
+      },
+      "UtilityNotFoundError": {
+        "type": "object",
+        "description": "Flat 404 shape returned when a utility slug is not in the registry.",
+        "required": [
+          "error",
+          "slug"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "enum": [
+              "utility_not_found"
+            ]
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
       "SearchResults": {
         "type": "object",
         "description": "Grouped search results keyed by entity type (camelCase plural).",
@@ -2043,6 +2207,51 @@
         }
       }
     },
+    "/utilities/{slug}/geometry": {
+      "get": {
+        "operationId": "getUtilityGeometry",
+        "summary": "Get utility service-territory geometry (GeoJSON FeatureCollection)",
+        "description": "Resolves a utility slug to its service-territory polygon and returns a GeoJSON `FeatureCollection` with a `metadata` block describing the resolved utility and `geometry_status`. Resolution follows utilities → regions (`SERVICE_TERRITORY`) → territories internally, so consumers only need the utility slug. Returns `200` with `features: []` and `metadata.geometry_status: \"pending_backfill\"` for utilities whose territory polygon has not been ingested yet (a known data gap that the backfill pipeline resolves over time) and `200` with one `Feature<MultiPolygon>` and `metadata.geometry_status: \"loaded\"` when geometry is available. Returns `404 { error: \"utility_not_found\", slug }` only when the slug is not in the registry. Responses are served as `application/geo+json` with cache headers that differentiate loaded (1h) from pending (5m).",
+        "tags": [
+          "Utilities"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "description": "Topology-preserving simplification tolerance in degrees (default 0.01, higher = simpler).",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UtilityGeometryFeatureCollection"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/utilities/resolve": {
       "post": {
         "operationId": "resolveUtility",
@@ -2694,7 +2903,7 @@
       "get": {
         "operationId": "getTerritoryGeometry",
         "summary": "Get territory geometry (GeoJSON)",
-        "description": "Returns the territory's MultiPolygon geometry as GeoJSON. Use `?simplify=0.01` to apply topology-preserving simplification.",
+        "description": "Returns the territory's MultiPolygon geometry as GeoJSON. The `{slug}` path parameter accepts either the internal territory row id (e.g. `territory-7601`) or the human-friendly region slug (e.g. `st-green-mountain-power-corp-7601`) — the latter is the form documented elsewhere in the API. Use `?simplify=0.01` to apply topology-preserving simplification.",
         "tags": [
           "Territories"
         ],

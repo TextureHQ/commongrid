@@ -175,6 +175,26 @@ export const ENDPOINTS: EndpointDef[] = [
     response: { kind: "singleInData", schemaRef: "Utility" },
   },
   {
+    path: "/utilities/{slug}/geometry",
+    method: "get",
+    operationId: "getUtilityGeometry",
+    summary: "Get utility service-territory geometry (GeoJSON FeatureCollection)",
+    description:
+      'Resolves a utility slug to its service-territory polygon and returns a GeoJSON `FeatureCollection` with a `metadata` block describing the resolved utility and `geometry_status`. Resolution follows utilities \u2192 regions (`SERVICE_TERRITORY`) \u2192 territories internally, so consumers only need the utility slug. Returns `200` with `features: []` and `metadata.geometry_status: "pending_backfill"` for utilities whose territory polygon has not been ingested yet (a known data gap that the backfill pipeline resolves over time) and `200` with one `Feature<MultiPolygon>` and `metadata.geometry_status: "loaded"` when geometry is available. Returns `404 { error: "utility_not_found", slug }` only when the slug is not in the registry. Responses are served as `application/geo+json` with cache headers that differentiate loaded (1h) from pending (5m).',
+    tag: "Utilities",
+    parameters: [
+      SLUG_REF,
+      {
+        name: "simplify",
+        in: "query",
+        description: "Topology-preserving simplification tolerance in degrees (default 0.01, higher = simpler).",
+        schema: NUMBER,
+      },
+    ],
+    response: { kind: "raw", schema: { $ref: "#/components/schemas/UtilityGeometryFeatureCollection" } },
+    has404: true,
+  },
+  {
     path: "/utilities/resolve",
     method: "post",
     operationId: "resolveUtility",
@@ -369,7 +389,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getTerritoryGeometry",
     summary: "Get territory geometry (GeoJSON)",
     description:
-      "Returns the territory's MultiPolygon geometry as GeoJSON. Use `?simplify=0.01` to apply topology-preserving simplification.",
+      "Returns the territory's MultiPolygon geometry as GeoJSON. The `{slug}` path parameter accepts either the internal territory row id (e.g. `territory-7601`) or the human-friendly region slug (e.g. `st-green-mountain-power-corp-7601`) — the latter is the form documented elsewhere in the API. Use `?simplify=0.01` to apply topology-preserving simplification.",
     tag: "Territories",
     parameters: [
       SLUG_REF,
