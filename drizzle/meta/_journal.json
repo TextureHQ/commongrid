@@ -64,6 +64,13 @@
       "when": 1778700000000,
       "tag": "0012_remove_internal_surface_and_move_resolver_tables_to_public",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1778750000000,
+      "tag": "0013_deprecated_utilities_view",
+      "breakpoints": true
     }
   ]
 }
