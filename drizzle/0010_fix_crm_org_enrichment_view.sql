@@ -1,7 +1,7 @@
--- Migration: fix commongrid.v_crm_org_enrichment view + enrichment_schema sidecar (M2)
+-- Migration: fix commongrid.v_utility_enrichment view + enrichment_schema sidecar (M2)
 --
 -- Supersedes the earlier drizzle/0007_enrichment_schema_and_view.sql draft.
--- That draft created public.enrichment_schema + public.v_crm_org_enrichment
+-- That draft created public.enrichment_schema + public.v_utility_enrichment
 -- with non-existent source columns and would have failed to apply; we
 -- defensively DROP anything it may have landed in environments where it was
 -- partially run, then create the correct commongrid.* objects.
@@ -14,7 +14,7 @@ BEGIN;
 -- ---------------------------------------------------------------------------
 -- 0. Clean up partial drafts, if any.
 -- ---------------------------------------------------------------------------
-DROP VIEW  IF EXISTS public.v_crm_org_enrichment;
+DROP VIEW  IF EXISTS public.v_utility_enrichment;
 DROP TABLE IF EXISTS public.enrichment_schema;
 DROP VIEW  IF EXISTS commongrid.v_utilities_enriched;
 
@@ -43,7 +43,7 @@ GRANT USAGE ON SCHEMA commongrid TO internal_api_consumer;
 --    Source of truth is public.utilities joined to territory geometry via
 --    regions + territories. Active, non-deleted utilities with an EIA id only.
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW commongrid.v_crm_org_enrichment AS
+CREATE OR REPLACE VIEW commongrid.v_utility_enrichment AS
 SELECT
   u.eia_id                                              AS eia_utility_id,
   u.slug                                                AS commongrid_utility_slug,
@@ -89,7 +89,7 @@ WHERE u.deleted_at IS NULL
   AND u.status = 'ACTIVE'
   AND u.eia_id IS NOT NULL;
 
-COMMENT ON VIEW commongrid.v_crm_org_enrichment IS
+COMMENT ON VIEW commongrid.v_utility_enrichment IS
   'Versioned utility enrichment view for internal API consumers. Shape is '
   'documented in commongrid.enrichment_schema. Additive-only: new columns '
   'may be appended with a minor-version bump; removals or renames require a '
@@ -97,7 +97,7 @@ COMMENT ON VIEW commongrid.v_crm_org_enrichment IS
 
 -- ---------------------------------------------------------------------------
 -- 4. Versioning sidecar. Singleton table that records the current shape and
---    version of v_crm_org_enrichment so consumers can pin a known contract
+--    version of v_utility_enrichment so consumers can pin a known contract
 --    and fail loud on drift.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS commongrid.enrichment_schema (
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS commongrid.enrichment_schema (
 
 COMMENT ON TABLE commongrid.enrichment_schema IS
   'Singleton. Records the current (major, minor) version and column manifest '
-  'of commongrid.v_crm_org_enrichment so internal API consumers can detect drift.';
+  'of commongrid.v_utility_enrichment so internal API consumers can detect drift.';
 
 -- ---------------------------------------------------------------------------
 -- 5. Seed / refresh v1.0 manifest. Mirrors the columns and nullability of
@@ -141,7 +141,7 @@ VALUES (
     {"name":"territory_geojson_url","type":"text","nullable":true},
     {"name":"updated_at","type":"timestamptz","nullable":false}
   ]'::jsonb,
-  'v1.0 manifest for commongrid.v_crm_org_enrichment. Additive changes bump version_minor; breaking changes bump version_major.'
+  'v1.0 manifest for commongrid.v_utility_enrichment. Additive changes bump version_minor; breaking changes bump version_major.'
 )
 ON CONFLICT (id) DO UPDATE
 SET version_major   = EXCLUDED.version_major,
@@ -153,7 +153,7 @@ SET version_major   = EXCLUDED.version_major,
 -- ---------------------------------------------------------------------------
 -- 6. Read-only grants on the two publicly-contracted objects only.
 -- ---------------------------------------------------------------------------
-GRANT SELECT ON commongrid.v_crm_org_enrichment TO internal_api_consumer;
+GRANT SELECT ON commongrid.v_utility_enrichment TO internal_api_consumer;
 GRANT SELECT ON commongrid.enrichment_schema    TO internal_api_consumer;
 
 COMMIT;
