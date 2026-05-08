@@ -345,6 +345,106 @@ curl "https://commongrid.info/api/v1/utilities/by-eia-id/3046?include=iso"
 
 **Cache:** `public, s-maxage=3600, stale-while-revalidate=86400`.
 
+#### `GET /utilities/{slug}/geometry`
+
+Returns the utility's service-territory polygon as a GeoJSON `FeatureCollection`.
+The endpoint resolves `utilities.slug` → `regions` (`SERVICE_TERRITORY`) →
+`territories` server-side, so consumers only need a utility slug (no need to
+look up the region or territory id first).
+
+```bash
+curl "https://commongrid.info/api/v1/utilities/green-mountain-power/geometry"
+curl "https://commongrid.info/api/v1/utilities/green-mountain-power/geometry?simplify=0.05"
+```
+
+**Response is always a flat `FeatureCollection` with a top-level `metadata`
+block** — *not* a `{ data: ... }` envelope. Branch on `metadata.geometry_status`
+to distinguish the three states:
+
+*200 — `geometry_status: "loaded"`* (utility exists and the polygon is available):
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "MultiPolygon", "coordinates": [ … ] },
+      "properties": {
+        "utility_slug": "green-mountain-power",
+        "utility_name": "Green Mountain Power",
+        "eia_id": "7601",
+        "region_slug": "st-green-mountain-power-corp-7601",
+        "territory_id": "territory-7601"
+      }
+    }
+  ],
+  "metadata": {
+    "utility_slug": "green-mountain-power",
+    "utility_name": "Green Mountain Power",
+    "eia_id": "7601",
+    "region_slug": "st-green-mountain-power-corp-7601",
+    "territory_id": "territory-7601",
+    "geometry_status": "loaded",
+    "source": "HIFLD ArcGIS",
+    "source_url": "https://hifld-geoplatform.opendata.arcgis.com/…",
+    "area_sq_km": 24906.5,
+    "updated_at": "2026-03-01T00:00:00.000Z"
+  }
+}
+```
+
+*200 — `geometry_status: "pending_backfill"`* (utility exists but its territory
+polygon has not been ingested yet — rare as of 2026-05-08, but expected any time
+a newer EIA-861 filing adds a utility before its polygon lands):
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [],
+  "metadata": {
+    "utility_slug": "some-new-coop",
+    "eia_id": "99999",
+    "region_slug": "st-some-new-coop-99999",
+    "geometry_status": "pending_backfill",
+    "source": null
+  }
+}
+```
+
+> **Why empty-200 instead of 404 for pending?** An empty `FeatureCollection` is
+> a no-op on `mapboxgl.Map.addSource`, so clients get graceful degradation for
+> free — just branch on `metadata.geometry_status` and skip `addLayer` when
+> `features.length === 0`. The `404` shape stays reserved for unknown slugs,
+> so consumers never have to parse error codes to distinguish “bad slug” from
+> “known utility, geometry coming soon.”
+
+*404 — utility slug not in the registry:*
+
+```json
+{ "error": "utility_not_found", "slug": "…" }
+```
+
+**Content-Type:** `application/geo+json`.
+
+**Cache:**
+
+| State | `Cache-Control` | Rationale |
+|---|---|---|
+| `loaded` | `public, max-age=3600` | Territories are effectively static between sync runs. |
+| `pending_backfill` | `public, max-age=300` | Tight window so backfills propagate quickly once the polygon lands. |
+| `utility_not_found` | `public, max-age=60` | Minimal caching. |
+
+`ETag: sha256(utility_id | geometry_status | updated_at)` — flips the moment a
+pending utility becomes loaded, so `If-None-Match` / CDN caches invalidate
+cleanly with no client purge.
+
+**Query params**
+
+| Param | Description |
+|---|---|
+| `simplify` | Topology-preserving simplification tolerance in degrees (default `0.01`, higher = simpler). |
+
 #### `POST /utilities/resolve`
 
 See [Resolver endpoint (POST)](#resolver-endpoint-post) for the full contract. Resolves a free-form
@@ -415,11 +515,13 @@ Territory metadata for a single territory.
 
 #### `GET /territories/{slug}/geometry`
 
-GeoJSON geometry for a territory. Optional `?simplify=0.01` applies
-`ST_SimplifyPreserveTopology` at the requested tolerance.
+GeoJSON geometry for a territory. Accepts either `regions.slug` (the documented
+public identifier, e.g. `st-green-mountain-power-corp-7601`) or `territories.id`
+(the legacy internal row id, e.g. `territory-7601`). Optional `?simplify=0.01`
+applies `ST_SimplifyPreserveTopology` at the requested tolerance.
 
 ```bash
-curl "https://commongrid.info/api/v1/territories/region-st-1000/geometry?simplify=0.005"
+curl "https://commongrid.info/api/v1/territories/st-green-mountain-power-corp-7601/geometry?simplify=0.005"
 ```
 
 Response:
@@ -427,6 +529,14 @@ Response:
 ```json
 { "data": { "type": "MultiPolygon", "coordinates": [ … ] } }
 ```
+
+> **Shape difference vs. `/utilities/{slug}/geometry`:** this endpoint returns the
+> legacy `{ data: <geometry> }` envelope. The newer utility-geometry endpoint
+> returns a flat `FeatureCollection` with a top-level `metadata` block. If you're
+> building new integrations, prefer `/utilities/{slug}/geometry` — it resolves the
+> utilities → regions → territories chain server-side and the FC shape drops
+> directly into Mapbox sources. Convergence is tracked as a future non-breaking
+> change via `Accept: application/geo+json` content negotiation.
 
 **Cache:** `public, s-maxage=86400, stale-while-revalidate=86400`, `Cache-Tag: territory:<slug>`
 (so we can surgically purge a single territory after a contribution merges).
