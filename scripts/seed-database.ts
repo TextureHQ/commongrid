@@ -555,15 +555,22 @@ async function seedTerritories(db: DrizzleDb): Promise<number> {
       const geojsonStr = JSON.stringify(feature.geometry);
 
       // Insert using PostGIS: validate, fix, and normalize Polygon → MultiPolygon
-      // ST_MakeValid fixes any topological issues
-      // ST_Multi normalizes Polygon → MultiPolygon
+      // ST_MakeValid fixes any topological issues. When it returns a
+      // GeometryCollection (mixed polygon + line/point slivers), ST_CollectionExtract(_, 3)
+      // keeps only polygonal components so the cast to MultiPolygon succeeds.
+      // ST_Multi normalizes Polygon → MultiPolygon.
       try {
         await db.execute(sql`
           INSERT INTO territories (id, region_id, geography, source)
           VALUES (
             ${`territory-${eiaId}`},
             ${regionId},
-            ST_Multi(ST_MakeValid(ST_GeomFromGeoJSON(${geojsonStr})))::geography,
+            ST_Multi(
+              ST_CollectionExtract(
+                ST_MakeValid(ST_GeomFromGeoJSON(${geojsonStr})),
+                3
+              )
+            )::geography,
             ${"HIFLD ArcGIS"}
           )
           ON CONFLICT (id) DO NOTHING

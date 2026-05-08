@@ -18,6 +18,7 @@
     "sync:ev-charging": "tsx scripts/sync-ev-charging.ts",
     "sync:pricing-nodes": "tsx scripts/sync-pricing-nodes.ts",
     "sync:substations": "tsx scripts/sync-substations.ts",
+    "backfill:service-territory-geoms": "tsx scripts/backfill-service-territory-geoms.ts",
     "backfill:utility-domains": "tsx scripts/backfill-utility-domains.ts",
     "backfill:utility-domains:db": "tsx scripts/backfill-utility-domains.ts --db",
     "backfill:utility-domains:dry": "tsx scripts/backfill-utility-domains.ts --dry-run",

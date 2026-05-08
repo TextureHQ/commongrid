@@ -159,29 +159,32 @@ describe("GET /api/v1/utilities/[slug]/geometry", () => {
     });
   });
 
-  it("returns 200 + empty features + geometry_status='pending_backfill' when region exists but territory polygon is missing (VEC canary)", async () => {
+  it("returns 200 + loaded FeatureCollection for VEC (canary — polygon backfilled 2026-05-08)", async () => {
     // This is the Vermont Electric Cooperative case that prompted the whole
-    // endpoint. Region metadata exists; polygon has not been backfilled yet.
-    // Flipped to the "loaded" assertion path once the 71-region backfill
-    // fleet-task completes.
+    // endpoint. As of the 71-region SERVICE_TERRITORY backfill
+    // (fleet-task 79e6e387 / PR #236), VEC has geometry in the `territories`
+    // table and this endpoint now returns `loaded`. If this test starts
+    // failing with `pending_backfill`, the backfill has regressed — check
+    // that `territory-19791` still exists and has a geography polygon.
     execute.mockResolvedValue({
       rows: [
         {
           utility_exists: true,
           region_exists: true,
-          territory_exists: false,
+          territory_exists: true,
           utility_id: "utility-19791",
           utility_slug: "vermont-electric-cooperative",
           utility_name: "Vermont Electric Cooperative",
           eia_id: "19791",
           region_id: "region-st-19791",
           region_slug: "st-vermont-electric-cooperative-inc-19791",
-          territory_id: null,
-          territory_source: null,
-          territory_source_url: null,
+          territory_id: "territory-19791",
+          territory_source: "HIFLD ArcGIS",
+          territory_source_url:
+            "https://hifld-geoplatform.opendata.arcgis.com/datasets/f4cd55044f8f4d04a2dd0f5f1e6f4b6e/",
           area_sq_km: null,
-          updated_at: null,
-          geojson: null,
+          updated_at: "2026-05-08T22:00:00.000Z",
+          geojson: JSON.stringify(FIXTURE_MULTIPOLYGON),
         },
       ],
     });
@@ -194,16 +197,17 @@ describe("GET /api/v1/utilities/[slug]/geometry", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.type).toBe("FeatureCollection");
-    expect(body.features).toEqual([]);
+    expect(body.features).toHaveLength(1);
+    expect(body.features[0].geometry).toEqual(FIXTURE_MULTIPOLYGON);
     expect(body.metadata).toMatchObject({
       utility_slug: "vermont-electric-cooperative",
       eia_id: "19791",
       region_slug: "st-vermont-electric-cooperative-inc-19791",
-      geometry_status: "pending_backfill",
-      source: null,
+      geometry_status: "loaded",
+      source: "HIFLD ArcGIS",
     });
-    // Pending uses the short cache window so backfills propagate quickly.
-    expect(res.headers.get("Cache-Control")).toBe("public, max-age=300");
+    // Loaded geometries use the long cache window.
+    expect(res.headers.get("Cache-Control")).toBe("public, max-age=3600");
   });
 
   it("returns 200 + loaded FeatureCollection for a utility with geometry (green-mountain-power)", async () => {
