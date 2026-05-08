@@ -175,6 +175,25 @@ export const ENDPOINTS: EndpointDef[] = [
     response: { kind: "singleInData", schemaRef: "Utility" },
   },
   {
+    path: "/utilities/{slug}/geometry",
+    method: "get",
+    operationId: "getUtilityGeometry",
+    summary: "Get utility service-territory geometry (GeoJSON)",
+    description:
+      "Returns the utility's service-territory MultiPolygon as GeoJSON, resolved via the utility's EIA id to its `SERVICE_TERRITORY` region and territory polygon. Use `?simplify=0.01` to apply topology-preserving simplification. Returns 404 with a distinguishing message when the utility is unknown, has no service-territory region registered, or has a region but no geometry loaded yet.",
+    tag: "Utilities",
+    parameters: [
+      SLUG_REF,
+      {
+        name: "simplify",
+        in: "query",
+        description: "Simplification tolerance in degrees (higher = simpler)",
+        schema: NUMBER,
+      },
+    ],
+    response: { kind: "geojson" },
+  },
+  {
     path: "/utilities/resolve",
     method: "post",
     operationId: "resolveUtility",
@@ -369,7 +388,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getTerritoryGeometry",
     summary: "Get territory geometry (GeoJSON)",
     description:
-      "Returns the territory's MultiPolygon geometry as GeoJSON. Use `?simplify=0.01` to apply topology-preserving simplification.",
+      "Returns the territory's MultiPolygon geometry as GeoJSON. The `{slug}` path parameter accepts either the internal territory row id (e.g. `territory-7601`) or the human-friendly region slug (e.g. `st-green-mountain-power-corp-7601`) — the latter is the form documented elsewhere in the API. Use `?simplify=0.01` to apply topology-preserving simplification.",
     tag: "Territories",
     parameters: [
       SLUG_REF,
