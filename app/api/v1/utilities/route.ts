@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, ilike, isNull, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, ilike, inArray, isNotNull, isNull, lt, lte, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
@@ -26,6 +26,17 @@ interface FilterParams {
   hasTransmission: string | null;
   hasDistribution: string | null;
   fields: string | null;
+  // Bulk multi-id filter: ?eiaIds=19791,19792,19793
+  eiaIds: string[] | null;
+  // Numeric bounds on scale metrics
+  minCustomers: number | null;
+  maxCustomers: number | null;
+  minAmiMeters: number | null;
+  minTotalMeters: number | null;
+  // Content presence flags
+  hasLogo: boolean | null;
+  hasWebsite: boolean | null;
+  hasTerritory: boolean | null;
 }
 
 interface DbFilterParams extends FilterParams {
@@ -35,6 +46,35 @@ interface DbFilterParams extends FilterParams {
 // ---------------------------------------------------------------------------
 // GET /api/v1/utilities — List utilities with filtering
 // ---------------------------------------------------------------------------
+
+// Bulk-id request cap. Keeps a single call under Postgres's parameter limit and
+// makes rate limits predictable. Consumers needing more should paginate.
+const MAX_EIA_IDS_PER_REQUEST = 500;
+
+function parsePositiveInt(raw: string | null): number | null {
+  if (raw === null || raw.trim() === "") return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.floor(n);
+}
+
+function parseBooleanFlag(raw: string | null): boolean | null {
+  if (raw === null) return null;
+  const v = raw.trim().toLowerCase();
+  if (v === "true" || v === "1") return true;
+  if (v === "false" || v === "0") return false;
+  return null;
+}
+
+function parseEiaIds(raw: string | null): string[] | null {
+  if (raw === null || raw.trim() === "") return null;
+  const ids = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  if (ids.length === 0) return null;
+  return ids.slice(0, MAX_EIA_IDS_PER_REQUEST);
+}
 
 async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
@@ -53,6 +93,18 @@ async function handleGet(req: Request, _ctx: RouteContext) {
   const fields = url.searchParams.get("fields");
   const include = url.searchParams.get("include");
 
+  // Bulk + numeric + presence filters
+  const eiaIds = parseEiaIds(url.searchParams.get("eiaIds") ?? url.searchParams.get("eia_ids"));
+  const minCustomers = parsePositiveInt(url.searchParams.get("minCustomers") ?? url.searchParams.get("min_customers"));
+  const maxCustomers = parsePositiveInt(url.searchParams.get("maxCustomers") ?? url.searchParams.get("max_customers"));
+  const minAmiMeters = parsePositiveInt(url.searchParams.get("minAmiMeters") ?? url.searchParams.get("min_ami_meters"));
+  const minTotalMeters = parsePositiveInt(
+    url.searchParams.get("minTotalMeters") ?? url.searchParams.get("min_total_meters")
+  );
+  const hasLogo = parseBooleanFlag(url.searchParams.get("hasLogo") ?? url.searchParams.get("has_logo"));
+  const hasWebsite = parseBooleanFlag(url.searchParams.get("hasWebsite") ?? url.searchParams.get("has_website"));
+  const hasTerritory = parseBooleanFlag(url.searchParams.get("hasTerritory") ?? url.searchParams.get("has_territory"));
+
   const filterParams: FilterParams = {
     url,
     segment,
@@ -66,6 +118,14 @@ async function handleGet(req: Request, _ctx: RouteContext) {
     hasTransmission,
     hasDistribution,
     fields,
+    eiaIds,
+    minCustomers,
+    maxCustomers,
+    minAmiMeters,
+    minTotalMeters,
+    hasLogo,
+    hasWebsite,
+    hasTerritory,
   };
 
   return handleDatabaseMode({ ...filterParams, include });
@@ -119,6 +179,40 @@ async function handleDatabaseMode(params: DbFilterParams) {
   }
   if (params.hasDistribution !== null) {
     conditions.push(eq(utilities.hasDistribution, params.hasDistribution === "true"));
+  }
+  if (params.eiaIds && params.eiaIds.length > 0) {
+    conditions.push(inArray(utilities.eiaId, params.eiaIds));
+  }
+  if (params.minCustomers !== null) {
+    conditions.push(gte(utilities.customerCount, params.minCustomers));
+  }
+  if (params.maxCustomers !== null) {
+    conditions.push(lte(utilities.customerCount, params.maxCustomers));
+  }
+  if (params.minAmiMeters !== null) {
+    conditions.push(gte(utilities.amiMeterCount, params.minAmiMeters));
+  }
+  if (params.minTotalMeters !== null) {
+    conditions.push(gte(utilities.totalMeterCount, params.minTotalMeters));
+  }
+  if (params.hasLogo !== null) {
+    conditions.push(
+      params.hasLogo
+        ? sql`${utilities.logo} IS NOT NULL AND length(${utilities.logo}) > 0`
+        : sql`${utilities.logo} IS NULL OR length(${utilities.logo}) = 0`
+    );
+  }
+  if (params.hasWebsite !== null) {
+    conditions.push(
+      params.hasWebsite
+        ? sql`${utilities.website} IS NOT NULL AND length(${utilities.website}) > 0`
+        : sql`${utilities.website} IS NULL OR length(${utilities.website}) = 0`
+    );
+  }
+  if (params.hasTerritory !== null) {
+    conditions.push(
+      params.hasTerritory ? isNotNull(utilities.serviceTerritoryId) : isNull(utilities.serviceTerritoryId)
+    );
   }
 
   // Full-text search
