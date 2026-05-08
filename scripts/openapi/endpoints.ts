@@ -214,6 +214,44 @@ export const ENDPOINTS: EndpointDef[] = [
     response: { kind: "raw", schema: { $ref: "#/components/schemas/ResolveUtilityResponse" } },
     has404: false,
   },
+  {
+    path: "/utilities/deprecated",
+    method: "get",
+    operationId: "listDeprecatedUtilities",
+    summary: "List utilities with deprecated EIA ids",
+    description:
+      "Returns utilities whose EIA id has been deprecated — merged into a successor, acquired by another utility, or dissolved/retired. Useful for journalists tracking utility consolidation, researchers joining historical datasets whose rows key on an EIA id, and integrators polling `?since=<last_sync_at>` to keep a cache of CommonGrid keys fresh. A utility is considered deprecated when its status is MERGED, ACQUIRED, or DEFUNCT. The response's `deprecated_at` field is the precise deprecation timestamp when known, falling back to the row's `updated_at` for historical rows that predate the dedicated column.",
+    tag: "Utilities",
+    parameters: [
+      {
+        name: "since",
+        in: "query",
+        description:
+          "ISO 8601 timestamp. Only include utilities whose effective deprecation timestamp is strictly after this value.",
+        schema: { type: "string", format: "date-time" },
+      },
+      {
+        name: "state",
+        in: "query",
+        description: "Two-letter US state/jurisdiction code. Case-insensitive.",
+        schema: { type: "string", pattern: "^[A-Za-z]{2}$" },
+      },
+      {
+        name: "limit",
+        in: "query",
+        description: "Page size. Defaults to 100, maximum 500.",
+        schema: { type: "integer", minimum: 1, maximum: 500, default: 100 },
+      },
+      {
+        name: "offset",
+        in: "query",
+        description: "Row offset for pagination. Defaults to 0.",
+        schema: { type: "integer", minimum: 0, default: 0 },
+      },
+    ],
+    response: { kind: "raw", schema: { $ref: "#/components/schemas/DeprecatedUtilitiesResponse" } },
+    has404: false,
+  },
 
   // -----------------------
   // ISOs

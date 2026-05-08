@@ -328,6 +328,64 @@ export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
       slug: { type: "string" },
     },
   },
+  DeprecatedUtility: {
+    type: "object",
+    description:
+      "A utility whose EIA id has been deprecated (merged, acquired, or dissolved). Returned by GET /utilities/deprecated.",
+    properties: {
+      eia_id: {
+        type: "string",
+        nullable: true,
+        description:
+          "EIA utility id of the deprecated row. Nullable for the rare case of a deprecated utility that never had an EIA id assigned.",
+      },
+      slug: { type: "string", description: "Stable CommonGrid slug (immutable across EIA id reassignments)." },
+      name: { type: "string", description: "Utility name at the time of deprecation." },
+      state: {
+        type: "string",
+        nullable: true,
+        description: "Two-letter jurisdiction code, when known.",
+      },
+      deprecated_at: {
+        type: "string",
+        format: "date-time",
+        description:
+          "ISO 8601 timestamp when the utility was deprecated. Falls back to `updated_at` for historical rows that predate the precise `deprecated_at` column; consumers should treat the field as an authoritative lifecycle timestamp regardless of source.",
+      },
+      successor_eia_id: {
+        type: "string",
+        nullable: true,
+        description:
+          "EIA id of the successor utility when status is MERGED or ACQUIRED. Null for DEFUNCT utilities and for merger/acquisition events where the successor isn't recorded.",
+      },
+      deprecation_reason: {
+        type: "string",
+        nullable: true,
+        description: "Free-form human-readable reason the utility was deprecated, when recorded.",
+      },
+    },
+    required: ["slug", "name", "deprecated_at"],
+  },
+  DeprecatedUtilitiesResponse: {
+    type: "object",
+    description: "Response shape for GET /utilities/deprecated.",
+    properties: {
+      data: {
+        type: "array",
+        items: { $ref: "#/components/schemas/DeprecatedUtility" },
+      },
+      pagination: {
+        type: "object",
+        properties: {
+          total: { type: "integer", description: "Total matching rows (independent of offset/limit)." },
+          limit: { type: "integer", description: "Page size used for this response." },
+          offset: { type: "integer", description: "Offset of the first row in this page." },
+        },
+        required: ["total", "limit", "offset"],
+      },
+    },
+    required: ["data", "pagination"],
+  },
   SearchResults: {
     type: "object",
     description: "Grouped search results keyed by entity type (camelCase plural).",

@@ -93,6 +93,12 @@ export const utilities = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     version: integer("version").notNull().default(1),
+
+    // Deprecation lifecycle (exposed via GET /api/v1/utilities/deprecated).
+    /** Free-form human-readable reason a utility was deprecated (merged, dissolved, retired). Paired with `status` and `successorId`. */
+    deprecationReason: text("deprecation_reason"),
+    /** Timestamp when the utility transitioned into a deprecated status (MERGED, ACQUIRED, DEFUNCT). Nullable for currently-active utilities and for historical deprecations predating the column. */
+    deprecatedAt: timestamp("deprecated_at", { withTimezone: true }),
   },
   (table) => [
     index("idx_utilities_slug").on(table.slug),
@@ -105,6 +111,9 @@ export const utilities = pgTable(
     index("idx_utilities_jurisdiction").on(table.jurisdiction),
     index("idx_utilities_parent_id").on(table.parentId),
     index("idx_utilities_service_territory").on(table.serviceTerritoryId),
+    // idx_utilities_deprecated_at is a partial index scoped to deprecated
+    // statuses; it's created directly in migration 0013 (drizzle-kit can't
+    // express the WHERE predicate), so we don't declare it here.
     // GIN index for full-text search — defined in migration DDL:
     // CREATE INDEX idx_utilities_search ON utilities USING GIN(search_vector);
     // CREATE INDEX idx_utilities_name_trgm ON utilities USING GIN(name gin_trgm_ops);
