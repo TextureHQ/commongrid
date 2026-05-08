@@ -227,6 +227,112 @@
           }
         }
       },
+      "ResolveUtilityRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Free-form utility name. May also be a string containing '@domain' to trigger domain matching.",
+            "example": "Vermont Electric Cooperative"
+          },
+          "state": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{2}$",
+            "description": "Optional two-letter US state code. Narrows candidates to utilities in that state.",
+            "example": "VT"
+          },
+          "domain": {
+            "type": "string",
+            "maxLength": 253,
+            "description": "Optional email/web domain (e.g. 'duke-energy.com'). Combined with name when name does not already contain '@'.",
+            "example": "vermontelectric.coop"
+          },
+          "confidence_threshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.85,
+            "description": "Minimum trigram similarity (0..1) required to return a fuzzy match as the resolved utility. Defaults to 0.85."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResolveUtilityCandidate": {
+        "type": "object",
+        "properties": {
+          "eia_id": {
+            "type": "string",
+            "description": "EIA utility id."
+          },
+          "name": {
+            "type": "string",
+            "description": "Canonical utility name."
+          },
+          "score": {
+            "type": "number",
+            "description": "Match score, 0..1."
+          },
+          "segment": {
+            "type": "string",
+            "nullable": true,
+            "description": "Utility segment (e.g. distribution)."
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "description": "Two-letter state code."
+          }
+        }
+      },
+      "ResolveUtilityResponse": {
+        "type": "object",
+        "properties": {
+          "eia_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Resolved EIA utility id, or null when no match met the confidence threshold."
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Confidence of the resolved match, 0..1."
+          },
+          "match_source": {
+            "type": "string",
+            "enum": [
+              "exact",
+              "fuzzy",
+              "alias",
+              "domain",
+              "override",
+              "none"
+            ],
+            "description": "Which resolver phase produced the match."
+          },
+          "canonical_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Canonical utility name for the resolved id, when a match was found."
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResolveUtilityCandidate"
+            },
+            "description": "Up to 5 candidates considered, ordered by score desc. Populated even when no candidate met the threshold."
+          },
+          "resolver_version": {
+            "type": "string",
+            "description": "Semantic version of the resolver algorithm. Clients can pin this to detect algorithm changes."
+          }
+        }
+      },
       "SearchResults": {
         "type": "object",
         "description": "Grouped search results keyed by entity type (camelCase plural).",
@@ -440,7 +546,7 @@
               "type": "string"
             },
             "nullable": true,
-            "description": "Email / web domains associated with this utility (e.g. ['duke-energy.com']). Useful for CRM email scoping, communication tracking, and partner integrations. Backfilled from website + NRECA/EIA-861 where available; editable via the community contribution flow."
+            "description": "Email / web domains associated with this utility (e.g. ['duke-energy.com']). Useful for domain-scoped joins against external datasets (email sign-ups, news mentions, complaint logs). Backfilled from website + NRECA/EIA-861 where available; editable via the community contribution flow."
           },
           "source": {
             "type": "string",
@@ -1926,6 +2032,53 @@
           },
           "404": {
             "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/utilities/resolve": {
+      "post": {
+        "operationId": "resolveUtility",
+        "summary": "Resolve a utility name to an EIA id",
+        "description": "Resolves a free-form utility name (optionally scoped by state or an email domain) to a canonical EIA utility id. Useful for researchers, journalists, and anyone joining an external dataset (news articles, complaint databases, email sign-ups) against the utility registry. Cascades through a manual override table, an exact normalized-name match, a domain match when the input looks like an email, and a trigram fuzzy match. Returns the resolved id plus the top 5 candidates considered.",
+        "tags": [
+          "Utilities"
+        ],
+        "requestBody": {
+          "description": "Resolution query.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveUtilityRequest"
+              },
+              "example": {
+                "name": "Vermont Electric Cooperative",
+                "state": "VT"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolveUtilityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed",
             "content": {
               "application/json": {
                 "schema": {

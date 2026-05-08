@@ -154,6 +154,87 @@ export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
       source: { type: "string", enum: ["static", "database"] },
     },
   },
+  ResolveUtilityRequest: {
+    type: "object",
+    required: ["name"],
+    properties: {
+      name: {
+        type: "string",
+        minLength: 1,
+        maxLength: 200,
+        description: "Free-form utility name. May also be a string containing '@domain' to trigger domain matching.",
+        example: "Vermont Electric Cooperative",
+      },
+      state: {
+        type: "string",
+        pattern: "^[A-Za-z]{2}$",
+        description: "Optional two-letter US state code. Narrows candidates to utilities in that state.",
+        example: "VT",
+      },
+      domain: {
+        type: "string",
+        maxLength: 253,
+        description:
+          "Optional email/web domain (e.g. 'duke-energy.com'). Combined with name when name does not already contain '@'.",
+        example: "vermontelectric.coop",
+      },
+      confidence_threshold: {
+        type: "number",
+        minimum: 0,
+        maximum: 1,
+        default: 0.85,
+        description:
+          "Minimum trigram similarity (0..1) required to return a fuzzy match as the resolved utility. Defaults to 0.85.",
+      },
+    },
+    additionalProperties: false,
+  },
+  ResolveUtilityCandidate: {
+    type: "object",
+    properties: {
+      eia_id: { type: "string", description: "EIA utility id." },
+      name: { type: "string", description: "Canonical utility name." },
+      score: { type: "number", description: "Match score, 0..1." },
+      segment: { type: "string", nullable: true, description: "Utility segment (e.g. distribution)." },
+      state: { type: "string", nullable: true, description: "Two-letter state code." },
+    },
+  },
+  ResolveUtilityResponse: {
+    type: "object",
+    properties: {
+      eia_id: {
+        type: "string",
+        nullable: true,
+        description: "Resolved EIA utility id, or null when no match met the confidence threshold.",
+      },
+      confidence: {
+        type: "number",
+        minimum: 0,
+        maximum: 1,
+        description: "Confidence of the resolved match, 0..1.",
+      },
+      match_source: {
+        type: "string",
+        enum: ["exact", "fuzzy", "alias", "domain", "override", "none"],
+        description: "Which resolver phase produced the match.",
+      },
+      canonical_name: {
+        type: "string",
+        nullable: true,
+        description: "Canonical utility name for the resolved id, when a match was found.",
+      },
+      candidates: {
+        type: "array",
+        items: { $ref: "#/components/schemas/ResolveUtilityCandidate" },
+        description:
+          "Up to 5 candidates considered, ordered by score desc. Populated even when no candidate met the threshold.",
+      },
+      resolver_version: {
+        type: "string",
+        description: "Semantic version of the resolver algorithm. Clients can pin this to detect algorithm changes.",
+      },
+    },
+  },
   SearchResults: {
     type: "object",
     description: "Grouped search results keyed by entity type (camelCase plural).",

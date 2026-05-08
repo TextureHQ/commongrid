@@ -34,9 +34,9 @@
  *                       the schema, which it isn't.
  *
  *   notionPageId      — Historical field from a now-defunct Notion sync.
- *                       The column was dropped (ALL-735 / PR #209) and the
+ *                       The column was dropped (see PR #209) and the
  *                       field was removed from `data/utilities.json` and
- *                       the Utility type (ALL-743). It's kept in this list
+ *                       the Utility type. It's kept in this list
  *                       as a defensive safety-net: if a stale column,
  *                       legacy snapshot, or community fork still carries
  *                       the field, it will never leak through the public

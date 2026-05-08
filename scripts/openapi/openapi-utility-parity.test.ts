@@ -1,13 +1,13 @@
 /**
- * Regression test for ALL-739 (OpenAPI Utility schema drift).
+ * Regression test for OpenAPI Utility schema drift.
  *
- * Morgan reported 2026-05-06 that the published OpenAPI spec listed ~12
- * Utility properties while the live `/api/v1/utilities/{slug}` response
- * returned 42 keys — blocking codegen clients.
+ * Background: an integrator reported 2026-05-06 that the published OpenAPI
+ * spec listed ~12 Utility properties while the live `/api/v1/utilities/{slug}`
+ * response returned 42 keys — blocking codegen clients.
  *
  * The drift was fixed by moving the spec to auto-generation from Drizzle
- * (ALL-728, PR #203) and unifying the list/detail serializer (ALL-733,
- * PR #208). This test locks that fix in place by asserting two invariants:
+ * (PR #203) and unifying the list/detail serializer (PR #208). This test
+ * locks that fix in place by asserting two invariants:
  *
  *   1. The spec's `Utility.properties` key set equals the Drizzle column
  *      names minus `INTERNAL_FIELDS`. The serializer does `db.select()`
@@ -64,7 +64,7 @@ function drizzleColumnNames(): string[] {
   return Object.keys(getTableColumns(utilities));
 }
 
-describe("OpenAPI Utility spec parity (ALL-739 regression)", () => {
+describe("OpenAPI Utility spec parity", () => {
   it("spec_keys match drizzle_keys minus INTERNAL_FIELDS (empty diff)", () => {
     const spec = loadSpec();
     const specKeys = new Set(Object.keys(spec.components.schemas.Utility.properties));
@@ -78,9 +78,9 @@ describe("OpenAPI Utility spec parity (ALL-739 regression)", () => {
     expect(extraInSpec, `Extra keys in spec: ${extraInSpec.join(", ")}`).toEqual([]);
   });
 
-  it("spec covers all the high-value fields Morgan originally flagged", () => {
+  it("spec covers all the high-value fields integrators depend on", () => {
     // These are the fields that were missing from the old hand-written spec
-    // and that Relay codegen was blocked on. Locking them in explicitly so
+    // and that blocked downstream codegen. Locking them in explicitly so
     // an accidental future regression is immediately legible.
     const spec = loadSpec();
     const props = spec.components.schemas.Utility.properties;

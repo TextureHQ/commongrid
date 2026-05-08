@@ -2,8 +2,8 @@
  * Global search engine — searches across all entity types using the database.
  *
  * Context: this previously returned `[]` for every type because `searchFromDb`
- * was a TODO stub (see ALL-731 / Morgan's Relay bug report, 2026-05-06 #3).
- * The `search_vector` tsvector columns on utilities, programs, power_plants,
+ * was a TODO stub — `/search?q=tri-state` returned 0 rows. The
+ * `search_vector` tsvector columns on utilities, programs, power_plants,
  * and ev_stations are already populated by `GENERATED ALWAYS AS STORED`
  * expressions — the endpoint just wasn't reading them. This file is the
  * read path.

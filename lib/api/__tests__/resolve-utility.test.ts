@@ -1,12 +1,18 @@
 /**
- * Tests for POST /api/internal/resolve-utility
+ * Tests for POST /api/v1/utilities/resolve
  *
- * Route under test: `app/api/internal/resolve-utility/route.ts`.
+ * Route under test: `app/api/v1/utilities/resolve/route.ts`.
  *
- * We mock the auth validator and the Drizzle DB client so the tests stay
- * hermetic (no DATABASE_URL required). Schema of the mocked DB `.execute`
- * return value matches the Neon-HTTP / drizzle `{ rows: [{ result: jsonb }] }`
- * shape.
+ * The route is public (no auth required) — same contract as every other
+ * /api/v1/* route — so we don't exercise auth here, we exercise:
+ *   - request validation (400 branches)
+ *   - happy path (200 branch)
+ *   - output normalization (legacy match_source aliases, canonical_name fallback)
+ *   - method gate (GET → 405)
+ *
+ * We mock the Drizzle DB client so the tests stay hermetic (no DATABASE_URL
+ * required). The mocked `.execute` return value matches the Neon-HTTP /
+ * drizzle `{ rows: [{ result: jsonb }] }` shape.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -15,16 +21,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Module mocks — must be registered before importing the route.
 // ---------------------------------------------------------------------------
 
-vi.mock("@/lib/api/auth", () => ({
-  validateApiKey: vi.fn(),
-}));
-
 vi.mock("@/lib/db/client", () => ({
   getDb: vi.fn(),
+  db: null,
 }));
 
-import { POST } from "@/app/api/internal/resolve-utility/route";
-import { validateApiKey } from "@/lib/api/auth";
+import { POST } from "@/app/api/v1/utilities/resolve/route";
 import { getDb } from "@/lib/db/client";
 
 // ---------------------------------------------------------------------------
@@ -32,11 +34,10 @@ import { getDb } from "@/lib/db/client";
 // ---------------------------------------------------------------------------
 
 function makeRequest(body: unknown, headers: Record<string, string> = {}): Request {
-  return new Request("https://commongrid.info/api/internal/resolve-utility", {
+  return new Request("https://commongrid.info/api/v1/utilities/resolve", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer cg_test_key",
       ...headers,
     },
     body: typeof body === "string" ? body : JSON.stringify(body),
@@ -47,9 +48,8 @@ function makeRequest(body: unknown, headers: Record<string, string> = {}): Reque
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("POST /api/internal/resolve-utility", () => {
+describe("POST /api/v1/utilities/resolve", () => {
   beforeEach(() => {
-    vi.mocked(validateApiKey).mockReset();
     vi.mocked(getDb).mockReset();
   });
 
@@ -57,61 +57,17 @@ describe("POST /api/internal/resolve-utility", () => {
     vi.clearAllMocks();
   });
 
-  // --- 401 branch --------------------------------------------------------
-  describe("auth", () => {
-    it("returns 401 when validateApiKey rejects the request", async () => {
-      vi.mocked(validateApiKey).mockResolvedValue({
-        valid: false,
-        error: "Invalid API key",
-      });
-
-      const res = await POST(makeRequest({ name: "Vermont Electric Cooperative" }), {});
-
-      expect(res.status).toBe(401);
-      const body = await res.json();
-      expect(body.error.code).toBe("UNAUTHORIZED");
-      // Never echo the key back.
-      expect(JSON.stringify(body)).not.toContain("cg_test_key");
-      // Internal routes must not be edge-cached.
-      expect(res.headers.get("Cache-Control")).toBe("no-store");
-    });
-
-    it("returns 401 when Authorization header is missing", async () => {
-      vi.mocked(validateApiKey).mockResolvedValue({
-        valid: false,
-        error: "Missing Authorization header",
-      });
-
-      const req = new Request("https://commongrid.info/api/internal/resolve-utility", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "Vermont Electric Cooperative" }),
-      });
-      const res = await POST(req, {});
-
-      expect(res.status).toBe(401);
-    });
-  });
-
   // --- Validation / 400 branch -------------------------------------------
   describe("request validation", () => {
-    beforeEach(() => {
-      vi.mocked(validateApiKey).mockResolvedValue({
-        valid: true,
-        identity: "test-key",
-      });
-    });
-
     it("returns 400 when body is not valid JSON", async () => {
-      const req = makeRequest("{not-json");
-      const res = await POST(req, {});
+      const res = await POST(makeRequest("{not-json"));
       expect(res.status).toBe(400);
       const body = await res.json();
       expect(body.error.code).toBe("BAD_REQUEST");
     });
 
     it("returns 400 when name is missing", async () => {
-      const res = await POST(makeRequest({}), {});
+      const res = await POST(makeRequest({}));
       expect(res.status).toBe(400);
       const body = await res.json();
       expect(body.error.code).toBe("VALIDATION_ERROR");
@@ -119,22 +75,36 @@ describe("POST /api/internal/resolve-utility", () => {
     });
 
     it("returns 400 when name is empty string", async () => {
-      const res = await POST(makeRequest({ name: "   " }), {});
+      const res = await POST(makeRequest({ name: "   " }));
       expect(res.status).toBe(400);
       const body = await res.json();
       expect(body.error.code).toBe("VALIDATION_ERROR");
     });
 
     it("returns 400 when name exceeds 200 chars", async () => {
-      const res = await POST(makeRequest({ name: "x".repeat(201) }), {});
+      const res = await POST(makeRequest({ name: "x".repeat(201) }));
       expect(res.status).toBe(400);
       const body = await res.json();
       expect(body.error.code).toBe("VALIDATION_ERROR");
       expect(body.error.message).toMatch(/200/);
     });
 
-    it("returns 400 when state is not 2 chars", async () => {
-      const res = await POST(makeRequest({ name: "Vermont Electric", state: "VTT" }), {});
+    it("returns 400 when state is not a 2-letter code", async () => {
+      const res = await POST(makeRequest({ name: "Vermont Electric", state: "VTT" }));
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error.code).toBe("VALIDATION_ERROR");
+    });
+
+    it("returns 400 when domain contains whitespace or '@'", async () => {
+      const res = await POST(makeRequest({ name: "x", domain: "foo@bar.com" }));
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error.code).toBe("VALIDATION_ERROR");
+    });
+
+    it("returns 400 when confidence_threshold is out of range", async () => {
+      const res = await POST(makeRequest({ name: "x", confidence_threshold: 2 }));
       expect(res.status).toBe(400);
       const body = await res.json();
       expect(body.error.code).toBe("VALIDATION_ERROR");
@@ -143,25 +113,18 @@ describe("POST /api/internal/resolve-utility", () => {
 
   // --- Happy path / 200 branch -------------------------------------------
   describe("happy path", () => {
-    beforeEach(() => {
-      vi.mocked(validateApiKey).mockResolvedValue({
-        valid: true,
-        identity: "test-key",
-      });
-    });
-
-    it("returns the resolver JSONB payload verbatim (modulo normalization)", async () => {
+    it("returns the public contract shape (canonical_name, candidates.score)", async () => {
       const fakeResult = {
         eia_id: "19791",
         confidence: 1.0,
-        match_source: "exact",
+        match_source: "override",
         candidates: [
           {
             eia_id: "19791",
             name: "Vermont Electric Cooperative",
-            jurisdiction: "VT",
             segment: "distribution",
-            score: 1.0,
+            state: "VT",
+            match_score: 1.0,
           },
         ],
         resolver_version: "1.0.0",
@@ -170,7 +133,7 @@ describe("POST /api/internal/resolve-utility", () => {
       const execute = vi.fn().mockResolvedValue({ rows: [{ result: fakeResult }] });
       vi.mocked(getDb).mockReturnValue({ execute } as never);
 
-      const res = await POST(makeRequest({ name: "Vermont Electric Cooperative", state: "vt" }), {});
+      const res = await POST(makeRequest({ name: "Vermont Electric Cooperative", state: "vt" }));
 
       expect(res.status).toBe(200);
       expect(res.headers.get("Cache-Control")).toBe("no-store");
@@ -178,57 +141,59 @@ describe("POST /api/internal/resolve-utility", () => {
       expect(body).toMatchObject({
         eia_id: "19791",
         confidence: 1.0,
-        match_source: "exact",
+        match_source: "override",
+        canonical_name: "Vermont Electric Cooperative",
         resolver_version: "1.0.0",
       });
       expect(body.candidates).toHaveLength(1);
+      expect(body.candidates[0]).toMatchObject({
+        eia_id: "19791",
+        name: "Vermont Electric Cooperative",
+        score: 1.0,
+        segment: "distribution",
+        state: "VT",
+      });
       expect(execute).toHaveBeenCalledTimes(1);
     });
 
     it("uppercases the state parameter before passing it to the resolver", async () => {
-      const execute = vi.fn().mockResolvedValue({ rows: [{ result: { ...defaultResolverResult() } }] });
+      const execute = vi.fn().mockResolvedValue({ rows: [{ result: defaultResolverResult() }] });
       vi.mocked(getDb).mockReturnValue({ execute } as never);
 
-      await POST(makeRequest({ name: "Vermont Electric", state: "vt" }), {});
+      await POST(makeRequest({ name: "Vermont Electric", state: "vt" }));
 
       expect(execute).toHaveBeenCalledTimes(1);
-      // Drizzle's `sql` tag produces an internal SQL builder whose params
-      // live in a non-public field. Serialize it to JSON and assert the
-      // uppercase code is in there and the lowercase input is not.
       const callArg = execute.mock.calls[0]?.[0];
       const serialized = JSON.stringify(callArg);
       expect(serialized).toContain("VT");
-      // Only the lowercased state input should be absent; the lowercase
-      // substring appears inside "Vermont" so check as an explicit param
-      // value rather than substring.
       expect(serialized).not.toMatch(/"vt"/);
     });
 
-    it("returns the DEFAULT_RESULT shape when the DB yields no rows", async () => {
+    it("returns the default shape when the DB yields no rows", async () => {
       const execute = vi.fn().mockResolvedValue({ rows: [] });
       vi.mocked(getDb).mockReturnValue({ execute } as never);
 
-      const res = await POST(makeRequest({ name: "Nonexistent Utility" }), {});
+      const res = await POST(makeRequest({ name: "Nonexistent Utility" }));
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body).toEqual({
         eia_id: null,
         confidence: 0,
         match_source: "none",
+        canonical_name: null,
         candidates: [],
         resolver_version: "1.0.0",
       });
     });
 
     it("coerces string confidence from JSONB into a number", async () => {
-      // Some drivers return pg JSONB numerics as strings — cover that.
       const execute = vi.fn().mockResolvedValue({
         rows: [
           {
             result: {
               eia_id: "19791",
               confidence: "0.92",
-              match_source: "fuzzy_name_state",
+              match_source: "fuzzy",
               candidates: [],
               resolver_version: "1.0.0",
             },
@@ -237,18 +202,52 @@ describe("POST /api/internal/resolve-utility", () => {
       });
       vi.mocked(getDb).mockReturnValue({ execute } as never);
 
-      const res = await POST(makeRequest({ name: "Vermont Electric" }), {});
+      const res = await POST(makeRequest({ name: "Vermont Electric" }));
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(typeof body.confidence).toBe("number");
       expect(body.confidence).toBeCloseTo(0.92, 5);
     });
+
+    it("maps legacy match_source values to the public contract vocabulary", async () => {
+      const execute = vi.fn().mockResolvedValue({
+        rows: [
+          {
+            result: {
+              eia_id: "123",
+              confidence: 0.95,
+              match_source: "exact_name_match",
+              candidates: [{ eia_id: "123", name: "Acme Co", match_score: 0.95 }],
+              resolver_version: "1.0.0",
+            },
+          },
+        ],
+      });
+      vi.mocked(getDb).mockReturnValue({ execute } as never);
+
+      const res = await POST(makeRequest({ name: "Acme" }));
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.match_source).toBe("exact");
+    });
+
+    it("stitches name + domain when name doesn't already look like an email", async () => {
+      const execute = vi.fn().mockResolvedValue({ rows: [{ result: defaultResolverResult() }] });
+      vi.mocked(getDb).mockReturnValue({ execute } as never);
+
+      await POST(makeRequest({ name: "Duke Energy", domain: "duke-energy.com" }));
+
+      const callArg = execute.mock.calls[0]?.[0];
+      const serialized = JSON.stringify(callArg);
+      // The effective name handed to the resolver should contain the @-form.
+      expect(serialized).toContain("Duke Energy@duke-energy.com");
+    });
   });
 
   // --- Method gate -------------------------------------------------------
   describe("method gate", () => {
-    it("GET is rejected with 405", async () => {
-      const mod = await import("@/app/api/internal/resolve-utility/route");
+    it("GET is rejected with 405 and Allow: POST", async () => {
+      const mod = await import("@/app/api/v1/utilities/resolve/route");
       const res = await mod.GET();
       expect(res.status).toBe(405);
       expect(res.headers.get("Allow")).toBe("POST");

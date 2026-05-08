@@ -1,9 +1,10 @@
 /**
  * DB-backed smoke test for the global /search dispatcher.
  *
- * Regression guard for ALL-731 (Relay bug #3). If `/search?q=tri-state`
- * stops returning Tri-State G&T, this test fires in CI (when a DB URL is
- * provisioned) and blocks the merge.
+ * Regression guard: if `/search?q=tri-state` stops returning Tri-State G&T,
+ * this test fires in CI (when a DB URL is provisioned) and blocks the merge.
+ * Hyphenated slugs like "tri-state" are a known rough spot for
+ * tsvector-only matching, so this exercise keeps the ILIKE fallback honest.
  *
  * Gated on `process.env.DATABASE_URL`. Local runs without a DB skip cleanly.
  * To run locally:

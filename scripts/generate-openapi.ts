@@ -28,6 +28,7 @@ import type { JsonSchema } from "./openapi/schema-from-drizzle";
 
 function buildResponses(ep: EndpointDef): JsonSchema {
   const has404 = ep.has404 ?? ep.path.includes("{");
+  const has400 = ep.has400 ?? ep.method === "post";
 
   const content200 = (() => {
     switch (ep.response.kind) {
@@ -86,6 +87,17 @@ function buildResponses(ep: EndpointDef): JsonSchema {
     },
   };
 
+  if (has400) {
+    responses["400"] = {
+      description: "Request validation failed",
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/ErrorResponse" },
+        },
+      },
+    };
+  }
+
   if (has404) {
     responses["404"] = {
       description: "Resource not found",
@@ -135,12 +147,26 @@ function buildSpec(): JsonSchema {
   const paths: Record<string, JsonSchema> = {};
   for (const ep of ENDPOINTS) {
     const parameters = (ep.parameters ?? []).map((p) => buildParameter(p as ParamDef | JsonSchema));
+    const requestBody = ep.requestBody
+      ? {
+          ...(ep.requestBody.description ? { description: ep.requestBody.description } : {}),
+          required: ep.requestBody.required ?? true,
+          content: {
+            "application/json": {
+              schema: ep.requestBody.schema,
+              ...(ep.requestBody.example !== undefined ? { example: ep.requestBody.example } : {}),
+            },
+          },
+        }
+      : undefined;
+
     const operation: JsonSchema = {
       operationId: ep.operationId,
       summary: ep.summary,
       ...(ep.description ? { description: ep.description } : {}),
       tags: [ep.tag],
       ...(parameters.length > 0 ? { parameters } : {}),
+      ...(requestBody ? { requestBody } : {}),
       responses: buildResponses(ep),
     };
 

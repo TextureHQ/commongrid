@@ -6,7 +6,8 @@
  *
  * What we're protecting against (the bugs this guards against):
  *   • Regressing `searchFromDb` back to a stub (all results empty) —
- *     see CommonGrid Bug #3 / ALL-731 (`/search?q=tri-state` returned 0 rows).
+ *     `/search?q=tri-state` returned 0 rows before the tsvector backend
+ *     was wired up.
  *   • Dropping the ILIKE fallback (tsvector stemming alone misses some
  *     literal substring matches like hyphenated slugs).
  *   • Using `plainto_tsquery` (chokes on punctuation) instead of

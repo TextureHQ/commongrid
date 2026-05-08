@@ -1,11 +1,11 @@
 /**
  * Regression tests for the Utility schema in the generated OpenAPI spec.
  *
- * Guards against two failure modes that bit us in ALL-739:
+ * Guards against two failure modes:
  *
  *   1. Field drop-off — someone refactors the Drizzle schema or
  *      `scripts/openapi/resources.ts` and the public spec silently loses
- *      fields that external integrators (e.g. Relay, Morgan) depend on.
+ *      fields that external integrators depend on.
  *
  *   2. Spec <-> live API drift — the committed spec documents a shape
  *      the running `/api/v1/utilities/{slug}` handler no longer returns.
@@ -16,9 +16,9 @@
  *
  *       RUN_LIVE_OPENAPI_PARITY=1 npx vitest run scripts/openapi/openapi-utility-schema.test.ts
  *
- * Origin: ALL-739 — spec went from 38 → out-of-date after new utility
- * fields landed; we now auto-generate from Drizzle, but want a canary so
- * future regressions fail loud instead of silent.
+ * Origin: the spec went out-of-date after new utility fields landed; we
+ * now auto-generate from Drizzle, but want a canary so future regressions
+ * fail loud instead of silent.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -75,7 +75,7 @@ const REQUIRED_UTILITY_FIELDS = [
   "segment",
   "status",
   "jurisdiction",
-  // Operational metrics (the ones Relay and partners filter on)
+  // Operational metrics — the primary filter/sort targets for integrators
   "customerCount",
   "peakDemandMw",
   "winterPeakDemandMw",
