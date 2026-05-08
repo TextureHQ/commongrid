@@ -120,12 +120,34 @@ else
 fi
 
 echo ""
-echo "=== Step 11: Cleanup temp files ==="
+echo "=== Step 11: Prepare substation GeoJSON ==="
+node "$SCRIPT_DIR/prepare-substations-geojson.mjs"
+
+echo ""
+echo "=== Step 12: Generate substation tiles with tippecanoe ==="
+if [ -f "$ROOT_DIR/.tmp-substations.geojson" ]; then
+  tippecanoe \
+    --output="$OUT_DIR/substations.pmtiles" \
+    --force \
+    --name="CommonGrid Substations" \
+    --layer=substations \
+    --minimum-zoom=0 \
+    --maximum-zoom=12 \
+    --drop-densest-as-needed \
+    --extend-zooms-if-still-dropping \
+    "$ROOT_DIR/.tmp-substations.geojson"
+else
+  echo "⚠️  No substation GeoJSON found — skipping tile generation."
+fi
+
+echo ""
+echo "=== Step 13: Cleanup temp files ==="
 rm -f "$ROOT_DIR/.tmp-territories.geojson" \
       "$ROOT_DIR/.tmp-power-plants.geojson" \
       "$ROOT_DIR/.tmp-transmission-lines.geojson" \
       "$ROOT_DIR/.tmp-ev-charging.geojson" \
-      "$ROOT_DIR/.tmp-pricing-nodes.geojson"
+      "$ROOT_DIR/.tmp-pricing-nodes.geojson" \
+      "$ROOT_DIR/.tmp-substations.geojson"
 
 echo ""
 echo "=== Results ==="
@@ -143,6 +165,10 @@ if [ -f "$OUT_DIR/ev-charging.pmtiles" ]; then
 fi
 if [ -f "$OUT_DIR/pricing-nodes.pmtiles" ]; then
   pmtiles show "$OUT_DIR/pricing-nodes.pmtiles"
+  echo ""
+fi
+if [ -f "$OUT_DIR/substations.pmtiles" ]; then
+  pmtiles show "$OUT_DIR/substations.pmtiles"
   echo ""
 fi
 ls -lh "$OUT_DIR"/*.pmtiles
