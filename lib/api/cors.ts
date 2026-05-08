@@ -1,8 +1,17 @@
 /**
  * CORS configuration for CommonGrid API routes.
  *
- * Production:   Access-Control-Allow-Origin: https://commongrid.info
- * Development:  Access-Control-Allow-Origin: *
+ * Read endpoints (GET / HEAD / OPTIONS): `Access-Control-Allow-Origin: *`.
+ * The public v1 API is read-only for anonymous clients and is explicitly
+ * meant to be consumed from third-party applications, research tools,
+ * mapping frontends, and server-to-server integrations. Wildcard CORS
+ * matches the documented "public, cacheable, any consumer" posture.
+ *
+ * Write endpoints (POST / PATCH / DELETE): scoped to `https://commongrid.info`.
+ * Community contributions + moderation flows ship through first-party UI
+ * paths and go through Clerk session auth rather than CORS; allowing
+ * cross-origin writes would just invite accidental misuse without
+ * unlocking a legitimate use case.
  *
  * Handles OPTIONS preflight automatically when used via withCors().
  *
@@ -15,14 +24,34 @@ import type { RouteContext, RouteHandler } from "./types";
 // Headers
 // ---------------------------------------------------------------------------
 
-/** Returns the CORS headers that must be present on every API response. */
+/**
+ * Returns the CORS headers that must be present on every API response.
+ *
+ * Read responses (`*` in the Origin header) are safe to share across origins.
+ * Write origins are intentionally not widened — see the module comment.
+ */
 export function corsHeaders(): Record<string, string> {
-  const origin = process.env.NODE_ENV === "production" ? "https://commongrid.info" : "*";
-
   return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    Vary: "Origin",
+  };
+}
+
+/**
+ * Returns CORS headers for routes that accept writes from our own first-party UI.
+ *
+ * Used by contribution + moderation + follows + discussions routes — anywhere
+ * POST/PATCH/DELETE is exposed. Browser writes from third-party origins are
+ * intentionally rejected.
+ */
+export function corsWriteHeaders(): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": "https://commongrid.info",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    Vary: "Origin",
   };
 }
 
