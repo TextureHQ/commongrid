@@ -79,6 +79,15 @@ const ENTITY_CARDS = [
     countKey: "pricingNodes" as const,
     tags: ["LMP", "DA / RT"],
   },
+  {
+    num: "09",
+    cat: "Infrastructure",
+    href: "/substations",
+    name: "Substations",
+    desc: "Step-up, step-down, and switching substations \u2014 voltage class, owner, and interconnected assets normalized from OpenStreetMap.",
+    countKey: "substations" as const,
+    tags: ["OSM", "\u226569 kV"],
+  },
 ];
 
 const LEDGER_ROWS = [
@@ -164,6 +173,7 @@ const ENDPOINT_DEFS = [
   { path: "/transmission-lines", countKey: "transmissionLines" as const, suffix: "lines" },
   { path: "/ev-stations", countKey: "evStations" as const, suffix: "stations" },
   { path: "/pricing-nodes", countKey: "pricingNodes" as const, suffix: "nodes" },
+  { path: "/substations", countKey: "substations" as const, suffix: "substations" },
   { path: "/programs", countKey: "programs" as const, suffix: "programs" },
   { path: "/search", desc: "full-text" },
   { path: "/changelog", desc: "every edit, attributed" },
@@ -200,6 +210,7 @@ export default function LandingPage() {
     transmissionLines: formatCount(counts.transmissionLines),
     evStations: formatCount(counts.evStations),
     pricingNodes: formatCount(counts.pricingNodes),
+    substations: formatCount(counts.substations),
   };
 
   return (
@@ -928,7 +939,7 @@ export default function LandingPage() {
           <div className="section-head">
             <div>
               <div className="kicker">01 &middot; Browse</div>
-              <h2 className="section-title">Eight entry points, one connected graph.</h2>
+              <h2 className="section-title">Nine entry points, one connected graph.</h2>
             </div>
             <p className="section-desc">
               Every utility links to its territory, every territory to its operator, every plant to its interconnection.
@@ -1331,6 +1342,7 @@ export default function LandingPage() {
               <Link href="/explore">Territories</Link>
               <Link href="/grid-operators">Operators</Link>
               <Link href="/power-plants">Power plants</Link>
+              <Link href="/substations">Substations</Link>
               <Link href="/ev-charging">EV charging</Link>
               <Link href="/changelog">Full changelog</Link>
             </div>

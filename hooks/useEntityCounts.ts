@@ -13,6 +13,7 @@ export interface EntityCounts {
   pricingNodes: number | null;
   programs: number | null;
   territories: number | null;
+  substations: number | null;
 }
 
 export const COUNT_ENDPOINTS: { key: keyof EntityCounts; path: string }[] = [
@@ -26,6 +27,7 @@ export const COUNT_ENDPOINTS: { key: keyof EntityCounts; path: string }[] = [
   { key: "pricingNodes", path: "/api/v1/pricing-nodes?limit=1" },
   { key: "programs", path: "/api/v1/programs?limit=1" },
   { key: "territories", path: "/api/v1/territories?limit=1" },
+  { key: "substations", path: "/api/v1/substations?limit=1" },
 ];
 
 export function useEntityCounts(): EntityCounts {
@@ -40,6 +42,7 @@ export function useEntityCounts(): EntityCounts {
     pricingNodes: null,
     programs: null,
     territories: null,
+    substations: null,
   });
 
   useEffect(() => {
