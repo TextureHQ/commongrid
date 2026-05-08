@@ -5,6 +5,7 @@
  * map, ownership, voltage info, connected transmission lines, etc.
  */
 
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -13,16 +14,27 @@ interface Props {
 }
 
 /**
- * Build an absolute URL suitable for server-side fetches against our own API.
+ * Build an absolute URL for server-side fetches against our own API.
  *
- * Preference order:
- *   1. `NEXT_PUBLIC_API_URL` (explicit override, e.g. for preview environments)
- *   2. `VERCEL_URL` (Vercel's per-deployment hostname, no scheme)
- *   3. `localhost:3000` fallback for local dev
+ * Vercel's default `VERCEL_URL` (the deployment-specific hostname) has bot
+ * protection enabled by default and is NOT the public alias (`commongrid.info`),
+ * so fetching it from within a server component can redirect / auth-fail.
+ *
+ * Instead, derive the origin from the incoming request headers (set by Vercel's
+ * edge network). Fall back to `NEXT_PUBLIC_API_URL` (explicit override) or
+ * localhost for local dev.
  */
-function buildInternalApiUrl(path: string): string {
+async function buildInternalApiUrl(path: string): Promise<string> {
   const explicit = process.env.NEXT_PUBLIC_API_URL;
   if (explicit) return new URL(path, explicit).toString();
+  try {
+    const hdrs = await headers();
+    const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host");
+    const proto = hdrs.get("x-forwarded-proto") ?? "https";
+    if (host) return new URL(path, `${proto}://${host}`).toString();
+  } catch {
+    // `headers()` is only callable in request-scoped contexts; fall through.
+  }
   const vercel = process.env.VERCEL_URL;
   if (vercel) return new URL(path, `https://${vercel}`).toString();
   return new URL(path, "http://localhost:3000").toString();
@@ -30,7 +42,7 @@ function buildInternalApiUrl(path: string): string {
 
 async function SubstationDetailContent({ slug }: { slug: string }) {
   try {
-    const url = buildInternalApiUrl(`/api/v1/substations/${slug}`);
+    const url = await buildInternalApiUrl(`/api/v1/substations/${slug}`);
     const response = await fetch(url, { next: { revalidate: 86400 } });
 
     if (!response.ok) {
@@ -233,7 +245,7 @@ async function SubstationDetailContentWrapper({ params }: Props) {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   try {
-    const url = buildInternalApiUrl(`/api/v1/substations/${slug}`);
+    const url = await buildInternalApiUrl(`/api/v1/substations/${slug}`);
     const response = await fetch(url);
     if (response.ok) {
       const result = await response.json();
