@@ -42,6 +42,12 @@
  *                       the field, it will never leak through the public
  *                       API. Harmless no-op for current data.
  *
+ *   deprecationReason — Admin-curated lifecycle signal recorded when a
+ *                       utility is soft-deleted (e.g. merger, EIA-id retired).
+ *                       Surfaced to server-to-server consumers via the
+ *                       dedicated `commongrid.v_deprecated_utilities` view
+ *                       (M10), never inline on the public Utility resource.
+ *
  * Geometry fields are also excluded from the default resource response —
  * geometry belongs on dedicated `/geometry` endpoints, not inline on every
  * list/detail row (they'd bloat the payload and trash caching).
@@ -63,6 +69,9 @@ export const INTERNAL_FIELDS = new Set<string>([
   // Index / storage artifacts — not useful public data.
   "searchVector",
   "notionPageId",
+
+  // Lifecycle signal — surfaced via commongrid.v_deprecated_utilities, not inline.
+  "deprecationReason",
 
   // Geometry — served via dedicated /geometry endpoints, not inline.
   "geography",
