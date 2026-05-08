@@ -235,6 +235,99 @@ export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
       },
     },
   },
+  UtilityGeometryFeatureCollection: {
+    type: "object",
+    description:
+      "GeoJSON FeatureCollection returned by `/utilities/{slug}/geometry`. Always 200 when the utility exists; `metadata.geometry_status` tells the caller whether the polygon is loaded or still pending backfill.",
+    required: ["type", "features", "metadata"],
+    properties: {
+      type: { type: "string", enum: ["FeatureCollection"] },
+      features: {
+        type: "array",
+        description:
+          "Zero or one `Feature<MultiPolygon>`. Empty when `metadata.geometry_status` is `pending_backfill`; contains one feature when `loaded`.",
+        items: {
+          type: "object",
+          required: ["type", "geometry", "properties"],
+          properties: {
+            type: { type: "string", enum: ["Feature"] },
+            geometry: {
+              type: "object",
+              description: "GeoJSON MultiPolygon geometry.",
+              required: ["type", "coordinates"],
+              properties: {
+                type: { type: "string", enum: ["MultiPolygon"] },
+                coordinates: {
+                  type: "array",
+                  items: {
+                    type: "array",
+                    items: {
+                      type: "array",
+                      items: {
+                        type: "array",
+                        items: { type: "number" },
+                        minItems: 2,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            properties: {
+              type: "object",
+              properties: {
+                utility_slug: { type: "string" },
+                utility_name: { type: "string" },
+                eia_id: { type: "string" },
+                region_slug: { type: "string", nullable: true },
+                territory_id: { type: "string", nullable: true },
+              },
+            },
+          },
+        },
+      },
+      metadata: {
+        type: "object",
+        required: ["utility_slug", "eia_id", "geometry_status"],
+        properties: {
+          utility_slug: { type: "string" },
+          utility_name: { type: "string" },
+          eia_id: { type: "string" },
+          region_slug: { type: "string", nullable: true },
+          territory_id: { type: "string", nullable: true },
+          geometry_status: {
+            type: "string",
+            enum: ["loaded", "pending_backfill"],
+            description:
+              "`loaded` when the territory polygon is available; `pending_backfill` when the utility exists in the registry but its polygon has not been ingested yet (known data gap).",
+          },
+          source: {
+            type: "string",
+            nullable: true,
+            description:
+              "Data source for the polygon (e.g. `HIFLD`, `EIA-861`). `null` when `geometry_status` is `pending_backfill`.",
+          },
+          source_url: { type: "string", nullable: true },
+          area_sq_km: { type: "number", nullable: true },
+          updated_at: {
+            type: "string",
+            format: "date-time",
+            nullable: true,
+            description: "When the territory row was last updated. Present on `loaded` responses.",
+          },
+        },
+      },
+    },
+  },
+  UtilityNotFoundError: {
+    type: "object",
+    description: "Flat 404 shape returned when a utility slug is not in the registry.",
+    required: ["error", "slug"],
+    properties: {
+      error: { type: "string", enum: ["utility_not_found"] },
+      slug: { type: "string" },
+    },
+  },
   SearchResults: {
     type: "object",
     description: "Grouped search results keyed by entity type (camelCase plural).",
