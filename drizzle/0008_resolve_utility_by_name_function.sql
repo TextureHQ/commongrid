@@ -1,5 +1,5 @@
 -- Migration: Add fn_resolve_utility_by_name SQL function (M3)
--- Spec: TextureHQ/mono#10142 (specs/relay/commongrid-nisc-matcher.md)
+-- Public server-to-server utility matching contract.
 -- SECURITY INVOKER function with pinned search_path
 -- Implements: override-lookup → exact normalized name → domain match → trigram fuzzy cascade
 -- Returns: contract JSONB with {eia_id, confidence, match_source, candidates[top 5], resolver_version}

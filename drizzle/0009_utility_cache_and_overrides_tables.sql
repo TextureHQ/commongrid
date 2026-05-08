@@ -1,5 +1,5 @@
 -- Migration: Add utility_resolver_cache + utility_name_manual_overrides tables (M4)
--- Spec: TextureHQ/mono#10142 (specs/relay/commongrid-nisc-matcher.md)
+-- Public server-to-server utility matching contract.
 -- Creates two admin tables to support M3 fn_resolve_utility_by_name:
 --   1. utility_name_manual_overrides: admin-curated mappings for ambiguous/new utilities
 --   2. utility_resolver_cache: read-only cache keyed by sha256(lower(name)|state|domain)

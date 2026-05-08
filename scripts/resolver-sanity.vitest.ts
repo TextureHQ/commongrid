@@ -1,6 +1,6 @@
 /**
  * M5: Resolver sanity fixture + CI test
- * Spec: TextureHQ/mono#10142 (specs/relay/commongrid-nisc-matcher.md)
+ * Public server-to-server utility matching contract.
  *
  * Fixture: ~30 known co-op names mapped to expected eia_id
  * Test assertion: >= 90% recall at confidence >= 0.90, 0 false positives at that threshold
