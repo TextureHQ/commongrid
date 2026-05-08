@@ -84,6 +84,13 @@ export const utilities = pgTable(
     lockedStatus: text("locked_status"),
 
     // Provenance & audit
+    /**
+     * Optional human-readable reason this utility was deprecated / soft-deleted.
+     * Surfaced via commongrid.v_deprecated_utilities for downstream lifecycle polling.
+     * See specs/relay/commongrid-nisc-matcher.md M10.
+     */
+    deprecationReason: text("deprecation_reason"),
+
     source: text("source"),
     sourceUrl: text("source_url"),
     submittedBy: text("submitted_by"),
