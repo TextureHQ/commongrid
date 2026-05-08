@@ -113,7 +113,8 @@ CREATE OR REPLACE FUNCTION commongrid.fn_resolve_nisc_company(
 ) RETURNS jsonb
 LANGUAGE plpgsql
 STABLE
-SECURITY DEFINER
+SECURITY INVOKER                    -- Talos review: caller already has needed SELECTs via the view + function path; DEFINER widens blast radius for no gain.
+SET search_path = commongrid, public, pg_temp
 AS $$
 DECLARE
   v_result jsonb;
@@ -124,8 +125,15 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION commongrid.fn_resolve_nisc_company(text, text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION commongrid.fn_resolve_nisc_company(text, text, text) TO relay_crm_sync;
 ```
+
+**INVOKER vs DEFINER hardening** (Talos review, adopted):
+- `SECURITY INVOKER` — function runs as caller; grants are explicit and auditable.
+- `SET search_path` pinned — a compromised caller can't shadow `commongrid.*` or `public.*` objects with same-named objects in their own schema.
+- `REVOKE ALL ... FROM PUBLIC` then grant narrowly — default-deny.
+- CI test asserts the function body has no `INSERT`/`UPDATE`/`DELETE`/`COPY` statements (regex over `pg_proc.prosrc`). Fails the build if anyone adds a write path.
 
 Companion idempotent-re-run cache:
 
@@ -175,8 +183,12 @@ CREATE ROLE relay_crm_sync NOLOGIN;
 GRANT USAGE ON SCHEMA commongrid TO relay_crm_sync;
 GRANT EXECUTE ON FUNCTION commongrid.fn_resolve_nisc_company(text, text, text) TO relay_crm_sync;
 GRANT SELECT ON commongrid.nisc_resolver_cache TO relay_crm_sync;
-GRANT SELECT ON public.utilities TO relay_crm_sync;  -- read-only, no UPDATE/INSERT/DELETE
 GRANT SELECT ON commongrid.v_crm_org_enrichment TO relay_crm_sync;
+GRANT SELECT ON commongrid.enrichment_schema TO relay_crm_sync;
+
+-- Explicitly NOT granted (Talos review):
+--   public.utilities                 — caller only needs the view + function, not the raw table.
+--   commongrid.nisc_manual_overrides — admin-only; relay_crm_sync is a consumer, not an editor.
 
 -- Login user for Lyra's job
 CREATE USER relay_crm_sync_user WITH PASSWORD '<stored in 1Password: Fleet Secrets/CommonGrid Relay Sync Role>';
@@ -208,7 +220,7 @@ SELECT
   u.name                                    AS name,
   u.eia_name                                AS eia_name,
   u.short_name                              AS dba,
-  u.segment                                 AS ownership_type,       -- distribution|transmission|generation|... (segment is the closest field today)
+  u.segment                                 AS segment,              -- Talos review: renamed from ownership_type alias — semantic honesty. GraphQL resolver on Lyra's side derives ownershipType from segment for v1.
   NULL::text                                AS naics,                -- reserved; not currently populated
   u.jurisdiction                            AS state,
   u.website                                 AS website,
@@ -223,15 +235,34 @@ SELECT
       THEN 'https://commongrid.info/api/utilities/' || u.eia_id || '/territory.geojson'
     ELSE NULL
   END                                       AS territory_geojson_url,
-  1                                         AS schema_version,        -- bump on breaking changes
   u.updated_at                              AS updated_at
 FROM public.utilities u
 WHERE u.deleted_at IS NULL
   AND u.status = 'active'
-  AND u.eia_id IS NOT NULL;                                          -- require EIA ID so CRM always has a stable key
+  AND u.eia_id IS NOT NULL;                                          -- require EIA ID so CRM always has a stable key (v1 scope only — see below)
 
 GRANT SELECT ON commongrid.v_crm_org_enrichment TO relay_crm_sync;
 ```
+
+**Versioning sidecar — replaces inline `schema_version`** (Talos review, adopted):
+
+```sql
+CREATE TABLE commongrid.enrichment_schema (
+  id                smallint PRIMARY KEY DEFAULT 1 CHECK (id = 1),  -- singleton
+  version_major     int NOT NULL,
+  version_minor     int NOT NULL,
+  column_manifest   jsonb NOT NULL,      -- [{name, type, nullable}, ...] matching the current view
+  effective_at      timestamptz NOT NULL DEFAULT now(),
+  notes             text
+);
+INSERT INTO commongrid.enrichment_schema (id, version_major, version_minor, column_manifest, notes)
+VALUES (1, 1, 0, '[...]'::jsonb, 'initial v1 — see specs/relay/commongrid-nisc-matcher.md')
+ON CONFLICT (id) DO NOTHING;
+```
+
+Lyra's sync job reads `SELECT version_major, version_minor, column_manifest FROM commongrid.enrichment_schema;` on startup, compares against its pinned major, and fails loud on mismatch. `column_manifest` lets the sync do a structural dry-check — asserts each pinned column still exists with the expected type before the first row is copied. Catches silent column renames.
+
+**On `eia_id IS NOT NULL` filter** (Talos review): correct for v1 because every `NiscCompanyOrgMap.eiaUtilityId` must resolve to a canonical key. It *won't* generalize — some CommonGrid utilities (new entrants, small municipals below EIA reporting threshold) lack EIA IDs. V2 concern: add a Texture-internal stable ID on `utilities` and expose both in the view.
 
 ### Schema-version policy
 
@@ -256,10 +287,12 @@ Atlas's org-detail page needs to render the service territory map panel. Two del
 
 ```
 GET https://commongrid.info/api/utilities/{eia_id}/territory.geojson
+GET https://commongrid.info/api/utilities/slug/{slug}/territory.geojson   # alias, same response (Talos review)
 ```
 
 - Public, no auth, `Cache-Control: public, max-age=86400, stale-while-revalidate=86400`.
-- Returns a single `Feature` with `geometry: Polygon|MultiPolygon` and `properties: { eia_id, name, jurisdiction, source, updated_at }`.
+- Returns a single `Feature` with `geometry: Polygon|MultiPolygon` and `properties: { eia_id, commongrid_utility_slug, name, jurisdiction, source, updated_at }`.
+- **Slug alias** (Talos review): keying Relay bookmarks by Texture slug guards against EIA reassignments. `utilities.id` is an immutable Texture slug and the right durable identifier. M7 ships the `eia_id` path first; slug alias follows as M7.1 (non-blocking).
 - 404 if utility has no territory. Atlas should handle gracefully (many small cos don't have boundaries).
 - Size: typical single-state co-op ~3–30 KB gzipped; large IOUs (e.g. PG&E) up to ~500 KB. Use PMTiles for the large ones.
 
@@ -299,8 +332,10 @@ All in `TextureHQ/commongrid`. Branch prefix `meridian/`. Each ships green CI, C
 | M5 | **Resolver sanity fixture + CI test** — fixture with ~30 known NISC co-op names + expected `eia_id`; pytest/vitest asserts ≥ 90% recall at confidence ≥ 0.90 | Trust in M3 | Test script |
 | M6 | **HTTP endpoint `POST /api/internal/resolve-utility`** — Clerk fleet-token auth, wraps M3, rate-limited | Lyra steady-state cron | Next.js route handler |
 | M7 | **Territory GeoJSON endpoint `/api/utilities/{eia_id}/territory.geojson`** | Atlas org map panel | Next.js route handler + caching |
-| M8 | **PMTiles utility-territories tile** — extend existing tile build to include per-territory `eia_id`; publish to `commongrid.info/tiles/utility-territories.pmtiles` | Atlas (optional, can ship after GeoJSON) | Tippecanoe build + CDN upload |
+| M7.1 | **Slug-alias route** `/api/utilities/slug/{slug}/territory.geojson` — Talos review; guards Relay bookmarks against EIA reassignments | Follow-up to M7 | Next.js route handler (non-blocking) |
+| M8 | **PMTiles utility-territories tile** — extend existing tile build to include per-territory `eia_id` + `slug`; publish to `commongrid.info/tiles/utility-territories.pmtiles` | Atlas (optional, can ship after GeoJSON) | Tippecanoe build + CDN upload |
 | M9 | **Public docs** — `DB-SCHEMA.md` section + `docs/relay-integration.md` covering A3/A5/A6 contract, schema-version policy, how CRM should pin | Onboarding / future consumers | Docs |
+| M10 | **`v_deprecated_eia_ids` view** — lists eia_ids that left `v_crm_org_enrichment` with reason (`soft_deleted` \| `merged_into:<new_eia_id>` \| `data_quality_reject`). Lyra joins against this instead of set-diffing. | Lyra's orphaned-mapping nightly signal | Migration (view) + backing table for merge tracking |
 
 Ordering for Lyra:
 - M1+M2+M3+M4 unblock her Step 6 (company→org mapping).
@@ -360,3 +395,11 @@ This spec is drafted against the review panel Victor assigned to Lyra (staff CRM
 ## Revision log
 
 - **v1 (2026-05-08)** — Initial draft, companion to Lyra's `nisc-to-crm-migration.md` v1. Open for review.
+- **v1.1 (2026-05-08)** — Talos review addressed:
+  - `fn_resolve_nisc_company`: `SECURITY DEFINER` → `SECURITY INVOKER` with pinned `search_path`, `REVOKE ALL FROM PUBLIC`, and a CI test asserting no write statements.
+  - `relay_crm_sync`: removed `GRANT SELECT ON public.utilities`. Role only has view + function + cache + schema-table access.
+  - `v_crm_org_enrichment`: renamed `ownership_type` alias → `segment` for semantic honesty; Lyra derives `ownershipType` in her GraphQL resolver.
+  - Added `commongrid.enrichment_schema` sidecar table replacing the inline `schema_version` column; includes `column_manifest` JSONB for structural dry-check.
+  - Territory endpoint: added slug-alias route `/api/utilities/slug/{slug}/territory.geojson` (M7.1) so Relay bookmarks survive EIA ID reassignments.
+  - Added M10 — `v_deprecated_eia_ids` view with structured departure reason, replacing set-diff on Lyra's side.
+  - Confirmed: batch HTTP endpoint deferred (Lyra's delta is <100 rows/day, well under ceiling).
