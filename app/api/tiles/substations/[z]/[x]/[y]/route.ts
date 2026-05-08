@@ -42,7 +42,7 @@ export async function GET(
         "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
       },
     });
-  } catch (error) {
+  } catch (_error) {
     // Tile not found or reading failed
     return new Response(null, {
       status: 404,
