@@ -12,10 +12,26 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+/**
+ * Build an absolute URL suitable for server-side fetches against our own API.
+ *
+ * Preference order:
+ *   1. `NEXT_PUBLIC_API_URL` (explicit override, e.g. for preview environments)
+ *   2. `VERCEL_URL` (Vercel's per-deployment hostname, no scheme)
+ *   3. `localhost:3000` fallback for local dev
+ */
+function buildInternalApiUrl(path: string): string {
+  const explicit = process.env.NEXT_PUBLIC_API_URL;
+  if (explicit) return new URL(path, explicit).toString();
+  const vercel = process.env.VERCEL_URL;
+  if (vercel) return new URL(path, `https://${vercel}`).toString();
+  return new URL(path, "http://localhost:3000").toString();
+}
+
 async function SubstationDetailContent({ slug }: { slug: string }) {
   try {
-    const url = new URL(`/api/v1/substations/${slug}`, process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000");
-    const response = await fetch(url.toString(), { next: { revalidate: 86400 } });
+    const url = buildInternalApiUrl(`/api/v1/substations/${slug}`);
+    const response = await fetch(url, { next: { revalidate: 86400 } });
 
     if (!response.ok) {
       return notFound();
@@ -27,12 +43,12 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
     // Format voltage display
     const voltageDisplay = [substation.minVoltageKv, substation.maxVoltageKv]
       .filter(Boolean)
-      .map((v) => `${v}kV`)
+      .map((v: number) => `${v}kV`)
       .join(" - ");
 
     // Attribution text for ODbL sources
     const attributionText =
-      substation.source === "OSM"
+      substation.source === "osm"
         ? "© OpenStreetMap contributors. Licensed under ODbL 1.0"
         : substation.source === "hybrid"
           ? "Data from EIA and OpenStreetMap contributors. OSM portions licensed under ODbL 1.0"
@@ -53,7 +69,7 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
                 fontSize: "12px",
               }}
             >
-              {substation.voltageClass || "unknown"}
+              {substation.voltageBand || "unknown"}
             </span>
             <span
               style={{
@@ -121,10 +137,10 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
                   <div>{voltageDisplay}</div>
                 </div>
               )}
-              {substation.voltageClass && (
+              {substation.voltageBand && (
                 <div>
                   <div style={{ color: "#666", fontSize: "12px" }}>Classification</div>
-                  <div style={{ textTransform: "capitalize" }}>{substation.voltageClass}</div>
+                  <div style={{ textTransform: "capitalize" }}>{substation.voltageBand}</div>
                 </div>
               )}
             </div>
@@ -132,24 +148,16 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
         </div>
 
         {/* Ownership card */}
-        {(substation.owner || substation.operator) && (
+        {substation.ownerName && (
           <div style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "16px", marginBottom: "32px" }}>
             <h2 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "12px", textTransform: "uppercase" }}>
               Ownership & Operations
             </h2>
             <div style={{ display: "grid", gap: "8px", fontSize: "14px" }}>
-              {substation.owner && (
-                <div>
-                  <div style={{ color: "#666", fontSize: "12px" }}>Owner</div>
-                  <div>{substation.owner}</div>
-                </div>
-              )}
-              {substation.operator && (
-                <div>
-                  <div style={{ color: "#666", fontSize: "12px" }}>Operator</div>
-                  <div>{substation.operator}</div>
-                </div>
-              )}
+              <div>
+                <div style={{ color: "#666", fontSize: "12px" }}>Owner</div>
+                <div>{substation.ownerName}</div>
+              </div>
             </div>
           </div>
         )}
@@ -225,14 +233,14 @@ async function SubstationDetailContentWrapper({ params }: Props) {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   try {
-    const url = new URL(`/api/v1/substations/${slug}`, process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000");
-    const response = await fetch(url.toString());
+    const url = buildInternalApiUrl(`/api/v1/substations/${slug}`);
+    const response = await fetch(url);
     if (response.ok) {
       const result = await response.json();
       const substation = result.data;
       return {
         title: `${substation.name} | Substations | CommonGrid`,
-        description: `${substation.name} substation in ${substation.state}. ${substation.voltageClass || "Voltage"} class, operated by ${substation.owner || "Unknown operator"}.`,
+        description: `${substation.name} substation in ${substation.state}. ${substation.voltageBand || "Voltage"} class, operated by ${substation.ownerName || "Unknown operator"}.`,
       };
     }
   } catch {
