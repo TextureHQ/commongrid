@@ -63,6 +63,8 @@ import { createHash } from "node:crypto";
 
 import type { Feature, FeatureCollection, MultiPolygon } from "geojson";
 
+import { corsHeaders } from "@/lib/api/cors";
+
 // ---------------------------------------------------------------------------
 // Response envelope types
 // ---------------------------------------------------------------------------
@@ -122,11 +124,20 @@ function utilityNotFoundResponse(slug: string): Response {
     {
       status: 404,
       headers: {
+        ...corsHeaders(),
         "Cache-Control": "public, max-age=60",
         "Content-Type": "application/json",
       },
     }
   );
+}
+
+// ---------------------------------------------------------------------------
+// OPTIONS preflight
+// ---------------------------------------------------------------------------
+
+export function OPTIONS(): Response {
+  return new Response(null, { status: 204, headers: corsHeaders() });
 }
 
 function computeETag(utilityId: string, status: "loaded" | "pending_backfill", updatedAt: string | null): string {
@@ -156,7 +167,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   if (!db) {
     return Response.json(
       { error: "internal_error", message: "Database not configured" },
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
     );
   }
 
@@ -267,7 +278,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   const row = rows[0];
 
   // ── 404: utility slug is not in the registry ──────────────────────────────
-  if (!row || !row.utility_exists) {
+  if (!row?.utility_exists) {
     return utilityNotFoundResponse(slug);
   }
 
@@ -305,6 +316,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     return Response.json(payload, {
       status: 200,
       headers: {
+        ...corsHeaders(),
         "Cache-Control": `public, max-age=${CACHE_MAX_AGE_PENDING}`,
         "Content-Type": "application/geo+json",
         ETag: computeETag(utilityId, "pending_backfill", null),
@@ -349,6 +361,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   return Response.json(payload, {
     status: 200,
     headers: {
+      ...corsHeaders(),
       "Cache-Control": `public, max-age=${CACHE_MAX_AGE_LOADED}`,
       "Content-Type": "application/geo+json",
       ETag: computeETag(utilityId, "loaded", updatedAt),

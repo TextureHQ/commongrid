@@ -37,7 +37,10 @@ vi.mock("@/lib/db/client", () => ({
 }));
 
 import { GET as getTerritoryGeometry } from "@/app/api/v1/territories/[slug]/geometry/route";
-import { GET as getUtilityGeometry } from "@/app/api/v1/utilities/[slug]/geometry/route";
+import {
+  GET as getUtilityGeometry,
+  OPTIONS as optionsUtilityGeometry,
+} from "@/app/api/v1/utilities/[slug]/geometry/route";
 import { db } from "@/lib/db/client";
 
 // Minimal valid GeoJSON MultiPolygon fixture (GMP-shaped).
@@ -431,5 +434,111 @@ describe("GET /api/v1/territories/[slug]/geometry (both slug forms)", () => {
     const body = await res.json();
     expect(body.error.code).toBe("NOT_FOUND");
     expect(body.error.message).toContain("no-such-slug");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CORS regression — ships with the cross-origin Relay map bug fix (2026-05-08).
+//
+// Victor hit 404s in-browser when Relay (https://relay.texturehq.com) called
+// commongrid.info/api/v1/utilities/{slug}/geometry — the response was a 200
+// server-side but the browser refused it because we shipped the route without
+// CORS headers. Every response branch (loaded / pending / 404 / 500 / OPTIONS)
+// MUST carry Access-Control-Allow-Origin. These tests lock that in.
+// ---------------------------------------------------------------------------
+
+describe("GET /api/v1/utilities/[slug]/geometry — CORS", () => {
+  beforeEach(() => {
+    execute.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("attaches Access-Control-Allow-Origin: * on the 404 branch", async () => {
+    execute.mockResolvedValue({ rows: [{ utility_exists: false }] });
+
+    const res = await getUtilityGeometry(
+      makeRequest("https://commongrid.info/api/v1/utilities/does-not-exist/geometry"),
+      makeParams("does-not-exist")
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(res.headers.get("vary")).toContain("Origin");
+  });
+
+  it("attaches Access-Control-Allow-Origin: * on the pending_backfill branch", async () => {
+    execute.mockResolvedValue({
+      rows: [
+        {
+          utility_exists: true,
+          region_exists: false,
+          territory_exists: false,
+          utility_id: "util-x",
+          utility_slug: "pending-co-op",
+          utility_name: "Pending Co-op",
+          eia_id: "99999",
+          region_slug: null,
+          territory_id: null,
+          geojson: null,
+        },
+      ],
+    });
+
+    const res = await getUtilityGeometry(
+      makeRequest("https://commongrid.info/api/v1/utilities/pending-co-op/geometry"),
+      makeParams("pending-co-op")
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(res.headers.get("vary")).toContain("Origin");
+  });
+
+  it("attaches Access-Control-Allow-Origin: * on the loaded branch", async () => {
+    execute.mockResolvedValue({
+      rows: [
+        {
+          utility_exists: true,
+          region_exists: true,
+          territory_exists: true,
+          utility_id: "util-gmp",
+          utility_slug: "green-mountain-power",
+          utility_name: "Green Mountain Power",
+          eia_id: "7601",
+          region_id: "region-st-7601",
+          region_slug: "st-green-mountain-power-corp-7601",
+          territory_id: "territory-7601",
+          territory_source: "HIFLD ArcGIS",
+          territory_source_url: null,
+          area_sq_km: 24000,
+          updated_at: "2026-04-15T16:29:21.444Z",
+          geojson: JSON.stringify(FIXTURE_MULTIPOLYGON),
+        },
+      ],
+    });
+
+    const res = await getUtilityGeometry(
+      makeRequest("https://commongrid.info/api/v1/utilities/green-mountain-power/geometry"),
+      makeParams("green-mountain-power")
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(res.headers.get("vary")).toContain("Origin");
+    expect(res.headers.get("content-type")).toBe("application/geo+json");
+  });
+
+  it("answers OPTIONS preflight with 204 + full CORS headers", async () => {
+    const res = await optionsUtilityGeometry();
+
+    expect(res.status).toBe(204);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(res.headers.get("access-control-allow-methods")).toContain("GET");
+    expect(res.headers.get("access-control-allow-methods")).toContain("OPTIONS");
+    expect(res.headers.get("access-control-allow-headers")).toContain("Content-Type");
+    expect(res.headers.get("vary")).toContain("Origin");
   });
 });
