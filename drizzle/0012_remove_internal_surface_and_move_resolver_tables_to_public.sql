@@ -81,9 +81,15 @@ CREATE TABLE IF NOT EXISTS public.utility_resolver_cache (
 CREATE INDEX IF NOT EXISTS idx_utility_resolver_cache_utility_id
   ON public.utility_resolver_cache (utility_id);
 
+-- Hot-cache index: order by created_at DESC. Earlier drafts of this
+-- migration tried to make this a partial index with WHERE created_at > NOW() - INTERVAL '30 days',
+-- but Postgres rejects non-IMMUTABLE functions (like NOW()) in index predicates,
+-- which caused the migration to abort mid-transaction and leave the
+-- resolver function uncreated in prod. A plain btree on created_at is
+-- sufficient for the cache's access patterns; stale-entry pruning lives
+-- in the application layer, not the index predicate.
 CREATE INDEX IF NOT EXISTS idx_utility_resolver_cache_created_at
-  ON public.utility_resolver_cache (created_at DESC)
-  WHERE created_at > NOW() - INTERVAL '30 days';
+  ON public.utility_resolver_cache (created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_utility_resolver_cache_match_source
   ON public.utility_resolver_cache ((match_result ->> 'match_source'));
@@ -166,17 +172,18 @@ BEGIN
 
   -- PHASE 1: manual override
   SELECT
-    u.id,
+    u.eia_id AS id,
     u.segment,
-    u.state,
+    u.jurisdiction AS state,
     u.name
   INTO v_match_record
   FROM public.utility_name_manual_overrides m
   JOIN public.utilities u ON m.utility_id = u.id
   WHERE m.search_name = v_normalized_name
-    AND (p_state IS NULL OR u.state = p_state)
+    AND (p_state IS NULL OR u.jurisdiction = p_state)
     AND u.deleted_at IS NULL
     AND u.status = 'ACTIVE'
+    AND u.eia_id IS NOT NULL
   LIMIT 1;
 
   IF FOUND THEN
@@ -199,16 +206,17 @@ BEGIN
 
   -- PHASE 2: exact normalized name
   SELECT
-    u.id,
+    u.eia_id AS id,
     u.segment,
-    u.state,
+    u.jurisdiction AS state,
     u.name
   INTO v_match_record
   FROM public.utilities u
   WHERE public.normalize_utility_name(u.name) = v_normalized_name
-    AND (p_state IS NULL OR u.state = p_state)
+    AND (p_state IS NULL OR u.jurisdiction = p_state)
     AND u.deleted_at IS NULL
     AND u.status = 'ACTIVE'
+    AND u.eia_id IS NOT NULL
   LIMIT 1;
 
   IF FOUND THEN
@@ -233,17 +241,18 @@ BEGIN
   -- PHASE 3: domain-based match when input looks like an email
   IF p_name ~ '@' THEN
     SELECT
-      u.id,
+      u.eia_id AS id,
       u.segment,
-      u.state,
+      u.jurisdiction AS state,
       u.name
     INTO v_match_record
     FROM public.utilities u
     WHERE u.domains IS NOT NULL
       AND u.domains @> ARRAY[LOWER(SUBSTRING(p_name FROM '@(.+)$'))]
-      AND (p_state IS NULL OR u.state = p_state)
+      AND (p_state IS NULL OR u.jurisdiction = p_state)
       AND u.deleted_at IS NULL
       AND u.status = 'ACTIVE'
+    AND u.eia_id IS NOT NULL
     LIMIT 1;
 
     IF FOUND THEN
@@ -269,16 +278,17 @@ BEGIN
   -- PHASE 4: trigram fuzzy
   FOR v_match_record IN
     SELECT
-      u.id,
+      u.eia_id AS id,
       SIMILARITY(public.normalize_utility_name(u.name), v_normalized_name) AS similarity_score,
       u.segment,
-      u.state,
+      u.jurisdiction AS state,
       u.name
     FROM public.utilities u
     WHERE public.normalize_utility_name(u.name) % v_normalized_name
-      AND (p_state IS NULL OR u.state = p_state)
+      AND (p_state IS NULL OR u.jurisdiction = p_state)
       AND u.deleted_at IS NULL
       AND u.status = 'ACTIVE'
+    AND u.eia_id IS NOT NULL
     ORDER BY similarity_score DESC
     LIMIT 5
   LOOP
@@ -300,7 +310,7 @@ BEGIN
         'eia_id', v_match_record.id,
         'confidence', v_confidence,
         'match_source', v_match_source,
-        'candidates', v_candidates::JSONB,
+        'candidates', COALESCE(to_jsonb(v_candidates), '[]'::jsonb),
         'resolver_version', '1.0.0'
       );
     END IF;
@@ -310,7 +320,7 @@ BEGIN
     'eia_id', NULL,
     'confidence', 0,
     'match_source', 'none',
-    'candidates', COALESCE(v_candidates::JSONB, '[]'::jsonb),
+    'candidates', COALESCE(to_jsonb(v_candidates), '[]'::jsonb),
     'resolver_version', '1.0.0'
   );
 END;
@@ -349,7 +359,7 @@ AFTER UPDATE ON public.utilities
 FOR EACH ROW
   WHEN (
     OLD.name IS DISTINCT FROM NEW.name
-    OR OLD.state IS DISTINCT FROM NEW.state
+    OR OLD.jurisdiction IS DISTINCT FROM NEW.jurisdiction
     OR OLD.domains IS DISTINCT FROM NEW.domains
     OR OLD.status IS DISTINCT FROM NEW.status
   )
