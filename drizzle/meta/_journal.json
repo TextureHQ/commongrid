@@ -85,6 +85,13 @@
       "when": 1778870400000,
       "tag": "0015_backfill_eia_ids_7_stubs",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778872500000,
+      "tag": "0016_pentex_energy_eia_followup",
+      "breakpoints": true
     }
   ]
 }
