@@ -1127,3 +1127,42 @@ This design passes the CommonGrid open-source covenant:
 - It keeps private/credentialed user workflows separate from public CommonGrid data access.
 
 CommonGrid remains the open registry. Publishable keys simply give browser-based mapmakers a safe compass to navigate it with.
+
+---
+
+## 20. Expert Panel Review (2026-05-09)
+
+This PRD was reviewed by a simulated four-expert panel covering application security, API/DX product, infrastructure, and open-source stewardship. Full notes are tracked on PR #244; the items below are carried into the design and should be resolved before or during implementation.
+
+### 20.1 Security (AppSec)
+
+- **Keep**: explicit threat model, strict Origin rejection for `cg_pk_*`, permissive CORS with `Access-Control-Allow-Origin: *` (no credentials), and non-billing of invalid-origin attempts.
+- **Action**: defer wildcard subdomain origins to Phase 2 unless a launch partner needs them, to avoid subdomain-takeover exposure until tests are in place.
+- **Action**: add SSR/server-side misuse detection guidance (e.g., warn when a `cg_pk_*` is observed from many distinct origins or with no `Referer` alongside an expected `Origin`).
+- **Action**: commit to a rotation/expiration convention for publishable keys (even if optional) so compromised keys have a bounded blast radius.
+
+### 20.2 API Platform / DX (PM)
+
+- **Keep**: pk-vs-sk dashboard split, standard error envelope with `docs` URL, Mapbox/Next.js code samples.
+- **Decision flagged**: strict `403 ORIGIN_NOT_ALLOWED` instead of silent downgrade to anonymous is correct for analytics integrity, but the developer-facing story must be excellent. Error messages must name the rejected origin, link to the exact dashboard page, and include a copyable snippet to add the origin. A small banner in the developer dashboard should surface recent `ORIGIN_NOT_ALLOWED` counts so devs find the problem proactively.
+- **DX consideration**: one-time reveal vs. Mapbox-style re-copyable publishable tokens remains an open question (see §17). Panel bias is toward re-copyable for publishable keys because they are not secrets by design; revisit in Phase 3 when dashboard UX is designed.
+- **Action**: publish first-party SDK/code snippets for Mapbox GL JS, MapLibre, and PMTiles at launch; DX parity with Mapbox is critical for third-party adoption.
+
+### 20.3 Infrastructure / Performance
+
+- **Keep**: per-key rate-limit buckets, hash-only key storage, permissive OPTIONS handling, and the explicit CDN-body-vs-per-key-headers constraint.
+- **Blocking-class concern**: enforce that the implementation define, in Phase 2, exactly where auth and origin checks run (edge middleware vs. serverless route vs. CDN Worker) and how per-key headers are attached without poisoning the public cache. Acceptance criteria in §15 already require this; Phase 2 must not start without a written design for the edge path.
+- **Action**: plan for a low-latency key/allowlist lookup cache (keyed by `key_prefix` + origin) backed by in-memory LRU or Upstash/Redis. Neon Postgres must not be on the hot path for every request at expected browser volumes.
+- **Action**: define SLOs for auth middleware (target: <5ms p50, <15ms p95 added latency) and instrument them from day one.
+
+### 20.4 Open-Source Stewardship
+
+- **Keep**: covenant compliance, same public developer model for all consumers, documented schemas and errors.
+- **Action**: publish bulk-tier eligibility criteria for publishable keys (e.g., usage thresholds, required disclosure) as a public policy page — the same page any CommonGrid user can read and apply to.
+- **Action**: share early dashboard mockups in a public issue or discussion so community contributors (third-party dashboard authors, data journalists, researchers) can give feedback before Phase 3.
+
+### 20.5 Derived Follow-ups
+
+- Add a dashboard "recent invalid-origin attempts" panel to §5.4 key management during Phase 3.
+- Add an explicit auth/origin-check edge-path design artifact as a Phase 2 deliverable.
+- Promote "document bulk-tier eligibility publicly" from Phase 4 to Phase 0 docs work.
