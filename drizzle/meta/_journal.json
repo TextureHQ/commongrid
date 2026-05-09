@@ -71,6 +71,13 @@
       "when": 1778750000000,
       "tag": "0013_deprecated_utilities_view",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1778783400000,
+      "tag": "0014_consolidate_duplicate_utility_stubs",
+      "breakpoints": true
     }
   ]
 }

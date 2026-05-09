@@ -334,6 +334,22 @@ curl "https://commongrid.info/api/v1/utilities/duke-energy-carolinas-llc?include
 
 **Cache:** `public, s-maxage=3600, stale-while-revalidate=86400`.
 
+**Successor following.** When the row matched by `slug` has
+`status` of `MERGED` or `ACQUIRED` and a non-null `successor_id`, the
+response body returns the *successor's* data (so consumers transparently
+receive the live canonical record at the historical URL). The response
+includes:
+
+- `_redirected_from`: `{ from_slug, from_status, reason }` describing the
+  deprecated row the request was redirected from.
+- HTTP `Link: </api/v1/utilities/{successor_slug}>; rel="canonical"` header.
+
+This preserves stable URLs for historical slugs while giving consumers the
+current canonical data. To opt out and get the deprecated row verbatim
+(useful for audit, debugging, or lifecycle tooling), pass
+`?follow_successor=false`. Use [`GET /utilities/deprecated`](#get-utilitiesdeprecated)
+to enumerate deprecated rows directly.
+
 #### `GET /utilities/by-eia-id/{eiaId}`
 
 Same response shape as `{slug}` but looked up by the canonical EIA Utility ID. Use this when you
