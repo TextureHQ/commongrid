@@ -16,6 +16,7 @@ const steps = [
   { script: "sync:cca", label: "CEC ArcGIS → CCA territories" },
   { script: "sync:ba", label: "HIFLD + EIA → balancing authorities" },
   { script: "sync:power-plants", label: "EIA-860 → power plants" },
+  { script: "sync:power-plants-monthly", label: "EIA-860M → monthly power plant updates" },
   { script: "generate:changelog", label: "Diff data → changelog.json" },
 ];
 
