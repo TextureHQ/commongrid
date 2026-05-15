@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
-import { extractMonthlyFilenames, parseEia860mWorkbook } from "../sync-power-plants-monthly";
+import { aggregateGenerators, extractMonthlyFilenames, parseEia860mWorkbook } from "../sync-power-plants-monthly";
 
 const baselineWorkbook = path.resolve(__dirname, "../../../data/eia-860m/march_generator2026.xlsx");
 
@@ -43,6 +43,47 @@ describe("EIA-860M monthly sync", () => {
           }),
         ])
       );
+    },
+    15_000
+  );
+
+  it.skipIf(!fs.existsSync(baselineWorkbook))(
+    "aggregates Puerto Rico generators from _PR sheets into the plant inventory",
+    () => {
+      const { rows } = parseEia860mWorkbook(baselineWorkbook);
+      const aggregates = aggregateGenerators(rows);
+
+      // Puerto Rico plants are sourced from EIA-860M Operating_PR + Planned_PR sheets.
+      // EIA-860M ships 225 operating + 8 planned PR generator rows across ~69 unique plants.
+      const prPlants = Array.from(aggregates.values()).filter((agg) => agg.state === "PR");
+      expect(prPlants.length).toBeGreaterThanOrEqual(60);
+      expect(prPlants.length).toBeLessThanOrEqual(80);
+
+      const prOperatingRows = rows.filter((row) => row.sourceSheet === "Operating_PR");
+      const prPlannedRows = rows.filter((row) => row.sourceSheet === "Planned_PR");
+      const operatingGenerators = prPlants.reduce((sum, agg) => sum + agg.operatingGeneratorCount, 0);
+      const plannedGenerators = prPlants.reduce((sum, agg) => sum + agg.proposedGeneratorCount, 0);
+      expect(operatingGenerators).toBe(prOperatingRows.length);
+      expect(plannedGenerators).toBe(prPlannedRows.length);
+
+      // Every PR plant must have at least one PR-sourced row (no accidental mainland contamination).
+      for (const agg of prPlants) {
+        const fromPrSheet =
+          agg.sourceSheets.has("Operating_PR") ||
+          agg.sourceSheets.has("Planned_PR") ||
+          agg.sourceSheets.has("Retired_PR");
+        expect(fromPrSheet).toBe(true);
+      }
+
+      // Sanity-check a known landmark plant: AES Puerto Rico (plant code 50098 in EIA data).
+      // We don't pin a specific plant code (EIA reshuffles them), but at least one PR plant
+      // should be petroleum-fired since the island fleet is overwhelmingly oil-based.
+      const fuelSources = new Set<string>();
+      for (const agg of prPlants) {
+        for (const source of agg.energySources) fuelSources.add(source);
+      }
+      const hasPetroleum = ["DFO", "RFO", "KER", "JF", "PC", "WO"].some((code) => fuelSources.has(code));
+      expect(hasPetroleum).toBe(true);
     },
     15_000
   );

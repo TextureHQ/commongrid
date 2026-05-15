@@ -214,6 +214,7 @@ interface PlantAggregate {
   energySources: Set<string>;
   oldestOperatingYear: number | null;
   earliestProposedOnlineYear: number | null;
+  sourceSheets: Set<RequiredSheet>;
 }
 
 interface PowerPlantRecord {
@@ -263,6 +264,9 @@ interface MergeStats {
   plannedGenerators: number;
   retiredGenerators: number;
   canceledOrPostponedGenerators: number;
+  puertoRicoPlantsMerged: number;
+  puertoRicoOperatingGenerators: number;
+  puertoRicoPlannedGenerators: number;
 }
 
 function parseNum(val: unknown): number | null {
@@ -495,6 +499,8 @@ function parseGeneratorSheet(workbook: XLSX.WorkBook, sheetName: RequiredSheet):
   return rows;
 }
 
+export type { GeneratorRow, PlantAggregate, RequiredSheet };
+
 export function parseEia860mWorkbook(filePath: string): {
   rows: GeneratorRow[];
   sheetRowCounts: Record<RequiredSheet, number>;
@@ -519,7 +525,7 @@ export function parseEia860mWorkbook(filePath: string): {
   return { rows, sheetRowCounts };
 }
 
-function aggregateGenerators(rows: GeneratorRow[]): Map<string, PlantAggregate> {
+export function aggregateGenerators(rows: GeneratorRow[]): Map<string, PlantAggregate> {
   const aggregates = new Map<string, PlantAggregate>();
 
   for (const row of rows) {
@@ -546,9 +552,11 @@ function aggregateGenerators(rows: GeneratorRow[]): Map<string, PlantAggregate> 
         energySources: new Set(),
         oldestOperatingYear: null,
         earliestProposedOnlineYear: null,
+        sourceSheets: new Set(),
       };
       aggregates.set(row.plantCode, aggregate);
     }
+    aggregate.sourceSheets.add(row.sourceSheet);
 
     if (!aggregate.utilityEiaId && row.entityId) aggregate.utilityEiaId = row.entityId;
     if (row.entityName && (!aggregate.utilityName || aggregate.utilityName === "Unknown"))
@@ -686,17 +694,33 @@ function mergePowerPlants(aggregates: Map<string, PlantAggregate>): MergeStats {
     plannedGenerators: 0,
     retiredGenerators: 0,
     canceledOrPostponedGenerators: 0,
+    puertoRicoPlantsMerged: 0,
+    puertoRicoOperatingGenerators: 0,
+    puertoRicoPlannedGenerators: 0,
   };
 
   for (const aggregate of aggregates.values()) {
     stats.operatingGenerators += aggregate.operatingGeneratorCount;
     stats.plannedGenerators += aggregate.proposedGeneratorCount;
 
+    // EIA-860M ships dedicated Operating_PR / Planned_PR sheets for Puerto Rico generators.
+    // Track them explicitly so the sync log proves we have territory coverage, not just CONUS.
+    const isPuertoRico =
+      aggregate.state === "PR" ||
+      aggregate.sourceSheets.has("Operating_PR") ||
+      aggregate.sourceSheets.has("Planned_PR");
+    if (isPuertoRico) {
+      stats.puertoRicoOperatingGenerators += aggregate.operatingGeneratorCount;
+      stats.puertoRicoPlannedGenerators += aggregate.proposedGeneratorCount;
+    }
+
     const next = createPowerPlantRecord(aggregate, utilityByEiaId, baByCode);
     if (!next) {
       stats.skippedMissingCoordinates += 1;
       continue;
     }
+
+    if (isPuertoRico) stats.puertoRicoPlantsMerged += 1;
 
     const existingRecord = existingByPlantCode.get(next.plantCode);
     if (existingRecord) {
@@ -841,6 +865,11 @@ async function main() {
   console.log(`  Skipped plants missing coordinates: ${stats.skippedMissingCoordinates.toLocaleString()}`);
   console.log(`  Retired generators observed: ${stats.retiredGenerators.toLocaleString()}`);
   console.log(`  Canceled/postponed generators observed: ${stats.canceledOrPostponedGenerators.toLocaleString()}`);
+  console.log(
+    `  Puerto Rico plants merged: ${stats.puertoRicoPlantsMerged.toLocaleString()} ` +
+      `(${stats.puertoRicoOperatingGenerators.toLocaleString()} operating + ` +
+      `${stats.puertoRicoPlannedGenerators.toLocaleString()} planned generators from _PR sheets)`
+  );
 }
 
 const invokedDirectly = (() => {
