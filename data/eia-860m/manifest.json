@@ -1,0 +1,62 @@
+{
+  "source": "EIA Form 860M — Preliminary Monthly Electric Generator Inventory",
+  "source_page": "https://www.eia.gov/electricity/data/eia860m/",
+  "latest_month": "2026-03",
+  "latest_month_label": "March 2026",
+  "file_name": "march_generator2026.xlsx",
+  "file_url": "https://www.eia.gov/electricity/data/eia860m/xls/march_generator2026.xlsx",
+  "file_date": "2026-04-23",
+  "file_release_date_iso": "2026-04-23T16:07:40Z",
+  "next_release_date": "2026-05-22",
+  "file_size_bytes": 13696844,
+  "checksum_sha256": "93f2b2501cd42ba1290136ec04fd616346d974e0dfd6020cd8ec5e532ef7cec6",
+  "local_path": "data/eia-860m/march_generator2026.xlsx",
+  "sheets": [
+    "Operating",
+    "Planned",
+    "Retired",
+    "Canceled or Postponed",
+    "Operating_PR",
+    "Planned_PR",
+    "Retired_PR"
+  ],
+  "sheet_row_counts": {
+    "Operating": 27834,
+    "Planned": 2317,
+    "Retired": 7251,
+    "Canceled or Postponed": 1686,
+    "Operating_PR": 225,
+    "Planned_PR": 8,
+    "Retired_PR": 10
+  },
+  "files": [
+    {
+      "file_name": "march_generator2026.xlsx",
+      "file_url": "https://www.eia.gov/electricity/data/eia860m/xls/march_generator2026.xlsx",
+      "month": "2026-03",
+      "month_label": "March 2026",
+      "file_size_bytes": 13696844,
+      "checksum_sha256": "93f2b2501cd42ba1290136ec04fd616346d974e0dfd6020cd8ec5e532ef7cec6",
+      "local_path": "data/eia-860m/march_generator2026.xlsx",
+      "parsed_at": "2026-05-15T10:29:44.753Z",
+      "sheet_row_counts": {
+        "Operating": 27834,
+        "Planned": 2317,
+        "Retired": 7251,
+        "Canceled or Postponed": 1686,
+        "Operating_PR": 225,
+        "Planned_PR": 8,
+        "Retired_PR": 10
+      }
+    }
+  ],
+  "notes": [
+    "EIA-860M is the monthly supplement to the annual Form EIA-860; it tracks generator status, new builds, retirements, and capacity revisions between annual releases.",
+    "Sheets _PR contain Puerto Rico generators (added starting March 2018 data).",
+    "Retired sheet contains comprehensive list of generators retired since 2002 (since March 2017 data).",
+    "Capacities are preliminary estimates; final inventory comes from annual EIA-860."
+  ],
+  "captured_at": "2026-05-15T09:53:00Z",
+  "captured_by": "meridian (EIA-860M baseline subagent)",
+  "updated_at": "2026-05-15T10:29:44.753Z"
+}
