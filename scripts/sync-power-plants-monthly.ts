@@ -703,9 +703,19 @@ function mergePowerPlants(aggregates: Map<string, PlantAggregate>): MergeStats {
       next.id = existingRecord.id;
       next.slug = existingRecord.slug;
       next.utilityId = next.utilityId ?? existingRecord.utilityId;
+      next.utilityName = existingRecord.utilityName;
       next.balancingAuthorityId = next.balancingAuthorityId ?? existingRecord.balancingAuthorityId;
       next.nercRegion = existingRecord.nercRegion;
       next.gridVoltageKv = existingRecord.gridVoltageKv;
+
+      // Annual EIA-860 is still the authoritative source for stable plant metadata.
+      // EIA-860M is used here for monthly generator-level facts and to seed new plants.
+      next.name = existingRecord.name;
+      next.county = existingRecord.county;
+      next.latitude = existingRecord.latitude;
+      next.longitude = existingRecord.longitude;
+      next.sector = existingRecord.sector;
+      next.baCode = existingRecord.baCode;
     } else {
       dedupeSlug(next, existingSlugByPlantCode, slugCounts);
     }
