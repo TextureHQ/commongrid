@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
-import { useColorMode } from "@texturehq/edges";
+import { SearchTrigger, useColorMode } from "@texturehq/edges";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -255,7 +255,10 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
         aria-hidden="true"
       />
 
-      {/* Drawer panel */}
+      {/* Drawer panel — slides down from below the sticky top nav.
+          The nav stays visible above, so the hamburger ↔ close X toggle
+          lives in the nav itself. No duplicate logo/close header inside
+          the panel. */}
       <div
         ref={drawerRef}
         className={`cg-drawer ${open ? "cg-drawer--open" : ""}`}
@@ -263,43 +266,16 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
         aria-modal="true"
         aria-label="Navigation menu"
       >
-        {/* Drawer header */}
-        <div className="cg-drawer-header">
-          <Link href="/" className="cg-brand-lockup" onClick={onClose} aria-label="CommonGrid home">
-            <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-              <circle cx="4" cy="4" r="1.8" fill="currentColor" />
-              <circle cx="12" cy="4" r="1.8" fill="currentColor" />
-              <circle cx="20" cy="4" r="1.8" fill="currentColor" />
-              <circle cx="28" cy="4" r="1.8" fill="currentColor" />
-              <circle cx="4" cy="12" r="1.8" fill="currentColor" />
-              <circle cx="4" cy="20" r="1.8" fill="currentColor" />
-              <circle cx="28" cy="12" r="1.8" fill="currentColor" />
-              <circle cx="28" cy="20" r="1.8" fill="currentColor" />
-              <circle cx="4" cy="28" r="1.8" fill="currentColor" />
-              <circle cx="12" cy="28" r="1.8" fill="currentColor" />
-              <circle cx="20" cy="28" r="1.8" fill="currentColor" />
-              <circle cx="28" cy="28" r="1.8" fill="currentColor" />
-              <rect x="11" y="11" width="10" height="10" rx="1.5" fill="currentColor" />
-            </svg>
-            <span>CommonGrid</span>
-          </Link>
-          <button type="button" className="cg-icon-btn" onClick={onClose} aria-label="Close menu">
-            <CloseIcon />
-          </button>
-        </div>
-
-        {/* Search button */}
+        {/* Search trigger — imported from @texturehq/edges for consistency
+            with the Texture design system. Clicking opens the global search
+            modal (same target as the desktop ⌘K shortcut). */}
         <div className="cg-drawer-search">
-          <button
-            type="button"
-            className="cg-nav-search"
-            style={{ width: "100%", minWidth: 0 }}
+          <SearchTrigger
+            placeholder="Search the registry"
             onClick={handleSearchClick}
-            aria-label="Search"
-          >
-            <SearchIcon />
-            <span>Search</span>
-          </button>
+            showShortcut={false}
+            className="cg-drawer-search-trigger"
+          />
         </div>
 
         {/* Nav links */}
