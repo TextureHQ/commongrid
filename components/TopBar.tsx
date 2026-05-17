@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
-import { useColorMode } from "@texturehq/edges";
+import { SearchTrigger, useColorMode } from "@texturehq/edges";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -266,18 +266,16 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
         aria-modal="true"
         aria-label="Navigation menu"
       >
-        {/* Search button */}
+        {/* Search trigger — imported from @texturehq/edges for consistency
+            with the Texture design system. Clicking opens the global search
+            modal (same target as the desktop ⌘K shortcut). */}
         <div className="cg-drawer-search">
-          <button
-            type="button"
-            className="cg-nav-search"
-            style={{ width: "100%", minWidth: 0 }}
+          <SearchTrigger
+            placeholder="Search the registry"
             onClick={handleSearchClick}
-            aria-label="Search"
-          >
-            <SearchIcon />
-            <span>Search</span>
-          </button>
+            showShortcut={false}
+            className="cg-drawer-search-trigger"
+          />
         </div>
 
         {/* Nav links */}

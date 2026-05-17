@@ -225,7 +225,7 @@ html, body {
   right: 0;
   z-index: 80;
   width: 100%;
-  max-height: calc(100dvh - 60px);
+  height: calc(100dvh - 60px); /* full available viewport height */
   background: #ffffff;
   border-bottom: 1px solid var(--_nav-rule);
   box-shadow: 0 12px 32px -8px rgba(44, 42, 38, 0.18);
@@ -270,6 +270,12 @@ html, body {
 .cg-drawer-search {
   padding: 16px 20px 12px;
   flex-shrink: 0;
+}
+.cg-drawer-search-trigger {
+  /* Force the edges SearchTrigger to span the full drawer width
+     (its default is fit-content). */
+  width: 100%;
+  display: flex;
 }
 
 .cg-drawer-nav {
@@ -320,22 +326,25 @@ html, body {
 
 .cg-drawer-footer {
   border-top: 1px solid var(--_nav-rule);
-  padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  /* Horizontal padding gives the auth buttons + footer row a comfortable
+     inset away from the panel edges. */
+  padding: 20px 24px calc(20px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   gap: 16px;
   flex-shrink: 0;
-  background: #faf7f0;        /* thoughtful linen accent on the footer surface */
+  background: #ffffff;
 }
 .theme-dark .cg-drawer-footer {
-  background: color-mix(in srgb, var(--_nav-ink) 5%, #1b1915);
+  background: #1b1915;
 }
 
 .cg-drawer-footer-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 16px;
+  padding: 4px 4px 0;
 }
 
 .cg-drawer-footer-link {
