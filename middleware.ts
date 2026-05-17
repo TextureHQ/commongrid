@@ -108,12 +108,42 @@ const clerkAuthMiddleware = clerkMiddleware(async (auth, request) => {
   return response;
 });
 
+/**
+ * Fallback middleware for environments where Clerk is not configured
+ * (e.g. preview deployments, sandboxed previews, local dev without keys).
+ *
+ * Without this, `clerkMiddleware` throws `MIDDLEWARE_INVOCATION_FAILED`
+ * on every request and the entire site 500s — even though CommonGrid is
+ * predominantly public, read-only pages that don't need Clerk at all.
+ *
+ * When Clerk isn't configured we:
+ *   - apply the standard security headers,
+ *   - skip auth-protected routes (they'll bounce on the page-level
+ *     server check the next time a user tries to use them).
+ *
+ * The publishable key is intentionally public, so checking only it is
+ * safe (we don't want to log presence/absence of the secret key here).
+ */
+function clerkIsConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+}
+
+function unauthenticatedMiddleware(request: NextRequest): NextResponse {
+  const response = NextResponse.next();
+  applySecurityHeaders(response, request.nextUrl.pathname);
+  return response;
+}
+
 export default function middleware(
   request: NextRequest,
   event: NextFetchEvent
-): ReturnType<typeof clerkAuthMiddleware> {
+): ReturnType<typeof clerkAuthMiddleware> | NextResponse {
   const publicResponse = publicApiResponse(request);
   if (publicResponse) return publicResponse;
+
+  if (!clerkIsConfigured()) {
+    return unauthenticatedMiddleware(request);
+  }
 
   return clerkAuthMiddleware(request, event);
 }
