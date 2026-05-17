@@ -164,14 +164,11 @@ export function TopBar({ navigation, navigationReady = true }: TopBarProps) {
             )}
           </div>
 
-          {/* Mobile right */}
+          {/* Mobile right — theme toggle lives in the drawer footer to
+             avoid duplicating it here. Keeps the mobile nav compact and
+             groups theme with the other settings-y controls. */}
           <div className="cg-nav-mobile-right">
             {isAuthLoaded && isSignedIn && <UserMenu />}
-            {mounted && (
-              <button type="button" className="cg-icon-btn" onClick={toggleTheme} aria-label="Toggle color mode">
-                {isDarkTheme ? <SunIcon /> : <MoonIcon />}
-              </button>
-            )}
             <button
               type="button"
               className="cg-icon-btn"
