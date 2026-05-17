@@ -1,7 +1,17 @@
 /* ═══════════════════════════════════════════
    CommonGrid homepage styles
-   Accent: Raspberry (#d93d72), used sparingly.
-   Tone: civic / stewardship / wiki — the commons.
+   Aligned with the Texture marketing aesthetic
+   (apps/www) — same family, distinct personality.
+   Texture is corporate/polished, CommonGrid is
+   civic/wiki/commons.
+
+   Typography:  Rethink Sans (display)
+                Inter (body)
+                Fira Code (mono — CommonGrid keeps its own)
+   Surfaces:    linen #FAF7F0
+   Accents:     Rose #D93D72 (registry), with Honey/Ocean
+                pastels used semantically in the ledger.
+   Neutrals:    warm-gray ramp (200/400/600/800)
    ═══════════════════════════════════════════ */
 
 /* ---------- Font families ---------- */
@@ -10,13 +20,31 @@
   --font-family-mono:  "Fira Code", ui-monospace, "SF Mono", Menlo, monospace;
   --font-family-sans:  "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --cg-section-y:  clamp(64px, 9vw, 112px);
+  /* Spacing rhythm aligned to the Texture marketing 8-step scale */
+  --cg-section-y:  clamp(64px, 8vw, 96px);
   --cg-gutter:     clamp(20px, 4vw, 56px);
-  --cg-card-pad:   22px;
+  --cg-card-pad:   24px;
   --cg-row-pad:    14px;
-  --cg-headline:   clamp(48px, 7.6vw, 104px);
-  --cg-lede:       18px;
   --cg-entity-min: 220px;
+
+  /* warm-gray ramp (mirrors @texturehq/edges-tokens) */
+  --cg-warm-100: #f5f5f4;
+  --cg-warm-200: #e7e6e5;
+  --cg-warm-400: #a09d98;
+  --cg-warm-600: #5d5b56;
+  --cg-warm-800: #302f2d;
+  --cg-ink:      #111111;
+
+  /* Accent pastels — used for ledger op semantics */
+  --cg-honey-base:   #f0972a;
+  --cg-honey-pastel: #fceBd4;
+  --cg-honey-dark:   #7a4708;
+  --cg-ocean-base:   #2fa3b0;
+  --cg-ocean-pastel: #dcf1f4;
+  --cg-ocean-dark:   #123862;
+  --cg-rose-base:    #d93d72;
+  --cg-rose-pastel:  #fbe3ec;
+  --cg-rose-dark:    #7a1212;
 
   /* warm shadows */
   --shadow-xs: 0 1px 2px rgba(44, 42, 38, 0.06);
@@ -27,7 +55,9 @@
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   color: var(--color-text-body);
-  background: #faf7f0;
+  /* Page base is clean white; linen #FAF7F0 is reserved for thoughtful
+     brand-accent surfaces (license card, incubation badge). */
+  background: var(--color-background-body);
 }
 
 .theme-dark .cg-home {
@@ -50,11 +80,13 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-family: var(--font-family-sans);
   font-size: 14px;
   font-weight: 500;
+  line-height: 1;
   border: 1px solid var(--color-border-default);
   background: var(--color-background-surface);
   color: var(--color-text-heading);
@@ -78,10 +110,10 @@
   color: var(--color-background-body);
 }
 .cg-home .btn-lg {
-  height: 44px;
-  padding: 0 20px;
-  font-size: 14px;
-  border-radius: 10px;
+  height: 48px;
+  padding: 0 24px;
+  font-size: 15px;
+  border-radius: 6px;
 }
 
 /* ── Hero ── */
@@ -102,10 +134,51 @@
   align-items: center;
   gap: 10px;
   font-family: var(--font-family-mono);
-  font-size: 11px;
-  letter-spacing: .08em;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+}
+
+/* Incubation badge — sits above the eyebrow on the hero. Tiny
+   visual cue that CommonGrid shares heritage with Texture without
+   being a Texture product. */
+.cg-home .incubation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--cg-warm-600);
+  padding: 5px 12px;
+  border: 1px solid var(--cg-warm-200);
+  border-radius: 20px;
+  /* Thoughtful linen accent — ties CommonGrid to the Texture brand
+     without flooding the page. */
+  background: #faf7f0;
+  margin-bottom: 20px;
+}
+.theme-dark .cg-home .incubation-badge {
+  background: rgba(250,247,240,.06);
+  border-color: rgba(255,255,255,.1);
+}
+.cg-home .incubation-badge .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--cg-rose-base);
+}
+.cg-home .incubation-badge strong {
+  color: var(--color-text-heading);
+  font-weight: 600;
+  letter-spacing: -.01em;
+  text-transform: none;
+  font-family: var(--font-family-brand);
+  font-size: 12px;
 }
 .cg-home .eyebrow .pulse {
   position: relative;
@@ -129,28 +202,32 @@
 }
 
 .cg-home .hero-h1 {
+  /* Aligned to the Texture marketing h1 scale — 36px mobile, 64px desktop,
+     line-height 1.05, tracking -0.04em, regular weight. */
   font-family: var(--font-family-brand);
-  font-weight: 600;
-  font-size: clamp(40px,4.6vw,72px);
-  line-height: .98;
-  letter-spacing: -.035em;
-  margin: 18px 0 20px;
-  max-width: 15ch;
-  color: var(--color-text-heading);
+  font-weight: 500;
+  font-size: clamp(36px,5.4vw,64px);
+  line-height: 1.05;
+  letter-spacing: -.04em;
+  margin: 16px 0 24px;
+  max-width: 17ch;
+  color: var(--cg-ink);
   text-wrap: balance;
 }
 .cg-home .hero-lede {
-  font-size: clamp(15px,1.1vw,17.5px);
-  line-height: 1.55;
-  color: var(--color-text-muted);
-  max-width: 48ch;
+  font-family: var(--font-family-sans);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--cg-warm-600);
+  max-width: 50ch;
   margin: 0;
   text-wrap: pretty;
 }
 .cg-home .hero-cta {
   display: flex;
-  gap: 10px;
-  margin-top: 24px;
+  gap: 12px;
+  margin-top: 32px;
   flex-wrap: wrap;
   align-items: center;
 }
@@ -226,31 +303,32 @@
 .cg-home .stats {
   display: grid;
   grid-template-columns: repeat(5,1fr);
-  border-top: 1px solid var(--color-border-default);
-  border-bottom: 1px solid var(--color-border-default);
-  margin-top: clamp(32px,5vw,64px);
+  border-top: 1px solid var(--cg-warm-200);
+  border-bottom: 1px solid var(--cg-warm-200);
+  margin-top: clamp(40px,5vw,64px);
 }
 .cg-home .stat {
-  padding: 22px 20px;
-  border-right: 1px solid var(--color-border-default);
+  padding: 24px 20px;
+  border-right: 1px solid var(--cg-warm-200);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 .cg-home .stat:last-child { border-right: 0; }
 .cg-home .stat-n {
   font-family: var(--font-family-brand);
-  font-weight: 600;
-  font-size: 30px;
+  font-weight: 500;
+  font-size: 32px;
   letter-spacing: -.03em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-heading);
+  color: var(--cg-ink);
 }
 .cg-home .stat-l {
-  font-size: 11px;
-  color: var(--color-brand-primary);
-  letter-spacing: .06em;
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+  color: var(--cg-warm-600);
+  letter-spacing: .08em;
   text-transform: uppercase;
   font-weight: 500;
 }
@@ -275,37 +353,42 @@
 }
 .cg-home .kicker {
   font-family: var(--font-family-mono);
-  font-size: 11px;
-  letter-spacing: .12em;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--color-text-caption);
+  color: var(--cg-warm-600);
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 .cg-home .kicker::before {
   content: "";
-  width: 20px;
+  width: 24px;
   height: 1px;
-  background: var(--color-brand-primary);
+  background: var(--cg-rose-base);
 }
 .cg-home .section-title {
+  /* Aligned to Texture marketing h2 — desktop 56px, mobile 32px,
+     regular weight, tracking -0.04em. Slightly tighter than h2 since
+     CommonGrid pages tend toward 2-line titles. */
   font-family: var(--font-family-brand);
-  font-weight: 600;
-  font-size: clamp(30px,3.6vw,48px);
-  letter-spacing: -.028em;
-  line-height: 1.02;
-  color: var(--color-text-heading);
-  max-width: 20ch;
+  font-weight: 500;
+  font-size: clamp(32px,4.4vw,48px);
+  letter-spacing: -.035em;
+  line-height: 1.05;
+  color: var(--cg-ink);
+  max-width: 22ch;
   margin: 0;
   text-wrap: balance;
 }
 .cg-home .section-desc {
-  color: var(--color-text-muted);
-  font-size: 15px;
-  line-height: 1.6;
-  max-width: 46ch;
+  font-family: var(--font-family-sans);
+  color: var(--cg-warm-600);
+  font-size: 16px;
+  line-height: 1.5;
+  max-width: 50ch;
   margin: 0;
   text-wrap: pretty;
 }
@@ -344,29 +427,34 @@
   justify-content: space-between;
   gap: 12px;
   font-family: var(--font-family-mono);
-  font-size: 11px;
-  color: var(--color-text-caption);
-  letter-spacing: .06em;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cg-warm-600);
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 .cg-home .entity-count {
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-heading);
+  color: var(--cg-ink);
   font-weight: 500;
 }
 .cg-home .entity-name {
+  /* Aligned to Texture marketing h5 — desktop 32px, mobile 24px,
+     regular weight, tracking -0.02em. Slightly compressed because
+     entity cards are dense (3-up grid). */
   font-family: var(--font-family-brand);
-  font-weight: 600;
-  font-size: 22px;
-  letter-spacing: -.022em;
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: -.025em;
   line-height: 1.1;
-  color: var(--color-text-heading);
-  margin: 10px 0 2px;
+  color: var(--cg-ink);
+  margin: 12px 0 4px;
 }
 .cg-home .entity-desc {
-  color: var(--color-text-muted);
+  font-family: var(--font-family-sans);
+  color: var(--cg-warm-600);
   font-size: 14px;
-  line-height: 1.52;
+  line-height: 1.5;
   margin: 4px 0 auto;
   text-wrap: pretty;
 }
@@ -432,21 +520,34 @@
 .cg-home .ledger-row:hover {
   background: color-mix(in srgb, var(--color-text-heading) 3%, transparent);
 }
+/* Ledger op pills — chip-style, with semantically-chosen pastels
+   from the Texture marketing accent palette:
+     add   → Moss (additive, generative)
+     edit  → Honey (a touch, a tweak)
+     fix   → Ocean (steady, corrective)
+     merge → Rose (the CommonGrid hue — change accepted into the record) */
 .cg-home .op {
   font-family: var(--font-family-mono);
   font-size: 11px;
   letter-spacing: .08em;
   text-transform: uppercase;
   font-weight: 600;
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  width: max-content;
+  line-height: 1.2;
 }
-.cg-home .op-add  { color: #278a4a; }
-.cg-home .op-edit { color: #d88420; }
-.cg-home .op-fix  { color: #2d6cb8; }
-.cg-home .op-merge{ color: var(--color-text-caption); }
-.theme-dark .cg-home .op-add  { color: #7ec99a; }
-.theme-dark .cg-home .op-fix  { color: #80abd8; }
-.theme-dark .cg-home .op-merge{ color: var(--color-text-caption); }
+.cg-home .op-add   { background: #eef6d8; color: #364d10; border-color: color-mix(in srgb, #8FBF2C 50%, transparent); }
+.cg-home .op-edit  { background: var(--cg-honey-pastel); color: var(--cg-honey-dark); border-color: color-mix(in srgb, var(--cg-honey-base) 50%, transparent); }
+.cg-home .op-fix   { background: var(--cg-ocean-pastel); color: #0e3b41; border-color: color-mix(in srgb, var(--cg-ocean-base) 50%, transparent); }
+.cg-home .op-merge { background: var(--cg-rose-pastel); color: var(--cg-rose-dark); border-color: color-mix(in srgb, var(--cg-rose-base) 50%, transparent); }
+.theme-dark .cg-home .op-add   { background: rgba(143,191,44,.18); color: #c5e07a; border-color: rgba(143,191,44,.4); }
+.theme-dark .cg-home .op-edit  { background: rgba(240,151,42,.18); color: #f0c275; border-color: rgba(240,151,42,.4); }
+.theme-dark .cg-home .op-fix   { background: rgba(47,163,176,.18); color: #80d4dc; border-color: rgba(47,163,176,.4); }
+.theme-dark .cg-home .op-merge { background: rgba(217,61,114,.18); color: #f0a5be; border-color: rgba(217,61,114,.4); }
 .cg-home .ledger-name { min-width: 0; }
 .cg-home .ledger-name .n {
   color: var(--color-text-heading);
@@ -457,9 +558,10 @@
   text-overflow: ellipsis;
 }
 .cg-home .ledger-name .s {
-  color: var(--color-text-muted);
+  color: var(--cg-warm-600);
   font-size: 12px;
-  font-family: var(--font-family-mono);
+  font-family: var(--font-family-sans);
+  font-weight: 400;
 }
 .cg-home .ledger-author {
   color: var(--color-text-muted);
@@ -523,25 +625,26 @@
 }
 .cg-home .commons-cell h4 {
   font-family: var(--font-family-brand);
-  font-weight: 600;
-  font-size: 20px;
-  letter-spacing: -.015em;
-  margin: 0 0 10px;
-  color: var(--color-text-heading);
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -.025em;
+  line-height: 1.15;
+  margin: 0 0 12px;
+  color: var(--cg-ink);
 }
 .cg-home .commons-cell p {
-  color: var(--color-text-muted);
-  font-size: 14px;
+  color: var(--cg-warm-600);
+  font-size: 15px;
   line-height: 1.55;
   margin: 0;
 }
 .cg-home .commons-cell .q {
   font-family: var(--font-family-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--color-brand-primary);
-  margin-bottom: 8px;
+  color: var(--cg-rose-base);
+  margin-bottom: 10px;
   font-weight: 500;
 }
 
@@ -566,26 +669,29 @@
   align-items: start;
 }
 .cg-home .step-num {
-  font-family: var(--font-family-brand);
-  font-weight: 600;
-  font-size: 32px;
-  color: var(--color-brand-primary);
+  font-family: var(--font-family-mono);
+  font-weight: 500;
+  font-size: 24px;
+  color: var(--cg-rose-base);
   line-height: 1;
-  letter-spacing: -.03em;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
 }
 .cg-home .step h4 {
-  margin: 0 0 6px;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -.012em;
-  color: var(--color-text-heading);
+  font-family: var(--font-family-brand);
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  color: var(--cg-ink);
 }
 .cg-home .step p {
   margin: 0;
-  color: var(--color-text-muted);
-  font-size: 14px;
-  line-height: 1.55;
-  max-width: 48ch;
+  color: var(--cg-warm-600);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 50ch;
 }
 .cg-home .step-meta {
   font-family: var(--font-family-mono);
@@ -594,21 +700,26 @@
   white-space: nowrap;
 }
 .cg-home .license-card {
-  border: 1px solid var(--color-border-default);
-  padding: 22px;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--color-text-heading) 2.5%, transparent);
+  border: 1px solid var(--cg-warm-200);
+  padding: 28px;
+  border-radius: 8px;
+  /* Second thoughtful linen accent — the license card is a key brand
+     surface ("this is shared, public, citable") so it earns the warm
+     wash. */
+  background: #faf7f0;
 }
 .theme-dark .cg-home .license-card {
   background: color-mix(in srgb, var(--color-text-heading) 5%, transparent);
+  border-color: rgba(255,255,255,.1);
 }
 .cg-home .license-card h4 {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-family: var(--font-family-brand);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -.02em;
-  color: var(--color-text-heading);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -.025em;
+  line-height: 1.15;
+  color: var(--cg-ink);
 }
 .cg-home .license-card .sub {
   color: var(--color-text-muted);
@@ -753,27 +864,31 @@
   gap: 32px;
 }
 .cg-home .foot-col h5 {
-  font-size: 11px;
+  font-family: var(--font-family-mono);
+  font-size: 12px;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--color-text-caption);
-  margin: 0 0 12px;
+  color: var(--cg-warm-600);
+  margin: 0 0 16px;
   font-weight: 500;
 }
 .cg-home .foot-col a {
   display: block;
-  font-size: 13px;
-  color: var(--color-text-muted);
+  font-family: var(--font-family-sans);
+  font-size: 14px;
+  color: var(--cg-warm-600);
   padding: 4px 0;
   text-decoration: none;
+  transition: color .15s;
 }
-.cg-home .foot-col a:hover { color: var(--color-text-heading); }
+.cg-home .foot-col a:hover { color: var(--cg-ink); }
 .cg-home .foot-about {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  line-height: 1.6;
-  max-width: 36ch;
-  margin: 10px 0 0;
+  font-family: var(--font-family-sans);
+  font-size: 14px;
+  color: var(--cg-warm-600);
+  line-height: 1.5;
+  max-width: 38ch;
+  margin: 12px 0 0;
 }
 .cg-home .foot-backed {
   display: inline-flex;

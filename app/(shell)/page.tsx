@@ -220,6 +220,10 @@ export default function LandingPage() {
         <div className="wrap">
           <div className="hero-grid">
             <div className="hero-copy">
+              <span className="incubation-badge">
+                <span className="dot" />
+                Incubated by <strong>Texture</strong>
+              </span>
               <span className="eyebrow">
                 <span className="pulse" />
                 An open data commons &middot; continuously updated
