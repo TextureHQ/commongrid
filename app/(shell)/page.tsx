@@ -1,8 +1,20 @@
 "use client";
 
+import { Skeleton } from "@texturehq/edges";
 import Link from "next/link";
 import { formatCount, useEntityCounts } from "@/hooks/useEntityCounts";
 import "./homepage.css";
+
+/**
+ * Inline number with a Skeleton fallback while the count is loading.
+ * Sized to match the `.stat-n` typography (32px / tabular numerals).
+ */
+function StatNumber({ value, width = 96 }: { value: number | null; width?: number | string }) {
+  if (value === null) {
+    return <Skeleton width={width} height={32} variant="rect" animation="pulse" ariaLabel="Loading metric" />;
+  }
+  return <>{formatCount(value)}</>;
+}
 
 const RATE_SCHEDULE_COUNT = "~12k";
 
@@ -914,23 +926,33 @@ export default function LandingPage() {
           {/* Stats band */}
           <ul className="stats" aria-label="Registry contents">
             <li className="stat">
-              <span className="stat-n">{formatCount(counts.utilities)}</span>
+              <span className="stat-n">
+                <StatNumber value={counts.utilities} width={72} />
+              </span>
               <span className="stat-l">Utilities</span>
             </li>
             <li className="stat">
-              <span className="stat-n">{formatCount(gridOperatorCount)}</span>
+              <span className="stat-n">
+                <StatNumber value={gridOperatorCount} width={44} />
+              </span>
               <span className="stat-l">Grid operators</span>
             </li>
             <li className="stat">
-              <span className="stat-n">{formatCount(counts.powerPlants)}</span>
+              <span className="stat-n">
+                <StatNumber value={counts.powerPlants} width={88} />
+              </span>
               <span className="stat-l">Power plants</span>
             </li>
             <li className="stat">
-              <span className="stat-n">{formatCount(counts.transmissionLines)}</span>
+              <span className="stat-n">
+                <StatNumber value={counts.transmissionLines} width={92} />
+              </span>
               <span className="stat-l">Transmission lines</span>
             </li>
             <li className="stat">
-              <span className="stat-n">{formatCount(counts.evStations)}</span>
+              <span className="stat-n">
+                <StatNumber value={counts.evStations} width={96} />
+              </span>
               <span className="stat-l">EV stations</span>
             </li>
           </ul>

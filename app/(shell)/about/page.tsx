@@ -1,9 +1,21 @@
 "use client";
 
+import { Skeleton } from "@texturehq/edges";
 import Link from "next/link";
 import { ContentPage } from "@/components/ContentPage";
 import { formatCount, useEntityCounts } from "@/hooks/useEntityCounts";
 import "./about.css";
+
+/**
+ * Inline number with a Skeleton fallback while the count is loading.
+ * Sized to match the `.ab-stat-n` typography (~26–34px clamped).
+ */
+function AboutStatNumber({ value, width = 88 }: { value: number | null; width?: number | string }) {
+  if (value === null) {
+    return <Skeleton width={width} height={30} variant="rect" animation="pulse" ariaLabel="Loading metric" />;
+  }
+  return <>{formatCount(value)}</>;
+}
 
 const DATA_SOURCES = [
   {
@@ -113,27 +125,39 @@ export default function AboutPage() {
           </div>
           <div className="ab-stats">
             <div className="ab-stat">
-              <div className="ab-stat-n">{formatCount(counts.utilities)}</div>
+              <div className="ab-stat-n">
+                <AboutStatNumber value={counts.utilities} width={72} />
+              </div>
               <div className="ab-stat-l">Utilities</div>
             </div>
             <div className="ab-stat">
-              <div className="ab-stat-n">{formatCount(gridOperatorCount)}</div>
+              <div className="ab-stat-n">
+                <AboutStatNumber value={gridOperatorCount} width={44} />
+              </div>
               <div className="ab-stat-l">Grid operators</div>
             </div>
             <div className="ab-stat">
-              <div className="ab-stat-n">{formatCount(counts.territories)}</div>
+              <div className="ab-stat-n">
+                <AboutStatNumber value={counts.territories} width={72} />
+              </div>
               <div className="ab-stat-l">Territories</div>
             </div>
             <div className="ab-stat">
-              <div className="ab-stat-n">{formatCount(counts.powerPlants)}</div>
+              <div className="ab-stat-n">
+                <AboutStatNumber value={counts.powerPlants} width={80} />
+              </div>
               <div className="ab-stat-l">Power plants</div>
             </div>
             <div className="ab-stat">
-              <div className="ab-stat-n">{formatCount(counts.programs)}</div>
+              <div className="ab-stat-n">
+                <AboutStatNumber value={counts.programs} width={56} />
+              </div>
               <div className="ab-stat-l">Programs</div>
             </div>
             <div className="ab-stat">
-              <div className="ab-stat-n">{formatCount(counts.evStations)}</div>
+              <div className="ab-stat-n">
+                <AboutStatNumber value={counts.evStations} width={88} />
+              </div>
               <div className="ab-stat-l">EV stations</div>
             </div>
           </div>
