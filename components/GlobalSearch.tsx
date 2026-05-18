@@ -623,24 +623,18 @@ export function GlobalSearchModal() {
           height: 100dvh;
           border-radius: 0;
         }
-        /* Force the edges TextField inside the search row to be tall
-           enough to feel like a real "address bar" on mobile, and to
-           never trigger iOS Safari's font-zoom (must be ≥ 16px). */
+        /* Let the edges TextField size itself (via size="xl" on mobile,
+           the design-system default). We only need two things from
+           this stylesheet: the wrapper takes full width so the input
+           fills the row, and the iOS Safari pseudo cancel button on
+           type=search is hidden (we render our own clear via
+           TextField's isClearable prop).
+
+           iOS zoom safety: edges size="xl" font-size is ≥ 16px so no
+           extra rule is needed here. */
         .og-search-textfield-wrapper > * {
           width: 100%;
         }
-        .og-search-textfield-wrapper input {
-          font-size: 17px !important;
-          line-height: 28px !important;
-          font-weight: 500 !important;
-          letter-spacing: -0.005em !important;
-          height: 56px !important;
-        }
-        .og-search-textfield-wrapper input::placeholder {
-          font-weight: 400 !important;
-        }
-        /* Kill iOS Safari's pseudo-element cancel button on type=search
-           (we render our own clear button via TextField's isClearable). */
         .og-search-textfield-wrapper input::-webkit-search-decoration,
         .og-search-textfield-wrapper input::-webkit-search-cancel-button,
         .og-search-textfield-wrapper input::-webkit-search-results-button,
@@ -648,7 +642,6 @@ export function GlobalSearchModal() {
           -webkit-appearance: none;
         }
         .og-search-row {
-          height: 76px;
           padding-left: 12px;
           padding-right: 12px;
           gap: 8px;
@@ -676,15 +669,7 @@ export function GlobalSearchModal() {
             max-height: 65vh;
             border-radius: 14px;
           }
-          .og-search-textfield-wrapper input {
-            font-size: 15px !important;
-            line-height: 22px !important;
-            font-weight: 400 !important;
-            letter-spacing: 0 !important;
-            height: 44px !important;
-          }
           .og-search-row {
-            height: 60px;
             padding-left: 16px;
             padding-right: 16px;
             gap: 12px;
@@ -715,7 +700,10 @@ export function GlobalSearchModal() {
              design-system consistency. The mobile-only back button on
              the left anchors the sheet as a navigation destination;
              the esc hint on the right is desktop-only. */}
-          <div className="og-search-row flex items-stretch border-b border-border-default flex-none">
+          {/* Let the row collapse to the natural height of the edges
+             TextField + 12px top/bottom padding (mobile) / 14px (desktop).
+             No fixed height — the design system owns it. */}
+          <div className="og-search-row flex items-center border-b border-border-default flex-none py-3 sm:py-3.5">
             {/* Mobile-only back button. iOS-style chevron, 44px target. */}
             <button
               type="button"
@@ -751,7 +739,7 @@ export function GlobalSearchModal() {
                   focusInput();
                 }}
                 isLoading={loadingAsync}
-                size="xl"
+                size="lg"
                 transparent
                 reserveErrorSpace={false}
                 autoComplete="off"
