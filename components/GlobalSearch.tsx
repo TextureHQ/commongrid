@@ -9,6 +9,7 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -319,6 +320,10 @@ export function GlobalSearchModal() {
   const { isOpen, close } = useGlobalSearch();
   const router = useRouter();
   const [query, setQuery] = useState("");
+  // Deferred query keeps the input itself responsive while the Fuse
+  // pipeline catches up on slower devices. Combined with the 2-char
+  // minimum below, this kills the perceived sluggishness on mobile.
+  const deferredQuery = useDeferredValue(query);
   const inputRef = useRef<HTMLInputElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -441,10 +446,14 @@ export function GlobalSearchModal() {
     return () => window.removeEventListener("keydown", handler);
   }, [isOpen, close]);
 
-  // Build results
+  // Build results — driven by the *deferred* query so typing stays
+  // smooth even when the Fuse pipeline takes ~30-60ms per keystroke.
   const results = useMemo<SearchResult[]>(() => {
-    const q = query.trim();
+    const q = deferredQuery.trim();
     if (!q) return [];
+    // Skip single-character queries: Fuse returns hundreds of poor matches
+    // and renders are expensive. Two characters is the conventional floor.
+    if (q.length < 2) return [];
 
     const out: SearchResult[] = [];
 
@@ -499,7 +508,7 @@ export function GlobalSearchModal() {
     );
 
     return out.slice(0, MAX_TOTAL);
-  }, [query, utilityFuse, isoFuse, rtoFuse, baFuse, plantFuse, stationFuse, pricingNodeFuse, programFuse]);
+  }, [deferredQuery, utilityFuse, isoFuse, rtoFuse, baFuse, plantFuse, stationFuse, pricingNodeFuse, programFuse]);
 
   // Group results by kind (maintain KIND_ORDER order)
   const grouped = useMemo<Array<{ kind: EntityKind; label: string; items: SearchResult[] }>>(() => {
@@ -599,7 +608,33 @@ export function GlobalSearchModal() {
         /* Prevent iOS Safari from auto-zooming when the input is focused.
            Safari zooms when an input's computed font-size is < 16px. */
         .og-search-input {
-          font-size: 16px;
+          font-size: 17px;
+          line-height: 24px;
+          font-weight: 500;
+          letter-spacing: -0.005em;
+        }
+        .og-search-input::placeholder {
+          font-weight: 400;
+        }
+        /* Kill iOS Safari's pseudo-element cancel button on type=search. */
+        .og-search-input::-webkit-search-decoration,
+        .og-search-input::-webkit-search-cancel-button,
+        .og-search-input::-webkit-search-results-button,
+        .og-search-input::-webkit-search-results-decoration {
+          -webkit-appearance: none;
+        }
+        .og-search-row {
+          height: 64px;
+          padding-left: 12px;
+          padding-right: 12px;
+          gap: 10px;
+        }
+        .og-search-section-label {
+          font-size: 11px;
+          font-weight: 600;
+          line-height: 16px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
         }
         @media (min-width: 640px) {
           .og-search-modal-wrapper {
@@ -615,10 +650,19 @@ export function GlobalSearchModal() {
           .og-search-panel {
             height: auto !important;
             max-height: 65vh;
-            border-radius: 1rem;
+            border-radius: 14px;
           }
           .og-search-input {
             font-size: 15px;
+            line-height: 22px;
+            font-weight: 400;
+            letter-spacing: 0;
+          }
+          .og-search-row {
+            height: 56px;
+            padding-left: 20px;
+            padding-right: 16px;
+            gap: 12px;
           }
         }
       `}</style>
@@ -628,6 +672,7 @@ export function GlobalSearchModal() {
           never reach the backdrop's onClick handler. Both backdrop and
           sheet are above the sticky top nav (z-60). */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: event stops propagation to prevent close-on-outside-click */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick here is purely a stopPropagation guard, no user-facing action triggered */}
       <div className="og-search-modal-wrapper fixed z-[80]" onClick={(e) => e.stopPropagation()}>
         <div
           className="og-search-panel w-full flex flex-col overflow-hidden"
@@ -640,31 +685,30 @@ export function GlobalSearchModal() {
           aria-modal="true"
           aria-label="Search the registry"
         >
-          {/* Search input — paired with a back/close affordance on mobile so
-             the search sheet feels like a first-class screen, not an overlay. */}
-          <div
-            className="flex items-center gap-3 px-3 sm:px-5 border-b border-border-default flex-none"
-            style={{ height: 56 }}
-          >
-            {/* Mobile-only back button — visually anchors the sheet as a
-               navigation destination. Hidden on desktop where esc/click-out
-               dismisses. */}
+          {/* Search input row — tall, prominent, app-like.
+             On mobile: 64px tall, large 22px chevron back button, 17px
+             medium-weight text. Reads as the sheet's "address bar", not
+             an underweight overlay control. */}
+          <div className="og-search-row flex items-center border-b border-border-default flex-none">
+            {/* Mobile-only back button. iOS-style chevron, 44px tap target. */}
             <button
               type="button"
               onClick={close}
-              className="sm:hidden flex-none w-9 h-9 rounded-md flex items-center justify-center text-text-muted hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)] transition-colors -ml-1"
+              className="sm:hidden flex-none -ml-1 w-11 h-11 rounded-full flex items-center justify-center text-text-heading active:bg-[var(--color-background-subtle)] transition-colors"
               aria-label="Close search"
             >
               <svg
-                width="18"
-                height="18"
+                width="22"
+                height="22"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 aria-hidden="true"
               >
-                <path d="M19 12H5M12 19l-7-7 7-7" />
+                <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
             <Icon name="MagnifyingGlass" size={18} className="text-text-muted flex-none hidden sm:block" />
@@ -674,8 +718,8 @@ export function GlobalSearchModal() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search utilities, ISOs, power plants..."
-              className="og-search-input flex-1 bg-transparent text-text-body placeholder:text-text-muted outline-none font-normal min-w-0"
+              placeholder="Search the registry"
+              className="og-search-input flex-1 bg-transparent text-text-heading placeholder:text-text-muted outline-none min-w-0"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
@@ -684,7 +728,7 @@ export function GlobalSearchModal() {
             />
             <div className="flex items-center gap-2 flex-none">
               {loadingAsync && (
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
+                <div className="w-4 h-4 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
               )}
               {query && (
                 <button
@@ -693,10 +737,10 @@ export function GlobalSearchModal() {
                     setQuery("");
                     inputRef.current?.focus();
                   }}
-                  className="w-7 h-7 rounded-full bg-[var(--color-background-subtle)] flex items-center justify-center hover:bg-border-default transition-colors"
+                  className="w-8 h-8 rounded-full bg-[var(--color-background-subtle)] flex items-center justify-center active:bg-border-default hover:bg-border-default transition-colors"
                   aria-label="Clear search"
                 >
-                  <Icon name="X" size={11} className="text-text-muted" />
+                  <Icon name="X" size={12} className="text-text-muted" />
                 </button>
               )}
               {/* biome-ignore lint/a11y/noStaticElementInteractions: kbd visually acts as a dismiss hint, onClick is non-critical */}
@@ -711,40 +755,47 @@ export function GlobalSearchModal() {
 
           {/* Results / Empty state */}
           <div className="flex-1 overflow-y-auto overscroll-contain">
-            {/* Empty state with quick links */}
+            {/* Empty state — "Browse" rows rendered with prominence:
+               40px kind-tiles on mobile, generous 16px section padding,
+               clean type pair. The earlier 8px dots looked cramped at
+               phone density and didn't read as actionable; the tiles do. */}
             {query.trim() === "" && (
-              <div className="px-3 py-3">
-                <div className="px-2 py-1.5 mb-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">Browse</span>
-                </div>
-                {QUICK_LINKS.map((link) => (
-                  <button
-                    key={link.href}
-                    type="button"
-                    onClick={() => {
-                      router.push(link.href);
-                      close();
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-lg text-left hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)] transition-colors group"
-                  >
-                    <span
-                      className={`flex-none w-8 h-8 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${KIND_DOT_COLOR[link.kind].replace("-400", "-100")}`}
+              <div className="py-4 sm:py-3">
+                <div className="og-search-section-label text-text-muted px-5 sm:px-5 pb-3 sm:pb-2">Browse</div>
+                <div className="px-2 sm:px-3">
+                  {QUICK_LINKS.map((link) => (
+                    <button
+                      key={link.href}
+                      type="button"
+                      onClick={() => {
+                        router.push(link.href);
+                        close();
+                      }}
+                      className="w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)] transition-colors group"
                     >
-                      <span className={`w-2 h-2 rounded-full ${KIND_DOT_COLOR[link.kind]}`} />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-text-heading">{link.label}</div>
-                      <div className="text-xs text-text-muted">{link.subtitle}</div>
-                    </div>
-                    <Icon
-                      name="ArrowRight"
-                      size={14}
-                      className="flex-none text-text-muted opacity-30 group-hover:opacity-70 transition-opacity"
-                    />
-                  </button>
-                ))}
+                      <span
+                        className={`flex-none w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-lg flex items-center justify-center ${KIND_DOT_COLOR[link.kind].replace("-400", "-100")}`}
+                      >
+                        <span className={`w-2.5 h-2.5 sm:w-2 sm:h-2 rounded-full ${KIND_DOT_COLOR[link.kind]}`} />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[16px] sm:text-sm font-semibold text-text-heading leading-tight">
+                          {link.label}
+                        </div>
+                        <div className="text-[13px] sm:text-xs text-text-muted leading-tight mt-0.5">
+                          {link.subtitle}
+                        </div>
+                      </div>
+                      <Icon
+                        name="ArrowRight"
+                        size={16}
+                        className="flex-none text-text-muted opacity-40 group-hover:opacity-70 transition-opacity"
+                      />
+                    </button>
+                  ))}
+                </div>
                 {/* Tip — desktop only */}
-                <div className="hidden sm:flex mt-3 mx-2 pt-3 border-t border-border-default items-center gap-2">
+                <div className="hidden sm:flex mt-3 mx-5 pt-3 border-t border-border-default items-center gap-2">
                   <span className="text-xs text-text-muted">Tip:</span>
                   <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[10px] font-mono">
                     ⌘K
@@ -754,65 +805,71 @@ export function GlobalSearchModal() {
               </div>
             )}
 
-            {/* No results */}
-            {query.trim() !== "" && results.length === 0 && !loadingAsync && (
-              <div className="flex flex-col items-center justify-center py-12 gap-2 text-text-muted">
-                <div className="w-10 h-10 rounded-full bg-[var(--color-background-subtle)] flex items-center justify-center mb-1">
-                  <Icon name="MagnifyingGlass" size={18} className="opacity-40" />
+            {/* No results — only show once the deferred query has caught
+               up. Otherwise we'd flash this banner on every keystroke. */}
+            {query.trim().length >= 2 && deferredQuery === query && results.length === 0 && !loadingAsync && (
+              <div className="flex flex-col items-center justify-center px-6 py-16 sm:py-12 gap-3 text-text-muted">
+                <div className="w-14 h-14 rounded-2xl bg-[var(--color-background-subtle)] flex items-center justify-center mb-1">
+                  <Icon name="MagnifyingGlass" size={22} className="opacity-40" />
                 </div>
-                <p className="text-sm font-medium text-text-body">No results for &ldquo;{query}&rdquo;</p>
-                <p className="text-xs opacity-60">Try a different search term</p>
+                <p className="text-base sm:text-sm font-semibold text-text-heading">
+                  No results for &ldquo;{query}&rdquo;
+                </p>
+                <p className="text-sm sm:text-xs opacity-60 text-center max-w-xs">
+                  Try a different name, ID, or location — or browse the categories from the empty state.
+                </p>
               </div>
             )}
 
-            {/* Results grouped by entity type */}
+            {/* Results grouped by entity type. Each section starts with a
+               proper uppercase label with generous breathing room, then
+               taller rows (60px on mobile) with a real kind-tile, 15px
+               semibold name and 13px muted subtitle. */}
             {grouped.length > 0 && (
-              <div className="px-3 py-2">
-                {grouped.map((group) => (
-                  <div key={group.kind} className="mb-1">
-                    <div className="px-2 py-1.5">
-                      <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">
-                        {group.label}
-                      </span>
-                    </div>
-                    {group.items.map((result) => {
-                      const idx = flatIndex++;
-                      const isActive = idx === activeIndex;
-                      return (
-                        <button
-                          key={`${result.kind}-${result.slug}`}
-                          type="button"
-                          className={`w-full flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-lg text-left transition-colors group ${
-                            isActive
-                              ? "bg-[var(--color-background-subtle)]"
-                              : "hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)]"
-                          }`}
-                          onMouseEnter={() => setActiveIndex(idx)}
-                          onClick={() => navigateTo(result)}
-                        >
-                          <span
-                            className={`flex-none w-8 h-8 sm:w-7 sm:h-7 rounded-md flex items-center justify-center ${KIND_DOT_COLOR[result.kind].replace("-400", "-100")}`}
+              <div className="py-2 sm:py-2">
+                {grouped.map((group, groupIdx) => (
+                  <div key={group.kind} className={groupIdx === 0 ? "" : "mt-2 sm:mt-1"}>
+                    <div className="og-search-section-label text-text-muted px-5 sm:px-5 pt-3 pb-2">{group.label}</div>
+                    <div className="px-2 sm:px-3">
+                      {group.items.map((result) => {
+                        const idx = flatIndex++;
+                        const isActive = idx === activeIndex;
+                        return (
+                          <button
+                            key={`${result.kind}-${result.slug}`}
+                            type="button"
+                            className={`w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left transition-colors group ${
+                              isActive
+                                ? "bg-[var(--color-background-subtle)]"
+                                : "hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)]"
+                            }`}
+                            onMouseEnter={() => setActiveIndex(idx)}
+                            onClick={() => navigateTo(result)}
                           >
-                            <span className={`w-2 h-2 rounded-full ${result.dotColor}`} />
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-text-heading truncate leading-snug">
-                              {result.name}
-                            </div>
-                            {result.subtitle && (
-                              <div className="text-xs text-text-muted truncate mt-0.5 leading-snug">
-                                {result.subtitle}
+                            <span
+                              className={`flex-none w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-lg flex items-center justify-center ${KIND_DOT_COLOR[result.kind].replace("-400", "-100")}`}
+                            >
+                              <span className={`w-2.5 h-2.5 sm:w-2 sm:h-2 rounded-full ${result.dotColor}`} />
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-[16px] sm:text-sm font-semibold text-text-heading truncate leading-tight">
+                                {result.name}
                               </div>
-                            )}
-                          </div>
-                          <Icon
-                            name="ArrowRight"
-                            size={14}
-                            className={`flex-none text-text-muted transition-opacity ${isActive ? "opacity-60" : "opacity-0 group-hover:opacity-40"}`}
-                          />
-                        </button>
-                      );
-                    })}
+                              {result.subtitle && (
+                                <div className="text-[13px] sm:text-xs text-text-muted truncate mt-0.5 leading-tight">
+                                  {result.subtitle}
+                                </div>
+                              )}
+                            </div>
+                            <Icon
+                              name="ArrowRight"
+                              size={16}
+                              className={`flex-none text-text-muted transition-opacity ${isActive ? "opacity-60" : "opacity-0 group-hover:opacity-40"}`}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>
