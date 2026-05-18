@@ -1321,22 +1321,9 @@ export default function LandingPage() {
       <footer className="cg-footer">
         <div className="wrap">
           <div className="foot-grid">
-            <div className="foot-col">
-              <Link
-                href="/"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  fontFamily: "var(--font-family-brand)",
-                  fontWeight: 700,
-                  fontSize: "16px",
-                  letterSpacing: "-.015em",
-                  color: "var(--color-text-heading)",
-                  textDecoration: "none",
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <div className="foot-col foot-brand">
+              <Link href="/" className="foot-brand-link">
+                <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
                   <circle cx="4" cy="4" r="1.8" fill="currentColor" />
                   <circle cx="12" cy="4" r="1.8" fill="currentColor" />
                   <circle cx="20" cy="4" r="1.8" fill="currentColor" />
