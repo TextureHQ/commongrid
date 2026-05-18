@@ -891,7 +891,7 @@
   margin: 0 0 16px;
   font-weight: 500;
 }
-.cg-home .foot-col a {
+.cg-home .foot-col a:not(.foot-brand-link) {
   display: block;
   font-family: var(--font-family-sans);
   font-size: 14px;
