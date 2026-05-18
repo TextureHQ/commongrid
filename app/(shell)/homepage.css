@@ -866,13 +866,20 @@
 .cg-home .foot-brand-link {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 12px;
   font-family: var(--font-family-brand);
   font-weight: 700;
-  font-size: 16px;
-  letter-spacing: -.015em;
+  font-size: 22px;
+  letter-spacing: -.02em;
   color: var(--color-text-heading);
   text-decoration: none;
+}
+.cg-home .foot-brand-link svg {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
 }
 .cg-home .foot-col h5 {
   font-family: var(--font-family-mono);

@@ -1323,7 +1323,7 @@ export default function LandingPage() {
           <div className="foot-grid">
             <div className="foot-col foot-brand">
               <Link href="/" className="foot-brand-link">
-                <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
                   <circle cx="4" cy="4" r="1.8" fill="currentColor" />
                   <circle cx="12" cy="4" r="1.8" fill="currentColor" />
                   <circle cx="20" cy="4" r="1.8" fill="currentColor" />
