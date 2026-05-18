@@ -84,9 +84,14 @@ const KIND_ORDER: EntityKind[] = [
 ];
 
 // Flat lookup maps derived from the catalog — keep the per-result
-// `dotColor: KIND_DOT_COLOR.<kind>` callsites concise.
+// `dotColor: KIND_DOT_COLOR.<kind>` callsites concise. Falls back to
+// a neutral slate color for any kind that doesn't have an explicit
+// entry, so we can't crash on a newly added kind that hasn't been
+// wired up here yet.
+const KIND_DOT_COLOR_FALLBACK = "bg-slate-400";
+const KIND_TILE_BG_FALLBACK = "bg-slate-100";
 const KIND_DOT_COLOR = Object.fromEntries(
-  KIND_ORDER.map((k) => [k, ENTITY_BY_KIND[k]?.dotColor ?? "bg-slate-400"])
+  KIND_ORDER.map((k) => [k, ENTITY_BY_KIND[k]?.dotColor ?? KIND_DOT_COLOR_FALLBACK])
 ) as Record<EntityKind, string>;
 
 const KIND_LABELS = Object.fromEntries(KIND_ORDER.map((k) => [k, ENTITY_BY_KIND[k]?.label ?? k])) as Record<
@@ -566,13 +571,18 @@ export function GlobalSearchModal() {
   let flatIndex = 0;
 
   // Browse-list entries come from the central catalog so adding a new
-  // dataset elsewhere automatically surfaces here. Labels, counts, and
-  // hrefs are the single source of truth in lib/entity-catalog.ts.
+  // dataset elsewhere automatically surfaces here. Labels, counts,
+  // hrefs, AND dot/tile colors are the single source of truth in
+  // lib/entity-catalog.ts — we project them onto the row shape the
+  // empty-state UI expects, including the lighter tile background
+  // (e.g. bg-amber-100) that pairs with the dot color (bg-amber-400).
   const QUICK_LINKS = BROWSE_ENTRIES.map((entry) => ({
     label: entry.label,
     href: entry.href,
     kind: entry.kind,
     subtitle: `${entry.count.toLocaleString("en-US")} ${entry.noun}`,
+    dotColor: entry.dotColor,
+    tileBg: entry.tileBg,
   }));
 
   return (
@@ -777,9 +787,9 @@ export function GlobalSearchModal() {
                       className="w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)] transition-colors group"
                     >
                       <span
-                        className={`flex-none w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-lg flex items-center justify-center ${KIND_DOT_COLOR[link.kind].replace("-400", "-100")}`}
+                        className={`flex-none w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-lg flex items-center justify-center ${link.tileBg}`}
                       >
-                        <span className={`w-2.5 h-2.5 sm:w-2 sm:h-2 rounded-full ${KIND_DOT_COLOR[link.kind]}`} />
+                        <span className={`w-2.5 h-2.5 sm:w-2 sm:h-2 rounded-full ${link.dotColor}`} />
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="text-[16px] sm:text-sm font-semibold text-text-heading leading-tight">
@@ -850,9 +860,13 @@ export function GlobalSearchModal() {
                             onClick={() => navigateTo(result)}
                           >
                             <span
-                              className={`flex-none w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-lg flex items-center justify-center ${KIND_DOT_COLOR[result.kind].replace("-400", "-100")}`}
+                              className={`flex-none w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-lg flex items-center justify-center ${
+                                ENTITY_BY_KIND[result.kind]?.tileBg ?? KIND_TILE_BG_FALLBACK
+                              }`}
                             >
-                              <span className={`w-2.5 h-2.5 sm:w-2 sm:h-2 rounded-full ${result.dotColor}`} />
+                              <span
+                                className={`w-2.5 h-2.5 sm:w-2 sm:h-2 rounded-full ${result.dotColor ?? KIND_DOT_COLOR_FALLBACK}`}
+                              />
                             </span>
                             <div className="flex-1 min-w-0">
                               <div className="text-[16px] sm:text-sm font-semibold text-text-heading truncate leading-tight">
