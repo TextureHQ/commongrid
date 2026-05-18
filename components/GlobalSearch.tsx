@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@texturehq/edges";
+import { Icon, TextField } from "@texturehq/edges";
 import Fuse from "fuse.js";
 import { useRouter } from "next/navigation";
 import {
@@ -16,6 +16,7 @@ import {
   useState,
 } from "react";
 import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getAllRtos } from "@/lib/data";
+import { BROWSE_ENTRIES, ENTITY_BY_KIND, type EntityKind } from "@/lib/entity-catalog";
 import { useUtilities } from "@/lib/utilities-client";
 import type { BalancingAuthority, Iso, PowerPlant, Rto, Utility } from "@/types/entities";
 import type { EVStation } from "@/types/ev-charging";
@@ -54,7 +55,11 @@ export function useGlobalSearch(): GlobalSearchContextValue {
 // Search result types
 // ---------------------------------------------------------------------------
 
-type EntityKind = "utility" | "iso" | "rto" | "ba" | "power-plant" | "ev-station" | "pricing-node" | "program";
+// EntityKind, labels, colors, browse list, and counts all live in the
+// shared catalog (lib/entity-catalog.ts) so the empty-state suggestions
+// and the search-result groups stay in sync with the actual datasets
+// we ship. Adding a new dataset = adding one catalog entry; this
+// component re-derives everything.
 
 interface SearchResult {
   kind: EntityKind;
@@ -65,17 +70,8 @@ interface SearchResult {
   dotColor: string;
 }
 
-const KIND_LABELS: Record<EntityKind, string> = {
-  utility: "Utilities",
-  iso: "ISOs",
-  rto: "RTOs",
-  ba: "Balancing Authorities",
-  "power-plant": "Power Plants",
-  "ev-station": "EV Charging",
-  "pricing-node": "Pricing Nodes",
-  program: "Programs",
-};
-
+// Order in which kinds appear in the search-result list. Matches the
+// catalog order, with RTOs slotted in next to ISOs.
 const KIND_ORDER: EntityKind[] = [
   "utility",
   "iso",
@@ -87,16 +83,16 @@ const KIND_ORDER: EntityKind[] = [
   "program",
 ];
 
-const KIND_DOT_COLOR: Record<EntityKind, string> = {
-  utility: "bg-slate-400",
-  iso: "bg-amber-400",
-  rto: "bg-amber-400",
-  ba: "bg-amber-400",
-  "power-plant": "bg-teal-400",
-  "ev-station": "bg-green-400",
-  "pricing-node": "bg-yellow-400",
-  program: "bg-indigo-400",
-};
+// Flat lookup maps derived from the catalog — keep the per-result
+// `dotColor: KIND_DOT_COLOR.<kind>` callsites concise.
+const KIND_DOT_COLOR = Object.fromEntries(
+  KIND_ORDER.map((k) => [k, ENTITY_BY_KIND[k]?.dotColor ?? "bg-slate-400"])
+) as Record<EntityKind, string>;
+
+const KIND_LABELS = Object.fromEntries(KIND_ORDER.map((k) => [k, ENTITY_BY_KIND[k]?.label ?? k])) as Record<
+  EntityKind,
+  string
+>;
 
 const MAX_PER_KIND = 5;
 const MAX_TOTAL = 30;
@@ -324,7 +320,16 @@ export function GlobalSearchModal() {
   // pipeline catches up on slower devices. Combined with the 2-char
   // minimum below, this kills the perceived sluggishness on mobile.
   const deferredQuery = useDeferredValue(query);
-  const inputRef = useRef<HTMLInputElement>(null);
+  // Wrap the TextField in a div ref so we can imperatively focus the
+  // inner <input>. The edges TextField doesn't forward a ref to its
+  // <input>, so we reach in via DOM query — not pretty, but it's the
+  // approved escape hatch (TextField is built on react-aria-components
+  // which manages the input internally).
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
+  const focusInput = useCallback(() => {
+    const el = searchWrapperRef.current?.querySelector("input");
+    el?.focus();
+  }, []);
   const [activeIndex, setActiveIndex] = useState(0);
 
   // Tier-2 async data
@@ -359,9 +364,9 @@ export function GlobalSearchModal() {
     if (isOpen) {
       setQuery("");
       setActiveIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      setTimeout(() => focusInput(), 50);
     }
-  }, [isOpen]);
+  }, [isOpen, focusInput]);
 
   // Fetch tier-2 data on open
   useEffect(() => {
@@ -560,12 +565,15 @@ export function GlobalSearchModal() {
   // Flatten results for keyboard nav indexing
   let flatIndex = 0;
 
-  const QUICK_LINKS: Array<{ label: string; href: string; kind: EntityKind; subtitle: string }> = [
-    { label: "Utilities", href: "/grid-operators", kind: "utility", subtitle: "3,132 utilities" },
-    { label: "Power Plants", href: "/power-plants", kind: "power-plant", subtitle: "15,082 plants" },
-    { label: "EV Charging", href: "/ev-charging", kind: "ev-station", subtitle: "85,425 stations" },
-    { label: "Pricing Nodes", href: "/pricing-nodes", kind: "pricing-node", subtitle: "4,065 nodes" },
-  ];
+  // Browse-list entries come from the central catalog so adding a new
+  // dataset elsewhere automatically surfaces here. Labels, counts, and
+  // hrefs are the single source of truth in lib/entity-catalog.ts.
+  const QUICK_LINKS = BROWSE_ENTRIES.map((entry) => ({
+    label: entry.label,
+    href: entry.href,
+    kind: entry.kind,
+    subtitle: `${entry.count.toLocaleString("en-US")} ${entry.noun}`,
+  }));
 
   return (
     <>
@@ -605,29 +613,35 @@ export function GlobalSearchModal() {
           height: 100dvh;
           border-radius: 0;
         }
-        /* Prevent iOS Safari from auto-zooming when the input is focused.
-           Safari zooms when an input's computed font-size is < 16px. */
-        .og-search-input {
-          font-size: 17px;
-          line-height: 24px;
-          font-weight: 500;
-          letter-spacing: -0.005em;
+        /* Force the edges TextField inside the search row to be tall
+           enough to feel like a real "address bar" on mobile, and to
+           never trigger iOS Safari's font-zoom (must be ≥ 16px). */
+        .og-search-textfield-wrapper > * {
+          width: 100%;
         }
-        .og-search-input::placeholder {
-          font-weight: 400;
+        .og-search-textfield-wrapper input {
+          font-size: 17px !important;
+          line-height: 28px !important;
+          font-weight: 500 !important;
+          letter-spacing: -0.005em !important;
+          height: 56px !important;
         }
-        /* Kill iOS Safari's pseudo-element cancel button on type=search. */
-        .og-search-input::-webkit-search-decoration,
-        .og-search-input::-webkit-search-cancel-button,
-        .og-search-input::-webkit-search-results-button,
-        .og-search-input::-webkit-search-results-decoration {
+        .og-search-textfield-wrapper input::placeholder {
+          font-weight: 400 !important;
+        }
+        /* Kill iOS Safari's pseudo-element cancel button on type=search
+           (we render our own clear button via TextField's isClearable). */
+        .og-search-textfield-wrapper input::-webkit-search-decoration,
+        .og-search-textfield-wrapper input::-webkit-search-cancel-button,
+        .og-search-textfield-wrapper input::-webkit-search-results-button,
+        .og-search-textfield-wrapper input::-webkit-search-results-decoration {
           -webkit-appearance: none;
         }
         .og-search-row {
-          height: 64px;
+          height: 76px;
           padding-left: 12px;
           padding-right: 12px;
-          gap: 10px;
+          gap: 8px;
         }
         .og-search-section-label {
           font-size: 11px;
@@ -652,15 +666,16 @@ export function GlobalSearchModal() {
             max-height: 65vh;
             border-radius: 14px;
           }
-          .og-search-input {
-            font-size: 15px;
-            line-height: 22px;
-            font-weight: 400;
-            letter-spacing: 0;
+          .og-search-textfield-wrapper input {
+            font-size: 15px !important;
+            line-height: 22px !important;
+            font-weight: 400 !important;
+            letter-spacing: 0 !important;
+            height: 44px !important;
           }
           .og-search-row {
-            height: 56px;
-            padding-left: 20px;
+            height: 60px;
+            padding-left: 16px;
             padding-right: 16px;
             gap: 12px;
           }
@@ -685,21 +700,22 @@ export function GlobalSearchModal() {
           aria-modal="true"
           aria-label="Search the registry"
         >
-          {/* Search input row — tall, prominent, app-like.
-             On mobile: 64px tall, large 22px chevron back button, 17px
-             medium-weight text. Reads as the sheet's "address bar", not
-             an underweight overlay control. */}
-          <div className="og-search-row flex items-center border-b border-border-default flex-none">
-            {/* Mobile-only back button. iOS-style chevron, 44px tap target. */}
+          {/* Search input row — uses the edges TextField configured as a
+             search input (size=xl on mobile, lg on desktop) for full
+             design-system consistency. The mobile-only back button on
+             the left anchors the sheet as a navigation destination;
+             the esc hint on the right is desktop-only. */}
+          <div className="og-search-row flex items-stretch border-b border-border-default flex-none">
+            {/* Mobile-only back button. iOS-style chevron, 44px target. */}
             <button
               type="button"
               onClick={close}
-              className="sm:hidden flex-none -ml-1 w-11 h-11 rounded-full flex items-center justify-center text-text-heading active:bg-[var(--color-background-subtle)] transition-colors"
+              className="sm:hidden flex-none -ml-1 w-11 h-11 self-center rounded-full flex items-center justify-center text-text-heading active:bg-[var(--color-background-subtle)] transition-colors"
               aria-label="Close search"
             >
               <svg
-                width="22"
-                height="22"
+                width="24"
+                height="24"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -711,46 +727,33 @@ export function GlobalSearchModal() {
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
-            <Icon name="MagnifyingGlass" size={18} className="text-text-muted flex-none hidden sm:block" />
-            <input
-              ref={inputRef}
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search the registry"
-              className="og-search-input flex-1 bg-transparent text-text-heading placeholder:text-text-muted outline-none min-w-0"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              enterKeyHint="search"
-            />
-            <div className="flex items-center gap-2 flex-none">
-              {loadingAsync && (
-                <div className="w-4 h-4 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
-              )}
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery("");
-                    inputRef.current?.focus();
-                  }}
-                  className="w-8 h-8 rounded-full bg-[var(--color-background-subtle)] flex items-center justify-center active:bg-border-default hover:bg-border-default transition-colors"
-                  aria-label="Clear search"
-                >
-                  <Icon name="X" size={12} className="text-text-muted" />
-                </button>
-              )}
-              {/* biome-ignore lint/a11y/noStaticElementInteractions: kbd visually acts as a dismiss hint, onClick is non-critical */}
-              <kbd
-                onClick={close}
-                className="hidden sm:flex items-center px-2 py-1 rounded-md border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[11px] font-mono cursor-pointer hover:bg-border-default transition-colors select-none"
-              >
-                esc
-              </kbd>
+            <div ref={searchWrapperRef} className="og-search-textfield-wrapper flex-1 min-w-0 self-center">
+              <TextField
+                aria-label="Search the registry"
+                value={query}
+                onChange={setQuery}
+                onKeyDown={handleKeyDown}
+                placeholder="Search the registry"
+                showSearchIcon
+                isClearable
+                onClear={() => {
+                  setQuery("");
+                  focusInput();
+                }}
+                isLoading={loadingAsync}
+                size="xl"
+                transparent
+                reserveErrorSpace={false}
+                autoComplete="off"
+              />
             </div>
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: kbd visually acts as a dismiss hint, onClick is non-critical */}
+            <kbd
+              onClick={close}
+              className="hidden sm:flex flex-none self-center items-center px-2 py-1 ml-2 rounded-md border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[11px] font-mono cursor-pointer hover:bg-border-default transition-colors select-none"
+            >
+              esc
+            </kbd>
           </div>
 
           {/* Results / Empty state */}
