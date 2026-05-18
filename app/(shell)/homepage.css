@@ -996,7 +996,7 @@
     margin: 0 0 8px;
     font-size: 11px;
   }
-  .cg-home .foot-col a {
+  .cg-home .foot-col a:not(.foot-brand-link) {
     padding: 3px 0;
     font-size: 14px;
     line-height: 1.5;
