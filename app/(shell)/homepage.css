@@ -868,17 +868,18 @@
   align-items: center;
   flex-wrap: nowrap;
   white-space: nowrap;
-  gap: 12px;
+  gap: 14px;
   font-family: var(--font-family-brand);
   font-weight: 700;
-  font-size: 22px;
-  letter-spacing: -.02em;
+  font-size: 28px;
+  letter-spacing: -.025em;
+  line-height: 1;
   color: var(--color-text-heading);
   text-decoration: none;
 }
 .cg-home .foot-brand-link svg {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
 }
 .cg-home .foot-col h5 {
