@@ -562,12 +562,22 @@ export function GlobalSearchModal() {
     <>
       {/* Backdrop — covers the full viewport on mobile (including the
           nav area, since the search sheet itself takes over the screen),
-          and dims everything behind the floating panel on desktop. */}
+          and dims everything behind the floating panel on desktop.
+
+          z-index: must sit ABOVE the sticky top nav (z-60) so the modal
+          actually covers the nav on mobile. Backdrop is z-[70], sheet
+          wrapper is z-[80].
+
+          Click vs touch: only respond to onClick, NOT onMouseDown /
+          onTouchStart. iOS Safari fires touchstart on whatever's under
+          the finger when a new layer appears, so listening to touchstart
+          would close the modal in the same gesture that opened it (the
+          original "tap does nothing" bug). Click fires after touchend,
+          which is exactly what we want. */}
       <div
-        className="fixed inset-0 z-50"
+        className="fixed inset-0 z-[70]"
         style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
-        onMouseDown={close}
-        onTouchStart={close}
+        onClick={close}
         aria-hidden="true"
       />
 
@@ -613,9 +623,12 @@ export function GlobalSearchModal() {
         }
       `}</style>
 
-      {/* Modal — full-screen sheet on mobile, floating centered on desktop */}
+      {/* Modal — full-screen sheet on mobile, floating centered on desktop.
+          Sits one layer above the backdrop so taps on the panel itself
+          never reach the backdrop's onClick handler. Both backdrop and
+          sheet are above the sticky top nav (z-60). */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: event stops propagation to prevent close-on-outside-click */}
-      <div className="og-search-modal-wrapper fixed z-50" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="og-search-modal-wrapper fixed z-[80]" onClick={(e) => e.stopPropagation()}>
         <div
           className="og-search-panel w-full flex flex-col overflow-hidden"
           style={{

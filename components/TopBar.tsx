@@ -29,8 +29,16 @@ const GitHubIcon = () => (
   </svg>
 );
 
-const SearchIcon = () => (
-  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+const SearchIcon = ({ size = 14 }: { size?: number }) => (
+  <svg
+    aria-hidden="true"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
   </svg>
@@ -167,10 +175,18 @@ export function TopBar({ navigation, navigationReady = true }: TopBarProps) {
           {/* Mobile right — search icon + auth + hamburger.
              Search is a top-level affordance (one tap to a full-screen
              search sheet). Theme toggle and other settings live in the
-             drawer footer to keep this row compact. */}
+             drawer footer to keep this row compact. The search icon is
+             rendered at 20px to visually balance the 20px hamburger
+             beside it (the inline 14px desktop icon is too small to
+             read on a 60px-tall mobile nav). */}
           <div className="cg-nav-mobile-right">
-            <button type="button" className="cg-icon-btn" onClick={openSearch} aria-label="Search the registry">
-              <SearchIcon />
+            <button
+              type="button"
+              className="cg-icon-btn cg-nav-mobile-search"
+              onClick={openSearch}
+              aria-label="Search the registry"
+            >
+              <SearchIcon size={20} />
             </button>
             {isAuthLoaded && isSignedIn && <UserMenu />}
             <button

@@ -431,6 +431,12 @@ html, body {
 @media (max-width: 640px) {
   .cg-nav-links, .cg-nav-right { display: none; }
   .cg-nav-mobile-right { display: flex; }
+  /* On mobile, the .cg-icon-btn used for search/menu needs more presence —
+     larger tap target (Apple HIG: ≥44px) and a visible icon size. */
+  .cg-nav-mobile-right .cg-icon-btn {
+    width: 40px;
+    height: 40px;
+  }
 }
 @media (min-width: 641px) {
   .cg-nav-mobile-right { display: none; }
