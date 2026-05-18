@@ -267,20 +267,9 @@ html, body {
    is retained as a no-op for any legacy markup that still renders it. */
 .cg-drawer-header { display: none; }
 
-.cg-drawer-search {
-  padding: 16px 20px 12px;
-  flex-shrink: 0;
-}
-.cg-drawer-search-trigger {
-  /* Force the edges SearchTrigger to span the full drawer width
-     (its default is fit-content). */
-  width: 100%;
-  display: flex;
-}
-
 .cg-drawer-nav {
   flex: 1;
-  padding: 4px 12px 16px;
+  padding: 20px 12px 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -431,7 +420,6 @@ html, body {
    don't stretch awkwardly. */
 @media (min-width: 480px) and (max-width: 640px) {
   .cg-drawer-nav,
-  .cg-drawer-search,
   .cg-drawer-footer {
     max-width: 520px;
     margin-left: auto;
@@ -443,6 +431,12 @@ html, body {
 @media (max-width: 640px) {
   .cg-nav-links, .cg-nav-right { display: none; }
   .cg-nav-mobile-right { display: flex; }
+  /* On mobile, the .cg-icon-btn used for search/menu needs more presence —
+     larger tap target (Apple HIG: ≥44px) and a visible icon size. */
+  .cg-nav-mobile-right .cg-icon-btn {
+    width: 40px;
+    height: 40px;
+  }
 }
 @media (min-width: 641px) {
   .cg-nav-mobile-right { display: none; }
