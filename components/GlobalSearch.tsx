@@ -739,7 +739,7 @@ export function GlobalSearchModal() {
                   focusInput();
                 }}
                 isLoading={loadingAsync}
-                size="lg"
+                size="md"
                 transparent
                 reserveErrorSpace={false}
                 autoComplete="off"
