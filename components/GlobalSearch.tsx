@@ -560,17 +560,37 @@ export function GlobalSearchModal() {
 
   return (
     <>
-      {/* Backdrop — tap outside to close; starts below fixed nav on mobile */}
+      {/* Backdrop — covers the full viewport on mobile (including the
+          nav area, since the search sheet itself takes over the screen),
+          and dims everything behind the floating panel on desktop. */}
       <div
-        className="fixed inset-0 top-14 sm:top-0 z-50"
+        className="fixed inset-0 z-50"
         style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
         onMouseDown={close}
         onTouchStart={close}
         aria-hidden="true"
       />
 
-      {/* Modal positioning styles — mobile: full-screen below nav; desktop: centered float */}
+      {/* Modal positioning styles
+         • Mobile: true full-screen sheet (top:0, 100dvh) so the keyboard
+           doesn't shove the panel around and we get the full viewport
+           for results. Uses `dvh` so iOS Safari accounts for the URL bar.
+         • Desktop: centered floating panel as before. */}
       <style>{`
+        .og-search-modal-wrapper {
+          top: 0;
+          left: 0;
+          right: 0;
+        }
+        .og-search-panel {
+          height: 100dvh;
+          border-radius: 0;
+        }
+        /* Prevent iOS Safari from auto-zooming when the input is focused.
+           Safari zooms when an input's computed font-size is < 16px. */
+        .og-search-input {
+          font-size: 16px;
+        }
         @media (min-width: 640px) {
           .og-search-modal-wrapper {
             top: 0 !important;
@@ -587,68 +607,83 @@ export function GlobalSearchModal() {
             max-height: 65vh;
             border-radius: 1rem;
           }
+          .og-search-input {
+            font-size: 15px;
+          }
         }
       `}</style>
 
-      {/* Modal — full-screen below nav on mobile, floating centered on desktop */}
+      {/* Modal — full-screen sheet on mobile, floating centered on desktop */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: event stops propagation to prevent close-on-outside-click */}
-      <div
-        className="og-search-modal-wrapper fixed z-50"
-        style={{
-          top: "3.5rem",
-          left: 0,
-          right: 0,
-        }}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
+      <div className="og-search-modal-wrapper fixed z-50" onMouseDown={(e) => e.stopPropagation()}>
         <div
           className="og-search-panel w-full flex flex-col overflow-hidden"
           style={{
-            height: "calc(100dvh - 3.5rem)",
             background: "var(--color-background-surface)",
             boxShadow:
               "0 32px 64px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Search the registry"
         >
-          {/* Search input */}
+          {/* Search input — paired with a back/close affordance on mobile so
+             the search sheet feels like a first-class screen, not an overlay. */}
           <div
-            className="flex items-center gap-3 px-4 sm:px-5 border-b border-border-default flex-none"
-            style={{ height: 52 }}
+            className="flex items-center gap-3 px-3 sm:px-5 border-b border-border-default flex-none"
+            style={{ height: 56 }}
           >
-            <Icon name="MagnifyingGlass" size={18} className="text-text-muted flex-none" />
+            {/* Mobile-only back button — visually anchors the sheet as a
+               navigation destination. Hidden on desktop where esc/click-out
+               dismisses. */}
+            <button
+              type="button"
+              onClick={close}
+              className="sm:hidden flex-none w-9 h-9 rounded-md flex items-center justify-center text-text-muted hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)] transition-colors -ml-1"
+              aria-label="Close search"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <Icon name="MagnifyingGlass" size={18} className="text-text-muted flex-none hidden sm:block" />
             <input
               ref={inputRef}
-              type="text"
+              type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search utilities, ISOs, power plants..."
-              className="flex-1 bg-transparent text-[15px] text-text-body placeholder:text-text-muted outline-none font-normal min-w-0"
+              className="og-search-input flex-1 bg-transparent text-text-body placeholder:text-text-muted outline-none font-normal min-w-0"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
+              enterKeyHint="search"
             />
             <div className="flex items-center gap-2 flex-none">
               {loadingAsync && (
                 <div className="w-3.5 h-3.5 rounded-full border-2 border-brand-primary border-t-transparent animate-spin" />
               )}
-              {query ? (
+              {query && (
                 <button
                   type="button"
-                  onClick={() => setQuery("")}
-                  className="w-6 h-6 rounded-full bg-[var(--color-background-subtle)] flex items-center justify-center hover:bg-border-default transition-colors"
+                  onClick={() => {
+                    setQuery("");
+                    inputRef.current?.focus();
+                  }}
+                  className="w-7 h-7 rounded-full bg-[var(--color-background-subtle)] flex items-center justify-center hover:bg-border-default transition-colors"
                   aria-label="Clear search"
                 >
                   <Icon name="X" size={11} className="text-text-muted" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={close}
-                  className="sm:hidden flex items-center px-2 py-1 rounded-md border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[12px] font-medium"
-                >
-                  Cancel
                 </button>
               )}
               {/* biome-ignore lint/a11y/noStaticElementInteractions: kbd visually acts as a dismiss hint, onClick is non-critical */}

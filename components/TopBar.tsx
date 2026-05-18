@@ -1,10 +1,10 @@
 "use client";
 
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
-import { SearchTrigger, useColorMode } from "@texturehq/edges";
+import { useColorMode } from "@texturehq/edges";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useGlobalSearch } from "@/components/GlobalSearch";
 import { UserMenu } from "@/components/UserMenu";
@@ -164,16 +164,21 @@ export function TopBar({ navigation, navigationReady = true }: TopBarProps) {
             )}
           </div>
 
-          {/* Mobile right — theme toggle lives in the drawer footer to
-             avoid duplicating it here. Keeps the mobile nav compact and
-             groups theme with the other settings-y controls. */}
+          {/* Mobile right — search icon + auth + hamburger.
+             Search is a top-level affordance (one tap to a full-screen
+             search sheet). Theme toggle and other settings live in the
+             drawer footer to keep this row compact. */}
           <div className="cg-nav-mobile-right">
+            <button type="button" className="cg-icon-btn" onClick={openSearch} aria-label="Search the registry">
+              <SearchIcon />
+            </button>
             {isAuthLoaded && isSignedIn && <UserMenu />}
             <button
               type="button"
               className="cg-icon-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
             </button>
@@ -213,7 +218,6 @@ interface MobileDrawerProps {
 function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggleTheme, mounted }: MobileDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
-  const { open: openSearch } = useGlobalSearch();
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -237,12 +241,6 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  const handleSearchClick = useCallback(() => {
-    onClose();
-    // Small delay so drawer close animation doesn't conflict
-    setTimeout(() => openSearch(), 150);
-  }, [onClose, openSearch]);
-
   return createPortal(
     <>
       {/* Backdrop */}
@@ -263,19 +261,12 @@ function MobileDrawer({ open, onClose, navigation, isActive, isDarkTheme, toggle
         aria-modal="true"
         aria-label="Navigation menu"
       >
-        {/* Search trigger — imported from @texturehq/edges for consistency
-            with the Texture design system. Clicking opens the global search
-            modal (same target as the desktop ⌘K shortcut). */}
-        <div className="cg-drawer-search">
-          <SearchTrigger
-            placeholder="Search the registry"
-            onClick={handleSearchClick}
-            showShortcut={false}
-            className="cg-drawer-search-trigger"
-          />
-        </div>
-
         {/* Nav links */}
+        {/* Search is a top-level affordance in the nav itself on mobile
+            (search icon next to the hamburger) — no duplicate search
+            control inside the drawer. This prevents the "two inputs,
+            tap one and focus jumps" confusion that the original drawer
+            search caused. */}
         <nav className="cg-drawer-nav">
           {navigation.map((item) =>
             item.external ? (
