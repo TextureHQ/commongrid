@@ -2,8 +2,12 @@
 
 import { Button, Drawer, Icon, Loader } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { type EditableField, EditSummaryField, EntityFormFields, SourceCitationFields } from "./EntityFormFields";
+
+// Convert snake_case field name to camelCase for object lookups against
+// the entity payload (which is camelCase). e.g. "customer_count" -> "customerCount".
+const snakeToCamel = (str: string): string => str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 
 interface EditEntityPanelProps {
   entityType: string;
@@ -41,12 +45,19 @@ export function EditEntityPanel({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
+  // Look up the current value for a field, trying snake_case first then
+  // camelCase. The editable-fields API returns snake_case fieldNames, but
+  // the entity payload is camelCase, so we need both for safety.
+  const lookupCurrentValue = useCallback(
+    (fieldName: string): unknown => {
+      const camelCaseKey = snakeToCamel(fieldName);
+      return currentValues[fieldName] ?? currentValues[camelCaseKey];
+    },
+    [currentValues]
+  );
+
   // Fetch editable fields on mount
   useEffect(() => {
-    // Convert snake_case to camelCase for field name lookups
-    const snakeToCamel = (str: string): string => {
-      return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-    };
     const fetchFields = async () => {
       try {
         setIsLoadingFields(true);
@@ -58,12 +69,11 @@ export function EditEntityPanel({
         const json = await res.json();
         setFields(json.data ?? []);
 
-        // Initialize form values with current values
-        // Map snake_case field names to camelCase for lookups
+        // Initialize form values with current values, looking up via both
+        // snake_case and camelCase to handle API/payload mismatch.
         const initialValues: Record<string, unknown> = {};
         for (const field of json.data ?? []) {
-          const camelCaseKey = snakeToCamel(field.fieldName);
-          initialValues[field.fieldName] = currentValues[camelCaseKey] ?? currentValues[field.fieldName];
+          initialValues[field.fieldName] = lookupCurrentValue(field.fieldName);
         }
         setFormValues(initialValues);
       } catch (error) {
@@ -75,22 +85,44 @@ export function EditEntityPanel({
     };
 
     fetchFields();
-  }, [entityType, currentValues]);
+  }, [entityType, lookupCurrentValue]);
 
-  // Calculate changed fields
+  // Calculate changed fields.
+  //
+  // IMPORTANT: `formValues` is keyed by `field.fieldName` (snake_case from the
+  // editable-fields API), but `currentValues` is the entity payload, which is
+  // camelCase. Comparing `formValues[snake_key] !== currentValues[snake_key]`
+  // always evaluates to true on first render because `currentValues[snake_key]`
+  // is undefined — which previously caused every editable field to look
+  // "changed" without the user touching anything, AND prevented us from
+  // detecting when a user reverted a field back to its original value.
   const changedFields = useMemo(() => {
     const changes: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(formValues)) {
-      const currentValue = currentValues[key];
-      if (value !== currentValue) {
+      const currentValue = lookupCurrentValue(key);
+      // Normalize null/undefined and treat empty string as "no value" so a
+      // pristine-empty field doesn't count as a change.
+      const normalizedCurrent = currentValue === undefined || currentValue === "" ? null : currentValue;
+      const normalizedNew = value === undefined || value === "" ? null : value;
+      if (normalizedNew !== normalizedCurrent) {
         changes[key] = value;
       }
     }
     return changes;
-  }, [formValues, currentValues]);
+  }, [formValues, lookupCurrentValue]);
 
   const hasChanges = Object.keys(changedFields).length > 0;
-  const canSubmit = hasChanges && editSummary.trim().length >= 25 && !isSubmitting;
+  const summaryLongEnough = editSummary.trim().length >= 25;
+  const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
+
+  // Help text under the disabled submit button explaining what's missing.
+  const submitBlockedReason = isSubmitting
+    ? null
+    : !hasChanges
+      ? "Change a field to enable submit"
+      : !summaryLongEnough
+        ? `Add an edit summary (${editSummary.trim().length}/25 chars)`
+        : null;
 
   const handleFieldChange = (fieldName: string, value: unknown) => {
     setFormValues((prev) => ({ ...prev, [fieldName]: value }));
@@ -244,20 +276,27 @@ export function EditEntityPanel({
 
         {/* Footer */}
         {!isLoadingFields && !fieldsError && fields.length > 0 && (
-          <div className="border-t border-border-default p-4 flex items-center justify-end gap-3">
-            <Button variant="secondary" size="md" onPress={onClose}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="md" onPress={handleSubmit} isDisabled={!canSubmit}>
-              {isSubmitting ? (
-                <>
-                  <Loader size={16} />
-                  <span>Submitting...</span>
-                </>
-              ) : (
-                "Submit Edit"
-              )}
-            </Button>
+          <div className="border-t border-border-default p-4 space-y-2">
+            {submitBlockedReason && (
+              <p className="text-xs text-text-muted text-right" data-testid="submit-blocked-reason">
+                {submitBlockedReason}
+              </p>
+            )}
+            <div className="flex items-center justify-end gap-3">
+              <Button variant="secondary" size="md" onPress={onClose}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="md" onPress={handleSubmit} isDisabled={!canSubmit}>
+                {isSubmitting ? (
+                  <>
+                    <Loader size={16} />
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  "Submit Edit"
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </div>
