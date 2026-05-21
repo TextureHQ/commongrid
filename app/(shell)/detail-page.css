@@ -182,7 +182,7 @@
 .cg-detail .detail-stat-l {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  color: var(--color-text-caption);
+  color: var(--color-text-muted);
   letter-spacing: .08em;
   text-transform: uppercase;
   margin-top: 4px;
@@ -240,7 +240,7 @@
   font-family: var(--font-family-mono);
   font-size: 11px;
   letter-spacing: .06em;
-  color: var(--color-text-caption);
+  color: var(--color-text-muted);
   text-transform: uppercase;
   flex-shrink: 0;
 }

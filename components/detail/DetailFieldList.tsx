@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInButton } from "@clerk/nextjs";
-import { Icon, Tooltip } from "@texturehq/edges";
+import { Button, Dialog, Icon, Tooltip } from "@texturehq/edges";
 import { useEffect, useState } from "react";
 import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -154,33 +154,22 @@ function FieldValue({
         />
       )}
 
-      {showSignInModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-background-body rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-text-heading mb-2">Sign in to edit</h3>
-            <p className="text-sm text-text-body mb-4">
-              Sign in to suggest edits and help improve CommonGrid data quality.
-            </p>
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowSignInModal(false)}
-                className="px-4 py-2 text-sm font-medium text-text-body hover:text-text-heading transition-colors"
-              >
-                Cancel
-              </button>
-              <SignInButton mode="modal">
-                <button
-                  type="button"
-                  className="px-4 py-2 text-sm font-medium bg-brand-primary text-text-on-primary rounded-md hover:bg-brand-primary/90 transition-colors"
-                >
-                  Sign In
-                </button>
-              </SignInButton>
-            </div>
+      <Dialog isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} title="Sign in to edit">
+        <div className="space-y-4 p-4">
+          <p className="text-sm text-text-body">
+            Sign in to suggest edits and help improve CommonGrid data quality.
+          </p>
+          
+          <div className="flex items-center justify-end gap-3">
+            <Button variant="secondary" onPress={() => setShowSignInModal(false)}>
+              Cancel
+            </Button>
+            <SignInButton mode="modal">
+              <Button variant="primary">Sign In</Button>
+            </SignInButton>
           </div>
         </div>
-      )}
+      </Dialog>
     </>
   );
 }
