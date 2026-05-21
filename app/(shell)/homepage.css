@@ -856,6 +856,13 @@
   .cg-home .foot-brand .foot-about { max-width: 60ch; }
 }
 @media (max-width: 560px) {
+  /* Stats: 2 columns on narrow mobile */
+  .cg-home .stats { grid-template-columns: repeat(2,1fr); }
+  .cg-home .stats .stat:nth-child(2n) { border-right: 0; }
+  .cg-home .stats .stat:nth-child(3n) { border-right: 1px solid var(--color-border-default); }
+  .cg-home .stats .stat { border-bottom: 1px solid var(--color-border-default); }
+  .cg-home .stats .stat:nth-last-child(-n+2) { border-bottom: 0; }
+
   .cg-home .entities { grid-template-columns: 1fr; }
 
   /* Mobile footer: brand on top, then a compact 2-col grid of link groups.
