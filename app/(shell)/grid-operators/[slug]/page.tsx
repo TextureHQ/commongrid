@@ -331,16 +331,34 @@ export default function UtilityDetailPage() {
               id: "customers",
               label: "Customers",
               value: utility.customerCount ? formatCustomerCount(utility.customerCount) : null,
+              editable: true,
+              fieldName: "customer_count",
             },
-            { id: "jurisdiction", label: "Jurisdiction", value: utility.jurisdiction ?? null },
+            {
+              id: "jurisdiction",
+              label: "Jurisdiction",
+              value: utility.jurisdiction ?? null,
+              editable: true,
+              fieldName: "jurisdiction",
+            },
             { id: "eiaId", label: "EIA ID", value: utility.eiaId ?? null, copyable: true },
             {
               id: "website",
               label: "Website",
               value: utility.website ? safeHostname(utility.website) : null,
               href: utility.website ?? undefined,
+              editable: true,
+              fieldName: "website",
             },
           ]}
+          enableInlineEdit
+          entityType="utility"
+          entityId={utility.id}
+          entityName={utility.name}
+          currentValues={utility as unknown as Record<string, unknown>}
+          onFieldEdited={() => {
+            window.location.reload();
+          }}
         />
       </DetailSection>
 
@@ -354,6 +372,8 @@ export default function UtilityDetailPage() {
                       id: "summerPeak",
                       label: "Summer Peak Demand",
                       value: `${utility.peakDemandMw.toLocaleString()} MW`,
+                      editable: true,
+                      fieldName: "peak_demand_mw",
                     },
                   ]
                 : []),
@@ -363,17 +383,43 @@ export default function UtilityDetailPage() {
                       id: "winterPeak",
                       label: "Winter Peak Demand",
                       value: `${utility.winterPeakDemandMw.toLocaleString()} MW`,
+                      editable: true,
+                      fieldName: "winter_peak_demand_mw",
                     },
                   ]
                 : []),
               ...(utility.totalRevenueDollars !== null
-                ? [{ id: "revenue", label: "Total Revenue", value: formatRevenue(utility.totalRevenueDollars) }]
+                ? [
+                    {
+                      id: "revenue",
+                      label: "Total Revenue",
+                      value: formatRevenue(utility.totalRevenueDollars),
+                      editable: true,
+                      fieldName: "total_revenue_dollars",
+                    },
+                  ]
                 : []),
               ...(utility.totalSalesMwh !== null
-                ? [{ id: "sales", label: "Total Sales", value: formatSales(utility.totalSalesMwh) }]
+                ? [
+                    {
+                      id: "sales",
+                      label: "Total Sales",
+                      value: formatSales(utility.totalSalesMwh),
+                      editable: true,
+                      fieldName: "total_sales_mwh",
+                    },
+                  ]
                 : []),
               ...(utility.totalMeterCount !== null
-                ? [{ id: "meters", label: "Total Meters", value: utility.totalMeterCount.toLocaleString() }]
+                ? [
+                    {
+                      id: "meters",
+                      label: "Total Meters",
+                      value: utility.totalMeterCount.toLocaleString(),
+                      editable: true,
+                      fieldName: "total_meter_count",
+                    },
+                  ]
                 : []),
               ...(utility.amiMeterCount !== null
                 ? [
@@ -381,6 +427,8 @@ export default function UtilityDetailPage() {
                       id: "amiMeters",
                       label: "AMI Meters",
                       value: `${utility.amiMeterCount.toLocaleString()}${utility.totalMeterCount ? ` (${Math.round((utility.amiMeterCount / utility.totalMeterCount) * 100)}%)` : ""}`,
+                      editable: true,
+                      fieldName: "ami_meter_count",
                     },
                   ]
                 : []),
@@ -388,6 +436,14 @@ export default function UtilityDetailPage() {
                 ? [{ id: "nercRegion", label: "NERC Region", value: utility.nercRegion }]
                 : []),
             ]}
+            enableInlineEdit
+            entityType="utility"
+            entityId={utility.id}
+            entityName={utility.name}
+            currentValues={utility as unknown as Record<string, unknown>}
+            onFieldEdited={() => {
+              window.location.reload();
+            }}
           />
           {utility.hasGeneration !== null &&
             (utility.hasGeneration || utility.hasTransmission || utility.hasDistribution) && (
@@ -563,6 +619,14 @@ export default function UtilityDetailPage() {
               },
             ]}
             columns={2}
+            enableInlineEdit
+            entityType="utility"
+            entityId={utility.id}
+            entityName={utility.name}
+            currentValues={utility as unknown as Record<string, unknown>}
+            onFieldEdited={() => {
+              window.location.reload();
+            }}
           />
         </DetailSection>
       )}
