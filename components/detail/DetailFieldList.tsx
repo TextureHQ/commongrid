@@ -2,7 +2,7 @@
 
 import { SignInButton } from "@clerk/nextjs";
 import { Icon, Tooltip } from "@texturehq/edges";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -78,6 +78,13 @@ function FieldValue({
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    // Detect touch capability
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    setIsTouchDevice(hasTouch);
+  }, []);
 
   if (item.value === null || item.value === undefined) {
     return <span style={{ color: "var(--color-text-caption)" }}>—</span>;
@@ -116,7 +123,7 @@ function FieldValue({
       >
         {content}
         {item.copyable && typeof item.value === "string" && <CopyButton value={item.value} />}
-        {canEdit && isHovering && (
+        {canEdit && (isTouchDevice || isHovering) && (
           <Tooltip content="Edit this field" placement="top">
             <button
               type="button"
