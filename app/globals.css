@@ -1,25 +1,15 @@
 @import "tailwindcss";
 @import "@texturehq/edges/theme.css";
 @import "@texturehq/edges/styles.css";
-
-/* Custom token: subtle page background (between body and surface) */
-:root {
-  --color-background-subtle: #F8F9FB;
-}
-
-.theme-dark {
-  --color-background-subtle: #1c1c1c;
-}
+/* Pull the latest edges-tokens directly so tokens added after the
+   currently-pinned @texturehq/edges build (e.g. --color-background-paper)
+   resolve. Re-importing tokens-light/dark is idempotent. */
+@import "@texturehq/edges-tokens/css/light";
+@import "@texturehq/edges-tokens/css/dark";
 
 html, body {
   overflow-x: hidden;
   background-color: var(--color-background-body);
-}
-
-.theme-dark {
-  --color-background-surface: #141414;
-  --color-border-default: #2a2a2a;
-  /* Dark mode brand handled by BrandProvider darkVariables in Providers.tsx (@texturehq/edges@1.28.2) */
 }
 
 @layer utilities {
@@ -37,33 +27,18 @@ html, body {
 }
 
 /* ══════════════════════════════════════════
-   CommonGrid top nav — warm neutral aesthetic
+   CommonGrid top nav — warm paper aesthetic
    ══════════════════════════════════════════ */
 .cg-nav {
-  --_nav-ink: #111111;
-  --_nav-paper: #faf7f0;
-  --_nav-card: #ffffff;
-  --_nav-rule: #e5dfd3;
-  --_nav-muted: #6b6155;
-  --_nav-subtle: #857b6b;
-
   position: sticky;
   top: 0;
   z-index: 60;
-  background: color-mix(in srgb, var(--_nav-paper) 88%, transparent);
+  background: color-mix(in srgb, var(--color-background-paper) 88%, transparent);
   backdrop-filter: saturate(1.2) blur(8px);
   -webkit-backdrop-filter: saturate(1.2) blur(8px);
-  border-bottom: 1px solid var(--_nav-rule);
+  border-bottom: 1px solid var(--color-border-paper);
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
-}
-.theme-dark .cg-nav {
-  --_nav-ink: #faf7f0;
-  --_nav-paper: #121110;
-  --_nav-card: #1b1915;
-  --_nav-rule: #2f2b24;
-  --_nav-muted: #a89f90;
-  --_nav-subtle: #857b6b;
 }
 .cg-nav-inner {
   display: flex;
@@ -80,12 +55,12 @@ html, body {
   font-weight: 700;
   font-size: 17px;
   letter-spacing: -.015em;
-  color: var(--_nav-ink);
+  color: var(--color-text-heading);
   text-decoration: none;
   flex-shrink: 0;
 }
 .cg-brand-lockup:hover { text-decoration: none; }
-.cg-brand-lockup svg { color: var(--_nav-ink); }
+.cg-brand-lockup svg { color: var(--color-text-heading); }
 
 .cg-nav-links {
   display: flex;
@@ -95,18 +70,18 @@ html, body {
 .cg-nav-links a {
   padding: 6px 10px;
   font-size: 14px;
-  color: var(--_nav-muted);
+  color: var(--color-text-muted);
   border-radius: 6px;
   text-decoration: none;
   transition: color .12s, background .12s;
 }
 .cg-nav-links a:hover {
-  color: var(--_nav-ink);
-  background: color-mix(in srgb, var(--_nav-ink) 5%, transparent);
+  color: var(--color-text-heading);
+  background: color-mix(in srgb, var(--color-text-heading) 5%, transparent);
   text-decoration: none;
 }
 .cg-nav-links a.active {
-  color: var(--_nav-ink);
+  color: var(--color-text-heading);
   font-weight: 500;
 }
 
@@ -129,27 +104,27 @@ html, body {
   gap: 8px;
   height: 32px;
   padding: 0 10px;
-  border: 1px solid var(--_nav-rule);
+  border: 1px solid var(--color-border-paper);
   border-radius: 8px;
-  color: var(--_nav-muted);
+  color: var(--color-text-muted);
   font-size: 13px;
   min-width: 220px;
-  background: var(--_nav-card);
+  background: var(--color-background-surface);
   cursor: pointer;
   transition: border-color .15s, color .15s;
   font-family: inherit;
 }
 .cg-nav-search:hover {
-  border-color: var(--_nav-ink);
-  color: var(--_nav-ink);
+  border-color: var(--color-text-heading);
+  color: var(--color-text-heading);
 }
 .cg-nav-kbd {
   font-family: "Fira Code", ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 11px;
   padding: 2px 5px;
-  border: 1px solid var(--_nav-rule);
+  border: 1px solid var(--color-border-paper);
   border-radius: 3px;
-  color: var(--_nav-subtle);
+  color: var(--color-text-subtle);
   margin-left: auto;
 }
 
@@ -160,7 +135,7 @@ html, body {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  color: var(--_nav-muted);
+  color: var(--color-text-muted);
   border: 1px solid transparent;
   background: none;
   cursor: pointer;
@@ -168,8 +143,8 @@ html, body {
   text-decoration: none;
 }
 .cg-icon-btn:hover {
-  color: var(--_nav-ink);
-  border-color: var(--_nav-rule);
+  color: var(--color-text-heading);
+  border-color: var(--color-border-paper);
 }
 
 .cg-nav-signin {
@@ -180,9 +155,9 @@ html, body {
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  background: var(--_nav-ink);
-  color: var(--_nav-paper);
-  border: 1px solid var(--_nav-ink);
+  background: var(--color-text-heading);
+  color: var(--color-background-paper);
+  border: 1px solid var(--color-text-heading);
   cursor: pointer;
   transition: all .15s;
   font-family: inherit;
@@ -214,11 +189,6 @@ html, body {
 }
 
 .cg-drawer {
-  --_nav-ink: #111111;
-  --_nav-paper: #faf7f0;
-  --_nav-rule: #e5dfd3;
-  --_nav-muted: #5d5b56;
-
   position: fixed;
   top: 60px;                  /* anchored to nav bottom */
   left: 0;
@@ -226,9 +196,9 @@ html, body {
   z-index: 80;
   width: 100%;
   height: calc(100dvh - 60px); /* full available viewport height */
-  background: #ffffff;
-  border-bottom: 1px solid var(--_nav-rule);
-  box-shadow: 0 12px 32px -8px rgba(44, 42, 38, 0.18);
+  background: var(--color-background-surface);
+  border-bottom: 1px solid var(--color-border-paper);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.18);
   transform: translateY(-100%);
   opacity: 0;
   visibility: hidden;
@@ -253,12 +223,6 @@ html, body {
     visibility 0s linear 0s;
 }
 .theme-dark .cg-drawer {
-  --_nav-ink: #faf7f0;
-  --_nav-paper: #121110;
-  --_nav-rule: #2f2b24;
-  --_nav-muted: #a89f90;
-
-  background: #1b1915;
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
 }
 
@@ -287,7 +251,7 @@ html, body {
   font-size: 18px;
   font-weight: 500;
   letter-spacing: -.02em;
-  color: var(--_nav-ink);
+  color: var(--color-text-heading);
   text-decoration: none;
   transition: background 0.12s;
   border: none;
@@ -300,13 +264,13 @@ html, body {
 }
 .cg-drawer-link:hover,
 .cg-drawer-link:focus-visible {
-  background: color-mix(in srgb, var(--_nav-ink) 6%, transparent);
+  background: color-mix(in srgb, var(--color-text-heading) 6%, transparent);
   text-decoration: none;
 }
 .cg-drawer-link--active {
-  color: var(--_nav-ink);
+  color: var(--color-text-heading);
   font-weight: 600;
-  background: color-mix(in srgb, var(--_nav-ink) 5%, transparent);
+  background: color-mix(in srgb, var(--color-text-heading) 5%, transparent);
 }
 .cg-drawer-link svg {
   flex-shrink: 0;
@@ -314,7 +278,7 @@ html, body {
 }
 
 .cg-drawer-footer {
-  border-top: 1px solid var(--_nav-rule);
+  border-top: 1px solid var(--color-border-paper);
   /* Horizontal padding gives the auth buttons + footer row a comfortable
      inset away from the panel edges. */
   padding: 20px 24px calc(20px + env(safe-area-inset-bottom, 0px));
@@ -322,10 +286,7 @@ html, body {
   flex-direction: column;
   gap: 16px;
   flex-shrink: 0;
-  background: #ffffff;
-}
-.theme-dark .cg-drawer-footer {
-  background: #1b1915;
+  background: var(--color-background-surface);
 }
 
 .cg-drawer-footer-row {
@@ -342,7 +303,7 @@ html, body {
   gap: 6px;
   font-size: 13.5px;
   font-weight: 500;
-  color: var(--_nav-muted);
+  color: var(--color-text-muted);
   background: none;
   border: none;
   cursor: pointer;
@@ -352,7 +313,7 @@ html, body {
   text-decoration: none;
 }
 .cg-drawer-footer-link:hover {
-  color: var(--_nav-ink);
+  color: var(--color-text-heading);
 }
 
 .cg-drawer-auth {
@@ -362,7 +323,7 @@ html, body {
   gap: 10px;
   padding-bottom: 16px;
   margin-bottom: 4px;
-  border-bottom: 1px solid var(--_nav-rule);
+  border-bottom: 1px solid var(--color-border-paper);
 }
 
 .cg-drawer-signup-btn {
@@ -375,9 +336,9 @@ html, body {
   border-radius: 8px;
   font-size: 15px;
   font-weight: 500;
-  background: var(--_nav-ink);
-  color: var(--_nav-paper);
-  border: 1px solid var(--_nav-ink);
+  background: var(--color-action-default);
+  color: var(--color-action-default-text);
+  border: 1px solid var(--color-action-default);
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.15s;
@@ -395,19 +356,16 @@ html, body {
   border-radius: 8px;
   font-size: 15px;
   font-weight: 500;
-  color: var(--_nav-ink);
-  background: #ffffff;
-  border: 1px solid var(--_nav-rule);
+  color: var(--color-text-heading);
+  background: var(--color-background-surface);
+  border: 1px solid var(--color-border-paper);
   cursor: pointer;
   font-family: inherit;
   padding: 0 18px;
   transition: border-color 0.15s;
 }
-.theme-dark .cg-drawer-signin-link {
-  background: transparent;
-}
 .cg-drawer-signin-link:hover {
-  border-color: var(--_nav-ink);
+  border-color: var(--color-text-heading);
 }
 
 /* Hide drawer on desktop */
@@ -454,8 +412,8 @@ html, body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1.5px solid color-mix(in srgb, var(--_nav-rule) 80%, #c4b69e 20%);
-  background: var(--_nav-card);
+  border: 1.5px solid var(--color-border-paper);
+  background: var(--color-background-surface);
   cursor: pointer;
   padding: 0;
   overflow: hidden;
@@ -466,8 +424,8 @@ html, body {
 }
 
 .cg-user-trigger:hover {
-  border-color: var(--_nav-muted);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--_nav-rule) 40%, transparent);
+  border-color: var(--color-text-muted);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-border-paper) 40%, transparent);
 }
 
 .cg-user-avatar {
@@ -488,12 +446,8 @@ html, body {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: .02em;
-  color: #6b5c4d;
-  background: linear-gradient(145deg, #f0e8da, #e8dcc8);
-}
-.theme-dark .cg-user-avatar-fallback {
-  color: #c4b69e;
-  background: linear-gradient(145deg, #2d2820, #362f25);
+  color: var(--color-honey-base);
+  background: var(--color-honey-pastel);
 }
 
 .cg-user-dropdown {
@@ -501,8 +455,8 @@ html, body {
   top: calc(100% + 8px);
   right: 0;
   min-width: 240px;
-  background: var(--_nav-card);
-  border: 1px solid var(--_nav-rule);
+  background: var(--color-background-surface);
+  border: 1px solid var(--color-border-paper);
   border-radius: 10px;
   box-shadow: 0 8px 24px -4px rgba(44, 42, 38, 0.12), 0 2px 8px -2px rgba(44, 42, 38, 0.06);
   z-index: 100;
@@ -547,7 +501,7 @@ html, body {
 .cg-user-header-name {
   font-size: 14px;
   font-weight: 600;
-  color: var(--_nav-ink);
+  color: var(--color-text-heading);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -556,7 +510,7 @@ html, body {
 
 .cg-user-header-email {
   font-size: 12px;
-  color: var(--_nav-muted);
+  color: var(--color-text-muted);
   line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
@@ -565,7 +519,7 @@ html, body {
 
 .cg-user-divider {
   height: 1px;
-  background: var(--_nav-rule);
+  background: var(--color-border-paper);
 }
 
 .cg-user-items {
@@ -581,7 +535,7 @@ html, body {
   border: none;
   border-radius: 6px;
   background: none;
-  color: var(--_nav-muted);
+  color: var(--color-text-muted);
   font-size: 13px;
   font-family: "Inter", system-ui, sans-serif;
   cursor: pointer;
@@ -592,8 +546,8 @@ html, body {
 }
 
 .cg-user-item:hover {
-  color: var(--_nav-ink);
-  background: color-mix(in srgb, var(--_nav-ink) 5%, transparent);
+  color: var(--color-text-heading);
+  background: color-mix(in srgb, var(--color-text-heading) 5%, transparent);
   text-decoration: none;
 }
 
@@ -607,19 +561,10 @@ html, body {
 }
 
 .cg-user-item-danger {
-  color: #c03030;
+  color: var(--color-feedback-error-border);
 }
 
 .cg-user-item-danger:hover {
-  color: #c03030;
-  background: color-mix(in srgb, #c03030 6%, transparent);
-}
-
-.theme-dark .cg-user-item-danger {
-  color: #e87070;
-}
-
-.theme-dark .cg-user-item-danger:hover {
-  color: #e87070;
-  background: color-mix(in srgb, #e87070 10%, transparent);
+  color: var(--color-feedback-error-border);
+  background: color-mix(in srgb, var(--color-feedback-error-border) 6%, transparent);
 }
