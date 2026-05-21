@@ -8,6 +8,37 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Keep serverless function bundles under Vercel's 250MB unzipped limit.
+  // Without this, API routes that transitively import from @texturehq/edges
+  // (e.g. via shared TypeScript types) pull in mapbox-gl + visx + tiptap +
+  // ace-builds + framer-motion + filestack and balloon past the limit.
+  // Bumping edges 1.30.3 → 1.33.2 surfaced this regression.
+  outputFileTracingExcludes: {
+    "app/api/**": [
+      "node_modules/mapbox-gl/**",
+      "node_modules/react-map-gl/**",
+      "node_modules/@visx/**",
+      "node_modules/@tiptap/**",
+      "node_modules/ace-builds/**",
+      "node_modules/react-ace/**",
+      "node_modules/framer-motion/**",
+      "node_modules/filestack-react/**",
+      "node_modules/lucide-react/**",
+      "node_modules/d3-array/**",
+      "node_modules/@phosphor-icons/**",
+      "node_modules/react-aria-components/**",
+      "node_modules/react-stately/**",
+      "node_modules/@dnd-kit/**",
+      "node_modules/papaparse/**",
+      "node_modules/file-saver/**",
+      "node_modules/next-intl/**",
+      "node_modules/luxon/**",
+      "node_modules/date-fns/**",
+      "node_modules/@tanstack/react-virtual/**",
+      "node_modules/react-colorful/**",
+      "node_modules/@texturehq/edges/dist/index.js",
+    ],
+  },
   async headers() {
     return [
       {
