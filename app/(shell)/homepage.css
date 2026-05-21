@@ -194,6 +194,12 @@
   height: 100%;
   object-fit: cover;
 }
+/* Two map previews ship in the DOM (light + dark Mapbox base). Show the
+   one that matches the current theme; the other is hidden but kept around
+   so theme toggles don't trigger a network fetch. */
+.cg-home .map-frame .map-preview-dark { display: none; }
+.theme-dark .cg-home .map-frame .map-preview-light { display: none; }
+.theme-dark .cg-home .map-frame .map-preview-dark  { display: block; }
 .cg-home .map-cta {
   position: absolute;
   right: 20px;

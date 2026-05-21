@@ -245,11 +245,22 @@ export default function LandingPage() {
 
             <Link href="/explore" className="hero-visual" aria-label="Explore the registry on the interactive map">
               <div className="map-frame">
-                <picture>
+                <picture className="map-preview-light">
                   <source srcSet="/hero-map-preview@2x.webp" type="image/webp" />
                   <img
                     src="/hero-map-preview@2x.png"
                     alt="A preview of the CommonGrid interactive map, centered on Colorado, showing utility service territories, ISO/RTO boundaries, and transmission lines."
+                    width={740}
+                    height={448}
+                    loading="eager"
+                    decoding="async"
+                  />
+                </picture>
+                <picture className="map-preview-dark" aria-hidden="true">
+                  <source srcSet="/hero-map-preview-dark@2x.webp" type="image/webp" />
+                  <img
+                    src="/hero-map-preview-dark@2x.png"
+                    alt=""
                     width={740}
                     height={448}
                     loading="eager"
