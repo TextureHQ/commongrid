@@ -256,7 +256,7 @@ export default function LandingPage() {
                     decoding="async"
                   />
                 </picture>
-                <picture className="map-preview-dark" aria-hidden="true">
+                <picture className="map-preview-dark">
                   <source srcSet="/hero-map-preview-dark@2x.webp" type="image/webp" />
                   <img
                     src="/hero-map-preview-dark@2x.png"
