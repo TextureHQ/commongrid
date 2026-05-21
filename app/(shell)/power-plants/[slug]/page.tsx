@@ -119,29 +119,69 @@ export default function PowerPlantDetailPage() {
       id: "capacity",
       label: isProposedOnly ? "Proposed Capacity" : "Nameplate Capacity",
       value: formatCapacity(effectiveCapacity),
+      editable: !isProposedOnly,
+      fieldName: "total_capacity_mw",
     },
     ...(!isProposedOnly
       ? [
           { id: "generators", label: "Generators", value: plant.generatorCount },
-          { id: "operatingSince", label: "Operating Since", value: plant.operatingYear ?? null },
+          {
+            id: "operatingSince",
+            label: "Operating Since",
+            value: plant.operatingYear ?? null,
+            editable: true,
+            fieldName: "operating_year",
+          },
         ]
       : []),
     ...(isProposedOnly && plant.proposedOnlineYear
-      ? [{ id: "expectedOnline", label: "Expected Online", value: plant.proposedOnlineYear }]
+      ? [
+          {
+            id: "expectedOnline",
+            label: "Expected Online",
+            value: plant.proposedOnlineYear,
+            editable: true,
+            fieldName: "proposed_online_year",
+          },
+        ]
       : []),
     ...(!isProposedOnly && plant.proposedCapacityMw !== null && plant.proposedCapacityMw > 0
       ? [
-          { id: "additionalProposed", label: "Additional Proposed", value: formatCapacity(plant.proposedCapacityMw) },
+          {
+            id: "additionalProposed",
+            label: "Additional Proposed",
+            value: formatCapacity(plant.proposedCapacityMw),
+            editable: true,
+            fieldName: "proposed_capacity_mw",
+          },
           ...(plant.proposedOnlineYear
-            ? [{ id: "proposedOnlineYear", label: "Proposed Online Year", value: plant.proposedOnlineYear }]
+            ? [
+                {
+                  id: "proposedOnlineYear",
+                  label: "Proposed Online Year",
+                  value: plant.proposedOnlineYear,
+                  editable: true,
+                  fieldName: "proposed_online_year",
+                },
+              ]
             : []),
         ]
       : []),
     { id: "state", label: "State", value: formatStateName(plant.state) },
-    ...(plant.county ? [{ id: "county", label: "County", value: plant.county }] : []),
+    ...(plant.county
+      ? [{ id: "county", label: "County", value: plant.county, editable: true, fieldName: "county" }]
+      : []),
     { id: "sector", label: "Sector", value: plant.sector ?? null },
     ...(plant.gridVoltageKv !== null
-      ? [{ id: "gridVoltage", label: "Grid Voltage", value: `${plant.gridVoltageKv} kV` }]
+      ? [
+          {
+            id: "gridVoltage",
+            label: "Grid Voltage",
+            value: `${plant.gridVoltageKv} kV`,
+            editable: true,
+            fieldName: "grid_voltage_kv",
+          },
+        ]
       : []),
     ...(plant.nercRegion ? [{ id: "nercRegion", label: "NERC Region", value: plant.nercRegion }] : []),
     {
@@ -210,7 +250,19 @@ export default function PowerPlantDetailPage() {
 
       {/* 01 · Overview */}
       <DetailSection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
-        <DetailFieldList items={overviewFields} columns={2} />
+        <DetailFieldList
+          items={overviewFields}
+          columns={2}
+          enableInlineEdit
+          entityType="power_plant"
+          entityId={plant.id ?? plant.slug}
+          entityName={plant.name}
+          currentValues={plant as unknown as Record<string, unknown>}
+          onFieldEdited={() => {
+            // Refresh the page after successful edit
+            window.location.reload();
+          }}
+        />
       </DetailSection>
 
       {/* 02 · Technologies */}
