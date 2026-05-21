@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "@texturehq/edges/theme.css";
 @import "@texturehq/edges/styles.css";
+/* Explicit edges-tokens imports — theme.css already pulls these transitively,
+   but importing them directly mirrors the apps/www reference pattern and keeps
+   the dependency obvious to anyone reading globals.css. Dark tokens activate
+   only when `.theme-dark` is set on <html> (handled by ColorModeProvider). */
+@import "@texturehq/edges-tokens/css/light";
+@import "@texturehq/edges-tokens/css/dark";
 
 /* Custom token: subtle page background (between body and surface) */
 :root {
@@ -40,9 +46,13 @@ html, body {
    CommonGrid top nav — warm neutral aesthetic
    ══════════════════════════════════════════ */
 .cg-nav {
-  --_nav-ink: #111111;
-  --_nav-paper: #faf7f0;
-  --_nav-card: #ffffff;
+  /* Warm-neutral nav palette. Primitives (ink/linen/white) come from
+     @texturehq/edges-tokens; the warm rule/muted/subtle tones are
+     CommonGrid brand neutrals not yet in edges-tokens — keep as literals
+     until edges-tokens grows a warm-gray ramp. */
+  --_nav-ink: var(--color-ink);
+  --_nav-paper: var(--color-linen);
+  --_nav-card: var(--color-white);
   --_nav-rule: #e5dfd3;
   --_nav-muted: #6b6155;
   --_nav-subtle: #857b6b;
@@ -58,7 +68,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 .theme-dark .cg-nav {
-  --_nav-ink: #faf7f0;
+  --_nav-ink: var(--color-linen);
   --_nav-paper: #121110;
   --_nav-card: #1b1915;
   --_nav-rule: #2f2b24;
@@ -214,10 +224,10 @@ html, body {
 }
 
 .cg-drawer {
-  --_nav-ink: #111111;
-  --_nav-paper: #faf7f0;
+  --_nav-ink: var(--color-ink);
+  --_nav-paper: var(--color-linen);
   --_nav-rule: #e5dfd3;
-  --_nav-muted: #5d5b56;
+  --_nav-muted: var(--color-gray-600);
 
   position: fixed;
   top: 60px;                  /* anchored to nav bottom */
@@ -253,7 +263,7 @@ html, body {
     visibility 0s linear 0s;
 }
 .theme-dark .cg-drawer {
-  --_nav-ink: #faf7f0;
+  --_nav-ink: var(--color-linen);
   --_nav-paper: #121110;
   --_nav-rule: #2f2b24;
   --_nav-muted: #a89f90;
@@ -607,19 +617,19 @@ html, body {
 }
 
 .cg-user-item-danger {
-  color: #c03030;
+  color: var(--color-error-base);
 }
 
 .cg-user-item-danger:hover {
-  color: #c03030;
-  background: color-mix(in srgb, #c03030 6%, transparent);
+  color: var(--color-error-base);
+  background: color-mix(in srgb, var(--color-error-base) 6%, transparent);
 }
 
 .theme-dark .cg-user-item-danger {
-  color: #e87070;
+  color: var(--color-error-base);
 }
 
 .theme-dark .cg-user-item-danger:hover {
-  color: #e87070;
-  background: color-mix(in srgb, #e87070 10%, transparent);
+  color: var(--color-error-base);
+  background: color-mix(in srgb, var(--color-error-base) 10%, transparent);
 }

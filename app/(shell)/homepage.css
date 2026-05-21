@@ -27,24 +27,28 @@
   --cg-row-pad:    14px;
   --cg-entity-min: 220px;
 
-  /* warm-gray ramp (mirrors @texturehq/edges-tokens) */
-  --cg-warm-100: #f5f5f4;
-  --cg-warm-200: #e7e6e5;
-  --cg-warm-400: #a09d98;
-  --cg-warm-600: #5d5b56;
-  --cg-warm-800: #302f2d;
-  --cg-ink:      #111111;
+  /* warm-gray ramp — sourced from @texturehq/edges-tokens primitives.
+     These aliases remain for backwards-compat with .cg-home selectors;
+     new code should reference --color-gray-* and --color-ink directly. */
+  --cg-warm-100: var(--color-gray-100);
+  --cg-warm-200: var(--color-gray-200);
+  --cg-warm-400: var(--color-gray-400);
+  --cg-warm-600: var(--color-gray-600);
+  --cg-warm-800: var(--color-gray-800);
+  --cg-ink:      var(--color-ink);
 
-  /* Accent pastels — used for ledger op semantics */
-  --cg-honey-base:   #f0972a;
-  --cg-honey-pastel: #fceBd4;
+  /* Accent pastels — used for ledger op semantics.
+     Sourced from @texturehq/edges-tokens (--color-honey-*, --color-ocean-*,
+     --color-rose-*) and --color-error-dark for the dark rose. */
+  --cg-honey-base:   var(--color-honey-base);
+  --cg-honey-pastel: var(--color-honey-pastel);
   --cg-honey-dark:   #7a4708;
-  --cg-ocean-base:   #2fa3b0;
-  --cg-ocean-pastel: #dcf1f4;
+  --cg-ocean-base:   var(--color-ocean-base);
+  --cg-ocean-pastel: var(--color-ocean-pastel);
   --cg-ocean-dark:   #123862;
-  --cg-rose-base:    #d93d72;
-  --cg-rose-pastel:  #fbe3ec;
-  --cg-rose-dark:    #7a1212;
+  --cg-rose-base:    var(--color-rose-base);
+  --cg-rose-pastel:  var(--color-rose-pastel);
+  --cg-rose-dark:    var(--color-error-dark);
 
   /* warm shadows */
   --shadow-xs: 0 1px 2px rgba(44, 42, 38, 0.06);
