@@ -38,6 +38,31 @@ const nextConfig = {
       "node_modules/react-colorful/**",
       "node_modules/@texturehq/edges/dist/index.js",
     ],
+    // Cron routes spawn sync scripts via child_process; the tracer follows
+    // the scripts' static imports of data/*.json and bundles ~150MB of
+    // committed snapshots into the function. At runtime the cron fetches
+    // fresh data from external sources (EIA, HIFLD, OSM, AFDC) — the bundled
+    // snapshots are not needed in the serverless function. Excluding them
+    // drops /api/cron/sync-substations from 262MB → ~110MB, well under the
+    // 250MB Vercel limit. Edges 1.30.3 → 1.33.2 bump nudged this over the
+    // edge; the cron route had been overweight for some time.
+    "app/api/cron/**": [
+      "data/**",
+      "node_modules/mapbox-gl/**",
+      "node_modules/react-map-gl/**",
+      "node_modules/@visx/**",
+      "node_modules/@tiptap/**",
+      "node_modules/ace-builds/**",
+      "node_modules/react-ace/**",
+      "node_modules/framer-motion/**",
+      "node_modules/filestack-react/**",
+      "node_modules/lucide-react/**",
+      "node_modules/@phosphor-icons/**",
+      "node_modules/react-aria-components/**",
+      "node_modules/react-stately/**",
+      "node_modules/@dnd-kit/**",
+      "node_modules/@texturehq/edges/dist/index.js",
+    ],
   },
   async headers() {
     return [
