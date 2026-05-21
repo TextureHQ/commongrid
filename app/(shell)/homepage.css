@@ -8,13 +8,13 @@
    Typography:  Rethink Sans (display)
                 Inter (body)
                 Fira Code (mono — CommonGrid keeps its own)
-   Surfaces:    linen #FAF7F0
-   Accents:     Rose #D93D72 (registry), with Honey/Ocean
-                pastels used semantically in the ledger.
-   Neutrals:    warm-gray ramp (200/400/600/800)
+   Color:       all surfaces, text, borders, and accents come from
+                @texturehq/edges-tokens semantic tokens (--color-*).
+                Light/dark flipping is automatic via the .theme-dark
+                class on <html>; no local color overrides required.
    ═══════════════════════════════════════════ */
 
-/* ---------- Font families ---------- */
+/* ---------- Font families + spacing tokens ---------- */
 .cg-home {
   --font-family-brand: "Rethink Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
   --font-family-mono:  "Fira Code", ui-monospace, "SF Mono", Menlo, monospace;
@@ -27,41 +27,11 @@
   --cg-row-pad:    14px;
   --cg-entity-min: 220px;
 
-  /* warm-gray ramp (mirrors @texturehq/edges-tokens) */
-  --cg-warm-100: #f5f5f4;
-  --cg-warm-200: #e7e6e5;
-  --cg-warm-400: #a09d98;
-  --cg-warm-600: #5d5b56;
-  --cg-warm-800: #302f2d;
-  --cg-ink:      #111111;
-
-  /* Accent pastels — used for ledger op semantics */
-  --cg-honey-base:   #f0972a;
-  --cg-honey-pastel: #fceBd4;
-  --cg-honey-dark:   #7a4708;
-  --cg-ocean-base:   #2fa3b0;
-  --cg-ocean-pastel: #dcf1f4;
-  --cg-ocean-dark:   #123862;
-  --cg-rose-base:    #d93d72;
-  --cg-rose-pastel:  #fbe3ec;
-  --cg-rose-dark:    #7a1212;
-
-  /* warm shadows */
-  --shadow-xs: 0 1px 2px rgba(44, 42, 38, 0.06);
-  --shadow-sm: 0 1px 2px rgba(44, 42, 38, 0.08), 0 1px 3px rgba(44, 42, 38, 0.05);
-  --shadow-md: 0 4px 8px -2px rgba(44, 42, 38, 0.08), 0 2px 4px -2px rgba(44, 42, 38, 0.05);
-
   font-family: var(--font-family-sans);
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   color: var(--color-text-body);
-  /* Page base is clean white; linen #FAF7F0 is reserved for thoughtful
-     brand-accent surfaces (license card, incubation badge). */
   background: var(--color-background-body);
-}
-
-.theme-dark .cg-home {
-  background: #121110;
 }
 
 /* ---------- Layout ---------- */
@@ -141,45 +111,6 @@
   color: var(--color-text-muted);
 }
 
-/* Incubation badge — sits above the eyebrow on the hero. Tiny
-   visual cue that CommonGrid shares heritage with Texture without
-   being a Texture product. */
-.cg-home .incubation-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-family-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--cg-warm-600);
-  padding: 5px 12px;
-  border: 1px solid var(--cg-warm-200);
-  border-radius: 20px;
-  /* Thoughtful linen accent — ties CommonGrid to the Texture brand
-     without flooding the page. */
-  background: #faf7f0;
-  margin-bottom: 20px;
-}
-.theme-dark .cg-home .incubation-badge {
-  background: rgba(250,247,240,.06);
-  border-color: rgba(255,255,255,.1);
-}
-.cg-home .incubation-badge .dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--cg-rose-base);
-}
-.cg-home .incubation-badge strong {
-  color: var(--color-text-heading);
-  font-weight: 600;
-  letter-spacing: -.01em;
-  text-transform: none;
-  font-family: var(--font-family-brand);
-  font-size: 12px;
-}
 .cg-home .eyebrow .pulse {
   position: relative;
   width: 6px;
@@ -211,7 +142,7 @@
   letter-spacing: -.04em;
   margin: 16px 0 24px;
   max-width: 17ch;
-  color: var(--cg-ink);
+  color: var(--color-text-heading);
   text-wrap: balance;
 }
 .cg-home .hero-lede {
@@ -219,8 +150,8 @@
   font-size: 17px;
   font-weight: 400;
   line-height: 1.5;
-  color: var(--cg-warm-600);
-  max-width: 50ch;
+  color: var(--color-text-muted);
+  max-width: 60ch;
   margin: 0;
   text-wrap: pretty;
 }
@@ -232,84 +163,61 @@
   align-items: center;
 }
 
-/* ── Map ── */
+/* ── Map preview ── */
+.cg-home a.hero-visual {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
 .cg-home .map-frame {
+  position: relative;
   border: 1px solid var(--color-border-default);
   border-radius: 2px;
   overflow: hidden;
   background: var(--color-background-surface);
   box-shadow: var(--shadow-md);
+  aspect-ratio: 740 / 448;
+  transition: box-shadow .2s ease, transform .2s ease;
 }
-.cg-home .map {
-  position: relative;
-  aspect-ratio: 5/4;
-  min-height: auto;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 39px, color-mix(in srgb, var(--color-text-heading) 4%, transparent) 39px 40px),
-    repeating-linear-gradient(90deg, transparent 0 39px, color-mix(in srgb, var(--color-text-heading) 4%, transparent) 39px 40px);
-  color: var(--color-text-body);
+.cg-home a.hero-visual:hover .map-frame {
+  box-shadow: var(--shadow-lg, var(--shadow-md));
+  transform: translateY(-2px);
 }
-.theme-dark .cg-home .map {
-  background:
-    repeating-linear-gradient(0deg, transparent 0 39px, rgba(255,255,255,.045) 39px 40px),
-    repeating-linear-gradient(90deg, transparent 0 39px, rgba(255,255,255,.045) 39px 40px);
+.cg-home a.hero-visual:focus-visible .map-frame {
+  outline: 2px solid var(--color-border-emphasis, currentColor);
+  outline-offset: 2px;
 }
-.cg-home .map svg {
+.cg-home .map-frame picture,
+.cg-home .map-frame img {
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
-  padding: 16px;
-  box-sizing: border-box;
+  object-fit: cover;
 }
-.cg-home .hex-states polygon {
-  transition: fill-opacity .15s, stroke-width .15s;
-  cursor: pointer;
-}
-.cg-home .hex-states polygon:hover {
-  fill-opacity: .88;
-  stroke-width: 1.6;
-}
-.cg-home .map-legend {
+.cg-home .map-cta {
   position: absolute;
-  bottom: 14px;
-  right: 14px;
-  left: auto;
-  display: grid;
-  grid-template-columns: repeat(2, auto);
-  gap: 4px 14px;
-  font-family: var(--font-family-mono);
-  font-size: 11px;
-  color: var(--color-text-muted);
-  background: color-mix(in srgb, var(--color-background-surface) 94%, transparent);
-  padding: 10px 12px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 4px;
-  backdrop-filter: blur(6px);
-  white-space: nowrap;
+  right: 20px;
+  bottom: 20px;
+  pointer-events: none;
+  transition: transform .2s ease, box-shadow .2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
 }
-.cg-home .map-legend .row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.cg-home .map-legend .sw {
-  width: 14px;
-  height: 10px;
-  border-radius: 1px;
-  border: 1px solid rgba(0,0,0,.1);
+.cg-home a.hero-visual:hover .map-cta {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
 }
 
 /* ── Stats band ── */
 .cg-home .stats {
   display: grid;
   grid-template-columns: repeat(5,1fr);
-  border-top: 1px solid var(--cg-warm-200);
-  border-bottom: 1px solid var(--cg-warm-200);
+  border-top: 1px solid var(--color-border-default);
+  border-bottom: 1px solid var(--color-border-default);
   margin-top: clamp(40px,5vw,64px);
 }
 .cg-home .stat {
   padding: 24px 20px;
-  border-right: 1px solid var(--cg-warm-200);
+  border-right: 1px solid var(--color-border-default);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -322,12 +230,12 @@
   letter-spacing: -.03em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--cg-ink);
+  color: var(--color-text-heading);
 }
 .cg-home .stat-l {
   font-family: var(--font-family-mono);
   font-size: 12px;
-  color: var(--cg-warm-600);
+  color: var(--color-text-muted);
   letter-spacing: .08em;
   text-transform: uppercase;
   font-weight: 500;
@@ -351,24 +259,6 @@
   margin-bottom: 40px;
   align-items: end;
 }
-.cg-home .kicker {
-  font-family: var(--font-family-mono);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--cg-warm-600);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.cg-home .kicker::before {
-  content: "";
-  width: 24px;
-  height: 1px;
-  background: var(--cg-rose-base);
-}
 .cg-home .section-title {
   /* Aligned to Texture marketing h2 — desktop 56px, mobile 32px,
      regular weight, tracking -0.04em. Slightly tighter than h2 since
@@ -378,14 +268,14 @@
   font-size: clamp(32px,4.4vw,48px);
   letter-spacing: -.035em;
   line-height: 1.05;
-  color: var(--cg-ink);
+  color: var(--color-text-heading);
   max-width: 22ch;
   margin: 0;
   text-wrap: balance;
 }
 .cg-home .section-desc {
   font-family: var(--font-family-sans);
-  color: var(--cg-warm-600);
+  color: var(--color-text-muted);
   font-size: 16px;
   line-height: 1.5;
   max-width: 50ch;
@@ -429,13 +319,13 @@
   font-family: var(--font-family-mono);
   font-size: 12px;
   font-weight: 500;
-  color: var(--cg-warm-600);
+  color: var(--color-text-muted);
   letter-spacing: .08em;
   text-transform: uppercase;
 }
 .cg-home .entity-count {
   font-variant-numeric: tabular-nums;
-  color: var(--cg-ink);
+  color: var(--color-text-heading);
   font-weight: 500;
 }
 .cg-home .entity-name {
@@ -447,12 +337,12 @@
   font-size: 24px;
   letter-spacing: -.025em;
   line-height: 1.1;
-  color: var(--cg-ink);
+  color: var(--color-text-heading);
   margin: 12px 0 4px;
 }
 .cg-home .entity-desc {
   font-family: var(--font-family-sans);
-  color: var(--cg-warm-600);
+  color: var(--color-text-muted);
   font-size: 14px;
   line-height: 1.5;
   margin: 4px 0 auto;
@@ -540,14 +430,10 @@
   width: max-content;
   line-height: 1.2;
 }
-.cg-home .op-add   { background: #eef6d8; color: #364d10; border-color: color-mix(in srgb, #8FBF2C 50%, transparent); }
-.cg-home .op-edit  { background: var(--cg-honey-pastel); color: var(--cg-honey-dark); border-color: color-mix(in srgb, var(--cg-honey-base) 50%, transparent); }
-.cg-home .op-fix   { background: var(--cg-ocean-pastel); color: #0e3b41; border-color: color-mix(in srgb, var(--cg-ocean-base) 50%, transparent); }
-.cg-home .op-merge { background: var(--cg-rose-pastel); color: var(--cg-rose-dark); border-color: color-mix(in srgb, var(--cg-rose-base) 50%, transparent); }
-.theme-dark .cg-home .op-add   { background: rgba(143,191,44,.18); color: #c5e07a; border-color: rgba(143,191,44,.4); }
-.theme-dark .cg-home .op-edit  { background: rgba(240,151,42,.18); color: #f0c275; border-color: rgba(240,151,42,.4); }
-.theme-dark .cg-home .op-fix   { background: rgba(47,163,176,.18); color: #80d4dc; border-color: rgba(47,163,176,.4); }
-.theme-dark .cg-home .op-merge { background: rgba(217,61,114,.18); color: #f0a5be; border-color: rgba(217,61,114,.4); }
+.cg-home .op-add   { background: var(--color-moss-pastel);  color: var(--color-feedback-success-text); border-color: color-mix(in srgb, var(--color-moss-base)  50%, transparent); }
+.cg-home .op-edit  { background: var(--color-honey-pastel); color: var(--color-feedback-warning-text); border-color: color-mix(in srgb, var(--color-honey-base) 50%, transparent); }
+.cg-home .op-fix   { background: var(--color-ocean-pastel); color: var(--color-feedback-info-text);    border-color: color-mix(in srgb, var(--color-ocean-base) 50%, transparent); }
+.cg-home .op-merge { background: var(--color-rose-pastel);  color: var(--color-feedback-error-text);   border-color: color-mix(in srgb, var(--color-rose-base)  50%, transparent); }
 .cg-home .ledger-name { min-width: 0; }
 .cg-home .ledger-name .n {
   color: var(--color-text-heading);
@@ -558,7 +444,7 @@
   text-overflow: ellipsis;
 }
 .cg-home .ledger-name .s {
-  color: var(--cg-warm-600);
+  color: var(--color-text-muted);
   font-size: 12px;
   font-family: var(--font-family-sans);
   font-weight: 400;
@@ -630,10 +516,10 @@
   letter-spacing: -.025em;
   line-height: 1.15;
   margin: 0 0 12px;
-  color: var(--cg-ink);
+  color: var(--color-text-heading);
 }
 .cg-home .commons-cell p {
-  color: var(--cg-warm-600);
+  color: var(--color-text-muted);
   font-size: 15px;
   line-height: 1.55;
   margin: 0;
@@ -643,7 +529,7 @@
   font-size: 12px;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--cg-rose-base);
+  color: var(--color-rose-base);
   margin-bottom: 10px;
   font-weight: 500;
 }
@@ -672,7 +558,7 @@
   font-family: var(--font-family-mono);
   font-weight: 500;
   font-size: 24px;
-  color: var(--cg-rose-base);
+  color: var(--color-rose-base);
   line-height: 1;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
@@ -684,11 +570,11 @@
   font-weight: 500;
   letter-spacing: -.02em;
   line-height: 1.2;
-  color: var(--cg-ink);
+  color: var(--color-text-heading);
 }
 .cg-home .step p {
   margin: 0;
-  color: var(--cg-warm-600);
+  color: var(--color-text-muted);
   font-size: 15px;
   line-height: 1.5;
   max-width: 50ch;
@@ -700,17 +586,12 @@
   white-space: nowrap;
 }
 .cg-home .license-card {
-  border: 1px solid var(--cg-warm-200);
+  /* The license card is a key brand surface ("this is shared, public,
+     citable") so it earns the warm paper wash. */
+  border: 1px solid var(--color-border-paper);
   padding: 28px;
   border-radius: 8px;
-  /* Second thoughtful linen accent — the license card is a key brand
-     surface ("this is shared, public, citable") so it earns the warm
-     wash. */
-  background: #faf7f0;
-}
-.theme-dark .cg-home .license-card {
-  background: color-mix(in srgb, var(--color-text-heading) 5%, transparent);
-  border-color: rgba(255,255,255,.1);
+  background: var(--color-background-paper);
 }
 .cg-home .license-card h4 {
   margin: 0 0 8px;
@@ -719,7 +600,7 @@
   font-weight: 500;
   letter-spacing: -.025em;
   line-height: 1.15;
-  color: var(--cg-ink);
+  color: var(--color-text-heading);
 }
 .cg-home .license-card .sub {
   color: var(--color-text-muted);
@@ -759,9 +640,11 @@
   overflow: hidden;
 }
 .cg-home .dev-code {
+  /* Stylized "terminal" block — intentionally always dark in both themes
+     (uses the dark-mode primitives directly, not theme-flipping tokens). */
   padding: 26px;
-  background: #1a1815;
-  color: #e5dfd3;
+  background: var(--color-gray-950);
+  color: var(--color-gray-200);
 }
 .cg-home .dev-endpoints {
   padding: 26px;
@@ -774,7 +657,7 @@
   font-size: 11px;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: #a89f90;
+  color: var(--color-gray-400);
   margin-bottom: 14px;
   display: flex;
   align-items: center;
@@ -788,10 +671,13 @@
   white-space: pre;
   overflow-x: auto;
 }
-.cg-home .code .c { color: #857b6b; }
-.cg-home .code .k { color: #7a86d4; }
-.cg-home .code .s { color: #f0e8d8; }
-.cg-home .code .m { color: #f0b96a; }
+/* Syntax-highlight palette for the always-dark .dev-code block. Intentional
+   terminal-style colors that don't flip with the theme — kept as literals
+   since they don't map cleanly to a semantic role in edges-tokens. */
+.cg-home .code .c { color: #857b6b; } /* comment */
+.cg-home .code .k { color: #7a86d4; } /* keyword */
+.cg-home .code .s { color: #f0e8d8; } /* string */
+.cg-home .code .m { color: #f0b96a; } /* number */
 .cg-home .endpoint {
   display: grid;
   grid-template-columns: 48px 1fr auto;
@@ -807,15 +693,11 @@
   font-size: 10px;
   padding: 3px 6px;
   border-radius: 3px;
-  background: #e4f3e9;
-  color: #15452a;
+  background: var(--color-feedback-success-background);
+  color: var(--color-feedback-success-text);
   font-weight: 600;
   text-align: center;
   letter-spacing: .04em;
-}
-.theme-dark .cg-home .endpoint .badge {
-  background: #14331f;
-  color: #9ad4b1;
 }
 .cg-home .endpoint .p {
   font-family: var(--font-family-mono);
@@ -887,7 +769,7 @@
   font-size: 12px;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--cg-warm-600);
+  color: var(--color-text-muted);
   margin: 0 0 16px;
   font-weight: 500;
 }
@@ -895,16 +777,16 @@
   display: block;
   font-family: var(--font-family-sans);
   font-size: 14px;
-  color: var(--cg-warm-600);
+  color: var(--color-text-muted);
   padding: 4px 0;
   text-decoration: none;
   transition: color .15s;
 }
-.cg-home .foot-col a:hover { color: var(--cg-ink); }
+.cg-home .foot-col a:hover { color: var(--color-text-heading); }
 .cg-home .foot-about {
   font-family: var(--font-family-sans);
   font-size: 14px;
-  color: var(--cg-warm-600);
+  color: var(--color-text-muted);
   line-height: 1.5;
   max-width: 38ch;
   margin: 12px 0 0;
@@ -942,7 +824,6 @@
 /* ── Responsive ── */
 @media (max-width: 960px) {
   .cg-home .hero-grid { grid-template-columns: 1fr; gap: 32px; }
-  .cg-home .hero-visual .map { aspect-ratio: 16/10; }
   .cg-home .entities { grid-template-columns: repeat(2,1fr); }
   .cg-home .govern { grid-template-columns: 1fr; }
 }
@@ -1009,7 +890,4 @@
     padding-top: 16px;
     line-height: 1.5;
   }
-}
-@media (min-width: 1200px) {
-  .cg-home .hero-visual .map { aspect-ratio: 4/3; }
 }

@@ -3,24 +3,15 @@
    Direction D — clean editorial detail pages
    ═══════════════════════════════════════════ */
 
-/* ---------- Design tokens ---------- */
+/* ---------- Layout tokens ---------- */
 .cg-detail {
   --font-family-brand: "Rethink Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
   --font-family-mono:  "Fira Code", ui-monospace, "SF Mono", Menlo, monospace;
   --font-family-sans:  "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --cg-chip-teal-bg:   #d9edf1;
-  --cg-chip-teal-text: #2b6570;
-  --cg-chip-green-bg:  #e3efc8;
-  --cg-chip-green-text:#3d5c12;
-  --cg-chip-neutral-bg:#eae7e0;
-  --cg-chip-neutral-text:#56514a;
-
   --cg-gutter:    clamp(16px, 4vw, 48px);
   --cg-section-y: clamp(28px, 4vw, 48px);
   --cg-card-pad:  0px;
-
-  --shadow-sm: 0 1px 2px rgba(44,42,38,.06);
 
   font-family: var(--font-family-sans);
   font-feature-settings: "ss01", "cv11";
@@ -514,16 +505,16 @@
   border-radius: 4px;
   letter-spacing: .02em;
   display: inline-block;
-  background: var(--cg-chip-neutral-bg);
-  color: var(--cg-chip-neutral-text);
+  background: var(--color-background-muted);
+  color: var(--color-text-muted);
 }
 .cg-detail .cg-tag--teal {
-  background: var(--cg-chip-teal-bg);
-  color: var(--cg-chip-teal-text);
+  background: var(--color-ocean-pastel);
+  color: var(--color-feedback-info-text);
 }
 .cg-detail .cg-tag--green {
-  background: var(--cg-chip-green-bg);
-  color: var(--cg-chip-green-text);
+  background: var(--color-moss-pastel);
+  color: var(--color-feedback-success-text);
 }
 
 .cg-detail .cg-tags {

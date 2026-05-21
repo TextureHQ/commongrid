@@ -4,13 +4,6 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .cg-explore {
-  /* ── Entity colors ── */
-  --cg-teal: #1a7a85;
-  --cg-blue: #3945a8;
-  --cg-amber: #c06800;
-  --cg-lime: #5f8a10;
-  --cg-purple: #8b39b8;
-  --cg-copper: #a94f2a;
   /* ── Fonts ── */
   --font-family-sans: "Inter", system-ui, sans-serif;
   --font-family-brand: "Rethink Sans", sans-serif;
@@ -50,8 +43,8 @@
 }
 
 .cg-explore-view-toggle button[data-active="true"] {
-  background: var(--color-text-heading);
-  color: #fff;
+  background: var(--color-action-default);
+  color: var(--color-action-default-text);
   font-weight: 500;
 }
 
@@ -350,9 +343,9 @@
 }
 
 .cg-explore-page-btn[data-active="true"] {
-  border-color: var(--color-text-heading);
-  background: var(--color-text-heading);
-  color: #fff;
+  border-color: var(--color-action-default);
+  background: var(--color-action-default);
+  color: var(--color-action-default-text);
 }
 
 /* ── Detail panel ── */
