@@ -2,15 +2,28 @@
 
 import "../../detail-page.css";
 
-import { Avatar, Badge, type Column, DataTable, InteractiveMap, Loader, layer, StatList, type StatItem, Icon, Tooltip, Dialog, Button } from "@texturehq/edges";
+import { SignInButton } from "@clerk/nextjs";
+import {
+  Avatar,
+  Badge,
+  Button,
+  type Column,
+  DataTable,
+  Dialog,
+  Icon,
+  InteractiveMap,
+  Loader,
+  layer,
+  type StatItem,
+  StatList,
+  Tooltip,
+} from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { SignInButton } from "@clerk/nextjs";
 import { EntityActions } from "@/components/contributions/EntityActions";
+import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
 import {
   DetailEntityList,
   DetailMap,
@@ -19,6 +32,7 @@ import {
   DetailSection,
   DetailStatGrid,
 } from "@/components/detail";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
 import {
   formatCapacity,
@@ -36,6 +50,8 @@ import { filterByUtility, usePowerPlants } from "@/lib/power-plants";
 import { filterProgramsByUtility, usePrograms } from "@/lib/programs-client";
 import { filterLinesByOwner, useTransmissionLines } from "@/lib/transmission-lines-client";
 import { useUtilities } from "@/lib/utilities-client";
+import type { Utility } from "@/types/entities";
+import type { TransmissionLine } from "@/types/transmission-lines";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -80,7 +96,7 @@ function EditableStatItem({
   const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   useEffect(() => {
-    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
     setIsTouchDevice(hasTouch);
   }, []);
 
@@ -95,18 +111,19 @@ function EditableStatItem({
   const currentVersion = (currentValues?.version as number) ?? 1;
   const currentValue = currentValues?.[fieldName];
 
-  const editButton = (isTouchDevice || isHovering) ? (
-    <Tooltip content="Edit this field" placement="top">
-      <button
-        type="button"
-        onClick={handleEditClick}
-        className="text-text-muted hover:text-text-body transition-colors"
-        aria-label={`Edit ${item.label}`}
-      >
-        <Icon name="PencilSimple" size="xs" />
-      </button>
-    </Tooltip>
-  ) : null;
+  const editButton =
+    isTouchDevice || isHovering ? (
+      <Tooltip content="Edit this field" placement="top">
+        <button
+          type="button"
+          onClick={handleEditClick}
+          className="text-text-muted hover:text-text-body transition-colors"
+          aria-label={`Edit ${item.label}`}
+        >
+          <Icon name="PencilSimple" size="xs" />
+        </button>
+      </Tooltip>
+    ) : null;
 
   return (
     <>
@@ -116,13 +133,15 @@ function EditableStatItem({
         onMouseLeave={() => setIsHovering(false)}
         onFocus={() => setIsHovering(true)}
         onBlur={() => setIsHovering(false)}
-        style={{ display: 'contents' }}
+        style={{ display: "contents" }}
       >
         <StatList
-          items={[{
-            ...item,
-            iconRight: editButton,
-          }]}
+          items={[
+            {
+              ...item,
+              iconRight: editButton,
+            },
+          ]}
           layout="one-column"
           showDividers
         />
@@ -147,9 +166,7 @@ function EditableStatItem({
 
       <Dialog isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} title="Sign in to edit">
         <div className="space-y-4 p-4">
-          <p className="text-sm text-text-body">
-            Sign in to suggest edits and help improve CommonGrid data quality.
-          </p>
+          <p className="text-sm text-text-body">Sign in to suggest edits and help improve CommonGrid data quality.</p>
           <div className="flex items-center justify-end gap-3">
             <Button variant="secondary" onPress={() => setShowSignInModal(false)}>
               Cancel
@@ -165,14 +182,12 @@ function EditableStatItem({
 }
 
 // Overview section component
-function OverviewStatList({ utility }: { utility: any }) {
+function OverviewStatList({ utility }: { utility: Utility }) {
   const items: StatItem[] = [
     {
       id: "segment",
       label: "SEGMENT",
-      value: (
-        <Badge variant={getSegmentBadgeVariant(utility.segment)}>{getSegmentLabel(utility.segment)}</Badge>
-      ),
+      value: <Badge variant={getSegmentBadgeVariant(utility.segment)}>{getSegmentLabel(utility.segment)}</Badge>,
     },
     {
       id: "status",
@@ -201,7 +216,7 @@ function OverviewStatList({ utility }: { utility: any }) {
       value: utility.website ? safeHostname(utility.website) : null,
       href: utility.website ?? undefined,
     },
-  ].filter(item => item.value !== null && item.value !== undefined);
+  ].filter((item) => item.value !== null && item.value !== undefined);
 
   const editableFields = [
     { id: "customers", fieldName: "customer_count" },
@@ -211,8 +226,8 @@ function OverviewStatList({ utility }: { utility: any }) {
 
   return (
     <>
-      {items.map(item => {
-        const editableField = editableFields.find(f => f.id === item.id);
+      {items.map((item) => {
+        const editableField = editableFields.find((f) => f.id === item.id);
         if (editableField) {
           return (
             <EditableStatItem
@@ -227,21 +242,14 @@ function OverviewStatList({ utility }: { utility: any }) {
             />
           );
         }
-        return (
-          <StatList
-            key={item.id}
-            items={[item]}
-            layout="one-column"
-            showDividers
-          />
-        );
+        return <StatList key={item.id} items={[item]} layout="one-column" showDividers />;
       })}
     </>
   );
 }
 
 // Operations section component
-function OperationsStatList({ utility }: { utility: any }) {
+function OperationsStatList({ utility }: { utility: Utility }) {
   const items: StatItem[] = [
     ...(utility.peakDemandMw !== null
       ? [
@@ -319,8 +327,8 @@ function OperationsStatList({ utility }: { utility: any }) {
 
   return (
     <>
-      {items.map(item => {
-        const editableField = editableFields.find(f => f.id === item.id);
+      {items.map((item) => {
+        const editableField = editableFields.find((f) => f.id === item.id);
         if (editableField) {
           return (
             <EditableStatItem
@@ -335,21 +343,20 @@ function OperationsStatList({ utility }: { utility: any }) {
             />
           );
         }
-        return (
-          <StatList
-            key={item.id}
-            items={[item]}
-            layout="one-column"
-            showDividers
-          />
-        );
+        return <StatList key={item.id} items={[item]} layout="one-column" showDividers />;
       })}
     </>
   );
 }
 
 // Transmission section component
-function TransmissionStatList({ utilityLines, linesTotalMiles }: { utilityLines: any[]; linesTotalMiles: number }) {
+function TransmissionStatList({
+  utilityLines,
+  linesTotalMiles,
+}: {
+  utilityLines: TransmissionLine[];
+  linesTotalMiles: number;
+}) {
   const voltages = utilityLines.map((l) => l.voltage).filter((v): v is number => v !== null && v > 0);
   const voltageRangeValue = (() => {
     if (voltages.length === 0) return null;
@@ -374,15 +381,9 @@ function TransmissionStatList({ utilityLines, linesTotalMiles }: { utilityLines:
       label: "VOLTAGE RANGE",
       value: voltageRangeValue,
     },
-  ].filter(item => item.value !== null);
+  ].filter((item) => item.value !== null);
 
-  return (
-    <StatList
-      items={items}
-      layout="one-column"
-      showDividers
-    />
-  );
+  return <StatList items={items} layout="one-column" showDividers />;
 }
 
 export default function UtilityDetailPage() {

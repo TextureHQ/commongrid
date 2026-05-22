@@ -13,19 +13,22 @@ import { ExplorerToolbar } from "./ExplorerToolbar";
 // ---------------------------------------------------------------------------
 
 const FilterIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Filter">
+    <title>Filter</title>
     <path d="M22 3H2l8 9.46V19l4 2V12.46z" />
   </svg>
 );
 
 const ExportIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Export">
+    <title>Export</title>
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m4-5 5 5 5-5m-5 5V3" />
   </svg>
 );
 
 const ListIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-label="List view">
+    <title>List view</title>
     <path
       fillRule="evenodd"
       d="M2 4.75A.75.75 0 0 1 2.75 4h10.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75ZM2 8a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 8Zm0 3.25a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z"
@@ -35,7 +38,8 @@ const ListIcon = () => (
 );
 
 const MapIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-label="Map view">
+    <title>Map view</title>
     <path
       fillRule="evenodd"
       d="M5.37 1.482a.75.75 0 0 1 .476.058L10.5 3.442l3.654-1.827A.75.75 0 0 1 15.25 2.3v9.75a.75.75 0 0 1-.404.666l-4.25 2.125a.75.75 0 0 1-.596.018L5.5 12.56l-3.654 1.826A.75.75 0 0 1 .75 13.7V3.95a.75.75 0 0 1 .404-.666l4.25-2.125a.75.75 0 0 1-.034.323Z"
@@ -54,7 +58,9 @@ const ChevronDownIcon = () => (
     strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-label="Expand"
   >
+    <title>Expand</title>
     <path d="M1 1l4 4 4-4" />
   </svg>
 );
@@ -69,7 +75,9 @@ const CheckIcon = () => (
     strokeWidth="3"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-label="Check"
   >
+    <title>Check</title>
     <path d="M20 6 9 17l-5-5" />
   </svg>
 );

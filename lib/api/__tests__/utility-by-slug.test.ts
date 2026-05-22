@@ -20,7 +20,7 @@
  *   8. Unknown slug → 404.
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db/client", () => ({
   db: { execute: vi.fn() } as unknown,

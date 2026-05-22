@@ -10,8 +10,6 @@ interface BreadcrumbItem {
 }
 
 interface DetailPageShellProps {
-  kicker: React.ReactNode;
-  kickerDotColor?: string;
   entityName: string;
   subtitle?: React.ReactNode;
   breadcrumbs: BreadcrumbItem[];
@@ -22,8 +20,6 @@ interface DetailPageShellProps {
 }
 
 export function DetailPageShell({
-  kicker,
-  kickerDotColor,
   entityName,
   subtitle,
   breadcrumbs,

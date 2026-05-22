@@ -191,11 +191,10 @@ export function EditPanel({
   return (
     <>
       {/* Backdrop */}
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         aria-label="Close edit panel"
-        className="fixed inset-0 z-40 bg-black/30 transition-opacity"
+        className="fixed inset-0 z-40 bg-black/30 transition-opacity border-0 cursor-default"
         onClick={handleClose}
         onKeyDown={(e) => {
           if (e.key === "Escape" || e.key === "Enter") handleClose();

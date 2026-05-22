@@ -6,7 +6,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useEvCharging } from "@/lib/ev-charging";
 import { useFuseSearch } from "@/lib/search";
 import type { EVStation } from "@/types/ev-charging";
-import { EV_NETWORKS, getNetworkColor, getNetworkShortName, getStatusLabel } from "@/types/ev-charging";
+import { EV_NETWORKS, getNetworkColor, getNetworkShortName } from "@/types/ev-charging";
 import { useExplorer } from "../ExplorerContext";
 
 interface EVStationRow {

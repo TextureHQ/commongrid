@@ -82,7 +82,7 @@ function FieldValue({
 
   useEffect(() => {
     // Detect touch capability
-    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
     setIsTouchDevice(hasTouch);
   }, []);
 
@@ -156,10 +156,8 @@ function FieldValue({
 
       <Dialog isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} title="Sign in to edit">
         <div className="space-y-4 p-4">
-          <p className="text-sm text-text-body">
-            Sign in to suggest edits and help improve CommonGrid data quality.
-          </p>
-          
+          <p className="text-sm text-text-body">Sign in to suggest edits and help improve CommonGrid data quality.</p>
+
           <div className="flex items-center justify-end gap-3">
             <Button variant="secondary" onPress={() => setShowSignInModal(false)}>
               Cancel

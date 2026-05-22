@@ -91,11 +91,10 @@ export function VersionHistory({ entityType, entitySlug, isOpen, onClose }: Vers
   return (
     <>
       {/* Backdrop */}
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         aria-label="Close version history"
-        className="fixed inset-0 z-40 bg-black/30 transition-opacity"
+        className="fixed inset-0 z-40 bg-black/30 transition-opacity border-0 cursor-default"
         onClick={onClose}
         onKeyDown={(e) => {
           if (e.key === "Escape" || e.key === "Enter") onClose();

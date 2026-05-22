@@ -19,7 +19,8 @@ import { useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "../ExplorerContext";
 
 const BackIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Back">
+    <title>Back</title>
     <path d="M19 12H5m5-5-5 5 5 5" />
   </svg>
 );
@@ -33,7 +34,9 @@ const ArrowIcon = () => (
     fill="none"
     stroke="currentColor"
     strokeWidth="1.8"
+    aria-label="Navigate"
   >
+    <title>Navigate</title>
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
