@@ -58,10 +58,7 @@ export function DetailPageShell({
                 {kicker && (
                   <div className="detail-kicker">
                     {kickerDotColor && (
-                      <span
-                        className="detail-kicker-dot"
-                        style={{ backgroundColor: kickerDotColor }}
-                      />
+                      <span className="detail-kicker-dot" style={{ backgroundColor: kickerDotColor }} />
                     )}
                     {kicker}
                   </div>
