@@ -279,8 +279,7 @@
 .cg-explore-table-header span {
   font-size: 11px;
   font-family: var(--font-family-mono);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-caption);
   font-weight: 500;
   padding-right: 12px;
@@ -377,8 +376,7 @@
 .cg-explore-detail-type {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-muted);
   margin-bottom: 6px;
 }

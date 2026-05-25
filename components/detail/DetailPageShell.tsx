@@ -10,7 +10,7 @@ interface BreadcrumbItem {
 }
 
 interface DetailPageShellProps {
-  kicker: React.ReactNode;
+  kicker?: string;
   kickerDotColor?: string;
   entityName: string;
   subtitle?: React.ReactNode;
@@ -55,6 +55,14 @@ export function DetailPageShell({
             <div className="detail-header-identity">
               {avatar && <div className="detail-avatar-wrap">{avatar}</div>}
               <div style={{ minWidth: 0 }}>
+                {kicker && (
+                  <div className="detail-kicker">
+                    {kickerDotColor && (
+                      <span className="detail-kicker-dot" style={{ backgroundColor: kickerDotColor }} />
+                    )}
+                    {kicker}
+                  </div>
+                )}
                 <h1 className="detail-name">{entityName}</h1>
                 {subtitle && <div className="detail-sub">{subtitle}</div>}
               </div>

@@ -6,10 +6,112 @@
    resolve. Re-importing tokens-light/dark is idempotent. */
 @import "@texturehq/edges-tokens/css/light";
 @import "@texturehq/edges-tokens/css/dark";
+@import "@texturehq/edges-tokens/css/typography";
 
 html, body {
   overflow-x: hidden;
   background-color: var(--color-background-body);
+}
+
+/* ══════════════════════════════════════════
+   CommonGrid data visualization colors
+   Derived from edges tokens for consistency
+   ══════════════════════════════════════════ */
+@theme {
+  /* Utility type colors */
+  --color-cg-utility-iou: var(--color-viz-categorical-4);
+  --color-cg-utility-coop: var(--color-viz-categorical-3);
+  --color-cg-utility-municipal: var(--color-viz-categorical-7);
+  --color-cg-utility-cca: var(--color-viz-categorical-5);
+  --color-cg-utility-gentrans: var(--color-gray-500);
+  --color-cg-utility-political: var(--color-ocean-base);
+  --color-cg-utility-transop: var(--color-gray-600);
+  --color-cg-utility-jointaction: var(--color-plum-base);
+  --color-cg-utility-federal: var(--color-error-base);
+  --color-cg-utility-unknown: var(--color-gray-400);
+
+  /* ISO/RTO colors */
+  --color-cg-iso-caiso: var(--color-honey-base);
+  --color-cg-iso-pjm: var(--color-iris-base);
+  --color-cg-iso-ercot: var(--color-error-base);
+  --color-cg-iso-miso: var(--color-viz-categorical-10);
+  --color-cg-iso-nyiso: var(--color-plum-base);
+  --color-cg-iso-isone: var(--color-ocean-base);
+  --color-cg-iso-spp: var(--color-viz-categorical-3);
+
+  /* Voltage class colors */
+  --color-cg-voltage-extra-high: var(--color-error-base);
+  --color-cg-voltage-high: var(--color-warning-base);
+  --color-cg-voltage-medium: var(--color-success-base);
+  --color-cg-voltage-subtrans: var(--color-viz-categorical-4);
+  --color-cg-voltage-unknown: var(--color-gray-400);
+
+  /* Fuel type colors */
+  --color-cg-fuel-solar: var(--color-honey-base);
+  --color-cg-fuel-gas: var(--color-iris-base);
+  --color-cg-fuel-hydro: var(--color-ocean-base);
+  --color-cg-fuel-wind: var(--color-viz-categorical-7);
+  --color-cg-fuel-coal: var(--color-gray-600);
+  --color-cg-fuel-nuclear: var(--color-error-base);
+  --color-cg-fuel-battery: var(--color-plum-base);
+  --color-cg-fuel-petroleum: var(--color-viz-categorical-3);
+  --color-cg-fuel-biomass: var(--color-moss-base);
+
+  /* EV network colors (brand colors preserved where appropriate) */
+  --color-cg-ev-tesla: #cc0000;
+  --color-cg-ev-chargepoint: #0070f3;
+  --color-cg-ev-electrify: #00a550;
+  --color-cg-ev-evgo: var(--color-viz-categorical-3);
+  --color-cg-ev-blink: var(--color-plum-base);
+  --color-cg-ev-nonnetworked: var(--color-gray-400);
+
+  /* Operator boundary palette - extended categorical colors */
+  /* Uses edges viz-categorical tokens plus edges named colors for 45+ distinct boundary colors */
+  --color-cg-operator-1: var(--color-viz-categorical-4);
+  --color-cg-operator-2: var(--color-viz-categorical-11);
+  --color-cg-operator-3: var(--color-viz-categorical-7);
+  --color-cg-operator-4: var(--color-viz-categorical-3);
+  --color-cg-operator-5: var(--color-viz-categorical-5);
+  --color-cg-operator-6: var(--color-rose-base);
+  --color-cg-operator-7: var(--color-ocean-base);
+  --color-cg-operator-8: var(--color-viz-categorical-3);
+  --color-cg-operator-9: var(--color-iris-base);
+  --color-cg-operator-10: var(--color-moss-base);
+  --color-cg-operator-11: var(--color-ocean-base);
+  --color-cg-operator-12: var(--color-viz-categorical-2);
+  --color-cg-operator-13: var(--color-viz-categorical-7);
+  --color-cg-operator-14: var(--color-warning-base);
+  --color-cg-operator-15: var(--color-plum-base);
+  --color-cg-operator-16: var(--color-rose-base);
+  --color-cg-operator-17: var(--color-ocean-base);
+  --color-cg-operator-18: var(--color-viz-categorical-3);
+  --color-cg-operator-19: var(--color-iris-base);
+  --color-cg-operator-20: var(--color-moss-base);
+  --color-cg-operator-21: var(--color-ocean-base);
+  --color-cg-operator-22: var(--color-viz-categorical-2);
+  --color-cg-operator-23: var(--color-success-base);
+  --color-cg-operator-24: var(--color-warning-base);
+  --color-cg-operator-25: var(--color-plum-base);
+  --color-cg-operator-26: var(--color-rose-base);
+  --color-cg-operator-27: var(--color-ocean-base);
+  --color-cg-operator-28: var(--color-viz-categorical-3);
+  --color-cg-operator-29: var(--color-iris-base);
+  --color-cg-operator-30: var(--color-moss-base);
+  --color-cg-operator-31: var(--color-ocean-base);
+  --color-cg-operator-32: var(--color-error-base);
+  --color-cg-operator-33: var(--color-success-base);
+  --color-cg-operator-34: var(--color-warning-base);
+  --color-cg-operator-35: var(--color-plum-base);
+  --color-cg-operator-36: var(--color-rose-base);
+  --color-cg-operator-37: var(--color-ocean-base);
+  --color-cg-operator-38: var(--color-viz-categorical-3);
+  --color-cg-operator-39: var(--color-iris-base);
+  --color-cg-operator-40: var(--color-moss-base);
+  --color-cg-operator-41: var(--color-ocean-base);
+  --color-cg-operator-42: var(--color-error-base);
+  --color-cg-operator-43: var(--color-success-base);
+  --color-cg-operator-44: var(--color-warning-base);
+  --color-cg-operator-45: var(--color-plum-base);
 }
 
 @layer utilities {

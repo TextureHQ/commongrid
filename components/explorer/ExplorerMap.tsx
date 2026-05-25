@@ -24,16 +24,16 @@ function getTileUrl() {
 }
 
 const segmentColorMapping = {
-  INVESTOR_OWNED_UTILITY: { hex: "#3b82f6" },
-  DISTRIBUTION_COOPERATIVE: { hex: "#f59e0b" },
-  MUNICIPAL_UTILITY: { hex: "#10b981" },
-  COMMUNITY_CHOICE_AGGREGATOR: { hex: "#8b5cf6" },
-  GENERATION_AND_TRANSMISSION: { hex: "#6b7280" },
-  POLITICAL_SUBDIVISION: { hex: "#14b8a6" },
-  TRANSMISSION_OPERATOR: { hex: "#64748b" },
-  JOINT_ACTION_AGENCY: { hex: "#a855f7" },
-  FEDERAL: { hex: "#ef4444" },
-  UNKNOWN: { hex: "#9ca3af" },
+  INVESTOR_OWNED_UTILITY: { hex: "var(--color-cg-utility-iou)" },
+  DISTRIBUTION_COOPERATIVE: { hex: "var(--color-cg-utility-coop)" },
+  MUNICIPAL_UTILITY: { hex: "var(--color-cg-utility-municipal)" },
+  COMMUNITY_CHOICE_AGGREGATOR: { hex: "var(--color-cg-utility-cca)" },
+  GENERATION_AND_TRANSMISSION: { hex: "var(--color-cg-utility-gentrans)" },
+  POLITICAL_SUBDIVISION: { hex: "var(--color-cg-utility-political)" },
+  TRANSMISSION_OPERATOR: { hex: "var(--color-cg-utility-transop)" },
+  JOINT_ACTION_AGENCY: { hex: "var(--color-cg-utility-jointaction)" },
+  FEDERAL: { hex: "var(--color-cg-utility-federal)" },
+  UNKNOWN: { hex: "var(--color-cg-utility-unknown)" },
 };
 
 const US_CENTER = { longitude: -98.58, latitude: 39.83, zoom: 4 };
@@ -65,104 +65,105 @@ function getSubstationsTileUrl() {
 
 // Pricing node ISO color mapping
 const pricingNodeIsoColorMapping: Record<string, { hex: string }> = {
-  CAISO: { hex: "#eab308" }, // gold
-  PJM: { hex: "#3b82f6" }, // blue
-  ERCOT: { hex: "#ef4444" }, // red
-  MISO: { hex: "#22c55e" }, // green
-  NYISO: { hex: "#8b5cf6" }, // purple
-  ISONE: { hex: "#14b8a6" }, // teal
-  SPP: { hex: "#f97316" }, // orange
+  CAISO: { hex: "var(--color-cg-iso-caiso)" }, // gold
+  PJM: { hex: "var(--color-cg-iso-pjm)" }, // blue
+  ERCOT: { hex: "var(--color-cg-iso-ercot)" }, // red
+  MISO: { hex: "var(--color-cg-iso-miso)" }, // green
+  NYISO: { hex: "var(--color-cg-iso-nyiso)" }, // purple
+  ISONE: { hex: "var(--color-cg-iso-isone)" }, // teal
+  SPP: { hex: "var(--color-cg-iso-spp)" }, // orange
 };
 
 // Color by voltage class
 const voltageClassColorMapping = {
-  "extra-high": { hex: "#ef4444" }, // 345kV+ — red
-  high: { hex: "#f97316" }, // 230–344kV — orange
-  medium: { hex: "#22c55e" }, // 115–229kV — green
-  "sub-trans": { hex: "#60a5fa" }, // 69–114kV — light blue
-  unknown: { hex: "#9ca3af" }, // unknown — gray
+  "extra-high": { hex: "var(--color-cg-voltage-extra-high)" }, // 345kV+ — red
+  high: { hex: "var(--color-cg-voltage-high)" }, // 230–344kV — orange
+  medium: { hex: "var(--color-cg-voltage-medium)" }, // 115–229kV — green
+  "sub-trans": { hex: "var(--color-cg-voltage-subtrans)" }, // 69–114kV — light blue
+  unknown: { hex: "var(--color-cg-voltage-unknown)" }, // unknown — gray
 };
 
 // Substations share the voltage class palette (voltageBand uses the same buckets).
 const substationVoltageBandColorMapping = {
-  "extra-high": { hex: "#ef4444" },
-  high: { hex: "#f97316" },
-  medium: { hex: "#22c55e" },
-  "sub-trans": { hex: "#60a5fa" },
-  unknown: { hex: "#9ca3af" },
+  "extra-high": { hex: "var(--color-cg-voltage-extra-high)" },
+  high: { hex: "var(--color-cg-voltage-high)" },
+  medium: { hex: "var(--color-cg-voltage-medium)" },
+  "sub-trans": { hex: "var(--color-cg-voltage-subtrans)" },
+  unknown: { hex: "var(--color-cg-voltage-unknown)" },
 };
 
 const fuelCategoryColorMapping = {
-  Solar: { hex: "#eab308" },
-  "Natural Gas": { hex: "#3b82f6" },
-  Hydro: { hex: "#06b6d4" },
-  Wind: { hex: "#14b8a6" },
-  Coal: { hex: "#6b7280" },
-  Nuclear: { hex: "#ef4444" },
-  "Battery Storage": { hex: "#8b5cf6" },
-  Petroleum: { hex: "#f97316" },
-  "Biomass/Other": { hex: "#22c55e" },
+  Solar: { hex: "var(--color-cg-fuel-solar)" },
+  "Natural Gas": { hex: "var(--color-cg-fuel-gas)" },
+  Hydro: { hex: "var(--color-cg-fuel-hydro)" },
+  Wind: { hex: "var(--color-cg-fuel-wind)" },
+  Coal: { hex: "var(--color-cg-fuel-coal)" },
+  Nuclear: { hex: "var(--color-cg-fuel-nuclear)" },
+  "Battery Storage": { hex: "var(--color-cg-fuel-battery)" },
+  Petroleum: { hex: "var(--color-cg-fuel-petroleum)" },
+  "Biomass/Other": { hex: "var(--color-cg-fuel-biomass)" },
 };
 
 // EV network color mapping (top networks get distinct colors, rest gray)
 const evNetworkColorMapping: Record<string, { hex: string }> = {
-  Tesla: { hex: "#cc0000" },
-  "ChargePoint Network": { hex: "#0070f3" },
-  "Electrify America": { hex: "#00a550" },
-  "EVgo Network": { hex: "#f97316" },
-  "Blink Network": { hex: "#8b5cf6" },
-  "Non-Networked": { hex: "#9ca3af" },
+  Tesla: { hex: "var(--color-cg-ev-tesla)" },
+  "ChargePoint Network": { hex: "var(--color-cg-ev-chargepoint)" },
+  "Electrify America": { hex: "var(--color-cg-ev-electrify)" },
+  "EVgo Network": { hex: "var(--color-cg-ev-evgo)" },
+  "Blink Network": { hex: "var(--color-cg-ev-blink)" },
+  "Non-Networked": { hex: "var(--color-cg-ev-nonnetworked)" },
 };
 
 // hasMapboxToken is evaluated per-render based on the prop (see ExplorerMap component)
 
 // Distinct, high-contrast colors for operator boundaries
+// Derived from edges viz-categorical and named color tokens
 const OPERATOR_PALETTE = [
-  "#3b82f6",
-  "#ef4444",
-  "#10b981",
-  "#f59e0b",
-  "#8b5cf6",
-  "#ec4899",
-  "#14b8a6",
-  "#f97316",
-  "#6366f1",
-  "#84cc16",
-  "#06b6d4",
-  "#e11d48",
-  "#059669",
-  "#d97706",
-  "#7c3aed",
-  "#db2777",
-  "#0d9488",
-  "#ea580c",
-  "#4f46e5",
-  "#65a30d",
-  "#0891b2",
-  "#be123c",
-  "#047857",
-  "#b45309",
-  "#6d28d9",
-  "#a21caf",
-  "#0f766e",
-  "#c2410c",
-  "#4338ca",
-  "#4d7c0f",
-  "#0e7490",
-  "#9f1239",
-  "#15803d",
-  "#92400e",
-  "#5b21b6",
-  "#86198f",
-  "#115e59",
-  "#9a3412",
-  "#3730a3",
-  "#3f6212",
-  "#155e75",
-  "#881337",
-  "#166534",
-  "#78350f",
-  "#4c1d95",
+  "var(--color-cg-operator-1)",
+  "var(--color-cg-operator-2)",
+  "var(--color-cg-operator-3)",
+  "var(--color-cg-operator-4)",
+  "var(--color-cg-operator-5)",
+  "var(--color-cg-operator-6)",
+  "var(--color-cg-operator-7)",
+  "var(--color-cg-operator-8)",
+  "var(--color-cg-operator-9)",
+  "var(--color-cg-operator-10)",
+  "var(--color-cg-operator-11)",
+  "var(--color-cg-operator-12)",
+  "var(--color-cg-operator-13)",
+  "var(--color-cg-operator-14)",
+  "var(--color-cg-operator-15)",
+  "var(--color-cg-operator-16)",
+  "var(--color-cg-operator-17)",
+  "var(--color-cg-operator-18)",
+  "var(--color-cg-operator-19)",
+  "var(--color-cg-operator-20)",
+  "var(--color-cg-operator-21)",
+  "var(--color-cg-operator-22)",
+  "var(--color-cg-operator-23)",
+  "var(--color-cg-operator-24)",
+  "var(--color-cg-operator-25)",
+  "var(--color-cg-operator-26)",
+  "var(--color-cg-operator-27)",
+  "var(--color-cg-operator-28)",
+  "var(--color-cg-operator-29)",
+  "var(--color-cg-operator-30)",
+  "var(--color-cg-operator-31)",
+  "var(--color-cg-operator-32)",
+  "var(--color-cg-operator-33)",
+  "var(--color-cg-operator-34)",
+  "var(--color-cg-operator-35)",
+  "var(--color-cg-operator-36)",
+  "var(--color-cg-operator-37)",
+  "var(--color-cg-operator-38)",
+  "var(--color-cg-operator-39)",
+  "var(--color-cg-operator-40)",
+  "var(--color-cg-operator-41)",
+  "var(--color-cg-operator-42)",
+  "var(--color-cg-operator-43)",
+  "var(--color-cg-operator-44)",
+  "var(--color-cg-operator-45)",
 ];
 
 interface GridBoundaryData {

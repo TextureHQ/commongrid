@@ -191,11 +191,10 @@ export function EditPanel({
   return (
     <>
       {/* Backdrop */}
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         aria-label="Close edit panel"
-        className="fixed inset-0 z-40 bg-black/30 transition-opacity"
+        className="fixed inset-0 z-40 bg-black/30 transition-opacity border-0 cursor-default"
         onClick={handleClose}
         onKeyDown={(e) => {
           if (e.key === "Escape" || e.key === "Enter") handleClose();
@@ -248,7 +247,7 @@ export function EditPanel({
 
               {/* Source citation bar */}
               <div className="bg-background-muted rounded-lg p-4 space-y-3">
-                <div className="text-xs font-semibold uppercase tracking-widest text-text-muted">Source Citation</div>
+                <div className="text-xs font-medium text-text-muted">Source Citation</div>
                 <Select
                   label="Source Type"
                   selectedKey={sourceType}
@@ -276,7 +275,7 @@ export function EditPanel({
               {/* Field-by-field editing */}
               {Array.from(sections.entries()).map(([sectionName, sectionFields]) => (
                 <div key={sectionName}>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">
+                  <div className="text-xs font-medium text-text-muted mb-3">
                     {sectionName}
                   </div>
                   <div className="space-y-3">

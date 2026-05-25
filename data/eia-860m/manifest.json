@@ -1,16 +1,14 @@
 {
   "source": "EIA Form 860M — Preliminary Monthly Electric Generator Inventory",
   "source_page": "https://www.eia.gov/electricity/data/eia860m/",
-  "latest_month": "2026-03",
-  "latest_month_label": "March 2026",
-  "file_name": "march_generator2026.xlsx",
-  "file_url": "https://www.eia.gov/electricity/data/eia860m/xls/march_generator2026.xlsx",
-  "file_date": "2026-04-23",
-  "file_release_date_iso": "2026-04-23T16:07:40Z",
+  "latest_month": "2026-04",
+  "latest_month_label": "April 2026",
+  "file_name": "april_generator2026.xlsx",
+  "file_url": "https://www.eia.gov/electricity/data/eia860m/xls/april_generator2026.xlsx",
   "next_release_date": "2026-05-22",
-  "file_size_bytes": 13696844,
-  "checksum_sha256": "93f2b2501cd42ba1290136ec04fd616346d974e0dfd6020cd8ec5e532ef7cec6",
-  "local_path": "data/eia-860m/march_generator2026.xlsx",
+  "file_size_bytes": 13670943,
+  "checksum_sha256": "ec15bae939cc7cf8ee7e3f0dcb9a06d0f91d5fbab3714f0f36ecaeef3bde82b6",
+  "local_path": "data/eia-860m/april_generator2026.xlsx",
   "sheets": [
     "Operating",
     "Planned",
@@ -21,12 +19,12 @@
     "Retired_PR"
   ],
   "sheet_row_counts": {
-    "Operating": 27834,
-    "Planned": 2317,
-    "Retired": 7251,
-    "Canceled or Postponed": 1686,
-    "Operating_PR": 225,
-    "Planned_PR": 8,
+    "Operating": 27968,
+    "Planned": 2255,
+    "Retired": 7254,
+    "Canceled or Postponed": 1707,
+    "Operating_PR": 228,
+    "Planned_PR": 5,
     "Retired_PR": 10
   },
   "files": [
@@ -48,6 +46,25 @@
         "Planned_PR": 8,
         "Retired_PR": 10
       }
+    },
+    {
+      "file_name": "april_generator2026.xlsx",
+      "file_url": "https://www.eia.gov/electricity/data/eia860m/xls/april_generator2026.xlsx",
+      "month": "2026-04",
+      "month_label": "April 2026",
+      "file_size_bytes": 13670943,
+      "checksum_sha256": "ec15bae939cc7cf8ee7e3f0dcb9a06d0f91d5fbab3714f0f36ecaeef3bde82b6",
+      "local_path": "data/eia-860m/april_generator2026.xlsx",
+      "parsed_at": "2026-05-22T00:39:09.331Z",
+      "sheet_row_counts": {
+        "Operating": 27968,
+        "Planned": 2255,
+        "Retired": 7254,
+        "Canceled or Postponed": 1707,
+        "Operating_PR": 228,
+        "Planned_PR": 5,
+        "Retired_PR": 10
+      }
     }
   ],
   "notes": [
@@ -58,5 +75,5 @@
   ],
   "captured_at": "2026-05-15T09:53:00Z",
   "captured_by": "meridian (EIA-860M baseline subagent)",
-  "updated_at": "2026-05-15T10:29:44.753Z"
+  "updated_at": "2026-05-22T00:39:09.331Z"
 }

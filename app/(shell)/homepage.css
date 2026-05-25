@@ -104,10 +104,11 @@
   align-items: center;
   gap: 10px;
   font-family: var(--font-family-mono);
-  font-size: 12px;
+  /* Use text-eyebrow base, override with mono family */
+  font-size: var(--text-eyebrow-size);
   font-weight: 500;
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  line-height: var(--text-eyebrow-line-height);
   color: var(--color-text-muted);
 }
 
@@ -133,23 +134,24 @@
 }
 
 .cg-home .hero-h1 {
-  /* Aligned to the Texture marketing h1 scale — 36px mobile, 64px desktop,
-     line-height 1.05, tracking -0.04em, regular weight. */
+  /* Use display-lg typography from design system */
   font-family: var(--font-family-brand);
-  font-weight: 500;
-  font-size: clamp(36px,5.4vw,64px);
-  line-height: 1.05;
-  letter-spacing: -.04em;
+  font-size: var(--text-display-lg-size);
+  font-weight: var(--text-display-lg-weight);
+  line-height: var(--text-display-lg-line-height);
+  letter-spacing: var(--text-display-lg-letter-spacing);
   margin: 16px 0 24px;
   max-width: 17ch;
   color: var(--color-text-heading);
   text-wrap: balance;
 }
 .cg-home .hero-lede {
+  /* Use body-lg typography from design system */
   font-family: var(--font-family-sans);
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 1.5;
+  font-size: var(--text-body-lg-size);
+  font-weight: var(--text-body-lg-weight);
+  line-height: var(--text-body-lg-line-height);
+  letter-spacing: var(--text-body-lg-letter-spacing);
   color: var(--color-text-muted);
   max-width: 60ch;
   margin: 0;
@@ -230,21 +232,23 @@
 }
 .cg-home .stat:last-child { border-right: 0; }
 .cg-home .stat-n {
+  /* Use heading-xl for stats */
   font-family: var(--font-family-brand);
-  font-weight: 500;
-  font-size: 32px;
-  letter-spacing: -.03em;
-  line-height: 1;
+  font-size: var(--text-heading-xl-size);
+  font-weight: var(--text-heading-xl-weight);
+  line-height: var(--text-heading-xl-line-height);
+  letter-spacing: var(--text-heading-xl-letter-spacing);
   font-variant-numeric: tabular-nums;
   color: var(--color-text-heading);
 }
 .cg-home .stat-l {
+  /* Use caption typography */
   font-family: var(--font-family-mono);
-  font-size: 12px;
-  color: var(--color-text-muted);
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font-size: var(--text-caption-size);
   font-weight: 500;
+  line-height: var(--text-caption-line-height);
+  color: var(--color-text-muted);
+  letter-spacing: normal;
 }
 .cg-home .stat-d {
   font-family: var(--font-family-mono);
@@ -266,24 +270,25 @@
   align-items: end;
 }
 .cg-home .section-title {
-  /* Aligned to Texture marketing h2 — desktop 56px, mobile 32px,
-     regular weight, tracking -0.04em. Slightly tighter than h2 since
-     CommonGrid pages tend toward 2-line titles. */
+  /* Use display-md typography from design system */
   font-family: var(--font-family-brand);
-  font-weight: 500;
-  font-size: clamp(32px,4.4vw,48px);
-  letter-spacing: -.035em;
-  line-height: 1.05;
+  font-size: var(--text-display-md-size);
+  font-weight: var(--text-display-md-weight);
+  line-height: var(--text-display-md-line-height);
+  letter-spacing: var(--text-display-md-letter-spacing);
   color: var(--color-text-heading);
   max-width: 22ch;
   margin: 0;
   text-wrap: balance;
 }
 .cg-home .section-desc {
+  /* Use body-md typography from design system */
   font-family: var(--font-family-sans);
+  font-size: var(--text-body-md-size);
+  font-weight: var(--text-body-md-weight);
+  line-height: var(--text-body-md-line-height);
+  letter-spacing: var(--text-body-md-letter-spacing);
   color: var(--color-text-muted);
-  font-size: 16px;
-  line-height: 1.5;
   max-width: 50ch;
   margin: 0;
   text-wrap: pretty;
@@ -326,8 +331,7 @@
   font-size: 12px;
   font-weight: 500;
   color: var(--color-text-muted);
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
 }
 .cg-home .entity-count {
   font-variant-numeric: tabular-nums;
@@ -335,22 +339,23 @@
   font-weight: 500;
 }
 .cg-home .entity-name {
-  /* Aligned to Texture marketing h5 — desktop 32px, mobile 24px,
-     regular weight, tracking -0.02em. Slightly compressed because
-     entity cards are dense (3-up grid). */
+  /* Use heading-md typography from design system */
   font-family: var(--font-family-brand);
-  font-weight: 500;
-  font-size: 24px;
-  letter-spacing: -.025em;
-  line-height: 1.1;
+  font-size: var(--text-heading-md-size);
+  font-weight: var(--text-heading-md-weight);
+  line-height: var(--text-heading-md-line-height);
+  letter-spacing: var(--text-heading-md-letter-spacing);
   color: var(--color-text-heading);
   margin: 12px 0 4px;
 }
 .cg-home .entity-desc {
+  /* Use body-sm typography from design system */
   font-family: var(--font-family-sans);
+  font-size: var(--text-body-sm-size);
+  font-weight: var(--text-body-sm-weight);
+  line-height: var(--text-body-sm-line-height);
+  letter-spacing: var(--text-body-sm-letter-spacing);
   color: var(--color-text-muted);
-  font-size: 14px;
-  line-height: 1.5;
   margin: 4px 0 auto;
   text-wrap: pretty;
 }
@@ -401,8 +406,7 @@
   border-bottom: 1px solid var(--color-border-default);
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-caption);
   background: color-mix(in srgb, var(--color-text-heading) 3%, transparent);
 }
@@ -425,8 +429,7 @@
 .cg-home .op {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -516,25 +519,28 @@
   border-bottom: 1px solid var(--color-border-default);
 }
 .cg-home .commons-cell h4 {
+  /* Use heading-sm typography from design system */
   font-family: var(--font-family-brand);
-  font-weight: 500;
-  font-size: 22px;
-  letter-spacing: -.025em;
-  line-height: 1.15;
+  font-size: var(--text-heading-sm-size);
+  font-weight: var(--text-heading-sm-weight);
+  line-height: var(--text-heading-sm-line-height);
+  letter-spacing: var(--text-heading-sm-letter-spacing);
   margin: 0 0 12px;
   color: var(--color-text-heading);
 }
 .cg-home .commons-cell p {
+  /* Use body-md typography from design system */
+  font-size: var(--text-body-md-size);
+  font-weight: var(--text-body-md-weight);
+  line-height: var(--text-body-md-line-height);
+  letter-spacing: var(--text-body-md-letter-spacing);
   color: var(--color-text-muted);
-  font-size: 15px;
-  line-height: 1.55;
   margin: 0;
 }
 .cg-home .commons-cell .q {
   font-family: var(--font-family-mono);
   font-size: 12px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-rose-base);
   margin-bottom: 10px;
   font-weight: 500;
@@ -661,8 +667,7 @@
 .cg-home .dev-endpoints-head {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-gray-400);
   margin-bottom: 14px;
   display: flex;
@@ -773,8 +778,7 @@
 .cg-home .foot-col h5 {
   font-family: var(--font-family-mono);
   font-size: 12px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-muted);
   margin: 0 0 16px;
   font-weight: 500;
@@ -856,6 +860,13 @@
   .cg-home .foot-brand .foot-about { max-width: 60ch; }
 }
 @media (max-width: 560px) {
+  /* Stats: 2 columns on narrow mobile */
+  .cg-home .stats { grid-template-columns: repeat(2,1fr); }
+  .cg-home .stats .stat:nth-child(2n) { border-right: 0; }
+  .cg-home .stats .stat:nth-child(3n) { border-right: 1px solid var(--color-border-default); }
+  .cg-home .stats .stat { border-bottom: 1px solid var(--color-border-default); }
+  .cg-home .stats .stat:nth-last-child(-n+2) { border-bottom: 0; }
+
   .cg-home .entities { grid-template-columns: 1fr; }
 
   /* Mobile footer: brand on top, then a compact 2-col grid of link groups.

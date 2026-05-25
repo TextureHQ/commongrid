@@ -86,8 +86,7 @@
 .cg-detail .detail-kicker {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .10em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-caption);
   display: flex;
   align-items: center;
@@ -103,17 +102,22 @@
 .cg-detail .detail-kicker::before { display: none; }
 
 .cg-detail .detail-name {
+  /* Use display-md typography from design system */
   font-family: var(--font-family-brand);
-  font-weight: 700;
-  font-size: clamp(26px, 4vw, 42px);
-  letter-spacing: -.03em;
-  line-height: 1.05;
+  font-size: var(--text-display-md-size);
+  font-weight: var(--text-display-md-weight);
+  line-height: var(--text-display-md-line-height);
+  letter-spacing: var(--text-display-md-letter-spacing);
   color: var(--color-text-heading);
   margin: 0 0 4px;
 }
 
 .cg-detail .detail-sub {
-  font-size: 14px;
+  /* Use body-sm typography from design system */
+  font-size: var(--text-body-sm-size);
+  font-weight: var(--text-body-sm-weight);
+  line-height: var(--text-body-sm-line-height);
+  letter-spacing: var(--text-body-sm-letter-spacing);
   color: var(--color-text-muted);
   display: flex;
   align-items: center;
@@ -182,9 +186,8 @@
 .cg-detail .detail-stat-l {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  color: var(--color-text-caption);
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  color: var(--color-text-muted);
+  letter-spacing: normal;
   margin-top: 4px;
 }
 
@@ -239,9 +242,8 @@
 .cg-detail .detail-field-label {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .06em;
-  color: var(--color-text-caption);
-  text-transform: uppercase;
+  letter-spacing: normal;
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
@@ -327,8 +329,7 @@
 .cg-detail .detail-port-label {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-muted);
   margin-top: 6px;
 }
@@ -385,8 +386,7 @@
 .cg-detail .detail-rel-label {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-caption);
 }
 .cg-detail .detail-rel-name {
@@ -575,8 +575,7 @@
 .cg-detail .detail-pricing-label {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-caption);
   margin-bottom: 5px;
 }

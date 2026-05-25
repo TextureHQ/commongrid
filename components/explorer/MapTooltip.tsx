@@ -23,14 +23,14 @@ const FONTS = {
 };
 
 const COLORS = {
-  ink: "#111111",
-  ink2: "#2c2a26",
-  muted: "#6b6155",
-  subtle: "#857b6b",
-  faint: "#a89f90",
-  rule: "#e5dfd3",
-  accent: "#4a9a8a",
-  card: "#ffffff",
+  ink: "var(--color-text-heading)",
+  ink2: "var(--color-text-body)",
+  muted: "var(--color-text-muted)",
+  subtle: "var(--color-text-subtle)",
+  faint: "var(--color-text-placeholder)",
+  rule: "var(--color-border-paper)",
+  accent: "var(--color-ocean-base)",
+  card: "var(--color-background-surface)",
 };
 
 const styles = {
@@ -41,15 +41,14 @@ const styles = {
     maxWidth: 280,
     border: `1px solid ${COLORS.rule}`,
     borderRadius: 8,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.10), 0 0 1px rgba(0,0,0,0.08)",
+    boxShadow: "var(--shadow-md)",
     padding: 14,
   },
   kicker: {
     fontFamily: FONTS.mono,
     fontSize: 10,
-    fontWeight: 600 as const,
-    letterSpacing: "0.1em",
-    textTransform: "uppercase" as const,
+    fontWeight: 500 as const,
+    letterSpacing: "normal",
     color: COLORS.accent,
     marginBottom: 6,
     lineHeight: 1,
@@ -85,8 +84,7 @@ const styles = {
     fontFamily: FONTS.mono,
     fontSize: 9.5,
     fontWeight: 500 as const,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase" as const,
+    letterSpacing: "normal",
     color: COLORS.faint,
     lineHeight: 1,
     marginTop: 2,

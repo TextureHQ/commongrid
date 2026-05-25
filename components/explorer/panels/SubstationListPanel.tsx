@@ -82,15 +82,15 @@ function formatVoltage(row: SubstationApiRow): string {
 function getVoltageBandColor(band: VoltageBand): string {
   switch (band) {
     case "extra-high":
-      return "#ef4444"; // red
+      return "var(--color-cg-voltage-extra-high)"; // red
     case "high":
-      return "#f97316"; // orange
+      return "var(--color-cg-voltage-high)"; // orange
     case "medium":
-      return "#22c55e"; // green
+      return "var(--color-cg-voltage-medium)"; // green
     case "sub-trans":
-      return "#60a5fa"; // light blue
+      return "var(--color-cg-voltage-subtrans)"; // light blue
     default:
-      return "#9ca3af"; // gray
+      return "var(--color-cg-voltage-unknown)"; // gray
   }
 }
 

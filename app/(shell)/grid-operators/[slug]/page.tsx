@@ -2,21 +2,37 @@
 
 import "../../detail-page.css";
 
-import { Avatar, Badge, type Column, DataTable, InteractiveMap, Loader, layer } from "@texturehq/edges";
+import { SignInButton } from "@clerk/nextjs";
+import {
+  Avatar,
+  Badge,
+  Button,
+  type Column,
+  DataTable,
+  Dialog,
+  Icon,
+  InteractiveMap,
+  Loader,
+  layer,
+  type StatItem,
+  StatList,
+  Tooltip,
+} from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
+import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
 import {
   DetailEntityList,
-  DetailFieldList,
   DetailMap,
   DetailPageShell,
   DetailRelationships,
   DetailSection,
   DetailStatGrid,
 } from "@/components/detail";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
 import {
   formatCapacity,
@@ -34,6 +50,8 @@ import { filterByUtility, usePowerPlants } from "@/lib/power-plants";
 import { filterProgramsByUtility, usePrograms } from "@/lib/programs-client";
 import { filterLinesByOwner, useTransmissionLines } from "@/lib/transmission-lines-client";
 import { useUtilities } from "@/lib/utilities-client";
+import type { Utility } from "@/types/entities";
+import type { TransmissionLine } from "@/types/transmission-lines";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -51,6 +69,321 @@ function formatRevenue(v: number): string {
 
 function formatSales(v: number): string {
   return v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M MWh` : `${v.toLocaleString()} MWh`;
+}
+
+// Helper component for StatList items with inline editing
+function EditableStatItem({
+  item,
+  entityType,
+  entityId,
+  entityName,
+  fieldName,
+  currentValues,
+  onEdited,
+}: {
+  item: StatItem;
+  entityType: string;
+  entityId: string;
+  entityName: string;
+  fieldName: string;
+  currentValues: Record<string, unknown>;
+  onEdited: () => void;
+}) {
+  const { user, isLoading } = useCurrentUser();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showSignInModal, setShowSignInModal] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    setIsTouchDevice(hasTouch);
+  }, []);
+
+  const handleEditClick = () => {
+    if (!user && !isLoading) {
+      setShowSignInModal(true);
+    } else if (user) {
+      setShowEditModal(true);
+    }
+  };
+
+  const currentVersion = (currentValues?.version as number) ?? 1;
+  const currentValue = currentValues?.[fieldName];
+
+  const editButton =
+    isTouchDevice || isHovering ? (
+      <Tooltip content="Edit this field" placement="top">
+        <button
+          type="button"
+          onClick={handleEditClick}
+          className="text-text-muted hover:text-text-body transition-colors"
+          aria-label={`Edit ${item.label}`}
+        >
+          <Icon name="PencilSimple" size="xs" />
+        </button>
+      </Tooltip>
+    ) : null;
+
+  return (
+    <>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: div provides hover context */}
+      <div
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+        onFocus={() => setIsHovering(true)}
+        onBlur={() => setIsHovering(false)}
+        style={{ display: "contents" }}
+      >
+        <StatList
+          items={[
+            {
+              ...item,
+              iconRight: editButton,
+            },
+          ]}
+          layout="one-column"
+          showDividers
+        />
+      </div>
+
+      {showEditModal && (
+        <InlineFieldEdit
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          entityType={entityType}
+          entityId={entityId}
+          entityName={entityName}
+          fieldName={fieldName}
+          currentValue={currentValue}
+          currentVersion={currentVersion}
+          onSubmitted={() => {
+            setShowEditModal(false);
+            onEdited();
+          }}
+        />
+      )}
+
+      <Dialog isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} title="Sign in to edit">
+        <div className="space-y-4 p-4">
+          <p className="text-sm text-text-body">Sign in to suggest edits and help improve CommonGrid data quality.</p>
+          <div className="flex items-center justify-end gap-3">
+            <Button variant="secondary" onPress={() => setShowSignInModal(false)}>
+              Cancel
+            </Button>
+            <SignInButton mode="modal">
+              <Button variant="primary">Sign In</Button>
+            </SignInButton>
+          </div>
+        </div>
+      </Dialog>
+    </>
+  );
+}
+
+// Overview section component
+function OverviewStatList({ utility }: { utility: Utility }) {
+  const items: StatItem[] = [
+    {
+      id: "segment",
+      label: "SEGMENT",
+      value: <Badge variant={getSegmentBadgeVariant(utility.segment)}>{getSegmentLabel(utility.segment)}</Badge>,
+    },
+    {
+      id: "status",
+      label: "STATUS",
+      value: <Badge variant={getStatusBadgeVariant(utility.status)}>{getStatusLabel(utility.status)}</Badge>,
+    },
+    {
+      id: "customers",
+      label: "CUSTOMERS",
+      value: utility.customerCount ? formatCustomerCount(utility.customerCount) : null,
+    },
+    {
+      id: "jurisdiction",
+      label: "JURISDICTION",
+      value: utility.jurisdiction ?? null,
+    },
+    {
+      id: "eiaId",
+      label: "EIA ID",
+      value: utility.eiaId ?? null,
+      copyable: true,
+    },
+    {
+      id: "website",
+      label: "WEBSITE",
+      value: utility.website ? safeHostname(utility.website) : null,
+      href: utility.website ?? undefined,
+    },
+  ].filter((item) => item.value !== null && item.value !== undefined);
+
+  const editableFields = [
+    { id: "customers", fieldName: "customer_count" },
+    { id: "jurisdiction", fieldName: "jurisdiction" },
+    { id: "website", fieldName: "website" },
+  ];
+
+  return (
+    <>
+      {items.map((item) => {
+        const editableField = editableFields.find((f) => f.id === item.id);
+        if (editableField) {
+          return (
+            <EditableStatItem
+              key={item.id}
+              item={item}
+              entityType="utility"
+              entityId={utility.id}
+              entityName={utility.name}
+              fieldName={editableField.fieldName}
+              currentValues={utility as unknown as Record<string, unknown>}
+              onEdited={() => window.location.reload()}
+            />
+          );
+        }
+        return <StatList key={item.id} items={[item]} layout="one-column" showDividers />;
+      })}
+    </>
+  );
+}
+
+// Operations section component
+function OperationsStatList({ utility }: { utility: Utility }) {
+  const items: StatItem[] = [
+    ...(utility.peakDemandMw !== null
+      ? [
+          {
+            id: "summerPeak",
+            label: "SUMMER PEAK DEMAND",
+            value: `${utility.peakDemandMw.toLocaleString()} MW`,
+          },
+        ]
+      : []),
+    ...(utility.winterPeakDemandMw !== null
+      ? [
+          {
+            id: "winterPeak",
+            label: "WINTER PEAK DEMAND",
+            value: `${utility.winterPeakDemandMw.toLocaleString()} MW`,
+          },
+        ]
+      : []),
+    ...(utility.totalRevenueDollars !== null
+      ? [
+          {
+            id: "revenue",
+            label: "TOTAL REVENUE",
+            value: formatRevenue(utility.totalRevenueDollars),
+          },
+        ]
+      : []),
+    ...(utility.totalSalesMwh !== null
+      ? [
+          {
+            id: "sales",
+            label: "TOTAL SALES",
+            value: formatSales(utility.totalSalesMwh),
+          },
+        ]
+      : []),
+    ...(utility.totalMeterCount !== null
+      ? [
+          {
+            id: "meters",
+            label: "TOTAL METERS",
+            value: utility.totalMeterCount.toLocaleString(),
+          },
+        ]
+      : []),
+    ...(utility.amiMeterCount !== null
+      ? [
+          {
+            id: "amiMeters",
+            label: "AMI METERS",
+            value: `${utility.amiMeterCount.toLocaleString()}${utility.totalMeterCount ? ` (${Math.round((utility.amiMeterCount / utility.totalMeterCount) * 100)}%)` : ""}`,
+          },
+        ]
+      : []),
+    ...(utility.nercRegion !== null
+      ? [
+          {
+            id: "nercRegion",
+            label: "NERC REGION",
+            value: utility.nercRegion,
+          },
+        ]
+      : []),
+  ];
+
+  const editableFields = [
+    { id: "summerPeak", fieldName: "peak_demand_mw" },
+    { id: "winterPeak", fieldName: "winter_peak_demand_mw" },
+    { id: "revenue", fieldName: "total_revenue_dollars" },
+    { id: "sales", fieldName: "total_sales_mwh" },
+    { id: "meters", fieldName: "total_meter_count" },
+    { id: "amiMeters", fieldName: "ami_meter_count" },
+  ];
+
+  return (
+    <>
+      {items.map((item) => {
+        const editableField = editableFields.find((f) => f.id === item.id);
+        if (editableField) {
+          return (
+            <EditableStatItem
+              key={item.id}
+              item={item}
+              entityType="utility"
+              entityId={utility.id}
+              entityName={utility.name}
+              fieldName={editableField.fieldName}
+              currentValues={utility as unknown as Record<string, unknown>}
+              onEdited={() => window.location.reload()}
+            />
+          );
+        }
+        return <StatList key={item.id} items={[item]} layout="one-column" showDividers />;
+      })}
+    </>
+  );
+}
+
+// Transmission section component
+function TransmissionStatList({
+  utilityLines,
+  linesTotalMiles,
+}: {
+  utilityLines: TransmissionLine[];
+  linesTotalMiles: number;
+}) {
+  const voltages = utilityLines.map((l) => l.voltage).filter((v): v is number => v !== null && v > 0);
+  const voltageRangeValue = (() => {
+    if (voltages.length === 0) return null;
+    const min = Math.min(...voltages);
+    const max = Math.max(...voltages);
+    return min === max ? `${min} kV` : `${min}–${max} kV`;
+  })();
+
+  const items: StatItem[] = [
+    {
+      id: "lineCount",
+      label: "TOTAL LINES",
+      value: utilityLines.length.toLocaleString(),
+    },
+    {
+      id: "totalMiles",
+      label: "TOTAL MILES",
+      value: Math.round(linesTotalMiles).toLocaleString(),
+    },
+    {
+      id: "voltageRange",
+      label: "VOLTAGE RANGE",
+      value: voltageRangeValue,
+    },
+  ].filter((item) => item.value !== null);
+
+  return <StatList items={items} layout="one-column" showDividers />;
 }
 
 export default function UtilityDetailPage() {
@@ -313,82 +646,12 @@ export default function UtilityDetailPage() {
       />
 
       <DetailSection id="overview" kicker={`0${sectionNum++} · Overview`} title="Overview">
-        <DetailFieldList
-          items={[
-            {
-              id: "segment",
-              label: "Segment",
-              value: (
-                <Badge variant={getSegmentBadgeVariant(utility.segment)}>{getSegmentLabel(utility.segment)}</Badge>
-              ),
-            },
-            {
-              id: "status",
-              label: "Status",
-              value: <Badge variant={getStatusBadgeVariant(utility.status)}>{getStatusLabel(utility.status)}</Badge>,
-            },
-            {
-              id: "customers",
-              label: "Customers",
-              value: utility.customerCount ? formatCustomerCount(utility.customerCount) : null,
-            },
-            { id: "jurisdiction", label: "Jurisdiction", value: utility.jurisdiction ?? null },
-            { id: "eiaId", label: "EIA ID", value: utility.eiaId ?? null, copyable: true },
-            {
-              id: "website",
-              label: "Website",
-              value: utility.website ? safeHostname(utility.website) : null,
-              href: utility.website ?? undefined,
-            },
-          ]}
-        />
+        <OverviewStatList utility={utility} />
       </DetailSection>
 
       {hasOperationsData && (
         <DetailSection id="operations" kicker={`0${sectionNum++} · Operations`} title="Operations">
-          <DetailFieldList
-            items={[
-              ...(utility.peakDemandMw !== null
-                ? [
-                    {
-                      id: "summerPeak",
-                      label: "Summer Peak Demand",
-                      value: `${utility.peakDemandMw.toLocaleString()} MW`,
-                    },
-                  ]
-                : []),
-              ...(utility.winterPeakDemandMw !== null
-                ? [
-                    {
-                      id: "winterPeak",
-                      label: "Winter Peak Demand",
-                      value: `${utility.winterPeakDemandMw.toLocaleString()} MW`,
-                    },
-                  ]
-                : []),
-              ...(utility.totalRevenueDollars !== null
-                ? [{ id: "revenue", label: "Total Revenue", value: formatRevenue(utility.totalRevenueDollars) }]
-                : []),
-              ...(utility.totalSalesMwh !== null
-                ? [{ id: "sales", label: "Total Sales", value: formatSales(utility.totalSalesMwh) }]
-                : []),
-              ...(utility.totalMeterCount !== null
-                ? [{ id: "meters", label: "Total Meters", value: utility.totalMeterCount.toLocaleString() }]
-                : []),
-              ...(utility.amiMeterCount !== null
-                ? [
-                    {
-                      id: "amiMeters",
-                      label: "AMI Meters",
-                      value: `${utility.amiMeterCount.toLocaleString()}${utility.totalMeterCount ? ` (${Math.round((utility.amiMeterCount / utility.totalMeterCount) * 100)}%)` : ""}`,
-                    },
-                  ]
-                : []),
-              ...(utility.nercRegion !== null
-                ? [{ id: "nercRegion", label: "NERC Region", value: utility.nercRegion }]
-                : []),
-            ]}
-          />
+          <OperationsStatList utility={utility} />
           {utility.hasGeneration !== null &&
             (utility.hasGeneration || utility.hasTransmission || utility.hasDistribution) && (
               <div style={{ marginTop: 16 }}>
@@ -546,24 +809,7 @@ export default function UtilityDetailPage() {
 
       {!linesLoading && utilityLines.length > 0 && (
         <DetailSection id="transmission" kicker={`0${sectionNum++} · Transmission`} title="Transmission Lines">
-          <DetailFieldList
-            items={[
-              { id: "lineCount", label: "Total Lines", value: utilityLines.length.toLocaleString() },
-              { id: "totalMiles", label: "Total Miles", value: Math.round(linesTotalMiles).toLocaleString() },
-              {
-                id: "voltageRange",
-                label: "Voltage Range",
-                value: (() => {
-                  const voltages = utilityLines.map((l) => l.voltage).filter((v): v is number => v !== null && v > 0);
-                  if (voltages.length === 0) return null;
-                  const min = Math.min(...voltages);
-                  const max = Math.max(...voltages);
-                  return min === max ? `${min} kV` : `${min}–${max} kV`;
-                })(),
-              },
-            ]}
-            columns={2}
-          />
+          <TransmissionStatList utilityLines={utilityLines} linesTotalMiles={linesTotalMiles} />
         </DetailSection>
       )}
 
