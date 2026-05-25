@@ -239,11 +239,7 @@ export default function LandingPage() {
         <div className="max-w-[1280px] mx-auto px-[clamp(20px,4vw,56px)]">
           <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-[clamp(32px,5vw,64px)] items-center">
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-2.5 font-[family-name:var(--font-fira-code)] text-[length:var(--text-eyebrow-size)] font-medium leading-[var(--text-eyebrow-line-height)] text-text-muted">
-                <span className="cg-pulse-dot" />
-                An open data commons · continuously updated
-              </span>
-              <h1 className="font-[family-name:var(--font-rethink-sans)] text-[length:var(--text-display-lg-size)] font-[var(--text-display-lg-weight)] leading-[var(--text-display-lg-line-height)] tracking-[var(--text-display-lg-letter-spacing)] my-4 mb-6 max-w-[17ch] text-text-heading [text-wrap:balance]">
+              <h1 className="font-[family-name:var(--font-rethink-sans)] text-[length:var(--text-display-lg-size)] font-[var(--text-display-lg-weight)] leading-[var(--text-display-lg-line-height)] tracking-[var(--text-display-lg-letter-spacing)] mb-6 max-w-[17ch] text-text-heading [text-wrap:balance]">
                 The open registry of U.S. energy infrastructure.
               </h1>
               <p className="text-[length:var(--text-body-lg-size)] font-[var(--text-body-lg-weight)] leading-[var(--text-body-lg-line-height)] tracking-[var(--text-body-lg-letter-spacing)] text-text-muted max-w-[60ch] m-0 [text-wrap:pretty]">
@@ -297,26 +293,17 @@ export default function LandingPage() {
           </div>
 
           {/* Stats band */}
-          <ul className="grid grid-cols-5 border-t border-b border-border-default mt-[clamp(40px,5vw,64px)] md:grid-cols-3 sm:grid-cols-2" aria-label="Registry contents">
+          <ul className="flex flex-wrap gap-x-12 gap-y-8 mt-[clamp(40px,5vw,64px)] pt-[clamp(40px,5vw,64px)] border-t border-border-default" aria-label="Registry contents">
             {[
               { value: counts.utilities, label: "Utilities", width: 72 },
               { value: gridOperatorCount, label: "Grid operators", width: 44 },
               { value: counts.powerPlants, label: "Power plants", width: 88 },
               { value: counts.transmissionLines, label: "Transmission lines", width: 92 },
               { value: counts.evStations, label: "EV stations", width: 96 },
-            ].map((stat, idx, arr) => (
+            ].map((stat) => (
               <li
                 key={stat.label}
-                className={`
-                  p-6 px-5 border-r border-border-default flex flex-col gap-1.5
-                  ${idx === arr.length - 1 ? "border-r-0" : ""}
-                  md:${idx % 3 === 2 ? "border-r-0" : ""}
-                  md:border-b md:border-border-default
-                  md:last:border-b-0 md:[&:nth-last-child(-n+3)]:border-b-0
-                  sm:${idx % 2 === 1 ? "border-r-0" : ""}
-                  sm:border-b sm:border-border-default
-                  sm:last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0
-                `}
+                className="flex flex-col gap-1.5 min-w-[140px]"
               >
                 <span className="font-[family-name:var(--font-rethink-sans)] text-[length:var(--text-heading-xl-size)] font-[var(--text-heading-xl-weight)] leading-[var(--text-heading-xl-line-height)] tracking-[var(--text-heading-xl-letter-spacing)] tabular-nums text-text-heading">
                   <StatNumber value={stat.value} width={stat.width} />
