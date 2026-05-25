@@ -64,8 +64,7 @@
 .cg-content-kicker {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-caption);
   display: flex;
   align-items: center;

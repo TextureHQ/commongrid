@@ -247,7 +247,7 @@ export function EditPanel({
 
               {/* Source citation bar */}
               <div className="bg-background-muted rounded-lg p-4 space-y-3">
-                <div className="text-xs font-semibold uppercase tracking-widest text-text-muted">Source Citation</div>
+                <div className="text-xs font-medium text-text-muted">Source Citation</div>
                 <Select
                   label="Source Type"
                   selectedKey={sourceType}
@@ -275,7 +275,7 @@ export function EditPanel({
               {/* Field-by-field editing */}
               {Array.from(sections.entries()).map(([sectionName, sectionFields]) => (
                 <div key={sectionName}>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">
+                  <div className="text-xs font-medium text-text-muted mb-3">
                     {sectionName}
                   </div>
                   <div className="space-y-3">

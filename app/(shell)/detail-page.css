@@ -86,8 +86,7 @@
 .cg-detail .detail-kicker {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .10em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-caption);
   display: flex;
   align-items: center;
@@ -188,8 +187,7 @@
   font-family: var(--font-family-mono);
   font-size: 11px;
   color: var(--color-text-muted);
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   margin-top: 4px;
 }
 
@@ -244,9 +242,8 @@
 .cg-detail .detail-field-label {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .06em;
+  letter-spacing: normal;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   flex-shrink: 0;
 }
 
@@ -332,8 +329,7 @@
 .cg-detail .detail-port-label {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-muted);
   margin-top: 6px;
 }
@@ -390,8 +386,7 @@
 .cg-detail .detail-rel-label {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-caption);
 }
 .cg-detail .detail-rel-name {
@@ -580,8 +575,7 @@
 .cg-detail .detail-pricing-label {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-caption);
   margin-bottom: 5px;
 }

@@ -40,8 +40,7 @@
   font-family: var(--font-family-mono);
   font-size: 11px;
   color: var(--color-text-caption);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   font-weight: 500;
   margin-top: 6px;
 }
@@ -63,8 +62,7 @@
 .cg-changelog .cl-date {
   font-family: var(--font-family-mono);
   font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   color: var(--color-text-caption);
   font-weight: 500;
 }
@@ -128,8 +126,7 @@
   font-family: var(--font-family-mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   padding: 2px 7px;
   border-radius: 3px;
   line-height: 1.4;
@@ -161,8 +158,7 @@
   padding: 2px 6px;
   border: 1px solid var(--color-border-default);
   border-radius: 3px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  letter-spacing: normal;
   font-weight: 500;
 }
 
