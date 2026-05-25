@@ -3,14 +3,16 @@
 import { BrandProvider, ColorModeProvider, NoticeProvider } from "@texturehq/edges";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
+// CommonGrid brand colors derived from edges tokens
+// Use iris-base (blue) for brand identity
 const COMMONGRID_BRAND_VARIABLES = {
-  "--color-brand-primary": "#2563eb",
-  "--color-brand-dark": "#1d4ed8",
+  "--color-brand-primary": "var(--color-iris-base)",
+  "--color-brand-dark": "var(--color-iris-base)",
 };
 
 const COMMONGRID_DARK_VARIABLES = {
-  "--color-brand-primary": "#60a5fa",
-  "--color-brand-dark": "#93c5fd",
+  "--color-brand-primary": "var(--color-iris-base)",
+  "--color-brand-dark": "var(--color-iris-base)",
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {

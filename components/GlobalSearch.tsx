@@ -603,7 +603,7 @@ export function GlobalSearchModal() {
           which is exactly what we want. */}
       <div
         className="fixed inset-0 z-[70]"
-        style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
+        style={{ background: "var(--color-background-modal)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
         onClick={close}
         aria-hidden="true"
       />
@@ -688,8 +688,8 @@ export function GlobalSearchModal() {
           className="og-search-panel w-full flex flex-col overflow-hidden"
           style={{
             background: "var(--color-background-surface)",
-            boxShadow:
-              "0 32px 64px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.08)",
+            boxShadow: "var(--shadow-xl)",
+            border: "1px solid var(--color-border-default)",
           }}
           role="dialog"
           aria-modal="true"
