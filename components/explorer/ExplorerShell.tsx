@@ -582,7 +582,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
             className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium shadow-lg"
             style={{
               background: "var(--color-text-heading)",
-              color: "#fff",
+              color: "var(--color-text-on-color)",
             }}
           >
             {layout === "map" ? (
