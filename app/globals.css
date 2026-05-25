@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "@texturehq/edges/theme.css";
 @import "@texturehq/edges/styles.css";
+@import "@texturehq/edges/responsive-typography.css";
+
 /* Pull the latest edges-tokens directly so tokens added after the
    currently-pinned @texturehq/edges build (e.g. --color-background-paper)
    resolve. Re-importing tokens-light/dark is idempotent. */
@@ -12,18 +14,159 @@ html, body {
   background-color: var(--color-background-body);
 }
 
-@layer utilities {
-  @media (min-width: 768px) {
-    .md\:hidden {
-      display: none;
-    }
-    .md\:block {
-      display: block;
-    }
-    .md\:flex {
-      display: flex;
-    }
+/* ══════════════════════════════════════════
+   CommonGrid Semantic Color Tokens
+   ══════════════════════════════════════════
+   
+   These color variables define CommonGrid's visual identity.
+   They're wired into Tailwind via @theme below, so you can use
+   them as utilities: bg-cg-utility-iou, text-cg-iso-caiso, etc.
+   ══════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    /* Utility entity types */
+    --color-cg-utility-iou: oklch(65% 0.12 40);        /* Investor-Owned */
+    --color-cg-utility-coop: oklch(60% 0.14 140);      /* Cooperative */
+    --color-cg-utility-municipal: oklch(62% 0.13 220); /* Municipal */
+    --color-cg-utility-federal: oklch(55% 0.11 280);   /* Federal */
+    --color-cg-utility-political: oklch(58% 0.12 320); /* Political Subdivision */
+    --color-cg-utility-retail: oklch(64% 0.13 80);     /* Retail Power Marketer */
+    --color-cg-utility-wholesale: oklch(62% 0.12 180); /* Wholesale Power Marketer */
+    
+    /* ISO/RTO grid operators */
+    --color-cg-iso-caiso: oklch(68% 0.15 45);    /* CAISO - California */
+    --color-cg-iso-ercot: oklch(62% 0.16 25);    /* ERCOT - Texas */
+    --color-cg-iso-isone: oklch(60% 0.14 250);   /* ISO-NE - New England */
+    --color-cg-iso-miso: oklch(64% 0.13 140);    /* MISO - Midwest */
+    --color-cg-iso-nyiso: oklch(58% 0.15 280);   /* NYISO - New York */
+    --color-cg-iso-pjm: oklch(66% 0.14 200);     /* PJM - Mid-Atlantic */
+    --color-cg-iso-spp: oklch(70% 0.12 100);     /* SPP - Southwest */
+    
+    /* Power plant fuel types */
+    --color-cg-fuel-solar: oklch(72% 0.15 80);       /* Solar PV */
+    --color-cg-fuel-wind: oklch(68% 0.14 180);       /* Wind */
+    --color-cg-fuel-hydro: oklch(64% 0.15 240);      /* Hydroelectric */
+    --color-cg-fuel-nuclear: oklch(60% 0.12 300);    /* Nuclear */
+    --color-cg-fuel-natural-gas: oklch(66% 0.13 50); /* Natural Gas */
+    --color-cg-fuel-coal: oklch(42% 0.08 30);        /* Coal */
+    --color-cg-fuel-petroleum: oklch(48% 0.10 20);   /* Petroleum */
+    --color-cg-fuel-biomass: oklch(62% 0.14 120);    /* Biomass */
+    --color-cg-fuel-geothermal: oklch(58% 0.16 40);  /* Geothermal */
+    --color-cg-fuel-battery: oklch(70% 0.14 280);    /* Battery Storage */
+    
+    /* EV charging levels */
+    --color-cg-ev-dc-fast: oklch(62% 0.16 280);  /* DC Fast Charging */
+    --color-cg-ev-level2: oklch(68% 0.14 200);   /* Level 2 */
+    --color-cg-ev-level1: oklch(64% 0.12 140);   /* Level 1 */
+    
+    /* Program types */
+    --color-cg-program-demand-response: oklch(66% 0.14 40);   /* Demand Response */
+    --color-cg-program-energy-efficiency: oklch(62% 0.13 140); /* Energy Efficiency */
+    --color-cg-program-renewable: oklch(68% 0.15 120);        /* Renewable Programs */
+    --color-cg-program-low-income: oklch(60% 0.12 280);       /* Low Income Assistance */
+    
+    /* Status indicators */
+    --color-cg-status-operational: oklch(65% 0.15 140); /* Operational/Active */
+    --color-cg-status-retired: oklch(50% 0.06 30);      /* Retired/Inactive */
+    --color-cg-status-planned: oklch(68% 0.12 240);     /* Planned/Proposed */
+    --color-cg-status-construction: oklch(70% 0.14 80); /* Under Construction */
   }
+  
+  .theme-dark {
+    /* Dark mode adjustments - increase lightness for better contrast */
+    --color-cg-utility-iou: oklch(75% 0.12 40);
+    --color-cg-utility-coop: oklch(70% 0.14 140);
+    --color-cg-utility-municipal: oklch(72% 0.13 220);
+    --color-cg-utility-federal: oklch(70% 0.11 280);
+    --color-cg-utility-political: oklch(72% 0.12 320);
+    --color-cg-utility-retail: oklch(74% 0.13 80);
+    --color-cg-utility-wholesale: oklch(72% 0.12 180);
+    
+    --color-cg-iso-caiso: oklch(78% 0.15 45);
+    --color-cg-iso-ercot: oklch(72% 0.16 25);
+    --color-cg-iso-isone: oklch(70% 0.14 250);
+    --color-cg-iso-miso: oklch(74% 0.13 140);
+    --color-cg-iso-nyiso: oklch(72% 0.15 280);
+    --color-cg-iso-pjm: oklch(76% 0.14 200);
+    --color-cg-iso-spp: oklch(78% 0.12 100);
+    
+    --color-cg-fuel-solar: oklch(80% 0.15 80);
+    --color-cg-fuel-wind: oklch(76% 0.14 180);
+    --color-cg-fuel-hydro: oklch(74% 0.15 240);
+    --color-cg-fuel-nuclear: oklch(72% 0.12 300);
+    --color-cg-fuel-natural-gas: oklch(76% 0.13 50);
+    --color-cg-fuel-coal: oklch(58% 0.08 30);
+    --color-cg-fuel-petroleum: oklch(62% 0.10 20);
+    --color-cg-fuel-biomass: oklch(72% 0.14 120);
+    --color-cg-fuel-geothermal: oklch(70% 0.16 40);
+    --color-cg-fuel-battery: oklch(78% 0.14 280);
+    
+    --color-cg-ev-dc-fast: oklch(72% 0.16 280);
+    --color-cg-ev-level2: oklch(76% 0.14 200);
+    --color-cg-ev-level1: oklch(74% 0.12 140);
+    
+    --color-cg-program-demand-response: oklch(76% 0.14 40);
+    --color-cg-program-energy-efficiency: oklch(72% 0.13 140);
+    --color-cg-program-renewable: oklch(78% 0.15 120);
+    --color-cg-program-low-income: oklch(72% 0.12 280);
+    
+    --color-cg-status-operational: oklch(75% 0.15 140);
+    --color-cg-status-retired: oklch(60% 0.06 30);
+    --color-cg-status-planned: oklch(76% 0.12 240);
+    --color-cg-status-construction: oklch(78% 0.14 80);
+  }
+}
+
+/* ══════════════════════════════════════════
+   Tailwind Theme Extensions
+   ══════════════════════════════════════════
+   
+   Wire CommonGrid semantic tokens into Tailwind's utility system.
+   Now you can use: text-cg-utility-iou, bg-cg-iso-caiso, etc.
+   ══════════════════════════════════════════ */
+
+@theme {
+  --color-cg-utility-iou: var(--color-cg-utility-iou);
+  --color-cg-utility-coop: var(--color-cg-utility-coop);
+  --color-cg-utility-municipal: var(--color-cg-utility-municipal);
+  --color-cg-utility-federal: var(--color-cg-utility-federal);
+  --color-cg-utility-political: var(--color-cg-utility-political);
+  --color-cg-utility-retail: var(--color-cg-utility-retail);
+  --color-cg-utility-wholesale: var(--color-cg-utility-wholesale);
+  
+  --color-cg-iso-caiso: var(--color-cg-iso-caiso);
+  --color-cg-iso-ercot: var(--color-cg-iso-ercot);
+  --color-cg-iso-isone: var(--color-cg-iso-isone);
+  --color-cg-iso-miso: var(--color-cg-iso-miso);
+  --color-cg-iso-nyiso: var(--color-cg-iso-nyiso);
+  --color-cg-iso-pjm: var(--color-cg-iso-pjm);
+  --color-cg-iso-spp: var(--color-cg-iso-spp);
+  
+  --color-cg-fuel-solar: var(--color-cg-fuel-solar);
+  --color-cg-fuel-wind: var(--color-cg-fuel-wind);
+  --color-cg-fuel-hydro: var(--color-cg-fuel-hydro);
+  --color-cg-fuel-nuclear: var(--color-cg-fuel-nuclear);
+  --color-cg-fuel-natural-gas: var(--color-cg-fuel-natural-gas);
+  --color-cg-fuel-coal: var(--color-cg-fuel-coal);
+  --color-cg-fuel-petroleum: var(--color-cg-fuel-petroleum);
+  --color-cg-fuel-biomass: var(--color-cg-fuel-biomass);
+  --color-cg-fuel-geothermal: var(--color-cg-fuel-geothermal);
+  --color-cg-fuel-battery: var(--color-cg-fuel-battery);
+  
+  --color-cg-ev-dc-fast: var(--color-cg-ev-dc-fast);
+  --color-cg-ev-level2: var(--color-cg-ev-level2);
+  --color-cg-ev-level1: var(--color-cg-ev-level1);
+  
+  --color-cg-program-demand-response: var(--color-cg-program-demand-response);
+  --color-cg-program-energy-efficiency: var(--color-cg-program-energy-efficiency);
+  --color-cg-program-renewable: var(--color-cg-program-renewable);
+  --color-cg-program-low-income: var(--color-cg-program-low-income);
+  
+  --color-cg-status-operational: var(--color-cg-status-operational);
+  --color-cg-status-retired: var(--color-cg-status-retired);
+  --color-cg-status-planned: var(--color-cg-status-planned);
+  --color-cg-status-construction: var(--color-cg-status-construction);
 }
 
 /* ══════════════════════════════════════════
