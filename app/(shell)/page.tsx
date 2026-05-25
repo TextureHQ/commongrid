@@ -248,7 +248,11 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <Link href="/explore" className="block no-underline text-inherit min-w-0 relative" aria-label="Explore the registry on the interactive map">
+            <Link
+              href="/explore"
+              className="block no-underline text-inherit min-w-0 relative"
+              aria-label="Explore the registry on the interactive map"
+            >
               <div className="relative border border-border-default rounded-sm overflow-hidden bg-background-surface shadow-md aspect-[740/448] transition-all duration-200 ease-in-out hover:shadow-lg hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-border-emphasis focus-visible:outline-offset-2">
                 <picture className="block w-full h-full map-preview-light">
                   <source srcSet="/hero-map-preview@2x.webp" type="image/webp" />
@@ -293,7 +297,10 @@ export default function LandingPage() {
           </div>
 
           {/* Stats band */}
-          <ul className="flex flex-wrap gap-x-12 gap-y-8 mt-[clamp(40px,5vw,64px)] pt-[clamp(40px,5vw,64px)] border-t border-border-default" aria-label="Registry contents">
+          <ul
+            className="flex flex-wrap gap-x-12 gap-y-8 mt-[clamp(40px,5vw,64px)] pt-[clamp(40px,5vw,64px)] border-t border-border-default"
+            aria-label="Registry contents"
+          >
             {[
               { value: counts.utilities, label: "Utilities", width: 72 },
               { value: gridOperatorCount, label: "Grid operators", width: 44 },
@@ -301,10 +308,7 @@ export default function LandingPage() {
               { value: counts.transmissionLines, label: "Transmission lines", width: 92 },
               { value: counts.evStations, label: "EV stations", width: 96 },
             ].map((stat) => (
-              <li
-                key={stat.label}
-                className="flex flex-col gap-1.5 min-w-[140px]"
-              >
+              <li key={stat.label} className="flex flex-col gap-1.5 min-w-[140px]">
                 <span className="font-[family-name:var(--font-rethink-sans)] text-[length:var(--text-heading-xl-size)] font-[var(--text-heading-xl-weight)] leading-[var(--text-heading-xl-line-height)] tracking-[var(--text-heading-xl-letter-spacing)] tabular-nums text-text-heading">
                   <StatNumber value={stat.value} width={stat.width} />
                 </span>
@@ -389,7 +393,11 @@ export default function LandingPage() {
           </div>
 
           {/* biome-ignore lint/a11y/useSemanticElements: CSS grid layout, not a semantic table */}
-          <div className="border border-border-default rounded-sm overflow-hidden bg-background-surface" role="table" aria-label="Recent changes">
+          <div
+            className="border border-border-default rounded-sm overflow-hidden bg-background-surface"
+            role="table"
+            aria-label="Recent changes"
+          >
             <div className="grid grid-cols-[56px_minmax(0,1.8fr)_160px_110px_88px] md:grid-cols-[56px_1fr_80px] items-center gap-x-4 p-2.5 px-4 border-b border-border-default font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]">
               <span>Change</span>
               <span>Entity</span>
@@ -402,16 +410,16 @@ export default function LandingPage() {
                 key={row.name}
                 className="grid grid-cols-[56px_minmax(0,1.8fr)_160px_110px_88px] md:grid-cols-[56px_1fr_80px] items-center gap-x-4 py-3.5 px-4 border-b border-border-default text-[13px] transition-colors duration-[120ms] last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]"
               >
-                <span className={`font-[family-name:var(--font-fira-code)] text-[11px] font-semibold inline-flex items-center py-0.5 px-2 rounded border w-max leading-tight ${opColors[row.op as keyof typeof opColors]}`}>
+                <span
+                  className={`font-[family-name:var(--font-fira-code)] text-[11px] font-semibold inline-flex items-center py-0.5 px-2 rounded border w-max leading-tight ${opColors[row.op as keyof typeof opColors]}`}
+                >
                   {row.op}
                 </span>
                 <div className="min-w-0">
                   <span className="text-text-heading font-medium block whitespace-nowrap overflow-hidden text-ellipsis">
                     {row.name}
                   </span>
-                  <span className="text-text-muted text-xs">
-                    {row.detail}
-                  </span>
+                  <span className="text-text-muted text-xs">{row.detail}</span>
                 </div>
                 <div className="text-text-muted text-[13px] flex items-center gap-2 md:hidden">
                   <span className="w-5 h-5 rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-brand-dark grid place-items-center text-[10px] font-semibold shrink-0">
@@ -540,7 +548,10 @@ export default function LandingPage() {
                   meta: "permanent",
                 },
               ].map((step) => (
-                <div key={step.num} className="grid grid-cols-[56px_1fr_auto] gap-4.5 py-5.5 border-b border-border-default items-start">
+                <div
+                  key={step.num}
+                  className="grid grid-cols-[56px_1fr_auto] gap-4.5 py-5.5 border-b border-border-default items-start"
+                >
                   <div className="font-[family-name:var(--font-fira-code)] font-medium text-2xl text-rose-base leading-none tracking-normal tabular-nums">
                     {step.num}
                   </div>
@@ -548,9 +559,7 @@ export default function LandingPage() {
                     <h4 className="font-[family-name:var(--font-rethink-sans)] m-0 mb-2 text-xl font-medium tracking-[-.02em] leading-tight text-text-heading">
                       {step.title}
                     </h4>
-                    <p className="m-0 text-text-muted text-[15px] leading-relaxed max-w-[50ch]">
-                      {step.desc}
-                    </p>
+                    <p className="m-0 text-text-muted text-[15px] leading-relaxed max-w-[50ch]">{step.desc}</p>
                   </div>
                   <span className="font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption whitespace-nowrap">
                     {step.meta}
@@ -649,7 +658,8 @@ export default function LandingPage() {
                 {"\n"}
                 <span className="cg-code-k">curl</span>{" "}
                 <span className="cg-code-s">
-                  https://commongrid.info/api/v1/utilities/austin-energy?at=<span className="cg-code-m">2025-12-01</span>
+                  https://commongrid.info/api/v1/utilities/austin-energy?at=
+                  <span className="cg-code-m">2025-12-01</span>
                 </span>
               </pre>
               <div className="flex gap-2 mt-5.5 flex-wrap">
@@ -677,16 +687,17 @@ export default function LandingPage() {
               {ENDPOINT_DEFS.map((ep) => {
                 const desc = ep.desc ?? (ep.countKey ? `${dynamicCounts[ep.countKey]} ${ep.suffix}` : "");
                 return (
-                  <div key={ep.path} className="grid grid-cols-[48px_1fr_auto] gap-3 py-2.5 border-b border-dashed border-border-muted items-center text-[13px] last:border-b-0">
+                  <div
+                    key={ep.path}
+                    className="grid grid-cols-[48px_1fr_auto] gap-3 py-2.5 border-b border-dashed border-border-muted items-center text-[13px] last:border-b-0"
+                  >
                     <span className="font-[family-name:var(--font-fira-code)] text-[10px] py-0.5 px-1.5 rounded-sm bg-feedback-success-background text-feedback-success-text font-semibold text-center tracking-[.04em]">
                       {ep.path === "/tiles/{layer}/{z}/{x}/{y}" ? "MVT" : "GET"}
                     </span>
                     <span className="font-[family-name:var(--font-fira-code)] text-[13px] text-text-heading">
                       {ep.path}
                     </span>
-                    <span className="text-text-muted text-xs text-right">
-                      {desc}
-                    </span>
+                    <span className="text-text-muted text-xs text-right">{desc}</span>
                   </div>
                 );
               })}
@@ -697,9 +708,7 @@ export default function LandingPage() {
                 <span className="font-[family-name:var(--font-fira-code)] text-[13px] text-text-heading">
                   /tiles/&#123;layer&#125;/&#123;z&#125;/&#123;x&#125;/&#123;y&#125;
                 </span>
-                <span className="text-text-muted text-xs text-right">
-                  vector tiles
-                </span>
+                <span className="text-text-muted text-xs text-right">vector tiles</span>
               </div>
 
               <div className="mt-5 pt-4 border-t border-dashed border-border-muted flex justify-between items-center text-xs text-text-muted font-[family-name:var(--font-fira-code)]">
@@ -718,7 +727,10 @@ export default function LandingPage() {
         <div className="max-w-[1280px] mx-auto px-[clamp(20px,4vw,56px)]">
           <div className="grid lg:grid-cols-[2fr_1fr_1fr_1fr] md:grid-cols-3 sm:grid-cols-2 gap-8 md:gap-y-8 md:gap-x-6 sm:gap-y-7 sm:gap-x-4">
             <div className="lg:col-span-1 md:col-span-3 sm:col-span-2">
-              <Link href="/" className="inline-flex items-center flex-nowrap whitespace-nowrap gap-3.5 font-[family-name:var(--font-rethink-sans)] font-bold text-[28px] tracking-[-0.025em] leading-none text-text-heading no-underline">
+              <Link
+                href="/"
+                className="inline-flex items-center flex-nowrap whitespace-nowrap gap-3.5 font-[family-name:var(--font-rethink-sans)] font-bold text-[28px] tracking-[-0.025em] leading-none text-text-heading no-underline"
+              >
                 <svg viewBox="0 0 32 32" fill="none" aria-hidden="true" className="w-8 h-8 shrink-0">
                   <circle cx="4" cy="4" r="1.8" fill="currentColor" />
                   <circle cx="12" cy="4" r="1.8" fill="currentColor" />
@@ -758,7 +770,11 @@ export default function LandingPage() {
                 { href: "/ev-charging", label: "EV charging" },
                 { href: "/changelog", label: "Full changelog" },
               ].map((link) => (
-                <Link key={link.href} href={link.href} className="block text-sm text-text-muted py-1 no-underline transition-colors duration-150 hover:text-text-heading">
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block text-sm text-text-muted py-1 no-underline transition-colors duration-150 hover:text-text-heading"
+                >
                   {link.label}
                 </Link>
               ))}
@@ -810,12 +826,19 @@ export default function LandingPage() {
           <div className="flex sm:flex-col sm:items-start items-center justify-between mt-10 pt-5 border-t border-border-default text-xs text-text-caption gap-4 sm:gap-1 flex-wrap">
             <span>
               &copy; 2026 · Released under{" "}
-              <a href="https://opendatacommons.org/licenses/odbl/" target="_blank" rel="noopener noreferrer" className="text-text-muted no-underline hover:text-text-heading">
+              <a
+                href="https://opendatacommons.org/licenses/odbl/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-muted no-underline hover:text-text-heading"
+              >
                 Open Database License 1.0
               </a>{" "}
               · No trackers, no ads
             </span>
-            <span className="font-[family-name:var(--font-fira-code)] tabular-nums">rev 7a2f19 · deployed 14:32 UTC</span>
+            <span className="font-[family-name:var(--font-fira-code)] tabular-nums">
+              rev 7a2f19 · deployed 14:32 UTC
+            </span>
           </div>
         </div>
       </footer>
