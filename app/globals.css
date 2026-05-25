@@ -6,7 +6,7 @@
    resolve. Re-importing tokens-light/dark is idempotent. */
 @import "@texturehq/edges-tokens/css/light";
 @import "@texturehq/edges-tokens/css/dark";
-@import "./typography.css";
+@import "@texturehq/edges-tokens/css/typography";
 
 html, body {
   overflow-x: hidden;
