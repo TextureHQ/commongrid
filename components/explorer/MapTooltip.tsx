@@ -321,11 +321,11 @@ const programStatusLabels: Record<string, string> = {
 };
 
 const programStatusColors: Record<string, string> = {
-  ACTIVE: "#65a30d",
-  PAUSED: "#d97706",
-  FULL: "#6b7280",
-  DRAFT: "#9ca3af",
-  ARCHIVED: "#9ca3af",
+  ACTIVE: "var(--color-feedback-success-text)",
+  PAUSED: "var(--color-feedback-warning-text)",
+  FULL: "var(--color-gray-600)",
+  DRAFT: "var(--color-gray-400)",
+  ARCHIVED: "var(--color-gray-400)",
 };
 
 export function ProgramTerritoryTooltip({ programName, programStatus }: ProgramTerritoryProps) {

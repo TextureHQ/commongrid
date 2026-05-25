@@ -59,7 +59,7 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
           <span
             style={{
               display: "inline-block",
-              backgroundColor: "var(--color-background-subtle)",
+              backgroundColor: "#f0f0f0",
               padding: "6px 12px",
               borderRadius: "4px",
               fontSize: "12px",
@@ -70,7 +70,7 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
           <span
             style={{
               display: "inline-block",
-              backgroundColor: "var(--color-background-subtle)",
+              backgroundColor: "#f0f0f0",
               padding: "6px 12px",
               borderRadius: "4px",
               fontSize: "12px",
@@ -82,7 +82,7 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
             <span
               style={{
                 display: "inline-block",
-                backgroundColor: "var(--color-background-subtle)",
+                backgroundColor: "#f0f0f0",
                 padding: "6px 12px",
                 borderRadius: "4px",
                 fontSize: "12px",
@@ -97,23 +97,23 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
       {/* Main grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "32px" }}>
         {/* Location card */}
-        <div style={{ border: "1px solid var(--color-border-default)", borderRadius: "8px", padding: "16px" }}>
+        <div style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "16px" }}>
           <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>
             Location
           </h2>
           <div style={{ display: "grid", gap: "8px", fontSize: "14px" }}>
             <div>
-              <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>State</div>
+              <div style={{ color: "#666", fontSize: "12px" }}>State</div>
               <div>{substation.state}</div>
             </div>
             {substation.county && (
               <div>
-                <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>County</div>
+                <div style={{ color: "#666", fontSize: "12px" }}>County</div>
                 <div>{substation.county}</div>
               </div>
             )}
             <div>
-              <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>Coordinates</div>
+              <div style={{ color: "#666", fontSize: "12px" }}>Coordinates</div>
               <div style={{ fontSize: "12px", fontFamily: "monospace" }}>
                 {substation.latitude.toFixed(4)}, {substation.longitude.toFixed(4)}
               </div>
@@ -122,20 +122,20 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
         </div>
 
         {/* Voltage card */}
-        <div style={{ border: "1px solid var(--color-border-default)", borderRadius: "8px", padding: "16px" }}>
+        <div style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "16px" }}>
           <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>
             Voltage
           </h2>
           <div style={{ display: "grid", gap: "8px", fontSize: "14px" }}>
             {voltageDisplay && (
               <div>
-                <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>Range</div>
+                <div style={{ color: "#666", fontSize: "12px" }}>Range</div>
                 <div>{voltageDisplay}</div>
               </div>
             )}
             {substation.voltageBand && (
               <div>
-                <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>Classification</div>
+                <div style={{ color: "#666", fontSize: "12px" }}>Classification</div>
                 <div style={{ textTransform: "capitalize" }}>{substation.voltageBand}</div>
               </div>
             )}
@@ -145,13 +145,13 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
 
       {/* Ownership card */}
       {substation.ownerName && (
-        <div style={{ border: "1px solid var(--color-border-default)", borderRadius: "8px", padding: "16px", marginBottom: "32px" }}>
+        <div style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "16px", marginBottom: "32px" }}>
           <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>
             Ownership & Operations
           </h2>
           <div style={{ display: "grid", gap: "8px", fontSize: "14px" }}>
             <div>
-              <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>Owner</div>
+              <div style={{ color: "#666", fontSize: "12px" }}>Owner</div>
               <div>{substation.ownerName}</div>
             </div>
           </div>
@@ -160,7 +160,7 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
 
       {/* Source information */}
       <div
-        style={{ fontSize: "11px", color: "var(--color-text-caption)", padding: "16px", backgroundColor: "var(--color-background-subtle)", borderRadius: "4px" }}
+        style={{ fontSize: "11px", color: "#999", padding: "16px", backgroundColor: "#f9f9f9", borderRadius: "4px" }}
       >
         <strong>Data attribution:</strong> {attributionText}
         {substation.sourceUrl && (

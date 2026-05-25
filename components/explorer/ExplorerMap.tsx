@@ -783,7 +783,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         legend: {
           label: "Transmission Lines",
           swatch: "line",
-          color: "#ef4444",
+          color: "var(--color-error-base)",
           group: "Overlays",
         },
         style: {
@@ -821,7 +821,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         legend: {
           label: "Substations",
           swatch: "dot",
-          color: "#a94f2a",
+          color: "var(--color-cg-operator-1)",
           group: "Overlays",
         },
         style: {
@@ -869,7 +869,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         legend: {
           label: "EV Charging",
           swatch: "dot",
-          color: "#0070f3",
+          color: "var(--color-cg-ev-chargepoint)",
           group: "Overlays",
         },
         style: {
@@ -916,7 +916,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         legend: {
           label: "Pricing Nodes",
           swatch: "dot",
-          color: "#eab308",
+          color: "var(--color-honey-base)",
           group: "Overlays",
         },
         style: {
@@ -962,7 +962,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         legend: {
           label: "Power Plants",
           swatch: "dot",
-          color: "#eab308",
+          color: "var(--color-honey-base)",
           group: "Overlays",
         },
         style: {
@@ -1002,10 +1002,10 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           data: state.highlightGeoJSON,
           renderAs: "fill",
           style: {
-            color: { hex: "#2fa3b0" },
+            color: { hex: "var(--color-ocean-base)" },
             fillOpacity: 0.35,
             borderWidth: 2.5,
-            borderColor: { hex: "#2fa3b0" },
+            borderColor: { hex: "var(--color-ocean-base)" },
           },
         })
       );
