@@ -392,47 +392,70 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* biome-ignore lint/a11y/useSemanticElements: CSS grid layout, not a semantic table */}
-          <div
-            className="border border-border-default rounded-sm overflow-hidden bg-background-surface"
-            role="table"
-            aria-label="Recent changes"
-          >
-            <div className="grid grid-cols-[56px_minmax(0,1.8fr)_160px_110px_88px] md:grid-cols-[56px_1fr_80px] items-center gap-x-4 p-2.5 px-4 border-b border-border-default font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]">
+          {/* Desktop: table layout. Mobile: card layout */}
+          <div className="border border-border-default rounded-sm overflow-hidden bg-background-surface">
+            {/* Desktop table header - hidden on mobile */}
+            <div className="hidden md:grid grid-cols-[56px_minmax(0,1.8fr)_160px_110px_88px] items-center gap-x-4 p-2.5 px-4 border-b border-border-default font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]">
               <span>Change</span>
               <span>Entity</span>
-              <span className="md:hidden">Contributor</span>
-              <span className="md:hidden">Type</span>
+              <span>Contributor</span>
+              <span>Type</span>
               <span>When</span>
             </div>
+
             {LEDGER_ROWS.map((row) => (
-              <div
-                key={row.name}
-                className="grid grid-cols-[56px_minmax(0,1.8fr)_160px_110px_88px] md:grid-cols-[56px_1fr_80px] items-center gap-x-4 py-3.5 px-4 border-b border-border-default text-[13px] transition-colors duration-[120ms] last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]"
-              >
-                <span
-                  className={`font-[family-name:var(--font-fira-code)] text-[11px] font-semibold inline-flex items-center py-0.5 px-2 rounded border w-max leading-tight ${opColors[row.op as keyof typeof opColors]}`}
-                >
-                  {row.op}
-                </span>
-                <div className="min-w-0">
-                  <span className="text-text-heading font-medium block whitespace-nowrap overflow-hidden text-ellipsis">
-                    {row.name}
+              <div key={row.name}>
+                {/* Desktop: table row */}
+                <div className="hidden md:grid grid-cols-[56px_minmax(0,1.8fr)_160px_110px_88px] items-center gap-x-4 py-3.5 px-4 border-b border-border-default text-[13px] transition-colors duration-[120ms] last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]">
+                  <span
+                    className={`font-[family-name:var(--font-fira-code)] text-[11px] font-semibold inline-flex items-center py-0.5 px-2 rounded border w-max leading-tight ${opColors[row.op as keyof typeof opColors]}`}
+                  >
+                    {row.op}
                   </span>
-                  <span className="text-text-muted text-xs">{row.detail}</span>
-                </div>
-                <div className="text-text-muted text-[13px] flex items-center gap-2 md:hidden">
-                  <span className="w-5 h-5 rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-brand-dark grid place-items-center text-[10px] font-semibold shrink-0">
-                    {row.author}
+                  <div className="min-w-0">
+                    <span className="text-text-heading font-medium block whitespace-nowrap overflow-hidden text-ellipsis">
+                      {row.name}
+                    </span>
+                    <span className="text-text-muted text-xs">{row.detail}</span>
+                  </div>
+                  <div className="text-text-muted text-[13px] flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-brand-dark grid place-items-center text-[10px] font-semibold shrink-0">
+                      {row.author}
+                    </span>
+                    <span>{row.authorName}</span>
+                  </div>
+                  <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-muted">{row.type}</span>
+                  <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-caption text-right tabular-nums">
+                    {row.time}
                   </span>
-                  <span>{row.authorName}</span>
                 </div>
-                <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-muted md:hidden">
-                  {row.type}
-                </span>
-                <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-caption text-right tabular-nums">
-                  {row.time}
-                </span>
+
+                {/* Mobile: card layout */}
+                <div className="md:hidden p-4 border-b border-border-default last:border-b-0">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <span
+                      className={`font-[family-name:var(--font-fira-code)] text-[11px] font-semibold inline-flex items-center py-0.5 px-2 rounded border w-max leading-tight ${opColors[row.op as keyof typeof opColors]}`}
+                    >
+                      {row.op}
+                    </span>
+                    <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-caption tabular-nums">
+                      {row.time}
+                    </span>
+                  </div>
+                  <div className="mb-2">
+                    <div className="text-text-heading font-medium text-sm mb-0.5">{row.name}</div>
+                    <div className="text-text-muted text-xs leading-relaxed">{row.detail}</div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 text-text-muted">
+                      <span className="w-5 h-5 rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-brand-dark grid place-items-center text-[10px] font-semibold shrink-0">
+                        {row.author}
+                      </span>
+                      <span>{row.authorName}</span>
+                    </div>
+                    <span className="font-[family-name:var(--font-fira-code)] text-text-caption">{row.type}</span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
