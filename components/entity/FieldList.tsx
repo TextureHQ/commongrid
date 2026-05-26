@@ -210,8 +210,8 @@ export function FieldList({
     <div className={containerClass}>
       {filtered.map((item) => (
         <div key={item.id} className="flex flex-col gap-1">
-          <div className="text-text-caption text-xs uppercase tracking-wide font-medium">{item.label}</div>
-          <div className="text-text-body text-base">
+          <div className="text-label-sm uppercase tracking-wide font-medium text-text-caption">{item.label}</div>
+          <div className="text-body-md text-text-body">
             <FieldValue
               item={item}
               enableInlineEdit={enableInlineEdit}

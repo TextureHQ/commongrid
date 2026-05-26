@@ -34,9 +34,9 @@ export function RelationshipCards({ items }: RelationshipCardsProps) {
       {items.map((item) => {
         const content = (
           <>
-            <div className="text-text-caption text-xs uppercase tracking-wide">{item.label}</div>
-            <div className="text-text-body text-lg font-medium">{item.name}</div>
-            {item.meta && <div className="text-text-muted text-sm">{item.meta}</div>}
+            <div className="text-label-sm uppercase tracking-wide text-text-caption">{item.label}</div>
+            <div className="text-heading-md font-medium text-text-body">{item.name}</div>
+            {item.meta && <div className="text-body-sm text-text-muted">{item.meta}</div>}
           </>
         );
 

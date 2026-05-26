@@ -177,7 +177,6 @@ export default function ChangelogPage() {
   return (
     <ContentPage className="cg-changelog">
       <ContentPage.Header
-        kicker="Registry Updates"
         title="Changelog"
         subtitle="Synced from authoritative sources daily"
       />

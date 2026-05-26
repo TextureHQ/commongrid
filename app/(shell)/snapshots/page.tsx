@@ -83,7 +83,6 @@ export default async function SnapshotsPage() {
       {/* Header */}
       <header className="cg-content-header">
         <div className="cg-content-header-text">
-          <div className="cg-content-kicker">Data</div>
           <h1 className="cg-content-title">Database Snapshots</h1>
           <p className="cg-content-subtitle">Download the complete CommonGrid dataset as a PostgreSQL dump.</p>
         </div>

@@ -207,13 +207,12 @@ export default function BADetailPage() {
 
   const totalPlantCapacity = baPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0);
 
-  let sectionNum = 1;
-  const nextNum = () => String(sectionNum++).padStart(2, "0");
+
 
   return (
     <>
       <EntityPageHeader
-        kicker="BALANCING AUTHORITY"
+
         entityName={ba.name}
         subtitle={
           <>
@@ -245,13 +244,13 @@ export default function BADetailPage() {
         {/* Key stats band */}
         {headerStats.length > 0 && <EntityStatsRow stats={headerStats} />}
 
-        {/* 01 · Overview */}
-        <EntitySection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
+        {/* Overview */}
+        <EntitySection id="overview" title="Overview">
           <FieldList items={overviewFields} columns={2} />
         </EntitySection>
 
-        {/* 02 · Territory */}
-        <EntitySection id="territory" kicker={`${nextNum()} · Territory`} title="Balancing Authority Region">
+        {/* Territory */}
+        <EntitySection id="territory" title="Balancing Authority Region">
           <EntityMap loading={territoryLoading}>
             <InteractiveMap
               {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
@@ -281,16 +280,16 @@ export default function BADetailPage() {
           </EntityMap>
         </EntitySection>
 
-        {/* 03 · Grid Relationships */}
+        {/* Grid Relationships */}
         {gridRelItems.length > 0 && (
-          <EntitySection id="grid" kicker={`${nextNum()} · Grid`} title="Grid Relationships">
+          <EntitySection id="grid" title="Grid Relationships">
             <RelationshipCards items={gridRelItems} />
           </EntitySection>
         )}
 
-        {/* 04 · Utilities */}
+        {/* Utilities */}
         {utilityRows.length > 0 && (
-          <EntitySection id="utilities" kicker={`${nextNum()} · Utilities`} title="Utilities">
+          <EntitySection id="utilities" title="Utilities">
             <DataTableSection
               count={utilityRows.length}
               singularLabel="utility"
@@ -307,9 +306,9 @@ export default function BADetailPage() {
           </EntitySection>
         )}
 
-        {/* 05 · Fuel Mix */}
+        {/* Fuel Mix */}
         {!plantsLoading && fuelMix.length > 0 && (
-          <EntitySection id="fuel-mix" kicker={`${nextNum()} · Fuel Mix`} title="Generation Fuel Mix">
+          <EntitySection id="fuel-mix" title="Generation Fuel Mix">
             <FieldList
               items={fuelMix.map((item) => ({
                 id: item.fuel,
@@ -330,9 +329,9 @@ export default function BADetailPage() {
           </EntitySection>
         )}
 
-        {/* 06 · Programs */}
+        {/* Programs */}
         {!programsLoading && baPrograms.length > 0 && (
-          <EntitySection id="programs" kicker={`${nextNum()} · Programs`} title="Programs">
+          <EntitySection id="programs" title="Programs">
             <EntityList
               items={baPrograms.map((prog) => ({
                 href: `/programs/${prog.slug}`,
@@ -349,9 +348,9 @@ export default function BADetailPage() {
           </EntitySection>
         )}
 
-        {/* 07 · Power Plants */}
+        {/* Power Plants */}
         {!plantsLoading && baPowerPlants.length > 0 && (
-          <EntitySection id="power-plants" kicker={`${nextNum()} · Generation`} title="Power Plants">
+          <EntitySection id="power-plants" title="Power Plants">
             <EntityList
               items={plantListItems}
               maxItems={30}

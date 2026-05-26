@@ -574,12 +574,12 @@ export default function UtilityDetailPage() {
   const hasGridRelationships = iso || rto || ba;
   const hasUtilityRelationships = parent || generationProvider || transmissionProvider || successor;
 
-  let sectionNum = 1;
+
 
   return (
     <>
       <EntityPageHeader
-        kicker={getSegmentLabel(utility.segment)}
+
         entityName={utility.name}
         subtitle={
           <>
@@ -648,12 +648,12 @@ export default function UtilityDetailPage() {
           ]}
         />
 
-        <EntitySection id="overview" kicker={`0${sectionNum++} · Overview`} title="Overview">
+        <EntitySection id="overview" title="Overview">
           <OverviewStatList utility={utility} />
         </EntitySection>
 
         {hasOperationsData && (
-          <EntitySection id="operations" kicker={`0${sectionNum++} · Operations`} title="Operations">
+          <EntitySection id="operations" title="Operations">
             <OperationsStatList utility={utility} />
             {utility.hasGeneration !== null &&
               (utility.hasGeneration || utility.hasTransmission || utility.hasDistribution) && (
@@ -681,7 +681,7 @@ export default function UtilityDetailPage() {
           </EntitySection>
         )}
 
-        <EntitySection id="territory" kicker={`0${sectionNum++} · Territory`} title="Service Territory">
+        <EntitySection id="territory" title="Service Territory">
           <EntityMap loading={territoryLoading}>
             <InteractiveMap
               {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
@@ -712,7 +712,7 @@ export default function UtilityDetailPage() {
         </EntitySection>
 
         {hasGridRelationships && (
-          <EntitySection id="grid" kicker={`0${sectionNum++} · Grid`} title="Grid Relationships">
+          <EntitySection id="grid" title="Grid Relationships">
             <RelationshipCards
               items={[
                 ...(iso ? [{ label: "ISO", name: iso.shortName, href: `/explore?view=iso&slug=${iso.slug}` }] : []),
@@ -726,7 +726,7 @@ export default function UtilityDetailPage() {
         )}
 
         {hasUtilityRelationships && (
-          <EntitySection id="relationships" kicker={`0${sectionNum++} · Relationships`} title="Utility Relationships">
+          <EntitySection id="relationships" title="Utility Relationships">
             <RelationshipCards
               items={[
                 ...(parent ? [{ label: "Parent", name: parent.name, href: `/grid-operators/${parent.slug}` }] : []),
@@ -757,7 +757,7 @@ export default function UtilityDetailPage() {
         )}
 
         {servedRows.length > 0 && (
-          <EntitySection id="served" kicker={`0${sectionNum++} · Served`} title="Served Utilities">
+          <EntitySection id="served" title="Served Utilities">
             <div className="text-text-caption text-sm mb-3">
               {servedRows.length} utilit{servedRows.length !== 1 ? "ies" : "y"}
             </div>
@@ -774,7 +774,7 @@ export default function UtilityDetailPage() {
         )}
 
         {childRows.length > 0 && (
-          <EntitySection id="subsidiaries" kicker={`0${sectionNum++} · Subsidiaries`} title="Subsidiary Utilities">
+          <EntitySection id="subsidiaries" title="Subsidiary Utilities">
             <div className="text-text-caption text-sm mb-3">
               {childRows.length} subsidiar{childRows.length !== 1 ? "ies" : "y"}
             </div>
@@ -791,7 +791,7 @@ export default function UtilityDetailPage() {
         )}
 
         {!programsLoading && utilityPrograms.length > 0 && (
-          <EntitySection id="programs" kicker={`0${sectionNum++} · Programs`} title="Programs">
+          <EntitySection id="programs" title="Programs">
             <div className="detail-list-meta">
               {utilityPrograms.length} program{utilityPrograms.length !== 1 ? "s" : ""}
             </div>
@@ -811,13 +811,13 @@ export default function UtilityDetailPage() {
         )}
 
         {!linesLoading && utilityLines.length > 0 && (
-          <EntitySection id="transmission" kicker={`0${sectionNum++} · Transmission`} title="Transmission Lines">
+          <EntitySection id="transmission" title="Transmission Lines">
             <TransmissionStatList utilityLines={utilityLines} linesTotalMiles={linesTotalMiles} />
           </EntitySection>
         )}
 
         {!plantsLoading && utilityPowerPlants.length > 0 && (
-          <EntitySection id="power-plants" kicker={`0${sectionNum++} · Power Plants`} title="Power Plants">
+          <EntitySection id="power-plants" title="Power Plants">
             <EntityList
               items={utilityPowerPlants.map((plant) => ({
                 href: `/power-plants/${plant.slug}`,

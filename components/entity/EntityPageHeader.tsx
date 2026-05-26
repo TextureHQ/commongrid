@@ -1,3 +1,4 @@
+import { Breadcrumbs, BreadcrumbItem } from "@texturehq/edges";
 import Link from "next/link";
 
 /**
@@ -11,16 +12,12 @@ interface Breadcrumb {
 /**
  * EntityPageHeader - Unified header for all entity detail pages
  *
- * Provides breadcrumbs, kicker, title, subtitle, avatar, and actions.
+ * Provides breadcrumbs, title, subtitle, avatar, and actions.
  * Responsive: stacks naturally on mobile, horizontal layout on desktop.
  */
 interface EntityPageHeaderProps {
   /** Breadcrumb navigation items */
   breadcrumbs: Breadcrumb[];
-  /** Optional kicker text (e.g., "POWER PLANT") */
-  kicker?: string;
-  /** Optional colored dot for the kicker */
-  kickerDotColor?: string;
   /** Main entity name (h1) */
   entityName: string;
   /** Optional subtitle content (badges, links, etc.) */
@@ -37,8 +34,6 @@ const GITHUB_BASE = "https://github.com/TextureHQ/commongrid/blob/main";
 
 export function EntityPageHeader({
   breadcrumbs,
-  kicker,
-  kickerDotColor,
   entityName,
   subtitle,
   avatar,
@@ -48,20 +43,13 @@ export function EntityPageHeader({
   return (
     <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12 py-6">
       {/* Breadcrumbs */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-text-muted mb-6">
-        {breadcrumbs.map((crumb, index) => (
-          <span key={crumb.label} className="flex items-center gap-2">
-            {crumb.href ? (
-              <Link href={crumb.href} className="hover:text-text-body transition-colors">
-                {crumb.label}
-              </Link>
-            ) : (
-              <span className="text-text-body font-medium">{crumb.label}</span>
-            )}
-            {index < breadcrumbs.length - 1 && <span>›</span>}
-          </span>
+      <Breadcrumbs className="mb-6">
+        {breadcrumbs.map((crumb) => (
+          <BreadcrumbItem key={crumb.label} href={crumb.href}>
+            {crumb.label}
+          </BreadcrumbItem>
         ))}
-      </nav>
+      </Breadcrumbs>
 
       {/* Header content */}
       <div className="flex items-start justify-between gap-6">
@@ -69,22 +57,9 @@ export function EntityPageHeader({
           {avatar && <div className="flex-shrink-0">{avatar}</div>}
 
           <div className="min-w-0 flex-1">
-            {kicker && (
-              <div className="flex items-center gap-2 text-sm uppercase tracking-wide text-text-muted mb-2">
-                {kickerDotColor && (
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: kickerDotColor }}
-                    aria-hidden="true"
-                  />
-                )}
-                {kicker}
-              </div>
-            )}
+            <h1 className="text-display-lg font-semibold text-text-heading mb-2">{entityName}</h1>
 
-            <h1 className="text-3xl md:text-4xl font-semibold text-text-heading mb-2">{entityName}</h1>
-
-            {subtitle && <div className="text-base text-text-body flex items-center gap-2 flex-wrap">{subtitle}</div>}
+            {subtitle && <div className="text-body-md text-text-body flex items-center gap-2 flex-wrap">{subtitle}</div>}
           </div>
         </div>
 
@@ -93,7 +68,7 @@ export function EntityPageHeader({
 
       {/* Data sources */}
       {dataSourcePaths && dataSourcePaths.length > 0 && (
-        <div className="flex items-center gap-3 text-xs text-text-caption mt-4">
+        <div className="flex items-center gap-3 text-caption text-text-caption mt-4">
           {dataSourcePaths.map((path) => {
             const fileName = path.split("/").pop() ?? path;
             return (

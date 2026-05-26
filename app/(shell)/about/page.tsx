@@ -79,7 +79,6 @@ export default function AboutPage() {
   return (
     <ContentPage className="cg-about">
       <ContentPage.Header
-        kicker="Open data commons"
         title="The energy industry's shared infrastructure record."
         subtitle="CommonGrid is a public, citable, community-maintained registry of U.S. energy infrastructure — utilities, territories, grid operators, programs, rates, and assets. Free to read, download, cite, and build on."
       />
@@ -89,9 +88,8 @@ export default function AboutPage() {
         <span className="ab-badge">ODbL License</span>
       </div>
       <ContentPage.Body>
-        {/* ── 01 THE PROBLEM ── */}
+        {/* THE PROBLEM */}
         <div className="ab-section">
-          <div className="ab-kicker">01 &middot; The problem</div>
           <h2 className="ab-section-title">Energy data is public. Finding it shouldn&rsquo;t be a career.</h2>
           <div className="ab-prose">
             <p>
@@ -107,9 +105,8 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* ── 02 WHY COMMONGRID ── */}
+        {/* WHY COMMONGRID */}
         <div className="ab-section">
-          <div className="ab-kicker">02 &middot; Why CommonGrid is</div>
           <h2 className="ab-section-title">A connected graph, not a collection of spreadsheets.</h2>
           <div className="ab-prose">
             <p>
@@ -163,9 +160,8 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* ── 03 ORIGIN ── */}
+        {/* ORIGIN */}
         <div className="ab-section">
-          <div className="ab-kicker">03 &middot; Origin</div>
           <h2 className="ab-section-title">Built by Texture. Opened to everyone.</h2>
           <div className="ab-prose">
             <p>
@@ -195,9 +191,8 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* ── 04 CONTRIBUTION MODEL ── */}
+        {/* CONTRIBUTION MODEL */}
         <div className="ab-section">
-          <div className="ab-kicker">04 &middot; Contribution model</div>
           <h2 className="ab-section-title">Open, transparent, community-maintained.</h2>
           <div className="ab-prose" style={{ marginBottom: 20 }}>
             <p>
@@ -216,9 +211,8 @@ export default function AboutPage() {
           </dl>
         </div>
 
-        {/* ── 05 HOW CHANGES WORK ── */}
+        {/* HOW CHANGES WORK */}
         <div className="ab-section">
-          <div className="ab-kicker">05 &middot; How changes work</div>
           <h2 className="ab-section-title">Propose, review, merge &mdash; not edit and ship.</h2>
           <div className="ab-prose" style={{ marginBottom: 20 }}>
             <p>
@@ -241,9 +235,8 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* ── 06 DATA SOURCES ── */}
+        {/* DATA SOURCES */}
         <div className="ab-section">
-          <div className="ab-kicker">06 &middot; Data sources</div>
           <h2 className="ab-section-title">Seeded from authoritative public records.</h2>
           <div className="ab-prose" style={{ marginBottom: 20 }}>
             <p>
@@ -261,9 +254,8 @@ export default function AboutPage() {
           </dl>
         </div>
 
-        {/* ── 07 LICENSE ── */}
+        {/* LICENSE */}
         <div className="ab-section">
-          <div className="ab-kicker">07 &middot; License</div>
           <h2 className="ab-section-title">Open Database License (ODbL).</h2>
           <div className="ab-prose">
             <p>

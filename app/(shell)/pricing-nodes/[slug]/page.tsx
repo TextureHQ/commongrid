@@ -102,14 +102,12 @@ export default function PricingNodeDetailPage() {
       : []),
   ];
 
-  let sectionNum = 1;
-  const nextNum = () => String(sectionNum++).padStart(2, "0");
+
 
   return (
     <>
       <EntityPageHeader
-        kicker="PRICING NODE"
-        kickerDotColor={isoColor}
+
         entityName={node.name}
         subtitle={
           <>
@@ -135,19 +133,19 @@ export default function PricingNodeDetailPage() {
         {/* Key stats band */}
         <EntityStatsRow stats={headerStats} />
 
-        {/* 01 · Overview */}
-        <EntitySection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
+        {/* Overview */}
+        <EntitySection id="overview" title="Overview">
           <FieldList items={overviewFields} columns={2} />
         </EntitySection>
 
-        {/* 02 · Location Details */}
-        <EntitySection id="location-details" kicker={`${nextNum()} · Coordinates`} title="Location Details">
+        {/* Location Details */}
+        <EntitySection id="location-details" title="Location Details">
           <FieldList items={locationFields} columns={2} />
         </EntitySection>
 
-        {/* 03 · Map */}
+        {/* Map */}
         {process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
-          <EntitySection id="map" kicker={`${nextNum()} · Map`} title="Map">
+          <EntitySection id="map" title="Map">
             <EntityMap>
               <InteractiveMap
                 mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
@@ -180,18 +178,18 @@ export default function PricingNodeDetailPage() {
           </EntitySection>
         )}
 
-        {/* 04 · Linked Power Plant */}
+        {/* Linked Power Plant */}
         {node.eiaPlantCode && (
-          <EntitySection id="linked-plant" kicker={`${nextNum()} · Generation`} title="Linked Power Plant">
+          <EntitySection id="linked-plant" title="Linked Power Plant">
             <RelationshipCards
               items={[{ label: "EIA Plant Code", name: node.eiaPlantCode, href: `/power-plants/${node.eiaPlantCode}` }]}
             />
           </EntitySection>
         )}
 
-        {/* 05 · Nearby Nodes */}
+        {/* Nearby Nodes */}
         {!nodesLoading && nearbyNodes.length > 0 && (
-          <EntitySection id="nearby" kicker={`${nextNum()} · Nearby`} title="Nearby Pricing Nodes">
+          <EntitySection id="nearby" title="Nearby Pricing Nodes">
             <EntityList
               items={nearbyNodes.map((n) => ({
                 href: `/pricing-nodes/${n.slug}`,

@@ -38,7 +38,7 @@ export function EntityList({ items, maxItems, headerMeta }: EntityListProps) {
 
   return (
     <div className="space-y-2">
-      {headerMeta && <div className="text-text-caption text-sm mb-3">{headerMeta}</div>}
+      {headerMeta && <div className="text-body-sm text-text-caption mb-3">{headerMeta}</div>}
 
       {visibleItems.map((item) => (
         <Link
@@ -54,17 +54,17 @@ export function EntityList({ items, maxItems, headerMeta }: EntityListProps) {
                 aria-hidden="true"
               />
             )}
-            <span className="text-text-body font-medium truncate">{item.name}</span>
+            <span className="text-body-md font-medium text-text-body truncate">{item.name}</span>
           </div>
 
           <div className="flex items-center gap-3 flex-shrink-0">
             {item.badge}
-            {item.meta && <span className="text-text-caption text-sm font-mono">{item.meta}</span>}
+            {item.meta && <span className="text-label-sm font-mono text-text-caption">{item.meta}</span>}
           </div>
         </Link>
       ))}
 
-      {hasMore && <div className="text-text-muted text-sm text-center py-2">{moreCount} more</div>}
+      {hasMore && <div className="text-body-sm text-text-muted text-center py-2">{moreCount} more</div>}
     </div>
   );
 }

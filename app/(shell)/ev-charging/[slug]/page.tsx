@@ -85,14 +85,12 @@ export default function EVStationDetailPage() {
     `${station.streetAddress}, ${station.city}, ${station.state} ${station.zip}`
   )}`;
 
-  let sectionNum = 1;
-  const nextNum = () => String(sectionNum++).padStart(2, "0");
+
 
   return (
     <>
       <EntityPageHeader
-        kicker="EV CHARGING STATION"
-        kickerDotColor={networkColor}
+
         entityName={station.stationName}
         subtitle={
           <>
@@ -144,8 +142,8 @@ export default function EVStationDetailPage() {
           ]}
         />
 
-        {/* 01 · Overview */}
-        <EntitySection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
+        {/* Overview */}
+        <EntitySection id="overview" title="Overview">
           <FieldList
             items={[
               { id: "network", label: "Network", value: getNetworkShortName(station.evNetwork) },
@@ -164,8 +162,8 @@ export default function EVStationDetailPage() {
           />
         </EntitySection>
 
-        {/* 02 · Charging Infrastructure */}
-        <EntitySection id="charging" kicker={`${nextNum()} · Charging`} title="Charging Infrastructure">
+        {/* Charging Infrastructure */}
+        <EntitySection id="charging" title="Charging Infrastructure">
           <PortDisplay
             level1Count={station.evLevel1EvseNum ?? 0}
             level2Count={station.evLevel2EvseNum ?? 0}
@@ -184,8 +182,8 @@ export default function EVStationDetailPage() {
           )}
         </EntitySection>
 
-        {/* 03 · Station Details */}
-        <EntitySection id="details" kicker={`${nextNum()} · Details`} title="Station Details">
+        {/* Station Details */}
+        <EntitySection id="details" title="Station Details">
           <FieldList
             items={[
               {
@@ -219,8 +217,8 @@ export default function EVStationDetailPage() {
           </div>
         </EntitySection>
 
-        {/* 04 · Location Map */}
-        <EntitySection id="location" kicker={`${nextNum()} · Location`} title="Location">
+        {/* Location Map */}
+        <EntitySection id="location" title="Location">
           <EntityMap>
             <InteractiveMap
               {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {

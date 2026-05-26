@@ -9,6 +9,7 @@ interface StatItem {
 /**
  * EntityStatsRow - Display 2-4 key metrics in a horizontal row
  *
+ * Uses Edges text styles for consistent typography.
  * Responsive grid: 2 columns on mobile, 4 columns on desktop.
  * Automatically filters out null/empty values.
  */
@@ -28,9 +29,9 @@ export function EntityStatsRow({ stats }: EntityStatsRowProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-8 border-b border-border-default">
       {filtered.map((stat) => (
-        <div key={stat.label} className="flex flex-col">
-          <div className="text-3xl md:text-4xl font-semibold text-text-heading tabular-nums">{stat.value}</div>
-          <div className="text-xs uppercase tracking-wide text-text-muted mt-1">{stat.label}</div>
+        <div key={stat.label} className="flex flex-col gap-1">
+          <div className="text-display-md font-semibold text-text-heading tabular-nums">{stat.value}</div>
+          <div className="text-label-sm uppercase tracking-wide text-text-muted">{stat.label}</div>
         </div>
       ))}
     </div>

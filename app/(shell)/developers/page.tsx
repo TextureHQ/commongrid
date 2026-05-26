@@ -230,7 +230,6 @@ export default function DevelopersPage() {
     <ContentPage>
       <ContentPage.Header
         title="Developer Dashboard"
-        kicker="Developers"
         subtitle="Manage your API keys, monitor usage, and explore the CommonGrid API."
       />
       <ContentPage.Body>

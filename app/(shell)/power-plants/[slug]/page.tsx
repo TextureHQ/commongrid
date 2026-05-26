@@ -217,14 +217,9 @@ export default function PowerPlantDetailPage() {
       : []),
   ];
 
-  let sectionNum = 1;
-  const nextNum = () => String(sectionNum++).padStart(2, "0");
-
   return (
     <>
       <EntityPageHeader
-        kicker="POWER PLANT"
-        kickerDotColor={getFuelCategoryColor(plant.fuelCategory)}
         entityName={plant.name}
         subtitle={
           <>
@@ -252,8 +247,8 @@ export default function PowerPlantDetailPage() {
         {/* Key stats band */}
         {headerStats.length > 0 && <EntityStatsRow stats={headerStats} />}
 
-        {/* 01 · Overview */}
-        <EntitySection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
+        {/* Overview */}
+        <EntitySection id="overview" title="Overview">
           <FieldList
             items={overviewFields}
             columns={2}
@@ -268,9 +263,9 @@ export default function PowerPlantDetailPage() {
           />
         </EntitySection>
 
-        {/* 02 · Technologies */}
+        {/* Technologies */}
         {plant.technologies.length > 0 && (
-          <EntitySection id="technologies" kicker={`${nextNum()} · Technologies`} title="Technologies">
+          <EntitySection id="technologies" title="Technologies">
             <BadgeList items={plant.technologies} variant="neutral" />
             {plant.energySources.length > 0 && (
               <div className="mt-6">
@@ -280,8 +275,8 @@ export default function PowerPlantDetailPage() {
           </EntitySection>
         )}
 
-        {/* 03 · Location */}
-        <EntitySection id="location" kicker={`${nextNum()} · Location`} title="Location">
+        {/* Location */}
+        <EntitySection id="location" title="Location">
           <EntityMap>
             <InteractiveMap
               {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
@@ -311,16 +306,16 @@ export default function PowerPlantDetailPage() {
           </EntityMap>
         </EntitySection>
 
-        {/* 04 · Grid Relationships */}
+        {/* Grid Relationships */}
         {hasRelationships && (
-          <EntitySection id="relationships" kicker={`${nextNum()} · Grid`} title="Grid Relationships">
+          <EntitySection id="relationships" title="Grid Relationships">
             <RelationshipCards items={relationshipItems} />
           </EntitySection>
         )}
 
-        {/* 05 · Nearby Plants */}
+        {/* Nearby Plants */}
         {!plantsLoading && nearbyPlants.length > 0 && (
-          <EntitySection id="nearby" kicker={`${nextNum()} · Nearby`} title="Nearby Power Plants">
+          <EntitySection id="nearby" title="Nearby Power Plants">
             <EntityList
               items={nearbyPlants.map((p) => ({
                 href: `/power-plants/${p.slug}`,
