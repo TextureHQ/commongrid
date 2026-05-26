@@ -603,7 +603,11 @@ export function GlobalSearchModal() {
           which is exactly what we want. */}
       <div
         className="fixed inset-0 z-[70]"
-        style={{ background: "var(--color-background-modal)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
+        style={{
+          background: "var(--color-background-modal)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+        }}
         onClick={close}
         aria-hidden="true"
       />

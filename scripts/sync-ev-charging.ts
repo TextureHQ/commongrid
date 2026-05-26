@@ -16,9 +16,14 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { Pool } from "@neondatabase/serverless";
+import { sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { evStations } from "../lib/db/schema";
 
 const API_KEY = process.env.NREL_API_KEY ?? "DEMO_KEY";
 const BASE_URL = "https://developer.nrel.gov/api/alt-fuel-stations/v1.json";
+const BATCH_SIZE = 500;
 
 function slugify(str: string): string {
   return str
@@ -139,12 +144,89 @@ async function main() {
   // ── 3. Sort by name ────────────────────────────────────────────────────
   stations.sort((a, b) => a.stationName.localeCompare(b.stationName));
 
-  // ── 4. Write output ───────────────────────────────────────────────────
-  console.log("\n3. Writing output...");
+  // ── 4. Write JSON output ───────────────────────────────────────────────
+  console.log("\n3. Writing JSON output...");
   const outPath = path.join(process.cwd(), "data", "ev-charging.json");
   fs.writeFileSync(outPath, `${JSON.stringify(stations)}\n`);
   const sizeMb = (fs.statSync(outPath).size / 1024 / 1024).toFixed(1);
   console.log(`   Wrote ${outPath} (${sizeMb} MB)`);
+
+  // ── 5. Sync to Postgres ───────────────────────────────────────────────
+  if (process.env.DATABASE_URL) {
+    console.log("\n4. Syncing to Postgres...");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const db = drizzle(pool);
+
+    let upserted = 0;
+    const batches = [];
+    for (let i = 0; i < stations.length; i += BATCH_SIZE) {
+      batches.push(stations.slice(i, i + BATCH_SIZE));
+    }
+
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+      const rows = batch.map((s) => ({
+        id: s.id,
+        slug: s.slug,
+        stationName: s.stationName,
+        streetAddress: s.streetAddress,
+        city: s.city,
+        state: s.state,
+        zip: s.zip,
+        latitude: s.latitude,
+        longitude: s.longitude,
+        evNetwork: s.evNetwork,
+        evLevel1EvseNum: s.evLevel1EvseNum,
+        evLevel2EvseNum: s.evLevel2EvseNum,
+        evDcFastNum: s.evDcFastNum,
+        evConnectorTypes: s.evConnectorTypes,
+        accessCode: s.accessCode,
+        statusCode: s.statusCode,
+        openDate: s.openDate,
+        facilityType: s.facilityType,
+        ownerTypeCode: s.ownerTypeCode,
+        evPricing: s.evPricing,
+      }));
+
+      await db
+        .insert(evStations)
+        .values(rows)
+        .onConflictDoUpdate({
+          target: evStations.id,
+          set: {
+            slug: sql`EXCLUDED.slug`,
+            stationName: sql`EXCLUDED.station_name`,
+            streetAddress: sql`EXCLUDED.street_address`,
+            city: sql`EXCLUDED.city`,
+            state: sql`EXCLUDED.state`,
+            zip: sql`EXCLUDED.zip`,
+            latitude: sql`EXCLUDED.latitude`,
+            longitude: sql`EXCLUDED.longitude`,
+            evNetwork: sql`EXCLUDED.ev_network`,
+            evLevel1EvseNum: sql`EXCLUDED.ev_level1_evse_num`,
+            evLevel2EvseNum: sql`EXCLUDED.ev_level2_evse_num`,
+            evDcFastNum: sql`EXCLUDED.ev_dc_fast_num`,
+            evConnectorTypes: sql`EXCLUDED.ev_connector_types`,
+            accessCode: sql`EXCLUDED.access_code`,
+            statusCode: sql`EXCLUDED.status_code`,
+            openDate: sql`EXCLUDED.open_date`,
+            facilityType: sql`EXCLUDED.facility_type`,
+            ownerTypeCode: sql`EXCLUDED.owner_type_code`,
+            evPricing: sql`EXCLUDED.ev_pricing`,
+            updatedAt: sql`NOW()`,
+          },
+        });
+
+      upserted += batch.length;
+      if ((i + 1) % 10 === 0 || i === batches.length - 1) {
+        console.log(`   Processed ${upserted.toLocaleString()} / ${stations.length.toLocaleString()} stations...`);
+      }
+    }
+
+    console.log(`   ✓ Upserted ${upserted.toLocaleString()} stations to Postgres`);
+  } else {
+    console.log("\n4. Skipping Postgres sync (DATABASE_URL not set)");
+  }
 
   // ── Summary ────────────────────────────────────────────────────────────
   const networkCounts = new Map<string, number>();
