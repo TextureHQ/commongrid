@@ -1,5 +1,3 @@
-
-
 /**
  * EntitySection - Wrapper for each section with clean heading
  *

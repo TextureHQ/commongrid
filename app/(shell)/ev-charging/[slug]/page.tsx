@@ -85,12 +85,9 @@ export default function EVStationDetailPage() {
     `${station.streetAddress}, ${station.city}, ${station.state} ${station.zip}`
   )}`;
 
-
-
   return (
     <>
       <EntityPageHeader
-
         entityName={station.stationName}
         subtitle={
           <>

@@ -574,12 +574,9 @@ export default function UtilityDetailPage() {
   const hasGridRelationships = iso || rto || ba;
   const hasUtilityRelationships = parent || generationProvider || transmissionProvider || successor;
 
-
-
   return (
     <>
       <EntityPageHeader
-
         entityName={utility.name}
         subtitle={
           <>

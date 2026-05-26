@@ -1,4 +1,4 @@
-import { Breadcrumbs, BreadcrumbItem } from "@texturehq/edges";
+import { BreadcrumbItem, Breadcrumbs } from "@texturehq/edges";
 import Link from "next/link";
 
 /**
@@ -59,7 +59,9 @@ export function EntityPageHeader({
           <div className="min-w-0 flex-1">
             <h1 className="text-display-lg font-semibold text-text-heading mb-2">{entityName}</h1>
 
-            {subtitle && <div className="text-body-md text-text-body flex items-center gap-2 flex-wrap">{subtitle}</div>}
+            {subtitle && (
+              <div className="text-body-md text-text-body flex items-center gap-2 flex-wrap">{subtitle}</div>
+            )}
           </div>
         </div>
 

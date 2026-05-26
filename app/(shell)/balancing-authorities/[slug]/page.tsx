@@ -207,12 +207,9 @@ export default function BADetailPage() {
 
   const totalPlantCapacity = baPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0);
 
-
-
   return (
     <>
       <EntityPageHeader
-
         entityName={ba.name}
         subtitle={
           <>
@@ -290,11 +287,7 @@ export default function BADetailPage() {
         {/* Utilities */}
         {utilityRows.length > 0 && (
           <EntitySection id="utilities" title="Utilities">
-            <DataTableSection
-              count={utilityRows.length}
-              singularLabel="utility"
-              pluralLabel="utilities"
-            >
+            <DataTableSection count={utilityRows.length} singularLabel="utility" pluralLabel="utilities">
               <DataTable
                 data={utilityRows}
                 columns={utilityColumns}

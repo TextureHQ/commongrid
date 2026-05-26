@@ -102,12 +102,9 @@ export default function PricingNodeDetailPage() {
       : []),
   ];
 
-
-
   return (
     <>
       <EntityPageHeader
-
         entityName={node.name}
         subtitle={
           <>
