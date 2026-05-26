@@ -17,8 +17,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { Pool } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
 import { sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/neon-serverless";
 import { evStations } from "../lib/db/schema";
 
 const API_KEY = process.env.NREL_API_KEY ?? "DEMO_KEY";
