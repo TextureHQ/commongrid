@@ -1,20 +1,21 @@
 "use client";
 
-import "../../detail-page.css";
-
 import { Badge, type Column, DataTable, InteractiveMap, layer } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
-import { DetailEntityList } from "@/components/detail/DetailEntityList";
-import { DetailFieldList } from "@/components/detail/DetailFieldList";
-import { DetailMap } from "@/components/detail/DetailMap";
-import { DetailPageShell } from "@/components/detail/DetailPageShell";
-import { DetailRelationships } from "@/components/detail/DetailRelationships";
-import { DetailSection } from "@/components/detail/DetailSection";
-import { DetailStatGrid } from "@/components/detail/DetailStatGrid";
+import {
+  DataTableSection,
+  EntityList,
+  EntityMap,
+  EntityPageHeader,
+  EntitySection,
+  EntityStatsRow,
+  FieldList,
+  RelationshipCards,
+} from "@/components/entity";
 import { getBalancingAuthorityBySlug, getIsoById } from "@/lib/data";
 import {
   formatCapacity,
@@ -210,157 +211,155 @@ export default function BADetailPage() {
   const nextNum = () => String(sectionNum++).padStart(2, "0");
 
   return (
-    <DetailPageShell
-      kicker="Balancing Authority"
-      entityName={ba.name}
-      subtitle={
-        <>
-          <span>{ba.shortName}</span>
-          {ba.website && (
-            <>
-              <span className="sep">·</span>
-              <a href={ba.website} target="_blank" rel="noopener noreferrer">
-                {safeHostname(ba.website)}
-              </a>
-            </>
-          )}
-        </>
-      }
-      breadcrumbs={[{ label: "Grid Operators", href: "/explore?view=grid-operators" }, { label: ba.slug }]}
-      actions={
-        <EntityActions
-          entityType="balancing_authority"
-          entityId={ba.id ?? ba.slug}
-          entitySlug={ba.slug}
-          entityName={ba.name}
-          currentValues={ba as unknown as Record<string, unknown>}
-        />
-      }
-      dataSourcePaths={["data/balancing-authorities.json"]}
-    >
-      {/* Key stats band */}
-      {headerStats.length > 0 && <DetailStatGrid stats={headerStats} />}
-
-      {/* 01 · Overview */}
-      <DetailSection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
-        <DetailFieldList items={overviewFields} columns={2} />
-      </DetailSection>
-
-      {/* 02 · Territory */}
-      <DetailSection id="territory" kicker={`${nextNum()} · Territory`} title="Balancing Authority Region">
-        <DetailMap loading={territoryLoading}>
-          <InteractiveMap
-            {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
-              mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
-            })}
-            initialViewState={mapViewState}
-            mapType="neutral"
-            controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
-            layers={
-              territoryGeoJSON
-                ? [
-                    layer.geojson({
-                      id: "ba-territory",
-                      data: territoryGeoJSON,
-                      renderAs: "fill",
-                      style: {
-                        color: { token: "brand-primary" },
-                        fillOpacity: 0.25,
-                        borderWidth: 3,
-                        borderColor: { token: "brand-primary" },
-                      },
-                    }),
-                  ]
-                : []
-            }
+    <>
+      <EntityPageHeader
+        kicker="BALANCING AUTHORITY"
+        entityName={ba.name}
+        subtitle={
+          <>
+            <span>{ba.shortName}</span>
+            {ba.website && (
+              <>
+                <span className="text-text-muted mx-2">·</span>
+                <a href={ba.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                  {safeHostname(ba.website)}
+                </a>
+              </>
+            )}
+          </>
+        }
+        breadcrumbs={[{ label: "Grid Operators", href: "/explore?view=grid-operators" }, { label: ba.slug }]}
+        actions={
+          <EntityActions
+            entityType="balancing_authority"
+            entityId={ba.id ?? ba.slug}
+            entitySlug={ba.slug}
+            entityName={ba.name}
+            currentValues={ba as unknown as Record<string, unknown>}
           />
-        </DetailMap>
-      </DetailSection>
+        }
+        dataSourcePaths={["data/balancing-authorities.json"]}
+      />
 
-      {/* 03 · Grid Relationships */}
-      {gridRelItems.length > 0 && (
-        <DetailSection id="grid" kicker={`${nextNum()} · Grid`} title="Grid Relationships">
-          <DetailRelationships items={gridRelItems} />
-        </DetailSection>
-      )}
+      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        {/* Key stats band */}
+        {headerStats.length > 0 && <EntityStatsRow stats={headerStats} />}
 
-      {/* 04 · Utilities */}
-      {utilityRows.length > 0 && (
-        <DetailSection id="utilities" kicker={`${nextNum()} · Utilities`} title="Utilities">
-          <div className="detail-table-meta">
-            {utilityRows.length} utilit{utilityRows.length === 1 ? "y" : "ies"}
-          </div>
-          <div className="detail-table-wrap">
-            <DataTable
-              data={utilityRows}
-              columns={utilityColumns}
-              mobileBreakpoint="md"
-              isLoading={false}
-              onRowClick={handleRowClick}
+        {/* 01 · Overview */}
+        <EntitySection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
+          <FieldList items={overviewFields} columns={2} />
+        </EntitySection>
+
+        {/* 02 · Territory */}
+        <EntitySection id="territory" kicker={`${nextNum()} · Territory`} title="Balancing Authority Region">
+          <EntityMap loading={territoryLoading}>
+            <InteractiveMap
+              {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
+                mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+              })}
+              initialViewState={mapViewState}
+              mapType="neutral"
+              controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+              layers={
+                territoryGeoJSON
+                  ? [
+                      layer.geojson({
+                        id: "ba-territory",
+                        data: territoryGeoJSON,
+                        renderAs: "fill",
+                        style: {
+                          color: { token: "brand-primary" },
+                          fillOpacity: 0.25,
+                          borderWidth: 3,
+                          borderColor: { token: "brand-primary" },
+                        },
+                      }),
+                    ]
+                  : []
+              }
             />
-          </div>
-        </DetailSection>
-      )}
+          </EntityMap>
+        </EntitySection>
 
-      {/* 05 · Fuel Mix */}
-      {!plantsLoading && fuelMix.length > 0 && (
-        <DetailSection id="fuel-mix" kicker={`${nextNum()} · Fuel Mix`} title="Generation Fuel Mix">
-          <div className="detail-fields">
-            {fuelMix.map((item) => (
-              <div key={item.fuel} className="detail-field">
-                <div className="detail-field-label" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      backgroundColor: getFuelCategoryColor(item.fuel),
-                      flexShrink: 0,
-                    }}
-                  />
-                  {getFuelCategoryLabel(item.fuel)}
-                </div>
-                <div className="detail-field-value">
-                  {formatCapacity(item.capacity)} · {item.count} plant{item.count !== 1 ? "s" : ""} ·{" "}
-                  {item.pct.toFixed(1)}%
-                </div>
-              </div>
-            ))}
-          </div>
-        </DetailSection>
-      )}
+        {/* 03 · Grid Relationships */}
+        {gridRelItems.length > 0 && (
+          <EntitySection id="grid" kicker={`${nextNum()} · Grid`} title="Grid Relationships">
+            <RelationshipCards items={gridRelItems} />
+          </EntitySection>
+        )}
 
-      {/* 06 · Programs */}
-      {!programsLoading && baPrograms.length > 0 && (
-        <DetailSection id="programs" kicker={`${nextNum()} · Programs`} title="Programs">
-          <div className="detail-list-meta">
-            {baPrograms.length} program{baPrograms.length !== 1 ? "s" : ""} across member utilities
-          </div>
-          <DetailEntityList
-            items={baPrograms.map((prog) => ({
-              href: `/programs/${prog.slug}`,
-              name: prog.name,
-              badge: (
-                <Badge size="sm" shape="pill" variant={prog.status === "ACTIVE" ? "success" : "neutral"}>
-                  {prog.status}
-                </Badge>
-              ),
-              meta: prog.gridServices.join(", "),
-            }))}
-          />
-        </DetailSection>
-      )}
+        {/* 04 · Utilities */}
+        {utilityRows.length > 0 && (
+          <EntitySection id="utilities" kicker={`${nextNum()} · Utilities`} title="Utilities">
+            <DataTableSection
+              count={utilityRows.length}
+              singularLabel="utility"
+              pluralLabel="utilities"
+            >
+              <DataTable
+                data={utilityRows}
+                columns={utilityColumns}
+                mobileBreakpoint="md"
+                isLoading={false}
+                onRowClick={handleRowClick}
+              />
+            </DataTableSection>
+          </EntitySection>
+        )}
 
-      {/* 07 · Power Plants */}
-      {!plantsLoading && baPowerPlants.length > 0 && (
-        <DetailSection id="power-plants" kicker={`${nextNum()} · Generation`} title="Power Plants">
-          <DetailEntityList
-            items={plantListItems}
-            maxItems={30}
-            headerMeta={`${baPowerPlants.length} plant${baPowerPlants.length !== 1 ? "s" : ""} · ${formatCapacity(totalPlantCapacity)} total capacity`}
-          />
-        </DetailSection>
-      )}
-    </DetailPageShell>
+        {/* 05 · Fuel Mix */}
+        {!plantsLoading && fuelMix.length > 0 && (
+          <EntitySection id="fuel-mix" kicker={`${nextNum()} · Fuel Mix`} title="Generation Fuel Mix">
+            <FieldList
+              items={fuelMix.map((item) => ({
+                id: item.fuel,
+                label: (
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: getFuelCategoryColor(item.fuel) }}
+                      aria-hidden="true"
+                    />
+                    {getFuelCategoryLabel(item.fuel)}
+                  </span>
+                ),
+                value: `${formatCapacity(item.capacity)} · ${item.count} plant${item.count !== 1 ? "s" : ""} · ${item.pct.toFixed(1)}%`,
+              }))}
+              columns={1}
+            />
+          </EntitySection>
+        )}
+
+        {/* 06 · Programs */}
+        {!programsLoading && baPrograms.length > 0 && (
+          <EntitySection id="programs" kicker={`${nextNum()} · Programs`} title="Programs">
+            <EntityList
+              items={baPrograms.map((prog) => ({
+                href: `/programs/${prog.slug}`,
+                name: prog.name,
+                badge: (
+                  <Badge size="sm" shape="pill" variant={prog.status === "ACTIVE" ? "success" : "neutral"}>
+                    {prog.status}
+                  </Badge>
+                ),
+                meta: prog.gridServices.join(", "),
+              }))}
+              headerMeta={`${baPrograms.length} program${baPrograms.length !== 1 ? "s" : ""} across member utilities`}
+            />
+          </EntitySection>
+        )}
+
+        {/* 07 · Power Plants */}
+        {!plantsLoading && baPowerPlants.length > 0 && (
+          <EntitySection id="power-plants" kicker={`${nextNum()} · Generation`} title="Power Plants">
+            <EntityList
+              items={plantListItems}
+              maxItems={30}
+              headerMeta={`${baPowerPlants.length} plant${baPowerPlants.length !== 1 ? "s" : ""} · ${formatCapacity(totalPlantCapacity)} total capacity`}
+            />
+          </EntitySection>
+        )}
+      </div>
+    </>
   );
 }

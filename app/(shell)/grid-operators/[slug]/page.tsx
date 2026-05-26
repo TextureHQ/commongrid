@@ -1,7 +1,5 @@
 "use client";
 
-import "../../detail-page.css";
-
 import { SignInButton } from "@clerk/nextjs";
 import {
   Avatar,
@@ -25,13 +23,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
 import {
-  DetailEntityList,
-  DetailMap,
-  DetailPageShell,
-  DetailRelationships,
-  DetailSection,
-  DetailStatGrid,
-} from "@/components/detail";
+  EntityList,
+  EntityMap,
+  EntityPageHeader,
+  EntitySection,
+  EntityStatsRow,
+  RelationshipCards,
+} from "@/components/entity";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
 import {
@@ -579,258 +577,264 @@ export default function UtilityDetailPage() {
   let sectionNum = 1;
 
   return (
-    <DetailPageShell
-      kicker={getSegmentLabel(utility.segment)}
-      entityName={utility.name}
-      subtitle={
-        <>
-          {utility.shortName && <span>{utility.shortName}</span>}
-          {utility.shortName && (utility.website || utility.jurisdiction) && <span className="sep">·</span>}
-          {utility.website && (
-            <a href={utility.website} target="_blank" rel="noopener noreferrer">
-              {safeHostname(utility.website)}
-            </a>
-          )}
-          {utility.jurisdiction && (
-            <>
-              {utility.website && <span className="sep">·</span>}
-              <span>{utility.jurisdiction}</span>
-            </>
-          )}
-        </>
-      }
-      breadcrumbs={[
-        { label: "Home", href: "/" },
-        { label: "Grid Operators", href: "/grid-operators" },
-        { label: utility.slug },
-      ]}
-      avatar={
-        <Avatar
-          {...(utility.logo ? { src: utility.logo } : {})}
-          fullName={utility.name}
-          size="xl"
-          shape="square"
-          variant="organization"
-        />
-      }
-      actions={
-        <EntityActions
-          entityType="utility"
-          entityId={utility.id}
-          entitySlug={utility.slug}
-          entityName={utility.name}
-          currentValues={utility as unknown as Record<string, unknown>}
-        />
-      }
-      dataSourcePaths={["data/utilities.json"]}
-    >
-      <DetailStatGrid
-        stats={[
-          {
-            value: utility.customerCount ? formatCustomerCount(utility.customerCount) : null,
-            label: "Customers",
-          },
-          {
-            value: utility.peakDemandMw !== null ? `${utility.peakDemandMw.toLocaleString()} MW` : null,
-            label: "Summer Peak",
-          },
-          {
-            value: utility.totalSalesMwh !== null ? formatSales(utility.totalSalesMwh) : null,
-            label: "Annual Sales",
-          },
-          {
-            value: utility.totalRevenueDollars !== null ? formatRevenue(utility.totalRevenueDollars) : null,
-            label: "Revenue",
-          },
+    <>
+      <EntityPageHeader
+        kicker={getSegmentLabel(utility.segment)}
+        entityName={utility.name}
+        subtitle={
+          <>
+            {utility.shortName && <span>{utility.shortName}</span>}
+            {utility.shortName && (utility.website || utility.jurisdiction) && (
+              <span className="text-text-muted mx-2">·</span>
+            )}
+            {utility.website && (
+              <a href={utility.website} target="_blank" rel="noopener noreferrer">
+                {safeHostname(utility.website)}
+              </a>
+            )}
+            {utility.jurisdiction && (
+              <>
+                {utility.website && <span className="text-text-muted mx-2">·</span>}
+                <span>{utility.jurisdiction}</span>
+              </>
+            )}
+          </>
+        }
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "Grid Operators", href: "/grid-operators" },
+          { label: utility.slug },
         ]}
+        avatar={
+          <Avatar
+            {...(utility.logo ? { src: utility.logo } : {})}
+            fullName={utility.name}
+            size="xl"
+            shape="square"
+            variant="organization"
+          />
+        }
+        actions={
+          <EntityActions
+            entityType="utility"
+            entityId={utility.id}
+            entitySlug={utility.slug}
+            entityName={utility.name}
+            currentValues={utility as unknown as Record<string, unknown>}
+          />
+        }
+        dataSourcePaths={["data/utilities.json"]}
       />
 
-      <DetailSection id="overview" kicker={`0${sectionNum++} · Overview`} title="Overview">
-        <OverviewStatList utility={utility} />
-      </DetailSection>
+      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        <EntityStatsRow
+          stats={[
+            {
+              value: utility.customerCount ? formatCustomerCount(utility.customerCount) : null,
+              label: "Customers",
+            },
+            {
+              value: utility.peakDemandMw !== null ? `${utility.peakDemandMw.toLocaleString()} MW` : null,
+              label: "Summer Peak",
+            },
+            {
+              value: utility.totalSalesMwh !== null ? formatSales(utility.totalSalesMwh) : null,
+              label: "Annual Sales",
+            },
+            {
+              value: utility.totalRevenueDollars !== null ? formatRevenue(utility.totalRevenueDollars) : null,
+              label: "Revenue",
+            },
+          ]}
+        />
 
-      {hasOperationsData && (
-        <DetailSection id="operations" kicker={`0${sectionNum++} · Operations`} title="Operations">
-          <OperationsStatList utility={utility} />
-          {utility.hasGeneration !== null &&
-            (utility.hasGeneration || utility.hasTransmission || utility.hasDistribution) && (
-              <div style={{ marginTop: 16 }}>
-                <div className="detail-list-meta">Activities</div>
-                <div className="detail-activities">
-                  {utility.hasGeneration && (
-                    <Badge size="sm" shape="pill" variant="info">
-                      Generation
-                    </Badge>
-                  )}
-                  {utility.hasTransmission && (
-                    <Badge size="sm" shape="pill" variant="info">
-                      Transmission
-                    </Badge>
-                  )}
-                  {utility.hasDistribution && (
-                    <Badge size="sm" shape="pill" variant="info">
-                      Distribution
-                    </Badge>
-                  )}
+        <EntitySection id="overview" kicker={`0${sectionNum++} · Overview`} title="Overview">
+          <OverviewStatList utility={utility} />
+        </EntitySection>
+
+        {hasOperationsData && (
+          <EntitySection id="operations" kicker={`0${sectionNum++} · Operations`} title="Operations">
+            <OperationsStatList utility={utility} />
+            {utility.hasGeneration !== null &&
+              (utility.hasGeneration || utility.hasTransmission || utility.hasDistribution) && (
+                <div style={{ marginTop: 16 }}>
+                  <div className="text-text-caption text-sm mb-3">Activities</div>
+                  <div className="flex flex-wrap gap-2">
+                    {utility.hasGeneration && (
+                      <Badge size="sm" shape="pill" variant="info">
+                        Generation
+                      </Badge>
+                    )}
+                    {utility.hasTransmission && (
+                      <Badge size="sm" shape="pill" variant="info">
+                        Transmission
+                      </Badge>
+                    )}
+                    {utility.hasDistribution && (
+                      <Badge size="sm" shape="pill" variant="info">
+                        Distribution
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-        </DetailSection>
-      )}
+              )}
+          </EntitySection>
+        )}
 
-      <DetailSection id="territory" kicker={`0${sectionNum++} · Territory`} title="Service Territory">
-        <DetailMap loading={territoryLoading}>
-          <InteractiveMap
-            {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
-              mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
-            })}
-            initialViewState={mapViewState}
-            mapType="neutral"
-            controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
-            layers={
-              territoryGeoJSON
-                ? [
-                    layer.geojson({
-                      id: "territory-fill",
-                      data: territoryGeoJSON,
-                      renderAs: "fill",
-                      style: {
-                        color: { token: "brand-primary" },
-                        fillOpacity: 0.25,
-                        borderWidth: 3,
-                        borderColor: { token: "brand-primary" },
+        <EntitySection id="territory" kicker={`0${sectionNum++} · Territory`} title="Service Territory">
+          <EntityMap loading={territoryLoading}>
+            <InteractiveMap
+              {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
+                mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+              })}
+              initialViewState={mapViewState}
+              mapType="neutral"
+              controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+              layers={
+                territoryGeoJSON
+                  ? [
+                      layer.geojson({
+                        id: "territory-fill",
+                        data: territoryGeoJSON,
+                        renderAs: "fill",
+                        style: {
+                          color: { token: "brand-primary" },
+                          fillOpacity: 0.25,
+                          borderWidth: 3,
+                          borderColor: { token: "brand-primary" },
+                        },
+                      }),
+                    ]
+                  : []
+              }
+            />
+          </EntityMap>
+        </EntitySection>
+
+        {hasGridRelationships && (
+          <EntitySection id="grid" kicker={`0${sectionNum++} · Grid`} title="Grid Relationships">
+            <RelationshipCards
+              items={[
+                ...(iso ? [{ label: "ISO", name: iso.shortName, href: `/explore?view=iso&slug=${iso.slug}` }] : []),
+                ...(rto ? [{ label: "RTO", name: rto.shortName, href: `/explore?view=rto&slug=${rto.slug}` }] : []),
+                ...(ba
+                  ? [{ label: "Balancing Authority", name: ba.shortName, href: `/balancing-authorities/${ba.slug}` }]
+                  : []),
+              ]}
+            />
+          </EntitySection>
+        )}
+
+        {hasUtilityRelationships && (
+          <EntitySection id="relationships" kicker={`0${sectionNum++} · Relationships`} title="Utility Relationships">
+            <RelationshipCards
+              items={[
+                ...(parent ? [{ label: "Parent", name: parent.name, href: `/grid-operators/${parent.slug}` }] : []),
+                ...(generationProvider
+                  ? [
+                      {
+                        label: "Generation Provider",
+                        name: generationProvider.name,
+                        href: `/grid-operators/${generationProvider.slug}`,
                       },
-                    }),
-                  ]
-                : []
-            }
-          />
-        </DetailMap>
-      </DetailSection>
-
-      {hasGridRelationships && (
-        <DetailSection id="grid" kicker={`0${sectionNum++} · Grid`} title="Grid Relationships">
-          <DetailRelationships
-            items={[
-              ...(iso ? [{ label: "ISO", name: iso.shortName, href: `/explore?view=iso&slug=${iso.slug}` }] : []),
-              ...(rto ? [{ label: "RTO", name: rto.shortName, href: `/explore?view=rto&slug=${rto.slug}` }] : []),
-              ...(ba
-                ? [{ label: "Balancing Authority", name: ba.shortName, href: `/balancing-authorities/${ba.slug}` }]
-                : []),
-            ]}
-          />
-        </DetailSection>
-      )}
-
-      {hasUtilityRelationships && (
-        <DetailSection id="relationships" kicker={`0${sectionNum++} · Relationships`} title="Utility Relationships">
-          <DetailRelationships
-            items={[
-              ...(parent ? [{ label: "Parent", name: parent.name, href: `/grid-operators/${parent.slug}` }] : []),
-              ...(generationProvider
-                ? [
-                    {
-                      label: "Generation Provider",
-                      name: generationProvider.name,
-                      href: `/grid-operators/${generationProvider.slug}`,
-                    },
-                  ]
-                : []),
-              ...(transmissionProvider
-                ? [
-                    {
-                      label: "Transmission Provider",
-                      name: transmissionProvider.name,
-                      href: `/grid-operators/${transmissionProvider.slug}`,
-                    },
-                  ]
-                : []),
-              ...(successor
-                ? [{ label: "Successor", name: successor.name, href: `/grid-operators/${successor.slug}` }]
-                : []),
-            ]}
-          />
-        </DetailSection>
-      )}
-
-      {servedRows.length > 0 && (
-        <DetailSection id="served" kicker={`0${sectionNum++} · Served`} title="Served Utilities">
-          <div className="detail-table-meta">
-            {servedRows.length} utilit{servedRows.length !== 1 ? "ies" : "y"}
-          </div>
-          <div className="detail-table-wrap">
-            <DataTable
-              data={servedRows}
-              columns={utilityColumns}
-              mobileBreakpoint="md"
-              isLoading={false}
-              onRowClick={handleRowClick}
+                    ]
+                  : []),
+                ...(transmissionProvider
+                  ? [
+                      {
+                        label: "Transmission Provider",
+                        name: transmissionProvider.name,
+                        href: `/grid-operators/${transmissionProvider.slug}`,
+                      },
+                    ]
+                  : []),
+                ...(successor
+                  ? [{ label: "Successor", name: successor.name, href: `/grid-operators/${successor.slug}` }]
+                  : []),
+              ]}
             />
-          </div>
-        </DetailSection>
-      )}
+          </EntitySection>
+        )}
 
-      {childRows.length > 0 && (
-        <DetailSection id="subsidiaries" kicker={`0${sectionNum++} · Subsidiaries`} title="Subsidiary Utilities">
-          <div className="detail-table-meta">
-            {childRows.length} subsidiar{childRows.length !== 1 ? "ies" : "y"}
-          </div>
-          <div className="detail-table-wrap">
-            <DataTable
-              data={childRows}
-              columns={utilityColumns}
-              mobileBreakpoint="md"
-              isLoading={false}
-              onRowClick={handleRowClick}
+        {servedRows.length > 0 && (
+          <EntitySection id="served" kicker={`0${sectionNum++} · Served`} title="Served Utilities">
+            <div className="text-text-caption text-sm mb-3">
+              {servedRows.length} utilit{servedRows.length !== 1 ? "ies" : "y"}
+            </div>
+            <div className="rounded-lg border border-border-default overflow-hidden">
+              <DataTable
+                data={servedRows}
+                columns={utilityColumns}
+                mobileBreakpoint="md"
+                isLoading={false}
+                onRowClick={handleRowClick}
+              />
+            </div>
+          </EntitySection>
+        )}
+
+        {childRows.length > 0 && (
+          <EntitySection id="subsidiaries" kicker={`0${sectionNum++} · Subsidiaries`} title="Subsidiary Utilities">
+            <div className="text-text-caption text-sm mb-3">
+              {childRows.length} subsidiar{childRows.length !== 1 ? "ies" : "y"}
+            </div>
+            <div className="rounded-lg border border-border-default overflow-hidden">
+              <DataTable
+                data={childRows}
+                columns={utilityColumns}
+                mobileBreakpoint="md"
+                isLoading={false}
+                onRowClick={handleRowClick}
+              />
+            </div>
+          </EntitySection>
+        )}
+
+        {!programsLoading && utilityPrograms.length > 0 && (
+          <EntitySection id="programs" kicker={`0${sectionNum++} · Programs`} title="Programs">
+            <div className="detail-list-meta">
+              {utilityPrograms.length} program{utilityPrograms.length !== 1 ? "s" : ""}
+            </div>
+            <EntityList
+              items={utilityPrograms.map((prog) => ({
+                href: `/programs/${prog.slug}`,
+                name: prog.name,
+                badge: (
+                  <Badge size="sm" shape="pill" variant={prog.status === "ACTIVE" ? "success" : "neutral"}>
+                    {prog.status}
+                  </Badge>
+                ),
+                meta: prog.assetTypes.join(", "),
+              }))}
             />
-          </div>
-        </DetailSection>
-      )}
+          </EntitySection>
+        )}
 
-      {!programsLoading && utilityPrograms.length > 0 && (
-        <DetailSection id="programs" kicker={`0${sectionNum++} · Programs`} title="Programs">
-          <div className="detail-list-meta">
-            {utilityPrograms.length} program{utilityPrograms.length !== 1 ? "s" : ""}
-          </div>
-          <DetailEntityList
-            items={utilityPrograms.map((prog) => ({
-              href: `/programs/${prog.slug}`,
-              name: prog.name,
-              badge: (
-                <Badge size="sm" shape="pill" variant={prog.status === "ACTIVE" ? "success" : "neutral"}>
-                  {prog.status}
-                </Badge>
-              ),
-              meta: prog.assetTypes.join(", "),
-            }))}
-          />
-        </DetailSection>
-      )}
+        {!linesLoading && utilityLines.length > 0 && (
+          <EntitySection id="transmission" kicker={`0${sectionNum++} · Transmission`} title="Transmission Lines">
+            <TransmissionStatList utilityLines={utilityLines} linesTotalMiles={linesTotalMiles} />
+          </EntitySection>
+        )}
 
-      {!linesLoading && utilityLines.length > 0 && (
-        <DetailSection id="transmission" kicker={`0${sectionNum++} · Transmission`} title="Transmission Lines">
-          <TransmissionStatList utilityLines={utilityLines} linesTotalMiles={linesTotalMiles} />
-        </DetailSection>
-      )}
-
-      {!plantsLoading && utilityPowerPlants.length > 0 && (
-        <DetailSection id="power-plants" kicker={`0${sectionNum++} · Power Plants`} title="Power Plants">
-          <DetailEntityList
-            items={utilityPowerPlants.map((plant) => ({
-              href: `/power-plants/${plant.slug}`,
-              name: plant.name,
-              dotColor: getFuelCategoryColor(plant.fuelCategory),
-              badge: (
-                <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(plant.fuelCategory)}>
-                  {getFuelCategoryLabel(plant.fuelCategory)}
-                </Badge>
-              ),
-              meta: formatCapacity(plant.totalCapacityMw),
-            }))}
-            headerMeta={`${utilityPowerPlants.length} plant${utilityPowerPlants.length !== 1 ? "s" : ""} · ${formatCapacity(utilityPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0))} total`}
-          />
-        </DetailSection>
-      )}
-    </DetailPageShell>
+        {!plantsLoading && utilityPowerPlants.length > 0 && (
+          <EntitySection id="power-plants" kicker={`0${sectionNum++} · Power Plants`} title="Power Plants">
+            <EntityList
+              items={utilityPowerPlants.map((plant) => ({
+                href: `/power-plants/${plant.slug}`,
+                name: plant.name,
+                dotColor: getFuelCategoryColor(plant.fuelCategory),
+                badge: (
+                  <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(plant.fuelCategory)}>
+                    {getFuelCategoryLabel(plant.fuelCategory)}
+                  </Badge>
+                ),
+                meta: formatCapacity(plant.totalCapacityMw),
+              }))}
+              headerMeta={`${utilityPowerPlants.length} plant${utilityPowerPlants.length !== 1 ? "s" : ""} · ${formatCapacity(utilityPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0))} total`}
+            />
+          </EntitySection>
+        )}
+      </div>
+    </>
   );
 }
