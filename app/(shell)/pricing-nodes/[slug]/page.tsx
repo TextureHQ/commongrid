@@ -1,18 +1,18 @@
 "use client";
 
-import "../../detail-page.css";
-
 import { Badge, InteractiveMap, Loader, layer } from "@texturehq/edges";
 import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
-import { DetailEntityList } from "@/components/detail/DetailEntityList";
-import { DetailFieldList } from "@/components/detail/DetailFieldList";
-import { DetailMap } from "@/components/detail/DetailMap";
-import { DetailPageShell } from "@/components/detail/DetailPageShell";
-import { DetailRelationships } from "@/components/detail/DetailRelationships";
-import { DetailSection } from "@/components/detail/DetailSection";
-import { DetailStatGrid } from "@/components/detail/DetailStatGrid";
+import {
+  EntityList,
+  EntityMap,
+  EntityPageHeader,
+  EntitySection,
+  EntityStatsRow,
+  FieldList,
+  RelationshipCards,
+} from "@/components/entity";
 import { usePricingNode, usePricingNodes } from "@/lib/pricing-nodes";
 import { getIsoColor, ISO_FULL_NAMES, ISO_LABELS, NODE_TYPE_LABELS } from "@/types/pricing-nodes";
 
@@ -35,8 +35,8 @@ export default function PricingNodeDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="cg-detail">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "96px 0" }}>
+      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        <div className="flex items-center justify-center py-24">
           <Loader size={32} />
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function PricingNodeDetailPage() {
     {
       id: "nodeType",
       label: "Node Type",
-      value: <span className="cg-tag">{NODE_TYPE_LABELS[node.nodeType]}</span>,
+      value: <Badge variant="neutral">{NODE_TYPE_LABELS[node.nodeType]}</Badge>,
     },
     { id: "zone", label: "Zone", value: node.zone ?? null },
     { id: "state", label: "State", value: node.state ?? null },
@@ -102,108 +102,108 @@ export default function PricingNodeDetailPage() {
       : []),
   ];
 
-  let sectionNum = 1;
-  const nextNum = () => String(sectionNum++).padStart(2, "0");
-
   return (
-    <DetailPageShell
-      kicker="Pricing Node"
-      kickerDotColor={isoColor}
-      entityName={node.name}
-      subtitle={
-        <>
-          <span>{ISO_LABELS[node.iso]}</span>
-          <span className="sep">·</span>
-          <span className="cg-tag">{NODE_TYPE_LABELS[node.nodeType]}</span>
-        </>
-      }
-      breadcrumbs={[{ label: "Pricing Nodes", href: "/pricing-nodes" }, { label: node.slug }]}
-      actions={
-        <EntityActions
-          entityType="pricing_node"
-          entityId={node.id ?? node.slug}
-          entitySlug={node.slug}
-          entityName={node.name}
-          currentValues={node as unknown as Record<string, unknown>}
-        />
-      }
-      dataSourcePaths={["data/pricing-nodes.json"]}
-    >
-      {/* Key stats band */}
-      <DetailStatGrid stats={headerStats} />
+    <>
+      <EntityPageHeader
+        entityName={node.name}
+        subtitle={
+          <>
+            <span>{ISO_LABELS[node.iso]}</span>
+            <span className="text-text-muted mx-2">·</span>
+            <Badge variant="neutral">{NODE_TYPE_LABELS[node.nodeType]}</Badge>
+          </>
+        }
+        breadcrumbs={[{ label: "Pricing Nodes", href: "/pricing-nodes" }, { label: node.slug }]}
+        actions={
+          <EntityActions
+            entityType="pricing_node"
+            entityId={node.id ?? node.slug}
+            entitySlug={node.slug}
+            entityName={node.name}
+            currentValues={node as unknown as Record<string, unknown>}
+          />
+        }
+        dataSourcePaths={["data/pricing-nodes.json"]}
+      />
 
-      {/* 01 · Overview */}
-      <DetailSection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
-        <DetailFieldList items={overviewFields} columns={2} />
-      </DetailSection>
+      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        {/* Key stats band */}
+        <EntityStatsRow stats={headerStats} />
 
-      {/* 02 · Location Details */}
-      <DetailSection id="location-details" kicker={`${nextNum()} · Coordinates`} title="Location Details">
-        <DetailFieldList items={locationFields} columns={2} />
-      </DetailSection>
+        {/* Overview */}
+        <EntitySection id="overview" title="Overview">
+          <FieldList items={overviewFields} columns={2} />
+        </EntitySection>
 
-      {/* 03 · Map */}
-      {process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
-        <DetailSection id="map" kicker={`${nextNum()} · Map`} title="Map">
-          <DetailMap>
-            <InteractiveMap
-              mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-              initialViewState={{
-                longitude: node.longitude,
-                latitude: node.latitude,
-                zoom: node.nodeType === "zone" || node.nodeType === "hub" ? 6 : 10,
-              }}
-              mapType="neutral"
-              controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
-              layers={[
-                layer.geojson({
-                  id: "node-point",
-                  data: pointGeoJSON,
-                  renderAs: "circle",
-                  style: {
-                    color: { hex: isoColor },
-                    radius: 8,
-                    borderWidth: 2,
-                    borderColor: { hex: "#ffffff" },
-                  },
-                  tooltip: {
-                    trigger: "hover",
-                    content: () => <div className="text-sm font-medium">{node.name}</div>,
-                  },
-                }),
-              ]}
+        {/* Location Details */}
+        <EntitySection id="location-details" title="Location Details">
+          <FieldList items={locationFields} columns={2} />
+        </EntitySection>
+
+        {/* Map */}
+        {process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
+          <EntitySection id="map" title="Map">
+            <EntityMap>
+              <InteractiveMap
+                mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
+                initialViewState={{
+                  longitude: node.longitude,
+                  latitude: node.latitude,
+                  zoom: node.nodeType === "zone" || node.nodeType === "hub" ? 6 : 10,
+                }}
+                mapType="neutral"
+                controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+                layers={[
+                  layer.geojson({
+                    id: "node-point",
+                    data: pointGeoJSON,
+                    renderAs: "circle",
+                    style: {
+                      color: { hex: isoColor },
+                      radius: 8,
+                      borderWidth: 2,
+                      borderColor: { hex: "#ffffff" },
+                    },
+                    tooltip: {
+                      trigger: "hover",
+                      content: () => <div className="text-sm font-medium">{node.name}</div>,
+                    },
+                  }),
+                ]}
+              />
+            </EntityMap>
+          </EntitySection>
+        )}
+
+        {/* Linked Power Plant */}
+        {node.eiaPlantCode && (
+          <EntitySection id="linked-plant" title="Linked Power Plant">
+            <RelationshipCards
+              items={[{ label: "EIA Plant Code", name: node.eiaPlantCode, href: `/power-plants/${node.eiaPlantCode}` }]}
             />
-          </DetailMap>
-        </DetailSection>
-      )}
-      {/* 04 · Linked Power Plant */}
-      {node.eiaPlantCode && (
-        <DetailSection id="linked-plant" kicker={`${nextNum()} · Generation`} title="Linked Power Plant">
-          <DetailRelationships
-            items={[{ label: "EIA Plant Code", name: node.eiaPlantCode, href: `/power-plants/${node.eiaPlantCode}` }]}
-          />
-        </DetailSection>
-      )}
+          </EntitySection>
+        )}
 
-      {/* 05 · Nearby Nodes */}
-      {!nodesLoading && nearbyNodes.length > 0 && (
-        <DetailSection id="nearby" kicker={`${nextNum()} · Nearby`} title="Nearby Pricing Nodes">
-          <DetailEntityList
-            items={nearbyNodes.map((n) => ({
-              href: `/pricing-nodes/${n.slug}`,
-              name: n.name,
-              dotColor: getIsoColor(n.iso),
-              badge: (
-                <Badge size="sm" shape="pill" variant="neutral">
-                  {NODE_TYPE_LABELS[n.nodeType]}
-                </Badge>
-              ),
-              meta: n.zone ?? undefined,
-            }))}
-            headerMeta={`${nearbyNodes.length} nodes in ${ISO_LABELS[node.iso]}`}
-          />
-        </DetailSection>
-      )}
-    </DetailPageShell>
+        {/* Nearby Nodes */}
+        {!nodesLoading && nearbyNodes.length > 0 && (
+          <EntitySection id="nearby" title="Nearby Pricing Nodes">
+            <EntityList
+              items={nearbyNodes.map((n) => ({
+                href: `/pricing-nodes/${n.slug}`,
+                name: n.name,
+                dotColor: getIsoColor(n.iso),
+                badge: (
+                  <Badge size="sm" shape="pill" variant="neutral">
+                    {NODE_TYPE_LABELS[n.nodeType]}
+                  </Badge>
+                ),
+                meta: n.zone ?? undefined,
+              }))}
+              headerMeta={`${nearbyNodes.length} nodes in ${ISO_LABELS[node.iso]}`}
+            />
+          </EntitySection>
+        )}
+      </div>
+    </>
   );
 }

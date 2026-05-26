@@ -4,8 +4,6 @@ import type { ReactNode } from "react";
 import "./ContentPage.css";
 
 interface ContentPageHeaderProps {
-  /** Optional small uppercase kicker above the title */
-  kicker?: string;
   /** Page title */
   title: string;
   /** Optional subtitle/description below the title */
@@ -26,7 +24,7 @@ export function ContentPage({ children, className }: ContentPageProps) {
   return <div className={`cg-content-page ${className || ""}`}>{children}</div>;
 }
 
-function Header({ kicker, title, subtitle, actions, breadcrumbs }: ContentPageHeaderProps) {
+function Header({ title, subtitle, actions, breadcrumbs }: ContentPageHeaderProps) {
   return (
     <header className="cg-content-header">
       {breadcrumbs && breadcrumbs.length > 0 && (
@@ -45,7 +43,6 @@ function Header({ kicker, title, subtitle, actions, breadcrumbs }: ContentPageHe
       )}
       <div className="cg-content-header-main">
         <div className="cg-content-header-text">
-          {kicker && <div className="cg-content-kicker">{kicker}</div>}
           <h1 className="cg-content-title">{title}</h1>
           {subtitle && <p className="cg-content-subtitle">{subtitle}</p>}
         </div>

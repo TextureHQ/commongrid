@@ -1,18 +1,19 @@
 "use client";
 
-import "../../detail-page.css";
-
 import { Badge, InteractiveMap, Loader, layer } from "@texturehq/edges";
 import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
-import { DetailEntityList } from "@/components/detail/DetailEntityList";
-import { DetailFieldList } from "@/components/detail/DetailFieldList";
-import { DetailMap } from "@/components/detail/DetailMap";
-import { DetailPageShell } from "@/components/detail/DetailPageShell";
-import { DetailRelationships } from "@/components/detail/DetailRelationships";
-import { DetailSection } from "@/components/detail/DetailSection";
-import { DetailStatGrid } from "@/components/detail/DetailStatGrid";
+import {
+  BadgeList,
+  EntityList,
+  EntityMap,
+  EntityPageHeader,
+  EntitySection,
+  EntityStatsRow,
+  FieldList,
+  RelationshipCards,
+} from "@/components/entity";
 import { getBalancingAuthorityById } from "@/lib/data";
 import {
   formatCapacity,
@@ -55,8 +56,8 @@ export default function PowerPlantDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="cg-detail">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "96px 0" }}>
+      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        <div className="flex items-center justify-center py-24">
           <Loader size={32} />
         </div>
       </div>
@@ -108,12 +109,12 @@ export default function PowerPlantDetailPage() {
     {
       id: "fuelType",
       label: "Fuel Type",
-      value: <span className="cg-tag">{getFuelCategoryLabel(plant.fuelCategory)}</span>,
+      value: <Badge variant="neutral">{getFuelCategoryLabel(plant.fuelCategory)}</Badge>,
     },
     {
       id: "status",
       label: "Status",
-      value: <span className="cg-tag">{plant.status === "operable" ? "Operable" : "Proposed"}</span>,
+      value: <Badge variant="neutral">{plant.status === "operable" ? "Operable" : "Proposed"}</Badge>,
     },
     {
       id: "capacity",
@@ -216,137 +217,122 @@ export default function PowerPlantDetailPage() {
       : []),
   ];
 
-  let sectionNum = 1;
-  const nextNum = () => String(sectionNum++).padStart(2, "0");
-
   return (
-    <DetailPageShell
-      kicker="Power Plant"
-      kickerDotColor={getFuelCategoryColor(plant.fuelCategory)}
-      entityName={plant.name}
-      subtitle={
-        <>
-          {plant.utilityName && <span>{plant.utilityName}</span>}
-          {plant.utilityName && <span className="sep">·</span>}
-          <span className="cg-tag">{plant.status === "operable" ? "Operable" : "Proposed"}</span>
-          <span className="sep">·</span>
-          <span className="cg-tag">{getFuelCategoryLabel(plant.fuelCategory)}</span>
-        </>
-      }
-      breadcrumbs={[{ label: "Power Plants", href: "/power-plants" }, { label: plant.slug }]}
-      actions={
-        <EntityActions
-          entityType="power_plant"
-          entityId={plant.id ?? plant.slug}
-          entitySlug={plant.slug}
-          entityName={plant.name}
-          currentValues={plant as unknown as Record<string, unknown>}
-        />
-      }
-      dataSourcePaths={["data/power-plants.json"]}
-    >
-      {/* Key stats band */}
-      {headerStats.length > 0 && <DetailStatGrid stats={headerStats} />}
+    <>
+      <EntityPageHeader
+        entityName={plant.name}
+        subtitle={
+          <>
+            {plant.utilityName && <span>{plant.utilityName}</span>}
+            {plant.utilityName && <span className="text-text-muted mx-2">·</span>}
+            <Badge variant="neutral">{plant.status === "operable" ? "Operable" : "Proposed"}</Badge>
+            <span className="text-text-muted mx-2">·</span>
+            <Badge variant="neutral">{getFuelCategoryLabel(plant.fuelCategory)}</Badge>
+          </>
+        }
+        breadcrumbs={[{ label: "Power Plants", href: "/power-plants" }, { label: plant.slug }]}
+        actions={
+          <EntityActions
+            entityType="power_plant"
+            entityId={plant.id ?? plant.slug}
+            entitySlug={plant.slug}
+            entityName={plant.name}
+            currentValues={plant as unknown as Record<string, unknown>}
+          />
+        }
+        dataSourcePaths={["data/power-plants.json"]}
+      />
 
-      {/* 01 · Overview */}
-      <DetailSection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
-        <DetailFieldList
-          items={overviewFields}
-          columns={2}
-          enableInlineEdit
-          entityType="power_plant"
-          entityId={plant.id ?? plant.slug}
-          entityName={plant.name}
-          currentValues={plant as unknown as Record<string, unknown>}
-          onFieldEdited={() => {
-            // Refresh the page after successful edit
-            window.location.reload();
-          }}
-        />
-      </DetailSection>
+      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        {/* Key stats band */}
+        {headerStats.length > 0 && <EntityStatsRow stats={headerStats} />}
 
-      {/* 02 · Technologies */}
-      {plant.technologies.length > 0 && (
-        <DetailSection id="technologies" kicker={`${nextNum()} · Technologies`} title="Technologies">
-          <div className="cg-tags">
-            {plant.technologies.map((tech) => (
-              <span key={tech} className="cg-tag">
-                {tech}
-              </span>
-            ))}
-          </div>
-          {plant.energySources.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <div className="detail-list-meta">Energy Sources</div>
-              <div className="cg-tags">
-                {plant.energySources.map((source) => (
-                  <span key={source} className="cg-tag">
-                    {source}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </DetailSection>
-      )}
-
-      {/* 03 · Location */}
-      <DetailSection id="location" kicker={`${nextNum()} · Location`} title="Location">
-        <DetailMap>
-          <InteractiveMap
-            {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
-              mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
-            })}
-            initialViewState={{
-              longitude: plant.longitude,
-              latitude: plant.latitude,
-              zoom: 10,
+        {/* Overview */}
+        <EntitySection id="overview" title="Overview">
+          <FieldList
+            items={overviewFields}
+            columns={2}
+            enableInlineEdit
+            entityType="power_plant"
+            entityId={plant.id ?? plant.slug}
+            entityName={plant.name}
+            currentValues={plant as unknown as Record<string, unknown>}
+            onFieldEdited={() => {
+              window.location.reload();
             }}
-            mapType="neutral"
-            controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
-            layers={[
-              layer.geojson({
-                id: "plant-location",
-                data: pointGeoJSON,
-                renderAs: "circle",
-                style: {
-                  color: { hex: getFuelCategoryColor(plant.fuelCategory) },
-                  radius: 8,
-                  borderWidth: 2,
-                  borderColor: { hex: "#ffffff" },
-                },
-              }),
-            ]}
           />
-        </DetailMap>
-      </DetailSection>
+        </EntitySection>
 
-      {/* 04 · Grid Relationships */}
-      {hasRelationships && (
-        <DetailSection id="relationships" kicker={`${nextNum()} · Grid`} title="Grid Relationships">
-          <DetailRelationships items={relationshipItems} />
-        </DetailSection>
-      )}
+        {/* Technologies */}
+        {plant.technologies.length > 0 && (
+          <EntitySection id="technologies" title="Technologies">
+            <BadgeList items={plant.technologies} variant="neutral" />
+            {plant.energySources.length > 0 && (
+              <div className="mt-6">
+                <BadgeList items={plant.energySources} variant="neutral" label="Energy Sources" />
+              </div>
+            )}
+          </EntitySection>
+        )}
 
-      {/* 05 · Nearby Plants */}
-      {!plantsLoading && nearbyPlants.length > 0 && (
-        <DetailSection id="nearby" kicker={`${nextNum()} · Nearby`} title="Nearby Power Plants">
-          <DetailEntityList
-            items={nearbyPlants.map((p) => ({
-              href: `/power-plants/${p.slug}`,
-              name: p.name,
-              dotColor: getFuelCategoryColor(p.fuelCategory),
-              badge: (
-                <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(p.fuelCategory)}>
-                  {getFuelCategoryLabel(p.fuelCategory)}
-                </Badge>
-              ),
-              meta: `${formatCapacity(p.totalCapacityMw)} · ${Math.round(p.distance)} mi`,
-            }))}
-            headerMeta={`${nearbyPlants.length} plants within 50 miles`}
-          />
-        </DetailSection>
-      )}
-    </DetailPageShell>
+        {/* Location */}
+        <EntitySection id="location" title="Location">
+          <EntityMap>
+            <InteractiveMap
+              {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
+                mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+              })}
+              initialViewState={{
+                longitude: plant.longitude,
+                latitude: plant.latitude,
+                zoom: 10,
+              }}
+              mapType="neutral"
+              controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+              layers={[
+                layer.geojson({
+                  id: "plant-location",
+                  data: pointGeoJSON,
+                  renderAs: "circle",
+                  style: {
+                    color: { hex: getFuelCategoryColor(plant.fuelCategory) },
+                    radius: 8,
+                    borderWidth: 2,
+                    borderColor: { hex: "#ffffff" },
+                  },
+                }),
+              ]}
+            />
+          </EntityMap>
+        </EntitySection>
+
+        {/* Grid Relationships */}
+        {hasRelationships && (
+          <EntitySection id="relationships" title="Grid Relationships">
+            <RelationshipCards items={relationshipItems} />
+          </EntitySection>
+        )}
+
+        {/* Nearby Plants */}
+        {!plantsLoading && nearbyPlants.length > 0 && (
+          <EntitySection id="nearby" title="Nearby Power Plants">
+            <EntityList
+              items={nearbyPlants.map((p) => ({
+                href: `/power-plants/${p.slug}`,
+                name: p.name,
+                dotColor: getFuelCategoryColor(p.fuelCategory),
+                badge: (
+                  <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(p.fuelCategory)}>
+                    {getFuelCategoryLabel(p.fuelCategory)}
+                  </Badge>
+                ),
+                meta: `${formatCapacity(p.totalCapacityMw)} · ${Math.round(p.distance)} mi`,
+              }))}
+              headerMeta={`${nearbyPlants.length} plants within 50 miles`}
+            />
+          </EntitySection>
+        )}
+      </div>
+    </>
   );
 }

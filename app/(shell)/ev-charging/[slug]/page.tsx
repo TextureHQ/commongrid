@@ -1,11 +1,17 @@
 "use client";
 
-import "../../detail-page.css";
-
-import { Badge, InteractiveMap, Loader, layer } from "@texturehq/edges";
+import { Badge, Button, InteractiveMap, Loader, layer } from "@texturehq/edges";
 import { notFound, useParams } from "next/navigation";
 import { EntityActions } from "@/components/contributions/EntityActions";
-import { DetailFieldList, DetailMap, DetailPageShell, DetailSection, DetailStatGrid } from "@/components/detail";
+import {
+  BadgeList,
+  EntityMap,
+  EntityPageHeader,
+  EntitySection,
+  EntityStatsRow,
+  FieldList,
+  PortDisplay,
+} from "@/components/entity";
 import { useEvStation } from "@/lib/ev-charging";
 import {
   getAccessLabel,
@@ -46,11 +52,10 @@ export default function EVStationDetailPage() {
 
   if (isLoading) {
     return (
-      <div
-        className="cg-detail"
-        style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}
-      >
-        <Loader size={32} />
+      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader size={32} />
+        </div>
       </div>
     );
   }
@@ -80,189 +85,166 @@ export default function EVStationDetailPage() {
     `${station.streetAddress}, ${station.city}, ${station.state} ${station.zip}`
   )}`;
 
-  let sectionNum = 1;
-  const nextNum = () => String(sectionNum++).padStart(2, "0");
-
   return (
-    <DetailPageShell
-      kicker="EV Charging Station"
-      kickerDotColor={networkColor}
-      entityName={station.stationName}
-      subtitle={
-        <>
-          <span>{getNetworkShortName(station.evNetwork)}</span>
-          <span className="sep">·</span>
-          <span>
-            {station.city}, {station.state}
-          </span>
-          <span className="sep">·</span>
-          <Badge size="sm" shape="pill" variant={getStatusBadgeVariant(station.statusCode)}>
-            {getStatusLabel(station.statusCode)}
-          </Badge>
-        </>
-      }
-      breadcrumbs={[
-        { label: "Home", href: "/" },
-        { label: "EV Charging", href: "/ev-charging" },
-        { label: station.slug },
-      ]}
-      actions={
-        <EntityActions
-          entityType="ev_station"
-          entityId={station.id ?? station.slug}
-          entitySlug={station.slug}
-          entityName={station.stationName}
-          currentValues={station as unknown as Record<string, unknown>}
-        />
-      }
-      dataSourcePaths={["data/ev-charging.json"]}
-    >
-      {/* Stats: port counts */}
-      <DetailStatGrid
-        stats={[
-          {
-            value: station.evLevel1EvseNum != null ? String(station.evLevel1EvseNum) : null,
-            label: "Level 1 (120V)",
-          },
-          {
-            value: station.evLevel2EvseNum != null ? String(station.evLevel2EvseNum) : null,
-            label: "Level 2 (240V)",
-          },
-          {
-            value: station.evDcFastNum != null ? String(station.evDcFastNum) : null,
-            label: "DC Fast Charge",
-          },
-          { value: totalConnectors > 0 ? String(totalConnectors) : null, label: "Total Connectors" },
+    <>
+      <EntityPageHeader
+        entityName={station.stationName}
+        subtitle={
+          <>
+            <span>{getNetworkShortName(station.evNetwork)}</span>
+            <span className="text-text-muted mx-2">·</span>
+            <span>
+              {station.city}, {station.state}
+            </span>
+            <span className="text-text-muted mx-2">·</span>
+            <Badge size="sm" shape="pill" variant={getStatusBadgeVariant(station.statusCode)}>
+              {getStatusLabel(station.statusCode)}
+            </Badge>
+          </>
+        }
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "EV Charging", href: "/ev-charging" },
+          { label: station.slug },
         ]}
+        actions={
+          <EntityActions
+            entityType="ev_station"
+            entityId={station.id ?? station.slug}
+            entitySlug={station.slug}
+            entityName={station.stationName}
+            currentValues={station as unknown as Record<string, unknown>}
+          />
+        }
+        dataSourcePaths={["data/ev-charging.json"]}
       />
 
-      {/* 01 · Overview */}
-      <DetailSection id="overview" kicker={`${nextNum()} · Overview`} title="Overview">
-        <DetailFieldList
-          items={[
-            { id: "network", label: "Network", value: getNetworkShortName(station.evNetwork) },
+      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        {/* Stats: port counts */}
+        <EntityStatsRow
+          stats={[
             {
-              id: "status",
-              label: "Status",
-              value: (
-                <Badge size="sm" shape="pill" variant={getStatusBadgeVariant(station.statusCode)}>
-                  {getStatusLabel(station.statusCode)}
-                </Badge>
-              ),
+              value: station.evLevel1EvseNum != null ? String(station.evLevel1EvseNum) : null,
+              label: "Level 1 (120V)",
             },
-            { id: "access", label: "Access", value: getAccessLabel(station.accessCode) },
-            { id: "connectors", label: "Total Connectors", value: totalConnectors },
+            {
+              value: station.evLevel2EvseNum != null ? String(station.evLevel2EvseNum) : null,
+              label: "Level 2 (240V)",
+            },
+            {
+              value: station.evDcFastNum != null ? String(station.evDcFastNum) : null,
+              label: "DC Fast Charge",
+            },
+            { value: totalConnectors > 0 ? String(totalConnectors) : null, label: "Total Connectors" },
           ]}
         />
-      </DetailSection>
 
-      {/* 02 · Charging Infrastructure */}
-      <DetailSection id="charging" kicker={`${nextNum()} · Charging`} title="Charging Infrastructure">
-        {/* Port display */}
-        <div className="detail-ports">
-          <div className="detail-port">
-            <div className="detail-port-n tabular">{station.evLevel1EvseNum ?? 0}</div>
-            <div className="detail-port-label">Level 1</div>
-            <div className="detail-port-sub">120V AC</div>
-          </div>
-          <div className="detail-port">
-            <div className="detail-port-n tabular">{station.evLevel2EvseNum ?? 0}</div>
-            <div className="detail-port-label">Level 2</div>
-            <div className="detail-port-sub">240V AC</div>
-          </div>
-          <div className="detail-port">
-            <div className="detail-port-n tabular">{station.evDcFastNum ?? 0}</div>
-            <div className="detail-port-label">DC Fast</div>
-            <div className="detail-port-sub">CCS / CHAdeMO</div>
-          </div>
-        </div>
-
-        {station.evConnectorTypes.length > 0 && (
-          <div>
-            <div className="detail-list-meta">Connector Types</div>
-            <div className="cg-tags">
-              {station.evConnectorTypes.map((ct) => (
-                <Badge key={ct} size="sm" shape="pill" variant="info">
-                  {ct}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {station.evPricing && (
-          <div className="detail-pricing">
-            <div className="detail-pricing-label">Pricing</div>
-            <div className="detail-pricing-text">{station.evPricing}</div>
-          </div>
-        )}
-      </DetailSection>
-
-      {/* 03 · Station Details */}
-      <DetailSection id="details" kicker={`${nextNum()} · Details`} title="Station Details">
-        <DetailFieldList
-          items={[
-            {
-              id: "address",
-              label: "Address",
-              value: `${station.streetAddress}, ${station.city}, ${station.state} ${station.zip}`,
-            },
-            ...(station.facilityType
-              ? [
-                  {
-                    id: "facilityType",
-                    label: "Facility Type",
-                    value: station.facilityType.replace(/_/g, " "),
-                  },
-                ]
-              : []),
-            { id: "ownerType", label: "Owner Type", value: getOwnerTypeLabel(station.ownerTypeCode) },
-            ...(station.openDate ? [{ id: "openDate", label: "Opened", value: station.openDate }] : []),
-            {
-              id: "coordinates",
-              label: "Coordinates",
-              value: `${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}`,
-            },
-            { id: "stationId", label: "Station ID", value: station.id, copyable: true },
-          ]}
-        />
-        <div style={{ marginTop: 16 }}>
-          <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="cg-btn cg-btn-primary">
-            Get Directions →
-          </a>
-        </div>
-      </DetailSection>
-
-      {/* 04 · Location Map */}
-      <DetailSection id="location" kicker={`${nextNum()} · Location`} title="Location">
-        <DetailMap>
-          <InteractiveMap
-            {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
-              mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
-            })}
-            initialViewState={{
-              longitude: station.longitude,
-              latitude: station.latitude,
-              zoom: 13,
-            }}
-            mapType="neutral"
-            controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
-            layers={[
-              layer.geojson({
-                id: "station-location",
-                data: pointGeoJSON,
-                renderAs: "circle",
-                style: {
-                  color: { hex: networkColor },
-                  radius: 10,
-                  borderWidth: 2,
-                  borderColor: { hex: "#ffffff" },
-                },
-              }),
+        {/* Overview */}
+        <EntitySection id="overview" title="Overview">
+          <FieldList
+            items={[
+              { id: "network", label: "Network", value: getNetworkShortName(station.evNetwork) },
+              {
+                id: "status",
+                label: "Status",
+                value: (
+                  <Badge size="sm" shape="pill" variant={getStatusBadgeVariant(station.statusCode)}>
+                    {getStatusLabel(station.statusCode)}
+                  </Badge>
+                ),
+              },
+              { id: "access", label: "Access", value: getAccessLabel(station.accessCode) },
+              { id: "connectors", label: "Total Connectors", value: totalConnectors },
             ]}
           />
-        </DetailMap>
-      </DetailSection>
-    </DetailPageShell>
+        </EntitySection>
+
+        {/* Charging Infrastructure */}
+        <EntitySection id="charging" title="Charging Infrastructure">
+          <PortDisplay
+            level1Count={station.evLevel1EvseNum ?? 0}
+            level2Count={station.evLevel2EvseNum ?? 0}
+            dcFastCount={station.evDcFastNum ?? 0}
+          />
+
+          {station.evConnectorTypes.length > 0 && (
+            <BadgeList items={station.evConnectorTypes} variant="info" label="Connector Types" />
+          )}
+
+          {station.evPricing && (
+            <div className="mt-6">
+              <div className="text-text-caption text-xs uppercase tracking-wide mb-2">Pricing</div>
+              <div className="text-text-body text-base">{station.evPricing}</div>
+            </div>
+          )}
+        </EntitySection>
+
+        {/* Station Details */}
+        <EntitySection id="details" title="Station Details">
+          <FieldList
+            items={[
+              {
+                id: "address",
+                label: "Address",
+                value: `${station.streetAddress}, ${station.city}, ${station.state} ${station.zip}`,
+              },
+              ...(station.facilityType
+                ? [
+                    {
+                      id: "facilityType",
+                      label: "Facility Type",
+                      value: station.facilityType.replace(/_/g, " "),
+                    },
+                  ]
+                : []),
+              { id: "ownerType", label: "Owner Type", value: getOwnerTypeLabel(station.ownerTypeCode) },
+              ...(station.openDate ? [{ id: "openDate", label: "Opened", value: station.openDate }] : []),
+              {
+                id: "coordinates",
+                label: "Coordinates",
+                value: `${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}`,
+              },
+              { id: "stationId", label: "Station ID", value: station.id, copyable: true },
+            ]}
+          />
+          <div className="mt-4">
+            <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
+              <Button variant="primary">Get Directions →</Button>
+            </a>
+          </div>
+        </EntitySection>
+
+        {/* Location Map */}
+        <EntitySection id="location" title="Location">
+          <EntityMap>
+            <InteractiveMap
+              {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
+                mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+              })}
+              initialViewState={{
+                longitude: station.longitude,
+                latitude: station.latitude,
+                zoom: 13,
+              }}
+              mapType="neutral"
+              controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+              layers={[
+                layer.geojson({
+                  id: "station-location",
+                  data: pointGeoJSON,
+                  renderAs: "circle",
+                  style: {
+                    color: { hex: networkColor },
+                    radius: 10,
+                    borderWidth: 2,
+                    borderColor: { hex: "#ffffff" },
+                  },
+                }),
+              ]}
+            />
+          </EntityMap>
+        </EntitySection>
+      </div>
+    </>
   );
 }
