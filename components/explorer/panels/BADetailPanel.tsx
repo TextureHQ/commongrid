@@ -43,7 +43,6 @@ const ArrowIcon = () => (
 
 export function BADetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
-  const { user } = useCurrentUser();
 
   const ba = getBalancingAuthorityBySlug(slug);
   const iso = ba?.isoId ? getIsoById(ba.isoId) : null;
@@ -117,15 +116,13 @@ export function BADetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">ISO</span>
               <span className="cg-explore-kv-val">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigateToDetail("iso", iso.slug);
-                  }}
+                <button
+                  type="button"
+                  className="cg-explore-link-button"
+                  onClick={() => navigateToDetail("iso", iso.slug)}
                 >
                   {iso.shortName}
-                </a>
+                </button>
               </span>
             </div>
           )}
@@ -146,7 +143,19 @@ export function BADetailPanel({ slug }: { slug: string }) {
           <>
             <div className="cg-explore-related-heading">Utilities ({utilities.length})</div>
             {utilities.slice(0, 15).map((u) => (
-              <div key={u.id} className="cg-explore-related-row" onClick={() => navigateToDetail("utility", u.slug)}>
+              <div
+                key={u.id}
+                className="cg-explore-related-row"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigateToDetail("utility", u.slug)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigateToDetail("utility", u.slug);
+                  }
+                }}
+              >
                 <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{u.name}</div>

@@ -275,9 +275,7 @@ export function EditPanel({
               {/* Field-by-field editing */}
               {Array.from(sections.entries()).map(([sectionName, sectionFields]) => (
                 <div key={sectionName}>
-                  <div className="text-xs font-medium text-text-muted mb-3">
-                    {sectionName}
-                  </div>
+                  <div className="text-xs font-medium text-text-muted mb-3">{sectionName}</div>
                   <div className="space-y-3">
                     {sectionFields.map((field) => {
                       const editedVal = editedValues[field.name] ?? "";

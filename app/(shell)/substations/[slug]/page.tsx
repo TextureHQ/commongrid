@@ -98,9 +98,7 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "32px" }}>
         {/* Location card */}
         <div style={{ border: "1px solid var(--color-border-default)", borderRadius: "8px", padding: "16px" }}>
-          <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>
-            Location
-          </h2>
+          <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>Location</h2>
           <div style={{ display: "grid", gap: "8px", fontSize: "14px" }}>
             <div>
               <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>State</div>
@@ -123,9 +121,7 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
 
         {/* Voltage card */}
         <div style={{ border: "1px solid var(--color-border-default)", borderRadius: "8px", padding: "16px" }}>
-          <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>
-            Voltage
-          </h2>
+          <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>Voltage</h2>
           <div style={{ display: "grid", gap: "8px", fontSize: "14px" }}>
             {voltageDisplay && (
               <div>
@@ -145,10 +141,15 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
 
       {/* Ownership card */}
       {substation.ownerName && (
-        <div style={{ border: "1px solid var(--color-border-default)", borderRadius: "8px", padding: "16px", marginBottom: "32px" }}>
-          <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>
-            Ownership & Operations
-          </h2>
+        <div
+          style={{
+            border: "1px solid var(--color-border-default)",
+            borderRadius: "8px",
+            padding: "16px",
+            marginBottom: "32px",
+          }}
+        >
+          <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>Ownership & Operations</h2>
           <div style={{ display: "grid", gap: "8px", fontSize: "14px" }}>
             <div>
               <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>Owner</div>
@@ -160,7 +161,13 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
 
       {/* Source information */}
       <div
-        style={{ fontSize: "11px", color: "var(--color-text-caption)", padding: "16px", backgroundColor: "var(--color-background-subtle)", borderRadius: "4px" }}
+        style={{
+          fontSize: "11px",
+          color: "var(--color-text-caption)",
+          padding: "16px",
+          backgroundColor: "var(--color-background-subtle)",
+          borderRadius: "4px",
+        }}
       >
         <strong>Data attribution:</strong> {attributionText}
         {substation.sourceUrl && (
