@@ -150,7 +150,13 @@ export default function EVStationDetailPage() {
         <EntitySection id="overview" title="Overview">
           <FieldList
             items={[
-              { id: "network", label: "Network", value: getNetworkShortName(station.evNetwork) },
+              {
+                id: "network",
+                label: "Network",
+                value: getNetworkShortName(station.evNetwork),
+                editable: true,
+                fieldName: "ev_network",
+              },
               {
                 id: "status",
                 label: "Status",
@@ -159,10 +165,26 @@ export default function EVStationDetailPage() {
                     {getStatusLabel(station.statusCode)}
                   </Badge>
                 ),
+                editable: true,
+                fieldName: "status_code",
               },
-              { id: "access", label: "Access", value: getAccessLabel(station.accessCode) },
-              { id: "connectors", label: "Total Connectors", value: totalConnectors },
+              {
+                id: "access",
+                label: "Access",
+                value: getAccessLabel(station.accessCode),
+                editable: true,
+                fieldName: "access_code",
+              },
+              { id: "connectors", label: "Total Connectors", value: totalConnectors, editable: false },
             ]}
+            enableInlineEdit
+            entityType="ev_station"
+            entityId={station.id ?? station.slug}
+            entityName={station.stationName}
+            currentValues={station as unknown as Record<string, unknown>}
+            onFieldEdited={() => {
+              window.location.reload();
+            }}
           />
         </EntitySection>
 
@@ -191,9 +213,32 @@ export default function EVStationDetailPage() {
           <FieldList
             items={[
               {
-                id: "address",
-                label: "Address",
-                value: `${station.streetAddress}, ${station.city}, ${station.state} ${station.zip}`,
+                id: "streetAddress",
+                label: "Street Address",
+                value: station.streetAddress,
+                editable: true,
+                fieldName: "street_address",
+              },
+              {
+                id: "city",
+                label: "City",
+                value: station.city,
+                editable: true,
+                fieldName: "city",
+              },
+              {
+                id: "state",
+                label: "State",
+                value: station.state,
+                editable: true,
+                fieldName: "state",
+              },
+              {
+                id: "zip",
+                label: "ZIP Code",
+                value: station.zip,
+                editable: true,
+                fieldName: "zip",
               },
               ...(station.facilityType
                 ? [
@@ -201,18 +246,35 @@ export default function EVStationDetailPage() {
                       id: "facilityType",
                       label: "Facility Type",
                       value: station.facilityType.replace(/_/g, " "),
+                      editable: false,
                     },
                   ]
                 : []),
-              { id: "ownerType", label: "Owner Type", value: getOwnerTypeLabel(station.ownerTypeCode) },
-              ...(station.openDate ? [{ id: "openDate", label: "Opened", value: station.openDate }] : []),
+              {
+                id: "ownerType",
+                label: "Owner Type",
+                value: getOwnerTypeLabel(station.ownerTypeCode),
+                editable: false,
+              },
+              ...(station.openDate
+                ? [{ id: "openDate", label: "Opened", value: station.openDate, editable: false }]
+                : []),
               {
                 id: "coordinates",
                 label: "Coordinates",
                 value: `${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}`,
+                editable: false,
               },
-              { id: "stationId", label: "Station ID", value: station.id, copyable: true },
+              { id: "stationId", label: "Station ID", value: station.id, copyable: true, editable: false },
             ]}
+            enableInlineEdit
+            entityType="ev_station"
+            entityId={station.id ?? station.slug}
+            entityName={station.stationName}
+            currentValues={station as unknown as Record<string, unknown>}
+            onFieldEdited={() => {
+              window.location.reload();
+            }}
           />
           <div className="mt-4">
             <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
