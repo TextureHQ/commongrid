@@ -9,16 +9,17 @@ import {
   DataTable,
   EmptyState,
   Icon,
+  Loader,
   PageLayout,
   TextCell,
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { sortByName } from "@/lib/data";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import {
   formatCustomerCount,
   getSegmentBadgeVariant,
@@ -26,8 +27,6 @@ import {
   getStatusBadgeVariant,
   getStatusLabel,
 } from "@/lib/formatting";
-import { useFuseSearch } from "@/lib/search";
-import { useUtilities } from "@/lib/utilities-client";
 import { UtilitySegmentLabel } from "@/types/entities";
 
 interface UtilityRow extends Record<string, unknown> {
@@ -44,8 +43,8 @@ interface UtilityRow extends Record<string, unknown> {
 const sortOptions = [
   { id: "name:asc", label: "Name A-Z", value: "name:asc" },
   { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "customers:desc", label: "Customers (High to Low)", value: "customers:desc" },
-  { id: "customers:asc", label: "Customers (Low to High)", value: "customers:asc" },
+  { id: "customerCount:desc", label: "Customers (High to Low)", value: "customerCount:desc" },
+  { id: "customerCount:asc", label: "Customers (Low to High)", value: "customerCount:asc" },
 ];
 
 const segmentFilterOptions = [
@@ -65,70 +64,108 @@ const statusFilterOptions = [
   { id: "DEFUNCT", label: "Defunct", value: "DEFUNCT" },
 ];
 
-const FUSE_OPTIONS = {
-  keys: [
-    { name: "name", weight: 0.4 },
-    { name: "shortName", weight: 0.2 },
-    { name: "eiaName", weight: 0.15 },
-    { name: "slug", weight: 0.1 },
-    { name: "jurisdiction", weight: 0.1 },
-    { name: "eiaId", weight: 0.05 },
-  ],
-  threshold: 0.3,
-  ignoreLocation: true,
-};
+// Common jurisdictions (could be fetched from API if needed)
+const JURISDICTIONS = [
+  "Alabama",
+  "Alaska",
+  "Arizona",
+  "Arkansas",
+  "California",
+  "Colorado",
+  "Connecticut",
+  "Delaware",
+  "Florida",
+  "Georgia",
+  "Hawaii",
+  "Idaho",
+  "Illinois",
+  "Indiana",
+  "Iowa",
+  "Kansas",
+  "Kentucky",
+  "Louisiana",
+  "Maine",
+  "Maryland",
+  "Massachusetts",
+  "Michigan",
+  "Minnesota",
+  "Mississippi",
+  "Missouri",
+  "Montana",
+  "Nebraska",
+  "Nevada",
+  "New Hampshire",
+  "New Jersey",
+  "New Mexico",
+  "New York",
+  "North Carolina",
+  "North Dakota",
+  "Ohio",
+  "Oklahoma",
+  "Oregon",
+  "Pennsylvania",
+  "Rhode Island",
+  "South Carolina",
+  "South Dakota",
+  "Tennessee",
+  "Texas",
+  "Utah",
+  "Vermont",
+  "Virginia",
+  "Washington",
+  "West Virginia",
+  "Wisconsin",
+  "Wyoming",
+  "District of Columbia",
+].sort();
 
 function GridOperatorsPageInner() {
   const router = useRouter();
-  const { utilities: allUtilities } = useUtilities();
   const { user } = useCurrentUser();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
-  const [sortValue, setSortValue] = useState("customers:desc");
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("q") ?? "");
+  const [sortValue, setSortValue] = useState("customerCount:desc");
   const [segmentFilter, setSegmentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [jurisdictionFilter, setJurisdictionFilter] = useState("all");
 
-  // Get unique jurisdictions for filter
-  const jurisdictions = useMemo(() => {
-    const j = new Set(allUtilities.map((u) => u.jurisdiction).filter(Boolean) as string[]);
-    return Array.from(j).sort();
-  }, [allUtilities]);
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  // Fuse.js search
-  const searched = useFuseSearch(allUtilities, searchQuery, FUSE_OPTIONS);
+  // Parse sort
+  const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];
 
-  // Apply filters + sort
-  const filtered = useMemo(() => {
-    let result = searched;
-    if (segmentFilter !== "all") {
-      result = result.filter((u) => u.segment === segmentFilter);
-    }
-    if (statusFilter !== "all") {
-      result = result.filter((u) => u.status === statusFilter);
-    }
-    if (jurisdictionFilter !== "all") {
-      result = result.filter((u) => u.jurisdiction === jurisdictionFilter);
-    }
-    // Sort (skip if Fuse search is active — it returns relevance-ordered)
-    if (!searchQuery.trim()) {
-      const [field, direction] = sortValue.split(":");
-      if (field === "name") {
-        result = sortByName(result, direction as "asc" | "desc");
-      } else if (field === "customers") {
-        result = [...result].sort((a, b) => {
-          const ca = a.customerCount ?? 0;
-          const cb = b.customerCount ?? 0;
-          return direction === "desc" ? cb - ca : ca - cb;
-        });
-      }
-    }
-    return result;
-  }, [searched, segmentFilter, statusFilter, jurisdictionFilter, sortValue, searchQuery]);
+  // Build API filters
+  const filters = useMemo(() => {
+    const f: {
+      search?: string;
+      segment?: string;
+      status?: string;
+      jurisdiction?: string;
+      sort?: string;
+      order?: "asc" | "desc";
+      limit: number;
+    } = {
+      limit: 200,
+      sort: sortField,
+      order: sortOrder,
+    };
+    if (debouncedSearch.trim()) f.search = debouncedSearch.trim();
+    if (segmentFilter !== "all") f.segment = segmentFilter;
+    if (statusFilter !== "all") f.status = statusFilter;
+    if (jurisdictionFilter !== "all") f.jurisdiction = jurisdictionFilter;
+    return f;
+  }, [debouncedSearch, segmentFilter, statusFilter, jurisdictionFilter, sortField, sortOrder]);
+
+  const { utilities, isLoading, error, pagination } = useUtilityList(filters);
 
   const rows: UtilityRow[] = useMemo(
     () =>
-      filtered.map((u) => ({
+      utilities.map((u) => ({
         slug: u.slug,
         name: u.name,
         segment: u.segment,
@@ -138,7 +175,7 @@ function GridOperatorsPageInner() {
         website: u.website,
         logo: u.logo,
       })),
-    [filtered]
+    [utilities]
   );
 
   const handleRowClick = useCallback(
@@ -213,6 +250,44 @@ function GridOperatorsPageInner() {
     []
   );
 
+  if (isLoading && rows.length === 0) {
+    return (
+      <PageLayout
+        className="flex flex-col h-full overflow-hidden bg-background-default"
+        paddingYClass="pt-8 md:pt-12"
+        paddingXClass="px-4"
+      >
+        <div className="flex-none">
+          <PageLayout.Header title="Grid Operators" sticky={true} />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <Loader size={32} />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageLayout
+        className="flex flex-col h-full overflow-hidden bg-background-default"
+        paddingYClass="pt-8 md:pt-12"
+        paddingXClass="px-4"
+      >
+        <div className="flex-none">
+          <PageLayout.Header title="Grid Operators" sticky={true} />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState icon="Lightning" title="Failed to load utilities" description={error.message} fullHeight={true} />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const totalCount = pagination?.totalCount ?? rows.length;
+  const showingCount = rows.length;
+  const hasMore = pagination?.hasNextPage ?? false;
+
   return (
     <PageLayout
       className="flex flex-col h-full overflow-hidden bg-background-default"
@@ -240,13 +315,16 @@ function GridOperatorsPageInner() {
           onChange={setSearchQuery}
           onClear={() => setSearchQuery("")}
           placeholder="Search grid operators by name, state, EIA ID..."
-          resultCount={filtered.length}
+          resultCount={showingCount}
           resultLabel="grid operators"
         />
       </div>
       <div className="flex-none">
         <DataControls
-          resultsCount={{ count: filtered.length, label: "grid operators" }}
+          resultsCount={{
+            count: showingCount,
+            label: hasMore ? `grid operators (${totalCount} total, showing first ${showingCount})` : "grid operators",
+          }}
           sort={{
             value: sortValue,
             options: sortOptions,
@@ -282,7 +360,7 @@ function GridOperatorsPageInner() {
                 className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All Jurisdictions</option>
-                {jurisdictions.map((j) => (
+                {JURISDICTIONS.map((j) => (
                   <option key={j} value={j}>
                     {j}
                   </option>
@@ -302,16 +380,25 @@ function GridOperatorsPageInner() {
             fullHeight={true}
           />
         ) : (
-          <DataTable
-            className="border-r border-l"
-            data={rows}
-            columns={columns}
-            mobileBreakpoint="md"
-            isLoading={false}
-            height="100%"
-            stickyHeader={true}
-            onRowClick={handleRowClick}
-          />
+          <>
+            <DataTable
+              className="border-r border-l"
+              data={rows}
+              columns={columns}
+              mobileBreakpoint="md"
+              isLoading={isLoading}
+              height="100%"
+              stickyHeader={true}
+              onRowClick={handleRowClick}
+            />
+            {hasMore && (
+              <div className="flex justify-center py-4 border-t border-border-default">
+                <div className="text-sm text-text-secondary">
+                  Showing first {showingCount} of {totalCount} results. Refine filters to see different utilities.
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </PageLayout>

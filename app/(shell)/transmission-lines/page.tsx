@@ -10,17 +10,11 @@ import {
   PageLayout,
   TextCell,
 } from "@texturehq/edges";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DataSourceLink } from "@/components/DataSourceLink";
 import { SearchInput } from "@/components/SearchInput";
-import { useFuseSearch } from "@/lib/search";
-import { useTransmissionLines } from "@/lib/transmission-lines";
-import {
-  type TransmissionLine,
-  VOLTAGE_CLASSES,
-  type VoltageClass,
-  VoltageClassLabel,
-} from "@/types/transmission-lines";
+import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
+import { VOLTAGE_CLASSES, type VoltageClass, VoltageClassLabel } from "@/types/transmission-lines";
 
 interface TransmissionLineRow extends Record<string, unknown> {
   objectId: number;
@@ -38,8 +32,8 @@ interface TransmissionLineRow extends Record<string, unknown> {
 const sortOptions = [
   { id: "voltage:desc", label: "Voltage (High to Low)", value: "voltage:desc" },
   { id: "voltage:asc", label: "Voltage (Low to High)", value: "voltage:asc" },
-  { id: "length:desc", label: "Length (Longest First)", value: "length:desc" },
-  { id: "length:asc", label: "Length (Shortest First)", value: "length:asc" },
+  { id: "lengthMiles:desc", label: "Length (Longest First)", value: "lengthMiles:desc" },
+  { id: "lengthMiles:asc", label: "Length (Shortest First)", value: "lengthMiles:asc" },
   { id: "owner:asc", label: "Owner A-Z", value: "owner:asc" },
 ];
 
@@ -90,62 +84,46 @@ function getVoltageClassShortLabel(vc: VoltageClass): string {
 }
 
 export default function TransmissionLinesPage() {
-  const { lines: allLines, isLoading } = useTransmissionLines();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortValue, setSortValue] = useState("voltage:desc");
   const [voltageFilter, setVoltageFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const fuseOptions = useMemo(
-    () => ({
-      keys: [
-        { name: "owner", weight: 0.5 },
-        { name: "id", weight: 0.2 },
-        { name: "sub1", weight: 0.15 },
-        { name: "sub2", weight: 0.15 },
-      ],
-      threshold: 0.3,
-      ignoreLocation: true,
-    }),
-    []
-  );
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const searched = useFuseSearch(allLines, searchQuery, fuseOptions);
+  // Parse sort
+  const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];
 
-  const filtered = useMemo(() => {
-    let result: TransmissionLine[] = searched;
-    if (voltageFilter !== "all") {
-      result = result.filter((l) => l.voltageClass === voltageFilter);
-    }
-    if (statusFilter !== "all") {
-      result = result.filter((l) => l.status.toLowerCase().includes(statusFilter.toLowerCase()));
-    }
-    // Sort only when not fuzzy-searching
-    if (!searchQuery.trim()) {
-      const [field, direction] = sortValue.split(":");
-      result = [...result].sort((a, b) => {
-        if (field === "voltage") {
-          const va = a.voltage ?? -1;
-          const vb = b.voltage ?? -1;
-          return direction === "desc" ? vb - va : va - vb;
-        }
-        if (field === "length") {
-          return direction === "desc" ? b.lengthMiles - a.lengthMiles : a.lengthMiles - b.lengthMiles;
-        }
-        if (field === "owner") {
-          return direction === "asc"
-            ? (a.owner ?? "").localeCompare(b.owner ?? "")
-            : (b.owner ?? "").localeCompare(a.owner ?? "");
-        }
-        return 0;
-      });
-    }
-    return result;
-  }, [searched, searchQuery, voltageFilter, statusFilter, sortValue]);
+  // Build API filters
+  const filters = useMemo(() => {
+    const f: {
+      search?: string;
+      voltageClass?: string;
+      status?: string;
+      sort?: string;
+      order?: "asc" | "desc";
+      limit: number;
+    } = {
+      limit: 200,
+      sort: sortField,
+      order: sortOrder,
+    };
+    if (debouncedSearch.trim()) f.search = debouncedSearch.trim();
+    if (voltageFilter !== "all") f.voltageClass = voltageFilter;
+    if (statusFilter !== "all") f.status = statusFilter;
+    return f;
+  }, [debouncedSearch, voltageFilter, statusFilter, sortField, sortOrder]);
+
+  const { transmissionLines, isLoading, error, pagination } = useTransmissionLineList(filters);
 
   const rows: TransmissionLineRow[] = useMemo(
     () =>
-      filtered.map((l) => ({
+      transmissionLines.map((l) => ({
         objectId: l.objectId,
         id: l.id,
         owner: l.owner,
@@ -157,7 +135,7 @@ export default function TransmissionLinesPage() {
         sub1: l.sub1,
         sub2: l.sub2,
       })),
-    [filtered]
+    [transmissionLines]
   );
 
   const columns: Column<TransmissionLineRow>[] = useMemo(
@@ -242,7 +220,7 @@ export default function TransmissionLinesPage() {
     []
   );
 
-  if (isLoading) {
+  if (isLoading && rows.length === 0) {
     return (
       <PageLayout
         className="flex flex-col h-full overflow-hidden bg-background-default"
@@ -258,6 +236,32 @@ export default function TransmissionLinesPage() {
       </PageLayout>
     );
   }
+
+  if (error) {
+    return (
+      <PageLayout
+        className="flex flex-col h-full overflow-hidden bg-background-default"
+        paddingYClass="pt-8 md:pt-12"
+        paddingXClass="px-4"
+      >
+        <div className="flex-none">
+          <PageLayout.Header title="Transmission Lines" sticky={true} />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState
+            icon="Lightning"
+            title="Failed to load transmission lines"
+            description={error.message}
+            fullHeight={true}
+          />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const totalCount = pagination?.totalCount ?? rows.length;
+  const showingCount = rows.length;
+  const hasMore = pagination?.hasNextPage ?? false;
 
   return (
     <PageLayout
@@ -275,13 +279,18 @@ export default function TransmissionLinesPage() {
           onChange={setSearchQuery}
           onClear={() => setSearchQuery("")}
           placeholder="Search by owner, ID, or substation..."
-          resultCount={filtered.length}
+          resultCount={showingCount}
           resultLabel="lines"
         />
       </div>
       <div className="flex-none">
         <DataControls
-          resultsCount={{ count: filtered.length, label: "transmission lines" }}
+          resultsCount={{
+            count: showingCount,
+            label: hasMore
+              ? `transmission lines (${totalCount} total, showing first ${showingCount})`
+              : "transmission lines",
+          }}
           sort={{
             value: sortValue,
             options: sortOptions,
@@ -327,15 +336,24 @@ export default function TransmissionLinesPage() {
             fullHeight={true}
           />
         ) : (
-          <DataTable
-            className="border-r border-l"
-            data={rows}
-            columns={columns}
-            mobileBreakpoint="md"
-            isLoading={false}
-            height="100%"
-            stickyHeader={true}
-          />
+          <>
+            <DataTable
+              className="border-r border-l"
+              data={rows}
+              columns={columns}
+              mobileBreakpoint="md"
+              isLoading={isLoading}
+              height="100%"
+              stickyHeader={true}
+            />
+            {hasMore && (
+              <div className="flex justify-center py-4 border-t border-border-default">
+                <div className="text-sm text-text-secondary">
+                  Showing first {showingCount} of {totalCount} results. Refine filters to see different lines.
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </PageLayout>
