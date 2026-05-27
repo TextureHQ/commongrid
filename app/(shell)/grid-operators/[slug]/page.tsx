@@ -55,6 +55,22 @@ import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
 import type { Utility } from "@/types/entities";
 import type { TransmissionLine } from "@/types/transmission-lines";
 
+// Map utility segments to categorical colors from edges design system
+function getTerritoryColor(segment: string | null | undefined): string {
+  const segmentColorMap: Record<string, string> = {
+    INVESTOR_OWNED_UTILITY: "#5424db", // viz-categorical-1 — Deep Violet
+    DISTRIBUTION_COOPERATIVE: "#e86a00", // viz-categorical-3 — Burnt Orange
+    MUNICIPAL_UTILITY: "#0ba286", // viz-categorical-7 — Teal
+    COMMUNITY_CHOICE_AGGREGATOR: "#9a47e2", // viz-categorical-5 — Purple
+    GENERATION_AND_TRANSMISSION: "#52a119", // viz-categorical-10 — Lime Green
+    POLITICAL_SUBDIVISION: "#5d89ff", // viz-categorical-4 — Cornflower
+    TRANSMISSION_OPERATOR: "#046691", // viz-categorical-12 — Deep Cyan
+    JOINT_ACTION_AGENCY: "#9c28af", // viz-categorical-8 — Purple-Magenta
+    FEDERAL: "#ff513d", // viz-categorical-11 — Red-Orange
+  };
+  return segmentColorMap[segment ?? ""] ?? "#5424db"; // Default to viz-categorical-1
+}
+
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
   name: string;
@@ -393,25 +409,38 @@ export default function UtilityDetailPage() {
     [utility]
   );
 
-  const territoryFileKey = useMemo(() => {
-    if (!region) return null;
-    if (region.type === "CCA_TERRITORY" || region.type === "ISO" || region.type === "CUSTOM") {
-      return region.slug;
-    }
-    return region.eiaId;
-  }, [region]);
-
   useEffect(() => {
-    if (!territoryFileKey) {
+    if (!region?.slug) {
       setTerritoryLoading(false);
       return;
     }
-    fetch(`/data/territories/${territoryFileKey}.json`)
+    fetch(`/api/v1/territories/${region.slug}/geometry`)
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setTerritoryGeoJSON(data as FeatureCollection | null))
+      .then((apiResponse) => {
+        if (!apiResponse?.data) {
+          setTerritoryGeoJSON(null);
+          return;
+        }
+        // Wrap the API geometry response in a FeatureCollection
+        const featureCollection: FeatureCollection = {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: {
+                id: region.id,
+                name: region.name,
+                slug: region.slug,
+              },
+              geometry: apiResponse.data,
+            },
+          ],
+        };
+        setTerritoryGeoJSON(featureCollection);
+      })
       .catch(() => setTerritoryGeoJSON(null))
       .finally(() => setTerritoryLoading(false));
-  }, [territoryFileKey]);
+  }, [region]);
 
   const generationMembers = useMemo(
     () => (utility ? utilities.filter((u) => u.generationProviderId === utility.id) : []),
@@ -682,10 +711,10 @@ export default function UtilityDetailPage() {
                         data: territoryGeoJSON,
                         renderAs: "fill",
                         style: {
-                          color: { token: "brand-primary" },
+                          color: { hex: getTerritoryColor(utility?.segment) },
                           fillOpacity: 0.25,
                           borderWidth: 3,
-                          borderColor: { token: "brand-primary" },
+                          borderColor: { hex: getTerritoryColor(utility?.segment) },
                         },
                       }),
                     ]
