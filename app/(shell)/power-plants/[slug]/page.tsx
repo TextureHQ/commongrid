@@ -15,6 +15,9 @@ import {
   FieldList,
   RelationshipCards,
 } from "@/components/entity";
+import { usePowerPlant } from "@/hooks/usePowerPlant";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import { getBalancingAuthorityById } from "@/lib/data";
 import {
   formatCapacity,
@@ -23,9 +26,6 @@ import {
   getFuelCategoryColor,
   getFuelCategoryLabel,
 } from "@/lib/formatting";
-import { usePowerPlant } from "@/hooks/usePowerPlant";
-import { usePowerPlantList } from "@/hooks/usePowerPlantList";
-import { useUtilityList } from "@/hooks/useUtilityList";
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 3959; // miles

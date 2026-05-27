@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useFuseSearch } from "@/lib/search";
 import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
+import { useFuseSearch } from "@/lib/search";
 import {
   type TransmissionLine,
   VOLTAGE_CLASSES,

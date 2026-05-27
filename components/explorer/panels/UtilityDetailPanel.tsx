@@ -3,7 +3,13 @@
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
+import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useIso } from "@/hooks/useIso";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useRto } from "@/hooks/useRto";
+import { useUtility } from "@/hooks/useUtility";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import { getRegionById } from "@/lib/data";
 import {
   formatCapacity,
@@ -14,12 +20,6 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
-import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
-import { useIso } from "@/hooks/useIso";
-import { usePowerPlantList } from "@/hooks/usePowerPlantList";
-import { useRto } from "@/hooks/useRto";
-import { useUtility } from "@/hooks/useUtility";
-import { useUtilityList } from "@/hooks/useUtilityList";
 import { useExplorer } from "../ExplorerContext";
 
 const BackIcon = () => (

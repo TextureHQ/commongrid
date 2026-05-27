@@ -17,6 +17,11 @@ import {
   FieldList,
   RelationshipCards,
 } from "@/components/entity";
+import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
+import { useIso } from "@/hooks/useIso";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useProgramList } from "@/hooks/useProgramList";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -28,11 +33,6 @@ import {
   getSegmentLabel,
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
-import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
-import { useIso } from "@/hooks/useIso";
-import { usePowerPlantList } from "@/hooks/usePowerPlantList";
-import { useProgramList } from "@/hooks/useProgramList";
-import { useUtilityList } from "@/hooks/useUtilityList";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -49,7 +49,7 @@ export default function BADetailPage() {
   const [territoryGeoJSON, setTerritoryGeoJSON] = useState<FeatureCollection | null>(null);
   const [territoryLoading, setTerritoryLoading] = useState(true);
 
-  const { iso, isLoading: isoLoading } = useIso(ba?.isoId ?? null);
+  const { iso } = useIso(ba?.isoId ?? null);
 
   useEffect(() => {
     if (!ba?.regionId) {
@@ -63,7 +63,7 @@ export default function BADetailPage() {
       .finally(() => setTerritoryLoading(false));
   }, [ba?.slug, ba?.regionId]);
 
-  const { utilities, isLoading: utilitiesLoading } = useUtilityList({ ba: ba?.slug, limit: 200 });
+  const { utilities } = useUtilityList({ ba: ba?.slug, limit: 200 });
   const { powerPlants: baPowerPlants, isLoading: plantsLoading } = usePowerPlantList({ baId: ba?.id, limit: 200 });
 
   const { programs: allPrograms, isLoading: programsLoading } = useProgramList({ limit: 200 });

@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { formatCapacity, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { formatCapacity, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
 import { useFuseSearch } from "@/lib/search";
 import { FUEL_CATEGORIES, FuelCategoryLabel, type PowerPlant } from "@/types/entities";
 import { useExplorer } from "../ExplorerContext";

@@ -3,12 +3,12 @@
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
-import { safeHostname } from "@/lib/geo";
 import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
 import { useUtilityList } from "@/hooks/useUtilityList";
+import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
+import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
 
 const BackIcon = () => (

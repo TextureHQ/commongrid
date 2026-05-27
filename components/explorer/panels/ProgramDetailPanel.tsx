@@ -4,10 +4,10 @@ import type { Feature, FeatureCollection } from "geojson";
 import { useEffect, useMemo, useState } from "react";
 import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getRegionById } from "@/lib/data";
-import { safeHostname } from "@/lib/geo";
 import { useProgram } from "@/hooks/useProgram";
 import { useUtilityList } from "@/hooks/useUtilityList";
+import { getRegionById } from "@/lib/data";
+import { safeHostname } from "@/lib/geo";
 import {
   AssetTypeLabel,
   CompensationTypeLabel,

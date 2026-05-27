@@ -2,8 +2,11 @@
 
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useEffect } from "react";
+import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
+import { useIso } from "@/hooks/useIso";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -13,10 +16,6 @@ import {
   getSegmentLabel,
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
-import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
-import { useIso } from "@/hooks/useIso";
-import { usePowerPlantList } from "@/hooks/usePowerPlantList";
-import { useUtilityList } from "@/hooks/useUtilityList";
 import { useExplorer } from "../ExplorerContext";
 
 const BackIcon = () => (
@@ -45,8 +44,8 @@ const ArrowIcon = () => (
 export function BADetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
 
-  const { balancingAuthority: ba, isLoading: baLoading } = useBalancingAuthority(slug);
-  const { iso, isLoading: isoLoading } = useIso(ba?.isoId ?? null);
+  const { balancingAuthority: ba } = useBalancingAuthority(slug);
+  const { iso } = useIso(ba?.isoId ?? null);
 
   useEffect(() => {
     if (!ba?.regionId) {

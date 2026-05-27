@@ -30,7 +30,15 @@ import {
   EntityStatsRow,
   RelationshipCards,
 } from "@/components/entity";
+import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useIso } from "@/hooks/useIso";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useProgramList } from "@/hooks/useProgramList";
+import { useRto } from "@/hooks/useRto";
+import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
+import { useUtility } from "@/hooks/useUtility";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import { getRegionById } from "@/lib/data";
 import {
   formatCapacity,
@@ -44,14 +52,6 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
-import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
-import { useIso } from "@/hooks/useIso";
-import { usePowerPlantList } from "@/hooks/usePowerPlantList";
-import { useProgramList } from "@/hooks/useProgramList";
-import { useRto } from "@/hooks/useRto";
-import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
-import { useUtility } from "@/hooks/useUtility";
-import { useUtilityList } from "@/hooks/useUtilityList";
 import type { Utility } from "@/types/entities";
 import type { TransmissionLine } from "@/types/transmission-lines";
 
@@ -367,9 +367,9 @@ export default function UtilityDetailPage() {
   const [territoryGeoJSON, setTerritoryGeoJSON] = useState<FeatureCollection | null>(null);
   const [territoryLoading, setTerritoryLoading] = useState(true);
 
-  const { iso, isLoading: isoLoading } = useIso(utility?.isoId ?? null);
-  const { rto, isLoading: rtoLoading } = useRto(utility?.rtoId ?? null);
-  const { balancingAuthority: ba, isLoading: baLoading } = useBalancingAuthority(utility?.balancingAuthorityId ?? null);
+  const { iso } = useIso(utility?.isoId ?? null);
+  const { rto } = useRto(utility?.rtoId ?? null);
+  const { balancingAuthority: ba } = useBalancingAuthority(utility?.balancingAuthorityId ?? null);
   const parent = useMemo(
     () => (utility?.parentId ? (utilities.find((u) => u.id === utility.parentId) ?? null) : null),
     [utility, utilities]

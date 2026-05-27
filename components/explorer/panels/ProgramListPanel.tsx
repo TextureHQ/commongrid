@@ -3,9 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { searchEntities, sortByName } from "@/lib/data";
 import { useProgramList } from "@/hooks/useProgramList";
 import { useUtilityList } from "@/hooks/useUtilityList";
+import { searchEntities, sortByName } from "@/lib/data";
 import { AssetTypeLabel, CompensationTypeLabel, CompensationUnitLabel, type Program } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
 
