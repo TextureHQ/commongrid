@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getRegionById } from "@/lib/data";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
-import { resolveCSSColor, resolveColorMapping } from "@/lib/resolve-css-colors";
+import { resolveColorMapping, resolveCSSColor } from "@/lib/resolve-css-colors";
 import { useExplorer } from "./ExplorerContext";
 import {
   EVChargingTooltip,
@@ -406,9 +406,12 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
 
   // Resolved color mappings (CSS variables resolved to actual colors)
   const [resolvedSegmentColorMapping, setResolvedSegmentColorMapping] = useState(segmentColorMapping);
-  const [resolvedPricingNodeIsoColorMapping, setResolvedPricingNodeIsoColorMapping] = useState(pricingNodeIsoColorMapping);
+  const [resolvedPricingNodeIsoColorMapping, setResolvedPricingNodeIsoColorMapping] =
+    useState(pricingNodeIsoColorMapping);
   const [resolvedVoltageClassColorMapping, setResolvedVoltageClassColorMapping] = useState(voltageClassColorMapping);
-  const [resolvedSubstationVoltageBandColorMapping, setResolvedSubstationVoltageBandColorMapping] = useState(substationVoltageBandColorMapping);
+  const [resolvedSubstationVoltageBandColorMapping, setResolvedSubstationVoltageBandColorMapping] = useState(
+    substationVoltageBandColorMapping
+  );
   const [resolvedFuelCategoryColorMapping, setResolvedFuelCategoryColorMapping] = useState(fuelCategoryColorMapping);
   const [resolvedEvNetworkColorMapping, setResolvedEvNetworkColorMapping] = useState(evNetworkColorMapping);
   const [resolvedOperatorPalette, setResolvedOperatorPalette] = useState(OPERATOR_PALETTE);
@@ -1045,6 +1048,12 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
     hasHighlight,
     territoryFilter,
     layerVisibility,
+    resolvedSubstationVoltageBandColorMapping,
+    resolvedFuelCategoryColorMapping,
+    resolvedVoltageClassColorMapping,
+    resolvedSegmentColorMapping,
+    resolvedPricingNodeIsoColorMapping,
+    resolvedEvNetworkColorMapping,
   ]);
 
   if (!hasMapboxToken) {

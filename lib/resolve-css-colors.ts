@@ -32,9 +32,7 @@ export function resolveCSSColor(cssValue: string): string {
  * Takes a mapping like `{ key: { hex: "var(--color)" } }` and returns
  * `{ key: { hex: "#ff0000" } }` with all CSS variables resolved.
  */
-export function resolveColorMapping<T extends string>(
-  mapping: Record<T, { hex: string }>
-): Record<T, { hex: string }> {
+export function resolveColorMapping<T extends string>(mapping: Record<T, { hex: string }>): Record<T, { hex: string }> {
   const resolved: Record<string, { hex: string }> = {};
 
   for (const [key, value] of Object.entries(mapping) as [string, { hex: string }][]) {

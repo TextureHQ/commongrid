@@ -2,7 +2,7 @@
 
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useRto } from "@/hooks/useRto";
 import { useUtilityList } from "@/hooks/useUtilityList";
