@@ -137,10 +137,6 @@ interface ApiResponse<T = unknown> {
   };
 }
 
-interface SingleEntityResponse<T = unknown> {
-  data: T;
-}
-
 async function apiRequest<T = unknown>(
   path: string,
   options?: RequestInit

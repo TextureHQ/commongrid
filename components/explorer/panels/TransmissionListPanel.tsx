@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
 import { useFuseSearch } from "@/lib/search";
-import { useTransmissionLines } from "@/lib/transmission-lines";
 import {
   type TransmissionLine,
   VOLTAGE_CLASSES,
@@ -74,7 +74,7 @@ export function TransmissionListPanel() {
   const { state, setSearch, setTypeFilter } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
-  const { lines: allLines, isLoading } = useTransmissionLines();
+  const { transmissionLines: allLines, isLoading } = useTransmissionLineList({ limit: 500 });
 
   const fuseOptions = useMemo(
     () => ({

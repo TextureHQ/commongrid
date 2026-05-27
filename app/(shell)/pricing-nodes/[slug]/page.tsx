@@ -14,25 +14,31 @@ import {
   FieldList,
   RelationshipCards,
 } from "@/components/entity";
-import { usePricingNode, usePricingNodes } from "@/lib/pricing-nodes";
+import { usePricingNode } from "@/hooks/usePricingNode";
+import { usePricingNodeList } from "@/hooks/usePricingNodeList";
 import { getIsoColor, ISO_FULL_NAMES, ISO_LABELS, NODE_TYPE_LABELS } from "@/types/pricing-nodes";
 
 export default function PricingNodeDetailPage() {
   const params = useParams<{ slug: string }>();
-  const { node, isLoading } = usePricingNode(params.slug);
-  const { nodes: allNodes, isLoading: nodesLoading } = usePricingNodes();
+  const { pricingNode: node, isLoading } = usePricingNode(params.slug);
+
+  // Load nodes from the same ISO for "nearby" calculation
+  const { pricingNodes: sameIsoNodes, isLoading: nodesLoading } = usePricingNodeList({
+    iso: node?.iso,
+    limit: 200,
+  });
 
   const nearbyNodes = useMemo(() => {
-    if (!node || allNodes.length === 0) return [];
-    return allNodes
-      .filter((n) => n.slug !== node.slug && n.iso === node.iso)
+    if (!node || sameIsoNodes.length === 0) return [];
+    return sameIsoNodes
+      .filter((n) => n.slug !== node.slug)
       .filter((n) => {
         const dLat = Math.abs(n.latitude - node.latitude);
         const dLon = Math.abs(n.longitude - node.longitude);
         return dLat < 1 && dLon < 1; // roughly within ~70 miles
       })
       .slice(0, 10);
-  }, [node, allNodes]);
+  }, [node, sameIsoNodes]);
 
   if (isLoading) {
     return (

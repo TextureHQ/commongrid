@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { usePricingNodes } from "@/lib/pricing-nodes";
+import { usePricingNodeList } from "@/hooks/usePricingNodeList";
 import { useFuseSearch } from "@/lib/search";
 import type { IsoRto, PricingNode, PricingNodeType } from "@/types/pricing-nodes";
 import { getIsoColor, getNodeTypeLabel, ISO_LABELS, ISOS } from "@/types/pricing-nodes";
@@ -48,7 +48,7 @@ export function PricingNodeListPanel() {
   const { state, setSearch, setTypeFilter } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
-  const { nodes: allNodes, isLoading } = usePricingNodes();
+  const { pricingNodes: allNodes, isLoading } = usePricingNodeList({ limit: 200 });
 
   const fuseOptions = useMemo(
     () => ({

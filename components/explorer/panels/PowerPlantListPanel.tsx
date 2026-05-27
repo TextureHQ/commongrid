@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { formatCapacity, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
-import { usePowerPlants } from "@/lib/power-plants";
 import { useFuseSearch } from "@/lib/search";
 import { FUEL_CATEGORIES, FuelCategoryLabel, type PowerPlant } from "@/types/entities";
 import { useExplorer } from "../ExplorerContext";
@@ -54,7 +54,7 @@ export function PowerPlantListPanel() {
   const { state, setSearch, setTypeFilter } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
-  const { plants: allPlants, isLoading } = usePowerPlants();
+  const { powerPlants: allPlants, isLoading } = usePowerPlantList({ limit: 500 });
 
   const fuseOptions = useMemo(
     () => ({

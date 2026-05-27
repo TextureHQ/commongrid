@@ -15,6 +15,9 @@ import {
   FieldList,
   RelationshipCards,
 } from "@/components/entity";
+import { usePowerPlant } from "@/hooks/usePowerPlant";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import { getBalancingAuthorityById } from "@/lib/data";
 import {
   formatCapacity,
@@ -23,8 +26,6 @@ import {
   getFuelCategoryColor,
   getFuelCategoryLabel,
 } from "@/lib/formatting";
-import { usePowerPlant, usePowerPlants } from "@/lib/power-plants";
-import { useUtilities } from "@/lib/utilities-client";
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 3959; // miles
@@ -38,9 +39,9 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export default function PowerPlantDetailPage() {
   const params = useParams<{ slug: string }>();
-  const { plant, isLoading } = usePowerPlant(params.slug);
-  const { utilities } = useUtilities();
-  const { plants: allPlants, isLoading: plantsLoading } = usePowerPlants();
+  const { powerPlant: plant, isLoading } = usePowerPlant(params.slug);
+  const { utilities } = useUtilityList({ limit: 200 });
+  const { powerPlants: allPlants, isLoading: plantsLoading } = usePowerPlantList({ limit: 500, state: plant?.state });
 
   const nearbyPlants = useMemo(() => {
     if (!plant || allPlants.length === 0) return [];

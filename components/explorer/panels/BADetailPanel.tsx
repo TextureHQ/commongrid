@@ -2,9 +2,11 @@
 
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getBalancingAuthorityBySlug, getIsoById } from "@/lib/data";
+import { useEffect } from "react";
+import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
+import { useIso } from "@/hooks/useIso";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -14,8 +16,6 @@ import {
   getSegmentLabel,
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
-import { filterByBA, usePowerPlants } from "@/lib/power-plants";
-import { useUtilities } from "@/lib/utilities-client";
 import { useExplorer } from "../ExplorerContext";
 
 const BackIcon = () => (
@@ -44,8 +44,8 @@ const ArrowIcon = () => (
 export function BADetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
 
-  const ba = getBalancingAuthorityBySlug(slug);
-  const iso = ba?.isoId ? getIsoById(ba.isoId) : null;
+  const { balancingAuthority: ba } = useBalancingAuthority(slug);
+  const { iso } = useIso(ba?.isoId ?? null);
 
   useEffect(() => {
     if (!ba?.regionId) {
@@ -59,13 +59,8 @@ export function BADetailPanel({ slug }: { slug: string }) {
     return () => setHighlight(null);
   }, [ba?.slug, ba?.regionId, setHighlight]);
 
-  const { utilities: allUtilities } = useUtilities();
-  const utilities = useMemo(
-    () => (ba ? allUtilities.filter((u) => u.balancingAuthorityId === ba.id) : []),
-    [ba, allUtilities]
-  );
-  const { plants: allPlants } = usePowerPlants();
-  const baPowerPlants = useMemo(() => (ba ? filterByBA(allPlants, ba.id) : []), [ba, allPlants]);
+  const { utilities } = useUtilityList({ ba: ba?.slug, limit: 200 });
+  const { powerPlants: baPowerPlants } = usePowerPlantList({ baId: ba?.id, limit: 200 });
 
   if (!ba) {
     return (

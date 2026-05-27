@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getAllPrograms, searchEntities, sortByName } from "@/lib/data";
-import { useUtilities } from "@/lib/utilities-client";
+import { useProgramList } from "@/hooks/useProgramList";
+import { useUtilityList } from "@/hooks/useUtilityList";
+import { searchEntities, sortByName } from "@/lib/data";
 import { AssetTypeLabel, CompensationTypeLabel, CompensationUnitLabel, type Program } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
 
@@ -63,10 +64,10 @@ export function ProgramListPanel() {
   const { state, setSearch, setTypeFilter, navigateToDetail, setFilteredUtilitySlugs } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
-  const { utilities } = useUtilities();
+  const { utilities } = useUtilityList({ limit: 200 });
+  const { programs, isLoading } = useProgramList({ limit: 200 });
 
   const allPrograms = useMemo((): ProgramRow[] => {
-    const programs = getAllPrograms();
     return programs.map((prog) => {
       const adminOrg = prog.organizations.find((o) => o.role === "ADMINISTRATOR");
       const utility = adminOrg ? utilities.find((u) => u.slug === adminOrg.entityId) : null;
@@ -80,7 +81,7 @@ export function ProgramListPanel() {
         compensationSummary: getPrimaryCompensationSummary(prog),
       };
     });
-  }, [utilities]);
+  }, [programs, utilities]);
 
   const filtered = useMemo(() => {
     let result = allPrograms;
