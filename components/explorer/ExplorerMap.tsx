@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getRegionById } from "@/lib/data";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
+import { resolveCSSColor, resolveColorMapping } from "@/lib/resolve-css-colors";
 import { useExplorer } from "./ExplorerContext";
 import {
   EVChargingTooltip,
@@ -171,7 +172,7 @@ interface GridBoundaryData {
   colorMapping: Record<string, { hex: string }>;
 }
 
-function useGridOperatorBoundaries(isActive: boolean) {
+function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[]) {
   const [data, setData] = useState<GridBoundaryData | null>(null);
 
   useEffect(() => {
@@ -193,7 +194,7 @@ function useGridOperatorBoundaries(isActive: boolean) {
         .filter((iso) => iso.shortName)
         .map((iso) => {
           const colorKey = `iso-${iso.shortName.toLowerCase()}`;
-          colorMapping[colorKey] = { hex: OPERATOR_PALETTE[colorIdx % OPERATOR_PALETTE.length] };
+          colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
           colorIdx++;
           return { key: `iso-${iso.shortName.toLowerCase()}`, name: iso.shortName, type: "ISO", colorKey };
         });
@@ -202,7 +203,7 @@ function useGridOperatorBoundaries(isActive: boolean) {
         .filter((ba) => ba.regionId)
         .map((ba) => {
           const colorKey = `ba-${ba.slug}`;
-          colorMapping[colorKey] = { hex: OPERATOR_PALETTE[colorIdx % OPERATOR_PALETTE.length] };
+          colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
           colorIdx++;
           return { key: `ba-${ba.slug}`, name: ba.shortName, type: "BA", colorKey };
         });
@@ -247,7 +248,7 @@ function useGridOperatorBoundaries(isActive: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [isActive]);
+  }, [isActive, operatorPalette]);
 
   return data;
 }
@@ -257,7 +258,7 @@ interface ProgramBoundaryData {
   colorMapping: Record<string, { hex: string }>;
 }
 
-function useProgramBoundaries(isActive: boolean) {
+function useProgramBoundaries(isActive: boolean, operatorPalette: string[]) {
   const [data, setData] = useState<ProgramBoundaryData | null>(null);
 
   useEffect(() => {
@@ -286,7 +287,7 @@ function useProgramBoundaries(isActive: boolean) {
 
       for (const prog of programs) {
         const colorKey = `prog-${prog.slug}`;
-        colorMapping[colorKey] = { hex: OPERATOR_PALETTE[colorIdx % OPERATOR_PALETTE.length] };
+        colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
         colorIdx++;
 
         const fileKeys: string[] = [];
@@ -363,7 +364,7 @@ function useProgramBoundaries(isActive: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [isActive]);
+  }, [isActive, operatorPalette]);
 
   return data;
 }
@@ -403,7 +404,27 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
   const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
 
+  // Resolved color mappings (CSS variables resolved to actual colors)
+  const [resolvedSegmentColorMapping, setResolvedSegmentColorMapping] = useState(segmentColorMapping);
+  const [resolvedPricingNodeIsoColorMapping, setResolvedPricingNodeIsoColorMapping] = useState(pricingNodeIsoColorMapping);
+  const [resolvedVoltageClassColorMapping, setResolvedVoltageClassColorMapping] = useState(voltageClassColorMapping);
+  const [resolvedSubstationVoltageBandColorMapping, setResolvedSubstationVoltageBandColorMapping] = useState(substationVoltageBandColorMapping);
+  const [resolvedFuelCategoryColorMapping, setResolvedFuelCategoryColorMapping] = useState(fuelCategoryColorMapping);
+  const [resolvedEvNetworkColorMapping, setResolvedEvNetworkColorMapping] = useState(evNetworkColorMapping);
+  const [resolvedOperatorPalette, setResolvedOperatorPalette] = useState(OPERATOR_PALETTE);
+
   const overlays = mapOverlays ?? DEFAULT_OVERLAYS;
+
+  // Resolve CSS variables to actual colors on mount (Mapbox can't parse CSS variables)
+  useEffect(() => {
+    setResolvedSegmentColorMapping(resolveColorMapping(segmentColorMapping));
+    setResolvedPricingNodeIsoColorMapping(resolveColorMapping(pricingNodeIsoColorMapping));
+    setResolvedVoltageClassColorMapping(resolveColorMapping(voltageClassColorMapping));
+    setResolvedSubstationVoltageBandColorMapping(resolveColorMapping(substationVoltageBandColorMapping));
+    setResolvedFuelCategoryColorMapping(resolveColorMapping(fuelCategoryColorMapping));
+    setResolvedEvNetworkColorMapping(resolveColorMapping(evNetworkColorMapping));
+    setResolvedOperatorPalette(OPERATOR_PALETTE.map(resolveCSSColor));
+  }, []);
 
   // Derive layer visibility from overlays prop (for the Edges layers control)
   const layerVisibility: Record<string, boolean> = useMemo(
@@ -419,8 +440,8 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
 
   const isGridOperatorView = mapRegion === "grid-operators";
   const isProgramView = mapRegion === "programs";
-  const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView);
-  const programBoundaryData = useProgramBoundaries(isProgramView);
+  const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView, resolvedOperatorPalette);
+  const programBoundaryData = useProgramBoundaries(isProgramView, resolvedOperatorPalette);
 
   const handleClick = useCallback(
     (feature: LayerFeature) => {
@@ -698,7 +719,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           renderAs: "fill",
           minZoom: 0,
           style: {
-            color: { by: "segment", mapping: segmentColorMapping },
+            color: { by: "segment", mapping: resolvedSegmentColorMapping },
             fillOpacity: 0.2,
           },
           tooltip: {
@@ -787,7 +808,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           group: "Overlays",
         },
         style: {
-          color: { by: "voltageClass", mapping: voltageClassColorMapping },
+          color: { by: "voltageClass", mapping: resolvedVoltageClassColorMapping },
           width: 1.5,
           opacity: 0.75,
         },
@@ -825,7 +846,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           group: "Overlays",
         },
         style: {
-          color: { by: "voltageBand", mapping: substationVoltageBandColorMapping },
+          color: { by: "voltageBand", mapping: resolvedSubstationVoltageBandColorMapping },
           radius: 3,
           borderWidth: 1,
           borderColor: { hex: "#ffffff" },
@@ -873,7 +894,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           group: "Overlays",
         },
         style: {
-          color: { by: "network", mapping: evNetworkColorMapping },
+          color: { by: "network", mapping: resolvedEvNetworkColorMapping },
           radius: 4,
           borderWidth: 1,
           borderColor: { hex: "#ffffff" },
@@ -920,7 +941,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           group: "Overlays",
         },
         style: {
-          color: { by: "iso", mapping: pricingNodeIsoColorMapping },
+          color: { by: "iso", mapping: resolvedPricingNodeIsoColorMapping },
           radius: 3,
           borderWidth: 1,
           borderColor: { hex: "#ffffff" },
@@ -966,7 +987,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           group: "Overlays",
         },
         style: {
-          color: { by: "fuelCategory", mapping: fuelCategoryColorMapping },
+          color: { by: "fuelCategory", mapping: resolvedFuelCategoryColorMapping },
           radius: 4,
           borderWidth: 1,
           borderColor: { hex: "#ffffff" },
