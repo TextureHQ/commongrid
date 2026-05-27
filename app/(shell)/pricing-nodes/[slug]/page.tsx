@@ -81,23 +81,27 @@ export default function PricingNodeDetailPage() {
 
   // Overview fields
   const overviewFields = [
-    { id: "iso", label: "ISO/RTO", value: ISO_FULL_NAMES[node.iso] },
+    { id: "iso", label: "ISO/RTO", value: ISO_FULL_NAMES[node.iso], editable: false },
     {
       id: "nodeType",
       label: "Node Type",
       value: <Badge variant="neutral">{NODE_TYPE_LABELS[node.nodeType]}</Badge>,
+      editable: true,
+      fieldName: "node_type",
     },
-    { id: "zone", label: "Zone", value: node.zone ?? null },
-    { id: "state", label: "State", value: node.state ?? null },
-    { id: "source", label: "Data Source", value: node.source },
-    { id: "nodeId", label: "Node ID", value: node.id, copyable: true },
+    { id: "zone", label: "Zone", value: node.zone ?? null, editable: true, fieldName: "zone" },
+    { id: "state", label: "State", value: node.state ?? null, editable: true, fieldName: "state" },
+    { id: "source", label: "Data Source", value: node.source, editable: false },
+    { id: "nodeId", label: "Node ID", value: node.id, copyable: true, editable: false },
   ];
 
   // Location fields
   const locationFields = [
-    { id: "latitude", label: "Latitude", value: node.latitude.toFixed(4) },
-    { id: "longitude", label: "Longitude", value: node.longitude.toFixed(4) },
-    ...(node.voltageKv ? [{ id: "voltage", label: "Voltage", value: `${node.voltageKv} kV` }] : []),
+    { id: "latitude", label: "Latitude", value: node.latitude.toFixed(4), editable: true, fieldName: "latitude" },
+    { id: "longitude", label: "Longitude", value: node.longitude.toFixed(4), editable: true, fieldName: "longitude" },
+    ...(node.voltageKv
+      ? [{ id: "voltage", label: "Voltage", value: `${node.voltageKv} kV`, editable: true, fieldName: "voltage_kv" }]
+      : []),
     ...(node.eiaPlantCode
       ? [
           {
@@ -105,6 +109,7 @@ export default function PricingNodeDetailPage() {
             label: "EIA Plant Code",
             value: node.eiaPlantCode,
             href: `/power-plants/${node.eiaPlantCode}`,
+            editable: false,
           },
         ]
       : []),
@@ -140,12 +145,34 @@ export default function PricingNodeDetailPage() {
 
         {/* Overview */}
         <EntitySection id="overview" title="Overview">
-          <FieldList items={overviewFields} columns={2} />
+          <FieldList
+            items={overviewFields}
+            columns={2}
+            enableInlineEdit
+            entityType="pricing_node"
+            entityId={node.id ?? node.slug}
+            entityName={node.name}
+            currentValues={node as unknown as Record<string, unknown>}
+            onFieldEdited={() => {
+              window.location.reload();
+            }}
+          />
         </EntitySection>
 
         {/* Location Details */}
         <EntitySection id="location-details" title="Location Details">
-          <FieldList items={locationFields} columns={2} />
+          <FieldList
+            items={locationFields}
+            columns={2}
+            enableInlineEdit
+            entityType="pricing_node"
+            entityId={node.id ?? node.slug}
+            entityName={node.name}
+            currentValues={node as unknown as Record<string, unknown>}
+            onFieldEdited={() => {
+              window.location.reload();
+            }}
+          />
         </EntitySection>
 
         {/* Map */}

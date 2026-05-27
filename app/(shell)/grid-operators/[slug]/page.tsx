@@ -220,8 +220,11 @@ function OverviewStatList({ utility }: { utility: Utility }) {
   ].filter((item) => item.value !== null && item.value !== undefined);
 
   const editableFields = [
+    { id: "segment", fieldName: "segment" },
+    { id: "status", fieldName: "status" },
     { id: "customers", fieldName: "customer_count" },
     { id: "jurisdiction", fieldName: "jurisdiction" },
+    { id: "eiaId", fieldName: "eia_id" },
     { id: "website", fieldName: "website" },
   ];
 
@@ -318,6 +321,7 @@ function OperationsStatList({ utility }: { utility: Utility }) {
     { id: "sales", fieldName: "total_sales_mwh" },
     { id: "meters", fieldName: "total_meter_count" },
     { id: "amiMeters", fieldName: "ami_meter_count" },
+    { id: "nercRegion", fieldName: "nerc_region" },
   ];
 
   const { items: enriched, chrome } = useEditableStatItems({

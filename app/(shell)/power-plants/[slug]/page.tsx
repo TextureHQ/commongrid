@@ -134,11 +134,15 @@ export default function PowerPlantDetailPage() {
       id: "fuelType",
       label: "Fuel Type",
       value: <Badge variant="neutral">{getFuelCategoryLabel(plant.fuelCategory)}</Badge>,
+      editable: true,
+      fieldName: "primary_fuel",
     },
     {
       id: "status",
       label: "Status",
       value: <Badge variant="neutral">{plant.status === "operable" ? "Operable" : "Proposed"}</Badge>,
+      editable: true,
+      fieldName: "status",
     },
     {
       id: "capacity",
@@ -192,11 +196,11 @@ export default function PowerPlantDetailPage() {
             : []),
         ]
       : []),
-    { id: "state", label: "State", value: formatStateName(plant.state) },
+    { id: "state", label: "State", value: formatStateName(plant.state), editable: true, fieldName: "state" },
     ...(plant.county
       ? [{ id: "county", label: "County", value: plant.county, editable: true, fieldName: "county" }]
       : []),
-    { id: "sector", label: "Sector", value: plant.sector ?? null },
+    { id: "sector", label: "Sector", value: plant.sector ?? null, editable: false },
     ...(plant.gridVoltageKv !== null
       ? [
           {
