@@ -37,14 +37,14 @@ export function EntityList({ items, maxItems, headerMeta }: EntityListProps) {
   const moreCount = hasMore ? items.length - maxItems : 0;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {headerMeta && <div className="text-body-sm text-text-caption mb-3">{headerMeta}</div>}
 
       {visibleItems.map((item) => (
         <Link
           key={item.href}
           href={item.href}
-          className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg hover:bg-background-muted transition-colors border border-transparent hover:border-border-default"
+          className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg border border-border-muted hover:border-border-default transition-colors"
         >
           <div className="flex items-center gap-3 min-w-0">
             {item.dotColor && (

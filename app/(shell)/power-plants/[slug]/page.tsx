@@ -10,6 +10,7 @@ import {
   EntityMap,
   EntityPageHeader,
   EntitySection,
+  type EntityStat,
   EntityStatsRow,
   FieldList,
   RelationshipCards,
@@ -88,20 +89,42 @@ export default function PowerPlantDetailPage() {
   const isProposedOnly = plant.status === "proposed";
   const effectiveCapacity = isProposedOnly ? plant.proposedCapacityMw : plant.totalCapacityMw;
 
-  // Header stats band
-  const headerStats = [
+  // Header stats band — pass raw numbers + formatters so Kpi can apply
+  // edges typography roles and we keep one source of truth for formatting.
+  const headerStats: EntityStat[] = [
     {
-      value: formatCapacity(effectiveCapacity),
       label: isProposedOnly ? "Proposed Capacity" : "Nameplate Capacity",
+      value: effectiveCapacity,
+      formatter: (v) => formatCapacity(v as number | null),
     },
-    ...(!isProposedOnly && plant.generatorCount ? [{ value: String(plant.generatorCount), label: "Generators" }] : []),
+    ...(!isProposedOnly && plant.generatorCount
+      ? [
+          {
+            label: "Generators",
+            value: plant.generatorCount,
+            formatter: (v) => (v as number).toLocaleString(),
+          } satisfies EntityStat,
+        ]
+      : []),
     ...(!isProposedOnly && plant.operatingYear
-      ? [{ value: String(plant.operatingYear), label: "Operating Since" }]
+      ? [
+          {
+            label: "Operating Since",
+            value: plant.operatingYear,
+            formatter: (v) => String(v),
+          } satisfies EntityStat,
+        ]
       : []),
     ...(isProposedOnly && plant.proposedOnlineYear
-      ? [{ value: String(plant.proposedOnlineYear), label: "Expected Online" }]
+      ? [
+          {
+            label: "Expected Online",
+            value: plant.proposedOnlineYear,
+            formatter: (v) => String(v),
+          } satisfies EntityStat,
+        ]
       : []),
-  ].filter((s) => s.value !== null && s.value !== undefined) as { value: string; label: string }[];
+  ];
 
   // Overview fields
   const overviewFields = [

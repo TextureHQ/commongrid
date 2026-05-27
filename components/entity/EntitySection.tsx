@@ -16,7 +16,7 @@ interface EntitySectionProps {
 export function EntitySection({ id, title, children }: EntitySectionProps) {
   return (
     <section id={id} className="py-10 border-b border-border-muted last:border-b-0">
-      <h2 className="text-heading-xl font-semibold text-text-heading mb-6">{title}</h2>
+      <h2 className="text-heading-md font-semibold text-text-heading mb-6">{title}</h2>
       <div className="space-y-6">{children}</div>
     </section>
   );

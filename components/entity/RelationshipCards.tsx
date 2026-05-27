@@ -30,14 +30,14 @@ export function RelationshipCards({ items }: RelationshipCardsProps) {
   if (items.length === 0) return null;
 
   return (
-    <div className="grid md:grid-cols-2 gap-4">
+    <div className="grid md:grid-cols-2 gap-3">
       {items.map((item) => {
-        const content = (
-          <>
+        const body = (
+          <div className="flex flex-col gap-1 min-w-0">
             <div className="text-label-sm uppercase tracking-wide text-text-caption">{item.label}</div>
-            <div className="text-heading-md font-medium text-text-body">{item.name}</div>
+            <div className="text-heading-sm font-medium text-text-body truncate">{item.name}</div>
             {item.meta && <div className="text-body-sm text-text-muted">{item.meta}</div>}
-          </>
+          </div>
         );
 
         if (item.href) {
@@ -45,24 +45,21 @@ export function RelationshipCards({ items }: RelationshipCardsProps) {
             <Link
               key={item.label}
               href={item.href}
-              className="flex flex-col gap-1 p-4 rounded-lg border border-border-default hover:border-border-focus hover:bg-background-muted transition-all group"
+              className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-border-muted hover:border-border-default transition-colors group"
             >
-              {content}
+              {body}
               <Icon
                 name="ArrowRight"
                 size="sm"
-                className="ml-auto text-text-muted group-hover:text-brand-primary group-hover:translate-x-1 transition-all"
+                className="flex-shrink-0 text-text-muted group-hover:text-text-body group-hover:translate-x-0.5 transition-all"
               />
             </Link>
           );
         }
 
         return (
-          <div
-            key={item.label}
-            className="flex flex-col gap-1 p-4 rounded-lg border border-border-muted bg-background-muted"
-          >
-            {content}
+          <div key={item.label} className="flex items-center px-4 py-3 rounded-lg border border-border-muted">
+            {body}
           </div>
         );
       })}
