@@ -12,7 +12,7 @@ import {
   FieldList,
   PortDisplay,
 } from "@/components/entity";
-import { useEvStation } from "@/lib/ev-charging";
+import { useEvStation } from "@/hooks/useEvStation";
 import {
   getAccessLabel,
   getNetworkColor,
@@ -48,7 +48,7 @@ function getOwnerTypeLabel(code: string | null): string {
 
 export default function EVStationDetailPage() {
   const params = useParams<{ slug: string }>();
-  const { station, isLoading } = useEvStation(params.slug);
+  const { evStation: station, isLoading } = useEvStation(params.slug);
 
   if (isLoading) {
     return (
