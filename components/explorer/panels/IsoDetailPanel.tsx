@@ -4,10 +4,11 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getBalancingAuthoritiesByIso, getIsoBySlug } from "@/lib/data";
 import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
-import { useUtilities } from "@/lib/utilities-client";
+import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
+import { useIso } from "@/hooks/useIso";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import { useExplorer } from "../ExplorerContext";
 
 const BackIcon = () => (
@@ -34,7 +35,7 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
   const { user } = useCurrentUser();
 
-  const iso = getIsoBySlug(slug);
+  const { iso, isLoading: isoLoading } = useIso(slug);
 
   useEffect(() => {
     if (!iso?.shortName) {
@@ -49,9 +50,8 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
     return () => setHighlight(null);
   }, [iso?.shortName, setHighlight]);
 
-  const { utilities: allUtilities } = useUtilities();
-  const utilities = useMemo(() => (iso ? allUtilities.filter((u) => u.isoId === iso.id) : []), [iso, allUtilities]);
-  const balancingAuthorities = useMemo(() => (iso ? getBalancingAuthoritiesByIso(iso.id) : []), [iso]);
+  const { utilities } = useUtilityList({ iso: iso?.slug, limit: 200 });
+  const { balancingAuthorities } = useBalancingAuthorityList({ isoId: iso?.id });
 
   if (!iso) {
     return (

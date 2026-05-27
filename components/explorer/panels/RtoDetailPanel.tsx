@@ -4,10 +4,10 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getRtoBySlug } from "@/lib/data";
 import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
-import { useUtilities } from "@/lib/utilities-client";
+import { useRto } from "@/hooks/useRto";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import { useExplorer } from "../ExplorerContext";
 
 const BackIcon = () => (
@@ -34,7 +34,7 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
   const { user } = useCurrentUser();
 
-  const rto = getRtoBySlug(slug);
+  const { rto, isLoading: rtoLoading } = useRto(slug);
 
   useEffect(() => {
     if (!rto?.shortName) {
@@ -49,8 +49,7 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
     return () => setHighlight(null);
   }, [rto?.shortName, setHighlight]);
 
-  const { utilities: allUtilities } = useUtilities();
-  const utilities = useMemo(() => (rto ? allUtilities.filter((u) => u.rtoId === rto.id) : []), [rto, allUtilities]);
+  const { utilities } = useUtilityList({ rto: rto?.slug, limit: 200 });
 
   if (!rto) {
     return (
