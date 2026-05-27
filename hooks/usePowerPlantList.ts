@@ -17,10 +17,9 @@ interface PowerPlant {
 interface PowerPlantListFilters {
   search?: string;
   state?: string;
-  utility?: string;
-  ba?: string;
-  primaryFuel?: string;
-  technologyType?: string;
+  utilityId?: string;
+  baId?: string;
+  fuelCategory?: string;
   status?: string;
   minCapacityMw?: number;
   maxCapacityMw?: number;
@@ -64,10 +63,9 @@ function buildQueryString(filters: PowerPlantListFilters): string {
 
   if (filters.search) params.set("search", filters.search);
   if (filters.state) params.set("state", filters.state);
-  if (filters.utility) params.set("utility", filters.utility);
-  if (filters.ba) params.set("ba", filters.ba);
-  if (filters.primaryFuel) params.set("primaryFuel", filters.primaryFuel);
-  if (filters.technologyType) params.set("technologyType", filters.technologyType);
+  if (filters.utilityId) params.set("utilityId", filters.utilityId);
+  if (filters.baId) params.set("baId", filters.baId);
+  if (filters.fuelCategory) params.set("fuelCategory", filters.fuelCategory);
   if (filters.status) params.set("status", filters.status);
   if (filters.minCapacityMw !== undefined) params.set("minCapacityMw", filters.minCapacityMw.toString());
   if (filters.maxCapacityMw !== undefined) params.set("maxCapacityMw", filters.maxCapacityMw.toString());

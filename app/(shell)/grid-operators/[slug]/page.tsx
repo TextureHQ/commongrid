@@ -31,7 +31,7 @@ import {
   RelationshipCards,
 } from "@/components/entity";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
+import { getRegionById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -44,10 +44,14 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
-import { filterByUtility, usePowerPlants } from "@/lib/power-plants";
-import { filterProgramsByUtility, usePrograms } from "@/lib/programs-client";
-import { filterLinesByOwner, useTransmissionLines } from "@/lib/transmission-lines-client";
-import { useUtilities } from "@/lib/utilities-client";
+import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
+import { useIso } from "@/hooks/useIso";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useProgramList } from "@/hooks/useProgramList";
+import { useRto } from "@/hooks/useRto";
+import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
+import { useUtility } from "@/hooks/useUtility";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import type { Utility } from "@/types/entities";
 import type { TransmissionLine } from "@/types/transmission-lines";
 
@@ -357,18 +361,15 @@ function TransmissionStatList({
 
 export default function UtilityDetailPage() {
   const params = useParams<{ slug: string }>();
-  const { utilities, isLoading: utilitiesLoading } = useUtilities();
-  const utility = useMemo(() => utilities.find((u) => u.slug === params.slug) ?? null, [utilities, params.slug]);
+  const { utility, isLoading: utilityLoading } = useUtility(params.slug);
+  const { utilities, isLoading: utilitiesLoading } = useUtilityList({ limit: 500 });
 
   const [territoryGeoJSON, setTerritoryGeoJSON] = useState<FeatureCollection | null>(null);
   const [territoryLoading, setTerritoryLoading] = useState(true);
 
-  const iso = useMemo(() => (utility?.isoId ? getIsoById(utility.isoId) : null), [utility]);
-  const rto = useMemo(() => (utility?.rtoId ? getRtoById(utility.rtoId) : null), [utility]);
-  const ba = useMemo(
-    () => (utility?.balancingAuthorityId ? getBalancingAuthorityById(utility.balancingAuthorityId) : null),
-    [utility]
-  );
+  const { iso, isLoading: isoLoading } = useIso(utility?.isoId ?? null);
+  const { rto, isLoading: rtoLoading } = useRto(utility?.rtoId ?? null);
+  const { balancingAuthority: ba, isLoading: baLoading } = useBalancingAuthority(utility?.balancingAuthorityId ?? null);
   const parent = useMemo(
     () => (utility?.parentId ? (utilities.find((u) => u.id === utility.parentId) ?? null) : null),
     [utility, utilities]
@@ -455,20 +456,21 @@ export default function UtilityDetailPage() {
     [childUtilities]
   );
 
-  const { plants: allPlants, isLoading: plantsLoading } = usePowerPlants();
-  const utilityPowerPlants = useMemo(
-    () => (utility ? filterByUtility(allPlants, utility.id) : []),
-    [utility, allPlants]
-  );
+  const { powerPlants: utilityPowerPlants, isLoading: plantsLoading } = usePowerPlantList({
+    utilityId: utility?.id,
+    limit: 200,
+  });
 
-  const { programs: allPrograms, isLoading: programsLoading } = usePrograms();
+  const { programs: allPrograms, isLoading: programsLoading } = useProgramList({ limit: 200 });
   const utilityPrograms = useMemo(
-    () => (utility ? filterProgramsByUtility(allPrograms, utility.slug) : []),
+    () => (utility ? allPrograms.filter((p) => p.organizations.some((o) => o.entityId === utility.slug)) : []),
     [utility, allPrograms]
   );
 
-  const { lines: allLines, isLoading: linesLoading } = useTransmissionLines();
-  const utilityLines = useMemo(() => (utility ? filterLinesByOwner(allLines, utility.name) : []), [utility, allLines]);
+  const { transmissionLines: utilityLines, isLoading: linesLoading } = useTransmissionLineList({
+    owner: utility?.name,
+    limit: 200,
+  });
   const linesTotalMiles = useMemo(() => utilityLines.reduce((sum, l) => sum + (l.lengthMiles || 0), 0), [utilityLines]);
 
   const utilityColumns: Column<UtilityRow>[] = useMemo(
@@ -524,6 +526,16 @@ export default function UtilityDetailPage() {
         style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}
       >
         <Loader size={32} />
+      </div>
+    );
+  }
+
+  if (utilityLoading) {
+    return (
+      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        <div className="flex items-center justify-center py-24">
+          <Loader size={32} />
+        </div>
       </div>
     );
   }

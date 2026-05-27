@@ -11,11 +11,8 @@ import type { TransmissionLine } from "@/types/transmission-lines";
 
 interface TransmissionLineListFilters {
   search?: string;
-  state?: string;
   owner?: string;
-  voltageKv?: number;
-  minVoltageKv?: number;
-  maxVoltageKv?: number;
+  voltageClass?: string;
   status?: string;
   fields?: string;
   sort?: string;
@@ -56,11 +53,8 @@ function buildQueryString(filters: TransmissionLineListFilters): string {
   const params = new URLSearchParams();
 
   if (filters.search) params.set("search", filters.search);
-  if (filters.state) params.set("state", filters.state);
   if (filters.owner) params.set("owner", filters.owner);
-  if (filters.voltageKv !== undefined) params.set("voltageKv", filters.voltageKv.toString());
-  if (filters.minVoltageKv !== undefined) params.set("minVoltageKv", filters.minVoltageKv.toString());
-  if (filters.maxVoltageKv !== undefined) params.set("maxVoltageKv", filters.maxVoltageKv.toString());
+  if (filters.voltageClass) params.set("voltageClass", filters.voltageClass);
   if (filters.status) params.set("status", filters.status);
   if (filters.fields) params.set("fields", filters.fields);
   if (filters.sort) params.set("sort", filters.sort);
