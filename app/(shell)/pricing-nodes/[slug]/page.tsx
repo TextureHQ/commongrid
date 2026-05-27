@@ -5,6 +5,7 @@ import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import {
+  type EntityStat,
   EntityList,
   EntityMap,
   EntityPageHeader,
@@ -63,13 +64,14 @@ export default function PricingNodeDetailPage() {
     ],
   };
 
-  // Header stats band
-  const headerStats = [
+  // Header stats band — these are categorical strings, so the back-compat
+  // pre-formatted shape is the right fit (no numeric formatter needed).
+  const headerStats: EntityStat[] = [
     { value: ISO_LABELS[node.iso], label: "ISO/RTO" },
     { value: NODE_TYPE_LABELS[node.nodeType], label: "Node Type" },
     ...(node.zone ? [{ value: node.zone, label: "Zone" }] : []),
     ...(node.state ? [{ value: node.state, label: "State" }] : []),
-  ] as { value: string; label: string }[];
+  ];
 
   // Overview fields
   const overviewFields = [

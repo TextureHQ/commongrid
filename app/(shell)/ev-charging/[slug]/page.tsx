@@ -124,18 +124,25 @@ export default function EVStationDetailPage() {
         <EntityStatsRow
           stats={[
             {
-              value: station.evLevel1EvseNum != null ? String(station.evLevel1EvseNum) : null,
               label: "Level 1 (120V)",
+              value: station.evLevel1EvseNum,
+              formatter: (v) => (v as number).toLocaleString(),
             },
             {
-              value: station.evLevel2EvseNum != null ? String(station.evLevel2EvseNum) : null,
               label: "Level 2 (240V)",
+              value: station.evLevel2EvseNum,
+              formatter: (v) => (v as number).toLocaleString(),
             },
             {
-              value: station.evDcFastNum != null ? String(station.evDcFastNum) : null,
               label: "DC Fast Charge",
+              value: station.evDcFastNum,
+              formatter: (v) => (v as number).toLocaleString(),
             },
-            { value: totalConnectors > 0 ? String(totalConnectors) : null, label: "Total Connectors" },
+            {
+              label: "Total Connectors",
+              value: totalConnectors > 0 ? totalConnectors : null,
+              formatter: (v) => (v as number).toLocaleString(),
+            },
           ]}
         />
 

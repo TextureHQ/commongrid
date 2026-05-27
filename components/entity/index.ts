@@ -5,6 +5,7 @@ export { EntityList } from "./EntityList";
 export { EntityMap } from "./EntityMap";
 export { EntityPageHeader } from "./EntityPageHeader";
 export { EntitySection } from "./EntitySection";
+export type { EntityStat } from "./EntityStatsRow";
 export { EntityStatsRow } from "./EntityStatsRow";
 export type { FieldItem } from "./FieldList";
 export { FieldList } from "./FieldList";

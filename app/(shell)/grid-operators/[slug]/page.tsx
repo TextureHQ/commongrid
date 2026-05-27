@@ -69,94 +69,75 @@ function formatSales(v: number): string {
   return v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M MWh` : `${v.toLocaleString()} MWh`;
 }
 
-// Helper component for StatList items with inline editing
-function EditableStatItem({
-  item,
+// Hook: builds a single StatList items[] for a section, attaching an edit
+// affordance (iconRight + onAction) to rows whose `id` matches an editable
+// field. The modal/auth chrome is rendered once by the section, not per row,
+// so StatList sees a single list and can draw dividers between all rows.
+interface EditableFieldRef {
+  id: string;
+  fieldName: string;
+}
+
+function useEditableStatItems({
+  items,
+  editableFields,
   entityType,
   entityId,
   entityName,
-  fieldName,
   currentValues,
   onEdited,
 }: {
-  item: StatItem;
+  items: StatItem[];
+  editableFields: EditableFieldRef[];
   entityType: string;
   entityId: string;
   entityName: string;
-  fieldName: string;
   currentValues: Record<string, unknown>;
   onEdited: () => void;
-}) {
+}): { items: StatItem[]; chrome: React.ReactNode } {
   const { user, isLoading } = useCurrentUser();
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
   const [showSignInModal, setShowSignInModal] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
-  useEffect(() => {
-    const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    setIsTouchDevice(hasTouch);
-  }, []);
-
-  const handleEditClick = () => {
-    if (!user && !isLoading) {
-      setShowSignInModal(true);
-    } else if (user) {
-      setShowEditModal(true);
-    }
-  };
+  const enriched = useMemo<StatItem[]>(() => {
+    return items.map((item) => {
+      const editable = editableFields.find((f) => f.id === item.id);
+      if (!editable) return item;
+      return {
+        ...item,
+        iconRight: (
+          <Tooltip content="Edit this field" placement="top">
+            <Icon name="PencilSimple" size="xs" />
+          </Tooltip>
+        ),
+        onAction: () => {
+          if (!user && !isLoading) {
+            setShowSignInModal(true);
+          } else if (user) {
+            setEditingField(editable.fieldName);
+          }
+        },
+      };
+    });
+  }, [items, editableFields, user, isLoading]);
 
   const currentVersion = (currentValues?.version as number) ?? 1;
-  const currentValue = currentValues?.[fieldName];
+  const currentValue = editingField ? currentValues?.[editingField] : undefined;
 
-  const editButton =
-    isTouchDevice || isHovering ? (
-      <Tooltip content="Edit this field" placement="top">
-        <button
-          type="button"
-          onClick={handleEditClick}
-          className="text-text-muted hover:text-text-body transition-colors"
-          aria-label={`Edit ${item.label}`}
-        >
-          <Icon name="PencilSimple" size="xs" />
-        </button>
-      </Tooltip>
-    ) : null;
-
-  return (
+  const chrome = (
     <>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: div provides hover context */}
-      <div
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
-        onFocus={() => setIsHovering(true)}
-        onBlur={() => setIsHovering(false)}
-        style={{ display: "contents" }}
-      >
-        <StatList
-          items={[
-            {
-              ...item,
-              iconRight: editButton,
-            },
-          ]}
-          layout="one-column"
-          showDividers
-        />
-      </div>
-
-      {showEditModal && (
+      {editingField && (
         <InlineFieldEdit
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
+          isOpen={true}
+          onClose={() => setEditingField(null)}
           entityType={entityType}
           entityId={entityId}
           entityName={entityName}
-          fieldName={fieldName}
+          fieldName={editingField}
           currentValue={currentValue}
           currentVersion={currentVersion}
           onSubmitted={() => {
-            setShowEditModal(false);
+            setEditingField(null);
             onEdited();
           }}
         />
@@ -177,6 +158,8 @@ function EditableStatItem({
       </Dialog>
     </>
   );
+
+  return { items: enriched, chrome };
 }
 
 // Overview section component
@@ -222,26 +205,20 @@ function OverviewStatList({ utility }: { utility: Utility }) {
     { id: "website", fieldName: "website" },
   ];
 
+  const { items: enriched, chrome } = useEditableStatItems({
+    items,
+    editableFields,
+    entityType: "utility",
+    entityId: utility.id,
+    entityName: utility.name,
+    currentValues: utility as unknown as Record<string, unknown>,
+    onEdited: () => window.location.reload(),
+  });
+
   return (
     <>
-      {items.map((item) => {
-        const editableField = editableFields.find((f) => f.id === item.id);
-        if (editableField) {
-          return (
-            <EditableStatItem
-              key={item.id}
-              item={item}
-              entityType="utility"
-              entityId={utility.id}
-              entityName={utility.name}
-              fieldName={editableField.fieldName}
-              currentValues={utility as unknown as Record<string, unknown>}
-              onEdited={() => window.location.reload()}
-            />
-          );
-        }
-        return <StatList key={item.id} items={[item]} layout="one-column" showDividers />;
-      })}
+      <StatList items={enriched} layout="one-column" showDividers />
+      {chrome}
     </>
   );
 }
@@ -323,26 +300,20 @@ function OperationsStatList({ utility }: { utility: Utility }) {
     { id: "amiMeters", fieldName: "ami_meter_count" },
   ];
 
+  const { items: enriched, chrome } = useEditableStatItems({
+    items,
+    editableFields,
+    entityType: "utility",
+    entityId: utility.id,
+    entityName: utility.name,
+    currentValues: utility as unknown as Record<string, unknown>,
+    onEdited: () => window.location.reload(),
+  });
+
   return (
     <>
-      {items.map((item) => {
-        const editableField = editableFields.find((f) => f.id === item.id);
-        if (editableField) {
-          return (
-            <EditableStatItem
-              key={item.id}
-              item={item}
-              entityType="utility"
-              entityId={utility.id}
-              entityName={utility.name}
-              fieldName={editableField.fieldName}
-              currentValues={utility as unknown as Record<string, unknown>}
-              onEdited={() => window.location.reload()}
-            />
-          );
-        }
-        return <StatList key={item.id} items={[item]} layout="one-column" showDividers />;
-      })}
+      <StatList items={enriched} layout="one-column" showDividers />
+      {chrome}
     </>
   );
 }
@@ -627,20 +598,24 @@ export default function UtilityDetailPage() {
         <EntityStatsRow
           stats={[
             {
-              value: utility.customerCount ? formatCustomerCount(utility.customerCount) : null,
               label: "Customers",
+              value: utility.customerCount,
+              formatter: (v) => formatCustomerCount(v as number | null),
             },
             {
-              value: utility.peakDemandMw !== null ? `${utility.peakDemandMw.toLocaleString()} MW` : null,
               label: "Summer Peak",
+              value: utility.peakDemandMw,
+              formatter: (v) => (v == null ? "—" : `${(v as number).toLocaleString()} MW`),
             },
             {
-              value: utility.totalSalesMwh !== null ? formatSales(utility.totalSalesMwh) : null,
               label: "Annual Sales",
+              value: utility.totalSalesMwh,
+              formatter: (v) => (v == null ? "—" : formatSales(v as number)),
             },
             {
-              value: utility.totalRevenueDollars !== null ? formatRevenue(utility.totalRevenueDollars) : null,
               label: "Revenue",
+              value: utility.totalRevenueDollars,
+              formatter: (v) => (v == null ? "—" : formatRevenue(v as number)),
             },
           ]}
         />

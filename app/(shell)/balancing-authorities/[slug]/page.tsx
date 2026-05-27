@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import {
   DataTableSection,
+  type EntityStat,
   EntityList,
   EntityMap,
   EntityPageHeader,
@@ -162,22 +163,45 @@ export default function BADetailPage() {
     notFound();
   }
 
-  // Header stats band
-  const headerStats = [
-    ...(totalCustomers > 0 ? [{ value: formatCustomerCount(totalCustomers), label: "Total Customers" }] : []),
-    ...(utilities.length > 0 ? [{ value: String(utilities.length), label: "Utilities" }] : []),
-    ...(!plantsLoading && baPowerPlants.length > 0
-      ? [{ value: String(baPowerPlants.length), label: "Power Plants" }]
+  // Header stats band — pass raw numbers + formatters
+  const headerStats: EntityStat[] = [
+    ...(totalCustomers > 0
+      ? [
+          {
+            label: "Total Customers",
+            value: totalCustomers,
+            formatter: (v) => formatCustomerCount(v as number | null),
+          } satisfies EntityStat,
+        ]
+      : []),
+    ...(utilities.length > 0
+      ? [
+          {
+            label: "Utilities",
+            value: utilities.length,
+            formatter: (v) => (v as number).toLocaleString(),
+          } satisfies EntityStat,
+        ]
       : []),
     ...(!plantsLoading && baPowerPlants.length > 0
       ? [
           {
-            value: formatCapacity(baPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0)),
-            label: "Total Capacity",
-          },
+            label: "Power Plants",
+            value: baPowerPlants.length,
+            formatter: (v) => (v as number).toLocaleString(),
+          } satisfies EntityStat,
         ]
       : []),
-  ] as { value: string; label: string }[];
+    ...(!plantsLoading && baPowerPlants.length > 0
+      ? [
+          {
+            label: "Total Capacity",
+            value: baPowerPlants.reduce((sum, p) => sum + p.totalCapacityMw, 0),
+            formatter: (v) => formatCapacity(v as number | null),
+          } satisfies EntityStat,
+        ]
+      : []),
+  ];
 
   // Overview fields
   const overviewFields = [
