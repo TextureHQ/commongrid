@@ -1,0 +1,92 @@
+/**
+ * useTransmissionLineList — Client hook for fetching a filtered/sorted list of transmission lines
+ *
+ * Uses SWR to fetch from /api/v1/transmission-lines with query parameters.
+ * Returns { transmissionLines, isLoading, error, mutate, pagination }
+ */
+
+import useSWR from "swr";
+
+import type { TransmissionLine } from "@/types/transmission-lines";
+
+interface TransmissionLineListFilters {
+  search?: string;
+  state?: string;
+  owner?: string;
+  voltageKv?: number;
+  minVoltageKv?: number;
+  maxVoltageKv?: number;
+  status?: string;
+  fields?: string;
+  sort?: string;
+  order?: "asc" | "desc";
+  limit?: number;
+  cursor?: string;
+}
+
+interface TransmissionLineListPagination {
+  totalCount: number;
+  pageSize: number;
+  hasNextPage: boolean;
+  nextCursor: string | null;
+}
+
+interface TransmissionLineListResponse {
+  data: TransmissionLine[];
+  pagination: TransmissionLineListPagination;
+}
+
+interface UseTransmissionLineListResult {
+  transmissionLines: TransmissionLine[];
+  isLoading: boolean;
+  error: Error | null;
+  mutate: () => void;
+  pagination: TransmissionLineListPagination | null;
+}
+
+const fetcher = async (url: string): Promise<TransmissionLineListResponse> => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch transmission lines: ${res.statusText}`);
+  }
+  return res.json();
+};
+
+function buildQueryString(filters: TransmissionLineListFilters): string {
+  const params = new URLSearchParams();
+
+  if (filters.search) params.set("search", filters.search);
+  if (filters.state) params.set("state", filters.state);
+  if (filters.owner) params.set("owner", filters.owner);
+  if (filters.voltageKv !== undefined) params.set("voltageKv", filters.voltageKv.toString());
+  if (filters.minVoltageKv !== undefined) params.set("minVoltageKv", filters.minVoltageKv.toString());
+  if (filters.maxVoltageKv !== undefined) params.set("maxVoltageKv", filters.maxVoltageKv.toString());
+  if (filters.status) params.set("status", filters.status);
+  if (filters.fields) params.set("fields", filters.fields);
+  if (filters.sort) params.set("sort", filters.sort);
+  if (filters.order) params.set("order", filters.order);
+  if (filters.limit) params.set("limit", filters.limit.toString());
+  if (filters.cursor) params.set("cursor", filters.cursor);
+
+  return params.toString();
+}
+
+export function useTransmissionLineList(filters: TransmissionLineListFilters = {}): UseTransmissionLineListResult {
+  const queryString = buildQueryString(filters);
+  const url = `/api/v1/transmission-lines${queryString ? `?${queryString}` : ""}`;
+
+  const { data, error, mutate } = useSWR<TransmissionLineListResponse>(url, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    // Cache for 24 hours (transmission line data doesn't change often)
+    dedupingInterval: 86_400_000,
+  });
+
+  return {
+    transmissionLines: data?.data ?? [],
+    isLoading: !data && !error,
+    error: error ?? null,
+    mutate,
+    pagination: data?.pagination ?? null,
+  };
+}
