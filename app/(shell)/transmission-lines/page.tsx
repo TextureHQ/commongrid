@@ -271,7 +271,6 @@ export default function TransmissionLinesPage() {
     >
       <div className="flex-none">
         <PageLayout.Header title="Transmission Lines" sticky={true} />
-
       </div>
       <div className="flex-none px-1 pb-3">
         <SearchInput

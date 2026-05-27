@@ -370,7 +370,6 @@ export default function EVChargingPage() {
             <span>Add EV Station</span>
           </Button>
         </div>
-
       </div>
       <div className="flex-none px-1 pb-3">
         <SearchInput

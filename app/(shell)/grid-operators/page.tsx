@@ -307,7 +307,6 @@ function GridOperatorsPageInner() {
             <span>Add Utility</span>
           </Button>
         </div>
-
       </div>
       <div className="flex-none px-1 pb-3">
         <SearchInput

@@ -313,7 +313,6 @@ export default function PowerPlantsPage() {
             <span>Add Power Plant</span>
           </Button>
         </div>
-
       </div>
       <div className="flex-none px-1 pb-3">
         <SearchInput

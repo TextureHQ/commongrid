@@ -257,7 +257,6 @@ export default function PricingNodesPage() {
             <span>Add Pricing Node</span>
           </Button>
         </div>
-
       </div>
       <div className="flex-none px-1 pb-3">
         <SearchInput
