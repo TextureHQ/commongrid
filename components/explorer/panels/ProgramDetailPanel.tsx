@@ -4,9 +4,10 @@ import type { Feature, FeatureCollection } from "geojson";
 import { useEffect, useMemo, useState } from "react";
 import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getProgramBySlug, getRegionById } from "@/lib/data";
+import { getRegionById } from "@/lib/data";
 import { safeHostname } from "@/lib/geo";
-import { useUtilities } from "@/lib/utilities-client";
+import { useProgram } from "@/hooks/useProgram";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import {
   AssetTypeLabel,
   CompensationTypeLabel,
@@ -44,8 +45,8 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   const { user } = useCurrentUser();
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  const program = getProgramBySlug(slug);
-  const { utilities } = useUtilities();
+  const { program, isLoading } = useProgram(slug);
+  const { utilities } = useUtilityList({ limit: 200 });
 
   // Resolve territory file keys for all program regions
   const territoryFileKeys = useMemo(() => {
