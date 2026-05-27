@@ -696,31 +696,33 @@ export default function UtilityDetailPage() {
 
         <EntitySection id="territory" title="Service Territory">
           <EntityMap loading={territoryLoading}>
-            <InteractiveMap
-              {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
-                mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
-              })}
-              initialViewState={mapViewState}
-              mapType="neutral"
-              controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
-              layers={
-                territoryGeoJSON
-                  ? [
-                      layer.geojson({
-                        id: "territory-fill",
-                        data: territoryGeoJSON,
-                        renderAs: "fill",
-                        style: {
-                          color: { hex: getTerritoryColor(utility?.segment) },
-                          fillOpacity: 0.25,
-                          borderWidth: 3,
-                          borderColor: { hex: getTerritoryColor(utility?.segment) },
-                        },
-                      }),
-                    ]
-                  : []
-              }
-            />
+            {!territoryLoading && (
+              <InteractiveMap
+                {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
+                  mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+                })}
+                initialViewState={mapViewState}
+                mapType="neutral"
+                controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
+                layers={
+                  territoryGeoJSON
+                    ? [
+                        layer.geojson({
+                          id: "territory-fill",
+                          data: territoryGeoJSON,
+                          renderAs: "fill",
+                          style: {
+                            color: { hex: getTerritoryColor(utility?.segment) },
+                            fillOpacity: 0.25,
+                            borderWidth: 3,
+                            borderColor: { hex: getTerritoryColor(utility?.segment) },
+                          },
+                        }),
+                      ]
+                    : []
+                }
+              />
+            )}
           </EntityMap>
         </EntitySection>
 
