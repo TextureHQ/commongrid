@@ -135,9 +135,7 @@ html, body {
   position: sticky;
   top: 0;
   z-index: 60;
-  background: color-mix(in srgb, var(--color-background-paper) 88%, transparent);
-  backdrop-filter: saturate(1.2) blur(8px);
-  -webkit-backdrop-filter: saturate(1.2) blur(8px);
+  background: var(--color-background-paper);
   border-bottom: 1px solid var(--color-border-paper);
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
