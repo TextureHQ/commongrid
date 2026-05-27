@@ -123,8 +123,9 @@ function FieldValue({
       >
         {content}
         {item.copyable && typeof item.value === "string" && <CopyButton value={item.value} />}
-        {canEdit && (isTouchDevice || isHovering) && (
-          <Tooltip content="Edit this field" placement="top">
+        {canEdit &&
+          (isTouchDevice || isHovering) &&
+          (isTouchDevice ? (
             <button
               type="button"
               onClick={handleEditClick}
@@ -133,8 +134,18 @@ function FieldValue({
             >
               <Icon name="PencilSimple" size="xs" />
             </button>
-          </Tooltip>
-        )}
+          ) : (
+            <Tooltip content="Edit this field" placement="top">
+              <button
+                type="button"
+                onClick={handleEditClick}
+                className="text-text-muted hover:text-text-body transition-colors"
+                aria-label={`Edit ${item.label}`}
+              >
+                <Icon name="PencilSimple" size="xs" />
+              </button>
+            </Tooltip>
+          ))}
       </span>
 
       {showEditModal && canEdit && entityType && entityId && entityName && item.fieldName && (
