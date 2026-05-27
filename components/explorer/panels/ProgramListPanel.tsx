@@ -81,7 +81,7 @@ export function ProgramListPanel() {
         compensationSummary: getPrimaryCompensationSummary(prog),
       };
     });
-  }, [utilities]);
+  }, [programs, utilities]);
 
   const filtered = useMemo(() => {
     let result = allPrograms;
