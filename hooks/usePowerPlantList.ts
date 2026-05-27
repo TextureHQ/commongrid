@@ -7,12 +7,7 @@
 
 import useSWR from "swr";
 
-interface PowerPlant {
-  id: string;
-  slug: string;
-  name: string;
-  [key: string]: unknown;
-}
+import type { PowerPlant } from "@/types/entities";
 
 interface PowerPlantListFilters {
   search?: string;

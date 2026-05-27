@@ -7,12 +7,7 @@
 
 import useSWR from "swr";
 
-interface Iso {
-  id: string;
-  slug: string;
-  name: string;
-  [key: string]: unknown;
-}
+import type { Iso } from "@/types/entities";
 
 interface UseIsoResult {
   iso: Iso | null;

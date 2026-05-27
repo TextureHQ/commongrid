@@ -7,12 +7,7 @@
 
 import useSWR from "swr";
 
-interface BalancingAuthority {
-  id: string;
-  slug: string;
-  name: string;
-  [key: string]: unknown;
-}
+import type { BalancingAuthority } from "@/types/entities";
 
 interface UseBalancingAuthorityResult {
   balancingAuthority: BalancingAuthority | null;

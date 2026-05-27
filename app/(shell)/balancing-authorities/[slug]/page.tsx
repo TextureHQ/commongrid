@@ -64,7 +64,7 @@ export default function BADetailPage() {
   }, [ba?.slug, ba?.regionId]);
 
   const { utilities, isLoading: utilitiesLoading } = useUtilityList({ ba: ba?.slug, limit: 200 });
-  const { powerPlants: baPowerPlants, isLoading: plantsLoading } = usePowerPlantList({ ba: ba?.slug, limit: 200 });
+  const { powerPlants: baPowerPlants, isLoading: plantsLoading } = usePowerPlantList({ baId: ba?.id, limit: 200 });
 
   const { programs: allPrograms, isLoading: programsLoading } = useProgramList({ limit: 200 });
   const baPrograms = useMemo(() => {

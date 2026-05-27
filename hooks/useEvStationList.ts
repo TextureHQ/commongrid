@@ -7,12 +7,7 @@
 
 import useSWR from "swr";
 
-interface EvStation {
-  id: string;
-  slug: string;
-  name: string;
-  [key: string]: unknown;
-}
+import type { EVStation } from "@/types/ev-charging";
 
 interface EvStationListFilters {
   search?: string;
@@ -36,12 +31,12 @@ interface EvStationListPagination {
 }
 
 interface EvStationListResponse {
-  data: EvStation[];
+  data: EVStation[];
   pagination: EvStationListPagination;
 }
 
 interface UseEvStationListResult {
-  evStations: EvStation[];
+  evStations: EVStation[];
   isLoading: boolean;
   error: Error | null;
   mutate: () => void;

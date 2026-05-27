@@ -7,21 +7,16 @@
 
 import useSWR from "swr";
 
-interface EvStation {
-  id: string;
-  slug: string;
-  name: string;
-  [key: string]: unknown;
-}
+import type { EVStation } from "@/types/ev-charging";
 
 interface UseEvStationResult {
-  evStation: EvStation | null;
+  evStation: EVStation | null;
   isLoading: boolean;
   error: Error | null;
   mutate: () => void;
 }
 
-const fetcher = async (url: string): Promise<EvStation> => {
+const fetcher = async (url: string): Promise<EVStation> => {
   const res = await fetch(url);
   if (!res.ok) {
     if (res.status === 404) {
@@ -34,7 +29,7 @@ const fetcher = async (url: string): Promise<EvStation> => {
 };
 
 export function useEvStation(slug: string | null | undefined): UseEvStationResult {
-  const { data, error, mutate } = useSWR<EvStation>(slug ? `/api/v1/ev-stations/${slug}` : null, fetcher, {
+  const { data, error, mutate } = useSWR<EVStation>(slug ? `/api/v1/ev-stations/${slug}` : null, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     // Cache for 24 hours (EV station data doesn't change often)

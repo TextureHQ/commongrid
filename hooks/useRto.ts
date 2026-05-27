@@ -7,12 +7,7 @@
 
 import useSWR from "swr";
 
-interface Rto {
-  id: string;
-  slug: string;
-  name: string;
-  [key: string]: unknown;
-}
+import type { Rto } from "@/types/entities";
 
 interface UseRtoResult {
   rto: Rto | null;
