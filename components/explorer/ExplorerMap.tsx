@@ -115,6 +115,9 @@ const evNetworkColorMapping: Record<string, { hex: string }> = {
   "Non-Networked": { hex: "var(--color-cg-ev-nonnetworked)" },
 };
 
+// Highlight color for selected entity
+const HIGHLIGHT_COLOR = "var(--color-ocean-base)";
+
 // hasMapboxToken is evaluated per-render based on the prop (see ExplorerMap component)
 
 // Distinct, high-contrast colors for operator boundaries
@@ -415,6 +418,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
   const [resolvedFuelCategoryColorMapping, setResolvedFuelCategoryColorMapping] = useState(fuelCategoryColorMapping);
   const [resolvedEvNetworkColorMapping, setResolvedEvNetworkColorMapping] = useState(evNetworkColorMapping);
   const [resolvedOperatorPalette, setResolvedOperatorPalette] = useState(OPERATOR_PALETTE);
+  const [resolvedHighlightColor, setResolvedHighlightColor] = useState(HIGHLIGHT_COLOR);
 
   const overlays = mapOverlays ?? DEFAULT_OVERLAYS;
 
@@ -427,6 +431,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
     setResolvedFuelCategoryColorMapping(resolveColorMapping(fuelCategoryColorMapping));
     setResolvedEvNetworkColorMapping(resolveColorMapping(evNetworkColorMapping));
     setResolvedOperatorPalette(OPERATOR_PALETTE.map(resolveCSSColor));
+    setResolvedHighlightColor(resolveCSSColor(HIGHLIGHT_COLOR));
   }, []);
 
   // Derive layer visibility from overlays prop (for the Edges layers control)
@@ -1026,10 +1031,10 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
           data: state.highlightGeoJSON,
           renderAs: "fill",
           style: {
-            color: { hex: "var(--color-ocean-base)" },
+            color: { hex: resolvedHighlightColor },
             fillOpacity: 0.35,
             borderWidth: 2.5,
-            borderColor: { hex: "var(--color-ocean-base)" },
+            borderColor: { hex: resolvedHighlightColor },
           },
         })
       );
@@ -1054,6 +1059,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
     resolvedSegmentColorMapping,
     resolvedPricingNodeIsoColorMapping,
     resolvedEvNetworkColorMapping,
+    resolvedHighlightColor,
   ]);
 
   if (!hasMapboxToken) {
