@@ -8,11 +8,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import {
   DataTableSection,
-  type EntityStat,
   EntityList,
   EntityMap,
   EntityPageHeader,
   EntitySection,
+  type EntityStat,
   EntityStatsRow,
   FieldList,
   RelationshipCards,

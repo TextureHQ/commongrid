@@ -1,5 +1,4 @@
 import { BreadcrumbItem, Breadcrumbs } from "@texturehq/edges";
-import Link from "next/link";
 
 /**
  * Breadcrumb item with optional link

@@ -1,4 +1,4 @@
-import { Kpi, type KpiProps, KpiGroup } from "@texturehq/edges";
+import { Kpi, KpiGroup, type KpiProps } from "@texturehq/edges";
 
 /**
  * Stat item for EntityStatsRow.

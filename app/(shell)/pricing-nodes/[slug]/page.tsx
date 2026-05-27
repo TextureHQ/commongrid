@@ -5,11 +5,11 @@ import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import {
-  type EntityStat,
   EntityList,
   EntityMap,
   EntityPageHeader,
   EntitySection,
+  type EntityStat,
   EntityStatsRow,
   FieldList,
   RelationshipCards,

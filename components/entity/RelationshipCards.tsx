@@ -58,10 +58,7 @@ export function RelationshipCards({ items }: RelationshipCardsProps) {
         }
 
         return (
-          <div
-            key={item.label}
-            className="flex items-center px-4 py-3 rounded-lg border border-border-muted"
-          >
+          <div key={item.label} className="flex items-center px-4 py-3 rounded-lg border border-border-muted">
             {body}
           </div>
         );

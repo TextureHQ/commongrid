@@ -6,11 +6,11 @@ import { useMemo } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import {
   BadgeList,
-  type EntityStat,
   EntityList,
   EntityMap,
   EntityPageHeader,
   EntitySection,
+  type EntityStat,
   EntityStatsRow,
   FieldList,
   RelationshipCards,
