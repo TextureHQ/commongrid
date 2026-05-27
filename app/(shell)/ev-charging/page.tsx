@@ -4,7 +4,7 @@ import { Badge, Button, type Column, DataControls, DataTable, Icon, Loader, Page
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { DataSourceLink } from "@/components/DataSourceLink";
+
 import { SearchInput } from "@/components/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { EVStation } from "@/types/ev-charging";
@@ -370,7 +370,6 @@ export default function EVChargingPage() {
             <span>Add EV Station</span>
           </Button>
         </div>
-        <DataSourceLink paths={["data/ev-charging.json"]} className="px-1 pb-2" />
       </div>
       <div className="flex-none px-1 pb-3">
         <SearchInput

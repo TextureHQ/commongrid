@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/copy-territories.mjs && node scripts/copy-power-plants.mjs && node scripts/copy-utilities.mjs && node scripts/copy-transmission-lines.mjs && node scripts/copy-ev-charging.mjs && node scripts/copy-pricing-nodes.mjs",
+    "prebuild": "node scripts/copy-territories.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "biome check .",

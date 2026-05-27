@@ -1,7 +1,6 @@
 "use client";
 
 import { Icon, TextField } from "@texturehq/edges";
-import Fuse from "fuse.js";
 import { useRouter } from "next/navigation";
 import {
   createContext,
@@ -9,15 +8,19 @@ import {
   type ReactNode,
   useCallback,
   useContext,
-  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getAllRtos } from "@/lib/data";
+
+import { useEvStationList } from "@/hooks/useEvStationList";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { usePricingNodeList } from "@/hooks/usePricingNodeList";
+import { useProgramList } from "@/hooks/useProgramList";
+import { useUtilityList } from "@/hooks/useUtilityList";
+import { getAllBalancingAuthorities, getAllIsos, getAllRtos } from "@/lib/data";
 import { BROWSE_ENTRIES, ENTITY_BY_KIND, type EntityKind } from "@/lib/entity-catalog";
-import { useUtilities } from "@/lib/utilities-client";
 import type { BalancingAuthority, Iso, PowerPlant, Rto, Utility } from "@/types/entities";
 import type { EVStation } from "@/types/ev-charging";
 import type { PricingNode } from "@/types/pricing-nodes";
@@ -55,12 +58,6 @@ export function useGlobalSearch(): GlobalSearchContextValue {
 // Search result types
 // ---------------------------------------------------------------------------
 
-// EntityKind, labels, colors, browse list, and counts all live in the
-// shared catalog (lib/entity-catalog.ts) so the empty-state suggestions
-// and the search-result groups stay in sync with the actual datasets
-// we ship. Adding a new dataset = adding one catalog entry; this
-// component re-derives everything.
-
 interface SearchResult {
   kind: EntityKind;
   slug: string;
@@ -70,8 +67,7 @@ interface SearchResult {
   dotColor: string;
 }
 
-// Order in which kinds appear in the search-result list. Matches the
-// catalog order, with RTOs slotted in next to ISOs.
+// Order in which kinds appear in the search-result list
 const KIND_ORDER: EntityKind[] = [
   "utility",
   "iso",
@@ -83,11 +79,6 @@ const KIND_ORDER: EntityKind[] = [
   "program",
 ];
 
-// Flat lookup maps derived from the catalog — keep the per-result
-// `dotColor: KIND_DOT_COLOR.<kind>` callsites concise. Falls back to
-// a neutral slate color for any kind that doesn't have an explicit
-// entry, so we can't crash on a newly added kind that hasn't been
-// wired up here yet.
 const KIND_DOT_COLOR_FALLBACK = "bg-slate-400";
 const KIND_TILE_BG_FALLBACK = "bg-slate-100";
 const KIND_DOT_COLOR = Object.fromEntries(
@@ -100,126 +91,6 @@ const KIND_LABELS = Object.fromEntries(KIND_ORDER.map((k) => [k, ENTITY_BY_KIND[
 >;
 
 const MAX_PER_KIND = 5;
-const MAX_TOTAL = 30;
-
-// ---------------------------------------------------------------------------
-// Tiny lightweight types for async datasets
-// ---------------------------------------------------------------------------
-
-interface SlimPlant {
-  slug: string;
-  name: string;
-  state: string;
-  utilityName: string;
-  fuelCategory: string;
-}
-
-interface SlimStation {
-  slug: string;
-  stationName: string;
-  city: string;
-  state: string;
-  evNetwork: string | null;
-}
-
-// ---------------------------------------------------------------------------
-// Build Fuse indices for tier-1 data
-// ---------------------------------------------------------------------------
-
-function buildUtilityFuse(utilities: Utility[]): Fuse<Utility> {
-  return new Fuse(utilities, {
-    threshold: 0.3,
-    ignoreLocation: true,
-    keys: [
-      { name: "name", weight: 0.6 },
-      { name: "shortName", weight: 0.3 },
-      { name: "jurisdiction", weight: 0.1 },
-    ],
-  });
-}
-
-function buildIsoFuse(isos: Iso[]): Fuse<Iso> {
-  return new Fuse(isos, {
-    threshold: 0.3,
-    ignoreLocation: true,
-    keys: [
-      { name: "name", weight: 0.6 },
-      { name: "shortName", weight: 0.3 },
-      { name: "states", weight: 0.1 },
-    ],
-  });
-}
-
-function buildRtoFuse(rtos: Rto[]): Fuse<Rto> {
-  return new Fuse(rtos, {
-    threshold: 0.3,
-    ignoreLocation: true,
-    keys: [
-      { name: "name", weight: 0.6 },
-      { name: "shortName", weight: 0.3 },
-      { name: "states", weight: 0.1 },
-    ],
-  });
-}
-
-function buildBaFuse(bas: BalancingAuthority[]): Fuse<BalancingAuthority> {
-  return new Fuse(bas, {
-    threshold: 0.3,
-    ignoreLocation: true,
-    keys: [
-      { name: "name", weight: 0.6 },
-      { name: "shortName", weight: 0.3 },
-      { name: "states", weight: 0.1 },
-    ],
-  });
-}
-
-function buildPricingNodeFuse(nodes: PricingNode[]): Fuse<PricingNode> {
-  return new Fuse(nodes, {
-    threshold: 0.3,
-    ignoreLocation: true,
-    keys: [
-      { name: "name", weight: 0.7 },
-      { name: "iso", weight: 0.2 },
-      { name: "state", weight: 0.1 },
-    ],
-  });
-}
-
-function buildProgramFuse(programs: Program[]): Fuse<Program> {
-  return new Fuse(programs, {
-    threshold: 0.3,
-    ignoreLocation: true,
-    keys: [
-      { name: "name", weight: 0.8 },
-      { name: "regions", weight: 0.2 },
-    ],
-  });
-}
-
-function buildPlantFuse(plants: SlimPlant[]): Fuse<SlimPlant> {
-  return new Fuse(plants, {
-    threshold: 0.3,
-    ignoreLocation: true,
-    keys: [
-      { name: "name", weight: 0.6 },
-      { name: "state", weight: 0.2 },
-      { name: "utilityName", weight: 0.2 },
-    ],
-  });
-}
-
-function buildStationFuse(stations: SlimStation[]): Fuse<SlimStation> {
-  return new Fuse(stations, {
-    threshold: 0.3,
-    ignoreLocation: true,
-    keys: [
-      { name: "stationName", weight: 0.6 },
-      { name: "city", weight: 0.2 },
-      { name: "state", weight: 0.2 },
-    ],
-  });
-}
 
 // ---------------------------------------------------------------------------
 // Helpers to convert to SearchResult
@@ -264,7 +135,7 @@ function baToResult(ba: BalancingAuthority): SearchResult {
     slug: ba.slug,
     name: ba.name,
     subtitle: `Balancing Authority · ${ba.shortName}`,
-    href: `/grid-operators/${ba.slug}`,
+    href: `/balancing-authorities/${ba.slug}`,
     dotColor: KIND_DOT_COLOR.ba,
   };
 }
@@ -291,7 +162,7 @@ function programToResult(program: Program): SearchResult {
   };
 }
 
-function plantToResult(plant: SlimPlant): SearchResult {
+function plantToResult(plant: PowerPlant): SearchResult {
   return {
     kind: "power-plant",
     slug: plant.slug,
@@ -302,7 +173,7 @@ function plantToResult(plant: SlimPlant): SearchResult {
   };
 }
 
-function stationToResult(station: SlimStation): SearchResult {
+function stationToResult(station: EVStation): SearchResult {
   return {
     kind: "ev-station",
     slug: station.slug,
@@ -314,6 +185,19 @@ function stationToResult(station: SlimStation): SearchResult {
 }
 
 // ---------------------------------------------------------------------------
+// Static search for small datasets (ISOs/RTOs)
+// ---------------------------------------------------------------------------
+
+function searchStatic<T extends { name: string; shortName?: string }>(items: T[], query: string): T[] {
+  const q = query.toLowerCase();
+  return items.filter((item) => {
+    const name = item.name.toLowerCase();
+    const shortName = item.shortName?.toLowerCase() ?? "";
+    return name.includes(q) || shortName.includes(q);
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Modal component
 // ---------------------------------------------------------------------------
 
@@ -321,15 +205,7 @@ export function GlobalSearchModal() {
   const { isOpen, close } = useGlobalSearch();
   const router = useRouter();
   const [query, setQuery] = useState("");
-  // Deferred query keeps the input itself responsive while the Fuse
-  // pipeline catches up on slower devices. Combined with the 2-char
-  // minimum below, this kills the perceived sluggishness on mobile.
-  const deferredQuery = useDeferredValue(query);
-  // Wrap the TextField in a div ref so we can imperatively focus the
-  // inner <input>. The edges TextField doesn't forward a ref to its
-  // <input>, so we reach in via DOM query — not pretty, but it's the
-  // approved escape hatch (TextField is built on react-aria-components
-  // which manages the input internally).
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const searchWrapperRef = useRef<HTMLDivElement>(null);
   const focusInput = useCallback(() => {
     const el = searchWrapperRef.current?.querySelector("input");
@@ -337,114 +213,36 @@ export function GlobalSearchModal() {
   }, []);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Tier-2 async data
-  const [plants, setPlants] = useState<SlimPlant[] | null>(null);
-  const [stations, setStations] = useState<SlimStation[] | null>(null);
-  const [pricingNodes, setPricingNodes] = useState<PricingNode[] | null>(null);
+  // Debounce search query (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
-  // Track fetch state
-  const [loadingAsync, setLoadingAsync] = useState(false);
-
-  // Tier-1 static data
-  const { utilities } = useUtilities();
+  // Static data (small datasets - ISOs, RTOs, BAs)
   const isos = useMemo(() => getAllIsos(), []);
   const rtos = useMemo(() => getAllRtos(), []);
   const bas = useMemo(() => getAllBalancingAuthorities(), []);
-  const programs = useMemo(() => getAllPrograms(), []);
 
-  // Build tier-1 Fuse indices once (not on each query)
-  const utilityFuse = useMemo(() => buildUtilityFuse(utilities), [utilities]);
-  const isoFuse = useMemo(() => buildIsoFuse(isos), [isos]);
-  const rtoFuse = useMemo(() => buildRtoFuse(rtos), [rtos]);
-  const baFuse = useMemo(() => buildBaFuse(bas), [bas]);
-  const programFuse = useMemo(() => buildProgramFuse(programs), [programs]);
+  // API-based search for large datasets
+  const shouldSearch = debouncedQuery.trim().length >= 2;
+  const searchTerm = shouldSearch ? debouncedQuery.trim() : undefined;
 
-  // Build tier-2 Fuse indices once data is loaded
-  const plantFuse = useMemo(() => (plants ? buildPlantFuse(plants) : null), [plants]);
-  const stationFuse = useMemo(() => (stations ? buildStationFuse(stations) : null), [stations]);
-  const pricingNodeFuse = useMemo(() => (pricingNodes ? buildPricingNodeFuse(pricingNodes) : null), [pricingNodes]);
+  const { utilities } = useUtilityList({ search: searchTerm, limit: MAX_PER_KIND });
+  const { powerPlants } = usePowerPlantList({ search: searchTerm, limit: MAX_PER_KIND });
+  const { evStations } = useEvStationList({ search: searchTerm, limit: MAX_PER_KIND });
+  const { pricingNodes } = usePricingNodeList({ search: searchTerm, limit: MAX_PER_KIND });
+  const { programs } = useProgramList({ search: searchTerm, limit: MAX_PER_KIND });
 
   // Focus input on open
   useEffect(() => {
     if (isOpen) {
       setQuery("");
+      setDebouncedQuery("");
       setActiveIndex(0);
       setTimeout(() => focusInput(), 50);
     }
   }, [isOpen, focusInput]);
-
-  // Fetch tier-2 data on open
-  useEffect(() => {
-    if (!isOpen) return;
-
-    let cancelled = false;
-    const pending: Promise<void>[] = [];
-
-    if (!plants) {
-      const p = fetch("/data/power-plants.json")
-        .then((r) => r.json())
-        .then((data: PowerPlant[]) => {
-          if (!cancelled) {
-            setPlants(
-              data.map((d) => ({
-                slug: d.slug,
-                name: d.name,
-                state: d.state,
-                utilityName: d.utilityName,
-                fuelCategory: d.fuelCategory,
-              }))
-            );
-          }
-        })
-        .catch(() => {});
-      pending.push(p);
-    }
-
-    if (!stations) {
-      const p = fetch("/data/ev-charging.json")
-        .then((r) => r.json())
-        .then((data: EVStation[]) => {
-          if (!cancelled) {
-            setStations(
-              data.map((d) => ({
-                slug: d.slug,
-                stationName: d.stationName,
-                city: d.city,
-                state: d.state,
-                evNetwork: d.evNetwork,
-              }))
-            );
-          }
-        })
-        .catch(() => {});
-      pending.push(p);
-    }
-
-    if (!pricingNodes) {
-      const p = fetch("/data/pricing-nodes.json")
-        .then((r) => r.json())
-        .then((data: PricingNode[]) => {
-          if (!cancelled) {
-            setPricingNodes(data);
-          }
-        })
-        .catch(() => {});
-      pending.push(p);
-    }
-
-    if (pending.length > 0) {
-      setLoadingAsync(true);
-      Promise.all(pending).finally(() => {
-        if (!cancelled) setLoadingAsync(false);
-      });
-    }
-
-    return () => {
-      cancelled = true;
-    };
-    // Only run when modal opens; we intentionally don't re-run when plants/stations/pricingNodes change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, plants, pricingNodes, stations]);
 
   // Escape key closes modal
   useEffect(() => {
@@ -456,69 +254,41 @@ export function GlobalSearchModal() {
     return () => window.removeEventListener("keydown", handler);
   }, [isOpen, close]);
 
-  // Build results — driven by the *deferred* query so typing stays
-  // smooth even when the Fuse pipeline takes ~30-60ms per keystroke.
+  // Build results from API responses + static search
   const results = useMemo<SearchResult[]>(() => {
-    const q = deferredQuery.trim();
-    if (!q) return [];
-    // Skip single-character queries: Fuse returns hundreds of poor matches
-    // and renders are expensive. Two characters is the conventional floor.
-    if (q.length < 2) return [];
+    if (!shouldSearch) return [];
 
     const out: SearchResult[] = [];
 
-    const utilityResults = utilityFuse
-      .search(q)
-      .slice(0, MAX_PER_KIND)
-      .map((r) => utilityToResult(r.item));
-    const isoResults = isoFuse
-      .search(q)
-      .slice(0, MAX_PER_KIND)
-      .map((r) => isoToResult(r.item));
-    const rtoResults = rtoFuse
-      .search(q)
-      .slice(0, MAX_PER_KIND)
-      .map((r) => rtoToResult(r.item));
-    const baResults = baFuse
-      .search(q)
-      .slice(0, MAX_PER_KIND)
-      .map((r) => baToResult(r.item));
-    const plantResults = plantFuse
-      ? plantFuse
-          .search(q)
-          .slice(0, MAX_PER_KIND)
-          .map((r) => plantToResult(r.item))
-      : [];
-    const stationResults = stationFuse
-      ? stationFuse
-          .search(q)
-          .slice(0, MAX_PER_KIND)
-          .map((r) => stationToResult(r.item))
-      : [];
-    const pricingNodeResults = pricingNodeFuse
-      ? pricingNodeFuse
-          .search(q)
-          .slice(0, MAX_PER_KIND)
-          .map((r) => pricingNodeToResult(r.item))
-      : [];
-    const programResults = programFuse
-      .search(q)
-      .slice(0, MAX_PER_KIND)
-      .map((r) => programToResult(r.item));
+    // Utilities (API)
+    out.push(...utilities.slice(0, MAX_PER_KIND).map(utilityToResult));
 
-    out.push(
-      ...utilityResults,
-      ...isoResults,
-      ...rtoResults,
-      ...baResults,
-      ...plantResults,
-      ...stationResults,
-      ...pricingNodeResults,
-      ...programResults
-    );
+    // ISOs (static - small dataset)
+    const isoResults = searchStatic(isos, debouncedQuery);
+    out.push(...isoResults.slice(0, MAX_PER_KIND).map(isoToResult));
 
-    return out.slice(0, MAX_TOTAL);
-  }, [deferredQuery, utilityFuse, isoFuse, rtoFuse, baFuse, plantFuse, stationFuse, pricingNodeFuse, programFuse]);
+    // RTOs (static - small dataset)
+    const rtoResults = searchStatic(rtos, debouncedQuery);
+    out.push(...rtoResults.slice(0, MAX_PER_KIND).map(rtoToResult));
+
+    // Balancing Authorities (static - small dataset)
+    const baResults = searchStatic(bas, debouncedQuery);
+    out.push(...baResults.slice(0, MAX_PER_KIND).map(baToResult));
+
+    // Power Plants (API)
+    out.push(...powerPlants.slice(0, MAX_PER_KIND).map(plantToResult));
+
+    // EV Stations (API)
+    out.push(...evStations.slice(0, MAX_PER_KIND).map(stationToResult));
+
+    // Pricing Nodes (API)
+    out.push(...pricingNodes.slice(0, MAX_PER_KIND).map(pricingNodeToResult));
+
+    // Programs (API)
+    out.push(...programs.slice(0, MAX_PER_KIND).map(programToResult));
+
+    return out;
+  }, [shouldSearch, debouncedQuery, utilities, isos, rtos, bas, powerPlants, evStations, pricingNodes, programs]);
 
   // Group results by kind (maintain KIND_ORDER order)
   const grouped = useMemo<Array<{ kind: EntityKind; label: string; items: SearchResult[] }>>(() => {
@@ -570,12 +340,6 @@ export function GlobalSearchModal() {
   // Flatten results for keyboard nav indexing
   let flatIndex = 0;
 
-  // Browse-list entries come from the central catalog so adding a new
-  // dataset elsewhere automatically surfaces here. Labels, counts,
-  // hrefs, AND dot/tile colors are the single source of truth in
-  // lib/entity-catalog.ts — we project them onto the row shape the
-  // empty-state UI expects, including the lighter tile background
-  // (e.g. bg-amber-100) that pairs with the dot color (bg-amber-400).
   const QUICK_LINKS = BROWSE_ENTRIES.map((entry) => ({
     label: entry.label,
     href: entry.href,
@@ -585,22 +349,11 @@ export function GlobalSearchModal() {
     tileBg: entry.tileBg,
   }));
 
+  const isLoading = query.trim().length >= 2 && debouncedQuery !== query;
+
   return (
     <>
-      {/* Backdrop — covers the full viewport on mobile (including the
-          nav area, since the search sheet itself takes over the screen),
-          and dims everything behind the floating panel on desktop.
-
-          z-index: must sit ABOVE the sticky top nav (z-60) so the modal
-          actually covers the nav on mobile. Backdrop is z-[70], sheet
-          wrapper is z-[80].
-
-          Click vs touch: only respond to onClick, NOT onMouseDown /
-          onTouchStart. iOS Safari fires touchstart on whatever's under
-          the finger when a new layer appears, so listening to touchstart
-          would close the modal in the same gesture that opened it (the
-          original "tap does nothing" bug). Click fires after touchend,
-          which is exactly what we want. */}
+      {/* Backdrop */}
       <div
         className="fixed inset-0 z-[70]"
         style={{
@@ -612,11 +365,7 @@ export function GlobalSearchModal() {
         aria-hidden="true"
       />
 
-      {/* Modal positioning styles
-         • Mobile: true full-screen sheet (top:0, 100dvh) so the keyboard
-           doesn't shove the panel around and we get the full viewport
-           for results. Uses `dvh` so iOS Safari accounts for the URL bar.
-         • Desktop: centered floating panel as before. */}
+      {/* Modal positioning styles */}
       <style>{`
         .og-search-modal-wrapper {
           top: 0;
@@ -627,15 +376,6 @@ export function GlobalSearchModal() {
           height: 100dvh;
           border-radius: 0;
         }
-        /* Let the edges TextField size itself (via size="xl" on mobile,
-           the design-system default). We only need two things from
-           this stylesheet: the wrapper takes full width so the input
-           fills the row, and the iOS Safari pseudo cancel button on
-           type=search is hidden (we render our own clear via
-           TextField's isClearable prop).
-
-           iOS zoom safety: edges size="xl" font-size is ≥ 16px so no
-           extra rule is needed here. */
         .og-search-textfield-wrapper > * {
           width: 100%;
         }
@@ -681,10 +421,7 @@ export function GlobalSearchModal() {
         }
       `}</style>
 
-      {/* Modal — full-screen sheet on mobile, floating centered on desktop.
-          Sits one layer above the backdrop so taps on the panel itself
-          never reach the backdrop's onClick handler. Both backdrop and
-          sheet are above the sticky top nav (z-60). */}
+      {/* Modal */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: event stops propagation to prevent close-on-outside-click */}
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick here is purely a stopPropagation guard, no user-facing action triggered */}
       <div className="og-search-modal-wrapper fixed z-[80]" onClick={(e) => e.stopPropagation()}>
@@ -699,16 +436,9 @@ export function GlobalSearchModal() {
           aria-modal="true"
           aria-label="Search the registry"
         >
-          {/* Search input row — uses the edges TextField configured as a
-             search input (size=xl on mobile, lg on desktop) for full
-             design-system consistency. The mobile-only back button on
-             the left anchors the sheet as a navigation destination;
-             the esc hint on the right is desktop-only. */}
-          {/* Let the row collapse to the natural height of the edges
-             TextField + 12px top/bottom padding (mobile) / 14px (desktop).
-             No fixed height — the design system owns it. */}
+          {/* Search input row */}
           <div className="og-search-row flex items-center border-b border-border-default flex-none py-3 sm:py-3.5">
-            {/* Mobile-only back button. iOS-style chevron, 44px target. */}
+            {/* Mobile-only back button */}
             <button
               type="button"
               onClick={close}
@@ -742,7 +472,7 @@ export function GlobalSearchModal() {
                   setQuery("");
                   focusInput();
                 }}
-                isLoading={loadingAsync}
+                isLoading={isLoading}
                 size="md"
                 transparent
                 reserveErrorSpace={false}
@@ -760,10 +490,7 @@ export function GlobalSearchModal() {
 
           {/* Results / Empty state */}
           <div className="flex-1 overflow-y-auto overscroll-contain">
-            {/* Empty state — "Browse" rows rendered with prominence:
-               40px kind-tiles on mobile, generous 16px section padding,
-               clean type pair. The earlier 8px dots looked cramped at
-               phone density and didn't read as actionable; the tiles do. */}
+            {/* Empty state — "Browse" rows */}
             {query.trim() === "" && (
               <div className="py-4 sm:py-3">
                 <div className="og-search-section-label text-text-muted px-5 sm:px-5 pb-3 sm:pb-2">Browse</div>
@@ -810,9 +537,8 @@ export function GlobalSearchModal() {
               </div>
             )}
 
-            {/* No results — only show once the deferred query has caught
-               up. Otherwise we'd flash this banner on every keystroke. */}
-            {query.trim().length >= 2 && deferredQuery === query && results.length === 0 && !loadingAsync && (
+            {/* No results */}
+            {query.trim().length >= 2 && debouncedQuery === query && results.length === 0 && !isLoading && (
               <div className="flex flex-col items-center justify-center px-6 py-16 sm:py-12 gap-3 text-text-muted">
                 <div className="w-14 h-14 rounded-2xl bg-[var(--color-background-subtle)] flex items-center justify-center mb-1">
                   <Icon name="MagnifyingGlass" size={22} className="opacity-40" />
@@ -826,10 +552,7 @@ export function GlobalSearchModal() {
               </div>
             )}
 
-            {/* Results grouped by entity type. Each section starts with a
-               proper uppercase label with generous breathing room, then
-               taller rows (60px on mobile) with a real kind-tile, 15px
-               semibold name and 13px muted subtitle. */}
+            {/* Results grouped by entity type */}
             {grouped.length > 0 && (
               <div className="py-2 sm:py-2">
                 {grouped.map((group, groupIdx) => (

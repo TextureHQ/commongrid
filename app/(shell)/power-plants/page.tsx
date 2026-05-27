@@ -14,11 +14,11 @@ import {
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
-import { DataSourceLink } from "@/components/DataSourceLink";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { SearchInput } from "@/components/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { sortByName } from "@/lib/data";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import {
   formatCapacity,
   getFuelBadgeVariant,
@@ -26,9 +26,7 @@ import {
   getFuelCategoryLabel,
   getPlantStatusBadgeVariant,
 } from "@/lib/formatting";
-import { usePowerPlants } from "@/lib/power-plants";
-import { useFuseSearch } from "@/lib/search";
-import { FUEL_CATEGORIES, FuelCategoryLabel, type PowerPlant } from "@/types/entities";
+import { FUEL_CATEGORIES, FuelCategoryLabel } from "@/types/entities";
 
 interface PowerPlantRow extends Record<string, unknown> {
   slug: string;
@@ -44,8 +42,10 @@ interface PowerPlantRow extends Record<string, unknown> {
 const sortOptions = [
   { id: "name:asc", label: "Name A-Z", value: "name:asc" },
   { id: "name:desc", label: "Name Z-A", value: "name:desc" },
-  { id: "capacity:desc", label: "Capacity (High to Low)", value: "capacity:desc" },
-  { id: "capacity:asc", label: "Capacity (Low to High)", value: "capacity:asc" },
+  { id: "totalCapacityMw:desc", label: "Capacity (High to Low)", value: "totalCapacityMw:desc" },
+  { id: "totalCapacityMw:asc", label: "Capacity (Low to High)", value: "totalCapacityMw:asc" },
+  { id: "state:asc", label: "State A-Z", value: "state:asc" },
+  { id: "state:desc", label: "State Z-A", value: "state:desc" },
 ];
 
 const fuelFilterOptions = [
@@ -63,81 +63,115 @@ const statusFilterOptions = [
   { id: "proposed", label: "Proposed", value: "proposed" },
 ];
 
+// State abbreviations for filter dropdown
+const US_STATES = [
+  "AL",
+  "AK",
+  "AZ",
+  "AR",
+  "CA",
+  "CO",
+  "CT",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "ID",
+  "IL",
+  "IN",
+  "IA",
+  "KS",
+  "KY",
+  "LA",
+  "ME",
+  "MD",
+  "MA",
+  "MI",
+  "MN",
+  "MS",
+  "MO",
+  "MT",
+  "NE",
+  "NV",
+  "NH",
+  "NJ",
+  "NM",
+  "NY",
+  "NC",
+  "ND",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VT",
+  "VA",
+  "WA",
+  "WV",
+  "WI",
+  "WY",
+  "DC",
+];
+
 export default function PowerPlantsPage() {
   const router = useRouter();
-  const { plants: allPlants, isLoading } = usePowerPlants();
   const { user } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortValue, setSortValue] = useState("capacity:desc");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sortValue, setSortValue] = useState("totalCapacityMw:desc");
   const [fuelFilter, setFuelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  // Get unique states for filter
-  const states = useMemo(() => {
-    const s = new Set(allPlants.map((p) => p.state));
-    return Array.from(s).sort();
-  }, [allPlants]);
+  // Parse sort value
+  const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];
 
-  // Fuse.js search options
-  const fuseOptions = useMemo(
-    () => ({
-      keys: [
-        { name: "name", weight: 0.4 },
-        { name: "utilityName", weight: 0.25 },
-        { name: "slug", weight: 0.1 },
-        { name: "state", weight: 0.15 },
-        { name: "county", weight: 0.1 },
-      ],
-      threshold: 0.3,
-      ignoreLocation: true,
-    }),
-    []
-  );
+  // Build API filters
+  const filters = useMemo(() => {
+    const f: {
+      search?: string;
+      state?: string;
+      fuelCategory?: string;
+      status?: string;
+      sort?: string;
+      order?: "asc" | "desc";
+      limit: number;
+    } = {
+      limit: 200, // Max allowed by API
+      sort: sortField,
+      order: sortOrder,
+    };
+    if (debouncedSearch.trim()) f.search = debouncedSearch.trim();
+    if (stateFilter !== "all") f.state = stateFilter;
+    if (fuelFilter !== "all") f.fuelCategory = fuelFilter;
+    if (statusFilter !== "all") f.status = statusFilter;
+    return f;
+  }, [debouncedSearch, stateFilter, fuelFilter, statusFilter, sortField, sortOrder]);
 
-  const searched = useFuseSearch(allPlants, searchQuery, fuseOptions);
+  const { powerPlants, isLoading, error, pagination } = usePowerPlantList(filters);
 
-  const filtered = useMemo(() => {
-    let result: PowerPlant[] = searched;
-    if (fuelFilter !== "all") {
-      result = result.filter((p) => p.fuelCategory === fuelFilter);
-    }
-    if (statusFilter !== "all") {
-      result = result.filter((p) => p.status === statusFilter);
-    }
-    if (stateFilter !== "all") {
-      result = result.filter((p) => p.state === stateFilter);
-    }
-    // Sort only when no search query (Fuse returns relevance-ordered)
-    if (!searchQuery.trim()) {
-      const [field, direction] = sortValue.split(":");
-      if (field === "name") {
-        result = sortByName(result, direction as "asc" | "desc");
-      } else if (field === "capacity") {
-        result = [...result].sort((a, b) => {
-          const capA = a.status === "operable" ? a.totalCapacityMw : (a.proposedCapacityMw ?? 0);
-          const capB = b.status === "operable" ? b.totalCapacityMw : (b.proposedCapacityMw ?? 0);
-          return direction === "desc" ? capB - capA : capA - capB;
-        });
-      }
-    }
-    return result;
-  }, [searched, searchQuery, fuelFilter, statusFilter, stateFilter, sortValue]);
-
-  const rows: PowerPlantRow[] = useMemo(
-    () =>
-      filtered.map((p) => ({
-        slug: p.slug,
-        name: p.name,
-        fuelCategory: p.fuelCategory,
-        totalCapacityMw: p.totalCapacityMw,
-        state: p.state,
-        utilityName: p.utilityName,
-        status: p.status,
-        proposedCapacityMw: p.proposedCapacityMw,
-      })),
-    [filtered]
-  );
+  const rows: PowerPlantRow[] = useMemo(() => {
+    return powerPlants.map((p) => ({
+      slug: p.slug,
+      name: p.name,
+      fuelCategory: p.fuelCategory,
+      totalCapacityMw: p.totalCapacityMw,
+      state: p.state,
+      utilityName: p.utilityName,
+      status: p.status,
+      proposedCapacityMw: p.proposedCapacityMw,
+    }));
+  }, [powerPlants]);
 
   const handleRowClick = useCallback(
     (row: PowerPlantRow) => {
@@ -217,7 +251,7 @@ export default function PowerPlantsPage() {
     []
   );
 
-  if (isLoading) {
+  if (isLoading && rows.length === 0) {
     return (
       <PageLayout
         className="flex flex-col h-full overflow-hidden bg-background-default"
@@ -233,6 +267,32 @@ export default function PowerPlantsPage() {
       </PageLayout>
     );
   }
+
+  if (error) {
+    return (
+      <PageLayout
+        className="flex flex-col h-full overflow-hidden bg-background-default"
+        paddingYClass="pt-8 md:pt-12"
+        paddingXClass="px-4"
+      >
+        <div className="flex-none">
+          <PageLayout.Header title="Power Plants" sticky={true} />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState
+            icon="Lightning"
+            title="Failed to load power plants"
+            description={error.message}
+            fullHeight={true}
+          />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const totalCount = pagination?.totalCount ?? rows.length;
+  const showingCount = rows.length;
+  const hasMore = pagination?.hasNextPage ?? false;
 
   return (
     <PageLayout
@@ -253,7 +313,6 @@ export default function PowerPlantsPage() {
             <span>Add Power Plant</span>
           </Button>
         </div>
-        <DataSourceLink paths={["data/power-plants.json"]} className="px-1 pb-2" />
       </div>
       <div className="flex-none px-1 pb-3">
         <SearchInput
@@ -261,13 +320,16 @@ export default function PowerPlantsPage() {
           onChange={setSearchQuery}
           onClear={() => setSearchQuery("")}
           placeholder="Search plants, utilities, states..."
-          resultCount={filtered.length}
+          resultCount={showingCount}
           resultLabel="power plants"
         />
       </div>
       <div className="flex-none">
         <DataControls
-          resultsCount={{ count: filtered.length, label: "power plants" }}
+          resultsCount={{
+            count: showingCount,
+            label: hasMore ? `power plants (${totalCount} total, showing first ${showingCount})` : "power plants",
+          }}
           sort={{
             value: sortValue,
             options: sortOptions,
@@ -303,7 +365,7 @@ export default function PowerPlantsPage() {
                 className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
               >
                 <option value="all">All States</option>
-                {states.map((s) => (
+                {US_STATES.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
@@ -325,16 +387,25 @@ export default function PowerPlantsPage() {
             fullHeight={true}
           />
         ) : (
-          <DataTable
-            className="border-r border-l"
-            data={rows}
-            columns={columns}
-            mobileBreakpoint="md"
-            isLoading={false}
-            height="100%"
-            stickyHeader={true}
-            onRowClick={handleRowClick}
-          />
+          <>
+            <DataTable
+              className="border-r border-l"
+              data={rows}
+              columns={columns}
+              mobileBreakpoint="md"
+              isLoading={isLoading}
+              height="100%"
+              stickyHeader={true}
+              onRowClick={handleRowClick}
+            />
+            {hasMore && (
+              <div className="flex justify-center py-4 border-t border-border-default">
+                <div className="text-sm text-text-secondary">
+                  Showing first {showingCount} of {totalCount} results. Refine filters to see different plants.
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </PageLayout>
