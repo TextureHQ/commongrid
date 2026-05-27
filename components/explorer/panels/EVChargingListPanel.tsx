@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useEvCharging } from "@/lib/ev-charging";
+import { useEvStationList } from "@/hooks/useEvStationList";
 import { useFuseSearch } from "@/lib/search";
 import type { EVStation } from "@/types/ev-charging";
 import { EV_NETWORKS, getNetworkColor, getNetworkShortName } from "@/types/ev-charging";
@@ -51,7 +51,7 @@ export function EVChargingListPanel() {
   const { state, setSearch, setTypeFilter } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
-  const { stations: allStations, isLoading } = useEvCharging();
+  const { evStations: allStations, isLoading } = useEvStationList({ limit: 500 });
 
   const fuseOptions = useMemo(
     () => ({

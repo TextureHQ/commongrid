@@ -4,7 +4,7 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { getBalancingAuthorityById, getIsoById, getRegionById, getRtoById } from "@/lib/data";
+import { getRegionById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -14,8 +14,12 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
-import { filterByUtility, usePowerPlants } from "@/lib/power-plants";
-import { useUtilities } from "@/lib/utilities-client";
+import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
+import { useIso } from "@/hooks/useIso";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useRto } from "@/hooks/useRto";
+import { useUtility } from "@/hooks/useUtility";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import { useExplorer } from "../ExplorerContext";
 
 const BackIcon = () => (
@@ -42,16 +46,12 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, goBack, setHighlight } = useExplorer();
   const { user } = useCurrentUser();
 
-  const { utilities, isLoading: utilitiesLoading } = useUtilities();
+  const { utility, isLoading: utilityLoading } = useUtility(slug);
+  const { utilities, isLoading: utilitiesLoading } = useUtilityList({ limit: 500 });
 
-  const utility = useMemo(() => utilities.find((u) => u.slug === slug) ?? null, [utilities, slug]);
-
-  const iso = useMemo(() => (utility?.isoId ? getIsoById(utility.isoId) : null), [utility]);
-  const rto = useMemo(() => (utility?.rtoId ? getRtoById(utility.rtoId) : null), [utility]);
-  const ba = useMemo(
-    () => (utility?.balancingAuthorityId ? getBalancingAuthorityById(utility.balancingAuthorityId) : null),
-    [utility]
-  );
+  const { iso, isLoading: isoLoading } = useIso(utility?.isoId ?? null);
+  const { rto, isLoading: rtoLoading } = useRto(utility?.rtoId ?? null);
+  const { balancingAuthority: ba, isLoading: baLoading } = useBalancingAuthority(utility?.balancingAuthorityId ?? null);
   const parent = useMemo(
     () => (utility?.parentId ? (utilities.find((u) => u.id === utility.parentId) ?? null) : null),
     [utility, utilities]
@@ -95,11 +95,10 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     [utility, utilities]
   );
 
-  const { plants: allPlants } = usePowerPlants();
-  const utilityPowerPlants = useMemo(
-    () => (utility ? filterByUtility(allPlants, utility.id) : []),
-    [utility, allPlants]
-  );
+  const { powerPlants: utilityPowerPlants } = usePowerPlantList({
+    utilityId: utility?.id,
+    limit: 200,
+  });
 
   if (utilitiesLoading) {
     return <div className="cg-explore-loading">Loading…</div>;
