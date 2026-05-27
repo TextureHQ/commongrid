@@ -15,7 +15,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DataSourceLink } from "@/components/DataSourceLink";
+
 import { SearchInput } from "@/components/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
@@ -313,7 +313,7 @@ export default function PowerPlantsPage() {
             <span>Add Power Plant</span>
           </Button>
         </div>
-        <DataSourceLink paths={["data/power-plants.json"]} className="px-1 pb-2" />
+
       </div>
       <div className="flex-none px-1 pb-3">
         <SearchInput

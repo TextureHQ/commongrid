@@ -15,7 +15,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DataSourceLink } from "@/components/DataSourceLink";
+
 import { SearchInput } from "@/components/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePricingNodeList } from "@/hooks/usePricingNodeList";
@@ -257,7 +257,7 @@ export default function PricingNodesPage() {
             <span>Add Pricing Node</span>
           </Button>
         </div>
-        <DataSourceLink paths={["data/pricing-nodes.json"]} className="px-1 pb-2" />
+
       </div>
       <div className="flex-none px-1 pb-3">
         <SearchInput

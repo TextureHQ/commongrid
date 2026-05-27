@@ -11,7 +11,7 @@ import {
   TextCell,
 } from "@texturehq/edges";
 import { useEffect, useMemo, useState } from "react";
-import { DataSourceLink } from "@/components/DataSourceLink";
+
 import { SearchInput } from "@/components/SearchInput";
 import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
 import { VOLTAGE_CLASSES, type VoltageClass, VoltageClassLabel } from "@/types/transmission-lines";
@@ -271,7 +271,7 @@ export default function TransmissionLinesPage() {
     >
       <div className="flex-none">
         <PageLayout.Header title="Transmission Lines" sticky={true} />
-        <DataSourceLink paths={["data/transmission-lines.json"]} className="px-1 pb-2" />
+
       </div>
       <div className="flex-none px-1 pb-3">
         <SearchInput
