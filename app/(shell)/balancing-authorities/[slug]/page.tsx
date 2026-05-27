@@ -17,7 +17,6 @@ import {
   FieldList,
   RelationshipCards,
 } from "@/components/entity";
-import { getBalancingAuthorityBySlug, getIsoById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -29,9 +28,11 @@ import {
   getSegmentLabel,
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
-import { filterByBA, usePowerPlants } from "@/lib/power-plants";
-import { usePrograms } from "@/lib/programs-client";
-import { useUtilities } from "@/lib/utilities-client";
+import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
+import { useIso } from "@/hooks/useIso";
+import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useProgramList } from "@/hooks/useProgramList";
+import { useUtilityList } from "@/hooks/useUtilityList";
 
 interface UtilityRow extends Record<string, unknown> {
   slug: string;
@@ -43,12 +44,12 @@ interface UtilityRow extends Record<string, unknown> {
 
 export default function BADetailPage() {
   const params = useParams<{ slug: string }>();
-  const ba = getBalancingAuthorityBySlug(params.slug);
+  const { balancingAuthority: ba, isLoading: baLoading } = useBalancingAuthority(params.slug);
 
   const [territoryGeoJSON, setTerritoryGeoJSON] = useState<FeatureCollection | null>(null);
   const [territoryLoading, setTerritoryLoading] = useState(true);
 
-  const iso = ba?.isoId ? getIsoById(ba.isoId) : null;
+  const { iso, isLoading: isoLoading } = useIso(ba?.isoId ?? null);
 
   useEffect(() => {
     if (!ba?.regionId) {
@@ -62,15 +63,10 @@ export default function BADetailPage() {
       .finally(() => setTerritoryLoading(false));
   }, [ba?.slug, ba?.regionId]);
 
-  const { utilities: allUtilities } = useUtilities();
-  const utilities = useMemo(
-    () => (ba ? allUtilities.filter((u) => u.balancingAuthorityId === ba.id) : []),
-    [ba, allUtilities]
-  );
-  const { plants: allPlants, isLoading: plantsLoading } = usePowerPlants();
-  const baPowerPlants = useMemo(() => (ba ? filterByBA(allPlants, ba.id) : []), [ba, allPlants]);
+  const { utilities, isLoading: utilitiesLoading } = useUtilityList({ ba: ba?.slug, limit: 200 });
+  const { powerPlants: baPowerPlants, isLoading: plantsLoading } = usePowerPlantList({ ba: ba?.slug, limit: 200 });
 
-  const { programs: allPrograms, isLoading: programsLoading } = usePrograms();
+  const { programs: allPrograms, isLoading: programsLoading } = useProgramList({ limit: 200 });
   const baPrograms = useMemo(() => {
     if (!utilities.length || !allPrograms.length) return [];
     const slugs = new Set(utilities.map((u) => u.slug));
@@ -158,6 +154,16 @@ export default function BADetailPage() {
     }
     return { longitude: -98.58, latitude: 39.83, zoom: 4 };
   }, [territoryGeoJSON]);
+
+  if (baLoading) {
+    return (
+      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        <div className="flex items-center justify-center py-24">
+          <div className="text-text-muted">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!ba) {
     notFound();
