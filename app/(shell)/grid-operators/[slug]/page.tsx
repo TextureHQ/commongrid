@@ -409,25 +409,38 @@ export default function UtilityDetailPage() {
     [utility]
   );
 
-  const territoryFileKey = useMemo(() => {
-    if (!region) return null;
-    if (region.type === "CCA_TERRITORY" || region.type === "ISO" || region.type === "CUSTOM") {
-      return region.slug;
-    }
-    return region.eiaId;
-  }, [region]);
-
   useEffect(() => {
-    if (!territoryFileKey) {
+    if (!region?.slug) {
       setTerritoryLoading(false);
       return;
     }
-    fetch(`/data/territories/${territoryFileKey}.json`)
+    fetch(`/api/v1/territories/${region.slug}/geometry`)
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setTerritoryGeoJSON(data as FeatureCollection | null))
+      .then((apiResponse) => {
+        if (!apiResponse?.data) {
+          setTerritoryGeoJSON(null);
+          return;
+        }
+        // Wrap the API geometry response in a FeatureCollection
+        const featureCollection: FeatureCollection = {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: {
+                id: region.id,
+                name: region.name,
+                slug: region.slug,
+              },
+              geometry: apiResponse.data,
+            },
+          ],
+        };
+        setTerritoryGeoJSON(featureCollection);
+      })
       .catch(() => setTerritoryGeoJSON(null))
       .finally(() => setTerritoryLoading(false));
-  }, [territoryFileKey]);
+  }, [region]);
 
   const generationMembers = useMemo(
     () => (utility ? utilities.filter((u) => u.generationProviderId === utility.id) : []),
