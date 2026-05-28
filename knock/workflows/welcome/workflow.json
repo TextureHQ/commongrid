@@ -1,0 +1,27 @@
+{
+  "categories": [],
+  "description": "Welcome email sent when a user first signs up for CommonGrid.",
+  "name": "Welcome to CommonGrid",
+  "steps": [
+    {
+      "channel_key": "postmark",
+      "channel_type": "email",
+      "ref": "email_1",
+      "template": {
+        "settings": {
+          "layout_key": "default"
+        },
+        "subject": "Welcome to CommonGrid — Let's map the grid together",
+        "visual_blocks@": "email_1/visual_blocks.json"
+      },
+      "type": "channel"
+    }
+  ],
+  "trigger_frequency": "once_per_recipient",
+  "__readonly": {
+    "key": "welcome",
+    "active": true,
+    "valid": true
+  },
+  "$schema": "https://schemas.knock.app/cli/workflow.json"
+}

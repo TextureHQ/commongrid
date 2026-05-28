@@ -21,6 +21,7 @@ import { getDb } from "@/lib/db/client";
 import { userNotificationPrefs } from "@/lib/db/schema/user-notification-prefs";
 import { users } from "@/lib/db/schema/users";
 import { deleteKnockUser, identifyKnockUser } from "@/lib/knock/sync";
+import { triggerWelcome } from "@/lib/knock/workflows";
 
 type ClerkEmailAddress = {
   email_address: string;
@@ -119,6 +120,9 @@ export async function POST(req: Request) {
 
           // Sync user to Knock (fire-and-forget)
           void identifyKnockUser(newUser);
+
+          // Send welcome email (fire-and-forget)
+          void triggerWelcome(newUser.id);
         }
 
         console.log(`User created: ${data.id} → ${newUser?.id}`);

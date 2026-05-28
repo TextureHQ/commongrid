@@ -37,5 +37,6 @@ export {
   triggerModFlaggedContribution,
   triggerModNewContribution,
   triggerTrustedStatusEarned,
+  triggerWelcome,
   triggerWorkflow,
 } from "./workflows";

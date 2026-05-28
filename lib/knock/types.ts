@@ -12,9 +12,11 @@
 
 /**
  * All Knock workflow keys registered in the Knock dashboard.
- * 14 workflows covering contributor, follower, moderator, and admin events.
+ * 15 workflows covering onboarding, contributor status, community activity, moderator alerts, and admin events.
  */
 export type KnockWorkflowKey =
+  // Onboarding
+  | "welcome"
   // Contributor status notifications
   | "contribution-approved"
   | "contribution-returned"
