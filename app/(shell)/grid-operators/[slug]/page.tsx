@@ -94,6 +94,9 @@ function formatSales(v: number): string {
 interface EditableFieldRef {
   id: string;
   fieldName: string;
+  // Key on the entity object used to read the current value (camelCase),
+  // since `fieldName` is the DB column name (snake_case).
+  valueKey: string;
 }
 
 function useEditableStatItems({
@@ -114,19 +117,18 @@ function useEditableStatItems({
   onEdited: () => void;
 }): { items: StatItem[]; chrome: React.ReactNode } {
   const { user, isLoading } = useCurrentUser();
-  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<EditableFieldRef | null>(null);
   const [showSignInModal, setShowSignInModal] = useState(false);
 
   const enriched = useMemo<StatItem[]>(() => {
     return items.map((item) => {
       const editable = editableFields.find((f) => f.id === item.id);
       if (!editable) return item;
-
       const handleAction = () => {
         if (!user && !isLoading) {
           setShowSignInModal(true);
         } else if (user) {
-          setEditingField(editable.fieldName);
+          setEditingField(editable);
         }
       };
 
@@ -146,7 +148,7 @@ function useEditableStatItems({
   }, [items, editableFields, user, isLoading]);
 
   const currentVersion = (currentValues?.version as number) ?? 1;
-  const currentValue = editingField ? currentValues?.[editingField] : undefined;
+  const currentValue = editingField ? currentValues?.[editingField.valueKey] : undefined;
 
   const chrome = (
     <>
@@ -157,7 +159,7 @@ function useEditableStatItems({
           entityType={entityType}
           entityId={entityId}
           entityName={entityName}
-          fieldName={editingField}
+          fieldName={editingField.fieldName}
           currentValue={currentValue}
           currentVersion={currentVersion}
           onSubmitted={() => {
@@ -223,13 +225,13 @@ function OverviewStatList({ utility }: { utility: Utility }) {
     },
   ].filter((item) => item.value !== null && item.value !== undefined);
 
-  const editableFields = [
-    { id: "segment", fieldName: "segment" },
-    { id: "status", fieldName: "status" },
-    { id: "customers", fieldName: "customer_count" },
-    { id: "jurisdiction", fieldName: "jurisdiction" },
-    { id: "eiaId", fieldName: "eia_id" },
-    { id: "website", fieldName: "website" },
+  const editableFields: EditableFieldRef[] = [
+    { id: "segment", fieldName: "segment", valueKey: "segment" },
+    { id: "status", fieldName: "status", valueKey: "status" },
+    { id: "customers", fieldName: "customer_count", valueKey: "customerCount" },
+    { id: "jurisdiction", fieldName: "jurisdiction", valueKey: "jurisdiction" },
+    { id: "eiaId", fieldName: "eia_id", valueKey: "eiaId" },
+    { id: "website", fieldName: "website", valueKey: "website" },
   ];
 
   const { items: enriched, chrome } = useEditableStatItems({
@@ -318,14 +320,14 @@ function OperationsStatList({ utility }: { utility: Utility }) {
       : []),
   ];
 
-  const editableFields = [
-    { id: "summerPeak", fieldName: "peak_demand_mw" },
-    { id: "winterPeak", fieldName: "winter_peak_demand_mw" },
-    { id: "revenue", fieldName: "total_revenue_dollars" },
-    { id: "sales", fieldName: "total_sales_mwh" },
-    { id: "meters", fieldName: "total_meter_count" },
-    { id: "amiMeters", fieldName: "ami_meter_count" },
-    { id: "nercRegion", fieldName: "nerc_region" },
+  const editableFields: EditableFieldRef[] = [
+    { id: "summerPeak", fieldName: "peak_demand_mw", valueKey: "peakDemandMw" },
+    { id: "winterPeak", fieldName: "winter_peak_demand_mw", valueKey: "winterPeakDemandMw" },
+    { id: "revenue", fieldName: "total_revenue_dollars", valueKey: "totalRevenueDollars" },
+    { id: "sales", fieldName: "total_sales_mwh", valueKey: "totalSalesMwh" },
+    { id: "meters", fieldName: "total_meter_count", valueKey: "totalMeterCount" },
+    { id: "amiMeters", fieldName: "ami_meter_count", valueKey: "amiMeterCount" },
+    { id: "nercRegion", fieldName: "nerc_region", valueKey: "nercRegion" },
   ];
 
   const { items: enriched, chrome } = useEditableStatItems({

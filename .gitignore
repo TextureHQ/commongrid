@@ -35,6 +35,11 @@ data/.snapshot/
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Skills installed via `npx skills add` — agent-local, not project artifacts
+/.agents/
+/.claude/skills/
+/skills-lock.json
 # EIA-860M monthly workbooks are large binary source files; sync script downloads them on demand
 data/eia-860m/*.xlsx
 data/.eia860m-last-sync
