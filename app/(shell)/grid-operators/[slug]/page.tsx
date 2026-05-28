@@ -118,28 +118,47 @@ function useEditableStatItems({
   const { user, isLoading } = useCurrentUser();
   const [editingField, setEditingField] = useState<string | null>(null);
   const [showSignInModal, setShowSignInModal] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    // Detect touch capability
+    const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    setIsTouchDevice(hasTouch);
+  }, []);
 
   const enriched = useMemo<StatItem[]>(() => {
     return items.map((item) => {
       const editable = editableFields.find((f) => f.id === item.id);
       if (!editable) return item;
+
+      const handleAction = () => {
+        if (!user && !isLoading) {
+          setShowSignInModal(true);
+        } else if (user) {
+          setEditingField(editable.fieldName);
+        }
+      };
+
       return {
         ...item,
-        iconRight: (
+        iconRight: isTouchDevice ? (
+          <Button
+            icon="PencilSimple"
+            size="sm"
+            variant="ghost"
+            onPress={handleAction}
+            aria-label={`Edit ${item.label}`}
+            className="min-w-[44px] min-h-[44px] -m-2"
+          />
+        ) : (
           <Tooltip content="Edit this field" placement="top">
             <Icon name="PencilSimple" size="xs" />
           </Tooltip>
         ),
-        onAction: () => {
-          if (!user && !isLoading) {
-            setShowSignInModal(true);
-          } else if (user) {
-            setEditingField(editable.fieldName);
-          }
-        },
+        onAction: isTouchDevice ? undefined : handleAction,
       };
     });
-  }, [items, editableFields, user, isLoading]);
+  }, [items, editableFields, user, isLoading, isTouchDevice]);
 
   const currentVersion = (currentValues?.version as number) ?? 1;
   const currentValue = editingField ? currentValues?.[editingField] : undefined;
