@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Dialog, Icon, TextField } from "@texturehq/edges";
+import { Button, Dialog, Icon, Select, TextField } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type EditableField, SOURCE_TYPE_OPTIONS } from "./EntityFormFields";
@@ -233,27 +233,24 @@ export function InlineFieldEdit({
           </div>
         );
 
-      case "enum":
+      case "enum": {
+        const enumOptions = (field.validationRules?.enum ?? []).map((option) => ({
+          id: option,
+          label: option.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          value: option,
+        }));
+
         return (
-          <div className="space-y-2">
-            <label htmlFor={`field-${field.fieldName}`} className="text-sm font-medium text-text-body">
-              {field.displayName}
-            </label>
-            <select
-              id={`field-${field.fieldName}`}
-              value={(value as string) ?? ""}
-              onChange={(e) => setValue(e.target.value)}
-              className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-            >
-              <option value="">-- Select --</option>
-              {field.validationRules?.enum?.map((option) => (
-                <option key={option} value={option}>
-                  {option.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label={field.displayName}
+            selectedKey={(value as string) || undefined}
+            onSelectionChange={(key) => setValue(key ? String(key) : "")}
+            items={enumOptions}
+            renderItem={(item) => item.label}
+            placeholder="-- Select --"
+          />
         );
+      }
 
       default:
         return (
@@ -321,23 +318,13 @@ export function InlineFieldEdit({
 
               {showSourceCitation && (
                 <div className="mt-3 space-y-3">
-                  <div className="space-y-1">
-                    <label htmlFor="source-type" className="text-sm font-medium text-text-body">
-                      Source Type
-                    </label>
-                    <select
-                      id="source-type"
-                      value={sourceType}
-                      onChange={(e) => setSourceType(e.target.value)}
-                      className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                    >
-                      {SOURCE_TYPE_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <Select
+                    label="Source Type"
+                    selectedKey={sourceType}
+                    onSelectionChange={(key) => setSourceType(String(key))}
+                    items={SOURCE_TYPE_OPTIONS.map((opt) => ({ id: opt.value, label: opt.label, value: opt.value }))}
+                    renderItem={(item) => item.label}
+                  />
 
                   <TextField
                     label="Source URL"
