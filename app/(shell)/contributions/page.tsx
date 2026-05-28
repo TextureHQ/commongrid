@@ -1,11 +1,13 @@
 "use client";
 
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { Badge, Button, Card, Icon, Loader, SegmentedControl } from "@texturehq/edges";
+import { Badge, Button, Card, Confirm, Icon, Loader, SegmentedControl, Tooltip } from "@texturehq/edges";
 import Link from "next/link";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { ContentPage } from "@/components/ContentPage";
+import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -16,9 +18,13 @@ interface Contribution {
   entityType: string;
   entitySlug: string;
   entityId: string;
+  entityVersion: number;
+  entityName?: string;
   editSummary: string;
   status: string;
   sourceType: string;
+  sourceUrl: string | null;
+  sourceDate: string | null;
   changes: Record<string, { old: unknown; new: unknown }>;
   createdAt: string;
   reviewedAt: string | null;
@@ -26,7 +32,7 @@ interface Contribution {
   autoApproved: boolean;
 }
 
-type StatusFilter = "all" | "pending" | "approved" | "returned" | "rejected";
+type StatusFilter = "all" | "pending" | "approved" | "returned" | "rejected" | "withdrawn";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -55,10 +61,11 @@ function statusBadge(status: string) {
   const config: Record<string, { variant: "success" | "warning" | "error" | "info" | "neutral"; label: string }> = {
     pending: { variant: "warning", label: "Pending" },
     approved: { variant: "success", label: "Approved" },
-    auto_approved: { variant: "success", label: "Auto-Approved" },
+    auto_approved: { variant: "success", label: "Auto-approved" },
     returned: { variant: "error", label: "Returned" },
-    changes_requested: { variant: "info", label: "Changes Requested" },
-    version_conflict: { variant: "neutral", label: "Version Conflict" },
+    changes_requested: { variant: "info", label: "Changes requested" },
+    version_conflict: { variant: "neutral", label: "Version conflict" },
+    withdrawn: { variant: "error", label: "Withdrawn" },
   };
   const c = config[status] ?? { variant: "neutral" as const, label: status };
   return (
@@ -120,14 +127,22 @@ function entityDetailHref(entityType: string, entitySlug: string): string {
 // ---------------------------------------------------------------------------
 
 export default function ContributionsDashboard() {
-  const { user, isLoaded: userLoaded } = useUser();
+  const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
+  // The contributions API filters on the internal users.id (a UUID), NOT the
+  // Clerk user id. useCurrentUser resolves the internal id via /api/v1/me.
+  const { user: appUser, isLoading: appUserLoading } = useCurrentUser();
+  const userLoaded = clerkLoaded && !appUserLoading;
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [editTarget, setEditTarget] = useState<Contribution | null>(null);
+  const [withdrawTarget, setWithdrawTarget] = useState<Contribution | null>(null);
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchContributions = useCallback(async () => {
-    if (!user) return;
+    if (!appUser) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -135,8 +150,7 @@ export default function ContributionsDashboard() {
       if (statusFilter !== "all") {
         params.set("status", statusFilter);
       }
-      // The API allows filtering by user_id — we use the Clerk user id
-      params.set("user_id", user.id);
+      params.set("user_id", appUser.id);
 
       const res = await fetch(`/api/v1/contributions?${params.toString()}`);
       if (!res.ok) throw new Error(`Failed to load contributions (${res.status})`);
@@ -147,13 +161,36 @@ export default function ContributionsDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, statusFilter]);
+  }, [appUser, statusFilter]);
 
   useEffect(() => {
-    if (userLoaded && user) {
+    if (userLoaded && appUser) {
       fetchContributions();
     }
-  }, [userLoaded, user, fetchContributions]);
+  }, [userLoaded, appUser, fetchContributions]);
+
+  const handleWithdrawConfirmed = useCallback(async () => {
+    if (!withdrawTarget) return;
+    const contributionId = withdrawTarget.id;
+    setWithdrawingId(contributionId);
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/v1/contributions/${contributionId}/withdraw`, { method: "POST" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error?.message ?? json?.error ?? `Failed to withdraw (${res.status})`);
+      }
+      // Optimistically flip the local row so the badge updates without waiting
+      // for the refetch to complete. The refetch will reconcile any drift.
+      setContributions((prev) => prev.map((c) => (c.id === contributionId ? { ...c, status: "withdrawn" } : c)));
+      setWithdrawTarget(null);
+      await fetchContributions();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to withdraw contribution");
+    } finally {
+      setWithdrawingId(null);
+    }
+  }, [withdrawTarget, fetchContributions]);
 
   // Stats
   const totalCount = contributions.length;
@@ -172,7 +209,7 @@ export default function ContributionsDashboard() {
   }
 
   // Show sign-in prompt for unauthenticated users
-  if (!user) {
+  if (!clerkUser) {
     return (
       <ContentPage>
         <ContentPage.Header title="My Contributions" breadcrumbs={[{ label: "Contributions" }]} />
@@ -243,6 +280,7 @@ export default function ContributionsDashboard() {
               { id: "pending", label: "Pending" },
               { id: "approved", label: "Approved" },
               { id: "returned", label: "Returned" },
+              { id: "withdrawn", label: "Withdrawn" },
             ]}
           />
         </div>
@@ -324,14 +362,95 @@ export default function ContributionsDashboard() {
                           <div className="text-sm text-text-body">{contribution.moderatorComment}</div>
                         </div>
                       )}
+
+                      {/* Contributor actions — only on contributions still in the queue. */}
+                      {(contribution.status === "pending" || contribution.status === "changes_requested") && (
+                        <div className="mt-3 flex items-center gap-2">
+                          {changeCount === 1 ? (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              icon="PencilSimple"
+                              onPress={() => setEditTarget(contribution)}
+                            >
+                              Edit
+                            </Button>
+                          ) : (
+                            <Tooltip content="Editing multi-field contributions coming soon." placement="top">
+                              <Button variant="secondary" size="sm" icon="PencilSimple" isDisabled>
+                                Edit
+                              </Button>
+                            </Tooltip>
+                          )}
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            icon="X"
+                            isDisabled={withdrawingId === contribution.id}
+                            onPress={() => setWithdrawTarget(contribution)}
+                          >
+                            {withdrawingId === contribution.id ? "Withdrawing…" : "Withdraw"}
+                          </Button>
+                        </div>
+                      )}
                     </Card.Content>
                   </Card>
                 );
               })}
             </div>
           )}
+
+          {actionError && (
+            <div className="mt-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+              {actionError}
+            </div>
+          )}
         </div>
       </ContentPage.Body>
+
+      {/* Edit-and-resubmit dialog */}
+      {editTarget &&
+        (() => {
+          const [singleField, change] = Object.entries(editTarget.changes ?? {})[0] ?? [];
+          if (!singleField) return null;
+          return (
+            <InlineFieldEdit
+              isOpen={true}
+              onClose={() => setEditTarget(null)}
+              entityType={editTarget.entityType}
+              entityId={editTarget.entityId}
+              entityName={editTarget.entityName ?? editTarget.entitySlug}
+              fieldName={singleField}
+              currentValue={change?.old}
+              currentVersion={editTarget.entityVersion}
+              existingContributionId={editTarget.id}
+              initialEditSummary={editTarget.editSummary}
+              initialProposedValue={change?.new}
+              initialSourceType={editTarget.sourceType}
+              initialSourceUrl={editTarget.sourceUrl ?? ""}
+              initialSourceDate={editTarget.sourceDate ?? ""}
+              onSubmitted={() => {
+                setEditTarget(null);
+                fetchContributions();
+              }}
+            />
+          );
+        })()}
+
+      <Confirm
+        isOpen={withdrawTarget !== null}
+        onClose={() => {
+          if (withdrawingId) return;
+          setWithdrawTarget(null);
+        }}
+        onConfirm={handleWithdrawConfirmed}
+        title="Withdraw this suggestion?"
+        message="Moderators will no longer review it. This can't be undone."
+        confirmLabel="Withdraw"
+        cancelLabel="Cancel"
+        isDestructive
+        isLoading={withdrawingId !== null}
+      />
     </ContentPage>
   );
 }

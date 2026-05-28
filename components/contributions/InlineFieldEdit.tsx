@@ -15,6 +15,20 @@ interface InlineFieldEditProps {
   currentValue: unknown;
   currentVersion: number;
   onSubmitted: () => void;
+  /**
+   * When provided, the dialog patches this existing contribution instead of
+   * creating a new one. Used to edit-and-resubmit a contribution that a
+   * moderator returned for changes.
+   */
+  existingContributionId?: string;
+  /** Prefill the edit summary (used when editing an existing contribution). */
+  initialEditSummary?: string;
+  /** Prefill the proposed new value (used when editing an existing contribution). */
+  initialProposedValue?: unknown;
+  /** Prefill source citation fields (used when editing an existing contribution). */
+  initialSourceType?: string;
+  initialSourceUrl?: string;
+  initialSourceDate?: string;
 }
 
 export function InlineFieldEdit({
@@ -27,6 +41,12 @@ export function InlineFieldEdit({
   currentValue,
   currentVersion,
   onSubmitted,
+  existingContributionId,
+  initialEditSummary,
+  initialProposedValue,
+  initialSourceType,
+  initialSourceUrl,
+  initialSourceDate,
 }: InlineFieldEditProps) {
   const router = useRouter();
 
@@ -35,13 +55,16 @@ export function InlineFieldEdit({
   const [isLoadingField, setIsLoadingField] = useState(true);
   const [fieldError, setFieldError] = useState<string | null>(null);
 
-  // Form state
-  const [value, setValue] = useState<unknown>(currentValue);
-  const [editSummary, setEditSummary] = useState("");
-  const [showSourceCitation, setShowSourceCitation] = useState(false);
-  const [sourceType, setSourceType] = useState("utility_website");
-  const [sourceUrl, setSourceUrl] = useState("");
-  const [sourceDate, setSourceDate] = useState("");
+  // Form state — when editing an existing contribution, prefill with its
+  // previously-submitted values so the contributor can amend instead of restart.
+  const [value, setValue] = useState<unknown>(initialProposedValue ?? currentValue);
+  const [editSummary, setEditSummary] = useState(initialEditSummary ?? "");
+  const [showSourceCitation, setShowSourceCitation] = useState(
+    Boolean(initialSourceUrl || initialSourceDate || (initialSourceType && initialSourceType !== "utility_website"))
+  );
+  const [sourceType, setSourceType] = useState(initialSourceType ?? "utility_website");
+  const [sourceUrl, setSourceUrl] = useState(initialSourceUrl ?? "");
+  const [sourceDate, setSourceDate] = useState(initialSourceDate ?? "");
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,8 +91,11 @@ export function InlineFieldEdit({
         }
         setField(targetField);
 
-        // Pre-fill edit summary
-        setEditSummary(`Updated ${targetField.displayName} for ${entityName}`);
+        // Pre-fill edit summary — keep contributor's prior summary when editing
+        // an existing contribution; only synthesize one for first-time edits.
+        if (!initialEditSummary) {
+          setEditSummary(`Updated ${targetField.displayName} for ${entityName}`);
+        }
       } catch (error) {
         console.error("Error fetching field metadata:", error);
         setFieldError(error instanceof Error ? error.message : "Failed to load field metadata");
@@ -79,19 +105,25 @@ export function InlineFieldEdit({
     };
 
     fetchField();
-  }, [isOpen, entityType, fieldName, entityName]);
+  }, [isOpen, entityType, fieldName, entityName, initialEditSummary]);
 
-  // Reset form when modal opens
+  // Reset form when the dialog opens. We intentionally only re-run on
+  // `isOpen` changes — an upstream entity refetch during editing must NOT
+  // wipe in-progress input by re-running this effect with new currentValue
+  // or initial* props.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: form reset is keyed to open transition only
   useEffect(() => {
     if (isOpen) {
-      setValue(currentValue);
+      setValue(initialProposedValue ?? currentValue);
       setSubmitError(null);
       setSubmitSuccess(false);
-      setShowSourceCitation(false);
-      setSourceUrl("");
-      setSourceDate("");
+      setShowSourceCitation(
+        Boolean(initialSourceUrl || initialSourceDate || (initialSourceType && initialSourceType !== "utility_website"))
+      );
+      setSourceUrl(initialSourceUrl ?? "");
+      setSourceDate(initialSourceDate ?? "");
     }
-  }, [isOpen, currentValue]);
+  }, [isOpen]);
 
   const hasChanges = useMemo(() => {
     // Normalize null/undefined and empty strings
@@ -110,21 +142,40 @@ export function InlineFieldEdit({
       setIsSubmitting(true);
       setSubmitError(null);
 
-      const payload = {
-        entity_type: entityType,
-        entity_id: entityId,
-        entity_version: currentVersion,
-        changes: {
-          [fieldName]: value,
-        },
-        edit_summary: editSummary.trim(),
-        source_type: sourceType,
-        source_url: sourceUrl || null,
-        source_date: sourceDate || null,
-      };
+      let url: string;
+      let method: "POST" | "PATCH";
+      let payload: Record<string, unknown>;
 
-      const res = await fetch("/api/v1/contributions", {
-        method: "POST",
+      if (existingContributionId) {
+        // Editing an existing contribution — PATCH only the editable fields.
+        // Server resets status to 'pending' when the prior status was
+        // 'changes_requested', so this counts as a resubmission.
+        url = `/api/v1/contributions/${existingContributionId}`;
+        method = "PATCH";
+        payload = {
+          changes: { [fieldName]: value },
+          edit_summary: editSummary.trim(),
+          source_type: sourceType,
+          source_url: sourceUrl || null,
+          source_date: sourceDate || null,
+        };
+      } else {
+        url = "/api/v1/contributions";
+        method = "POST";
+        payload = {
+          entity_type: entityType,
+          entity_id: entityId,
+          entity_version: currentVersion,
+          changes: { [fieldName]: value },
+          edit_summary: editSummary.trim(),
+          source_type: sourceType,
+          source_url: sourceUrl || null,
+          source_date: sourceDate || null,
+        };
+      }
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -361,7 +412,9 @@ export function InlineFieldEdit({
             {/* Success Message */}
             {submitSuccess && (
               <div className="rounded-md bg-green-50 p-4 border border-green-200">
-                <p className="text-sm font-medium text-green-800">Changes submitted!</p>
+                <p className="text-sm font-medium text-green-800">
+                  {existingContributionId ? "Changes resubmitted!" : "Changes submitted!"}
+                </p>
                 <p className="text-sm text-green-700 mt-1">Thank you for improving CommonGrid data quality.</p>
               </div>
             )}

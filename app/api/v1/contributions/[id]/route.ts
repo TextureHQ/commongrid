@@ -78,11 +78,14 @@ async function handlePatch(req: Request, ctx: RouteContext) {
     throw new ApiError("FORBIDDEN", "You can only edit your own contributions.");
   }
 
-  // Only pending contributions can be edited
-  if (existing.status !== "pending") {
+  // Contributors can edit while pending (revisions before review) or
+  // changes_requested (responding to moderator feedback). Editing a
+  // changes_requested contribution resubmits it for review.
+  const EDITABLE_STATUSES = ["pending", "changes_requested"] as const;
+  if (!EDITABLE_STATUSES.includes(existing.status as (typeof EDITABLE_STATUSES)[number])) {
     throw new ApiError(
       "CONFLICT",
-      `Cannot edit a contribution with status '${existing.status}'. Only pending contributions can be updated.`
+      `Cannot edit a contribution with status '${existing.status}'. Only ${EDITABLE_STATUSES.join(" or ")} contributions can be updated.`
     );
   }
 
@@ -105,7 +108,28 @@ async function handlePatch(req: Request, ctx: RouteContext) {
         field: "changes",
       });
     }
-    updates.changes = changes;
+    // Normalize incoming changes to { field: { old, new } } shape, matching
+    // the canonical format used by POST and the moderator review handler.
+    // The flat { field: value } shape is what InlineFieldEdit sends; we
+    // preserve the existing { old } from the prior contribution when present.
+    const existingChanges = (existing.changes as Record<string, { old: unknown; new: unknown }>) ?? {};
+    const normalized: Record<string, { old: unknown; new: unknown }> = {};
+    for (const [key, value] of Object.entries(changes as Record<string, unknown>)) {
+      if (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        "new" in (value as Record<string, unknown>)
+      ) {
+        normalized[key] = value as { old: unknown; new: unknown };
+      } else {
+        // Flat: keep the prior 'old' so reviewers still see what the original
+        // value was at the time of the first submission.
+        const priorOld = existingChanges[key]?.old ?? null;
+        normalized[key] = { old: priorOld, new: value };
+      }
+    }
+    updates.changes = normalized;
   }
 
   if (source_type !== undefined) {
@@ -130,6 +154,17 @@ async function handlePatch(req: Request, ctx: RouteContext) {
       "VALIDATION_ERROR",
       "At least one field must be provided for update. Allowed: edit_summary, changes, source_type, source_url, source_date."
     );
+  }
+
+  // If the contributor is editing a contribution that the moderator returned
+  // for changes, treat the edit as a resubmission: bounce status back to
+  // 'pending' and clear the prior review so the queue picks it up again.
+  // The moderator_actions table preserves the audit trail.
+  if (existing.status === "changes_requested") {
+    updates.status = "pending";
+    updates.moderatorComment = null;
+    updates.reviewedBy = null;
+    updates.reviewedAt = null;
   }
 
   // Set updatedAt

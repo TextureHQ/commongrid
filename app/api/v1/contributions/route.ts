@@ -75,6 +75,7 @@ const VALID_STATUSES = [
   "changes_requested",
   "auto_approved",
   "version_conflict",
+  "withdrawn",
 ] as const;
 
 type EntityType = (typeof VALID_ENTITY_TYPES)[number];
