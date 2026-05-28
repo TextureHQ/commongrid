@@ -57,6 +57,19 @@ export async function triggerWorkflow(opts: TriggerOptions): Promise<string | nu
 }
 
 // ---------------------------------------------------------------------------
+// Onboarding
+// ---------------------------------------------------------------------------
+
+export async function triggerWelcome(recipientId: string): Promise<string | null> {
+  return triggerWorkflow({
+    workflow: "welcome",
+    recipients: [recipientId],
+    data: {},
+    cancellationKey: `welcome:${recipientId}`,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Contributor status notifications
 // ---------------------------------------------------------------------------
 
