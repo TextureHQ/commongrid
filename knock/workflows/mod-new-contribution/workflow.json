@@ -1,0 +1,29 @@
+{
+  "categories": [
+    "moderation_queue"
+  ],
+  "description": "Sent to moderators when a new community contribution is submitted for review.",
+  "name": "New Contribution for Review",
+  "steps": [
+    {
+      "channel_key": "postmark",
+      "channel_type": "email",
+      "ref": "email_1",
+      "template": {
+        "settings": {
+          "layout_key": "default"
+        },
+        "subject": "New {{ data.entityType }} edit awaiting review",
+        "visual_blocks@": "email_1/visual_blocks.json"
+      },
+      "type": "channel"
+    }
+  ],
+  "trigger_frequency": "every_trigger",
+  "__readonly": {
+    "key": "mod-new-contribution",
+    "active": true,
+    "valid": true
+  },
+  "$schema": "https://schemas.knock.app/cli/workflow.json"
+}

@@ -1,0 +1,29 @@
+{
+  "categories": [
+    "contribution_status"
+  ],
+  "description": "Sent when a moderator approves a community contribution.",
+  "name": "Contribution Approved",
+  "steps": [
+    {
+      "channel_key": "postmark",
+      "channel_type": "email",
+      "ref": "email_1",
+      "template": {
+        "settings": {
+          "layout_key": "default"
+        },
+        "subject": "Your {{ data.entityType }} edit has been approved!",
+        "visual_blocks@": "email_1/visual_blocks.json"
+      },
+      "type": "channel"
+    }
+  ],
+  "trigger_frequency": "every_trigger",
+  "__readonly": {
+    "key": "contribution-approved",
+    "active": true,
+    "valid": true
+  },
+  "$schema": "https://schemas.knock.app/cli/workflow.json"
+}

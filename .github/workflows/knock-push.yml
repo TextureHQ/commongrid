@@ -1,0 +1,47 @@
+name: knock-push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'knock/**'
+  pull_request:
+    paths:
+      - 'knock/**'
+
+jobs:
+  push-to-knock:
+    name: Push Knock workflows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Knock CLI
+        run: npm install -g @knocklabs/cli
+
+      - name: Push to development (PR validation)
+        if: github.event_name == 'pull_request'
+        run: |
+          knock layout push --all \
+            --layouts-dir=./knock/layouts \
+            --service-token=${{ secrets.KNOCK_SERVICE_TOKEN }}
+          knock workflow push --all \
+            --workflows-dir=./knock/workflows \
+            --service-token=${{ secrets.KNOCK_SERVICE_TOKEN }}
+
+      - name: Push, commit, and promote to production
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          knock layout push --all \
+            --layouts-dir=./knock/layouts \
+            --service-token=${{ secrets.KNOCK_SERVICE_TOKEN }}
+          knock workflow push --all --commit \
+            -m "deploy: ${{ github.sha }}" \
+            --workflows-dir=./knock/workflows \
+            --service-token=${{ secrets.KNOCK_SERVICE_TOKEN }}
+          knock commit promote --to production \
+            --service-token=${{ secrets.KNOCK_SERVICE_TOKEN }}
