@@ -188,7 +188,29 @@ export function TopBar({ navigation, navigationReady = true }: TopBarProps) {
             >
               <SearchIcon size={20} />
             </button>
-            {isAuthLoaded && isSignedIn && <UserMenu />}
+            {/* Auth — hidden until Clerk resolves to prevent flash */}
+            {!isAuthLoaded ? (
+              <div style={{ width: 32, height: 32 }} />
+            ) : isSignedIn ? (
+              <UserMenu />
+            ) : (
+              <SignInButton mode="modal">
+                <button type="button" className="cg-icon-btn" aria-label="Sign in">
+                  <svg
+                    aria-hidden="true"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </button>
+              </SignInButton>
+            )}
             <button
               type="button"
               className="cg-icon-btn"
