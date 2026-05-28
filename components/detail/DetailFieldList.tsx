@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInButton } from "@clerk/nextjs";
-import { Button, Dialog, Icon, Tooltip } from "@texturehq/edges";
+import { Button, Dialog, Tooltip } from "@texturehq/edges";
 import { useEffect, useState } from "react";
 import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -77,7 +77,6 @@ function FieldValue({
   const { user, isLoading } = useCurrentUser();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   useEffect(() => {
@@ -113,37 +112,28 @@ function FieldValue({
 
   return (
     <>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: span provides hover context for child button */}
-      <span
-        className="inline-flex items-center gap-2"
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
-        onFocus={() => setIsHovering(true)}
-        onBlur={() => setIsHovering(false)}
-      >
+      <span className="inline-flex items-center gap-2">
         {content}
         {item.copyable && typeof item.value === "string" && <CopyButton value={item.value} />}
         {canEdit &&
-          (isTouchDevice || isHovering) &&
           (isTouchDevice ? (
-            <button
-              type="button"
-              onClick={handleEditClick}
-              className="text-text-muted hover:text-text-body transition-colors"
+            <Button
+              icon="PencilSimple"
+              size="sm"
+              variant="ghost"
+              onPress={handleEditClick}
               aria-label={`Edit ${item.label}`}
-            >
-              <Icon name="PencilSimple" size="xs" />
-            </button>
+              className="min-w-[44px] min-h-[44px] -m-2"
+            />
           ) : (
             <Tooltip content="Edit this field" placement="top">
-              <button
-                type="button"
-                onClick={handleEditClick}
-                className="text-text-muted hover:text-text-body transition-colors"
+              <Button
+                icon="PencilSimple"
+                size="sm"
+                variant="ghost"
+                onPress={handleEditClick}
                 aria-label={`Edit ${item.label}`}
-              >
-                <Icon name="PencilSimple" size="xs" />
-              </button>
+              />
             </Tooltip>
           ))}
       </span>
