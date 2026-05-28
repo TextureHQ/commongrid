@@ -8,13 +8,11 @@ import {
   type Column,
   DataTable,
   Dialog,
-  Icon,
   InteractiveMap,
   Loader,
   layer,
   type StatItem,
   StatList,
-  Tooltip,
 } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
@@ -118,13 +116,6 @@ function useEditableStatItems({
   const { user, isLoading } = useCurrentUser();
   const [editingField, setEditingField] = useState<string | null>(null);
   const [showSignInModal, setShowSignInModal] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-
-  useEffect(() => {
-    // Detect touch capability
-    const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    setIsTouchDevice(hasTouch);
-  }, []);
 
   const enriched = useMemo<StatItem[]>(() => {
     return items.map((item) => {
@@ -141,24 +132,18 @@ function useEditableStatItems({
 
       return {
         ...item,
-        iconRight: isTouchDevice ? (
+        iconRight: (
           <Button
             icon="PencilSimple"
             size="sm"
             variant="ghost"
             onPress={handleAction}
             aria-label={`Edit ${item.label}`}
-            className="min-w-[44px] min-h-[44px] -m-2"
           />
-        ) : (
-          <Tooltip content="Edit this field" placement="top">
-            <Icon name="PencilSimple" size="xs" />
-          </Tooltip>
         ),
-        onAction: isTouchDevice ? undefined : handleAction,
       };
     });
-  }, [items, editableFields, user, isLoading, isTouchDevice]);
+  }, [items, editableFields, user, isLoading]);
 
   const currentVersion = (currentValues?.version as number) ?? 1;
   const currentValue = editingField ? currentValues?.[editingField] : undefined;

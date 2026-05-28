@@ -1,8 +1,8 @@
 "use client";
 
 import { SignInButton } from "@clerk/nextjs";
-import { Button, Dialog, Tooltip } from "@texturehq/edges";
-import { useEffect, useState } from "react";
+import { Button, Dialog } from "@texturehq/edges";
+import { useState } from "react";
 import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -77,13 +77,6 @@ function FieldValue({
   const { user, isLoading } = useCurrentUser();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-
-  useEffect(() => {
-    // Detect touch capability
-    const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    setIsTouchDevice(hasTouch);
-  }, []);
 
   if (item.value === null || item.value === undefined) {
     return <span style={{ color: "var(--color-text-caption)" }}>—</span>;
@@ -115,27 +108,15 @@ function FieldValue({
       <span className="inline-flex items-center gap-2">
         {content}
         {item.copyable && typeof item.value === "string" && <CopyButton value={item.value} />}
-        {canEdit &&
-          (isTouchDevice ? (
-            <Button
-              icon="PencilSimple"
-              size="sm"
-              variant="ghost"
-              onPress={handleEditClick}
-              aria-label={`Edit ${item.label}`}
-              className="min-w-[44px] min-h-[44px] -m-2"
-            />
-          ) : (
-            <Tooltip content="Edit this field" placement="top">
-              <Button
-                icon="PencilSimple"
-                size="sm"
-                variant="ghost"
-                onPress={handleEditClick}
-                aria-label={`Edit ${item.label}`}
-              />
-            </Tooltip>
-          ))}
+        {canEdit && (
+          <Button
+            icon="PencilSimple"
+            size="sm"
+            variant="ghost"
+            onPress={handleEditClick}
+            aria-label={`Edit ${item.label}`}
+          />
+        )}
       </span>
 
       {showEditModal && canEdit && entityType && entityId && entityName && item.fieldName && (
