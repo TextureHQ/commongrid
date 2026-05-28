@@ -1,0 +1,29 @@
+{
+  "categories": [
+    "contribution_status"
+  ],
+  "description": "Sent when a moderator returns/rejects a community contribution.",
+  "name": "Contribution Returned",
+  "steps": [
+    {
+      "channel_key": "postmark",
+      "channel_type": "email",
+      "ref": "email_1",
+      "template": {
+        "settings": {
+          "layout_key": "default"
+        },
+        "subject": "Your {{ data.entityType }} edit was not approved",
+        "visual_blocks@": "email_1/visual_blocks.json"
+      },
+      "type": "channel"
+    }
+  ],
+  "trigger_frequency": "every_trigger",
+  "__readonly": {
+    "key": "contribution-returned",
+    "active": true,
+    "valid": true
+  },
+  "$schema": "https://schemas.knock.app/cli/workflow.json"
+}

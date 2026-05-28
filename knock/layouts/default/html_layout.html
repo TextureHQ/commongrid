@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" style="margin: 0; padding: 0;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ subject | default: "CommonGrid Notification" }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f6f6f6;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        color: #18181b;
+      }
+
+      a {
+        color: #2563eb;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .wrapper {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+      }
+
+      .content {
+        padding: 40px 32px;
+      }
+
+      .header {
+        font-size: 24px;
+        font-weight: 600;
+        color: #18181b;
+        margin-bottom: 24px;
+      }
+
+      .footer {
+        background-color: #f4f4f5;
+        color: #71717a;
+        padding: 32px;
+        font-size: 14px;
+        border-top: 1px solid #e4e4e7;
+      }
+
+      .footer-content {
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .footer-links {
+        margin-top: 16px;
+      }
+
+      .footer-links a {
+        color: #71717a;
+        text-decoration: none;
+        margin: 0 12px;
+        font-size: 14px;
+      }
+
+      .footer-links a:hover {
+        color: #2563eb;
+      }
+
+      @media only screen and (max-width: 600px) {
+        .content {
+          padding: 32px 16px;
+        }
+
+        .footer {
+          padding: 24px 16px;
+        }
+      }
+    </style>
+  </head>
+
+  <body dir="ltr">
+    {{ preview_text }}
+    <div class="wrapper">
+      <div class="content">
+        <div class="header">CommonGrid</div>
+        {{ content }}
+      </div>
+
+      <div class="footer">
+        <div class="footer-content">
+          <div>CommonGrid — The open registry of US energy infrastructure</div>
+          <div class="footer-links">
+            <a href="https://commongrid.info">commongrid.info</a>
+            <a href="https://github.com/TextureHQ/commongrid">GitHub</a>
+            <a href="https://commongrid.info/about">About</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

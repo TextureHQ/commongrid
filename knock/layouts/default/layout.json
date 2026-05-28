@@ -1,0 +1,25 @@
+{
+  "branding_overrides": {},
+  "footer_links": [
+    {
+      "text": "CommonGrid",
+      "url": "https://commongrid.info"
+    },
+    {
+      "text": "GitHub",
+      "url": "https://github.com/TextureHQ/commongrid"
+    },
+    {
+      "text": "About",
+      "url": "https://commongrid.info/about"
+    }
+  ],
+  "is_mjml": false,
+  "name": "CommonGrid Default",
+  "html_layout@": "html_layout.html",
+  "text_layout@": "text_layout.txt",
+  "__readonly": {
+    "key": "default"
+  },
+  "$schema": "https://schemas.knock.app/cli/email-layout.json"
+}
