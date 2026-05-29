@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import "./ContentPage.css";
+import { PageHeader, PageShell } from "@/components/ui/layout";
 
 interface ContentPageHeaderProps {
   /** Page title */
@@ -20,40 +20,22 @@ interface ContentPageProps {
   className?: string;
 }
 
+/**
+ * ContentPage — backwards-compatible compound wrapper around
+ * `PageShell` + `PageHeader`. Prefer using `PageShell` / `PageHeader`
+ * directly in new code; this component exists to keep older consumers
+ * (Contributions, Developers, etc.) working unchanged.
+ */
 export function ContentPage({ children, className }: ContentPageProps) {
-  return <div className={`cg-content-page ${className || ""}`}>{children}</div>;
+  return <PageShell className={className}>{children}</PageShell>;
 }
 
 function Header({ title, subtitle, actions, breadcrumbs }: ContentPageHeaderProps) {
-  return (
-    <header className="cg-content-header">
-      {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav className="cg-content-breadcrumbs">
-          {breadcrumbs.map((crumb, i) => (
-            <span key={crumb.label}>
-              {i > 0 && <span className="cg-content-breadcrumb-sep">/</span>}
-              {crumb.href ? (
-                <a href={crumb.href}>{crumb.label}</a>
-              ) : (
-                <span className="cg-content-breadcrumb-current">{crumb.label}</span>
-              )}
-            </span>
-          ))}
-        </nav>
-      )}
-      <div className="cg-content-header-main">
-        <div className="cg-content-header-text">
-          <h1 className="cg-content-title">{title}</h1>
-          {subtitle && <p className="cg-content-subtitle">{subtitle}</p>}
-        </div>
-        {actions && <div className="cg-content-header-actions">{actions}</div>}
-      </div>
-    </header>
-  );
+  return <PageHeader title={title} subtitle={subtitle} actions={actions} breadcrumbs={breadcrumbs} />;
 }
 
 function Body({ children }: { children: ReactNode }) {
-  return <div className="cg-content-body">{children}</div>;
+  return <div>{children}</div>;
 }
 
 ContentPage.Header = Header;

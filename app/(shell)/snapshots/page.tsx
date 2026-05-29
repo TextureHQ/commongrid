@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
+import { PageHeader, PageShell } from "@/components/ui/layout";
 
 interface GHRelease {
   tag_name: string;
@@ -79,14 +80,11 @@ export default async function SnapshotsPage() {
   }
 
   return (
-    <div className="cg-content-page">
-      {/* Header */}
-      <header className="cg-content-header">
-        <div className="cg-content-header-text">
-          <h1 className="cg-content-title">Database Snapshots</h1>
-          <p className="cg-content-subtitle">Download the complete CommonGrid dataset as a PostgreSQL dump.</p>
-        </div>
-      </header>
+    <PageShell>
+      <PageHeader
+        title="Database Snapshots"
+        subtitle="Download the complete CommonGrid dataset as a PostgreSQL dump."
+      />
 
       {/* Error state */}
       {error && (
@@ -215,6 +213,6 @@ export default async function SnapshotsPage() {
           </li>
         </ul>
       </div>
-    </div>
+    </PageShell>
   );
 }
