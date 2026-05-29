@@ -1,8 +1,8 @@
 "use client";
 
-import { Button, Kpi, KpiGroup } from "@texturehq/edges";
+import { Button, Kpi, KpiGroup, StatList } from "@texturehq/edges";
 import { useState } from "react";
-import { DefinitionList, KeyValueTable, PageHeader, PageShell, Section } from "@/components/ui";
+import { DefinitionList, PageHeader, PageShell, Section } from "@/components/ui";
 
 /**
  * Component Showcase Page
@@ -131,28 +131,39 @@ export default function ComponentsPage() {
             </div>
           </ComponentExample>
 
-          {/* KeyValueTable */}
+          {/* StatList */}
           <ComponentExample
-            name="KeyValueTable"
-            description="Bordered table for field lists. Commonly used on entity detail pages."
-            usage={`<KeyValueTable
-  rows={[
-    { key: "EIA ID", value: "12345" },
-    { key: "Type", value: "Investor-Owned" },
-    { key: "State", value: "California" },
+            name="StatList"
+            description="Field list component from Edges. Use for key-value pairs on detail pages, cards, or panels."
+            usage={`import { StatList } from "@texturehq/edges";
+
+<StatList
+  items={[
+    { label: "EIA ID", value: "12345" },
+    { label: "Type", value: "Investor-Owned Utility" },
+    { label: "State", value: "California" },
   ]}
 />`}
           >
             <div className="rounded-lg border border-border-default bg-background-surface p-6">
-              <KeyValueTable
-                rows={[
-                  { key: "EIA ID", value: "12345" },
-                  { key: "Type", value: "Investor-Owned Utility" },
-                  { key: "State", value: "California" },
-                  { key: "Customers", value: "5.5 million" },
-                  { key: "Service Area", value: "70,000 sq mi" },
+              <StatList
+                items={[
+                  { id: "eia-id", label: "EIA ID", value: "12345" },
+                  { id: "type", label: "Type", value: "Investor-Owned Utility" },
+                  { id: "state", label: "State", value: "California" },
+                  { id: "customers", label: "Customers", value: 5500000, formatter: { type: "number" } },
+                  {
+                    id: "area",
+                    label: "Service Area",
+                    value: 70000,
+                    formatter: (v) => (v ? `${v.toLocaleString()} sq mi` : "—"),
+                  },
                 ]}
               />
+              <div className="mt-4 text-xs text-text-caption">
+                💡 StatList supports formatters, conditional colors, thresholds, copy-to-clipboard, and mobile
+                truncation.
+              </div>
             </div>
           </ComponentExample>
 

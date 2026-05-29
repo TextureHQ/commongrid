@@ -114,24 +114,48 @@ import { Kpi, KpiGroup } from "@texturehq/edges";
 
 ---
 
-#### `KeyValueTable`
-Bordered table for field lists (commonly used on detail pages).
+#### Field Lists → Use Edges `StatList`
+
+**For key-value field lists, use the Edges `StatList` component instead of building custom tables.**
 
 ```tsx
-import { KeyValueTable } from "@/components/ui";
+import { StatList } from "@texturehq/edges";
 
-<KeyValueTable
-  rows={[
-    { key: "EIA ID", value: "12345" },
-    { key: "Type", value: "Investor-Owned" },
-    { key: "State", value: "California" },
+<StatList
+  items={[
+    { label: "EIA ID", value: "12345" },
+    { label: "Type", value: "Investor-Owned Utility" },
+    { label: "State", value: "California" },
   ]}
 />
 ```
 
-**Props:**
-- `rows: Array<{ key: string; value: ReactNode }>` — Key-value pairs
-- `className?: string` — Additional classes
+**Why use Edges StatList:**
+- Built-in formatters (currency, percent, power, temperature, etc.)
+- Conditional tone/colors based on thresholds (success, warning, error)
+- Copy-to-clipboard support
+- Mobile truncation for long values
+- Dense/comfortable density options
+- Stacked or side-by-side layouts
+
+**Example with formatters and thresholds:**
+```tsx
+<StatList
+  items={[
+    { label: "Revenue", value: 1234567, formatter: { type: "currency" } },
+    { 
+      label: "Battery Level", 
+      value: 15, 
+      formatter: { type: "percent" },
+      thresholds: [
+        { when: (v) => v < 20, tone: "error" },
+        { when: (v) => v < 50, tone: "warning" },
+      ]
+    },
+    { label: "Power Output", value: 5200, formatter: { type: "power", unit: "kW" } },
+  ]}
+/>
+```
 
 ---
 
