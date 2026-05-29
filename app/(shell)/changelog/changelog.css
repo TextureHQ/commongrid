@@ -1,48 +1,15 @@
 /* ═══════════════════════════════════════════
-   CommonGrid Changelog — registry ledger
-   Matches homepage warm civic aesthetic.
+   CommonGrid Changelog
+   Uses Edges components (PageShell, PageHeader, Kpi, KpiGroup, Badge)
+   Minimal custom styles for feed structure
    ═══════════════════════════════════════════ */
 
-/* ═══════════════════════════════════════════
-   Changelog — feed-specific styles
-   Outer layout + header handled by ContentPage
-   ═══════════════════════════════════════════ */
-
-/* ── Stats band ── */
-.cg-changelog .cl-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+/* ── Stats band (using KpiGroup) ── */
+.cg-changelog .cl-stats-kpi {
   border-top: 1px solid var(--color-border-default);
   border-bottom: 1px solid var(--color-border-default);
+  padding: 20px 0;
   margin-bottom: clamp(32px, 5vw, 56px);
-}
-
-.cg-changelog .cl-stat {
-  padding: 20px 16px;
-  border-right: 1px solid var(--color-border-default);
-}
-
-.cg-changelog .cl-stat:last-child {
-  border-right: 0;
-}
-
-.cg-changelog .cl-stat-n {
-  font-family: var(--font-family-brand);
-  font-weight: 600;
-  font-size: clamp(28px, 3vw, 36px);
-  letter-spacing: -0.03em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-heading);
-}
-
-.cg-changelog .cl-stat-l {
-  font-family: var(--font-family-mono);
-  font-size: 11px;
-  color: var(--color-text-caption);
-  letter-spacing: normal;
-  font-weight: 500;
-  margin-top: 6px;
 }
 
 /* ── Date group ── */
@@ -119,24 +86,6 @@
   line-height: 1.2;
 }
 
-/* ── Operation badges ── */
-.cg-changelog .cl-badge {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-family-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: normal;
-  padding: 2px 7px;
-  border-radius: 3px;
-  line-height: 1.4;
-}
-
-.cg-changelog .cl-badge-updated   { background: var(--color-iris-pastel);                 color: var(--color-iris-base); }
-.cg-changelog .cl-badge-new       { background: var(--color-feedback-success-background); color: var(--color-feedback-success-text); }
-.cg-changelog .cl-badge-corrected { background: var(--color-feedback-warning-background); color: var(--color-feedback-warning-text); }
-.cg-changelog .cl-badge-synced    { background: var(--color-background-muted);            color: var(--color-text-muted); }
-
 .cg-changelog .cl-entry-detail {
   font-size: 14px;
   color: var(--color-text-muted);
@@ -209,14 +158,6 @@
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
-  .cg-changelog .cl-stats {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .cg-changelog .cl-stat {
-    padding: 16px 12px;
-  }
-
   .cg-changelog .cl-entry {
     grid-template-columns: 10px 1fr;
     gap: 0 12px;
@@ -227,5 +168,4 @@
     margin-top: 4px;
     font-size: 11px;
   }
-
 }

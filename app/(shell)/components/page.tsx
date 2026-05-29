@@ -203,6 +203,82 @@ export default function ComponentsPage() {
         </div>
       </Section>
 
+      {/* Content Pages Pattern */}
+      <Section heading="Content Pages Pattern">
+        <div className="space-y-4 rounded-lg border border-border-default bg-background-surface p-6">
+          <h3 className="font-semibold text-text-heading">About & Changelog Pages</h3>
+
+          <div className="space-y-3 text-sm text-text-body">
+            <p>
+              The <strong>About</strong> and <strong>Changelog</strong> pages demonstrate the recommended pattern for
+              content-heavy pages using Edges components:
+            </p>
+
+            <ul className="list-disc space-y-2 pl-5">
+              <li>
+                <strong>PageShell + PageHeader:</strong> Replace custom ContentPage wrapper with standard layout
+                components
+              </li>
+              <li>
+                <strong>Section:</strong> Use for major content blocks with semantic headings
+              </li>
+              <li>
+                <strong>KpiGroup + Kpi:</strong> Use{" "}
+                <code className="rounded bg-background-muted px-1.5 py-0.5 font-mono text-xs">size="lg"</code> for
+                prominent stats rows (About page metrics)
+              </li>
+              <li>
+                <strong>DefinitionList:</strong> Use for term/description pairs (data sources, contribution roles)
+              </li>
+              <li>
+                <strong>Badge:</strong> Use Edges Badge component for status indicators
+              </li>
+              <li>
+                <strong>Minimal custom CSS:</strong> Keep page-specific CSS for unique elements only (flow diagrams,
+                feed structures)
+              </li>
+            </ul>
+          </div>
+
+          <div className="mt-4 rounded-md bg-background-muted p-4">
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-caption">
+              Example: About Page Stats Row
+            </h4>
+            <pre className="overflow-x-auto text-xs">
+              <code>{`import { Kpi, KpiGroup } from "@texturehq/edges";
+
+<KpiGroup cols={{ base: 2, sm: 3, lg: 6 }} gap="lg" className="mt-8">
+  <Kpi
+    label="Utilities"
+    value={counts.utilities}
+    size="lg"
+    isLoading={counts.utilities === null}
+  />
+  <Kpi
+    label="Grid operators"
+    value={gridOperatorCount}
+    size="lg"
+    isLoading={gridOperatorCount === null}
+  />
+  <Kpi
+    label="Power plants"
+    value={counts.powerPlants}
+    size="lg"
+    isLoading={counts.powerPlants === null}
+  />
+</KpiGroup>`}</code>
+            </pre>
+          </div>
+
+          <div className="mt-4 text-xs text-text-caption">
+            💡 See{" "}
+            <code className="rounded bg-background-muted px-1.5 py-0.5 font-mono">app/(shell)/about/page.tsx</code> and{" "}
+            <code className="rounded bg-background-muted px-1.5 py-0.5 font-mono">app/(shell)/changelog/page.tsx</code>{" "}
+            for complete examples.
+          </div>
+        </div>
+      </Section>
+
       {/* Integration Guide */}
       <Section heading="Integration Guide">
         <div className="space-y-4 rounded-lg border border-border-default bg-background-surface p-6">

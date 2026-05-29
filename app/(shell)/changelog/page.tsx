@@ -1,7 +1,8 @@
 "use client";
 
+import { Badge, Kpi, KpiGroup } from "@texturehq/edges";
 import { useState } from "react";
-import { ContentPage } from "@/components/ContentPage";
+import { PageHeader, PageShell } from "@/components/ui/layout";
 import { getChangelog } from "@/lib/data";
 import type { ChangelogEntry, ChangelogOperation } from "@/types/changelog";
 import "./changelog.css";
@@ -52,18 +53,18 @@ function groupByDate(entries: ChangelogEntry[]): Array<{ date: string; entries: 
   }));
 }
 
-function getBadgeClass(kind: ChangelogOperation): string {
+function getBadgeVariant(kind: ChangelogOperation): "info" | "success" | "warning" | "default" {
   switch (kind) {
     case "updated":
-      return "cl-badge cl-badge-updated";
+      return "info";
     case "added":
-      return "cl-badge cl-badge-new";
+      return "success";
     case "corrected":
-      return "cl-badge cl-badge-corrected";
+      return "warning";
     case "synced":
-      return "cl-badge cl-badge-synced";
+      return "default";
     default:
-      return "cl-badge cl-badge-updated";
+      return "info";
   }
 }
 
@@ -122,7 +123,9 @@ function EntryRow({ entry }: { entry: ChangelogEntry }) {
       <div className="cl-entry-body">
         <div className="cl-entry-head">
           <span className="cl-entry-name">{entry.name}</span>
-          <span className={getBadgeClass(entry.kind)}>{getBadgeLabel(entry.kind)}</span>
+          <Badge variant={getBadgeVariant(entry.kind)} size="sm">
+            {getBadgeLabel(entry.kind)}
+          </Badge>
         </div>
         <div className="cl-entry-detail">{entry.detail}</div>
         <div className="cl-entry-meta">
@@ -175,61 +178,50 @@ export default function ChangelogPage() {
   const _lastUpdated = changelog.updatedAt ? formatLastUpdated(changelog.updatedAt) : null;
 
   return (
-    <ContentPage className="cg-changelog">
-      <ContentPage.Header title="Changelog" subtitle="Synced from authoritative sources daily" />
+    <PageShell className="cg-changelog">
+      <PageHeader title="Changelog" subtitle="Synced from authoritative sources daily" />
 
-      <ContentPage.Body>
-        {/* Stats band */}
-        <div className="cl-stats">
-          <div className="cl-stat">
-            <div className="cl-stat-n">{updatedCount}</div>
-            <div className="cl-stat-l">Updated</div>
-          </div>
-          <div className="cl-stat">
-            <div className="cl-stat-n">{newCount}</div>
-            <div className="cl-stat-l">Newly added</div>
-          </div>
-          <div className="cl-stat">
-            <div className="cl-stat-n">{totalCount}</div>
-            <div className="cl-stat-l">Total changes this week</div>
-          </div>
+      {/* Stats band */}
+      <KpiGroup cols={{ base: 3 }} gap="md" className="cl-stats-kpi">
+        <Kpi label="Updated" value={updatedCount} size="lg" />
+        <Kpi label="Newly added" value={newCount} size="lg" />
+        <Kpi label="Total changes this week" value={totalCount} size="lg" />
+      </KpiGroup>
+
+      {/* Feed */}
+      {allEntries.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "48px 0", color: "var(--color-text-muted)", fontSize: "14px" }}>
+          <p>
+            No changes recorded yet. Run{" "}
+            <code
+              style={{
+                fontFamily: "var(--font-family-mono)",
+                fontSize: "12px",
+                background: "var(--color-border-default)",
+                padding: "2px 6px",
+                borderRadius: "3px",
+              }}
+            >
+              npm run generate:changelog
+            </code>{" "}
+            after a sync to populate this feed.
+          </p>
         </div>
+      ) : (
+        <>
+          {groups.slice(0, visibleGroups).map(({ date, entries }) => (
+            <DateGroup key={date} date={date} entries={entries} />
+          ))}
 
-        {/* Feed */}
-        {allEntries.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "48px 0", color: "var(--color-text-muted)", fontSize: "14px" }}>
-            <p>
-              No changes recorded yet. Run{" "}
-              <code
-                style={{
-                  fontFamily: "var(--font-family-mono)",
-                  fontSize: "12px",
-                  background: "var(--color-border-default)",
-                  padding: "2px 6px",
-                  borderRadius: "3px",
-                }}
-              >
-                npm run generate:changelog
-              </code>{" "}
-              after a sync to populate this feed.
-            </p>
-          </div>
-        ) : (
-          <>
-            {groups.slice(0, visibleGroups).map(({ date, entries }) => (
-              <DateGroup key={date} date={date} entries={entries} />
-            ))}
-
-            {hasMore && (
-              <div className="cl-load-more">
-                <button type="button" onClick={() => setVisibleGroups((v) => v + LOAD_MORE_GROUPS)}>
-                  Load older changes
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </ContentPage.Body>
-    </ContentPage>
+          {hasMore && (
+            <div className="cl-load-more">
+              <button type="button" onClick={() => setVisibleGroups((v) => v + LOAD_MORE_GROUPS)}>
+                Load older changes
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </PageShell>
   );
 }
