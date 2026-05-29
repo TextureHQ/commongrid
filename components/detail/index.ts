@@ -3,7 +3,6 @@ export { DetailEntityList } from "./DetailEntityList";
 export type { FieldItem } from "./DetailFieldList";
 export { DetailFieldList } from "./DetailFieldList";
 export { DetailMap } from "./DetailMap";
-export { DetailPageShell } from "./DetailPageShell";
 export type { RelationshipItem } from "./DetailRelationships";
 export { DetailRelationships } from "./DetailRelationships";
 export { DetailSection } from "./DetailSection";

@@ -1,4 +1,5 @@
 import { BreadcrumbItem, Breadcrumbs } from "@texturehq/edges";
+import { PageShell } from "../ui/layout/PageShell";
 
 /**
  * Breadcrumb item with optional link
@@ -12,7 +13,8 @@ interface Breadcrumb {
  * EntityPageHeader - Unified header for all entity detail pages
  *
  * Provides breadcrumbs, title, subtitle, avatar, and actions.
- * Responsive: stacks naturally on mobile, horizontal layout on desktop.
+ * Uses PageShell for consistent max-width container layout.
+ * Extends the base PageHeader pattern with avatar and data source links.
  */
 interface EntityPageHeaderProps {
   /** Breadcrumb navigation items */
@@ -40,7 +42,7 @@ export function EntityPageHeader({
   dataSourcePaths,
 }: EntityPageHeaderProps) {
   return (
-    <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12 py-6">
+    <PageShell className="py-6">
       {/* Breadcrumbs */}
       <Breadcrumbs className="mb-6">
         {breadcrumbs.map((crumb) => (
@@ -53,23 +55,25 @@ export function EntityPageHeader({
       {/* Header content */}
       <div className="flex items-start justify-between gap-6">
         <div className="flex items-start gap-4 min-w-0 flex-1">
-          {avatar && <div className="flex-shrink-0">{avatar}</div>}
+          {avatar && <div className="shrink-0">{avatar}</div>}
 
           <div className="min-w-0 flex-1">
-            <h1 className="text-heading-lg font-semibold text-text-heading mb-2">{entityName}</h1>
+            <h1 className="mb-2 font-brand text-[clamp(28px,3.5vw,42px)] font-semibold leading-tight tracking-tight text-text-heading">
+              {entityName}
+            </h1>
 
             {subtitle && (
-              <div className="text-body-md text-text-body flex items-center gap-2 flex-wrap">{subtitle}</div>
+              <div className="flex flex-wrap items-center gap-2 text-sm leading-relaxed text-text-body">{subtitle}</div>
             )}
           </div>
         </div>
 
-        {actions && <div className="flex-shrink-0">{actions}</div>}
+        {actions && <div className="shrink-0 self-start">{actions}</div>}
       </div>
 
       {/* Data sources */}
       {dataSourcePaths && dataSourcePaths.length > 0 && (
-        <div className="flex items-center gap-3 text-caption text-text-caption mt-4">
+        <div className="mt-4 flex items-center gap-3 font-mono text-[11px] tracking-wide text-text-caption">
           {dataSourcePaths.map((path) => {
             const fileName = path.split("/").pop() ?? path;
             return (
@@ -78,7 +82,7 @@ export function EntityPageHeader({
                 href={`${GITHUB_BASE}/${path}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-text-muted transition-colors"
+                className="flex items-center gap-1 transition-colors hover:text-text-muted"
               >
                 <svg
                   width="11"
@@ -97,6 +101,6 @@ export function EntityPageHeader({
           })}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
