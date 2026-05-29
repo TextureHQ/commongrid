@@ -560,10 +560,7 @@ export default function UtilityDetailPage() {
 
   if (utilitiesLoading) {
     return (
-      <div
-        className="cg-detail"
-        style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}
-      >
+      <div className="flex min-h-[60vh] items-center justify-center">
         <Loader size={32} />
       </div>
     );
