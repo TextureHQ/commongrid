@@ -114,16 +114,16 @@ export default function ComponentsPage() {
             usage={`import { Kpi, KpiGroup } from "@texturehq/edges";
 
 <KpiGroup cols={{ base: 1, sm: 2, md: 3 }} gap="lg">
-  <Kpi label="Utilities" value={1234} />
-  <Kpi label="Grid Operators" value={67} />
-  <Kpi label="Power Plants" value={12345} />
+  <Kpi label="Utilities" value={1234} size="lg" />
+  <Kpi label="Grid Operators" value={67} size="lg" />
+  <Kpi label="Power Plants" value={12345} size="lg" />
 </KpiGroup>`}
           >
             <div className="rounded-lg border border-border-default bg-background-surface p-6">
               <KpiGroup cols={{ base: 1, sm: 2, md: 3 }} gap="lg">
-                <Kpi label="Utilities" value={1234} />
-                <Kpi label="Grid Operators" value={67} />
-                <Kpi label="Power Plants" value={12345} />
+                <Kpi label="Utilities" value={1234} size="lg" />
+                <Kpi label="Grid Operators" value={67} size="lg" />
+                <Kpi label="Power Plants" value={12345} size="lg" />
               </KpiGroup>
               <div className="mt-4 text-xs text-text-caption">
                 💡 Kpi automatically formats numbers and supports loading states, trends, and custom formatters.
