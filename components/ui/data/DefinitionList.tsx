@@ -33,12 +33,8 @@ export function DefinitionList({ items, className = "" }: DefinitionListProps) {
     <dl className={`space-y-4 ${className}`}>
       {items.map((item) => (
         <div key={item.term} className="flex flex-col gap-1">
-          <dt className="text-sm font-semibold text-text-heading">
-            {item.term}
-          </dt>
-          <dd className="text-sm leading-relaxed text-text-muted">
-            {item.description}
-          </dd>
+          <dt className="text-sm font-semibold text-text-heading">{item.term}</dt>
+          <dd className="text-sm leading-relaxed text-text-muted">{item.description}</dd>
         </div>
       ))}
     </dl>

@@ -40,9 +40,7 @@ export function KeyValueTable({ rows, className = "" }: KeyValueTableProps) {
           }`}
         >
           <span className="shrink-0 text-text-muted">{row.key}</span>
-          <span className="truncate text-right font-mono text-xs font-medium text-text-heading">
-            {row.value}
-          </span>
+          <span className="truncate text-right font-mono text-xs font-medium text-text-heading">{row.value}</span>
         </div>
       ))}
     </div>

@@ -2,15 +2,7 @@
 
 import { Button, Skeleton } from "@texturehq/edges";
 import { useState } from "react";
-import {
-  DefinitionList,
-  KeyValueTable,
-  PageHeader,
-  PageShell,
-  Section,
-  StatGrid,
-  StatItem,
-} from "@/components/ui";
+import { DefinitionList, KeyValueTable, PageHeader, PageShell, Section, StatGrid, StatItem } from "@/components/ui";
 
 /**
  * Component Showcase Page
@@ -23,18 +15,11 @@ export default function ComponentsPage() {
   return (
     <PageShell>
       <PageHeader
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Components" },
-        ]}
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Components" }]}
         title="Component Library"
         subtitle="Shared UI components built with Tailwind utilities and Edges tokens. All components are responsive, typed with TypeScript, and composable."
         actions={
-          <Button
-            variant="secondary"
-            size="sm"
-            onPress={() => setShowSkeletons(!showSkeletons)}
-          >
+          <Button variant="secondary" size="sm" onPress={() => setShowSkeletons(!showSkeletons)}>
             {showSkeletons ? "Hide Skeletons" : "Show Skeletons"}
           </Button>
         }
@@ -107,14 +92,12 @@ export default function ComponentsPage() {
             <div className="rounded-lg border border-border-default bg-background-surface p-6">
               <Section heading="Example Section">
                 <p className="text-sm text-text-body">
-                  This is a section with a heading. Sections provide consistent spacing
-                  between major content blocks and optional semantic headings.
+                  This is a section with a heading. Sections provide consistent spacing between major content blocks and
+                  optional semantic headings.
                 </p>
               </Section>
               <Section heading="Another Section">
-                <p className="text-sm text-text-body">
-                  Multiple sections stack with consistent spacing.
-                </p>
+                <p className="text-sm text-text-body">Multiple sections stack with consistent spacing.</p>
               </Section>
             </div>
           </ComponentExample>
@@ -136,22 +119,11 @@ export default function ComponentsPage() {
           >
             <div className="rounded-lg border border-border-default bg-background-surface p-6">
               <StatGrid columns={3}>
-                <StatItem
-                  value={showSkeletons ? <Skeleton width={80} height={34} /> : "1,234"}
-                  label="Utilities"
-                />
-                <StatItem
-                  value={showSkeletons ? <Skeleton width={64} height={34} /> : "67"}
-                  label="Grid Operators"
-                />
-                <StatItem
-                  value={showSkeletons ? <Skeleton width={96} height={34} /> : "12,345"}
-                  label="Power Plants"
-                />
+                <StatItem value={showSkeletons ? <Skeleton width={80} height={34} /> : "1,234"} label="Utilities" />
+                <StatItem value={showSkeletons ? <Skeleton width={64} height={34} /> : "67"} label="Grid Operators" />
+                <StatItem value={showSkeletons ? <Skeleton width={96} height={34} /> : "12,345"} label="Power Plants" />
               </StatGrid>
-              <div className="mt-4 text-xs text-text-caption">
-                Toggle skeletons above to see loading states ↑
-              </div>
+              <div className="mt-4 text-xs text-text-caption">Toggle skeletons above to see loading states ↑</div>
             </div>
           </ComponentExample>
 
@@ -220,27 +192,28 @@ export default function ComponentsPage() {
       <Section heading="Integration Guide">
         <div className="space-y-4 rounded-lg border border-border-default bg-background-surface p-6">
           <h3 className="font-semibold text-text-heading">Using Components</h3>
-          
+
           <div className="space-y-3 text-sm text-text-body">
             <p>
-              <strong>Import from:</strong> <code className="rounded bg-background-muted px-1.5 py-0.5 font-mono text-xs">@/components/ui</code>
+              <strong>Import from:</strong>{" "}
+              <code className="rounded bg-background-muted px-1.5 py-0.5 font-mono text-xs">@/components/ui</code>
             </p>
-            
+
             <p>
-              <strong>Styling:</strong> All components use pure Tailwind utilities with Edges tokens 
-              (<code className="rounded bg-background-muted px-1.5 py-0.5 font-mono text-xs">--color-*</code>, 
-              <code className="rounded bg-background-muted px-1.5 py-0.5 font-mono text-xs">--space-*</code>). 
-              No custom CSS files.
+              <strong>Styling:</strong> All components use pure Tailwind utilities with Edges tokens (
+              <code className="rounded bg-background-muted px-1.5 py-0.5 font-mono text-xs">--color-*</code>,
+              <code className="rounded bg-background-muted px-1.5 py-0.5 font-mono text-xs">--space-*</code>). No custom
+              CSS files.
             </p>
-            
+
             <p>
-              <strong>Composition:</strong> Build page layouts by composing these components. 
-              Use Edges atoms (Button, TextField, etc.) for interactive elements.
+              <strong>Composition:</strong> Build page layouts by composing these components. Use Edges atoms (Button,
+              TextField, etc.) for interactive elements.
             </p>
-            
+
             <p>
-              <strong>Responsive:</strong> All components are mobile-first responsive. 
-              Test at 375px (mobile), 768px (tablet), and 1440px (desktop).
+              <strong>Responsive:</strong> All components are mobile-first responsive. Test at 375px (mobile), 768px
+              (tablet), and 1440px (desktop).
             </p>
           </div>
 
@@ -302,9 +275,7 @@ function ComponentExample({
   return (
     <div className="rounded-lg border border-border-default bg-background-body p-6">
       <div className="mb-4">
-        <h3 className="mb-1 font-mono text-lg font-semibold text-text-heading">
-          {name}
-        </h3>
+        <h3 className="mb-1 font-mono text-lg font-semibold text-text-heading">{name}</h3>
         <p className="text-sm text-text-muted">{description}</p>
       </div>
 

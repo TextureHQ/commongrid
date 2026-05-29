@@ -49,10 +49,7 @@ export function PageHeader({ title, subtitle, breadcrumbs, actions }: PageHeader
             <span key={crumb.label} className="contents">
               {i > 0 && <span className="opacity-50">/</span>}
               {crumb.href ? (
-                <Link
-                  href={crumb.href}
-                  className="transition-colors hover:text-brand-primary"
-                >
+                <Link href={crumb.href} className="transition-colors hover:text-brand-primary">
                   {crumb.label}
                 </Link>
               ) : (
@@ -69,18 +66,10 @@ export function PageHeader({ title, subtitle, breadcrumbs, actions }: PageHeader
           <h1 className="mb-2 font-brand text-[clamp(28px,3.5vw,42px)] font-semibold leading-tight tracking-tight text-text-heading">
             {title}
           </h1>
-          {subtitle && (
-            <p className="text-sm leading-relaxed text-text-muted">
-              {subtitle}
-            </p>
-          )}
+          {subtitle && <p className="text-sm leading-relaxed text-text-muted">{subtitle}</p>}
         </div>
 
-        {actions && (
-          <div className="shrink-0 self-start">
-            {actions}
-          </div>
-        )}
+        {actions && <div className="shrink-0 self-start">{actions}</div>}
       </div>
     </header>
   );
