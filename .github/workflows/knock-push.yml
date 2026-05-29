@@ -43,5 +43,5 @@ jobs:
             -m "deploy: ${{ github.sha }}" \
             --workflows-dir=./knock/workflows \
             --service-token=${{ secrets.KNOCK_SERVICE_TOKEN }}
-          knock commit promote --to production \
+          knock commit promote --to production --yes \
             --service-token=${{ secrets.KNOCK_SERVICE_TOKEN }}
