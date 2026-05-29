@@ -183,7 +183,7 @@ export function PowerPlantListPanel() {
                 data-shape="circle"
                 style={{ background: getFuelCategoryColor(row.fuelCategory) }}
               />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex-1 min-w-0">
                 <div className="cg-explore-entity-name">{row.name}</div>
                 <div className="cg-explore-entity-sub">
                   {row.state} · {getFuelCategoryLabel(row.fuelCategory)} ·{" "}
@@ -193,7 +193,8 @@ export function PowerPlantListPanel() {
                 </div>
               </div>
               <span
-                style={{ fontSize: 11, color: "var(--cg-teal)", fontFamily: "var(--font-family-mono)", flexShrink: 0 }}
+                className="shrink-0"
+                style={{ fontSize: 11, color: "var(--cg-teal)", fontFamily: "var(--font-family-mono)" }}
               >
                 {row.utilityName}
               </span>

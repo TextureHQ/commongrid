@@ -51,41 +51,32 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
         : "Data from EIA";
 
   return (
-    <div style={{ maxWidth: "900px", margin: "0 auto", padding: "24px" }}>
+    <div className="max-w-[900px] mx-auto p-6">
       {/* Header */}
-      <div style={{ marginBottom: "32px" }}>
-        <h1 style={{ fontSize: "32px", fontWeight: "700", marginBottom: "8px" }}>{substation.name}</h1>
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+      <div className="mb-8">
+        <h1 className="text-[32px] font-bold mb-2">{substation.name}</h1>
+        <div className="flex gap-3 flex-wrap">
           <span
+            className="inline-block px-3 py-1.5 rounded text-xs"
             style={{
-              display: "inline-block",
               backgroundColor: "var(--color-background-subtle)",
-              padding: "6px 12px",
-              borderRadius: "4px",
-              fontSize: "12px",
             }}
           >
             {substation.voltageBand || "unknown"}
           </span>
           <span
+            className="inline-block px-3 py-1.5 rounded text-xs"
             style={{
-              display: "inline-block",
               backgroundColor: "var(--color-background-subtle)",
-              padding: "6px 12px",
-              borderRadius: "4px",
-              fontSize: "12px",
             }}
           >
             {substation.status || "unknown"}
           </span>
           {substation.source && (
             <span
+              className="inline-block px-3 py-1.5 rounded text-xs"
               style={{
-                display: "inline-block",
                 backgroundColor: "var(--color-background-subtle)",
-                padding: "6px 12px",
-                borderRadius: "4px",
-                fontSize: "12px",
               }}
             >
               Source: {substation.source}
@@ -95,11 +86,11 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
       </div>
 
       {/* Main grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "32px" }}>
+      <div className="grid grid-cols-2 gap-6 mb-8">
         {/* Location card */}
-        <div style={{ border: "1px solid var(--color-border-default)", borderRadius: "8px", padding: "16px" }}>
-          <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>Location</h2>
-          <div style={{ display: "grid", gap: "8px", fontSize: "14px" }}>
+        <div className="rounded-lg p-4" style={{ border: "1px solid var(--color-border-default)" }}>
+          <h2 className="text-sm font-medium mb-3">Location</h2>
+          <div className="grid gap-2 text-sm">
             <div>
               <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>State</div>
               <div>{substation.state}</div>
@@ -120,9 +111,9 @@ async function SubstationDetailContent({ slug }: { slug: string }) {
         </div>
 
         {/* Voltage card */}
-        <div style={{ border: "1px solid var(--color-border-default)", borderRadius: "8px", padding: "16px" }}>
-          <h2 style={{ fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>Voltage</h2>
-          <div style={{ display: "grid", gap: "8px", fontSize: "14px" }}>
+        <div className="rounded-lg p-4" style={{ border: "1px solid var(--color-border-default)" }}>
+          <h2 className="text-sm font-medium mb-3">Voltage</h2>
+          <div className="grid gap-2 text-sm">
             {voltageDisplay && (
               <div>
                 <div style={{ color: "var(--color-text-muted)", fontSize: "12px" }}>Range</div>

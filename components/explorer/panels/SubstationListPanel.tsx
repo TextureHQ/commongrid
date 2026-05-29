@@ -322,7 +322,7 @@ export function SubstationListPanel() {
                   data-shape="circle"
                   style={{ background: getVoltageBandColor(row.voltageBand) }}
                 />
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="flex-1 min-w-0">
                   <div className="cg-explore-entity-name">{row.name}</div>
                   <div className="cg-explore-entity-sub">
                     {row.state} · {SUBSTATION_TYPE_LABELS[row.substationType]} · {formatVoltage(row)}
@@ -330,11 +330,11 @@ export function SubstationListPanel() {
                   </div>
                 </div>
                 <span
+                  className="shrink-0"
                   style={{
                     fontSize: 11,
                     fontFamily: "var(--font-family-mono)",
                     color: "var(--color-text-muted)",
-                    flexShrink: 0,
                   }}
                 >
                   {VOLTAGE_BAND_LABELS[row.voltageBand]}

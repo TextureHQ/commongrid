@@ -177,13 +177,13 @@ export function EVChargingListPanel() {
                 data-shape="circle"
                 style={{ background: getNetworkColor(row.evNetwork) }}
               />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex-1 min-w-0">
                 <div className="cg-explore-entity-name">{row.stationName}</div>
                 <div className="cg-explore-entity-sub">
                   {row.city}, {row.state} · {getNetworkShortName(row.evNetwork)}
                 </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1, flexShrink: 0 }}>
+              <div className="flex flex-col items-end gap-px shrink-0">
                 {row.evDcFastNum > 0 && (
                   <span
                     style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-heading)" }}

@@ -184,14 +184,14 @@ export function ProgramListPanel() {
           filtered.map((row) => (
             <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
               <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-purple)" }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex-1 min-w-0">
                 <div className="cg-explore-entity-name">{row.name}</div>
                 <div className="cg-explore-entity-sub">
                   {row.utilityName} ·{" "}
                   {row.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", ")}
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              <div className="flex items-center gap-2 shrink-0">
                 <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: statusColor(row.status) }}>
                   {statusLabel(row.status)}
                 </span>

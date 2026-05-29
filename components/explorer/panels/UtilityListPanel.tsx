@@ -382,7 +382,7 @@ export function UtilityListPanel() {
           rows.map((row) => (
             <div key={row.slug} className="cg-explore-entity-row" onClick={() => navigateToDetail("utility", row.slug)}>
               <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-teal)" }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex-1 min-w-0">
                 <div className="cg-explore-entity-name">{row.name}</div>
                 <div className="cg-explore-entity-sub">
                   {row.jurisdiction ?? "—"} · {getSegmentLabel(row.segment)}

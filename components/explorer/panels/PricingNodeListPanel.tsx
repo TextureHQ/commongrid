@@ -183,7 +183,7 @@ export function PricingNodeListPanel() {
                 data-shape="circle"
                 style={{ background: getIsoColor(row.iso) }}
               />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex-1 min-w-0">
                 <div className="cg-explore-entity-name">{row.name}</div>
                 <div className="cg-explore-entity-sub">
                   {ISO_LABELS[row.iso]} · {getNodeTypeLabel(row.nodeType)}

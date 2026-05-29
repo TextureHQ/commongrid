@@ -70,6 +70,29 @@ npm run dev
 
 ---
 
+## Technology Stack
+
+CommonGrid is built with modern web technologies:
+
+- **Framework:** [Next.js 15](https://nextjs.org/) (React, TypeScript, App Router)
+- **Styling:** [Tailwind CSS 4](https://tailwindcss.com/) (utility-first CSS)
+- **Design System:** [@texturehq/edges](https://github.com/TextureHQ/edges) (component library)
+- **Maps:** [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/) (interactive vector maps)
+- **Database:** [Neon](https://neon.tech/) (Serverless Postgres)
+- **Deployment:** [Vercel](https://vercel.com/) (continuous deployment from `main`)
+- **Code Quality:** [Biome](https://biomejs.dev/) (linting and formatting)
+
+### Component Library
+
+We use the **Edges design system** for UI components:
+
+- **Atoms:** Low-level components (Button, TextField, Checkbox, etc.)
+- **Composites:** Higher-level patterns (Kpi, KpiGroup, StatList, etc.)
+
+All styling follows a **Tailwind-first approach** — no custom CSS files except for global styles and special pages. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed styling guidelines.
+
+---
+
 ## Data Schemas
 
 ### Utilities (`data/utilities.json`)

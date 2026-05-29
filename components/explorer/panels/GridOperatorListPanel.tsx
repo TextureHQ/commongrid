@@ -176,7 +176,7 @@ export function GridOperatorListPanel() {
           filtered.map((row) => (
             <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
               <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-blue)" }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex-1 min-w-0">
                 <div className="cg-explore-entity-name">{row.name}</div>
                 <div className="cg-explore-entity-sub">
                   {row.shortName} · {row.type} · {row.states.slice(0, 3).join(", ")}
