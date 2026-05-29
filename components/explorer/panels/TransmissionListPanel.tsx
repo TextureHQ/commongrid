@@ -196,7 +196,7 @@ export function TransmissionListPanel() {
                 data-shape="line"
                 style={{ background: "var(--color-text-muted)", width: 8, height: 2 }}
               />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex-1 min-w-0">
                 <div className="cg-explore-entity-name">{row.owner || "Unknown owner"}</div>
                 <div className="cg-explore-entity-sub">
                   {row.sub1} → {row.sub2} · {getVoltageShortLabel(row.voltageClass)}
@@ -204,11 +204,11 @@ export function TransmissionListPanel() {
                 </div>
               </div>
               <span
+                className="shrink-0"
                 style={{
                   fontSize: 11,
                   fontFamily: "var(--font-family-mono)",
                   color: "var(--color-text-muted)",
-                  flexShrink: 0,
                 }}
               >
                 {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}

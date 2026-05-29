@@ -55,23 +55,25 @@ Territory boundaries are individual GeoJSON files in `data/territories/`. Each f
 }
 ```
 
-### 4. Improve the Explorer App
+### 4. Improve the Site
 
-The explorer app lives in `explorer/`. It's a Next.js app that visualizes the data.
+The CommonGrid website (commongrid.info) is built with Next.js. The app lives in the repo root with the following structure:
 
-## Running the Explorer Locally
+- `app/` — Next.js App Router pages and layouts
+- `components/` — React components
+- `lib/` — Data loading and utility functions
+- `types/` — TypeScript type definitions
+
+## Running the Site Locally
 
 ```bash
-cd explorer
 npm install
 npm run dev
-# Open http://localhost:4445
+# Open http://localhost:3000
 ```
 
-The explorer reads data from the repo root's `data/` directory via symlinks. If symlinks don't work on your system, you can copy the `data/` directory into `explorer/data/` and `explorer/public/data/`.
-
 **Environment variables (optional):**
-- `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` — For Mapbox-powered maps. The app works without it using a default tile provider.
+- `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` — For Mapbox-powered maps. Without it, the home page shows a static landing view — all other pages work fine.
 
 ## Running Sync Scripts
 
@@ -97,17 +99,61 @@ See `scripts/README.md` for detailed documentation on each script.
 ## Code Standards
 
 - **TypeScript** for all new code
-- **Biome** for linting and formatting (`npm run lint:fix` in the explorer)
+- **Biome** for linting and formatting (`npm run lint`)
 - **Atomic commits** — one logical change per commit
 - **Descriptive commit messages** — explain _what_ and _why_
+
+### Styling Guidelines
+
+CommonGrid uses a **Tailwind-first approach** for all styling. Please follow these guidelines:
+
+#### ✅ DO:
+
+- **Use Tailwind utility classes** for all styling whenever possible
+- **Use Edges design system components** for interactive elements:
+  - `Button` for buttons
+  - `TextField` for form inputs
+  - `Kpi`/`KpiGroup` for metrics
+  - `StatList` for field/value lists
+- **Build custom components** only for CommonGrid-specific patterns
+- **Use inline styles** ONLY for:
+  - CSS variable references (e.g., `style={{ color: "var(--color-text-muted)" }}`)
+  - Truly dynamic values (e.g., `style={{ backgroundColor: color }}`)
+  - Mapbox/map-specific positioning
+  - Third-party library requirements
+
+#### ❌ DON'T:
+
+- **Do NOT create new CSS files** (except for special cases like homepage styles)
+- **Do NOT use custom CSS classes** when Tailwind utilities exist
+- **Do NOT add new global CSS** except in `app/globals.css`
+
+#### Existing CSS Files
+
+The following CSS files are intentionally kept:
+- `app/globals.css` — Global styles and Tailwind imports
+- `app/(shell)/homepage-minimal.css` — Homepage-specific styles
+- Page-specific CSS for special layouts (about, explore, changelog)
+
+All other styling should use Tailwind utilities or the Edges component library.
+
+### Component Library
+
+CommonGrid uses the [@texturehq/edges](https://github.com/TextureHQ/edges) design system:
+
+- **Atoms**: Low-level interactive components (Button, TextField, Checkbox, etc.)
+- **Composites**: Higher-level patterns (Kpi, KpiGroup, StatList, etc.)
+
+See `components/ui/README.md` for a detailed component inventory and migration status.
 
 ## Pull Request Process
 
 1. Ensure your changes don't break existing data schemas
-2. If adding new fields, update the TypeScript types in `explorer/types/entities.ts`
-3. Test the explorer app locally if you've changed app code
-4. Describe what changed and why in your PR description
-5. Link to relevant issues if applicable
+2. If adding new fields, update the TypeScript types in `types/entities.ts`
+3. Run `npm run lint` and `npm run build` to ensure your changes pass CI
+4. Test the site locally if you've changed app code
+5. Describe what changed and why in your PR description
+6. Link to relevant issues if applicable
 
 ## Questions?
 

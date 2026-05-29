@@ -292,13 +292,9 @@ function ListSourceSelector({
 
   return (
     <div
+      className="flex items-center gap-1.5 px-3 py-2 shrink-0"
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "8px 12px",
         borderBottom: "1px solid var(--color-border-default)",
-        flexShrink: 0,
       }}
     >
       <span style={{ fontSize: 12, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>Showing:</span>
@@ -498,7 +494,7 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
   return (
     <div className="cg-explore flex flex-col h-full overflow-hidden">
       {/* Desktop: filter bar */}
-      <div className="hidden md:flex flex-col" style={{ flexShrink: 0 }}>
+      <div className="hidden md:flex flex-col shrink-0">
         <div className="cg-explore-filter-bar">
           {/* Row 1: view toggle */}
           <div className="cg-explore-filter-row" style={{ justifyContent: "space-between" }}>
@@ -530,9 +526,8 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
       {/* Mobile: simplified tab bar (list view only) + floating toggle */}
       {layout === "list" && (
         <div
-          className="md:hidden"
+          className="md:hidden shrink-0"
           style={{
-            flexShrink: 0,
             borderBottom: "1px solid var(--color-border-default)",
             background: "var(--color-background-surface)",
           }}
