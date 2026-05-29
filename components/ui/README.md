@@ -79,30 +79,38 @@ import { Section } from "@/components/ui";
 
 ### Data Display Components (`components/ui/data/`)
 
-#### `StatGrid` / `StatItem`
-Responsive grid for displaying metrics.
+#### Metrics / KPIs → Use Edges `Kpi` / `KpiGroup`
+
+**For metric displays, use the Edges `Kpi` and `KpiGroup` components instead of building custom stat components.**
 
 ```tsx
-import { StatGrid, StatItem } from "@/components/ui";
+import { Kpi, KpiGroup } from "@texturehq/edges";
 
-<StatGrid columns={3}>
-  <StatItem value="1,234" label="Utilities" />
-  <StatItem value="67" label="Grid Operators" />
-  <StatItem value="12,345" label="Power Plants" />
-</StatGrid>
+<KpiGroup cols={{ base: 1, sm: 2, md: 3 }} gap="lg">
+  <Kpi label="Utilities" value={1234} />
+  <Kpi label="Grid Operators" value={67} />
+  <Kpi label="Power Plants" value={12345} />
+</KpiGroup>
 ```
 
-**StatGrid Props:**
-- `children: ReactNode` — StatItem components
-- `columns?: 2 | 3 | 4 | 5 | 6` — Number of columns (default: 3)
-- `className?: string` — Additional classes
+**Why use Edges Kpi/KpiGroup:**
+- Built-in number formatting (thousands separators, decimals, etc.)
+- Automatic loading states (no manual Skeleton wrangling)
+- Trend indicators and sparklines supported
+- Custom formatters for currency, percentages, units
+- Consistent with the rest of the Edges design system
 
-**StatItem Props:**
-- `value: ReactNode` — Metric value (supports Skeleton for loading)
-- `label: string` — Metric label
-- `icon?: ReactNode` — Optional icon/decoration
+**Example with formatters:**
+```tsx
+<KpiGroup cols={{ base: 1, sm: 2, md: 4 }} gap="lg">
+  <Kpi label="Revenue" value={1234567} formatter={{ type: "currency" }} />
+  <Kpi label="Completion Rate" value={0.89} formatter={{ type: "percent" }} />
+  <Kpi label="Power Output" value={5200} formatter={{ type: "power", unit: "kW" }} />
+  <Kpi label="Total Sites" value={1234} />
+</KpiGroup>
+```
 
-**Loading states:** Pass `<Skeleton>` as the `value` for loading states.
+**See also:** `components/entity/EntityStatsRow.tsx` for real-world usage examples.
 
 ---
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { Button, Skeleton } from "@texturehq/edges";
+import { Button, Kpi, KpiGroup } from "@texturehq/edges";
 import { useState } from "react";
-import { DefinitionList, KeyValueTable, PageHeader, PageShell, Section, StatGrid, StatItem } from "@/components/ui";
+import { DefinitionList, KeyValueTable, PageHeader, PageShell, Section } from "@/components/ui";
 
 /**
  * Component Showcase Page
@@ -107,23 +107,27 @@ export default function ComponentsPage() {
       {/* Data Display Components */}
       <Section heading="Data Display Components">
         <div className="space-y-8">
-          {/* StatGrid */}
+          {/* Kpi / KpiGroup */}
           <ComponentExample
-            name="StatGrid / StatItem"
-            description="Responsive grid for displaying metrics. Stacks on mobile, expands to multiple columns on desktop."
-            usage={`<StatGrid columns={3}>
-  <StatItem value="1,234" label="Utilities" />
-  <StatItem value="67" label="Grid Operators" />
-  <StatItem value="12,345" label="Power Plants" />
-</StatGrid>`}
+            name="Kpi / KpiGroup"
+            description="Metric display components from Edges. Use for dashboards, stats rows, and KPI visualizations."
+            usage={`import { Kpi, KpiGroup } from "@texturehq/edges";
+
+<KpiGroup cols={{ base: 1, sm: 2, md: 3 }} gap="lg">
+  <Kpi label="Utilities" value={1234} />
+  <Kpi label="Grid Operators" value={67} />
+  <Kpi label="Power Plants" value={12345} />
+</KpiGroup>`}
           >
             <div className="rounded-lg border border-border-default bg-background-surface p-6">
-              <StatGrid columns={3}>
-                <StatItem value={showSkeletons ? <Skeleton width={80} height={34} /> : "1,234"} label="Utilities" />
-                <StatItem value={showSkeletons ? <Skeleton width={64} height={34} /> : "67"} label="Grid Operators" />
-                <StatItem value={showSkeletons ? <Skeleton width={96} height={34} /> : "12,345"} label="Power Plants" />
-              </StatGrid>
-              <div className="mt-4 text-xs text-text-caption">Toggle skeletons above to see loading states ↑</div>
+              <KpiGroup cols={{ base: 1, sm: 2, md: 3 }} gap="lg">
+                <Kpi label="Utilities" value={1234} />
+                <Kpi label="Grid Operators" value={67} />
+                <Kpi label="Power Plants" value={12345} />
+              </KpiGroup>
+              <div className="mt-4 text-xs text-text-caption">
+                💡 Kpi automatically formats numbers and supports loading states, trends, and custom formatters.
+              </div>
             </div>
           </ComponentExample>
 
@@ -222,8 +226,8 @@ export default function ComponentsPage() {
               Example Page Structure
             </h4>
             <pre className="overflow-x-auto text-xs">
-              <code>{`import { PageShell, PageHeader, Section, StatGrid, StatItem } from "@/components/ui";
-import { Button } from "@texturehq/edges";
+              <code>{`import { PageShell, PageHeader, Section } from "@/components/ui";
+import { Button, Kpi, KpiGroup } from "@texturehq/edges";
 
 export default function MyPage() {
   return (
@@ -235,11 +239,11 @@ export default function MyPage() {
       />
       
       <Section heading="Metrics">
-        <StatGrid columns={3}>
-          <StatItem value="1,234" label="Total" />
-          <StatItem value="567" label="Active" />
-          <StatItem value="89%" label="Rate" />
-        </StatGrid>
+        <KpiGroup cols={{ base: 1, sm: 2, md: 3 }} gap="lg">
+          <Kpi value={1234} label="Total" />
+          <Kpi value={567} label="Active" />
+          <Kpi value={0.89} formatter={{ type: "percent" }} label="Rate" />
+        </KpiGroup>
       </Section>
       
       <Section heading="Content">

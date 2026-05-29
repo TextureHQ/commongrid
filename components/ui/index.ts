@@ -1,5 +1,5 @@
 // Layout components
 
 // Data display components
-export { DefinitionList, KeyValueTable, StatGrid, StatItem } from "./data";
+export { DefinitionList, KeyValueTable } from "./data";
 export { PageHeader, PageShell, Section } from "./layout";
