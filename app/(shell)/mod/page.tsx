@@ -235,119 +235,118 @@ export default function ModerationDashboardPage() {
       />
       <ContentPage.Body>
         <div className="px-4 sm:px-6 space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <div className="p-4 space-y-1">
+                <div className="text-sm text-text-muted">Pending Contributions</div>
+                {statsLoading ? (
+                  <Loader />
+                ) : statsError ? (
+                  <div className="text-sm text-text-error">{statsError}</div>
+                ) : (
+                  <div className="text-3xl font-semibold text-text-heading">{stats?.pending_count ?? 0}</div>
+                )}
+              </div>
+            </Card>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <div className="p-4 space-y-1">
-              <div className="text-sm text-text-muted">Pending Contributions</div>
-              {statsLoading ? (
-                <Loader />
-              ) : statsError ? (
-                <div className="text-sm text-text-error">{statsError}</div>
-              ) : (
-                <div className="text-3xl font-semibold text-text-heading">{stats?.pending_count ?? 0}</div>
-              )}
-            </div>
-          </Card>
+            <Card>
+              <div className="p-4 space-y-1">
+                <div className="text-sm text-text-muted">Flagged Contributions</div>
+                {statsLoading ? (
+                  <Loader />
+                ) : statsError ? (
+                  <div className="text-sm text-text-error">{statsError}</div>
+                ) : (
+                  <div className="text-3xl font-semibold text-text-heading">{stats?.flagged_count ?? 0}</div>
+                )}
+              </div>
+            </Card>
 
-          <Card>
-            <div className="p-4 space-y-1">
-              <div className="text-sm text-text-muted">Flagged Contributions</div>
-              {statsLoading ? (
-                <Loader />
-              ) : statsError ? (
-                <div className="text-sm text-text-error">{statsError}</div>
-              ) : (
-                <div className="text-3xl font-semibold text-text-heading">{stats?.flagged_count ?? 0}</div>
-              )}
-            </div>
-          </Card>
+            <Card>
+              <div className="p-4 space-y-1">
+                <div className="text-sm text-text-muted">Reviewed This Week</div>
+                {statsLoading ? (
+                  <Loader />
+                ) : statsError ? (
+                  <div className="text-sm text-text-error">{statsError}</div>
+                ) : (
+                  <div className="text-3xl font-semibold text-text-heading">{stats?.reviewed_this_week ?? 0}</div>
+                )}
+              </div>
+            </Card>
 
-          <Card>
-            <div className="p-4 space-y-1">
-              <div className="text-sm text-text-muted">Reviewed This Week</div>
-              {statsLoading ? (
-                <Loader />
-              ) : statsError ? (
-                <div className="text-sm text-text-error">{statsError}</div>
-              ) : (
-                <div className="text-3xl font-semibold text-text-heading">{stats?.reviewed_this_week ?? 0}</div>
-              )}
-            </div>
-          </Card>
+            <Card>
+              <div className="p-4 space-y-1">
+                <div className="text-sm text-text-muted">Avg Review Time</div>
+                {statsLoading ? (
+                  <Loader />
+                ) : statsError ? (
+                  <div className="text-sm text-text-error">{statsError}</div>
+                ) : (
+                  <div className="text-3xl font-semibold text-text-heading">
+                    {stats?.average_review_time_hours.toFixed(1) ?? "0"}h
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
 
+          {/* Pending Contributions Queue */}
           <Card>
-            <div className="p-4 space-y-1">
-              <div className="text-sm text-text-muted">Avg Review Time</div>
-              {statsLoading ? (
-                <Loader />
-              ) : statsError ? (
-                <div className="text-sm text-text-error">{statsError}</div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-text-heading">Pending Review Queue</h2>
+                <Button variant="secondary" href="/mod/contributions?status=pending" size="sm">
+                  View All
+                </Button>
+              </div>
+
+              {contribLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader />
+                </div>
+              ) : contribError ? (
+                <div className="text-sm text-text-error py-8 text-center">{contribError}</div>
+              ) : contributions.length === 0 ? (
+                <div className="text-center py-8 text-text-muted">
+                  <Icon name="CheckCircle" size={40} className="mx-auto mb-2" />
+                  <p>No pending contributions. Great work!</p>
+                </div>
               ) : (
-                <div className="text-3xl font-semibold text-text-heading">
-                  {stats?.average_review_time_hours.toFixed(1) ?? "0"}h
+                <div className="space-y-3">
+                  {contributions.map((contrib) => (
+                    <Link
+                      key={contrib.id}
+                      href={`/mod/contributions/${contrib.id}`}
+                      className="block p-4 rounded-lg border border-border-default hover:border-border-strong transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge size="sm" shape="pill" variant="neutral">
+                              {entityTypeLabel(contrib.entityType)}
+                            </Badge>
+                            <span className="text-sm text-text-muted">#{contrib.id.slice(0, 8)}</span>
+                          </div>
+                          <div className="text-base font-medium text-text-heading">
+                            {contrib.editSummary || "No summary provided"}
+                          </div>
+                          {contrib.contributor && (
+                            <div className="text-sm text-text-muted">
+                              Submitted by {contrib.contributor.display_name} ({contrib.contributor.contribution_count}{" "}
+                              contributions)
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-sm text-text-muted shrink-0">{formatRelativeTime(contrib.createdAt)}</div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>
           </Card>
-        </div>
-
-        {/* Pending Contributions Queue */}
-        <Card>
-          <div className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-text-heading">Pending Review Queue</h2>
-              <Button variant="secondary" href="/mod/contributions?status=pending" size="sm">
-                View All
-              </Button>
-            </div>
-
-            {contribLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader />
-              </div>
-            ) : contribError ? (
-              <div className="text-sm text-text-error py-8 text-center">{contribError}</div>
-            ) : contributions.length === 0 ? (
-              <div className="text-center py-8 text-text-muted">
-                <Icon name="CheckCircle" size={40} className="mx-auto mb-2" />
-                <p>No pending contributions. Great work!</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {contributions.map((contrib) => (
-                  <Link
-                    key={contrib.id}
-                    href={`/mod/contributions/${contrib.id}`}
-                    className="block p-4 rounded-lg border border-border-default hover:border-border-strong transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Badge size="sm" shape="pill" variant="neutral">
-                            {entityTypeLabel(contrib.entityType)}
-                          </Badge>
-                          <span className="text-sm text-text-muted">#{contrib.id.slice(0, 8)}</span>
-                        </div>
-                        <div className="text-base font-medium text-text-heading">
-                          {contrib.editSummary || "No summary provided"}
-                        </div>
-                        {contrib.contributor && (
-                          <div className="text-sm text-text-muted">
-                            Submitted by {contrib.contributor.display_name} ({contrib.contributor.contribution_count}{" "}
-                            contributions)
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-sm text-text-muted shrink-0">{formatRelativeTime(contrib.createdAt)}</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
         </div>
       </ContentPage.Body>
     </ContentPage>
