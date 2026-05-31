@@ -299,13 +299,13 @@ export default function ContributionsDashboard() {
 
           {!isLoading && !error && contributions.length === 0 && (
             <Card variant="outlined">
-              <Card.Content className="py-12 text-center">
-                <Icon name="Article" size={40} className="text-text-muted mx-auto mb-3" />
-                <div className="text-base font-medium text-text-heading mb-1">No contributions yet</div>
-                <p className="text-sm text-text-muted mb-4">
+              <Card.Content className="py-16 text-center">
+                <Icon name="Article" size={48} className="text-text-muted mx-auto mb-4" />
+                <div className="text-lg font-semibold text-text-heading mb-2">No contributions yet</div>
+                <p className="text-text-muted mb-6 max-w-md mx-auto">
                   Suggest edits on any entity page to help improve CommonGrid data.
                 </p>
-                <Button variant="brand" href="/explore">
+                <Button variant="brand" size="lg" href="/explore">
                   Explore Entities
                 </Button>
               </Card.Content>

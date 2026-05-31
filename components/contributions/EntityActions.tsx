@@ -91,13 +91,13 @@ export function EntityActions({ entityType, entityId, entitySlug, entityName, cu
               <div className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-md border border-border-default bg-background-body shadow-lg py-1">
                 <button
                   type="button"
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-feedback-error hover:bg-background-muted transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-feedback-error hover:bg-feedback-error/10 transition-colors font-medium"
                   onClick={() => {
                     setMenuOpen(false);
                     setIsDeleteOpen(true);
                   }}
                 >
-                  <Icon name="Trash" size="sm" />
+                  <Icon name="Trash" size="sm" className="text-feedback-error" />
                   Request Deletion
                 </button>
               </div>
