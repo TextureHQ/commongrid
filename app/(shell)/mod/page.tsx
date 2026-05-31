@@ -1,9 +1,10 @@
 "use client";
 
-import { SignInButton } from "@clerk/nextjs";
-import { Badge, Button, Card, Icon, Loader, PageLayout } from "@texturehq/edges";
+import { SignInButton, useUser } from "@clerk/nextjs";
+import { Badge, Button, Card, Icon, Loader } from "@texturehq/edges";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ContentPage } from "@/components/ContentPage";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 // ---------------------------------------------------------------------------
@@ -87,6 +88,7 @@ function entityTypeLabel(et: string): string {
 // ---------------------------------------------------------------------------
 
 export default function ModerationDashboardPage() {
+  const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
   const { user, isLoading: userLoading } = useCurrentUser();
   const [stats, setStats] = useState<ModStats | null>(null);
   const [contributions, setContributions] = useState<Contribution[]>([]);
@@ -130,187 +132,223 @@ export default function ModerationDashboardPage() {
   }, [user]);
 
   // Show loader while user is loading
-  if (userLoading) {
+  if (!clerkLoaded || (clerkUser && userLoading)) {
     return (
-      <PageLayout maxWidth={1200}>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader />
+      <ContentPage>
+        <div className="flex items-center justify-center py-24">
+          <Loader size={32} />
         </div>
-      </PageLayout>
+      </ContentPage>
     );
   }
 
-  // Show sign-in prompt if not authenticated
+  // Show sign-in prompt if not authenticated via Clerk
+  if (!clerkUser) {
+    return (
+      <ContentPage>
+        <ContentPage.Header title="Moderation Dashboard" breadcrumbs={[{ label: "Moderation" }]} />
+        <ContentPage.Body>
+          <div className="px-4 sm:px-6 py-12">
+            <Card variant="outlined">
+              <Card.Content className="py-16 text-center">
+                <Icon name="ShieldCheck" size={48} className="text-text-muted mx-auto mb-4" />
+                <div className="text-lg font-semibold text-text-heading mb-2">Authentication Required</div>
+                <p className="text-text-muted mb-6 max-w-md mx-auto">
+                  Please sign in to access the moderation dashboard.
+                </p>
+                <SignInButton mode="modal">
+                  <Button variant="brand" size="lg">
+                    Sign In
+                  </Button>
+                </SignInButton>
+              </Card.Content>
+            </Card>
+          </div>
+        </ContentPage.Body>
+      </ContentPage>
+    );
+  }
+
+  // Show loader if Clerk user exists but app user not loaded yet
+  if (clerkUser && !user) {
+    return (
+      <ContentPage>
+        <div className="flex items-center justify-center py-24">
+          <Loader size={32} />
+        </div>
+      </ContentPage>
+    );
+  }
+
+  // Show access denied if app user loaded but not admin/moderator
+  if (user && user.role !== "admin" && user.role !== "moderator") {
+    return (
+      <ContentPage>
+        <ContentPage.Header title="Moderation Dashboard" breadcrumbs={[{ label: "Moderation" }]} />
+        <ContentPage.Body>
+          <div className="px-4 sm:px-6 py-12">
+            <Card variant="outlined">
+              <Card.Content className="py-16 text-center">
+                <Icon name="ShieldSlash" size={48} className="text-text-muted mx-auto mb-4" />
+                <div className="text-lg font-semibold text-text-heading mb-2">Access Denied</div>
+                <p className="text-text-muted mb-6 max-w-md mx-auto">
+                  You need moderator or admin privileges to access this page.
+                </p>
+                <Button variant="brand" size="lg" href="/">
+                  Go Home
+                </Button>
+              </Card.Content>
+            </Card>
+          </div>
+        </ContentPage.Body>
+      </ContentPage>
+    );
+  }
+
+  // Render dashboard (user is loaded and has proper permissions)
   if (!user) {
-    return (
-      <PageLayout maxWidth={1200}>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <Icon name="ShieldCheck" size={48} className="text-text-muted" />
-          <h1 className="text-2xl font-semibold text-text-heading">Authentication Required</h1>
-          <p className="text-text-muted">Please sign in to access the moderation dashboard.</p>
-          <SignInButton mode="modal">
-            <Button variant="primary">Sign In</Button>
-          </SignInButton>
-        </div>
-      </PageLayout>
-    );
+    // This shouldn't happen given the guards above, but TypeScript needs it
+    return null;
   }
 
-  // Show access denied if not admin/moderator
-  if (user.role !== "admin" && user.role !== "moderator") {
-    return (
-      <PageLayout maxWidth={1200}>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <Icon name="ShieldSlash" size={48} className="text-text-muted" />
-          <h1 className="text-2xl font-semibold text-text-heading">Access Denied</h1>
-          <p className="text-text-muted">You need moderator or admin privileges to access this page.</p>
-          <Button variant="secondary" href="/">
-            Go Home
-          </Button>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Render dashboard
   return (
-    <PageLayout maxWidth={1200}>
-      <div className="py-8 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Icon name="ShieldCheck" size={28} className="text-text-heading" />
-            <h1 className="text-3xl font-semibold text-text-heading">Moderation Dashboard</h1>
+    <ContentPage>
+      <ContentPage.Header
+        title="Moderation Dashboard"
+        breadcrumbs={[{ label: "Moderation" }]}
+        actions={
+          <div className="flex items-center gap-2">
             <Badge size="sm" shape="pill" variant={user.role === "admin" ? "error" : "info"}>
               {user.role === "admin" ? "Admin" : "Moderator"}
             </Badge>
-          </div>
-          <div className="flex items-center gap-2">
             {user.role === "admin" && (
-              <Button variant="secondary" href="/mod/users">
-                <Icon name="Users" size="sm" />
+              <Button variant="secondary" size="sm" href="/mod/users">
+                <Icon name="Users" size={14} />
                 Manage Users
               </Button>
             )}
-            <Button variant="secondary" href="/contributions">
+            <Button variant="secondary" size="sm" href="/contributions">
               View All Contributions
             </Button>
           </div>
-        </div>
+        }
+      />
+      <ContentPage.Body>
+        <div className="px-4 sm:px-6 space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <div className="p-4 space-y-1">
+                <div className="text-sm text-text-muted">Pending Contributions</div>
+                {statsLoading ? (
+                  <Loader />
+                ) : statsError ? (
+                  <div className="text-sm text-text-error">{statsError}</div>
+                ) : (
+                  <div className="text-3xl font-semibold text-text-heading">{stats?.pending_count ?? 0}</div>
+                )}
+              </div>
+            </Card>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <div className="p-4 space-y-1">
-              <div className="text-sm text-text-muted">Pending Contributions</div>
-              {statsLoading ? (
-                <Loader />
-              ) : statsError ? (
-                <div className="text-sm text-text-error">{statsError}</div>
-              ) : (
-                <div className="text-3xl font-semibold text-text-heading">{stats?.pending_count ?? 0}</div>
-              )}
-            </div>
-          </Card>
+            <Card>
+              <div className="p-4 space-y-1">
+                <div className="text-sm text-text-muted">Flagged Contributions</div>
+                {statsLoading ? (
+                  <Loader />
+                ) : statsError ? (
+                  <div className="text-sm text-text-error">{statsError}</div>
+                ) : (
+                  <div className="text-3xl font-semibold text-text-heading">{stats?.flagged_count ?? 0}</div>
+                )}
+              </div>
+            </Card>
 
-          <Card>
-            <div className="p-4 space-y-1">
-              <div className="text-sm text-text-muted">Flagged Contributions</div>
-              {statsLoading ? (
-                <Loader />
-              ) : statsError ? (
-                <div className="text-sm text-text-error">{statsError}</div>
-              ) : (
-                <div className="text-3xl font-semibold text-text-heading">{stats?.flagged_count ?? 0}</div>
-              )}
-            </div>
-          </Card>
+            <Card>
+              <div className="p-4 space-y-1">
+                <div className="text-sm text-text-muted">Reviewed This Week</div>
+                {statsLoading ? (
+                  <Loader />
+                ) : statsError ? (
+                  <div className="text-sm text-text-error">{statsError}</div>
+                ) : (
+                  <div className="text-3xl font-semibold text-text-heading">{stats?.reviewed_this_week ?? 0}</div>
+                )}
+              </div>
+            </Card>
 
-          <Card>
-            <div className="p-4 space-y-1">
-              <div className="text-sm text-text-muted">Reviewed This Week</div>
-              {statsLoading ? (
-                <Loader />
-              ) : statsError ? (
-                <div className="text-sm text-text-error">{statsError}</div>
-              ) : (
-                <div className="text-3xl font-semibold text-text-heading">{stats?.reviewed_this_week ?? 0}</div>
-              )}
-            </div>
-          </Card>
+            <Card>
+              <div className="p-4 space-y-1">
+                <div className="text-sm text-text-muted">Avg Review Time</div>
+                {statsLoading ? (
+                  <Loader />
+                ) : statsError ? (
+                  <div className="text-sm text-text-error">{statsError}</div>
+                ) : (
+                  <div className="text-3xl font-semibold text-text-heading">
+                    {stats?.average_review_time_hours.toFixed(1) ?? "0"}h
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
 
+          {/* Pending Contributions Queue */}
           <Card>
-            <div className="p-4 space-y-1">
-              <div className="text-sm text-text-muted">Avg Review Time</div>
-              {statsLoading ? (
-                <Loader />
-              ) : statsError ? (
-                <div className="text-sm text-text-error">{statsError}</div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-text-heading">Pending Review Queue</h2>
+                <Button variant="secondary" href="/mod/contributions?status=pending" size="sm">
+                  View All
+                </Button>
+              </div>
+
+              {contribLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader />
+                </div>
+              ) : contribError ? (
+                <div className="text-sm text-text-error py-8 text-center">{contribError}</div>
+              ) : contributions.length === 0 ? (
+                <div className="text-center py-8 text-text-muted">
+                  <Icon name="CheckCircle" size={40} className="mx-auto mb-2" />
+                  <p>No pending contributions. Great work!</p>
+                </div>
               ) : (
-                <div className="text-3xl font-semibold text-text-heading">
-                  {stats?.average_review_time_hours.toFixed(1) ?? "0"}h
+                <div className="space-y-3">
+                  {contributions.map((contrib) => (
+                    <Link
+                      key={contrib.id}
+                      href={`/mod/contributions/${contrib.id}`}
+                      className="block p-4 rounded-lg border border-border-default hover:border-border-strong transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge size="sm" shape="pill" variant="neutral">
+                              {entityTypeLabel(contrib.entityType)}
+                            </Badge>
+                            <span className="text-sm text-text-muted">#{contrib.id.slice(0, 8)}</span>
+                          </div>
+                          <div className="text-base font-medium text-text-heading">
+                            {contrib.editSummary || "No summary provided"}
+                          </div>
+                          {contrib.contributor && (
+                            <div className="text-sm text-text-muted">
+                              Submitted by {contrib.contributor.display_name} ({contrib.contributor.contribution_count}{" "}
+                              contributions)
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-sm text-text-muted shrink-0">{formatRelativeTime(contrib.createdAt)}</div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>
           </Card>
         </div>
-
-        {/* Pending Contributions Queue */}
-        <Card>
-          <div className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-text-heading">Pending Review Queue</h2>
-              <Button variant="secondary" href="/mod/contributions?status=pending" size="sm">
-                View All
-              </Button>
-            </div>
-
-            {contribLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader />
-              </div>
-            ) : contribError ? (
-              <div className="text-sm text-text-error py-8 text-center">{contribError}</div>
-            ) : contributions.length === 0 ? (
-              <div className="text-center py-8 text-text-muted">
-                <Icon name="CheckCircle" size={40} className="mx-auto mb-2" />
-                <p>No pending contributions. Great work!</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {contributions.map((contrib) => (
-                  <Link
-                    key={contrib.id}
-                    href={`/mod/contributions/${contrib.id}`}
-                    className="block p-4 rounded-lg border border-border-default hover:border-border-strong transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Badge size="sm" shape="pill" variant="neutral">
-                            {entityTypeLabel(contrib.entityType)}
-                          </Badge>
-                          <span className="text-sm text-text-muted">#{contrib.id.slice(0, 8)}</span>
-                        </div>
-                        <div className="text-base font-medium text-text-heading">
-                          {contrib.editSummary || "No summary provided"}
-                        </div>
-                        {contrib.contributor && (
-                          <div className="text-sm text-text-muted">
-                            Submitted by {contrib.contributor.display_name} ({contrib.contributor.contribution_count}{" "}
-                            contributions)
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-sm text-text-muted shrink-0">{formatRelativeTime(contrib.createdAt)}</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
-      </div>
-    </PageLayout>
+      </ContentPage.Body>
+    </ContentPage>
   );
 }
