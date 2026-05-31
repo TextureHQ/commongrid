@@ -135,13 +135,24 @@ function useEditableStatItems({
       return {
         ...item,
         iconRight: (
-          <Button
-            icon="PencilSimple"
-            size="sm"
-            variant="ghost"
-            onPress={handleAction}
-            aria-label={`Edit ${item.label}`}
-          />
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.stopPropagation();
+              }
+            }}
+            className="contents"
+          >
+            <Button
+              icon="PencilSimple"
+              size="sm"
+              variant="ghost"
+              onPress={handleAction}
+              aria-label={`Edit ${item.label}`}
+            />
+          </button>
         ),
       };
     });
@@ -639,7 +650,6 @@ export default function UtilityDetailPage() {
             currentValues={utility as unknown as Record<string, unknown>}
           />
         }
-        dataSourcePaths={["data/utilities.json"]}
       />
 
       <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">

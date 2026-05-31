@@ -291,15 +291,27 @@ export function InlineFieldEdit({
           value: option,
         }));
 
+        const currentLabel = currentValue
+          ? String(currentValue)
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase())
+          : "None";
+
         return (
-          <Select
-            label={field.displayName}
-            selectedKey={(value as string) || undefined}
-            onSelectionChange={(key) => setValue(key ? String(key) : "")}
-            items={enumOptions}
-            renderItem={(item) => item.label}
-            placeholder="-- Select --"
-          />
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-text-body">Current Value</div>
+              <div className="text-sm text-text-muted">{currentLabel}</div>
+            </div>
+            <Select
+              label="New Value"
+              selectedKey={(value as string) || undefined}
+              onSelectionChange={(key) => setValue(key ? String(key) : "")}
+              items={enumOptions}
+              renderItem={(item) => item.label}
+              placeholder="-- Select --"
+            />
+          </div>
         );
       }
 
@@ -313,13 +325,11 @@ export function InlineFieldEdit({
           />
         );
     }
-  }, [field, value]);
+  }, [field, value, currentValue]);
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose} title={`Edit ${field?.displayName ?? "Field"}`}>
       <div className="space-y-4 p-4">
-        {isLoadingField && <div className="text-sm text-text-muted">Loading field metadata...</div>}
-
         {fieldError && (
           <div className="rounded-md bg-red-50 p-4 border border-red-200">
             <p className="text-sm font-medium text-red-800">Error</p>
@@ -327,10 +337,19 @@ export function InlineFieldEdit({
           </div>
         )}
 
-        {!isLoadingField && !fieldError && field && (
+        {!fieldError && (
           <>
             {/* Field Input */}
-            <div className="space-y-2">{renderFieldInput()}</div>
+            <div className="space-y-2">
+              {isLoadingField ? (
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-background-muted animate-pulse rounded" />
+                  <div className="h-10 w-full bg-background-muted animate-pulse rounded-md" />
+                </div>
+              ) : (
+                renderFieldInput()
+              )}
+            </div>
 
             {/* Edit Summary */}
             <div className="space-y-2">
@@ -428,14 +447,16 @@ export function InlineFieldEdit({
         )}
 
         {/* Footer with buttons */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-border-default mt-6">
-          <Button variant="secondary" onPress={onClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" onPress={handleSubmit} isDisabled={!canSubmit}>
-            {isSubmitting ? "Submitting..." : "Submit Changes"}
-          </Button>
-        </div>
+        {!fieldError && (
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border-default mt-6">
+            <Button variant="secondary" onPress={onClose}>
+              Cancel
+            </Button>
+            <Button variant="primary" onPress={handleSubmit} isDisabled={!canSubmit || isLoadingField}>
+              {isSubmitting ? "Submitting..." : "Submit Changes"}
+            </Button>
+          </div>
+        )}
       </div>
     </Dialog>
   );
