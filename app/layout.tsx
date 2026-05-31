@@ -10,8 +10,7 @@ const clerkAppearance = {
     card: "shadow-lg rounded-xl",
     headerTitle: "text-2xl font-semibold mb-2",
     headerSubtitle: "text-base text-[--color-text-secondary] leading-relaxed mb-6",
-    socialButtonsBlockButton:
-      "border border-[--color-border] hover:bg-[--color-bg-hover] rounded-md transition-colors",
+    socialButtonsBlockButton: "border border-[--color-border] hover:bg-[--color-bg-hover] rounded-md transition-colors",
     formFieldInput:
       "border border-[--color-border] rounded-md focus:border-[--cg-brand] focus:ring-2 focus:ring-[--cg-brand]/20",
     footerActionLink: "text-[--cg-brand] hover:text-[--cg-brand-hover] font-medium",
