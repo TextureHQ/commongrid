@@ -204,7 +204,6 @@ export default function AboutPage() {
           <Button
             href="https://opendatacommons.org/licenses/odbl/"
             variant="secondary"
-            asLink
             className="inline-flex items-center gap-1.5"
           >
             Read the ODbL
@@ -213,7 +212,6 @@ export default function AboutPage() {
           <Button
             href="https://github.com/TextureHQ/commongrid"
             variant="primary"
-            asLink
             className="inline-flex items-center gap-1.5"
           >
             <Icon name="GithubLogo" size={16} />
