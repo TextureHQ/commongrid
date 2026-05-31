@@ -1,10 +1,9 @@
 "use client";
 
-import { Badge, Kpi, KpiGroup, Section } from "@texturehq/edges";
+import { Button, Icon, Section } from "@texturehq/edges";
 import Link from "next/link";
 import { DefinitionList } from "@/components/ui/data";
 import { PageHeader, PageShell } from "@/components/ui/layout";
-import { useEntityCounts } from "@/hooks/useEntityCounts";
 import "./about.css";
 
 const DATA_SOURCES = [
@@ -59,30 +58,12 @@ const HOW_STEPS = [
 ];
 
 export default function AboutPage() {
-  const counts = useEntityCounts();
-
-  const gridOperatorCount =
-    counts.isos !== null && counts.rtos !== null && counts.balancingAuthorities !== null
-      ? counts.isos + counts.rtos + counts.balancingAuthorities
-      : null;
-
   return (
     <PageShell className="cg-about">
       <PageHeader
-        title="The energy industry's shared infrastructure record."
+        title="About CommonGrid"
         subtitle="CommonGrid is a public, citable, community-maintained registry of U.S. energy infrastructure — utilities, territories, grid operators, programs, rates, and assets. Free to read, download, cite, and build on."
       />
-      <div className="ab-badges">
-        <Badge variant="default" size="sm" className="ab-badge">
-          Active &middot; continuously updated
-        </Badge>
-        <Badge variant="default" size="sm" className="ab-badge">
-          GitHub
-        </Badge>
-        <Badge variant="default" size="sm" className="ab-badge">
-          ODbL License
-        </Badge>
-      </div>
 
       {/* THE PROBLEM */}
       <Section title="Energy data is public. Finding it shouldn't be a career.">
@@ -113,14 +94,6 @@ export default function AboutPage() {
             outward to everything related. No manual joins. No spreadsheet archaeology.
           </p>
         </div>
-        <KpiGroup cols={{ base: 2, sm: 3, lg: 6 }} gap="lg" className="mt-8">
-          <Kpi label="Utilities" value={counts.utilities ?? 0} size="lg" isLoading={counts.utilities === null} />
-          <Kpi label="Grid operators" value={gridOperatorCount ?? 0} size="lg" isLoading={gridOperatorCount === null} />
-          <Kpi label="Territories" value={counts.territories ?? 0} size="lg" isLoading={counts.territories === null} />
-          <Kpi label="Power plants" value={counts.powerPlants ?? 0} size="lg" isLoading={counts.powerPlants === null} />
-          <Kpi label="Programs" value={counts.programs ?? 0} size="lg" isLoading={counts.programs === null} />
-          <Kpi label="EV stations" value={counts.evStations ?? 0} size="lg" isLoading={counts.evStations === null} />
-        </KpiGroup>
       </Section>
 
       {/* ORIGIN */}
@@ -228,44 +201,35 @@ export default function AboutPage() {
           </p>
         </div>
         <div className="flex gap-2.5 mt-5 flex-wrap">
-          <a
+          <Button
             href="https://opendatacommons.org/licenses/odbl/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium border border-border-default text-text-heading hover:border-text-heading transition-colors no-underline"
+            variant="secondary"
+            className="inline-flex items-center gap-1.5"
           >
-            Read the ODbL &nearr;
-          </a>
-          <a
+            Read the ODbL
+            <Icon name="ArrowUpRight" size={16} />
+          </Button>
+          <Button
             href="https://github.com/TextureHQ/commongrid"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-text-heading text-background-body border border-text-heading hover:opacity-90 transition-opacity no-underline"
+            variant="primary"
+            className="inline-flex items-center gap-1.5"
           >
+            <Icon name="GithubLogo" size={16} />
             View on GitHub
-          </a>
+          </Button>
         </div>
       </Section>
 
       {/* ── Footer CTA ── */}
       <div className="ab-cta">
-        <h2>Start contributing.</h2>
-        <p>
-          Something is missing or incorrect? Create an account and propose a change &mdash; every edit is reviewed,
-          attributed, and reversible.
-        </p>
+        <h2>Start exploring.</h2>
+        <p>Browse utilities, territories, programs, power plants, and more — or create an account to contribute.</p>
         <div className="flex gap-2.5 flex-wrap">
-          <Link
-            href="/explore"
-            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-text-heading text-background-body border border-text-heading hover:opacity-90 transition-opacity no-underline"
-          >
-            Browse the registry &rarr;
+          <Link href="/explore">
+            <Button variant="primary">Browse the registry</Button>
           </Link>
-          <Link
-            href="/auth/signup"
-            className="inline-flex items-center h-9 px-4 rounded-lg text-sm font-medium border border-border-default text-text-heading hover:border-text-heading transition-colors no-underline"
-          >
-            Create account
+          <Link href="/auth/signup">
+            <Button variant="secondary">Create account</Button>
           </Link>
         </div>
       </div>
