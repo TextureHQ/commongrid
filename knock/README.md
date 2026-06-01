@@ -26,9 +26,11 @@ Each workflow is a directory containing:
 
 Workflows are automatically deployed via GitHub Actions:
 - **PRs:** Validates workflows in Knock development environment
-- **Main merges:** Pushes to development, commits, and promotes to production
+- **Main merges:** Pushes to development, commits, and promotes to production (non-interactive)
 
 The GitHub Action runs on any change to the `knock/` directory.
+
+**Production Status:** Workflows are deployed and active in Knock production environment.
 
 ## Creating a New Workflow
 
