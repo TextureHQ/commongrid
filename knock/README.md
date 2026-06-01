@@ -30,7 +30,7 @@ Workflows are automatically deployed via GitHub Actions:
 
 The GitHub Action runs on any change to the `knock/` directory.
 
-**Production Status:** Workflows are deployed and active in Knock production environment.
+**Production Status:** Deploying workflows to Knock production (via CI with corrected --force flag).
 
 ## Creating a New Workflow
 
