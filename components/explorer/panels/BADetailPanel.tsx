@@ -18,13 +18,6 @@ import {
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
 
-const BackIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Back">
-    <title>Back</title>
-    <path d="M19 12H5m5-5-5 5 5 5" />
-  </svg>
-);
-
 const ArrowIcon = () => (
   <svg
     className="cg-explore-arrow"
@@ -42,7 +35,7 @@ const ArrowIcon = () => (
 );
 
 export function BADetailPanel({ slug }: { slug: string }) {
-  const { navigateToDetail, goBack, setHighlight } = useExplorer();
+  const { navigateToDetail, setHighlight } = useExplorer();
 
   const { balancingAuthority: ba } = useBalancingAuthority(slug);
   const { iso } = useIso(ba?.isoId ?? null);
@@ -65,11 +58,6 @@ export function BADetailPanel({ slug }: { slug: string }) {
   if (!ba) {
     return (
       <div className="flex flex-col h-full">
-        <div className="cg-explore-breadcrumb">
-          <button type="button" className="cg-explore-breadcrumb-back" onClick={goBack}>
-            <BackIcon /> Back
-          </button>
-        </div>
         <div className="cg-explore-empty">Balancing Authority not found</div>
       </div>
     );
@@ -77,14 +65,6 @@ export function BADetailPanel({ slug }: { slug: string }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="cg-explore-breadcrumb">
-        <button type="button" className="cg-explore-breadcrumb-back" onClick={goBack}>
-          <BackIcon /> Grid Operators
-        </button>
-        <span className="cg-explore-breadcrumb-sep">/</span>
-        <span className="cg-explore-breadcrumb-current">{ba.shortName}</span>
-      </div>
-
       <div className="cg-explore-detail">
         <div className="cg-explore-detail-type">Balancing Authority</div>
         <div className="cg-explore-detail-name">{ba.name}</div>

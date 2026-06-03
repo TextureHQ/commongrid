@@ -1,14 +1,18 @@
 "use client";
 
+import {
+  type ExploreRouteDescriptor,
+  type UrlExploreRouteStackController,
+  useUrlExploreRouteStack,
+} from "@texturehq/edges-explore";
 import type { FeatureCollection } from "geojson";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type LayoutMode = "map" | "list";
 export type EntityTab =
   | "utilities"
   | "grid-operators"
@@ -18,69 +22,209 @@ export type EntityTab =
   | "ev-charging"
   | "pricing-nodes"
   | "substations";
-export type ViewMode = "landing" | "list" | "detail";
 export type DetailView = "utility" | "iso" | "rto" | "ba" | "program";
-export type ListView = EntityTab;
-export type EntityView = EntityTab | DetailView;
 
-export interface PreviousView {
+/**
+ * Route shape for CommonGrid's explore stack.
+ *
+ * A `list` route owns its filter state in `payload`. Mutating a filter on
+ * the active list route is a `stack.replace(routeWithUpdatedFilter)` call —
+ * which both updates the in-memory stack and re-serializes to the URL.
+ * Switching tabs (push of a different list peer) evicts the prior list
+ * peer and its filter state — matching the existing behavior where
+ * tab switches clear filters.
+ *
+ * A `detail` route only carries the entity slug. `entityKind` records which
+ * tab context the user was in when they drilled in, so the back-arrow returns
+ * them to the right list view.
+ */
+export interface ListRoutePayload {
   tab: EntityTab;
-  slug: string | null;
   q: string;
   segment: string;
   type: string;
   jurisdictions: string[];
 }
 
-export interface ExplorerState {
-  layout: LayoutMode;
-  tab: EntityTab;
-  listSource: EntityTab; // which entity type to show in the map view panel
-  mode: ViewMode;
-  slug: string | null;
-  // List filters (persisted in URL)
-  q: string;
-  segment: string;
-  type: string;
-  jurisdictions: string[]; // selected state codes for multi-select jurisdiction filter
-  // Map interaction
+export interface DetailRoutePayload {
+  entityKind: EntityTab;
+  slug: string;
+}
+
+export type ExploreRoute =
+  | (ExploreRouteDescriptor & { type: "overview"; id: "overview" })
+  | (ExploreRouteDescriptor<ListRoutePayload> & { type: "list"; id: string; payload: ListRoutePayload })
+  | (ExploreRouteDescriptor<DetailRoutePayload> & { type: "detail"; id: string; payload: DetailRoutePayload });
+
+const DEFAULT_TAB: EntityTab = "utilities";
+const DEFAULT_FILTERS: Omit<ListRoutePayload, "tab"> = {
+  q: "",
+  segment: "all",
+  type: "all",
+  jurisdictions: [],
+};
+
+function makeOverviewRoute(): ExploreRoute {
+  return { type: "overview", id: "overview" };
+}
+
+function makeListRoute(tab: EntityTab, filters: Partial<Omit<ListRoutePayload, "tab">> = {}): ExploreRoute {
+  return {
+    type: "list",
+    id: `list:${tab}`,
+    payload: { tab, ...DEFAULT_FILTERS, ...filters },
+  };
+}
+
+function makeDetailRoute(entityKind: EntityTab, slug: string): ExploreRoute {
+  return {
+    type: "detail",
+    id: `detail:${slug}`,
+    payload: { entityKind, slug },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// URL ↔ stack serialization
+// ---------------------------------------------------------------------------
+
+const VALID_TABS: ReadonlySet<EntityTab> = new Set([
+  "utilities",
+  "grid-operators",
+  "power-plants",
+  "programs",
+  "transmission-lines",
+  "ev-charging",
+  "pricing-nodes",
+  "substations",
+]);
+
+function parseTab(value: string | null): EntityTab {
+  if (value && VALID_TABS.has(value as EntityTab)) return value as EntityTab;
+  return DEFAULT_TAB;
+}
+
+/**
+ * Parse URLSearchParams into a stack of explore routes.
+ *
+ * Overview is always the stack root — `/explore` (no params) lands on
+ * overview, and back-from-list returns to it.
+ *
+ * - empty URL → `[overview]`
+ * - `?tab=utilities` → `[overview, list(utilities)]`
+ * - `?tab=plants&slug=sunrise` → `[overview, list(plants), detail(sunrise, plants)]`
+ *
+ * Filter params (`q`, `segment`, `type`, `jurisdictions`) attach to the
+ * current list route's payload. They survive the back-arrow popping a
+ * detail route off, but are cleared when the user switches tabs (because
+ * peer eviction replaces the list route with a fresh one).
+ */
+function parseRoutes(params: URLSearchParams): ExploreRoute[] {
+  // Backwards-compat for the old `view` param name.
+  const tabParam = params.get("tab") ?? params.get("view");
+  if (!tabParam) return [makeOverviewRoute()];
+
+  const tab = parseTab(tabParam);
+  const list = makeListRoute(tab, {
+    q: params.get("q") ?? "",
+    segment: params.get("segment") ?? "all",
+    type: params.get("type") ?? "all",
+    jurisdictions: params.get("jurisdictions")?.split(",").filter(Boolean) ?? [],
+  });
+
+  const slug = params.get("slug");
+  if (!slug) return [makeOverviewRoute(), list];
+  return [makeOverviewRoute(), list, makeDetailRoute(tab, slug)];
+}
+
+function serializeRoutes(routes: ExploreRoute[]): URLSearchParams {
+  // Overview emits no params — `[overview]` serializes to an empty URL
+  // so `/explore` stays clean as the landing state.
+  const params = new URLSearchParams();
+  const list = routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+  const detail = routes.find((r): r is Extract<ExploreRoute, { type: "detail" }> => r.type === "detail");
+
+  if (list) {
+    params.set("tab", list.payload.tab);
+    if (list.payload.q) params.set("q", list.payload.q);
+    if (list.payload.segment && list.payload.segment !== "all") params.set("segment", list.payload.segment);
+    if (list.payload.type && list.payload.type !== "all") params.set("type", list.payload.type);
+    if (list.payload.jurisdictions.length > 0) params.set("jurisdictions", list.payload.jurisdictions.join(","));
+  }
+  if (detail) {
+    params.set("slug", detail.payload.slug);
+  }
+  return params;
+}
+
+// ---------------------------------------------------------------------------
+// View-only reducer (everything orthogonal to the route stack)
+// ---------------------------------------------------------------------------
+
+interface ViewState {
+  listSource: EntityTab;
   highlightGeoJSON: FeatureCollection | null;
   hoveredSlug: string | null;
-  // Navigation history for back button
-  previousView: PreviousView | null;
-  // Filtered utility slugs for map filtering (programs view)
   filteredUtilitySlugs: string[] | null;
 }
 
-type ExplorerAction =
-  | { type: "NAVIGATE_TAB"; tab: EntityTab }
-  | { type: "NAVIGATE_DETAIL"; view: DetailView; slug: string }
-  | { type: "SET_LAYOUT"; layout: LayoutMode }
+type ViewAction =
   | { type: "SET_LIST_SOURCE"; listSource: EntityTab }
-  | { type: "SET_SEARCH"; q: string }
-  | { type: "SET_SEGMENT"; segment: string }
-  | { type: "SET_TYPE"; typeFilter: string }
-  | { type: "SET_JURISDICTIONS"; jurisdictions: string[] }
   | { type: "SET_HIGHLIGHT"; geoJSON: FeatureCollection | null }
   | { type: "SET_HOVERED_SLUG"; slug: string | null }
-  | { type: "SET_FILTERED_UTILITY_SLUGS"; slugs: string[] | null }
-  | { type: "RESTORE_PREVIOUS" }
-  | {
-      type: "SYNC_FROM_URL";
-      layout: LayoutMode;
-      tab: EntityTab;
-      slug: string | null;
-      q: string;
-      segment: string;
-      typeFilter: string;
-      jurisdictions: string[];
-    };
+  | { type: "SET_FILTERED_UTILITY_SLUGS"; slugs: string[] | null };
+
+const initialView: ViewState = {
+  listSource: DEFAULT_TAB,
+  highlightGeoJSON: null,
+  hoveredSlug: null,
+  filteredUtilitySlugs: null,
+};
+
+function viewReducer(state: ViewState, action: ViewAction): ViewState {
+  switch (action.type) {
+    case "SET_LIST_SOURCE":
+      return { ...state, listSource: action.listSource };
+    case "SET_HIGHLIGHT":
+      return { ...state, highlightGeoJSON: action.geoJSON };
+    case "SET_HOVERED_SLUG":
+      return { ...state, hoveredSlug: action.slug };
+    case "SET_FILTERED_UTILITY_SLUGS":
+      return { ...state, filteredUtilitySlugs: action.slugs };
+    default:
+      return state;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Combined state surface (preserves the existing useExplorer() API shape)
+// ---------------------------------------------------------------------------
+
+/**
+ * Derived state mirrored from the route stack onto the existing `state.*`
+ * shape, so panels using `useExplorer().state.tab` / `state.slug` /
+ * `state.mode` etc. keep working unchanged.
+ */
+export interface ExplorerState {
+  tab: EntityTab;
+  listSource: EntityTab;
+  mode: "overview" | "list" | "detail";
+  slug: string | null;
+  q: string;
+  segment: string;
+  type: string;
+  jurisdictions: string[];
+  highlightGeoJSON: FeatureCollection | null;
+  hoveredSlug: string | null;
+  filteredUtilitySlugs: string[] | null;
+}
 
 interface ExplorerContextValue {
   state: ExplorerState;
+  stack: UrlExploreRouteStackController<ExploreRoute>;
   navigateToTab: (tab: EntityTab) => void;
+  navigateToOverview: () => void;
   navigateToDetail: (view: DetailView, slug: string) => void;
-  setLayout: (layout: LayoutMode) => void;
   setListSource: (listSource: EntityTab) => void;
   setSearch: (q: string) => void;
   setSegment: (segment: string) => void;
@@ -90,173 +234,6 @@ interface ExplorerContextValue {
   setHoveredSlug: (slug: string | null) => void;
   setFilteredUtilitySlugs: (slugs: string[] | null) => void;
   goBack: () => void;
-}
-
-// ---------------------------------------------------------------------------
-// Reducer
-// ---------------------------------------------------------------------------
-
-const initialState: ExplorerState = {
-  layout: "map",
-  tab: "utilities",
-  listSource: "utilities",
-  mode: "list",
-  slug: null,
-  q: "",
-  segment: "all",
-  type: "all",
-  jurisdictions: [],
-  highlightGeoJSON: null,
-  hoveredSlug: null,
-  previousView: null,
-  filteredUtilitySlugs: null,
-};
-
-function reducer(state: ExplorerState, action: ExplorerAction): ExplorerState {
-  switch (action.type) {
-    case "NAVIGATE_TAB":
-      return {
-        ...state,
-        tab: action.tab,
-        mode: "list",
-        slug: null,
-        q: "",
-        segment: "all",
-        type: "all",
-        jurisdictions: [],
-        highlightGeoJSON: null,
-        hoveredSlug: null,
-        previousView: null,
-        filteredUtilitySlugs: null,
-      };
-
-    case "NAVIGATE_DETAIL":
-      return {
-        ...state,
-        mode: "detail",
-        slug: action.slug,
-        hoveredSlug: null,
-        previousView: {
-          tab: state.tab,
-          slug: state.slug,
-          q: state.q,
-          segment: state.segment,
-          type: state.type,
-          jurisdictions: state.jurisdictions,
-        },
-      };
-
-    case "SET_LAYOUT":
-      return { ...state, layout: action.layout };
-
-    case "SET_LIST_SOURCE":
-      return { ...state, listSource: action.listSource };
-
-    case "SET_SEARCH":
-      return { ...state, q: action.q };
-
-    case "SET_SEGMENT":
-      return { ...state, segment: action.segment };
-
-    case "SET_TYPE":
-      return { ...state, type: action.typeFilter };
-
-    case "SET_JURISDICTIONS":
-      return { ...state, jurisdictions: action.jurisdictions };
-
-    case "SET_HIGHLIGHT":
-      return { ...state, highlightGeoJSON: action.geoJSON };
-
-    case "SET_HOVERED_SLUG":
-      return { ...state, hoveredSlug: action.slug };
-
-    case "SET_FILTERED_UTILITY_SLUGS":
-      return { ...state, filteredUtilitySlugs: action.slugs };
-
-    case "RESTORE_PREVIOUS": {
-      const prev = state.previousView;
-      if (!prev) {
-        return {
-          ...state,
-          mode: "list",
-          slug: null,
-          highlightGeoJSON: null,
-          hoveredSlug: null,
-          previousView: null,
-        };
-      }
-      return {
-        ...state,
-        tab: prev.tab,
-        mode: "list",
-        slug: null,
-        q: prev.q,
-        segment: prev.segment,
-        type: prev.type,
-        jurisdictions: prev.jurisdictions,
-        highlightGeoJSON: null,
-        hoveredSlug: null,
-        previousView: null,
-      };
-    }
-
-    case "SYNC_FROM_URL":
-      return {
-        ...state,
-        layout: action.layout,
-        tab: action.tab,
-        slug: action.slug,
-        q: action.q,
-        segment: action.segment,
-        type: action.typeFilter,
-        jurisdictions: action.jurisdictions,
-        mode: action.slug ? "detail" : "list",
-      };
-
-    default:
-      return state;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// URL helpers
-// ---------------------------------------------------------------------------
-
-function stateToSearchParams(state: ExplorerState): string {
-  const params = new URLSearchParams();
-  params.set("tab", state.tab);
-  if (state.layout !== "map") params.set("layout", state.layout);
-  if (state.slug) params.set("slug", state.slug);
-  if (state.q) params.set("q", state.q);
-  if (state.segment && state.segment !== "all") params.set("segment", state.segment);
-  if (state.type && state.type !== "all") params.set("type", state.type);
-  if (state.jurisdictions && state.jurisdictions.length > 0) params.set("jurisdictions", state.jurisdictions.join(","));
-  const str = params.toString();
-  return str ? `/explore?${str}` : "/explore";
-}
-
-function parseTab(value: string | null): EntityTab {
-  const valid: EntityTab[] = [
-    "utilities",
-    "grid-operators",
-    "power-plants",
-    "programs",
-    "transmission-lines",
-    "ev-charging",
-    "pricing-nodes",
-    "substations",
-  ];
-  // backwards-compat: old "view" param values that were list views
-  if (value === "grid-operators" || value === "programs") return value;
-  if (valid.includes(value as EntityTab)) return value as EntityTab;
-  return "utilities";
-}
-
-function parseLayout(value: string | null): LayoutMode {
-  if (value === "list") return "list";
-  // "hybrid" was the old map+panel mode — maps to new "map" layout
-  // "map" was the old map-only mode — also maps to new "map" layout
-  return "map";
 }
 
 // ---------------------------------------------------------------------------
@@ -278,89 +255,109 @@ export function useExplorer(): ExplorerContextValue {
 export function ExplorerProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const isUrlSync = useRef(false);
-  // Always-current ref so the FROM-URL effect can read state without needing
-  // state values in its dependency array (which would cause the sync loop bug).
-  const stateRef = useRef(state);
-  stateRef.current = state;
+  const [view, dispatch] = useReducer(viewReducer, initialView);
 
-  // Sync state FROM URL on mount and on popstate (browser back/forward).
-  // Depends ONLY on searchParams — not on state — to avoid the bidirectional
-  // sync loop where a user action (navigateToTab, setSegment, …) causes this
-  // effect to fire with stale URL params and override the action.
+  const stack = useUrlExploreRouteStack<ExploreRoute>({
+    parse: parseRoutes,
+    serialize: serializeRoutes,
+    initialSearch: searchParams?.toString(),
+    getRouteKey: (route) => route.id,
+  });
+
+  // Stack → URL sync. Push only when the serialized form differs from the
+  // current URL — calling router.replace on every render would spam history.
   useEffect(() => {
-    // Support old ?view= param for backwards compat
-    const tabParam = searchParams.get("tab") ?? searchParams.get("view");
-    const slugParam = searchParams.get("slug");
-    const layoutParam = searchParams.get("layout");
-    const qParam = searchParams.get("q") ?? "";
-    const segmentParam = searchParams.get("segment") ?? "all";
-    const typeParam = searchParams.get("type") ?? "all";
-    const jurisdictionsParam = searchParams.get("jurisdictions");
-    const jurisdictionsFromUrl = jurisdictionsParam ? jurisdictionsParam.split(",").filter(Boolean) : [];
-
-    const tab = parseTab(tabParam);
-    const layout = parseLayout(layoutParam);
-
-    const cur = stateRef.current;
-    if (
-      layout !== cur.layout ||
-      tab !== cur.tab ||
-      slugParam !== cur.slug ||
-      qParam !== cur.q ||
-      segmentParam !== cur.segment ||
-      typeParam !== cur.type ||
-      JSON.stringify(jurisdictionsFromUrl) !== JSON.stringify(cur.jurisdictions)
-    ) {
-      isUrlSync.current = true;
-      dispatch({
-        type: "SYNC_FROM_URL",
-        layout,
-        tab,
-        slug: slugParam,
-        q: qParam,
-        segment: segmentParam,
-        typeFilter: typeParam,
-        jurisdictions: jurisdictionsFromUrl,
-      });
+    if (typeof window === "undefined") return;
+    const next = stack.serializedSearch;
+    const current = window.location.search.replace(/^\?/, "");
+    if (next !== current) {
+      router.replace(next ? `${window.location.pathname}?${next}` : window.location.pathname, { scroll: false });
     }
-  }, [searchParams]);
+  }, [stack.serializedSearch, router]);
 
-  // Sync state TO URL when state changes (but not when syncing from URL)
-  useEffect(() => {
-    if (isUrlSync.current) {
-      isUrlSync.current = false;
-      return;
-    }
-    const url = stateToSearchParams(state);
-    router.push(url, { scroll: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    state.layout,
-    state.tab,
-    state.slug,
-    state.q,
-    state.segment,
-    state.type,
-    state.jurisdictions,
-    router.push,
-    state,
-  ]);
+  // Derive the legacy ExplorerState shape from the stack + view state so
+  // consuming panels continue to read `state.tab`, `state.slug`, etc.
+  const state = useMemo<ExplorerState>(() => {
+    const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+    const tab = currentList?.payload.tab ?? DEFAULT_TAB;
+    const filters = currentList?.payload ?? { q: "", segment: "all", type: "all", jurisdictions: [], tab: DEFAULT_TAB };
+    const detail = stack.current?.type === "detail" ? stack.current : null;
+    const current = stack.current;
+    const mode: ExplorerState["mode"] = detail ? "detail" : current?.type === "overview" ? "overview" : "list";
+    return {
+      tab,
+      listSource: view.listSource,
+      mode,
+      slug: detail?.payload.slug ?? null,
+      q: filters.q,
+      segment: filters.segment,
+      type: filters.type,
+      jurisdictions: filters.jurisdictions,
+      highlightGeoJSON: view.highlightGeoJSON,
+      hoveredSlug: view.hoveredSlug,
+      filteredUtilitySlugs: view.filteredUtilitySlugs,
+    };
+  }, [stack.routes, stack.current, view]);
 
-  const navigateToTab = useCallback((tab: EntityTab) => dispatch({ type: "NAVIGATE_TAB", tab }), []);
-  const navigateToDetail = useCallback(
-    (view: DetailView, slug: string) => dispatch({ type: "NAVIGATE_DETAIL", view, slug }),
-    []
+  // Replace the active list route with a fresh-filter copy. The list
+  // panel only renders when no detail is open (CommonGrid's list view
+  // hides the map and detail layers), so the list route is always the
+  // current top of the stack when a filter setter fires — a plain
+  // `replace` is sufficient.
+  const updateActiveListFilters = useCallback(
+    (patch: Partial<Omit<ListRoutePayload, "tab">>) => {
+      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+      if (!currentList) return;
+      stack.replace(
+        makeListRoute(currentList.payload.tab, {
+          q: currentList.payload.q,
+          segment: currentList.payload.segment,
+          type: currentList.payload.type,
+          jurisdictions: currentList.payload.jurisdictions,
+          ...patch,
+        })
+      );
+    },
+    [stack]
   );
-  const setLayout = useCallback((layout: LayoutMode) => dispatch({ type: "SET_LAYOUT", layout }), []);
+
+  const navigateToTab = useCallback(
+    (tab: EntityTab) => {
+      // Tab switch resets the stack to [overview, list(newTab)]. Plain
+      // `push` would keep an open detail (different type, peer eviction
+      // misses it) on top of the new list — landing the user on a detail
+      // from the OLD tab. Close + push the canonical 2-deep shape.
+      stack.close();
+      stack.push(makeOverviewRoute());
+      stack.push(makeListRoute(tab));
+    },
+    [stack]
+  );
+
+  const navigateToOverview = useCallback(() => {
+    stack.close();
+    stack.push(makeOverviewRoute());
+  }, [stack]);
+
+  const navigateToDetail = useCallback(
+    (_view: DetailView, slug: string) => {
+      const currentList = stack.routes.find((r) => r.type === "list");
+      const entityKind: EntityTab = currentList?.payload.tab ?? DEFAULT_TAB;
+      stack.push(makeDetailRoute(entityKind, slug));
+    },
+    [stack]
+  );
+
   const setListSource = useCallback((listSource: EntityTab) => dispatch({ type: "SET_LIST_SOURCE", listSource }), []);
-  const setSearch = useCallback((q: string) => dispatch({ type: "SET_SEARCH", q }), []);
-  const setSegment = useCallback((segment: string) => dispatch({ type: "SET_SEGMENT", segment }), []);
-  const setTypeFilter = useCallback((type: string) => dispatch({ type: "SET_TYPE", typeFilter: type }), []);
+  const setSearch = useCallback((q: string) => updateActiveListFilters({ q }), [updateActiveListFilters]);
+  const setSegment = useCallback((segment: string) => updateActiveListFilters({ segment }), [updateActiveListFilters]);
+  const setTypeFilter = useCallback(
+    (typeFilter: string) => updateActiveListFilters({ type: typeFilter }),
+    [updateActiveListFilters]
+  );
   const setJurisdictions = useCallback(
-    (jurisdictions: string[]) => dispatch({ type: "SET_JURISDICTIONS", jurisdictions }),
-    []
+    (jurisdictions: string[]) => updateActiveListFilters({ jurisdictions }),
+    [updateActiveListFilters]
   );
   const setHighlight = useCallback(
     (geoJSON: FeatureCollection | null) => dispatch({ type: "SET_HIGHLIGHT", geoJSON }),
@@ -373,20 +370,18 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   );
 
   const goBack = useCallback(() => {
-    const prev = state.previousView;
-    if (!prev) {
-      dispatch({ type: "NAVIGATE_TAB", tab: state.tab });
-      return;
+    if (stack.canGoBack) {
+      stack.back();
     }
-    dispatch({ type: "RESTORE_PREVIOUS" });
-  }, [state.previousView, state.tab]);
+  }, [stack]);
 
   const value = useMemo<ExplorerContextValue>(
     () => ({
       state,
+      stack,
       navigateToTab,
+      navigateToOverview,
       navigateToDetail,
-      setLayout,
       setListSource,
       setSearch,
       setSegment,
@@ -399,9 +394,10 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     }),
     [
       state,
+      stack,
       navigateToTab,
+      navigateToOverview,
       navigateToDetail,
-      setLayout,
       setListSource,
       setSearch,
       setSegment,

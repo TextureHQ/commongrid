@@ -464,13 +464,29 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
   const hasHighlight = !!state.highlightGeoJSON;
 
   // Trigger map resize after mount (fixes blank map on client-side navigation)
+  // AND wire a ResizeObserver on the map's container so the canvas re-fits
+  // whenever the flex layout reshapes — ExplorePanel opening / closing /
+  // expanding / drag-resizing all change the map column's width but
+  // mapbox-gl doesn't observe its own container, so without this the
+  // canvas keeps its old dimensions (visible as a blank stripe on
+  // whichever edge was just freed up, or a stretched canvas overflowing
+  // the new bounds).
   useEffect(() => {
+    let observer: ResizeObserver | null = null;
     const timer = setTimeout(() => {
       const map = mapRef.current?.getMap?.();
       if (!map) return;
       map.resize();
+      const container = map.getContainer();
+      if (container && typeof ResizeObserver !== "undefined") {
+        observer = new ResizeObserver(() => map.resize());
+        observer.observe(container);
+      }
     }, 100);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      observer?.disconnect();
+    };
   }, []);
 
   // Build Mapbox filter expression for utility territory tiles
