@@ -112,7 +112,14 @@ export function TransmissionListPanel() {
       <div className="flex flex-col h-full overflow-hidden">
         <div className="flex-1 min-h-0 overflow-y-auto">
           {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
-            <PanelEntityRow key={skeletonKey} loading leadingShape="dot" trailingShape="metric" title="" onSelect={() => {}} />
+            <PanelEntityRow
+              key={skeletonKey}
+              loading
+              leadingShape="dot"
+              trailingShape="metric"
+              title=""
+              onSelect={() => {}}
+            />
           ))}
         </div>
       </div>

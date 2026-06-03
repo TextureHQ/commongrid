@@ -289,7 +289,14 @@ export function SubstationListPanel() {
       <div className="flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
           Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
-            <PanelEntityRow key={skeletonKey} loading leadingShape="dot" trailingShape="metric" title="" onSelect={() => {}} />
+            <PanelEntityRow
+              key={skeletonKey}
+              loading
+              leadingShape="dot"
+              trailingShape="metric"
+              title=""
+              onSelect={() => {}}
+            />
           ))
         ) : error ? (
           <div className="cg-explore-empty">
