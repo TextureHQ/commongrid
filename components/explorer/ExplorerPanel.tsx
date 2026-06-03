@@ -5,6 +5,7 @@ import { BADetailPanel } from "./panels/BADetailPanel";
 import { EVChargingListPanel } from "./panels/EVChargingListPanel";
 import { GridOperatorListPanel } from "./panels/GridOperatorListPanel";
 import { IsoDetailPanel } from "./panels/IsoDetailPanel";
+import { OverviewPanel } from "./panels/OverviewPanel";
 import { PowerPlantListPanel } from "./panels/PowerPlantListPanel";
 import { PricingNodeListPanel } from "./panels/PricingNodeListPanel";
 import { ProgramDetailPanel } from "./panels/ProgramDetailPanel";
@@ -23,6 +24,11 @@ interface ExplorerPanelProps {
 
 export function ExplorerPanel({ listSource }: ExplorerPanelProps = {}) {
   const { state } = useExplorer();
+
+  // Overview is the stack root — shows the top-level entity buckets.
+  if (state.mode === "overview") {
+    return <OverviewPanel />;
+  }
 
   // activeTab: use listSource (map view) or state.tab (list view)
   const activeTab = listSource ?? state.tab;

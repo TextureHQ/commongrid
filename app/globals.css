@@ -1,4 +1,13 @@
 @import "tailwindcss";
+
+/* Tailwind 4 only scans the project's own source by default. Workspace
+   packages that ship Tailwind utility classes in their built JS need
+   to be sourced explicitly so the classes get generated. Without this,
+   ExplorePanel's `md:w-[380px]` / `md:w-[800px]` / width-transition
+   classes resolve to no styles and the panel renders at its content's
+   intrinsic width. */
+@source "../node_modules/@texturehq/edges-explore/dist/**/*.js";
+
 @import "@texturehq/edges/theme.css";
 @import "@texturehq/edges/styles.css";
 /* Pull the latest edges-tokens directly so tokens added after the
