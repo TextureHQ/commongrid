@@ -9,9 +9,11 @@
  * panel mirrors the pattern used by the full /substations page.
  */
 
+import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { voltageColor } from "@/lib/categorical-colors";
 import { useExplorer } from "../ExplorerContext";
 
 // ---------------------------------------------------------------------------
@@ -82,15 +84,15 @@ function formatVoltage(row: SubstationApiRow): string {
 function getVoltageBandColor(band: VoltageBand): string {
   switch (band) {
     case "extra-high":
-      return "var(--color-cg-voltage-extra-high)"; // red
+      return voltageColor("extra-high");
     case "high":
-      return "var(--color-cg-voltage-high)"; // orange
+      return voltageColor("high");
     case "medium":
-      return "var(--color-cg-voltage-medium)"; // green
+      return voltageColor("medium");
     case "sub-trans":
-      return "var(--color-cg-voltage-subtrans)"; // light blue
+      return voltageColor("subtrans");
     default:
-      return "var(--color-cg-voltage-unknown)"; // gray
+      return voltageColor("unknown");
   }
 }
 
@@ -128,20 +130,6 @@ const SearchIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
-  </svg>
-);
-
-const ArrowIcon = () => (
-  <svg
-    className="cg-explore-arrow"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-  >
-    <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
 
@@ -300,7 +288,9 @@ export function SubstationListPanel() {
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
-          <div className="cg-explore-loading">Loading substations…</div>
+          Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
+            <PanelEntityRow key={skeletonKey} loading leadingShape="dot" trailingShape="metric" title="" onSelect={() => {}} />
+          ))
         ) : error ? (
           <div className="cg-explore-empty">
             <div className="cg-explore-empty-title">Couldn't load substations</div>
@@ -316,31 +306,23 @@ export function SubstationListPanel() {
         ) : (
           <>
             {visibleRows.map((row) => (
-              <div key={row.id} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
-                <span
-                  className="cg-explore-entity-dot"
-                  data-shape="circle"
-                  style={{ background: getVoltageBandColor(row.voltageBand) }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="cg-explore-entity-name">{row.name}</div>
-                  <div className="cg-explore-entity-sub">
-                    {row.state} · {SUBSTATION_TYPE_LABELS[row.substationType]} · {formatVoltage(row)}
-                    {row.ownerName ? ` · ${row.ownerName}` : ""}
-                  </div>
-                </div>
-                <span
-                  className="shrink-0"
-                  style={{
-                    fontSize: 11,
-                    fontFamily: "var(--font-family-mono)",
-                    color: "var(--color-text-muted)",
-                  }}
-                >
-                  {VOLTAGE_BAND_LABELS[row.voltageBand]}
-                </span>
-                <ArrowIcon />
-              </div>
+              <PanelEntityRow
+                key={row.id}
+                leading={
+                  <span className="h-2 w-2 rounded-full" style={{ background: getVoltageBandColor(row.voltageBand) }} />
+                }
+                title={row.name}
+                subtitle={`${row.state} · ${SUBSTATION_TYPE_LABELS[row.substationType]} · ${formatVoltage(row)}${
+                  row.ownerName ? ` · ${row.ownerName}` : ""
+                }`}
+                trailing={
+                  <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)" }}>
+                    {VOLTAGE_BAND_LABELS[row.voltageBand]}
+                  </span>
+                }
+                trailingShape="metric"
+                onSelect={() => handleRowClick(row)}
+              />
             ))}
             {hasMore && (
               <div style={{ display: "flex", justifyContent: "center", padding: "16px 0" }}>

@@ -6,6 +6,7 @@ import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useProgram } from "@/hooks/useProgram";
 import { useUtilityList } from "@/hooks/useUtilityList";
+import { entityKindColor } from "@/lib/categorical-colors";
 import { getRegionById } from "@/lib/data";
 import { safeHostname } from "@/lib/geo";
 import {
@@ -123,9 +124,9 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   };
   const statusColor = (s: string) =>
     s === ProgramStatus.ACTIVE
-      ? "var(--cg-lime)"
+      ? "var(--color-feedback-success-text)"
       : s === ProgramStatus.PAUSED
-        ? "var(--cg-amber)"
+        ? "var(--color-feedback-warning-text)"
         : "var(--color-text-muted)";
 
   return (
@@ -244,7 +245,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
                     className="cg-explore-related-row"
                     onClick={() => navigateToDetail("utility", u.slug)}
                   >
-                    <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                    <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                     <div style={{ flex: 1 }}>
                       <div className="cg-explore-related-name">{u.name}</div>
                       <div className="cg-explore-related-type">Administrator</div>

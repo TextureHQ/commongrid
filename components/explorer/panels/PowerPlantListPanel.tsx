@@ -1,5 +1,6 @@
 "use client";
 
+import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -33,20 +34,6 @@ const SearchIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
-  </svg>
-);
-
-const ArrowIcon = () => (
-  <svg
-    className="cg-explore-arrow"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-  >
-    <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
 
@@ -111,7 +98,15 @@ export function PowerPlantListPanel() {
   );
 
   if (isLoading) {
-    return <div className="cg-explore-loading">Loading power plants…</div>;
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
+            <PanelEntityRow key={skeletonKey} loading leadingShape="dot" trailingShape="metric" title="" onSelect={() => {}} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -177,29 +172,19 @@ export function PowerPlantListPanel() {
           </div>
         ) : (
           rows.map((row) => (
-            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
-              <span
-                className="cg-explore-entity-dot"
-                data-shape="circle"
-                style={{ background: getFuelCategoryColor(row.fuelCategory) }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="cg-explore-entity-name">{row.name}</div>
-                <div className="cg-explore-entity-sub">
-                  {row.state} · {getFuelCategoryLabel(row.fuelCategory)} ·{" "}
-                  {row.status === "operable"
-                    ? formatCapacity(row.totalCapacityMw)
-                    : formatCapacity(row.proposedCapacityMw)}
-                </div>
-              </div>
-              <span
-                className="shrink-0"
-                style={{ fontSize: 11, color: "var(--cg-teal)", fontFamily: "var(--font-family-mono)" }}
-              >
-                {row.utilityName}
-              </span>
-              <ArrowIcon />
-            </div>
+            <PanelEntityRow
+              key={row.slug}
+              leading={
+                <span className="h-2 w-2 rounded-full" style={{ background: getFuelCategoryColor(row.fuelCategory) }} />
+              }
+              title={row.name}
+              subtitle={`${row.state} · ${getFuelCategoryLabel(row.fuelCategory)} · ${
+                row.status === "operable" ? formatCapacity(row.totalCapacityMw) : formatCapacity(row.proposedCapacityMw)
+              }`}
+              trailing={<span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)" }}>{row.utilityName}</span>}
+              trailingShape="metric"
+              onSelect={() => handleRowClick(row)}
+            />
           ))
         )}
       </div>

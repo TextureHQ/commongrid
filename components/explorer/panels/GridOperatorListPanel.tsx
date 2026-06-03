@@ -1,8 +1,10 @@
 "use client";
 
+import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { entityKindColor, isoColor } from "@/lib/categorical-colors";
 import { getAllBalancingAuthorities, getAllIsos, getAllRtos, searchEntities, sortByName } from "@/lib/data";
 import { type DetailView, useExplorer } from "../ExplorerContext";
 
@@ -30,20 +32,6 @@ const SearchIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
-  </svg>
-);
-
-const ArrowIcon = () => (
-  <svg
-    className="cg-explore-arrow"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-  >
-    <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
 
@@ -174,17 +162,23 @@ export function GridOperatorListPanel() {
           </div>
         ) : (
           filtered.map((row) => (
-            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
-              <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-blue)" }} />
-              <div className="flex-1 min-w-0">
-                <div className="cg-explore-entity-name">{row.name}</div>
-                <div className="cg-explore-entity-sub">
-                  {row.shortName} · {row.type} · {row.states.slice(0, 3).join(", ")}
-                  {row.states.length > 3 ? ` +${row.states.length - 3}` : ""}
-                </div>
-              </div>
-              <ArrowIcon />
-            </div>
+            <PanelEntityRow
+              key={row.slug}
+              leading={
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{
+                    background:
+                      row.type === "ISO" || row.type === "RTO" ? isoColor(row.slug) : entityKindColor("grid-operators"),
+                  }}
+                />
+              }
+              title={row.name}
+              subtitle={`${row.shortName} · ${row.type} · ${row.states.slice(0, 3).join(", ")}${
+                row.states.length > 3 ? ` +${row.states.length - 3}` : ""
+              }`}
+              onSelect={() => handleRowClick(row)}
+            />
           ))
         )}
       </div>

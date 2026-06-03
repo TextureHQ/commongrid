@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useRto } from "@/hooks/useRto";
 import { useUtilityList } from "@/hooks/useUtilityList";
+import { entityKindColor } from "@/lib/categorical-colors";
 import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
@@ -88,7 +89,7 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-related-heading">Utilities ({utilities.length})</div>
             {utilities.slice(0, 15).map((u) => (
               <div key={u.id} className="cg-explore-related-row" onClick={() => navigateToDetail("utility", u.slug)}>
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{u.name}</div>
                   <div className="cg-explore-related-type">

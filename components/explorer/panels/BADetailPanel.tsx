@@ -7,6 +7,7 @@ import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { useUtilityList } from "@/hooks/useUtilityList";
+import { entityKindColor } from "@/lib/categorical-colors";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -131,7 +132,7 @@ export function BADetailPanel({ slug }: { slug: string }) {
                   }
                 }}
               >
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{u.name}</div>
                   <div className="cg-explore-related-type">

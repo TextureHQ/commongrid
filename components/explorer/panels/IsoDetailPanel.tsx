@@ -7,6 +7,7 @@ import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
 import { useUtilityList } from "@/hooks/useUtilityList";
+import { entityKindColor } from "@/lib/categorical-colors";
 import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
@@ -91,7 +92,7 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-related-heading">Utilities ({utilities.length})</div>
             {utilities.slice(0, 15).map((u) => (
               <div key={u.id} className="cg-explore-related-row" onClick={() => navigateToDetail("utility", u.slug)}>
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{u.name}</div>
                   <div className="cg-explore-related-type">
@@ -117,7 +118,7 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
             </div>
             {balancingAuthorities.map((ba) => (
               <div key={ba.id} className="cg-explore-related-row" onClick={() => navigateToDetail("ba", ba.slug)}>
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-blue)" }} />
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("grid-operators") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{ba.name}</div>
                   <div className="cg-explore-related-type">
