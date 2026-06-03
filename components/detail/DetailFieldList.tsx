@@ -136,11 +136,13 @@ function FieldValue({
         />
       )}
 
-      <Dialog isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} title="Sign in to edit">
-        <div className="space-y-4 p-4">
-          <p className="text-sm text-text-body">Sign in to suggest edits and help improve CommonGrid data quality.</p>
-
-          <div className="flex items-center justify-end gap-3">
+      <Dialog isOpen={showSignInModal} onClose={() => setShowSignInModal(false)} title="Help improve CommonGrid">
+        <div className="space-y-6 p-6">
+          <p className="text-base text-text-body leading-relaxed">
+            Sign in to suggest edits, fix inaccuracies, and help keep US energy infrastructure data accurate and
+            up-to-date. Your contributions make CommonGrid better for everyone.
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-2">
             <Button variant="secondary" onPress={() => setShowSignInModal(false)}>
               Cancel
             </Button>
