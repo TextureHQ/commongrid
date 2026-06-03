@@ -15,8 +15,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm install
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run lint:biome
 
   test:
@@ -28,8 +26,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm install
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm test
 
   openapi:
@@ -41,8 +37,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm install
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run openapi:check
 
   build:
@@ -55,6 +49,4 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm install
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run build
