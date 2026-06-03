@@ -38,7 +38,7 @@
     "@sentry/nextjs": "^10.49.0",
     "@tailwindcss/postcss": "^4.1.14",
     "@texturehq/edges": "^1.35.0",
-    "@texturehq/edges-explore": "^0.0.4",
+    "@texturehq/edges-explore": "^0.0.5",
     "@texturehq/edges-tokens": "^0.4.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
