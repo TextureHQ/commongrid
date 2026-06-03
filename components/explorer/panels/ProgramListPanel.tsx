@@ -1,10 +1,12 @@
 "use client";
 
+import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useProgramList } from "@/hooks/useProgramList";
 import { useUtilityList } from "@/hooks/useUtilityList";
+import { entityKindColor } from "@/lib/categorical-colors";
 import { searchEntities, sortByName } from "@/lib/data";
 import { AssetTypeLabel, CompensationTypeLabel, CompensationUnitLabel, type Program } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
@@ -43,20 +45,6 @@ const SearchIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
-  </svg>
-);
-
-const ArrowIcon = () => (
-  <svg
-    className="cg-explore-arrow"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-  >
-    <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
 
@@ -121,7 +109,11 @@ export function ProgramListPanel() {
   const statusLabel = (s: string) =>
     s === "ACTIVE" ? "Active" : s === "PAUSED" ? "Paused" : s === "FULL" ? "Full" : s;
   const statusColor = (s: string) =>
-    s === "ACTIVE" ? "var(--cg-lime)" : s === "PAUSED" ? "var(--cg-amber)" : "var(--color-text-muted)";
+    s === "ACTIVE"
+      ? "var(--color-feedback-success-text)"
+      : s === "PAUSED"
+        ? "var(--color-feedback-warning-text)"
+        : "var(--color-text-muted)";
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -175,36 +167,52 @@ export function ProgramListPanel() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
+            <PanelEntityRow
+              key={skeletonKey}
+              loading
+              leadingShape="dot"
+              trailingShape="metric+badge"
+              title=""
+              onSelect={() => {}}
+            />
+          ))
+        ) : filtered.length === 0 ? (
           <div className="cg-explore-empty">
             <div className="cg-explore-empty-title">No programs found</div>
             <div>{state.q ? "Try adjusting your search criteria." : "No programs in the dataset."}</div>
           </div>
         ) : (
           filtered.map((row) => (
-            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
-              <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-purple)" }} />
-              <div className="flex-1 min-w-0">
-                <div className="cg-explore-entity-name">{row.name}</div>
-                <div className="cg-explore-entity-sub">
-                  {row.utilityName} ·{" "}
-                  {row.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", ")}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: statusColor(row.status) }}>
-                  {statusLabel(row.status)}
-                </span>
-                {row.compensationSummary && (
-                  <span
-                    style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-muted)" }}
-                  >
-                    {row.compensationSummary}
+            <PanelEntityRow
+              key={row.slug}
+              leading={<span className="h-2 w-2 rounded-full" style={{ background: entityKindColor("programs") }} />}
+              title={row.name}
+              subtitle={`${row.utilityName} · ${row.assetTypes
+                .map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at)
+                .join(", ")}`}
+              trailing={
+                <div className="flex flex-col items-end gap-0.5">
+                  <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: statusColor(row.status) }}>
+                    {statusLabel(row.status)}
                   </span>
-                )}
-              </div>
-              <ArrowIcon />
-            </div>
+                  {row.compensationSummary && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontFamily: "var(--font-family-mono)",
+                        color: "var(--color-text-muted)",
+                      }}
+                    >
+                      {row.compensationSummary}
+                    </span>
+                  )}
+                </div>
+              }
+              trailingShape="metric+badge"
+              onSelect={() => handleRowClick(row)}
+            />
           ))
         )}
       </div>

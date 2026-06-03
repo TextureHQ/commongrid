@@ -4,6 +4,14 @@ import { InteractiveMap, type LayerFeature, type LayerSpec, layer } from "@textu
 import type { Feature, FeatureCollection } from "geojson";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  evNetworkColor,
+  fuelColor,
+  isoColor,
+  operatorColor,
+  utilityColor,
+  voltageColor,
+} from "@/lib/categorical-colors";
 import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getRegionById } from "@/lib/data";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
 import { resolveColorMapping, resolveCSSColor } from "@/lib/resolve-css-colors";
@@ -25,16 +33,16 @@ function getTileUrl() {
 }
 
 const segmentColorMapping = {
-  INVESTOR_OWNED_UTILITY: { hex: "var(--color-cg-utility-iou)" },
-  DISTRIBUTION_COOPERATIVE: { hex: "var(--color-cg-utility-coop)" },
-  MUNICIPAL_UTILITY: { hex: "var(--color-cg-utility-municipal)" },
-  COMMUNITY_CHOICE_AGGREGATOR: { hex: "var(--color-cg-utility-cca)" },
-  GENERATION_AND_TRANSMISSION: { hex: "var(--color-cg-utility-gentrans)" },
-  POLITICAL_SUBDIVISION: { hex: "var(--color-cg-utility-political)" },
-  TRANSMISSION_OPERATOR: { hex: "var(--color-cg-utility-transop)" },
-  JOINT_ACTION_AGENCY: { hex: "var(--color-cg-utility-jointaction)" },
-  FEDERAL: { hex: "var(--color-cg-utility-federal)" },
-  UNKNOWN: { hex: "var(--color-cg-utility-unknown)" },
+  INVESTOR_OWNED_UTILITY: { hex: utilityColor("INVESTOR_OWNED_UTILITY") },
+  DISTRIBUTION_COOPERATIVE: { hex: utilityColor("DISTRIBUTION_COOPERATIVE") },
+  MUNICIPAL_UTILITY: { hex: utilityColor("MUNICIPAL_UTILITY") },
+  COMMUNITY_CHOICE_AGGREGATOR: { hex: utilityColor("COMMUNITY_CHOICE_AGGREGATOR") },
+  GENERATION_AND_TRANSMISSION: { hex: utilityColor("GENERATION_AND_TRANSMISSION") },
+  POLITICAL_SUBDIVISION: { hex: utilityColor("POLITICAL_SUBDIVISION") },
+  TRANSMISSION_OPERATOR: { hex: utilityColor("TRANSMISSION_OPERATOR") },
+  JOINT_ACTION_AGENCY: { hex: utilityColor("JOINT_ACTION_AGENCY") },
+  FEDERAL: { hex: utilityColor("FEDERAL") },
+  UNKNOWN: { hex: utilityColor(null) },
 };
 
 const US_CENTER = { longitude: -98.58, latitude: 39.83, zoom: 4 };
@@ -66,53 +74,53 @@ function getSubstationsTileUrl() {
 
 // Pricing node ISO color mapping
 const pricingNodeIsoColorMapping: Record<string, { hex: string }> = {
-  CAISO: { hex: "var(--color-cg-iso-caiso)" }, // gold
-  PJM: { hex: "var(--color-cg-iso-pjm)" }, // blue
-  ERCOT: { hex: "var(--color-cg-iso-ercot)" }, // red
-  MISO: { hex: "var(--color-cg-iso-miso)" }, // green
-  NYISO: { hex: "var(--color-cg-iso-nyiso)" }, // purple
-  ISONE: { hex: "var(--color-cg-iso-isone)" }, // teal
-  SPP: { hex: "var(--color-cg-iso-spp)" }, // orange
+  CAISO: { hex: isoColor("caiso") },
+  PJM: { hex: isoColor("pjm") },
+  ERCOT: { hex: isoColor("ercot") },
+  MISO: { hex: isoColor("miso") },
+  NYISO: { hex: isoColor("nyiso") },
+  ISONE: { hex: isoColor("isone") },
+  SPP: { hex: isoColor("spp") },
 };
 
 // Color by voltage class
 const voltageClassColorMapping = {
-  "extra-high": { hex: "var(--color-cg-voltage-extra-high)" }, // 345kV+ — red
-  high: { hex: "var(--color-cg-voltage-high)" }, // 230–344kV — orange
-  medium: { hex: "var(--color-cg-voltage-medium)" }, // 115–229kV — green
-  "sub-trans": { hex: "var(--color-cg-voltage-subtrans)" }, // 69–114kV — light blue
-  unknown: { hex: "var(--color-cg-voltage-unknown)" }, // unknown — gray
+  "extra-high": { hex: voltageColor("extra-high") }, // 345kV+
+  high: { hex: voltageColor("high") }, // 230–344kV
+  medium: { hex: voltageColor("medium") }, // 115–229kV
+  "sub-trans": { hex: voltageColor("subtrans") }, // 69–114kV
+  unknown: { hex: voltageColor("unknown") },
 };
 
 // Substations share the voltage class palette (voltageBand uses the same buckets).
 const substationVoltageBandColorMapping = {
-  "extra-high": { hex: "var(--color-cg-voltage-extra-high)" },
-  high: { hex: "var(--color-cg-voltage-high)" },
-  medium: { hex: "var(--color-cg-voltage-medium)" },
-  "sub-trans": { hex: "var(--color-cg-voltage-subtrans)" },
-  unknown: { hex: "var(--color-cg-voltage-unknown)" },
+  "extra-high": { hex: voltageColor("extra-high") },
+  high: { hex: voltageColor("high") },
+  medium: { hex: voltageColor("medium") },
+  "sub-trans": { hex: voltageColor("subtrans") },
+  unknown: { hex: voltageColor("unknown") },
 };
 
 const fuelCategoryColorMapping = {
-  Solar: { hex: "var(--color-cg-fuel-solar)" },
-  "Natural Gas": { hex: "var(--color-cg-fuel-gas)" },
-  Hydro: { hex: "var(--color-cg-fuel-hydro)" },
-  Wind: { hex: "var(--color-cg-fuel-wind)" },
-  Coal: { hex: "var(--color-cg-fuel-coal)" },
-  Nuclear: { hex: "var(--color-cg-fuel-nuclear)" },
-  "Battery Storage": { hex: "var(--color-cg-fuel-battery)" },
-  Petroleum: { hex: "var(--color-cg-fuel-petroleum)" },
-  "Biomass/Other": { hex: "var(--color-cg-fuel-biomass)" },
+  Solar: { hex: fuelColor("solar") },
+  "Natural Gas": { hex: fuelColor("gas") },
+  Hydro: { hex: fuelColor("hydro") },
+  Wind: { hex: fuelColor("wind") },
+  Coal: { hex: fuelColor("coal") },
+  Nuclear: { hex: fuelColor("nuclear") },
+  "Battery Storage": { hex: fuelColor("battery") },
+  Petroleum: { hex: fuelColor("petroleum") },
+  "Biomass/Other": { hex: fuelColor("biomass") },
 };
 
 // EV network color mapping (top networks get distinct colors, rest gray)
 const evNetworkColorMapping: Record<string, { hex: string }> = {
-  Tesla: { hex: "var(--color-cg-ev-tesla)" },
-  "ChargePoint Network": { hex: "var(--color-cg-ev-chargepoint)" },
-  "Electrify America": { hex: "var(--color-cg-ev-electrify)" },
-  "EVgo Network": { hex: "var(--color-cg-ev-evgo)" },
-  "Blink Network": { hex: "var(--color-cg-ev-blink)" },
-  "Non-Networked": { hex: "var(--color-cg-ev-nonnetworked)" },
+  Tesla: { hex: evNetworkColor("tesla") },
+  "ChargePoint Network": { hex: evNetworkColor("chargepoint") },
+  "Electrify America": { hex: evNetworkColor("electrify") },
+  "EVgo Network": { hex: evNetworkColor("evgo") },
+  "Blink Network": { hex: evNetworkColor("blink") },
+  "Non-Networked": { hex: evNetworkColor("nonnetworked") },
 };
 
 // Highlight color for selected entity
@@ -120,55 +128,13 @@ const HIGHLIGHT_COLOR = "var(--color-ocean-base)";
 
 // hasMapboxToken is evaluated per-render based on the prop (see ExplorerMap component)
 
-// Distinct, high-contrast colors for operator boundaries
-// Derived from edges viz-categorical and named color tokens
-const OPERATOR_PALETTE = [
-  "var(--color-cg-operator-1)",
-  "var(--color-cg-operator-2)",
-  "var(--color-cg-operator-3)",
-  "var(--color-cg-operator-4)",
-  "var(--color-cg-operator-5)",
-  "var(--color-cg-operator-6)",
-  "var(--color-cg-operator-7)",
-  "var(--color-cg-operator-8)",
-  "var(--color-cg-operator-9)",
-  "var(--color-cg-operator-10)",
-  "var(--color-cg-operator-11)",
-  "var(--color-cg-operator-12)",
-  "var(--color-cg-operator-13)",
-  "var(--color-cg-operator-14)",
-  "var(--color-cg-operator-15)",
-  "var(--color-cg-operator-16)",
-  "var(--color-cg-operator-17)",
-  "var(--color-cg-operator-18)",
-  "var(--color-cg-operator-19)",
-  "var(--color-cg-operator-20)",
-  "var(--color-cg-operator-21)",
-  "var(--color-cg-operator-22)",
-  "var(--color-cg-operator-23)",
-  "var(--color-cg-operator-24)",
-  "var(--color-cg-operator-25)",
-  "var(--color-cg-operator-26)",
-  "var(--color-cg-operator-27)",
-  "var(--color-cg-operator-28)",
-  "var(--color-cg-operator-29)",
-  "var(--color-cg-operator-30)",
-  "var(--color-cg-operator-31)",
-  "var(--color-cg-operator-32)",
-  "var(--color-cg-operator-33)",
-  "var(--color-cg-operator-34)",
-  "var(--color-cg-operator-35)",
-  "var(--color-cg-operator-36)",
-  "var(--color-cg-operator-37)",
-  "var(--color-cg-operator-38)",
-  "var(--color-cg-operator-39)",
-  "var(--color-cg-operator-40)",
-  "var(--color-cg-operator-41)",
-  "var(--color-cg-operator-42)",
-  "var(--color-cg-operator-43)",
-  "var(--color-cg-operator-44)",
-  "var(--color-cg-operator-45)",
-];
+// Distinct, high-contrast colors for operator boundaries — 12 unique
+// hues from the Edges curated viz-categorical palette, cycled by
+// `operatorColor(index)`. With more operators than palette slots we
+// accept some repetition; the assignment logic that drives `index`
+// (see `getOperatorIndex` below) prioritizes giving adjacent boundary
+// polygons different colors.
+const OPERATOR_PALETTE: string[] = Array.from({ length: 12 }, (_, i) => operatorColor(i));
 
 interface GridBoundaryData {
   geojson: FeatureCollection;
@@ -866,7 +832,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         legend: {
           label: "Substations",
           swatch: "dot",
-          color: "var(--color-cg-operator-1)",
+          color: operatorColor(0),
           group: "Overlays",
         },
         style: {
@@ -914,7 +880,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         legend: {
           label: "EV Charging",
           swatch: "dot",
-          color: "var(--color-cg-ev-chargepoint)",
+          color: evNetworkColor("chargepoint"),
           group: "Overlays",
         },
         style: {

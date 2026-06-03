@@ -10,6 +10,7 @@ import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { useRto } from "@/hooks/useRto";
 import { useUtility } from "@/hooks/useUtility";
 import { useUtilityList } from "@/hooks/useUtilityList";
+import { entityKindColor } from "@/lib/categorical-colors";
 import { getRegionById } from "@/lib/data";
 import {
   formatCapacity,
@@ -176,7 +177,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-related-heading">Related</div>
             {iso && (
               <div className="cg-explore-related-row" onClick={() => navigateToDetail("iso", iso.slug)}>
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-blue)" }} />
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("grid-operators") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{iso.shortName}</div>
                   <div className="cg-explore-related-type">ISO</div>
@@ -186,7 +187,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
             )}
             {rto && (
               <div className="cg-explore-related-row" onClick={() => navigateToDetail("rto", rto.slug)}>
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-blue)" }} />
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("grid-operators") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{rto.shortName}</div>
                   <div className="cg-explore-related-type">RTO</div>
@@ -196,7 +197,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
             )}
             {ba && (
               <div className="cg-explore-related-row" onClick={() => navigateToDetail("ba", ba.slug)}>
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-blue)" }} />
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("grid-operators") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{ba.shortName}</div>
                   <div className="cg-explore-related-type">Balancing Authority</div>
@@ -213,7 +214,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
             {!hasGridRelationships && <div className="cg-explore-related-heading">Related</div>}
             {parent && (
               <div className="cg-explore-related-row" onClick={() => navigateToDetail("utility", parent.slug)}>
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{parent.name}</div>
                   <div className="cg-explore-related-type">Parent</div>
@@ -223,7 +224,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
             )}
             {successor && (
               <div className="cg-explore-related-row" onClick={() => navigateToDetail("utility", successor.slug)}>
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{successor.name}</div>
                   <div className="cg-explore-related-type">Successor</div>
@@ -246,7 +247,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
                 className="cg-explore-related-row"
                 onClick={() => navigateToDetail("utility", child.slug)}
               >
-                <span className="cg-explore-related-dot" style={{ background: "var(--cg-teal)" }} />
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{child.name}</div>
                   <div className="cg-explore-related-type">

@@ -8,9 +8,11 @@ import {
   type FilterState,
   getFilterFields,
 } from "@texturehq/edges";
+import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { utilityColor } from "@/lib/categorical-colors";
 import { getSegmentLabel } from "@/lib/formatting";
 import { type Utility, UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
 import { useExplorer } from "../ExplorerContext";
@@ -182,20 +184,6 @@ const FilterIcon = () => (
   </svg>
 );
 
-const ArrowIcon = () => (
-  <svg
-    className="cg-explore-arrow"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-  >
-    <path d="M5 12h14m-5-5 5 5-5 5" />
-  </svg>
-);
-
 export function UtilityListPanel() {
   const { state, setSearch, setSegment, setJurisdictions, navigateToDetail } = useExplorer();
   const router = useRouter();
@@ -304,7 +292,15 @@ export function UtilityListPanel() {
   const activeFilterCount = getFilterFields(filterState).length;
 
   if (isLoading) {
-    return <div className="cg-explore-loading">Loading utilities…</div>;
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
+            <PanelEntityRow key={skeletonKey} loading leadingShape="dot" title="" onSelect={() => {}} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -380,16 +376,13 @@ export function UtilityListPanel() {
           </div>
         ) : (
           rows.map((row) => (
-            <div key={row.slug} className="cg-explore-entity-row" onClick={() => navigateToDetail("utility", row.slug)}>
-              <span className="cg-explore-entity-dot" data-shape="square" style={{ background: "var(--cg-teal)" }} />
-              <div className="flex-1 min-w-0">
-                <div className="cg-explore-entity-name">{row.name}</div>
-                <div className="cg-explore-entity-sub">
-                  {row.jurisdiction ?? "—"} · {getSegmentLabel(row.segment)}
-                </div>
-              </div>
-              <ArrowIcon />
-            </div>
+            <PanelEntityRow
+              key={row.slug}
+              leading={<span className="h-2 w-2 rounded-full" style={{ background: utilityColor(row.segment) }} />}
+              title={row.name}
+              subtitle={`${row.jurisdiction ?? "—"} · ${getSegmentLabel(row.segment)}`}
+              onSelect={() => navigateToDetail("utility", row.slug)}
+            />
           ))
         )}
       </div>

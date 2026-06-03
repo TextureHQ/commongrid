@@ -12,66 +12,30 @@
  * `[overview]` to `[overview, list(tab)]`. From there the existing list
  * → detail flow takes over.
  *
- * Mirrors the design pattern in apps/dashboard's OverviewRoute, adapted
- * to CommonGrid's entity model (no alerts section, no per-variant device
- * buckets).
+ * Visual chrome (accent dot, label, count, chevron) is owned by
+ * `PanelBucketRow` from `@texturehq/edges-explore/panel-atoms` — CommonGrid
+ * supplies just the data and the onSelect handler.
  */
 
+import { PanelBucketRow } from "@texturehq/edges-explore/panel-atoms";
 import { useEntityCounts } from "@/hooks/useEntityCounts";
+import { entityKindColor } from "@/lib/categorical-colors";
 import { type EntityTab, useExplorer } from "../ExplorerContext";
-
-const CaretRightIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 16 16"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    aria-hidden
-    focusable="false"
-  >
-    <path d="M6 4l4 4-4 4" />
-  </svg>
-);
 
 interface BucketSpec {
   tab: EntityTab;
   label: string;
-  /** Optional accent dot color. CSS var; falls back to a neutral if missing. */
-  accentColor?: string;
 }
 
-// Ordering matches the existing ExplorerTabBar for consistency.
 const BUCKETS: BucketSpec[] = [
-  { tab: "utilities", label: "Utilities", accentColor: "var(--cg-utility-accent, var(--color-text-secondary))" },
-  {
-    tab: "grid-operators",
-    label: "Grid Operators",
-    accentColor: "var(--cg-grid-operator-accent, var(--color-text-secondary))",
-  },
-  {
-    tab: "power-plants",
-    label: "Power Plants",
-    accentColor: "var(--cg-power-plant-accent, var(--color-text-secondary))",
-  },
-  { tab: "programs", label: "Programs", accentColor: "var(--cg-program-accent, var(--color-text-secondary))" },
-  {
-    tab: "transmission-lines",
-    label: "Transmission Lines",
-    accentColor: "var(--cg-transmission-accent, var(--color-text-secondary))",
-  },
-  {
-    tab: "ev-charging",
-    label: "EV Charging",
-    accentColor: "var(--cg-ev-charging-accent, var(--color-text-secondary))",
-  },
-  {
-    tab: "pricing-nodes",
-    label: "Pricing Nodes",
-    accentColor: "var(--cg-pricing-node-accent, var(--color-text-secondary))",
-  },
-  { tab: "substations", label: "Substations", accentColor: "var(--cg-substation-accent, var(--color-text-secondary))" },
+  { tab: "utilities", label: "Utilities" },
+  { tab: "grid-operators", label: "Grid Operators" },
+  { tab: "power-plants", label: "Power Plants" },
+  { tab: "programs", label: "Programs" },
+  { tab: "transmission-lines", label: "Transmission Lines" },
+  { tab: "ev-charging", label: "EV Charging" },
+  { tab: "pricing-nodes", label: "Pricing Nodes" },
+  { tab: "substations", label: "Substations" },
 ];
 
 /**
@@ -110,51 +74,19 @@ export function OverviewPanel() {
 
   return (
     <div className="flex flex-col">
-      {BUCKETS.map(({ tab, label, accentColor }) => (
-        <BucketRow
-          key={tab}
-          label={label}
-          accentColor={accentColor}
-          count={bucketCount(counts, tab)}
-          onSelect={() => navigateToTab(tab)}
-        />
-      ))}
+      {BUCKETS.map(({ tab, label }) => {
+        const count = bucketCount(counts, tab);
+        return (
+          <PanelBucketRow
+            key={tab}
+            label={label}
+            accentColor={entityKindColor(tab)}
+            count={count}
+            loading={count === null}
+            onSelect={() => navigateToTab(tab)}
+          />
+        );
+      })}
     </div>
-  );
-}
-
-interface BucketRowProps {
-  label: string;
-  accentColor: string | undefined;
-  count: number | null;
-  onSelect: () => void;
-}
-
-function BucketRow({ label, accentColor, count, onSelect }: BucketRowProps) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-background-hover"
-      style={{ borderBottom: "1px solid var(--color-border-subtle, var(--color-border-default))" }}
-    >
-      <span
-        aria-hidden
-        className="inline-block h-2 w-2 flex-shrink-0 rounded-full"
-        style={{ backgroundColor: accentColor ?? "currentColor" }}
-      />
-      <span className="flex-1 truncate text-sm" style={{ color: "var(--color-text-default)" }}>
-        {label}
-      </span>
-      <span
-        className="font-semibold text-sm tabular-nums"
-        style={{ color: count == null ? "var(--color-text-muted)" : "var(--color-text-default)" }}
-      >
-        {count == null ? "—" : count.toLocaleString()}
-      </span>
-      <span style={{ color: "var(--color-text-secondary)" }}>
-        <CaretRightIcon />
-      </span>
-    </button>
   );
 }

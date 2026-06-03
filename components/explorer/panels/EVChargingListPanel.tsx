@@ -1,5 +1,6 @@
 "use client";
 
+import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -30,20 +31,6 @@ const SearchIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
-  </svg>
-);
-
-const ArrowIcon = () => (
-  <svg
-    className="cg-explore-arrow"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-  >
-    <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
 
@@ -105,7 +92,22 @@ export function EVChargingListPanel() {
   );
 
   if (isLoading) {
-    return <div className="cg-explore-loading">Loading EV charging stations…</div>;
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
+            <PanelEntityRow
+              key={skeletonKey}
+              loading
+              leadingShape="dot"
+              trailingShape="metric+badge"
+              title=""
+              onSelect={() => {}}
+            />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -171,36 +173,40 @@ export function EVChargingListPanel() {
           </div>
         ) : (
           rows.map((row) => (
-            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
-              <span
-                className="cg-explore-entity-dot"
-                data-shape="circle"
-                style={{ background: getNetworkColor(row.evNetwork) }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="cg-explore-entity-name">{row.stationName}</div>
-                <div className="cg-explore-entity-sub">
-                  {row.city}, {row.state} · {getNetworkShortName(row.evNetwork)}
+            <PanelEntityRow
+              key={row.slug}
+              leading={<span className="h-2 w-2 rounded-full" style={{ background: getNetworkColor(row.evNetwork) }} />}
+              title={row.stationName}
+              subtitle={`${row.city}, ${row.state} · ${getNetworkShortName(row.evNetwork)}`}
+              trailing={
+                <div className="flex flex-col items-end gap-px">
+                  {row.evDcFastNum > 0 && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontFamily: "var(--font-family-mono)",
+                        color: "var(--color-text-heading)",
+                      }}
+                    >
+                      {row.evDcFastNum} DC Fast
+                    </span>
+                  )}
+                  {row.evLevel2EvseNum > 0 && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontFamily: "var(--font-family-mono)",
+                        color: "var(--color-text-muted)",
+                      }}
+                    >
+                      {row.evLevel2EvseNum} L2
+                    </span>
+                  )}
                 </div>
-              </div>
-              <div className="flex flex-col items-end gap-px shrink-0">
-                {row.evDcFastNum > 0 && (
-                  <span
-                    style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-heading)" }}
-                  >
-                    {row.evDcFastNum} DC Fast
-                  </span>
-                )}
-                {row.evLevel2EvseNum > 0 && (
-                  <span
-                    style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: "var(--color-text-muted)" }}
-                  >
-                    {row.evLevel2EvseNum} L2
-                  </span>
-                )}
-              </div>
-              <ArrowIcon />
-            </div>
+              }
+              trailingShape="metric+badge"
+              onSelect={() => handleRowClick(row)}
+            />
           ))
         )}
       </div>

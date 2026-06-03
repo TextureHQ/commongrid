@@ -1,9 +1,11 @@
 "use client";
 
+import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
+import { voltageColor } from "@/lib/categorical-colors";
 import { useFuseSearch } from "@/lib/search";
 import {
   type TransmissionLine,
@@ -53,20 +55,6 @@ const SearchIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
-  </svg>
-);
-
-const ArrowIcon = () => (
-  <svg
-    className="cg-explore-arrow"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-  >
-    <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
 
@@ -120,7 +108,22 @@ export function TransmissionListPanel() {
   );
 
   if (isLoading) {
-    return <div className="cg-explore-loading">Loading transmission lines…</div>;
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
+            <PanelEntityRow
+              key={skeletonKey}
+              loading
+              leadingShape="dot"
+              trailingShape="metric"
+              title=""
+              onSelect={() => {}}
+            />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -190,31 +193,21 @@ export function TransmissionListPanel() {
           </div>
         ) : (
           rows.map((row) => (
-            <div key={row.objectId} className="cg-explore-entity-row">
-              <span
-                className="cg-explore-entity-dot"
-                data-shape="line"
-                style={{ background: "var(--color-text-muted)", width: 8, height: 2 }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="cg-explore-entity-name">{row.owner || "Unknown owner"}</div>
-                <div className="cg-explore-entity-sub">
-                  {row.sub1} → {row.sub2} · {getVoltageShortLabel(row.voltageClass)}
-                  {row.voltage != null && row.voltage > 0 ? ` (${row.voltage} kV)` : ""}
-                </div>
-              </div>
-              <span
-                className="shrink-0"
-                style={{
-                  fontSize: 11,
-                  fontFamily: "var(--font-family-mono)",
-                  color: "var(--color-text-muted)",
-                }}
-              >
-                {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
-              </span>
-              <ArrowIcon />
-            </div>
+            <PanelEntityRow
+              key={row.objectId}
+              leading={<span className="h-2 w-2 rounded-full" style={{ background: voltageColor(row.voltageClass) }} />}
+              title={row.owner || "Unknown owner"}
+              subtitle={`${row.sub1} → ${row.sub2} · ${getVoltageShortLabel(row.voltageClass)}${
+                row.voltage != null && row.voltage > 0 ? ` (${row.voltage} kV)` : ""
+              }`}
+              trailing={
+                <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)" }}>
+                  {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
+                </span>
+              }
+              trailingShape="metric"
+              onSelect={() => router.push(`/transmission-lines/${row.id}`)}
+            />
           ))
         )}
       </div>

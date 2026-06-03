@@ -1,5 +1,6 @@
 "use client";
 
+import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -27,20 +28,6 @@ const SearchIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
-  </svg>
-);
-
-const ArrowIcon = () => (
-  <svg
-    className="cg-explore-arrow"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-  >
-    <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
 
@@ -111,7 +98,15 @@ export function PricingNodeListPanel() {
   );
 
   if (isLoading) {
-    return <div className="cg-explore-loading">Loading pricing nodes…</div>;
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
+            <PanelEntityRow key={skeletonKey} loading leadingShape="dot" title="" onSelect={() => {}} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -177,22 +172,15 @@ export function PricingNodeListPanel() {
           </div>
         ) : (
           rows.map((row) => (
-            <div key={row.slug} className="cg-explore-entity-row" onClick={() => handleRowClick(row)}>
-              <span
-                className="cg-explore-entity-dot"
-                data-shape="circle"
-                style={{ background: getIsoColor(row.iso) }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="cg-explore-entity-name">{row.name}</div>
-                <div className="cg-explore-entity-sub">
-                  {ISO_LABELS[row.iso]} · {getNodeTypeLabel(row.nodeType)}
-                  {row.zone ? ` · ${row.zone}` : ""}
-                  {row.state ? ` · ${row.state}` : ""}
-                </div>
-              </div>
-              <ArrowIcon />
-            </div>
+            <PanelEntityRow
+              key={row.slug}
+              leading={<span className="h-2 w-2 rounded-full" style={{ background: getIsoColor(row.iso) }} />}
+              title={row.name}
+              subtitle={`${ISO_LABELS[row.iso]} · ${getNodeTypeLabel(row.nodeType)}${
+                row.zone ? ` · ${row.zone}` : ""
+              }${row.state ? ` · ${row.state}` : ""}`}
+              onSelect={() => handleRowClick(row)}
+            />
           ))
         )}
       </div>
