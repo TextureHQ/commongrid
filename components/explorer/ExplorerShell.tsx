@@ -396,7 +396,7 @@ interface ExplorerLayoutProps {
 }
 
 function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
-  const { setListSource } = useExplorer();
+  const { state, setListSource } = useExplorer();
 
   const [mapRegion, setMapRegion] = useState<MapRegion>("utilities");
   const handleMapRegionChange = useCallback(
@@ -411,6 +411,29 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
   const toggleOverlay = useCallback((key: keyof MapOverlays) => {
     setMapOverlays((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
+
+  // Reflect the active entity tab onto the map. Region-backed entities
+  // (utilities / grid-operators / programs / pricing-nodes) switch the
+  // fill region. Point/line overlays (power-plants, transmission-lines,
+  // substations, ev-charging, pricing-nodes) get auto-enabled so markers
+  // appear the instant the user picks the bucket from the overview — no
+  // extra "+ Points & lines" toggle hunt required.
+  useEffect(() => {
+    const tab = state.listSource;
+    if (VALID_MAP_REGIONS.includes(tab as MapRegion)) {
+      setMapRegion(tab as MapRegion);
+    }
+    const overlayKeys: (keyof MapOverlays)[] = [
+      "power-plants",
+      "transmission-lines",
+      "substations",
+      "ev-charging",
+      "pricing-nodes",
+    ];
+    if (overlayKeys.includes(tab as keyof MapOverlays)) {
+      setMapOverlays((prev) => (prev[tab as keyof MapOverlays] ? prev : { ...prev, [tab as keyof MapOverlays]: true }));
+    }
+  }, [state.listSource]);
 
   const topBar = (
     <div className="cg-explore-filter-bar">
