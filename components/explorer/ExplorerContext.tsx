@@ -321,6 +321,16 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     [stack]
   );
 
+  // Mirror the active list-route tab onto the view-state listSource so
+  // deep-linked URLs (e.g. /explore?tab=ev-charging) land on the right
+  // panel and overlay configuration without the user having to click again.
+  useEffect(() => {
+    const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+    if (currentList && currentList.payload.tab !== view.listSource) {
+      dispatch({ type: "SET_LIST_SOURCE", listSource: currentList.payload.tab });
+    }
+  }, [stack.routes, view.listSource]);
+
   const navigateToTab = useCallback(
     (tab: EntityTab) => {
       // Tab switch resets the stack to [overview, list(newTab)]. Plain
@@ -330,6 +340,10 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       stack.close();
       stack.push(makeOverviewRoute());
       stack.push(makeListRoute(tab));
+      // Keep the panel's list-source in lock-step with the destination tab
+      // so the right list panel renders immediately (the MapLayout reads
+      // listSource, not state.tab, to decide which list panel to show).
+      dispatch({ type: "SET_LIST_SOURCE", listSource: tab });
     },
     [stack]
   );

@@ -1,12 +1,19 @@
 "use client";
 
+/**
+ * TransmissionListPanel — Explorer panel for transmission lines.
+ *
+ * Server-side search + cursor pagination via `useInfiniteList`. Replaces
+ * the old `useTransmissionLineList({ limit: 500 })` + client-side Fuse
+ * pattern that 400'd on the API's 200-row cap.
+ */
+
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
+import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { voltageColor } from "@/lib/categorical-colors";
-import { useFuseSearch } from "@/lib/search";
 import {
   type TransmissionLine,
   VOLTAGE_CLASSES,
@@ -14,18 +21,7 @@ import {
   VoltageClassLabel,
 } from "@/types/transmission-lines";
 import { useExplorer } from "../ExplorerContext";
-
-interface TransmissionLineRow {
-  objectId: number;
-  id: string;
-  owner: string;
-  voltage: number | null;
-  voltageClass: VoltageClass;
-  status: string;
-  lengthMiles: number;
-  sub1: string;
-  sub2: string;
-}
+import { InfiniteListShell } from "./InfiniteListShell";
 
 const voltageClassFilterOptions = [
   { id: "all", label: "All Voltage Classes", value: "all" },
@@ -51,166 +47,76 @@ function getVoltageShortLabel(vc: VoltageClass): string {
   }
 }
 
-const SearchIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3-3" />
-  </svg>
-);
-
 export function TransmissionListPanel() {
   const { state, setSearch, setTypeFilter } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
-  const { transmissionLines: allLines, isLoading } = useTransmissionLineList({ limit: 500 });
 
-  const fuseOptions = useMemo(
+  const params = useMemo(
     () => ({
-      keys: [
-        { name: "owner", weight: 0.5 },
-        { name: "id", weight: 0.2 },
-        { name: "sub1", weight: 0.15 },
-        { name: "sub2", weight: 0.15 },
-      ],
-      threshold: 0.3,
-      ignoreLocation: true,
+      search: state.q,
+      voltageClass: state.type !== "all" ? state.type : undefined,
+      sort: "voltageClass",
+      order: "desc" as const,
     }),
-    []
+    [state.q, state.type]
   );
 
-  const searched = useFuseSearch(allLines, state.q, fuseOptions);
+  const { items, total, hasMore, isLoading, isLoadingMore, error, sentinelRef, loadMore } =
+    useInfiniteList<TransmissionLine>({
+      endpoint: "/api/v1/transmission-lines",
+      params,
+    });
 
-  const filtered = useMemo(() => {
-    let result: TransmissionLine[] = searched;
-    if (state.type !== "all") {
-      result = result.filter((l) => l.voltageClass === state.type);
-    }
-    if (!state.q.trim()) {
-      result = [...result].sort((a, b) => (b.voltage ?? -1) - (a.voltage ?? -1));
-    }
-    return result;
-  }, [searched, state.q, state.type]);
-
-  const rows: TransmissionLineRow[] = useMemo(
-    () =>
-      filtered.map((l) => ({
-        objectId: l.objectId,
-        id: l.id,
-        owner: l.owner,
-        voltage: l.voltage,
-        voltageClass: l.voltageClass,
-        status: l.status,
-        lengthMiles: l.lengthMiles,
-        sub1: l.sub1,
-        sub2: l.sub2,
-      })),
-    [filtered]
+  const handleRowClick = useCallback(
+    (id: string) => {
+      router.push(`/transmission-lines/${id}`);
+    },
+    [router]
   );
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col h-full overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
-            <PanelEntityRow
-              key={skeletonKey}
-              loading
-              leadingShape="dot"
-              trailingShape="metric"
-              title=""
-              onSelect={() => {}}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="cg-explore-panel-header">
-        <div className="cg-explore-filter-row" style={{ justifyContent: "space-between" }}>
-          <span className="cg-explore-count">
-            <strong>{filtered.length.toLocaleString()}</strong> lines
-          </span>
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
-              {voltageClassFilterOptions.map((opt) => (
-                <option key={opt.id} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            {user && (
-              <button
-                type="button"
-                className="cg-explore-icon-btn"
-                onClick={() => router.push("/transmission-lines/new")}
-              >
-                + Add
-              </button>
-            )}
-          </div>
-        </div>
-        <div style={{ padding: "6px 14px 7px" }}>
-          <div className="cg-explore-search">
-            <SearchIcon />
-            <input
-              type="text"
-              placeholder="Search by owner, ID, substation…"
-              value={state.q}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {state.q && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--color-text-muted)",
-                  fontSize: 14,
-                  padding: 0,
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        {rows.length === 0 ? (
-          <div className="cg-explore-empty">
-            <div className="cg-explore-empty-title">No transmission lines found</div>
-            <div>
-              {state.q || state.type !== "all"
-                ? "Try adjusting your search or filters."
-                : "No transmission lines in the dataset."}
-            </div>
-          </div>
-        ) : (
-          rows.map((row) => (
-            <PanelEntityRow
-              key={row.objectId}
-              leading={<span className="h-2 w-2 rounded-full" style={{ background: voltageColor(row.voltageClass) }} />}
-              title={row.owner || "Unknown owner"}
-              subtitle={`${row.sub1} → ${row.sub2} · ${getVoltageShortLabel(row.voltageClass)}${
-                row.voltage != null && row.voltage > 0 ? ` (${row.voltage} kV)` : ""
-              }`}
-              trailing={
-                <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)" }}>
-                  {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
-                </span>
-              }
-              trailingShape="metric"
-              onSelect={() => router.push(`/transmission-lines/${row.id}`)}
-            />
-          ))
-        )}
-      </div>
-    </div>
+    <InfiniteListShell
+      entityLabel="lines"
+      emptyLabel="transmission lines"
+      total={total}
+      isLoading={isLoading}
+      isLoadingMore={isLoadingMore}
+      error={error}
+      hasMore={hasMore}
+      sentinelRef={sentinelRef}
+      loadMore={loadMore}
+      visibleCount={items.length}
+      searchValue={state.q}
+      onSearchChange={setSearch}
+      searchPlaceholder="Search by owner, ID, substation…"
+      filterOptions={voltageClassFilterOptions}
+      filterValue={state.type}
+      onFilterChange={setTypeFilter}
+      addAction={{
+        label: "+ Add",
+        onClick: () => router.push("/transmission-lines/new"),
+        visible: !!user,
+      }}
+      hasActiveFilter={state.type !== "all"}
+    >
+      {items.map((row) => (
+        <PanelEntityRow
+          key={row.objectId}
+          leading={<span className="h-2 w-2 rounded-full" style={{ background: voltageColor(row.voltageClass) }} />}
+          title={row.owner || "Unknown owner"}
+          subtitle={`${row.sub1} → ${row.sub2} · ${getVoltageShortLabel(row.voltageClass)}${
+            row.voltage != null && row.voltage > 0 ? ` (${row.voltage} kV)` : ""
+          }`}
+          trailing={
+            <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)" }}>
+              {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
+            </span>
+          }
+          trailingShape="metric"
+          onSelect={() => handleRowClick(row.id)}
+        />
+      ))}
+    </InfiniteListShell>
   );
 }

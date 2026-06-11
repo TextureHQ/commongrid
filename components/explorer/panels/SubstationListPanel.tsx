@@ -3,18 +3,24 @@
 /**
  * SubstationListPanel — Explorer panel for substations.
  *
- * Unlike pricing-nodes or transmission-lines (which preload the full JSON),
- * substations are served from the database via /api/v1/substations with cursor
- * pagination, because the dataset is ~60k+ rows and ~32 MB on disk. This
- * panel mirrors the pattern used by the full /substations page.
+ * Server-side search + cursor pagination via `useInfiniteList`. Previously
+ * paginated via a manual fetch + button-only Load More; this rewrite
+ * unifies with the other overlay panels and adds intersection-based
+ * auto-load. Substations are ~60k+ rows, so server-side pagination has
+ * always been required here.
+ *
+ * Voltage-band filtering is applied client-side because the API exposes
+ * `minMaxVoltageKv` rather than a band enum.
  */
 
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { voltageColor } from "@/lib/categorical-colors";
 import { useExplorer } from "../ExplorerContext";
+import { InfiniteListShell } from "./InfiniteListShell";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,16 +45,6 @@ interface SubstationApiRow {
   substationType: SubstationType;
   status: SubstationStatus;
   source: string;
-}
-
-interface SubstationsApiResponse {
-  data: SubstationApiRow[];
-  pagination: {
-    cursor: string | null;
-    limit: number;
-    total: number;
-    hasMore: boolean;
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -100,7 +96,7 @@ function getVoltageBandColor(band: VoltageBand): string {
 // Filter options
 // ---------------------------------------------------------------------------
 
-const VOLTAGE_BAND_FILTERS: { id: string; label: string; value: string }[] = [
+const VOLTAGE_BAND_FILTERS = [
   { id: "all", label: "All Voltages", value: "all" },
   { id: "extra-high", label: "Extra High (345kV+)", value: "extra-high" },
   { id: "high", label: "High (230–344kV)", value: "high" },
@@ -108,30 +104,6 @@ const VOLTAGE_BAND_FILTERS: { id: string; label: string; value: string }[] = [
   { id: "sub-trans", label: "Sub-Transmission (69–114kV)", value: "sub-trans" },
   { id: "unknown", label: "Unknown Voltage", value: "unknown" },
 ];
-
-// ---------------------------------------------------------------------------
-// Debounce helper
-// ---------------------------------------------------------------------------
-
-function useDebounced<T>(value: T, delay = 350): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const handle = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handle);
-  }, [value, delay]);
-  return debounced;
-}
-
-// ---------------------------------------------------------------------------
-// Icons
-// ---------------------------------------------------------------------------
-
-const SearchIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3-3" />
-  </svg>
-);
 
 // ---------------------------------------------------------------------------
 // Panel
@@ -142,211 +114,79 @@ export function SubstationListPanel() {
   const router = useRouter();
   const { user } = useCurrentUser();
 
-  // Debounce the search input (state.q updates on each keystroke)
-  const debouncedSearch = useDebounced(state.q, 350);
-
-  // Fetch state
-  const [rows, setRows] = useState<SubstationApiRow[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Request serialization: ignore stale responses when filters change quickly.
-  const requestIdRef = useRef(0);
-
-  const buildQuery = useCallback(
-    (opts: { cursor?: string | null } = {}) => {
-      const params = new URLSearchParams();
-      params.set("limit", "50");
-      if (debouncedSearch.trim().length >= 2) params.set("search", debouncedSearch.trim());
-      // state.type maps to voltageBand for substations; the API filters maxVoltageKv
-      // so we apply voltageBand filter client-side below.
-      params.set("sort", "name");
-      params.set("order", "asc");
-      if (opts.cursor) params.set("cursor", opts.cursor);
-      return params.toString();
-    },
-    [debouncedSearch]
+  const params = useMemo(
+    () => ({
+      search: state.q,
+      sort: "name",
+      order: "asc" as const,
+    }),
+    [state.q]
   );
 
-  // Reset + initial fetch whenever search changes
-  useEffect(() => {
-    const currentRequestId = ++requestIdRef.current;
-    setIsLoading(true);
-    setError(null);
+  const { items, total, hasMore, isLoading, isLoadingMore, error, sentinelRef, loadMore } =
+    useInfiniteList<SubstationApiRow>({
+      endpoint: "/api/v1/substations",
+      params,
+    });
 
-    const qs = buildQuery();
-    fetch(`/api/v1/substations?${qs}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`Request failed (${res.status})`);
-        return (await res.json()) as SubstationsApiResponse;
-      })
-      .then((result) => {
-        if (currentRequestId !== requestIdRef.current) return;
-        setRows(result.data);
-        setCursor(result.pagination.cursor);
-        setTotal(result.pagination.total);
-        setHasMore(result.pagination.hasMore);
-        setIsLoading(false);
-      })
-      .catch((err: unknown) => {
-        if (currentRequestId !== requestIdRef.current) return;
-        console.error("Failed to load substations", err);
-        setError(err instanceof Error ? err.message : "Failed to load substations");
-        setIsLoading(false);
-      });
-  }, [buildQuery]);
-
-  // Client-side voltage band filter (piggy-backs on state.type filter).
+  // Voltage-band filter applied client-side because the API doesn't expose a
+  // band enum on the query schema.
   const bandFilter = state.type && state.type !== "all" ? (state.type as VoltageBand) : null;
   const visibleRows = useMemo(() => {
-    if (!bandFilter) return rows;
-    return rows.filter((r) => r.voltageBand === bandFilter);
-  }, [rows, bandFilter]);
-
-  const loadMore = useCallback(async () => {
-    if (!cursor || isLoadingMore) return;
-    const currentRequestId = requestIdRef.current;
-    setIsLoadingMore(true);
-    try {
-      const qs = buildQuery({ cursor });
-      const res = await fetch(`/api/v1/substations?${qs}`);
-      if (!res.ok) throw new Error(`Request failed (${res.status})`);
-      const result = (await res.json()) as SubstationsApiResponse;
-      if (currentRequestId !== requestIdRef.current) return;
-      setRows((prev) => [...prev, ...result.data]);
-      setCursor(result.pagination.cursor);
-      setHasMore(result.pagination.hasMore);
-    } catch (err) {
-      console.error("Failed to load more substations", err);
-      setError(err instanceof Error ? err.message : "Failed to load more substations");
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [cursor, isLoadingMore, buildQuery]);
+    if (!bandFilter) return items;
+    return items.filter((r) => r.voltageBand === bandFilter);
+  }, [items, bandFilter]);
 
   const handleRowClick = useCallback(
-    (row: SubstationApiRow) => {
-      router.push(`/substations/${row.slug}`);
+    (slug: string) => {
+      router.push(`/substations/${slug}`);
     },
     [router]
   );
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="cg-explore-panel-header">
-        <div className="cg-explore-filter-row" style={{ justifyContent: "space-between" }}>
-          <span className="cg-explore-count">
-            <strong>{total.toLocaleString()}</strong> substations
-          </span>
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
-              {VOLTAGE_BAND_FILTERS.map((opt) => (
-                <option key={opt.id} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            {user && (
-              <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/substations")}>
-                Full list →
-              </button>
-            )}
-          </div>
-        </div>
-        <div style={{ padding: "6px 14px 7px" }}>
-          <div className="cg-explore-search">
-            <SearchIcon />
-            <input
-              type="text"
-              placeholder="Search substations, owners, states…"
-              value={state.q}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {state.q && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--color-text-muted)",
-                  fontSize: 14,
-                  padding: 0,
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        {isLoading ? (
-          Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
-            <PanelEntityRow
-              key={skeletonKey}
-              loading
-              leadingShape="dot"
-              trailingShape="metric"
-              title=""
-              onSelect={() => {}}
-            />
-          ))
-        ) : error ? (
-          <div className="cg-explore-empty">
-            <div className="cg-explore-empty-title">Couldn't load substations</div>
-            <div>{error}</div>
-          </div>
-        ) : visibleRows.length === 0 ? (
-          <div className="cg-explore-empty">
-            <div className="cg-explore-empty-title">No substations found</div>
-            <div>
-              {state.q || bandFilter ? "Try adjusting your search or filters." : "No substations in the dataset."}
-            </div>
-          </div>
-        ) : (
-          <>
-            {visibleRows.map((row) => (
-              <PanelEntityRow
-                key={row.id}
-                leading={
-                  <span className="h-2 w-2 rounded-full" style={{ background: getVoltageBandColor(row.voltageBand) }} />
-                }
-                title={row.name}
-                subtitle={`${row.state} · ${SUBSTATION_TYPE_LABELS[row.substationType]} · ${formatVoltage(row)}${
-                  row.ownerName ? ` · ${row.ownerName}` : ""
-                }`}
-                trailing={
-                  <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)" }}>
-                    {VOLTAGE_BAND_LABELS[row.voltageBand]}
-                  </span>
-                }
-                trailingShape="metric"
-                onSelect={() => handleRowClick(row)}
-              />
-            ))}
-            {hasMore && (
-              <div style={{ display: "flex", justifyContent: "center", padding: "16px 0" }}>
-                <button
-                  type="button"
-                  className="cg-explore-icon-btn"
-                  onClick={loadMore}
-                  disabled={isLoadingMore}
-                  style={{ opacity: isLoadingMore ? 0.6 : 1 }}
-                >
-                  {isLoadingMore ? "Loading…" : "Load more"}
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
+    <InfiniteListShell
+      entityLabel="substations"
+      total={total}
+      isLoading={isLoading}
+      isLoadingMore={isLoadingMore}
+      error={error}
+      hasMore={hasMore}
+      sentinelRef={sentinelRef}
+      loadMore={loadMore}
+      visibleCount={visibleRows.length}
+      searchValue={state.q}
+      onSearchChange={setSearch}
+      searchPlaceholder="Search substations, owners, states…"
+      filterOptions={VOLTAGE_BAND_FILTERS}
+      filterValue={state.type}
+      onFilterChange={setTypeFilter}
+      addAction={{
+        label: "Full list →",
+        onClick: () => router.push("/substations"),
+        visible: !!user,
+      }}
+      hasActiveFilter={!!bandFilter}
+    >
+      {visibleRows.map((row) => (
+        <PanelEntityRow
+          key={row.id}
+          leading={
+            <span className="h-2 w-2 rounded-full" style={{ background: getVoltageBandColor(row.voltageBand) }} />
+          }
+          title={row.name}
+          subtitle={`${row.state} · ${SUBSTATION_TYPE_LABELS[row.substationType]} · ${formatVoltage(row)}${
+            row.ownerName ? ` · ${row.ownerName}` : ""
+          }`}
+          trailing={
+            <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)" }}>
+              {VOLTAGE_BAND_LABELS[row.voltageBand]}
+            </span>
+          }
+          trailingShape="metric"
+          onSelect={() => handleRowClick(row.slug)}
+        />
+      ))}
+    </InfiniteListShell>
   );
 }
