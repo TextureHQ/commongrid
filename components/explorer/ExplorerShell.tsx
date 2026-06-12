@@ -213,9 +213,17 @@ function ListSourceSelector({
   mapOverlays: MapOverlays;
   onMapRegionChange?: (region: MapRegion) => void;
 }) {
-  const { state, setListSource } = useExplorer();
+  const { state, setListSource, stack } = useExplorer();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Active list-route tab — the tab the user navigated to. Always a valid
+  // option here so the snap-back effect below never fights an in-flight
+  // navigation (see the loop bug fixed in #311 for context).
+  const activeListTab = useMemo<EntityTab | null>(() => {
+    const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+    return currentList?.payload.tab ?? null;
+  }, [stack.routes]);
 
   const options = useMemo<EntityTab[]>(() => {
     const seen = new Set<EntityTab>();
@@ -226,12 +234,19 @@ function ListSourceSelector({
         result.push(t);
       }
     };
+    // Include the navigated-to list tab first so it's always a valid
+    // selection even before `mapRegion` / overlays have synced to it.
+    // Without this, navigating to Programs / Grid Operators / Pricing
+    // Nodes from the overview triggered an infinite ping-pong between
+    // this component's snap-back effect and the ExplorerContext effect
+    // that mirrors stack.list.tab → state.listSource.
+    if (activeListTab) addIfNew(activeListTab);
     addIfNew(mapRegion as EntityTab);
     for (const opt of OVERLAY_OPTIONS) {
       if (mapOverlays[opt.key]) addIfNew(opt.key as EntityTab);
     }
     return result;
-  }, [mapRegion, mapOverlays]);
+  }, [activeListTab, mapRegion, mapOverlays]);
 
   const activeSource: EntityTab = options.includes(state.listSource) ? state.listSource : (mapRegion as EntityTab);
 
