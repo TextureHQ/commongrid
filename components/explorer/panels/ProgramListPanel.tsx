@@ -1,15 +1,34 @@
 "use client";
 
+/**
+ * ProgramListPanel — Explorer panel for utility / aggregator programs.
+ *
+ * Migrated onto `useInfiniteList` + `InfiniteListShell` (same pattern as
+ * EV charging, power plants, transmission lines, substations, pricing
+ * nodes — see PR #309). The previous implementation fetched up to 200
+ * programs in one SWR call and ran client-side Fuse over the bag. That
+ * worked while the catalog was small, but a stale loading state could
+ * leave the panel rendering skeletons indefinitely, which is what
+ * surfaced as the "Programs panel flickering / crash" report on prod.
+ *
+ * Behavior change worth flagging:
+ * - Map utility-highlight filtering (`setFilteredUtilitySlugs`) now
+ *   reflects the *visible page* of program rows, not the full filtered
+ *   set. With server-side pagination at 50/page this is a deliberate
+ *   trade-off: correctness of the loading lifecycle over a complete map
+ *   highlight that requires fetching every matching program up front.
+ *   The set updates as the user scrolls more pages in.
+ */
+
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useProgramList } from "@/hooks/useProgramList";
-import { useUtilityList } from "@/hooks/useUtilityList";
+import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { entityKindColor } from "@/lib/categorical-colors";
-import { searchEntities, sortByName } from "@/lib/data";
 import { AssetTypeLabel, CompensationTypeLabel, CompensationUnitLabel, type Program } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
+import { InfiniteListShell } from "./InfiniteListShell";
 
 const assetTypeFilterOptions = [
   { id: "all", label: "All Asset Types", value: "all" },
@@ -23,16 +42,6 @@ const assetTypeFilterOptions = [
   { id: "GENERATOR", label: "Generator", value: "GENERATOR" },
 ];
 
-interface ProgramRow {
-  slug: string;
-  name: string;
-  utilityName: string;
-  utilitySlug: string | null;
-  assetTypes: string[];
-  status: string;
-  compensationSummary: string;
-}
-
 function getPrimaryCompensationSummary(program: Program): string {
   if (!program.compensationTiers || program.compensationTiers.length === 0) return "";
   const tier = program.compensationTiers[0];
@@ -41,181 +50,142 @@ function getPrimaryCompensationSummary(program: Program): string {
   return `$${tier.amount} ${typeLabel.toLowerCase()} ${unitLabel}`;
 }
 
-const SearchIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3-3" />
-  </svg>
-);
+function statusLabel(s: string): string {
+  if (s === "ACTIVE") return "Active";
+  if (s === "PAUSED") return "Paused";
+  if (s === "FULL") return "Full";
+  return s;
+}
+
+function statusColor(s: string): string {
+  if (s === "ACTIVE") return "var(--color-feedback-success-text)";
+  if (s === "PAUSED") return "var(--color-feedback-warning-text)";
+  return "var(--color-text-muted)";
+}
+
+function getAdminUtilitySlug(program: Program): string | null {
+  const adminOrg = program.organizations.find((o) => o.role === "ADMINISTRATOR");
+  return adminOrg?.entityId ?? null;
+}
 
 export function ProgramListPanel() {
   const { state, setSearch, setTypeFilter, navigateToDetail, setFilteredUtilitySlugs } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
-  const { utilities } = useUtilityList({ limit: 200 });
-  const { programs, isLoading } = useProgramList({ limit: 200 });
 
-  const allPrograms = useMemo((): ProgramRow[] => {
-    return programs.map((prog) => {
-      const adminOrg = prog.organizations.find((o) => o.role === "ADMINISTRATOR");
-      const utility = adminOrg ? utilities.find((u) => u.slug === adminOrg.entityId) : null;
-      return {
-        slug: prog.slug,
-        name: prog.name,
-        utilityName: utility?.name ?? adminOrg?.entityId ?? "—",
-        utilitySlug: adminOrg?.entityId ?? null,
-        assetTypes: prog.assetTypes,
-        status: prog.status,
-        compensationSummary: getPrimaryCompensationSummary(prog),
-      };
-    });
-  }, [programs, utilities]);
+  const params = useMemo(
+    () => ({
+      search: state.q,
+      assetType: state.type !== "all" ? state.type : undefined,
+      sort: "name",
+      order: "asc" as const,
+    }),
+    [state.q, state.type]
+  );
 
-  const filtered = useMemo(() => {
-    let result = allPrograms;
-    if (state.q) {
-      result = searchEntities(result, state.q);
-    }
-    if (state.type !== "all") {
-      result = result.filter((p) => p.assetTypes.includes(state.type));
-    }
-    result = sortByName(result, "asc");
-    return result;
-  }, [allPrograms, state.q, state.type]);
+  const { items, total, hasMore, isLoading, isLoadingMore, error, sentinelRef, loadMore } = useInfiniteList<Program>({
+    endpoint: "/api/v1/programs",
+    params,
+  });
 
-  // Push filtered utility slugs to context for map filtering
+  // Push the visible page's administrator-utility slugs to the map. When
+  // there's no active filter, clear the constraint so the map shows all
+  // utility regions. See file header for the page-vs-total trade-off.
+  //
+  // We compute and dispatch in a single effect, gated by a serialized
+  // string of slugs so identical sets don't trigger a re-dispatch. With
+  // server-side pagination at 50/page items is a stable reference between
+  // pages, but the filter-clear path used to fire on every parent
+  // re-render (because state object identity changes on every dispatch
+  // throughout the explore tree) — which storm'd the map's utility tile
+  // fetches. Gating on the slug-string fixes it.
+  const hasActiveFilter = state.q !== "" || state.type !== "all";
+  const slugsKey = useMemo(() => {
+    if (!hasActiveFilter) return "__none__";
+    const unique = [...new Set(items.map(getAdminUtilitySlug).filter((s): s is string => s !== null))].sort();
+    return unique.join(",");
+  }, [items, hasActiveFilter]);
+
   useEffect(() => {
-    const hasFilter = state.q !== "" || state.type !== "all";
-    if (!hasFilter) {
+    if (slugsKey === "__none__") {
       setFilteredUtilitySlugs(null);
       return;
     }
-    const slugs = [...new Set(filtered.map((p) => p.utilitySlug).filter((s): s is string => s !== null))];
-    setFilteredUtilitySlugs(slugs);
-  }, [filtered, state.q, state.type, setFilteredUtilitySlugs]);
+    setFilteredUtilitySlugs(slugsKey ? slugsKey.split(",") : []);
+  }, [slugsKey, setFilteredUtilitySlugs]);
 
-  // Clear filtered slugs on unmount (e.g. switching away from programs)
+  // Clear on unmount (e.g. tab switch away from Programs).
   useEffect(() => {
     return () => setFilteredUtilitySlugs(null);
   }, [setFilteredUtilitySlugs]);
 
   const handleRowClick = useCallback(
-    (row: ProgramRow) => {
-      navigateToDetail("program", row.slug);
+    (slug: string) => {
+      navigateToDetail("program", slug);
     },
     [navigateToDetail]
   );
 
-  const statusLabel = (s: string) =>
-    s === "ACTIVE" ? "Active" : s === "PAUSED" ? "Paused" : s === "FULL" ? "Full" : s;
-  const statusColor = (s: string) =>
-    s === "ACTIVE"
-      ? "var(--color-feedback-success-text)"
-      : s === "PAUSED"
-        ? "var(--color-feedback-warning-text)"
-        : "var(--color-text-muted)";
-
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="cg-explore-panel-header">
-        <div className="cg-explore-filter-row" style={{ justifyContent: "space-between" }}>
-          <span className="cg-explore-count">
-            <strong>{filtered.length}</strong> programs
-          </span>
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
-              {assetTypeFilterOptions.map((opt) => (
-                <option key={opt.id} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            {user && (
-              <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/programs/new")}>
-                + Add
-              </button>
-            )}
-          </div>
-        </div>
-        <div style={{ padding: "6px 14px 7px" }}>
-          <div className="cg-explore-search">
-            <SearchIcon />
-            <input
-              type="text"
-              placeholder="Search programs…"
-              value={state.q}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {state.q && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--color-text-muted)",
-                  fontSize: 14,
-                  padding: 0,
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        {isLoading ? (
-          Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
-            <PanelEntityRow
-              key={skeletonKey}
-              loading
-              leadingShape="dot"
-              trailingShape="metric+badge"
-              title=""
-              onSelect={() => {}}
-            />
-          ))
-        ) : filtered.length === 0 ? (
-          <div className="cg-explore-empty">
-            <div className="cg-explore-empty-title">No programs found</div>
-            <div>{state.q ? "Try adjusting your search criteria." : "No programs in the dataset."}</div>
-          </div>
-        ) : (
-          filtered.map((row) => (
-            <PanelEntityRow
-              key={row.slug}
-              leading={<span className="h-2 w-2 rounded-full" style={{ background: entityKindColor("programs") }} />}
-              title={row.name}
-              subtitle={`${row.utilityName} · ${row.assetTypes
-                .map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at)
-                .join(", ")}`}
-              trailing={
-                <div className="flex flex-col items-end gap-0.5">
-                  <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: statusColor(row.status) }}>
-                    {statusLabel(row.status)}
+    <InfiniteListShell
+      entityLabel="programs"
+      emptyLabel="programs"
+      total={total}
+      isLoading={isLoading}
+      isLoadingMore={isLoadingMore}
+      error={error}
+      hasMore={hasMore}
+      sentinelRef={sentinelRef}
+      loadMore={loadMore}
+      visibleCount={items.length}
+      searchValue={state.q}
+      onSearchChange={setSearch}
+      searchPlaceholder="Search programs…"
+      filterOptions={assetTypeFilterOptions}
+      filterValue={state.type}
+      onFilterChange={setTypeFilter}
+      addAction={{
+        label: "+ Add",
+        onClick: () => router.push("/programs/new"),
+        visible: !!user,
+      }}
+      hasActiveFilter={state.type !== "all"}
+    >
+      {items.map((row) => {
+        const adminOrg = row.organizations.find((o) => o.role === "ADMINISTRATOR");
+        const utilityDisplay = adminOrg?.entityId ?? "—";
+        const compensationSummary = getPrimaryCompensationSummary(row);
+        return (
+          <PanelEntityRow
+            key={row.slug}
+            leading={<span className="h-2 w-2 rounded-full" style={{ background: entityKindColor("programs") }} />}
+            title={row.name}
+            subtitle={`${utilityDisplay} · ${row.assetTypes
+              .map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at)
+              .join(", ")}`}
+            trailing={
+              <div className="flex flex-col items-end gap-0.5">
+                <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: statusColor(row.status) }}>
+                  {statusLabel(row.status)}
+                </span>
+                {compensationSummary && (
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontFamily: "var(--font-family-mono)",
+                      color: "var(--color-text-muted)",
+                    }}
+                  >
+                    {compensationSummary}
                   </span>
-                  {row.compensationSummary && (
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontFamily: "var(--font-family-mono)",
-                        color: "var(--color-text-muted)",
-                      }}
-                    >
-                      {row.compensationSummary}
-                    </span>
-                  )}
-                </div>
-              }
-              trailingShape="metric+badge"
-              onSelect={() => handleRowClick(row)}
-            />
-          ))
-        )}
-      </div>
-    </div>
+                )}
+              </div>
+            }
+            trailingShape="metric+badge"
+            onSelect={() => handleRowClick(row.slug)}
+          />
+        );
+      })}
+    </InfiniteListShell>
   );
 }
