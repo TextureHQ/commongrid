@@ -69,6 +69,53 @@ REMOTE_MONTH=$(echo "$REMOTE_MONTHS" | sort -r | head -n1)
 # Compare
 if [[ "$REMOTE_MONTH" > "$LOCAL_MONTH" ]]; then
   echo "NEW_DATA_AVAILABLE: Remote=$REMOTE_MONTH Local=$LOCAL_MONTH"
+  
+  # Create Linear issue for sync work (with dedup guard)
+  LINEAR_KEY=$(HOME=/var/tmp/op-agent op read 'op://Fleet Secrets/Linear API Key - Texture/password' 2>/dev/null || echo "")
+  
+  if [[ -n "$LINEAR_KEY" ]]; then
+    ISSUE_TITLE="Sync EIA-860M $REMOTE_MONTH"
+    
+    # Dedup guard: check for existing open issues with same title
+    EXISTING_ISSUE=$(curl -sS -X POST 'https://api.linear.app/graphql' \
+      -H "Authorization: $LINEAR_KEY" \
+      -H 'Content-Type: application/json' \
+      -d '{"query":"query { issues(filter: { title: { contains: \"'"$ISSUE_TITLE"'\" }, state: { type: { in: [\"backlog\", \"triage\", \"unstarted\", \"started\"] } } }) { nodes { identifier state { name } } } }"}' \
+      | jq -r '.data.issues.nodes[0].identifier // "NONE"')
+    
+    if [[ "$EXISTING_ISSUE" != "NONE" ]]; then
+      echo "LINEAR_ISSUE_EXISTS: $EXISTING_ISSUE (skipping duplicate creation)"
+    else
+      # Get ALL team ID
+      TEAM_ID=$(curl -sS -X POST 'https://api.linear.app/graphql' \
+        -H "Authorization: $LINEAR_KEY" \
+        -H 'Content-Type: application/json' \
+        -d '{"query":"query { teams(filter: { key: { eq: \"ALL\" } }) { nodes { id } } }"}' \
+        | jq -r '.data.teams.nodes[0].id')
+      
+      if [[ -n "$TEAM_ID" && "$TEAM_ID" != "null" ]]; then
+        # Create the issue
+        ISSUE_DESCRIPTION="EIA-860M data staleness detected.\\n\\nRemote version: **$REMOTE_MONTH**\\nLocal version: **$LOCAL_MONTH**\\n\\nDetected by: \`scripts/heartbeat/eia-860m-freshness.sh\` at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        
+        CREATED_ISSUE=$(curl -sS -X POST 'https://api.linear.app/graphql' \
+          -H "Authorization: $LINEAR_KEY" \
+          -H 'Content-Type: application/json' \
+          -d '{"query":"mutation { issueCreate(input: { teamId: \"'"$TEAM_ID"'\", title: \"'"$ISSUE_TITLE"'\", description: \"'"$ISSUE_DESCRIPTION"'\" }) { success issue { identifier url } } }"}' \
+          | jq -r '.data.issueCreate.issue.identifier // "FAILED"')
+        
+        if [[ "$CREATED_ISSUE" != "FAILED" ]]; then
+          echo "LINEAR_ISSUE_CREATED: $CREATED_ISSUE"
+        else
+          echo "ERROR: Failed to create Linear issue" >&2
+        fi
+      else
+        echo "ERROR: Failed to get ALL team ID" >&2
+      fi
+    fi
+  else
+    echo "WARNING: Linear API key not available (issue creation skipped)" >&2
+  fi
+  
   exit 1
 elif [[ "$REMOTE_MONTH" == "$LOCAL_MONTH" ]]; then
   echo "UP_TO_DATE: $LOCAL_MONTH"
