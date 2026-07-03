@@ -5,6 +5,10 @@
  * Use `getCurrentUser()` in server components and API routes
  * to get the full CommonGrid user profile.
  *
+ * Dev mode: set DEV_AUTH_BYPASS=<clerk_user_id> in .env.local
+ * to skip Clerk auth and return the matching local user directly.
+ * Only works when NODE_ENV !== "production".
+ *
  * ERD Reference: §9 Clerk Integration — Session Validation
  */
 
@@ -15,9 +19,27 @@ import type { UserSelect } from "@/lib/db/schema/users";
 import { users } from "@/lib/db/schema/users";
 
 /**
+ * Dev-mode auth bypass: when DEV_AUTH_BYPASS is set to a Clerk user ID,
+ * return that user from the local DB without hitting Clerk.
+ * Only enabled when NODE_ENV is not "production".
+ */
+async function getDevBypassUser(): Promise<UserSelect | null> {
+  if (process.env.NODE_ENV === "production") return null;
+  const bypassId = process.env.DEV_AUTH_BYPASS;
+  if (!bypassId) return null;
+
+  const db = getDb();
+  const result = await db.select().from(users).where(eq(users.clerkUserId, bypassId)).limit(1);
+  return result[0] ?? null;
+}
+
+/**
  * Get the current user's Clerk userId (or null if not signed in).
  */
 export async function getClerkUserId(): Promise<string | null> {
+  const devUser = await getDevBypassUser();
+  if (devUser) return devUser.clerkUserId;
+
   const { userId } = await auth();
   return userId;
 }
@@ -28,6 +50,9 @@ export async function getClerkUserId(): Promise<string | null> {
  * (webhook may not have fired yet).
  */
 export async function getCurrentUser(): Promise<UserSelect | null> {
+  const devUser = await getDevBypassUser();
+  if (devUser) return devUser;
+
   const clerkUserId = await getClerkUserId();
   if (!clerkUserId) return null;
 
