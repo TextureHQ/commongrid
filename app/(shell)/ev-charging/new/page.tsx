@@ -150,7 +150,8 @@ export default function CreateEVStationPage() {
 
       if (!res.ok) {
         const json = await res.json();
-        throw new Error(json.error ?? "Failed to submit contribution");
+        const errMsg = typeof json.error === 'string' ? json.error : json.error?.message;
+        throw new Error(errMsg ?? "Failed to submit contribution");
       }
 
       const json = await res.json();

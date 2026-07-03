@@ -81,7 +81,8 @@ export default function UserManagementPage() {
 
       if (!res.ok) {
         const json = await res.json();
-        throw new Error(json.error ?? "Failed to update user");
+        const errMsg = typeof json.error === 'string' ? json.error : json.error?.message;
+         throw new Error(errMsg ?? "Failed to update user");
       }
 
       // Update the user in the local state
