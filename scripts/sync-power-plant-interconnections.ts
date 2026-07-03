@@ -24,24 +24,6 @@
 import { neon } from "@neondatabase/serverless";
 import type { PowerPlantInterconnectionInsert } from "../lib/db/schema/power-plant-interconnections";
 
-interface PlantWithGeom {
-  id: string;
-  name: string;
-  latLon: {
-    type: string;
-    coordinates: [number, number];
-  };
-}
-
-interface SubstationWithGeom {
-  id: string;
-  name: string;
-  latLon: {
-    type: string;
-    coordinates: [number, number];
-  };
-}
-
 interface DistanceResult {
   plant_id: string;
   substation_id: string;

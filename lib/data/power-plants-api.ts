@@ -83,12 +83,11 @@ async function loadFromDb(options?: PowerPlantQueryOptions): Promise<PowerPlant[
   if (filters?.baId) conditions.push(eq(powerPlants.balancingAuthorityId, filters.baId));
   if (filters?.search) {
     const searchTerm = filters.search.trim();
-    conditions.push(
-      or(
-        sql`${powerPlants.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
-        ilike(powerPlants.name, `%${searchTerm}%`)
-      )!
+    const searchCondition = or(
+      sql`${powerPlants.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
+      ilike(powerPlants.name, `%${searchTerm}%`)
     );
+    if (searchCondition) conditions.push(searchCondition);
   }
 
   // Build ORDER BY clause
@@ -220,12 +219,11 @@ export async function countPowerPlants(filters?: PowerPlantFilters): Promise<num
   if (filters?.baId) conditions.push(eq(powerPlants.balancingAuthorityId, filters.baId));
   if (filters?.search) {
     const searchTerm = filters.search.trim();
-    conditions.push(
-      or(
-        sql`${powerPlants.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
-        ilike(powerPlants.name, `%${searchTerm}%`)
-      )!
+    const searchCondition = or(
+      sql`${powerPlants.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
+      ilike(powerPlants.name, `%${searchTerm}%`)
     );
+    if (searchCondition) conditions.push(searchCondition);
   }
 
   const result = await db

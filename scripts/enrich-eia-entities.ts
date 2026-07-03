@@ -227,7 +227,7 @@ function main() {
 
   // ── 4. Mark stale/merged/defunct entries ─────────────────────────────
   console.log("\n4. Marking stale entries...");
-  const utilityByEiaId = new Map(utilities.filter((u) => u.eiaId).map((u) => [u.eiaId!, u]));
+  const utilityByEiaId = new Map(utilities.filter((u) => u.eiaId).map((u) => [u.eiaId as string, u]));
 
   for (const stale of analysis.staleEntries.entities) {
     const utility = utilities.find((u) => u.id === stale.id);

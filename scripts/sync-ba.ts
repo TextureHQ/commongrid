@@ -27,7 +27,7 @@ import { readJSON, slugify, TERRITORIES_DIR, writeJSON, writeTerritory } from ".
 const HIFLD_CONTROL_AREAS_URL =
   "https://services5.arcgis.com/HDRa0B57OVrv2E1q/arcgis/rest/services/Control_Areas/FeatureServer/0/query";
 
-const EIA_DATA_DIR = path.resolve(process.env.HOME!, "Workspace/Context data/f8612024");
+const EIA_DATA_DIR = path.resolve(process.env.HOME ?? "", "Workspace/Context data/f8612024");
 
 interface HifldProperties {
   OBJECTID_1: number;
@@ -269,7 +269,8 @@ function loadEiaBAs(): Map<string, EiaBa> {
     if (!bas.has(code)) {
       bas.set(code, { eiaId, code, name, states: [] });
     }
-    const ba = bas.get(code)!;
+    const ba = bas.get(code);
+    if (!ba) continue;
     if (state && state !== "undefined" && !ba.states.includes(state)) {
       ba.states.push(state);
     }
@@ -464,9 +465,10 @@ async function main() {
     writeTerritory(`ba-${ba.slug}.json`, geoJson);
     geoWritten++;
 
+    if (!ba.regionId) continue;
     // Create region record
     newRegions.push({
-      id: ba.regionId!,
+      id: ba.regionId,
       slug: `ba-${ba.slug}`,
       name: ba.name,
       type: "BALANCING_AUTHORITY",

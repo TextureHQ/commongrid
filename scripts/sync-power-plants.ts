@@ -647,7 +647,8 @@ async function main() {
     if (!plantData) continue;
     if (plantData.latitude === null || plantData.longitude === null) continue;
 
-    const propAgg = propGenByPlant.get(plantCode)!;
+    const propAgg = propGenByPlant.get(plantCode);
+    if (!propAgg) continue;
     const fuelsArr = Array.from(propAgg.fuels);
     const techsArr = Array.from(propAgg.techs);
     const fuelCategory = getFuelCategory(fuelsArr);

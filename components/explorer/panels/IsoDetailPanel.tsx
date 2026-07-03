@@ -4,7 +4,6 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
@@ -28,9 +27,8 @@ const ArrowIcon = () => (
 
 export function IsoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
-  const { user } = useCurrentUser();
 
-  const { iso, isLoading: isoLoading } = useIso(slug);
+  const { iso } = useIso(slug);
 
   useEffect(() => {
     if (!iso?.shortName) {

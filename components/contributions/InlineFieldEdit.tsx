@@ -132,7 +132,7 @@ export function InlineFieldEdit({
     return normalizedNew !== normalizedCurrent;
   }, [currentValue, value]);
 
-  const summaryLongEnough = editSummary.trim().length >= 15;
+  const summaryLongEnough = editSummary.trim().length >= 25;
   const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
 
   const handleSubmit = async () => {
@@ -182,7 +182,8 @@ export function InlineFieldEdit({
 
       if (!res.ok) {
         const json = await res.json();
-        throw new Error(json.error ?? "Failed to submit contribution");
+        const errMsg = typeof json.error === "string" ? json.error : json.error?.message;
+        throw new Error(errMsg ?? "Failed to submit contribution");
       }
 
       setSubmitSuccess(true);
@@ -359,7 +360,7 @@ export function InlineFieldEdit({
                 </label>
                 <div className="flex items-center gap-1">
                   <span className={`text-xs ${summaryLongEnough ? "text-feedback-success" : "text-text-muted"}`}>
-                    {editSummary.trim().length}/15
+                    {editSummary.trim().length}/25
                   </span>
                   {summaryLongEnough && <Icon name="CheckCircle" size="sm" className="text-feedback-success" />}
                 </div>
@@ -368,7 +369,7 @@ export function InlineFieldEdit({
                 id="edit-summary"
                 value={editSummary}
                 onChange={(e) => setEditSummary(e.target.value)}
-                placeholder="Describe your change (minimum 15 characters)"
+                placeholder="Describe your change (minimum 25 characters)"
                 rows={2}
                 className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
               />
@@ -441,7 +442,7 @@ export function InlineFieldEdit({
             {/* Help Text */}
             {!hasChanges && <p className="text-xs text-text-muted">Change the field value to enable submission.</p>}
             {hasChanges && !summaryLongEnough && (
-              <p className="text-xs text-text-muted">Add a descriptive edit summary (at least 15 characters).</p>
+              <p className="text-xs text-text-muted">Add a descriptive edit summary (at least 25 characters).</p>
             )}
           </>
         )}

@@ -57,6 +57,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.0",
+    "@clerk/testing": "^2.2.2",
+    "@playwright/test": "^1.61.1",
     "@types/adm-zip": "^0.5.7",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^24.7.2",
