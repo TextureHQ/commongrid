@@ -130,7 +130,7 @@ function OverlayDropdown({
               key={opt.key}
               type="button"
               className="cg-explore-dropdown-item"
-              data-active={overlays[opt.key]}
+              data-active={overlays[opt.key] || undefined}
               onClick={() => onToggle(opt.key)}
             >
               <span className="cg-explore-dropdown-check">{overlays[opt.key] && <CheckIcon />}</span>
@@ -182,7 +182,7 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
               key={opt.value}
               type="button"
               className="cg-explore-dropdown-item"
-              data-active={value === opt.value}
+              data-active={value === opt.value || undefined}
               onClick={() => {
                 onChange(opt.value);
                 setOpen(false);
@@ -292,7 +292,7 @@ function ListSourceSelector({
                 key={opt}
                 type="button"
                 className="cg-explore-dropdown-item"
-                data-active={activeSource === opt}
+                data-active={activeSource === opt || undefined}
                 onClick={() => {
                   setListSource(opt);
                   if (onMapRegionChange && VALID_MAP_REGIONS.includes(opt as MapRegion)) {
