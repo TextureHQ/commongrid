@@ -365,21 +365,27 @@ function MapFilterBar({
   setMapRegion,
   mapOverlays,
   toggleOverlay,
+  onOpenFilter,
 }: {
   mapRegion: MapRegion;
   setMapRegion: (r: MapRegion) => void;
   mapOverlays: MapOverlays;
   toggleOverlay: (key: keyof MapOverlays) => void;
+  onOpenFilter?: () => void;
 }) {
   return (
     <div className="cg-explore-filter-row">
       <RegionDropdown value={mapRegion} onChange={setMapRegion} />
       <div className="cg-explore-divider" />
       <OverlayDropdown overlays={mapOverlays} onToggle={toggleOverlay} />
-      <div className="cg-explore-divider" />
-      <button type="button" className="cg-explore-icon-btn">
-        <FilterIcon /> Filter
-      </button>
+      {onOpenFilter && (
+        <>
+          <div className="cg-explore-divider" />
+          <button type="button" className="cg-explore-icon-btn" onClick={onOpenFilter}>
+            <FilterIcon /> Filter
+          </button>
+        </>
+      )}
     </div>
   );
 }
