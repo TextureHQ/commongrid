@@ -28,7 +28,7 @@ async function handlePost(_req: Request, ctx: RouteContext) {
     .update(notifications)
     .set({ readAt: new Date() })
     .where(and(eq(notifications.userId, user.id), isNull(notifications.readAt)))
-    .returning({ id: notifications.id });
+    .returning();
 
   return jsonResponse({ data: { marked_read: updated.length } }, 200, {
     ...corsHeaders(),

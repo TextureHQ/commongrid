@@ -163,20 +163,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
       description: description.trim(),
       expiresAt,
     })
-    .returning({
-      id: apiKeys.id,
-      name: apiKeys.name,
-      keyPrefix: apiKeys.keyPrefix,
-      scopes: apiKeys.scopes,
-      tier: apiKeys.tier,
-      appName: apiKeys.appName,
-      appUrl: apiKeys.appUrl,
-      useCase: apiKeys.useCase,
-      description: apiKeys.description,
-      isActive: apiKeys.isActive,
-      expiresAt: apiKeys.expiresAt,
-      createdAt: apiKeys.createdAt,
-    });
+    .returning();
 
   return jsonResponse(
     {
