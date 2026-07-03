@@ -4,7 +4,6 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { useRto } from "@/hooks/useRto";
@@ -39,14 +38,13 @@ const ArrowIcon = () => (
 
 export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
-  const { user } = useCurrentUser();
 
-  const { utility, isLoading: utilityLoading } = useUtility(slug);
+  const { utility } = useUtility(slug);
   const { utilities, isLoading: utilitiesLoading } = useUtilityList({ limit: 500 });
 
-  const { iso, isLoading: isoLoading } = useIso(utility?.isoId ?? null);
-  const { rto, isLoading: rtoLoading } = useRto(utility?.rtoId ?? null);
-  const { balancingAuthority: ba, isLoading: baLoading } = useBalancingAuthority(utility?.balancingAuthorityId ?? null);
+  const { iso } = useIso(utility?.isoId ?? null);
+  const { rto } = useRto(utility?.rtoId ?? null);
+  const { balancingAuthority: ba } = useBalancingAuthority(utility?.balancingAuthorityId ?? null);
   const parent = useMemo(
     () => (utility?.parentId ? (utilities.find((u) => u.id === utility.parentId) ?? null) : null),
     [utility, utilities]

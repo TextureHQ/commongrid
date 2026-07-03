@@ -99,7 +99,8 @@ export function buildVersionRecord(
   }
 
   // Subsequent versions: store delta only
-  const delta = computeDelta(oldData!, newData);
+  if (!oldData) throw new Error("oldData is required for version > 1");
+  const delta = computeDelta(oldData, newData);
 
   return {
     entityType,

@@ -40,7 +40,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   const { user } = useCurrentUser();
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  const { program, isLoading } = useProgram(slug);
+  const { program } = useProgram(slug);
   const { utilities } = useUtilityList({ limit: 200 });
 
   // Resolve territory file keys for all program regions

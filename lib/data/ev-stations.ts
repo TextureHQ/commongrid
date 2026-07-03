@@ -76,12 +76,11 @@ async function loadFromDb(options?: EVStationQueryOptions): Promise<EVStation[]>
   if (filters?.statusCode) conditions.push(eq(evStations.statusCode, filters.statusCode));
   if (filters?.search) {
     const searchTerm = filters.search.trim();
-    conditions.push(
-      or(
-        sql`${evStations.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
-        ilike(evStations.stationName, `%${searchTerm}%`)
-      )!
+    const searchCondition = or(
+      sql`${evStations.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
+      ilike(evStations.stationName, `%${searchTerm}%`)
     );
+    if (searchCondition) conditions.push(searchCondition);
   }
 
   // Build ORDER BY clause
@@ -203,12 +202,11 @@ export async function countEVStations(filters?: EVStationFilters): Promise<numbe
   if (filters?.statusCode) conditions.push(eq(evStations.statusCode, filters.statusCode));
   if (filters?.search) {
     const searchTerm = filters.search.trim();
-    conditions.push(
-      or(
-        sql`${evStations.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
-        ilike(evStations.stationName, `%${searchTerm}%`)
-      )!
+    const searchCondition = or(
+      sql`${evStations.searchVector} @@ plainto_tsquery('english', ${searchTerm})`,
+      ilike(evStations.stationName, `%${searchTerm}%`)
     );
+    if (searchCondition) conditions.push(searchCondition);
   }
 
   const result = await db

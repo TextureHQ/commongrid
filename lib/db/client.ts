@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
-import { Pool } from "pg";
 import { drizzle as neonDrizzle } from "drizzle-orm/neon-http";
 import { drizzle as nodeDrizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 
 let _db: ReturnType<typeof neonDrizzle> | ReturnType<typeof nodeDrizzle> | null = null;
 

@@ -22,7 +22,7 @@ import * as path from "node:path";
 import * as XLSX from "xlsx";
 import { readJSON, writeJSON } from "./lib";
 
-const EIA_DATA_DIR = path.resolve(process.env.HOME!, "Workspace/Context data/f8612024");
+const EIA_DATA_DIR = path.resolve(process.env.HOME ?? "", "Workspace/Context data/f8612024");
 
 interface UtilityRecord {
   id: string;
