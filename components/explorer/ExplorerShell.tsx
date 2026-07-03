@@ -443,6 +443,11 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
     const tab = state.listSource;
     if (VALID_MAP_REGIONS.includes(tab as MapRegion)) {
       setMapRegion(tab as MapRegion);
+    } else {
+      // Overlay-only tabs (power-plants, transmission-lines, etc.) don't
+      // have their own fill region — reset to utilities so the map shows
+      // territory polygons instead of stale grid/program boundaries.
+      setMapRegion("utilities");
     }
     const overlayKeys: (keyof MapOverlays)[] = [
       "power-plants",
