@@ -154,7 +154,7 @@ export function EditEntityPanel({
 
       if (!res.ok) {
         const json = await res.json();
-        const errMsg = typeof json.error === 'string' ? json.error : json.error?.message;
+        const errMsg = typeof json.error === "string" ? json.error : json.error?.message;
         throw new Error(errMsg ?? "Failed to submit contribution");
       }
 
