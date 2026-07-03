@@ -86,21 +86,7 @@ async function handlePatch(req: Request, ctx: RouteContext) {
   }
 
   const db = getDb();
-  const [updated] = await db.update(apiKeys).set(updates).where(eq(apiKeys.id, keyId)).returning({
-    id: apiKeys.id,
-    name: apiKeys.name,
-    keyPrefix: apiKeys.keyPrefix,
-    scopes: apiKeys.scopes,
-    tier: apiKeys.tier,
-    appName: apiKeys.appName,
-    appUrl: apiKeys.appUrl,
-    useCase: apiKeys.useCase,
-    description: apiKeys.description,
-    isActive: apiKeys.isActive,
-    lastUsedAt: apiKeys.lastUsedAt,
-    expiresAt: apiKeys.expiresAt,
-    createdAt: apiKeys.createdAt,
-  });
+  const [updated] = await db.update(apiKeys).set(updates).where(eq(apiKeys.id, keyId)).returning();
 
   return jsonResponse({ data: updated }, 200, {
     ...corsHeaders(),
