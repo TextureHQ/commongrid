@@ -1005,7 +1005,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         events: {
           onClick: (feature: LayerFeature) => {
             const slug = feature.properties.slug;
-            if (slug) router.push(`/power-plants/${slug}`);
+            if (slug) navigateToDetail("power-plant", slug);
           },
         },
       })

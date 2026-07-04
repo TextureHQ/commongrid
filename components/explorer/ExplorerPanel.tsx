@@ -7,6 +7,7 @@ import { GridOperatorListPanel } from "./panels/GridOperatorListPanel";
 import { IsoDetailPanel } from "./panels/IsoDetailPanel";
 import { OverviewPanel } from "./panels/OverviewPanel";
 import { PowerPlantListPanel } from "./panels/PowerPlantListPanel";
+import { PowerPlantDetailPanel } from "./panels/PowerPlantDetailPanel";
 import { PricingNodeListPanel } from "./panels/PricingNodeListPanel";
 import { ProgramDetailPanel } from "./panels/ProgramDetailPanel";
 import { ProgramListPanel } from "./panels/ProgramListPanel";
@@ -44,6 +45,8 @@ export function ExplorerPanel({ listSource }: ExplorerPanelProps = {}) {
         return <GridOperatorDetailRouter slug={state.slug} />;
       case "programs":
         return <ProgramDetailPanel slug={state.slug} />;
+      case "power-plants":
+        return <PowerPlantDetailPanel slug={state.slug} />;
     }
   }
 
