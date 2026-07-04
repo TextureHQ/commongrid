@@ -1,11 +1,11 @@
 "use client";
 
-import { Avatar, Badge, Loader, type StatItem, StatList } from "@texturehq/edges";
-import { notFound, useParams } from "next/navigation";
+import { Avatar, Badge, Loader } from "@texturehq/edges";
 import Link from "next/link";
+import { notFound, useParams } from "next/navigation";
+import { EntityPageHeader, EntitySection, RelationshipCards } from "@/components/entity";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useIso } from "@/hooks/useIso";
-import { EntityPageHeader, EntitySection, RelationshipCards } from "@/components/entity";
 
 export default function BalancingAuthorityDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -15,7 +15,7 @@ export default function BalancingAuthorityDetailPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader size="lg" />
+        <Loader size={40} />
       </div>
     );
   }
@@ -24,18 +24,12 @@ export default function BalancingAuthorityDetailPage() {
     notFound();
   }
 
-  const stats: StatItem[] = [
-    { id: "eia-code", label: "EIA Code", value: ba.eiaCode ?? "—" },
-    ...(ba.states?.length
-      ? [{ id: "states", label: "States", value: ba.states.join(", ") }]
-      : []),
-  ];
-
   return (
     <>
       <EntityPageHeader
-        avatar={<Avatar name={ba.name} size="lg" />}
-        title={ba.name}
+        breadcrumbs={[{ label: "Balancing Authorities", href: "/balancing-authorities" }, { label: ba.name }]}
+        entityName={ba.name}
+        avatar={<Avatar fullName={ba.name} size="lg" />}
         subtitle={
           <div className="flex items-center gap-2 flex-wrap">
             <Badge>Balancing Authority</Badge>
@@ -46,18 +40,16 @@ export default function BalancingAuthorityDetailPage() {
             )}
           </div>
         }
-        stats={<StatList items={stats} />}
       />
 
       <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12 space-y-12 py-8">
         {iso && (
-          <EntitySection title="ISO/RTO">
+          <EntitySection id="iso" title="ISO/RTO">
             <RelationshipCards
               items={[
                 {
-                  id: iso.slug,
+                  label: "ISO/RTO",
                   name: iso.name,
-                  type: iso.type,
                   href: `/grid-operators/${iso.slug}`,
                 },
               ]}
