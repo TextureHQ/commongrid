@@ -132,7 +132,7 @@ export function InlineFieldEdit({
     return normalizedNew !== normalizedCurrent;
   }, [currentValue, value]);
 
-  const summaryLongEnough = editSummary.trim().length >= 25;
+  const summaryLongEnough = editSummary.trim().length >= 10;
   const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
 
   const handleSubmit = async () => {
@@ -360,7 +360,7 @@ export function InlineFieldEdit({
                 </label>
                 <div className="flex items-center gap-1">
                   <span className={`text-xs ${summaryLongEnough ? "text-feedback-success" : "text-text-muted"}`}>
-                    {editSummary.trim().length}/25
+                    {editSummary.trim().length}/10
                   </span>
                   {summaryLongEnough && <Icon name="CheckCircle" size="sm" className="text-feedback-success" />}
                 </div>
@@ -369,11 +369,11 @@ export function InlineFieldEdit({
                 id="edit-summary"
                 value={editSummary}
                 onChange={(e) => setEditSummary(e.target.value)}
-                placeholder="Describe your change (minimum 25 characters)"
+                placeholder="Describe your change (minimum 10 characters)"
                 rows={2}
                 className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
               />
-              <p className="text-xs text-text-muted">Example: "Updated customer count from 2023 annual report"</p>
+              <p className="text-xs text-text-muted">A short description helps reviewers verify your update.</p>
             </div>
 
             {/* Source Citation (Collapsible) */}
@@ -437,12 +437,6 @@ export function InlineFieldEdit({
                 </p>
                 <p className="text-sm text-green-700 mt-1">Thank you for improving CommonGrid data quality.</p>
               </div>
-            )}
-
-            {/* Help Text */}
-            {!hasChanges && <p className="text-xs text-text-muted">Change the field value to enable submission.</p>}
-            {hasChanges && !summaryLongEnough && (
-              <p className="text-xs text-text-muted">Add a descriptive edit summary (at least 25 characters).</p>
             )}
           </>
         )}
