@@ -136,7 +136,7 @@ interface EditSummaryFieldProps {
   placeholder?: string;
 }
 
-export function EditSummaryField({ value, onChange, minLength = 25, placeholder }: EditSummaryFieldProps) {
+export function EditSummaryField({ value, onChange, minLength = 10, placeholder }: EditSummaryFieldProps) {
   return (
     <div className="space-y-1">
       <label htmlFor="editSummary" className="flex items-center justify-between text-sm font-medium text-text-body">
@@ -155,6 +155,7 @@ export function EditSummaryField({ value, onChange, minLength = 25, placeholder 
         rows={3}
         className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
       />
+      <p className="text-xs text-text-muted">A short description helps reviewers verify your update.</p>
     </div>
   );
 }

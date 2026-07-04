@@ -112,7 +112,7 @@ export function EditEntityPanel({
   }, [formValues, lookupCurrentValue]);
 
   const hasChanges = Object.keys(changedFields).length > 0;
-  const summaryLongEnough = editSummary.trim().length >= 25;
+  const summaryLongEnough = editSummary.trim().length >= 10;
   const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
 
   // Help text under the disabled submit button explaining what's missing.
@@ -278,11 +278,6 @@ export function EditEntityPanel({
         {/* Footer */}
         {!isLoadingFields && !fieldsError && fields.length > 0 && (
           <div className="border-t border-border-default p-4 space-y-2">
-            {submitBlockedReason && (
-              <p className="text-xs text-text-muted text-right" data-testid="submit-blocked-reason">
-                {submitBlockedReason}
-              </p>
-            )}
             <div className="flex items-center justify-end gap-3">
               <Button variant="secondary" size="md" onPress={onClose}>
                 Cancel
