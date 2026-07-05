@@ -28,7 +28,7 @@ const fuelFilterOptions = [
 ];
 
 export function PowerPlantListPanel() {
-  const { state, setSearch, setTypeFilter } = useExplorer();
+  const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
 
@@ -51,9 +51,9 @@ export function PowerPlantListPanel() {
 
   const handleRowClick = useCallback(
     (slug: string) => {
-      router.push(`/power-plants/${slug}`);
+      navigateToDetail("power-plant", slug);
     },
-    [router]
+    [navigateToDetail]
   );
 
   return (

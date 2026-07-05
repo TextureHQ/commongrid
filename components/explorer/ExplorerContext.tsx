@@ -22,7 +22,7 @@ export type EntityTab =
   | "ev-charging"
   | "pricing-nodes"
   | "substations";
-export type DetailView = "utility" | "iso" | "rto" | "ba" | "program";
+export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
 
 /**
  * Route shape for CommonGrid's explore stack.
