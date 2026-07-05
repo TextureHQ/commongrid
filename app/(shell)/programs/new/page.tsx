@@ -10,6 +10,7 @@ import {
   SourceCitationFields,
 } from "@/components/contributions/EntityFormFields";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useUtilityList } from "@/hooks/useUtilityList";
 
 export default function CreateProgramPage() {
   const router = useRouter();
@@ -18,6 +19,10 @@ export default function CreateProgramPage() {
   const [fields, setFields] = useState<EditableField[]>([]);
   const [isLoadingFields, setIsLoadingFields] = useState(true);
   const [fieldsError, setFieldsError] = useState<string | null>(null);
+
+  // Utility association (not part of editable-fields since it's a complex type)
+  const [adminUtilitySlug, setAdminUtilitySlug] = useState("");
+  const { utilities, isLoading: utilitiesLoading } = useUtilityList({ limit: 200 });
 
   // Form state
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
@@ -132,7 +137,12 @@ export default function CreateProgramPage() {
         entity_id: crypto.randomUUID(),
         entity_version: 0,
         change_type: "create",
-        changes,
+        changes: {
+          ...changes,
+          ...(adminUtilitySlug
+            ? { organizations: { old: null, new: [{ entityId: adminUtilitySlug, role: "ADMINISTRATOR" }] } }
+            : {}),
+        },
         edit_summary: editSummary.trim(),
         source_type: sourceType,
         source_url: sourceUrl || null,
@@ -229,6 +239,30 @@ export default function CreateProgramPage() {
 
               {/* Form Fields */}
               <EntityFormFields fields={fields} formValues={formValues} onChange={handleFieldChange} mode="create" />
+
+              {/* Utility Association */}
+              <div className="space-y-1">
+                <label htmlFor="adminUtility" className="flex items-center gap-2 text-sm font-medium text-text-body">
+                  Administrator Utility
+                </label>
+                <select
+                  id="adminUtility"
+                  value={adminUtilitySlug}
+                  onChange={(e) => setAdminUtilitySlug(e.target.value)}
+                  disabled={utilitiesLoading}
+                  className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                >
+                  <option value="">-- Select a utility --</option>
+                  {utilities.map((u) => (
+                    <option key={u.slug} value={u.slug}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-text-muted">
+                  The utility that administers this demand-response or rebate program.
+                </p>
+              </div>
 
               {/* Source Citation */}
               <SourceCitationFields
