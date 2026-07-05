@@ -6,7 +6,7 @@ import {
   useUrlExploreRouteStack,
 } from "@texturehq/edges-explore";
 import type { FeatureCollection } from "geojson";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
 
 // ---------------------------------------------------------------------------
@@ -253,7 +253,6 @@ export function useExplorer(): ExplorerContextValue {
 // ---------------------------------------------------------------------------
 
 export function ExplorerProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [view, dispatch] = useReducer(viewReducer, initialView);
 
@@ -264,16 +263,17 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     getRouteKey: (route) => route.id,
   });
 
-  // Stack → URL sync. Push only when the serialized form differs from the
-  // current URL — calling router.replace on every render would spam history.
+  // Stack → URL sync. Use raw history.replaceState to avoid triggering
+  // Next.js routing machinery (router.replace causes re-renders that can
+  // create feedback loops with useSearchParams / initialSearch serialization).
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const next = stack.serializedSearch;
+    const next = serializeRoutes(stack.routes).toString();
     const current = window.location.search.replace(/^\?/, "");
     if (next !== current) {
-      router.replace(next ? `${window.location.pathname}?${next}` : window.location.pathname, { scroll: false });
+      window.history.replaceState(null, "", next ? `${window.location.pathname}?${next}` : window.location.pathname);
     }
-  }, [stack.serializedSearch, router]);
+  }, [stack.routes]);
 
   // Derive the legacy ExplorerState shape from the stack + view state so
   // consuming panels continue to read `state.tab`, `state.slug`, etc.
