@@ -24,7 +24,7 @@ const isoFilterOptions = [
 ];
 
 export function PricingNodeListPanel() {
-  const { state, setSearch, setTypeFilter } = useExplorer();
+  const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
 
@@ -46,9 +46,9 @@ export function PricingNodeListPanel() {
 
   const handleRowClick = useCallback(
     (slug: string) => {
-      router.push(`/pricing-nodes/${slug}`);
+      navigateToDetail("pricing-node", slug);
     },
-    [router]
+    [navigateToDetail]
   );
 
   return (

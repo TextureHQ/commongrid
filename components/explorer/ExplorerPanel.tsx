@@ -8,6 +8,7 @@ import { IsoDetailPanel } from "./panels/IsoDetailPanel";
 import { OverviewPanel } from "./panels/OverviewPanel";
 import { PowerPlantDetailPanel } from "./panels/PowerPlantDetailPanel";
 import { PowerPlantListPanel } from "./panels/PowerPlantListPanel";
+import { PricingNodeDetailPanel } from "./panels/PricingNodeDetailPanel";
 import { PricingNodeListPanel } from "./panels/PricingNodeListPanel";
 import { ProgramDetailPanel } from "./panels/ProgramDetailPanel";
 import { ProgramListPanel } from "./panels/ProgramListPanel";
@@ -47,6 +48,8 @@ export function ExplorerPanel({ listSource }: ExplorerPanelProps = {}) {
         return <ProgramDetailPanel slug={state.slug} />;
       case "power-plants":
         return <PowerPlantDetailPanel slug={state.slug} />;
+      case "pricing-nodes":
+        return <PricingNodeDetailPanel slug={state.slug} />;
     }
   }
 

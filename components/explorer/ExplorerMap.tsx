@@ -959,7 +959,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         events: {
           onClick: (feature: LayerFeature) => {
             const slug = feature.properties.slug;
-            if (slug) router.push(`/pricing-nodes/${slug}`);
+            if (slug) navigateToDetail("pricing-node", slug);
           },
         },
       })
