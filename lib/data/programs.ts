@@ -43,7 +43,7 @@ export interface ProgramFilters {
 function normalizeOrganizations(raw: unknown): ProgramOrganization[] {
   if (!Array.isArray(raw)) return [];
 
-  const result = raw
+  return raw
     .map((item) => {
       // Already a proper object with entityId
       if (item !== null && typeof item === "object" && !Array.isArray(item) && "entityId" in item) {
