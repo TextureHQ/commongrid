@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
+import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
 import { AssetTypeLabel, CompensationTypeLabel, CompensationUnitLabel, type Program } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
@@ -72,6 +73,9 @@ export function ProgramListPanel() {
   const { state, setSearch, setTypeFilter, navigateToDetail, setFilteredUtilitySlugs } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
+
+  // Load utility names for displaying in the list (slug → name lookup)
+  const { utilities } = useUtilityList({ limit: 200 });
 
   const params = useMemo(
     () => ({
@@ -153,14 +157,15 @@ export function ProgramListPanel() {
     >
       {items.map((row) => {
         const adminOrg = row.organizations.find((o) => o.role === "ADMINISTRATOR");
-        const utilityDisplay = adminOrg?.entityId ?? "—";
+        const adminSlug = adminOrg?.entityId ?? null;
+        const utilityName = adminSlug ? (utilities.find((u) => u.slug === adminSlug)?.name ?? adminSlug) : "—";
         const compensationSummary = getPrimaryCompensationSummary(row);
         return (
           <PanelEntityRow
             key={row.slug}
             leading={<span className="h-2 w-2 rounded-full" style={{ background: entityKindColor("programs") }} />}
             title={row.name}
-            subtitle={`${utilityDisplay} · ${row.assetTypes
+            subtitle={`${utilityName} · ${row.assetTypes
               .map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at)
               .join(", ")}`}
             trailing={
