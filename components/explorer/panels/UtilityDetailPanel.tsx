@@ -6,6 +6,7 @@ import { useEffect, useMemo } from "react";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useProgramList } from "@/hooks/useProgramList";
 import { useRto } from "@/hooks/useRto";
 import { useUtility } from "@/hooks/useUtility";
 import { useUtilityList } from "@/hooks/useUtilityList";
@@ -92,6 +93,12 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     utilityId: utility?.id,
     limit: 200,
   });
+
+  const { programs: allPrograms } = useProgramList({ limit: 200 });
+  const utilityPrograms = useMemo(
+    () => (utility ? allPrograms.filter((p) => p.organizations.some((o) => o.entityId === utility.slug)) : []),
+    [utility, allPrograms]
+  );
 
   if (utilitiesLoading) {
     return <div className="cg-explore-loading">Loading…</div>;
@@ -292,6 +299,34 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
             {utilityPowerPlants.length > 15 && (
               <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
                 + {utilityPowerPlants.length - 15} more
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Programs */}
+        {utilityPrograms.length > 0 && (
+          <>
+            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+              Programs ({utilityPrograms.length})
+            </div>
+            {utilityPrograms.slice(0, 15).map((prog) => (
+              <div
+                key={prog.slug}
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("program", prog.slug)}
+              >
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("programs") }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{prog.name}</div>
+                  <div className="cg-explore-related-type">{prog.status}</div>
+                </div>
+                <ArrowIcon />
+              </div>
+            ))}
+            {utilityPrograms.length > 15 && (
+              <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
+                + {utilityPrograms.length - 15} more
               </div>
             )}
           </>

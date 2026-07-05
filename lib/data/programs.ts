@@ -4,7 +4,17 @@
  * Reads from Postgres via Drizzle.
  */
 
-import type { AssetType, GridService, MarketSegment, Program, ProgramStatus } from "@/types/programs";
+import type {
+  AssetType,
+  CompensationType,
+  CompensationUnit,
+  GridService,
+  MarketSegment,
+  Program,
+  ProgramOrganization,
+  ProgramOrganizationRole,
+  ProgramStatus,
+} from "@/types/programs";
 
 // ---------------------------------------------------------------------------
 // Filters
@@ -20,6 +30,58 @@ export interface ProgramFilters {
 }
 
 // ---------------------------------------------------------------------------
+// Data normalization
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalize organizations from the DB into the typed ProgramOrganization shape.
+ *
+ * In the current seed data, organizations is stored as a flat array of utility
+ * slugs (e.g. ["util-001"]).  This normalizer treats bare strings as ADMINISTRATOR
+ * entries so callers always receive `ProgramOrganization[]`.
+ */
+function normalizeOrganizations(raw: unknown): ProgramOrganization[] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .map((item) => {
+      // Already a proper object with entityId
+      if (item !== null && typeof item === "object" && !Array.isArray(item) && "entityId" in item) {
+        return item as ProgramOrganization;
+      }
+      // Legacy flat string — treat as ADMINISTRATOR
+      if (typeof item === "string" && item.length > 0) {
+        return { entityId: item, role: "ADMINISTRATOR" as ProgramOrganizationRole };
+      }
+      return null;
+    })
+    .filter((o): o is ProgramOrganization => o !== null);
+}
+
+/**
+ * Normalize compensation_tiers from the DB into the typed CompensationTier shape.
+ *
+ * Seed data stores tiers as flat strings (e.g. ["flat-rate"]). This normalizer
+ * converts bare strings into minimal CompensationTier objects so callers never
+ * see a raw string.
+ */
+function normalizeCompensationTiers(raw: unknown): Program["compensationTiers"] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .map((item) => {
+      if (item !== null && typeof item === "object" && !Array.isArray(item) && "type" in item) {
+        return item as Program["compensationTiers"][number];
+      }
+      if (typeof item === "string" && item.length > 0) {
+        return { tier: 1, type: "FLAT" as CompensationType, amount: 0, unit: "FLAT" as CompensationUnit };
+      }
+      return null;
+    })
+    .filter((t): t is Program["compensationTiers"][number] => t !== null);
+}
+
+// ---------------------------------------------------------------------------
 // DB source
 // ---------------------------------------------------------------------------
 
@@ -29,14 +91,14 @@ function dbRowToProgram(row: Record<string, unknown>): Program {
     slug: row.slug as string,
     name: row.name as string,
     description: (row.description as string | null) ?? undefined,
-    organizations: (row.organizations as Program["organizations"]) ?? [],
+    organizations: normalizeOrganizations(row.organizations),
     assetTypes: (row.assetTypes as AssetType[]) ?? [],
     marketSegments: (row.marketSegments as MarketSegment[]) ?? [],
     participationModels: (row.participationModels as Program["participationModels"]) ?? [],
     incentiveStructures: (row.incentiveStructures as Program["incentiveStructures"]) ?? [],
     gridServices: (row.gridServices as GridService[]) ?? [],
     regions: (row.regions as string[]) ?? [],
-    compensationTiers: (row.compensationTiers as Program["compensationTiers"]) ?? [],
+    compensationTiers: normalizeCompensationTiers(row.compensationTiers),
     capacityTarget: (row.capacityTarget as number | null) ?? undefined,
     maxEnrollments: (row.maxEnrollments as number | null) ?? undefined,
     programSeason: (row.programSeason as Program["programSeason"]) ?? undefined,
