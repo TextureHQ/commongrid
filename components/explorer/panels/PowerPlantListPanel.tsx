@@ -13,9 +13,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
-import { useExplorer } from "../ExplorerContext";
 import { formatCapacity, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
 import { FUEL_CATEGORIES, FuelCategoryLabel, type PowerPlant } from "@/types/entities";
+import { useExplorer } from "../ExplorerContext";
 import { InfiniteListShell } from "./InfiniteListShell";
 
 const fuelFilterOptions = [
