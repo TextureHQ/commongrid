@@ -13,9 +13,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
+import { useExplorer } from "../ExplorerContext";
 import { formatCapacity, getFuelCategoryColor, getFuelCategoryLabel } from "@/lib/formatting";
 import { FUEL_CATEGORIES, FuelCategoryLabel, type PowerPlant } from "@/types/entities";
-import { useExplorer } from "../ExplorerContext";
 import { InfiniteListShell } from "./InfiniteListShell";
 
 const fuelFilterOptions = [
@@ -28,7 +28,7 @@ const fuelFilterOptions = [
 ];
 
 export function PowerPlantListPanel() {
-  const { state, setSearch, setTypeFilter } = useExplorer();
+  const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
 
@@ -51,9 +51,9 @@ export function PowerPlantListPanel() {
 
   const handleRowClick = useCallback(
     (slug: string) => {
-      router.push(`/power-plants/${slug}`);
+      navigateToDetail("power-plant", slug);
     },
-    [router]
+    [navigateToDetail]
   );
 
   return (
