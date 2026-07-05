@@ -25,6 +25,8 @@ export default function CreateTransmissionLinePage() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceDate, setSourceDate] = useState("");
   const [editSummary, setEditSummary] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,10 +82,13 @@ export default function CreateTransmissionLinePage() {
         result[key] = { old: null, new: value };
       }
     }
+    // Always include geographic coordinates if provided
+    if (latitude.trim()) result.latitude = { old: null, new: parseFloat(latitude) };
+    if (longitude.trim()) result.longitude = { old: null, new: parseFloat(longitude) };
     return result;
-  }, [formValues]);
+  }, [formValues, latitude, longitude]);
 
-  const hasRequiredFields = !!formValues.owner;
+  const hasRequiredFields = !!formValues.owner && !!latitude.trim() && !!longitude.trim();
   const canSubmit = hasRequiredFields && editSummary.trim().length >= 25 && !isSubmitting;
 
   const handleSubmit = async () => {
@@ -180,6 +185,54 @@ export default function CreateTransmissionLinePage() {
             <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
               <p className="text-sm font-medium text-blue-800">No editable fields</p>
               <p className="text-sm text-blue-700 mt-1">This entity type has no editable fields configured yet.</p>
+            </div>
+          )}
+
+          {/* Geographic Coordinates — always shown for transmission lines */}
+          {!isLoadingFields && (
+            <div className="space-y-4 rounded-md border border-border-default p-4">
+              <h3 className="text-sm font-semibold text-text-primary">Geographic Coordinates</h3>
+              <p className="text-xs text-text-muted">
+                Enter the approximate center point of the transmission line. You can find coordinates using{" "}
+                <a href="https://www.openstreetmap.org" target="_blank" rel="noopener noreferrer" className="underline">
+                  OpenStreetMap
+                </a>{" "}
+                (right-click → Show address).
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="latitude" className="block text-sm font-medium text-text-primary mb-1">
+                    Latitude
+                  </label>
+                  <input
+                    id="latitude"
+                    type="number"
+                    step="any"
+                    min="-90"
+                    max="90"
+                    className="w-full rounded-md border border-border-default px-3 py-2 text-sm"
+                    placeholder="e.g. 40.7128"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="longitude" className="block text-sm font-medium text-text-primary mb-1">
+                    Longitude
+                  </label>
+                  <input
+                    id="longitude"
+                    type="number"
+                    step="any"
+                    min="-180"
+                    max="180"
+                    className="w-full rounded-md border border-border-default px-3 py-2 text-sm"
+                    placeholder="e.g. -74.0060"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
           )}
 

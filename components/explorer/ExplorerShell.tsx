@@ -198,119 +198,7 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
   );
 }
 
-// ---------------------------------------------------------------------------
-// ListSourceSelector — pinned to the top of the panel body in map mode
-// ---------------------------------------------------------------------------
-
 const VALID_MAP_REGIONS: MapRegion[] = ["utilities", "grid-operators", "programs", "pricing-nodes"];
-
-function ListSourceSelector({
-  mapRegion,
-  mapOverlays,
-  onMapRegionChange,
-}: {
-  mapRegion: MapRegion;
-  mapOverlays: MapOverlays;
-  onMapRegionChange?: (region: MapRegion) => void;
-}) {
-  const { state, setListSource, stack } = useExplorer();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Active list-route tab — the tab the user navigated to. Always a valid
-  // option here so the snap-back effect below never fights an in-flight
-  // navigation (see the loop bug fixed in #311 for context).
-  const activeListTab = useMemo<EntityTab | null>(() => {
-    const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
-    return currentList?.payload.tab ?? null;
-  }, [stack.routes]);
-
-  const options = useMemo<EntityTab[]>(() => {
-    const seen = new Set<EntityTab>();
-    const result: EntityTab[] = [];
-    const addIfNew = (t: EntityTab) => {
-      if (!seen.has(t)) {
-        seen.add(t);
-        result.push(t);
-      }
-    };
-    // Include the navigated-to list tab first so it's always a valid
-    // selection even before `mapRegion` / overlays have synced to it.
-    // Without this, navigating to Programs / Grid Operators / Pricing
-    // Nodes from the overview triggered an infinite ping-pong between
-    // this component's snap-back effect and the ExplorerContext effect
-    // that mirrors stack.list.tab → state.listSource.
-    if (activeListTab) addIfNew(activeListTab);
-    addIfNew(mapRegion as EntityTab);
-    for (const opt of OVERLAY_OPTIONS) {
-      if (mapOverlays[opt.key]) addIfNew(opt.key as EntityTab);
-    }
-    return result;
-  }, [activeListTab, mapRegion, mapOverlays]);
-
-  const activeSource: EntityTab = options.includes(state.listSource) ? state.listSource : (mapRegion as EntityTab);
-
-  useEffect(() => {
-    if (!options.includes(state.listSource)) {
-      setListSource(mapRegion as EntityTab);
-    }
-  }, [options, state.listSource, mapRegion, setListSource]);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
-
-  return (
-    <div
-      className="flex items-center gap-1.5 px-3 py-2 shrink-0"
-      style={{
-        borderBottom: "1px solid var(--color-border-default)",
-      }}
-    >
-      <span style={{ fontSize: 12, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>Showing:</span>
-      <div ref={ref} style={{ position: "relative" }}>
-        <button
-          type="button"
-          className="cg-explore-icon-btn"
-          onClick={() => setOpen(!open)}
-          style={{ gap: 6, fontWeight: 500 }}
-        >
-          {ENTITY_LABELS[activeSource]}
-          <ChevronDownIcon />
-        </button>
-        {open && (
-          <div className="cg-explore-dropdown">
-            {options.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                className="cg-explore-dropdown-item"
-                data-active={activeSource === opt || undefined}
-                onClick={() => {
-                  setListSource(opt);
-                  if (onMapRegionChange && VALID_MAP_REGIONS.includes(opt as MapRegion)) {
-                    onMapRegionChange(opt as MapRegion);
-                  }
-                  setOpen(false);
-                }}
-              >
-                <span className="cg-explore-dropdown-check">{activeSource === opt && <CheckIcon />}</span>
-                {ENTITY_LABELS[opt]}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Map layout — ExploreShell from @texturehq/edges-explore/layout owns the
@@ -359,14 +247,7 @@ function MapLayout({
       getRouteLabel={getExploreRouteLabel}
       homeRoute={{ type: "overview", id: "overview" }}
       homeRouteLabel="Open Overview"
-      panelChildren={
-        <>
-          {stack.current?.type !== "overview" && (
-            <ListSourceSelector mapRegion={mapRegion} mapOverlays={mapOverlays} onMapRegionChange={onMapRegionChange} />
-          )}
-          <ExplorerPanel listSource={state.listSource} />
-        </>
-      }
+      panelChildren={<ExplorerPanel listSource={state.listSource} />}
     />
   );
 }
