@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  addFilterCondition,
-  createEmptyFilter,
-  type FacetConfig,
-  FilterDialog,
-  type FilterState,
-  getFilterFields,
-} from "@texturehq/edges";
+import { type FacetConfig, type FilterState, getFilterFields } from "@texturehq/edges";
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -39,117 +32,21 @@ const sortOptions = [
   { id: "name:desc", label: "Name Z-A", value: "name:desc" },
 ];
 
-const ALL_STATE_CODES = [
-  "AK",
-  "AL",
-  "AR",
-  "AZ",
-  "CA",
-  "CO",
-  "CT",
-  "DC",
-  "DE",
-  "FL",
-  "GA",
-  "HI",
-  "IA",
-  "ID",
-  "IL",
-  "IN",
-  "KS",
-  "KY",
-  "LA",
-  "MA",
-  "MD",
-  "ME",
-  "MI",
-  "MN",
-  "MO",
-  "MS",
-  "MT",
-  "NC",
-  "ND",
-  "NE",
-  "NH",
-  "NJ",
-  "NM",
-  "NV",
-  "NY",
-  "OH",
-  "OK",
-  "OR",
-  "PA",
-  "RI",
-  "SC",
-  "SD",
-  "TN",
-  "TX",
-  "UT",
-  "VA",
-  "VT",
-  "WA",
-  "WI",
-  "WV",
-  "WY",
-];
+// ── Segment filter options (shown as inline buttons) ────────────────────────
 
-const FACET_CONFIGS: FacetConfig[] = [
-  {
-    field: "segment",
-    label: "Segment",
-    type: "string",
-    values: Object.values(UtilitySegment).map((seg) => ({
-      value: seg,
-      label: UtilitySegmentLabel[seg],
-    })),
-  },
-  {
-    field: "jurisdictions",
-    label: "Jurisdictions",
-    type: "string",
-    values: ALL_STATE_CODES.map((code) => ({ value: code, label: code })),
-    searchThreshold: 5,
-  },
-];
+const SEGMENT_OPTIONS = [
+  { value: "DISTRIBUTION_COOPERATIVE", label: "Distribution Co-op" },
+  { value: "GENERATION_AND_TRANSMISSION", label: "G&T Co-op" },
+  { value: "INVESTOR_OWNED_UTILITY", label: "Investor-Owned" },
+  { value: "MUNICIPAL_UTILITY", label: "Municipal" },
+  { value: "COMMUNITY_CHOICE_AGGREGATOR", label: "CCA" },
+  { value: "POLITICAL_SUBDIVISION", label: "Political Sub." },
+  { value: "TRANSMISSION_OPERATOR", label: "Transmission Op." },
+  { value: "JOINT_ACTION_AGENCY", label: "Joint Action" },
+  { value: "FEDERAL", label: "Federal" },
+] as const;
 
-function getSelectedValues(filters: FilterState, field: string): string[] {
-  if (!filters) return [];
-  const values: string[] = [];
-  function traverse(f: FilterState) {
-    if (!f) return;
-    for (const condition of f.conditions) {
-      if ("conditions" in condition) {
-        traverse(condition);
-      } else if (condition.field === field && condition.operator === "in") {
-        if (Array.isArray(condition.value)) {
-          values.push(...condition.value.map(String));
-        }
-      }
-    }
-  }
-  traverse(filters);
-  return values;
-}
-
-function filtersToJurisdictions(filters: FilterState): string[] {
-  return getSelectedValues(filters, "jurisdictions");
-}
-
-function filtersToSegment(filters: FilterState): string {
-  const values = getSelectedValues(filters, "segment");
-  return values.length === 1 ? values[0] : "all";
-}
-
-function buildFilterState(segment: string, jurisdictions: string[]): FilterState {
-  let filters = createEmptyFilter();
-  if (segment !== "all") {
-    filters = addFilterCondition(filters, { field: "segment", operator: "in", value: [segment] });
-  }
-  if (jurisdictions.length > 0) {
-    filters = addFilterCondition(filters, { field: "jurisdictions", operator: "in", value: jurisdictions });
-  }
-  return filters;
-}
+// ── API helpers ─────────────────────────────────────────────────────────────
 
 function buildApiParams(
   q: string,
@@ -189,7 +86,6 @@ export function UtilityListPanel() {
   const router = useRouter();
   const { user } = useCurrentUser();
 
-  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [sortValue, setSortValue] = useState("name:asc");
 
   const [utilities, setUtilities] = useState<Utility[]>([]);
@@ -257,11 +153,6 @@ export function UtilityListPanel() {
     setIsLoadingMore(false);
   }, [meta.nextCursor, isLoadingMore, debouncedSearch, state.segment, state.jurisdictions, sortValue]);
 
-  const filterState = useMemo(
-    () => buildFilterState(state.segment, state.jurisdictions),
-    [state.segment, state.jurisdictions]
-  );
-
   const rows: UtilityRow[] = useMemo(
     () =>
       utilities.map((u) => ({
@@ -276,20 +167,7 @@ export function UtilityListPanel() {
     [utilities]
   );
 
-  const handleApplyFilters = useCallback(
-    (newFilters: FilterState) => {
-      setSegment(filtersToSegment(newFilters));
-      setJurisdictions(filtersToJurisdictions(newFilters));
-    },
-    [setSegment, setJurisdictions]
-  );
-
-  const handleClearFilters = useCallback(() => {
-    setSegment("all");
-    setJurisdictions([]);
-  }, [setSegment, setJurisdictions]);
-
-  const activeFilterCount = getFilterFields(filterState).length;
+  const activeFilterCount = state.segment !== "all" ? 1 : 0;
 
   if (isLoading) {
     return (
@@ -312,14 +190,6 @@ export function UtilityListPanel() {
             <strong>{meta.total.toLocaleString()}</strong> utilities
           </span>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <button
-              type="button"
-              className="cg-explore-icon-btn"
-              data-active={activeFilterCount > 0}
-              onClick={() => setFilterDialogOpen(true)}
-            >
-              <FilterIcon /> Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
-            </button>
             <select className="cg-explore-select" value={sortValue} onChange={(e) => setSortValue(e.target.value)}>
               {sortOptions.map((opt) => (
                 <option key={opt.id} value={opt.value}>
@@ -360,6 +230,33 @@ export function UtilityListPanel() {
               </button>
             )}
           </div>
+        </div>
+
+        {/* Inline segment filter buttons */}
+        <div style={{ padding: "4px 12px 8px", display: "flex", gap: 4, flexWrap: "wrap" }}>
+          {SEGMENT_OPTIONS.map((opt) => {
+            const isActive = state.segment === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setSegment(isActive ? "all" : opt.value)}
+                style={{
+                  padding: "2px 8px",
+                  borderRadius: "6px",
+                  fontSize: 11,
+                  fontWeight: isActive ? 600 : 400,
+                  border: `1px solid ${isActive ? "var(--color-action-brand)" : "var(--color-border-muted)"}`,
+                  background: isActive ? "var(--color-action-brand)/0.08" : "transparent",
+                  color: isActive ? "var(--color-action-brand)" : "var(--color-text-secondary)",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -404,17 +301,6 @@ export function UtilityListPanel() {
           </button>
         </div>
       )}
-
-      <FilterDialog
-        isOpen={filterDialogOpen}
-        onClose={() => setFilterDialogOpen(false)}
-        facetConfigs={FACET_CONFIGS}
-        currentFilters={filterState}
-        onApply={handleApplyFilters}
-        onClear={handleClearFilters}
-        title="Filter Utilities"
-        resultCount={meta.total}
-      />
     </div>
   );
 }
