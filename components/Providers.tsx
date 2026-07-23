@@ -2,6 +2,7 @@
 
 import { BrandProvider, ColorModeProvider, NoticeProvider } from "@texturehq/edges";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PostHogProvider } from "@/components/PostHogProvider";
 
 // CommonGrid brand colors derived from edges tokens
 // Use iris-base (blue) for brand identity
@@ -17,12 +18,14 @@ const COMMONGRID_DARK_VARIABLES = {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ErrorBoundary level="page" title="Application Error">
-      <ColorModeProvider>
-        <BrandProvider variables={COMMONGRID_BRAND_VARIABLES} darkVariables={COMMONGRID_DARK_VARIABLES}>
-          <NoticeProvider>{children}</NoticeProvider>
-        </BrandProvider>
-      </ColorModeProvider>
-    </ErrorBoundary>
+    <PostHogProvider>
+      <ErrorBoundary level="page" title="Application Error">
+        <ColorModeProvider>
+          <BrandProvider variables={COMMONGRID_BRAND_VARIABLES} darkVariables={COMMONGRID_DARK_VARIABLES}>
+            <NoticeProvider>{children}</NoticeProvider>
+          </BrandProvider>
+        </ColorModeProvider>
+      </ErrorBoundary>
+    </PostHogProvider>
   );
 }
