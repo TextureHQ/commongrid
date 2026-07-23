@@ -2,6 +2,7 @@
 
 import { Icon, TextField } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import {
   createContext,
   type KeyboardEvent,
@@ -203,6 +204,7 @@ function searchStatic<T extends { name: string; shortName?: string }>(items: T[]
 
 export function GlobalSearchModal() {
   const { isOpen, close } = useGlobalSearch();
+  const posthog = usePostHog();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -312,10 +314,12 @@ export function GlobalSearchModal() {
 
   const navigateTo = useCallback(
     (result: SearchResult) => {
+      // Capture the selected record type, never a free-text query or entity name.
+      posthog.capture("registry_search_result_selected", { entity_type: result.kind });
       router.push(result.href);
       close();
     },
-    [router, close]
+    [router, close, posthog]
   );
 
   const handleKeyDown = useCallback(
@@ -500,6 +504,7 @@ export function GlobalSearchModal() {
                       key={link.href}
                       type="button"
                       onClick={() => {
+                        posthog.capture("registry_browse_category_selected", { entity_type: link.kind });
                         router.push(link.href);
                         close();
                       }}
