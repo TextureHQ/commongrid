@@ -1,4 +1,5 @@
 import { getTile } from "@/lib/pmtiles-server";
+import { resolveOverzoom } from "@/lib/tile-utils";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ z: string; x: string; y: string }> }) {
   const { z, x, y: yRaw } = await params;
@@ -12,7 +13,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ z: 
     return new Response("Invalid tile coordinates", { status: 400 });
   }
 
-  const data = await getTile("pricing-nodes", zNum, xNum, yNum);
+  const resolved = resolveOverzoom(zNum, xNum, yNum);
+  const data = await getTile("pricing-nodes", resolved.z, resolved.x, resolved.y);
 
   if (!data) {
     return new Response(null, { status: 204 });

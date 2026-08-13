@@ -73,9 +73,11 @@ const nextConfig = {
   },
   async rewrites() {
     return {
-      // afterFiles rewrites only trigger when no static file matches,
-      // so zoom 0-10 (static tiles) are served directly, zoom 11+
-      // falls through to the API route for dynamic generation.
+      // Backwards-compat aliases for the legacy `/tiles/{layer}/{z}/{x}/{y}` paths.
+      // The tile tree under `public/tiles/` contains only `.pmtiles` archives;
+      // individual MVT tiles are generated dynamically by `/api/tiles/...`. These
+      // rewrites let existing map clients that still hit `/tiles/...` continue to
+      // work without changing their source URLs.
       afterFiles: [
         // Territories
         { source: '/tiles/territories/:z/:x/:y.pbf', destination: '/api/tiles/territories/:z/:x/:y' },
@@ -83,6 +85,9 @@ const nextConfig = {
         // Power plants
         { source: '/tiles/power-plants/:z/:x/:y.pbf', destination: '/api/tiles/power-plants/:z/:x/:y' },
         { source: '/tiles/power-plants/:z/:x/:y', destination: '/api/tiles/power-plants/:z/:x/:y' },
+        // Substations
+        { source: '/tiles/substations/:z/:x/:y.pbf', destination: '/api/tiles/substations/:z/:x/:y' },
+        { source: '/tiles/substations/:z/:x/:y', destination: '/api/tiles/substations/:z/:x/:y' },
         // EV charging stations
         { source: '/tiles/ev-charging/:z/:x/:y.pbf', destination: '/api/tiles/ev-charging/:z/:x/:y' },
         { source: '/tiles/ev-charging/:z/:x/:y', destination: '/api/tiles/ev-charging/:z/:x/:y' },
