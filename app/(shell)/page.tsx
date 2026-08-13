@@ -16,88 +16,68 @@ function StatNumber({ value, width = 96 }: { value: number | null; width?: numbe
   return <>{formatCount(value)}</>;
 }
 
-const RATE_SCHEDULE_COUNT = "~12k";
-
 const ENTITY_CARDS = [
   {
-    num: "01",
-    cat: "Operators",
+    id: "utilities",
     href: "/grid-operators",
     name: "Electric utilities",
     desc: "All U.S. utilities — IOUs, co-ops, munis, and federal power agencies. Filtered by state, segment, and ISO.",
-    countKey: "utilities" as const,
     tags: ["EIA-861", "FERC"],
   },
   {
-    num: "02",
-    cat: "Markets",
+    id: "grid-operators",
     href: "/grid-operators",
     name: "ISOs, RTOs & balancing authorities",
     desc: "The entities that coordinate dispatch, markets, and reliability across every interconnection.",
-    countKey: "gridOperators" as const,
     tags: ["NERC", "FERC-714"],
   },
   {
-    num: "03",
-    cat: "Programs",
+    id: "programs",
     href: "/explore?view=programs",
     name: "Programs & incentives",
     desc: "Demand response, rebates, EV programs, VPP — queryable by asset type, segment, and territory.",
-    countKey: "programs" as const,
     tags: ["Structured", "Citable"],
   },
   {
-    num: "04",
-    cat: "Tariffs",
+    id: "rates",
     href: "/explore?view=rates",
     name: "Rates & tariffs",
     desc: "Residential and commercial rate structures — TOU windows, demand charges, standby, net metering.",
-    count: RATE_SCHEDULE_COUNT,
     tags: ["OpenEI", "Filed"],
   },
   {
-    num: "05",
-    cat: "Generation",
+    id: "power-plants",
     href: "/power-plants",
     name: "Power plants",
     desc: "Solar, wind, nuclear, gas, hydro — EIA Form 860 normalized and connected to utilities and territories.",
-    countKey: "powerPlants" as const,
     tags: ["EIA-860", ">1 MW"],
   },
   {
-    num: "06",
-    cat: "Transmission",
+    id: "transmission-lines",
     href: "/transmission-lines",
     name: "Transmission lines",
     desc: "High-voltage infrastructure from 69 kV to 765 kV. Spatially queryable, attributed to owners.",
-    countKey: "transmissionLines" as const,
     tags: ["HIFLD", "Spatial"],
   },
   {
-    num: "07",
-    cat: "EV charging",
+    id: "ev-charging",
     href: "/ev-charging",
     name: "EV charging stations",
     desc: "Every public AC and DC station in the U.S. — networks, plug standards, and power levels.",
-    countKey: "evStations" as const,
     tags: ["AFDC", "OCPI"],
   },
   {
-    num: "08",
-    cat: "Wholesale",
+    id: "pricing-nodes",
     href: "/pricing-nodes",
     name: "Pricing nodes",
     desc: "Wholesale market nodes — trading hubs, load zones, SUBLAPs, and generation pricing across 7 ISOs/RTOs.",
-    countKey: "pricingNodes" as const,
     tags: ["LMP", "DA / RT"],
   },
   {
-    num: "09",
-    cat: "Infrastructure",
+    id: "substations",
     href: "/substations",
     name: "Substations",
     desc: "Step-up, step-down, and switching substations — voltage class, owner, and interconnected assets normalized from OpenStreetMap.",
-    countKey: "substations" as const,
     tags: ["OSM", "≥69 kV"],
   },
 ];
@@ -337,42 +317,33 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 border-t border-l border-border-default">
-            {ENTITY_CARDS.map((card) => {
-              const count = card.count ?? (card.countKey ? dynamicCounts[card.countKey] : undefined);
-              return (
-                <Link
-                  key={card.num}
-                  href={card.href}
-                  className="group p-6 border-r border-b border-border-default flex flex-col gap-1.5 min-h-[220px] relative cursor-pointer transition-colors duration-150 text-inherit no-underline hover:bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]"
-                >
-                  <div className="flex items-start justify-between gap-3 font-[family-name:var(--font-fira-code)] text-xs font-medium text-text-muted">
-                    <span>
-                      {card.num} · {card.cat}
-                    </span>
-                    <span className="tabular-nums text-text-heading font-medium">{count}</span>
+            {ENTITY_CARDS.map((card) => (
+              <Link
+                key={card.id}
+                href={card.href}
+                className="group p-6 border-r border-b border-border-default flex flex-col gap-1.5 min-h-[220px] relative cursor-pointer transition-colors duration-150 text-inherit no-underline hover:bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]"
+              >
+                <div className="font-[family-name:var(--font-rethink-sans)] text-[length:var(--text-heading-md-size)] font-[var(--text-heading-md-weight)] leading-[var(--text-heading-md-line-height)] tracking-[var(--text-heading-md-letter-spacing)] text-text-heading mt-0 mb-1">
+                  {card.name}
+                </div>
+                <p className="text-[length:var(--text-body-sm-size)] font-[var(--text-body-sm-weight)] leading-[var(--text-body-sm-line-height)] tracking-[var(--text-body-sm-letter-spacing)] text-text-muted my-1 mb-auto [text-wrap:pretty]">
+                  {card.desc}
+                </p>
+                <div className="flex items-center justify-between pt-3 mt-3 border-t border-dashed border-border-muted">
+                  <div className="flex gap-1.5 flex-wrap">
+                    {card.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption py-0.5 px-1.5 border border-border-default rounded-sm tracking-[.02em]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
-                  <div className="font-[family-name:var(--font-rethink-sans)] text-[length:var(--text-heading-md-size)] font-[var(--text-heading-md-weight)] leading-[var(--text-heading-md-line-height)] tracking-[var(--text-heading-md-letter-spacing)] text-text-heading my-3 mt-3 mb-1">
-                    {card.name}
-                  </div>
-                  <p className="text-[length:var(--text-body-sm-size)] font-[var(--text-body-sm-weight)] leading-[var(--text-body-sm-line-height)] tracking-[var(--text-body-sm-letter-spacing)] text-text-muted my-1 mb-auto [text-wrap:pretty]">
-                    {card.desc}
-                  </p>
-                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-dashed border-border-muted">
-                    <div className="flex gap-1.5 flex-wrap">
-                      {card.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption py-0.5 px-1.5 border border-border-default rounded-sm tracking-[.02em]"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <ArrowIcon />
-                  </div>
-                </Link>
-              );
-            })}
+                  <ArrowIcon />
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -383,12 +354,12 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-6 mb-10 items-end">
             <div>
               <h2 className="font-[family-name:var(--font-rethink-sans)] text-[length:var(--text-display-md-size)] font-[var(--text-display-md-weight)] leading-[var(--text-display-md-line-height)] tracking-[var(--text-display-md-letter-spacing)] text-text-heading max-w-[22ch] m-0 [text-wrap:balance]">
-                Every edit is citable, attributed, and reversible.
+                A living dataset, with every edit citable, attributed, and reversible.
               </h2>
             </div>
             <p className="text-[length:var(--text-body-md-size)] font-[var(--text-body-md-weight)] leading-[var(--text-body-md-line-height)] tracking-[var(--text-body-md-letter-spacing)] text-text-muted max-w-[50ch] m-0 [text-wrap:pretty]">
-              CommonGrid is built like a wiki, not a dump. Every change is a diff with an author, a source, and a
-              timestamp. Every record has a history. Nothing is silently overwritten.
+              CommonGrid is built like a wiki, with every change recorded with an author, a source, and a timestamp.
+              Every record has a history, and no record is silently overwritten.
             </p>
           </div>
 

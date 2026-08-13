@@ -23,6 +23,43 @@ html, body {
 }
 
 /* ══════════════════════════════════════════
+   Body copy contrast
+   ══════════════════════════════════════════
+ * Edges ships secondary/muted/caption/subtle body text a step lighter than
+ * heading text in both themes — #525250 on light, #a09d98 (gray-400) on
+ * dark. On CommonGrid's dense, data-heavy pages that reads washed out at
+ * small sizes, so we pin body copy to the same value as heading text in
+ * each theme: #2c2a26 on light, #e7e6e5 (gray-200) on dark. Contrast on
+ * that text goes from roughly 4.5:1 to 13:1 (light) and 5:1 to 12:1 (dark).
+ *
+ * Deliberately left a step lighter in both themes:
+ *   --color-text-placeholder  Must stay lighter than typed input text so an
+ *                             empty field still reads as empty. It aliases
+ *                             to --color-text-secondary upstream, so it has
+ *                             to be re-pinned explicitly or it would
+ *                             inherit the new body color.
+ *   --color-text-disabled     Must stay visibly inert; untouched upstream.
+ *
+ * Scoped to `html:not(.theme-dark)` / `html.theme-dark` rather than `:root`
+ * so these declarations outrank the later-imported Edges `.theme-dark`
+ * block, and so neither theme leaks into the other. */
+html:not(.theme-dark) {
+  --color-text-secondary: #2c2a26;
+  --color-text-muted: #2c2a26;
+  --color-text-caption: #2c2a26;
+  --color-text-subtle: #2c2a26;
+  --color-text-placeholder: #525250;
+}
+
+html.theme-dark {
+  --color-text-secondary: #e7e6e5;
+  --color-text-muted: #e7e6e5;
+  --color-text-caption: #e7e6e5;
+  --color-text-subtle: #e7e6e5;
+  --color-text-placeholder: #a09d98;
+}
+
+/* ══════════════════════════════════════════
    CommonGrid data visualization colors
    Derived from edges tokens for consistency
    ══════════════════════════════════════════ */
