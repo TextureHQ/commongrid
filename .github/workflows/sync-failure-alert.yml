@@ -1,0 +1,85 @@
+name: Sync Failure Alert
+
+# Scheduled workflows fail silently — nobody is watching the Actions tab, and
+# GitHub only emails the last committer of the cron file. CommonGrid published
+# stale data for ~3 months and empty public snapshots for ~4 because of this
+# (CIR-1271).
+#
+# This workflow reacts to any scheduled data pipeline finishing in a failure
+# state and opens (or updates) a single tracking issue so the failure is visible
+# in the normal triage flow. No secrets required — uses the default GITHUB_TOKEN.
+
+on:
+  workflow_run:
+    workflows:
+      - Sync Monthly Data
+      - Sync Annual Data
+      - Sync Transmission Lines
+      - Sync Pricing Nodes
+      - Sync EV Charging Data
+      - Weekly Database Snapshot
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  alert:
+    # Only alert on genuine failures of *scheduled* runs. Manual
+    # workflow_dispatch runs are being actively watched by a human already.
+    if: >
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open or update failure tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          WF_NAME: ${{ github.event.workflow_run.name }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        shell: bash -euo pipefail {0}
+        run: |
+          TITLE="🔴 Scheduled sync failing: ${WF_NAME}"
+
+          # Find an existing open issue for this workflow so repeated failures
+          # append to one thread instead of spamming a new issue every run.
+          EXISTING=$(gh issue list \
+            --repo "$REPO" \
+            --state open \
+            --label sync-failure \
+            --search "\"${WF_NAME}\" in:title" \
+            --json number \
+            --jq '.[0].number // empty')
+
+          # Built with printf rather than a heredoc: an indented closing EOF
+          # does not terminate a <<EOF heredoc, and leading indentation would
+          # leak into the issue body as Markdown code blocks.
+          BODY=$(printf '%s\n' \
+            "Scheduled run of **${WF_NAME}** failed." \
+            "" \
+            "- Run: ${RUN_URL}" \
+            "- Run ID: \`${RUN_ID}\`" \
+            "- Detected: $(date -u '+%Y-%m-%d %H:%M UTC')" \
+            "" \
+            'This issue is opened automatically by `sync-failure-alert.yml`.' \
+            'It will be updated on subsequent failures. Close it once the pipeline is green again.')
+
+          if [ -n "$EXISTING" ]; then
+            echo "Appending to existing issue #${EXISTING}"
+            gh issue comment "$EXISTING" --repo "$REPO" --body "$BODY"
+          else
+            echo "Opening new tracking issue"
+            gh label create sync-failure \
+              --repo "$REPO" \
+              --color B60205 \
+              --description "Automated data sync pipeline failure" \
+              2>/dev/null || true
+            gh issue create \
+              --repo "$REPO" \
+              --title "$TITLE" \
+              --label sync-failure \
+              --body "$BODY"
+          fi

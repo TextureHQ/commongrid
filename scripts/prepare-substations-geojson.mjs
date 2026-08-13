@@ -22,8 +22,14 @@ function voltageBandForMax(kv) {
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    console.error("❌ DATABASE_URL is not set");
-    process.exit(1);
+    // Exit 0, not 1. This is one optional layer in a multi-layer tile build;
+    // a missing DB credential must not discard the other five layers that were
+    // just generated successfully. build-tiles.sh already handles a missing
+    // .tmp-substations.geojson by skipping tile generation for this layer.
+    // Previously this exited 1 and broke every sync workflow for ~3 months
+    // (CIR-1271).
+    console.warn("⚠️  DATABASE_URL is not set — skipping substation GeoJSON. Substation tiles will not be rebuilt.");
+    process.exit(0);
   }
 
   const sql = neon(url);

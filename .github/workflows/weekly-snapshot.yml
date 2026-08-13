@@ -37,9 +37,26 @@ jobs:
       - name: Create snapshot directory
         run: mkdir -p "$SNAPSHOT_DIR"
 
+      # Fail loudly and early if the DB credential is missing. Without this the
+      # export steps below silently produced 20-byte (empty) gzip files that were
+      # still published as public releases — see CIR-1271.
+      - name: Verify DATABASE_URL is present
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is not set — refusing to publish an empty snapshot."
+            exit 1
+          fi
+          echo "DATABASE_URL is present."
+
       - name: Export full database (SQL)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # `pipefail` is essential: without it, `pg_dump | gzip` reports the exit
+        # status of gzip (0) even when pg_dump fails, which is how empty
+        # snapshots got published for months.
+        shell: bash -euo pipefail {0}
         run: |
           echo "Dumping database..."
           pg_dump "$DATABASE_URL" \
@@ -54,6 +71,7 @@ jobs:
       - name: Export GeoJSON — Utilities
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        shell: bash -euo pipefail {0}
         run: |
           psql "$DATABASE_URL" -t -A -c "
             SELECT json_build_object(
@@ -84,6 +102,7 @@ jobs:
       - name: Export GeoJSON — EV Stations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        shell: bash -euo pipefail {0}
         run: |
           psql "$DATABASE_URL" -t -A -c "
             SELECT json_build_object(
@@ -118,6 +137,7 @@ jobs:
       - name: Export GeoJSON — Power Plants
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        shell: bash -euo pipefail {0}
         run: |
           psql "$DATABASE_URL" -t -A -c "
             SELECT json_build_object(
@@ -150,6 +170,7 @@ jobs:
       - name: Export GeoJSON — Transmission Lines
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        shell: bash -euo pipefail {0}
         run: |
           psql "$DATABASE_URL" -t -A -c "
             SELECT json_build_object(
@@ -178,6 +199,7 @@ jobs:
       - name: Export GeoJSON — Pricing Nodes
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        shell: bash -euo pipefail {0}
         run: |
           psql "$DATABASE_URL" -t -A -c "
             SELECT json_build_object(
@@ -205,6 +227,33 @@ jobs:
             WHERE deleted_at IS NULL
           " | gzip -9 > "$SNAPSHOT_DIR/pricing-nodes.geojson.gz"
           echo "Pricing nodes GeoJSON size: $(du -h "$SNAPSHOT_DIR/pricing-nodes.geojson.gz" | cut -f1)"
+
+      # Guard against publishing empty/garbage data to the public. An empty gzip
+      # stream is 20 bytes, and every asset in every release from W17–W32 was
+      # exactly that. Validate decompressed content, not just file presence.
+      - name: Validate snapshot artifacts are non-empty
+        shell: bash -euo pipefail {0}
+        run: |
+          cd "$SNAPSHOT_DIR"
+          FAILED=0
+          for f in *.gz; do
+            BYTES=$(gunzip -c "$f" | wc -c)
+            if [ "$BYTES" -lt 100 ]; then
+              echo "::error::$f decompresses to ${BYTES} bytes — refusing to publish an empty snapshot."
+              FAILED=1
+            else
+              echo "OK  $f — ${BYTES} bytes decompressed"
+            fi
+          done
+          # GeoJSON exports must contain at least one feature, not just an empty
+          # FeatureCollection shell.
+          for f in *.geojson.gz; do
+            if gunzip -c "$f" | grep -q '"features":\[\]'; then
+              echo "::error::$f contains zero features — refusing to publish."
+              FAILED=1
+            fi
+          done
+          exit $FAILED
 
       - name: Generate manifest
         run: |
