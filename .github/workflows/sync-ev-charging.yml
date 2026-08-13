@@ -28,6 +28,11 @@ jobs:
           git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
           cd /tmp/tippecanoe && make -j$(nproc) && sudo make install
       - name: Rebuild tiles
+        env:
+          # Required by prepare-substations-geojson.mjs, which reads substation
+          # geometry from Neon. Without it build-tiles.sh exits 1 and the whole
+          # sync job fails *after* regenerating the other layers (CIR-1271).
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: bash scripts/build-tiles.sh
       - name: Commit & push if changed
         run: |
