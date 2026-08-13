@@ -14,6 +14,7 @@ import {
   FieldList,
   RelationshipCards,
 } from "@/components/entity";
+import { usePowerPlant } from "@/hooks/usePowerPlant";
 import { usePricingNode } from "@/hooks/usePricingNode";
 import { usePricingNodeList } from "@/hooks/usePricingNodeList";
 import { getIsoColor, ISO_FULL_NAMES, ISO_LABELS, NODE_TYPE_LABELS } from "@/types/pricing-nodes";
@@ -27,6 +28,14 @@ export default function PricingNodeDetailPage() {
     iso: node?.iso,
     limit: 200,
   });
+
+  // Resolve the linked generator. `eia_plant_code` is EIA's identifier, but
+  // power plant pages are addressed by slug, so we have to resolve the code
+  // to the real plant before we can link to it (a raw
+  // `/power-plants/<eia_plant_code>` href used to 404). The detail endpoint
+  // accepts either identifier, so passing the code straight through gives us
+  // the canonical slug plus the plant's name for the card label.
+  const { powerPlant: linkedPlant } = usePowerPlant(node?.eiaPlantCode);
 
   const nearbyNodes = useMemo(() => {
     if (!node || sameIsoNodes.length === 0) return [];
@@ -108,7 +117,7 @@ export default function PricingNodeDetailPage() {
             id: "eiaPlantCode",
             label: "EIA Plant Code",
             value: node.eiaPlantCode,
-            href: `/power-plants/${node.eiaPlantCode}`,
+            ...(linkedPlant ? { href: `/power-plants/${linkedPlant.slug}` } : {}),
             editable: false,
           },
         ]
@@ -214,7 +223,17 @@ export default function PricingNodeDetailPage() {
         {node.eiaPlantCode && (
           <EntitySection id="linked-plant" title="Linked Power Plant">
             <RelationshipCards
-              items={[{ label: "EIA Plant Code", name: node.eiaPlantCode, href: `/power-plants/${node.eiaPlantCode}` }]}
+              items={[
+                {
+                  label: "Power Plant",
+                  // Show the plant's name once resolved; fall back to the raw
+                  // EIA code while the lookup is in flight or if the code
+                  // doesn't match a live plant.
+                  name: linkedPlant ? linkedPlant.name : node.eiaPlantCode,
+                  meta: linkedPlant ? `EIA Plant Code ${linkedPlant.plantCode}` : `EIA Plant Code ${node.eiaPlantCode}`,
+                  ...(linkedPlant ? { href: `/power-plants/${linkedPlant.slug}` } : {}),
+                },
+              ]}
             />
           </EntitySection>
         )}
