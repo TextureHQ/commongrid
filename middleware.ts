@@ -50,6 +50,18 @@ function isPublicApiPath(pathname: string): boolean {
 }
 
 /**
+ * Sentry's browser telemetry tunnel (`tunnelRoute` in next.config.mjs).
+ *
+ * Error reports are POSTed here and proxied on to Sentry from the server, which
+ * keeps ad blockers and privacy extensions from dropping them. It must not pass
+ * through Clerk: it is unauthenticated by design, called before a session may
+ * exist, and any middleware failure here silently loses error reports.
+ */
+function isTelemetryTunnelPath(pathname: string): boolean {
+  return pathname === "/monitoring" || pathname.startsWith("/monitoring/");
+}
+
+/**
  * CORS preflight for the public API: short-circuit OPTIONS with 204 + headers.
  */
 export function publicApiPreflightResponse(): NextResponse {
@@ -138,6 +150,10 @@ export default function middleware(
   request: NextRequest,
   event: NextFetchEvent
 ): ReturnType<typeof clerkAuthMiddleware> | NextResponse {
+  if (isTelemetryTunnelPath(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
   const publicResponse = publicApiResponse(request);
   if (publicResponse) return publicResponse;
 

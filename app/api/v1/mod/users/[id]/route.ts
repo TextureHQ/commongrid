@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
+import { reportError } from "@/lib/observability";
 
 /**
  * PATCH /api/v1/mod/users/[id]
@@ -56,7 +57,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json({ data: updated[0] });
   } catch (error) {
-    console.error("Error updating user:", error);
+    reportError(error, { scope: "api.mod.users.update" });
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 }

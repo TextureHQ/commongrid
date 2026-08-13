@@ -11,6 +11,7 @@
  * See docs/specs/persistence-api.md §4.10 and §12.4.
  */
 
+import * as Sentry from "@sentry/nextjs";
 import { validateApiKey } from "./auth";
 import { withCors } from "./cors";
 import { ApiError, formatError } from "./errors";
@@ -45,9 +46,44 @@ export function withRequestId(handler: RouteHandler): RouteHandler {
 // ---------------------------------------------------------------------------
 
 /**
+ * Report a server-side API failure to Sentry with request context attached.
+ *
+ * Client-caused failures (4xx — validation errors, 404s, bad API keys) are
+ * deliberately *not* reported: they are expected traffic on a public API and
+ * would drown out real defects. Anything that produces a 5xx is a bug on our
+ * side and always gets reported.
+ */
+function reportServerError(err: unknown, req: Request, requestId: string, code: string): void {
+  let pathname = "unknown";
+  try {
+    pathname = new URL(req.url).pathname;
+  } catch {
+    // A malformed request URL is itself worth knowing about, but must not
+    // prevent the error from being reported.
+  }
+
+  Sentry.withScope((scope) => {
+    scope.setTag("api.error_code", code);
+    scope.setTag("api.route", pathname);
+    scope.setTag("http.method", req.method);
+    scope.setTag("request_id", requestId);
+    scope.setContext("request", {
+      method: req.method,
+      pathname,
+      request_id: requestId,
+    });
+    Sentry.captureException(err);
+  });
+}
+
+/**
  * Middleware: catches thrown errors and returns a structured JSON error
  * response. Known `ApiError`s map to their status code; unknown errors
  * become 500 INTERNAL_ERROR.
+ *
+ * Every 5xx is also reported to Sentry — previously these were only written to
+ * `console.error`, which meant production API failures were invisible outside
+ * of Vercel's log retention window.
  */
 export function withErrorHandling(handler: RouteHandler): RouteHandler {
   return async (req: Request, ctx: RouteContext) => {
@@ -58,14 +94,18 @@ export function withErrorHandling(handler: RouteHandler): RouteHandler {
 
       if (err instanceof ApiError) {
         console.error(`[${requestId}] ApiError ${err.code}: ${err.message}`);
+        if (err.status >= 500) {
+          reportServerError(err, req, requestId, err.code);
+        }
         return Response.json(formatError(err, requestId), {
           status: err.status,
           headers: { "X-Request-Id": requestId },
         });
       }
 
-      // Unexpected error — log the full stack, return a safe message.
+      // Unexpected error — log the full stack, report it, return a safe message.
       console.error(`[${requestId}] Unexpected error:`, err);
+      reportServerError(err, req, requestId, "INTERNAL_ERROR");
       const internal = new ApiError("INTERNAL_ERROR", "An unexpected error occurred");
       return Response.json(formatError(internal, requestId), {
         status: 500,

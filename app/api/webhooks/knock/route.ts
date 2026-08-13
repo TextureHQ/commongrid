@@ -14,6 +14,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import type { KnockWebhookPayload } from "@/lib/knock";
 import { processKnockWebhookEvent, verifyKnockWebhook } from "@/lib/knock";
+import { flushTelemetry, reportError } from "@/lib/observability";
 
 export async function POST(req: NextRequest) {
   // 1. Read raw body for signature verification
@@ -31,7 +32,11 @@ export async function POST(req: NextRequest) {
   try {
     payload = JSON.parse(rawBody) as KnockWebhookPayload;
   } catch (err) {
-    console.error("[knock webhook] Failed to parse payload:", err);
+    // Malformed body from an already signature-verified sender means Knock
+    // changed its payload shape (or we verified the wrong bytes) — that is a
+    // real integration defect, not client noise.
+    reportError(err, { scope: "webhook.knock", extra: { phase: "parse-payload" } });
+    await flushTelemetry();
     return new NextResponse("Bad Request", { status: 400 });
   }
 
@@ -41,9 +46,14 @@ export async function POST(req: NextRequest) {
   try {
     await processKnockWebhookEvent(payload);
   } catch (err) {
-    console.error("[knock webhook] Processing error:", err);
     // Return 200 anyway — Knock retries on 5xx, and we already logged
-    // the delivery event, so this prevents infinite retry loops.
+    // the delivery event, so this prevents infinite retry loops. The error is
+    // still reported so the swallowed failure is visible.
+    reportError(err, {
+      scope: "webhook.knock",
+      extra: { phase: "process-event", eventType: payload.type, messageId: payload.data.id },
+    });
+    await flushTelemetry();
   }
 
   return new NextResponse("OK", { status: 200 });

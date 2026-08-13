@@ -1,3 +1,5 @@
+import { reportError } from "@/lib/observability";
+
 interface DbStatus {
   status: "ok" | "error" | "unconfigured";
   latencyMs?: number;
@@ -29,6 +31,9 @@ async function checkDatabase(): Promise<DbStatus> {
     await sql`SELECT 1`;
     return { status: "ok", latencyMs: Date.now() - start };
   } catch (err) {
+    // A failing health check means the database is unreachable from the edge —
+    // always worth an alertable event, not just a 503 body.
+    reportError(err, { scope: "health.database", extra: { latencyMs: Date.now() - start } });
     return {
       status: "error",
       latencyMs: Date.now() - start,

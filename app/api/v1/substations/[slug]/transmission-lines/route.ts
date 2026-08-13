@@ -7,6 +7,7 @@
 
 import { neon } from "@neondatabase/serverless";
 import { notFound } from "next/navigation";
+import { reportError } from "@/lib/observability";
 
 interface ConnectedLineResult {
   lineId: string;
@@ -86,7 +87,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
       }
     );
   } catch (error) {
-    console.error("Error fetching transmission lines for substation:", error);
+    reportError(error, { scope: "api.substations.transmission-lines" });
     return Response.json({ error: "Failed to fetch transmission lines" }, { status: 500 });
   }
 }

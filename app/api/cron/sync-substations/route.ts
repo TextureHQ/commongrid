@@ -14,6 +14,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
+import { flushTelemetry, reportError, withCronMonitor } from "@/lib/observability";
 
 interface SyncResult {
   status: "ok" | "error" | "skipped";
@@ -30,7 +31,19 @@ interface SyncResult {
 // return after a partial slice.
 export const maxDuration = 800; // 13m20s — Vercel Pro ceiling
 
+// Weekly substations sync. Not currently in vercel.json `crons` (it is
+// triggered manually / by an external scheduler), so the monitor schedule
+// documents the intended cadence: Mondays at 00:00 UTC.
+const SCHEDULE = "0 0 * * 1";
+
 export async function GET(request: Request): Promise<Response> {
+  return withCronMonitor(
+    { slug: "cron-sync-substations", schedule: SCHEDULE, checkinMarginMinutes: 60, maxRuntimeMinutes: 20 },
+    () => runSyncSubstations(request)
+  );
+}
+
+async function runSyncSubstations(request: Request): Promise<Response> {
   const timestamp = new Date().toISOString();
   const result: SyncResult = { status: "ok", timestamp };
 
@@ -63,7 +76,11 @@ export async function GET(request: Request): Promise<Response> {
           lastUpdated: timestamp,
         };
       } catch (err) {
-        console.error(`[${timestamp}] Failed to parse substations.json:`, err);
+        reportError(err, {
+          scope: "cron.sync-substations",
+          level: "warning",
+          extra: { phase: "parse-substations-json", path: statsJsonPath, timestamp },
+        });
       }
     }
 
@@ -75,7 +92,11 @@ export async function GET(request: Request): Promise<Response> {
           lastUpdated: timestamp,
         };
       } catch (err) {
-        console.error(`[${timestamp}] Failed to parse substations.geojson:`, err);
+        reportError(err, {
+          scope: "cron.sync-substations",
+          level: "warning",
+          extra: { phase: "parse-substations-geojson", path: statsGeojsonPath, timestamp },
+        });
       }
     }
 
@@ -85,7 +106,8 @@ export async function GET(request: Request): Promise<Response> {
     const message = err instanceof Error ? err.message : String(err);
     result.status = "error";
     result.error = message;
-    console.error(`[${timestamp}] Substations sync failed:`, message);
+    reportError(err, { scope: "cron.sync-substations", extra: { phase: "run-sync", timestamp } });
+    await flushTelemetry();
     return Response.json(result, { status: 503 });
   }
 }

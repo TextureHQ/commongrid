@@ -3,6 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
+import { reportError } from "@/lib/observability";
 
 /**
  * GET /api/v1/mod/users
@@ -69,7 +70,7 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json({ data: usersWithTrustLevel });
   } catch (error) {
-    console.error("Error fetching users:", error);
+    reportError(error, { scope: "api.mod.users.list" });
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
 }

@@ -17,12 +17,23 @@ import {
   triggerContributionApproved,
   triggerContributionReturned,
 } from "@/lib/knock/workflows";
+import { flushTelemetry, reportError, withCronMonitor } from "@/lib/observability";
 
 const BATCH_SIZE = 100;
 const MIN_AGE_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_ATTEMPTS = 3;
 
+// Keep in sync with the `crons` entry in vercel.json.
+const SCHEDULE = "*/30 * * * *";
+
 export async function GET() {
+  return withCronMonitor(
+    { slug: "cron-notification-retry", schedule: SCHEDULE, checkinMarginMinutes: 15, maxRuntimeMinutes: 10 },
+    runNotificationRetry
+  );
+}
+
+async function runNotificationRetry(): Promise<Response> {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] notification-retry cron triggered`);
 
@@ -55,7 +66,8 @@ export async function GET() {
       .limit(BATCH_SIZE);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`[${timestamp}] Failed to query pending notifications:`, message);
+    reportError(err, { scope: "cron.notification-retry", extra: { phase: "query-pending", timestamp } });
+    await flushTelemetry();
     return Response.json({ status: "error", error: message, timestamp }, { status: 500 });
   }
 
@@ -123,11 +135,16 @@ export async function GET() {
       retried++;
     } catch (err) {
       errors++;
-      console.error(`[${timestamp}] Failed to retry notification ${notif.id}:`, err);
+      reportError(err, {
+        scope: "cron.notification-retry",
+        extra: { phase: "retry-notification", notificationId: notif.id, notificationType: notif.type, timestamp },
+      });
     }
   }
 
   console.log(`[${timestamp}] notification-retry complete: retried=${retried}, errors=${errors}`);
+
+  await flushTelemetry();
 
   return Response.json({
     status: "ok",
