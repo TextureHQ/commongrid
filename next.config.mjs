@@ -73,9 +73,15 @@ const nextConfig = {
   },
   async rewrites() {
     return {
-      // afterFiles rewrites only trigger when no static file matches,
-      // so zoom 0-10 (static tiles) are served directly, zoom 11+
-      // falls through to the API route for dynamic generation.
+      // Backwards-compatible aliases from the legacy `/tiles/...` paths to the
+      // canonical `/api/tiles/...` routes.
+      //
+      // These once fronted a tree of pre-rendered static tile files, with the
+      // rewrite acting as the fallback for zooms that weren't pre-rendered.
+      // That tree no longer exists — `public/tiles/` holds only the `.pmtiles`
+      // archives — so no static file ever matches and every tile request is
+      // served dynamically from the archives by the API route. Keep these
+      // aliases so existing consumers of `/tiles/...` don't break.
       afterFiles: [
         // Territories
         { source: '/tiles/territories/:z/:x/:y.pbf', destination: '/api/tiles/territories/:z/:x/:y' },
@@ -92,6 +98,9 @@ const nextConfig = {
         // Pricing nodes
         { source: '/tiles/pricing-nodes/:z/:x/:y.pbf', destination: '/api/tiles/pricing-nodes/:z/:x/:y' },
         { source: '/tiles/pricing-nodes/:z/:x/:y', destination: '/api/tiles/pricing-nodes/:z/:x/:y' },
+        // Substations
+        { source: '/tiles/substations/:z/:x/:y.pbf', destination: '/api/tiles/substations/:z/:x/:y' },
+        { source: '/tiles/substations/:z/:x/:y', destination: '/api/tiles/substations/:z/:x/:y' },
       ],
     };
   },

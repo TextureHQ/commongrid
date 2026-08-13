@@ -165,6 +165,8 @@ function buildSpec(): JsonSchema {
       summary: ep.summary,
       ...(ep.description ? { description: ep.description } : {}),
       tags: [ep.tag],
+      // Endpoints outside the default /api/v1 base declare their own server.
+      ...(ep.servers ? { servers: ep.servers } : {}),
       ...(parameters.length > 0 ? { parameters } : {}),
       ...(requestBody ? { requestBody } : {}),
       responses: buildResponses(ep),

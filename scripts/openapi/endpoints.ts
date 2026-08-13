@@ -12,7 +12,13 @@
  *
  * Intentionally excluded (auth-required / internal):
  *   - mod/*, developer/*, contributions, discussions, follows, notifications,
- *     me, editable-fields, webhooks, revalidate, health, tiles.
+ *     me, editable-fields, webhooks, revalidate, health.
+ *
+ * Individual MVT tile endpoints (`/api/tiles/{layer}/{z}/{x}/{y}`) are also
+ * excluded: their contract is fixed by MVT/XYZ convention and their response is
+ * opaque protobuf, so an OpenAPI entry adds nothing. The TileJSON *metadata*
+ * endpoints ARE documented, since those are ordinary JSON and are the intended
+ * discovery path for third-party map clients.
  */
 
 import type { JsonSchema } from "./schema-from-drizzle";
@@ -48,6 +54,15 @@ export interface RequestBodyDef {
 export interface EndpointDef {
   path: string;
   method: "get" | "post";
+  /**
+   * Per-operation server override.
+   *
+   * Most endpoints are relative to the default `/api/v1` server. A few public
+   * routes live outside that prefix (the tile endpoints sit at `/api/tiles/...`
+   * because the MVT/XYZ path shape is a fixed convention), so they declare
+   * their own base URL rather than being misfiled under `/api/v1`.
+   */
+  servers?: Array<{ url: string; description?: string }>;
   operationId: string;
   summary: string;
   description?: string;
@@ -950,5 +965,49 @@ export const ENDPOINTS: EndpointDef[] = [
     ],
     response: { kind: "raw", schema: { $ref: "#/components/schemas/ChangelogResponse" } },
     has404: false,
+  },
+
+  // -----------------------
+  // Vector Tiles
+  //
+  // These live at /api/tiles/... rather than /api/v1/..., so they carry an
+  // explicit server override. The MVT tile endpoints themselves are not
+  // documented here — see the note at the top of this file.
+  // -----------------------
+  {
+    path: "/tiles.json",
+    method: "get",
+    operationId: "listTileLayers",
+    summary: "List vector tile layers",
+    description:
+      "Index of every vector tile layer CommonGrid publishes, each with a link to its TileJSON document. Start here to discover available layers, their zoom ranges, and their MVT source-layer names.",
+    tag: "Vector Tiles",
+    servers: [{ url: "https://commongrid.info/api", description: "Production" }],
+    response: { kind: "raw", schema: { $ref: "#/components/schemas/TileLayerIndex" } },
+    has404: false,
+  },
+  {
+    path: "/tiles/{layer}.json",
+    method: "get",
+    operationId: "getTileLayerTileJson",
+    summary: "Get TileJSON for a layer",
+    description:
+      'TileJSON 3.0.0 document for one vector tile layer. Pass this URL directly as a Mapbox GL JS / MapLibre GL JS vector source `url`:\n\n```js\nmap.addSource("cg", { type: "vector", url: "https://commongrid.info/api/tiles/power-plants.json" });\n```\n\n`minzoom`, `maxzoom`, `bounds`, and `vector_layers` are read from the underlying tile archive at request time, so they always describe the tiles actually being served.',
+    tag: "Vector Tiles",
+    servers: [{ url: "https://commongrid.info/api", description: "Production" }],
+    parameters: [
+      {
+        name: "layer",
+        in: "path",
+        required: true,
+        description: "Tile layer identifier.",
+        schema: {
+          type: "string",
+          enum: ["territories", "power-plants", "substations", "transmission-lines", "pricing-nodes", "ev-charging"],
+        },
+        example: "power-plants",
+      },
+    ],
+    response: { kind: "raw", schema: { $ref: "#/components/schemas/TileJson" } },
   },
 ];

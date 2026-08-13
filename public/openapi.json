@@ -497,6 +497,170 @@
           }
         }
       },
+      "TileJson": {
+        "type": "object",
+        "description": "TileJSON 3.0.0 document describing a single vector tileset. Pass the document URL straight to a Mapbox GL JS / MapLibre GL JS vector source `url` and the client configures itself.",
+        "required": [
+          "tilejson",
+          "name",
+          "tiles",
+          "minzoom",
+          "maxzoom",
+          "vector_layers"
+        ],
+        "properties": {
+          "tilejson": {
+            "type": "string",
+            "enum": [
+              "3.0.0"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "example": "CommonGrid Power Plants"
+          },
+          "description": {
+            "type": "string"
+          },
+          "attribution": {
+            "type": "string",
+            "description": "HTML attribution string crediting CommonGrid and the upstream data source."
+          },
+          "scheme": {
+            "type": "string",
+            "enum": [
+              "xyz"
+            ]
+          },
+          "tiles": {
+            "type": "array",
+            "description": "Absolute XYZ tile URL templates containing {z}/{x}/{y}.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "minzoom": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "maxzoom": {
+            "type": "integer",
+            "description": "Highest zoom with distinct data. Requests above this are served the highest-zoom ancestor tile for client-side overzooming.",
+            "example": 12
+          },
+          "bounds": {
+            "type": "array",
+            "description": "[minLon, minLat, maxLon, maxLat] covering the tileset extent.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "center": {
+            "type": "array",
+            "description": "[lon, lat, zoom] suggested default view.",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "vector_layers": {
+            "type": "array",
+            "description": "MVT layers inside the tileset. Use `id` as the style `source-layer`, and take attribute names from `fields` — they do not always match the JSON API field names (power-plant tiles emit `capacityMw`, the JSON API returns `totalCapacityMw`).",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "fields"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "fields": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "minzoom": {
+                  "type": "integer"
+                },
+                "maxzoom": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "TileLayerIndex": {
+        "type": "object",
+        "description": "Index of every vector tile layer CommonGrid publishes.",
+        "properties": {
+          "tilejson_version": {
+            "type": "string",
+            "example": "3.0.0"
+          },
+          "attribution": {
+            "type": "string"
+          },
+          "layers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "power-plants"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "attribution": {
+                  "type": "string"
+                },
+                "tilejson": {
+                  "type": "string",
+                  "description": "URL of this layer's TileJSON document.",
+                  "example": "https://commongrid.info/api/tiles/power-plants.json"
+                },
+                "tiles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "minzoom": {
+                  "type": "integer"
+                },
+                "maxzoom": {
+                  "type": "integer"
+                },
+                "bounds": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "sourceLayers": {
+                  "type": "array",
+                  "description": "MVT source-layer names available in this tileset.",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "SearchResults": {
         "type": "object",
         "description": "Grouped search results keyed by entity type (camelCase plural).",
@@ -4350,6 +4514,92 @@
           }
         }
       }
+    },
+    "/tiles.json": {
+      "get": {
+        "operationId": "listTileLayers",
+        "summary": "List vector tile layers",
+        "description": "Index of every vector tile layer CommonGrid publishes, each with a link to its TileJSON document. Start here to discover available layers, their zoom ranges, and their MVT source-layer names.",
+        "tags": [
+          "Vector Tiles"
+        ],
+        "servers": [
+          {
+            "url": "https://commongrid.info/api",
+            "description": "Production"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TileLayerIndex"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tiles/{layer}.json": {
+      "get": {
+        "operationId": "getTileLayerTileJson",
+        "summary": "Get TileJSON for a layer",
+        "description": "TileJSON 3.0.0 document for one vector tile layer. Pass this URL directly as a Mapbox GL JS / MapLibre GL JS vector source `url`:\n\n```js\nmap.addSource(\"cg\", { type: \"vector\", url: \"https://commongrid.info/api/tiles/power-plants.json\" });\n```\n\n`minzoom`, `maxzoom`, `bounds`, and `vector_layers` are read from the underlying tile archive at request time, so they always describe the tiles actually being served.",
+        "tags": [
+          "Vector Tiles"
+        ],
+        "servers": [
+          {
+            "url": "https://commongrid.info/api",
+            "description": "Production"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "layer",
+            "in": "path",
+            "description": "Tile layer identifier.",
+            "required": true,
+            "example": "power-plants",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "territories",
+                "power-plants",
+                "substations",
+                "transmission-lines",
+                "pricing-nodes",
+                "ev-charging"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TileJson"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
@@ -4400,6 +4650,10 @@
     {
       "name": "Changelog",
       "description": "Cross-entity change feed"
+    },
+    {
+      "name": "Vector Tiles",
+      "description": "TileJSON metadata for the published vector tile layers"
     }
   ]
 }

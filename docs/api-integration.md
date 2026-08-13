@@ -28,6 +28,7 @@
   - [Programs](#programs)
   - [Search & changelog](#search--changelog)
   - [Vector tiles](#vector-tiles)
+    - [TileJSON](#tilejson-recommended)
 - [Resolver endpoint (POST)](#resolver-endpoint-post)
 - [Bulk batching patterns](#bulk-batching-patterns)
 - [Versioning policy](#versioning-policy)
@@ -736,9 +737,107 @@ live at `/api/tiles/...` (not under `/api/v1`) because the tile ABI is fixed by 
 /api/tiles/ev-charging/{z}/{x}/{y}
 ```
 
-Each endpoint returns `application/x-protobuf` MVT tiles with long TTLs. Point your Mapbox GL / MapLibre
-client directly at these URLs. They're anonymous-callable and backed by the same auth/rate-limit
-stack as the JSON API (authenticate with an API key to pick up the higher tier).
+Each endpoint returns `application/x-protobuf` MVT tiles with long TTLs. They're anonymous-callable
+and CORS-open (`Access-Control-Allow-Origin: *`), so a browser app on any domain can consume them
+with no key and no proxy.
+
+#### TileJSON (recommended)
+
+Rather than transcribing the URL template, zoom range, and source-layer name by hand, point your
+client at a layer's **TileJSON 3.0.0** document and let it configure itself:
+
+```
+GET /api/tiles/{layer}.json     # TileJSON for one layer
+GET /api/tiles.json             # index of all layers
+```
+
+MapLibre GL JS:
+
+```js
+map.addSource("commongrid-power-plants", {
+  type: "vector",
+  url: "https://commongrid.info/api/tiles/power-plants.json",
+});
+
+map.addLayer({
+  id: "power-plants",
+  type: "circle",
+  source: "commongrid-power-plants",
+  "source-layer": "power-plants",
+  paint: {
+    "circle-radius": ["interpolate", ["linear"], ["get", "capacityMw"], 0, 2, 2000, 12],
+    "circle-color": "#2b6cb0",
+  },
+});
+```
+
+Mapbox GL JS is identical — both read TileJSON from a source `url`:
+
+```js
+map.addSource("commongrid-territories", {
+  type: "vector",
+  url: "https://commongrid.info/api/tiles/territories.json",
+});
+```
+
+A response looks like:
+
+```json
+{
+  "tilejson": "3.0.0",
+  "name": "CommonGrid Power Plants",
+  "description": "Electric generating facilities in the United States, including fuel type and nameplate capacity.",
+  "attribution": "<a href=\"https://commongrid.info\">CommonGrid</a> | EIA Form 860 / 860M",
+  "scheme": "xyz",
+  "tiles": ["https://commongrid.info/api/tiles/power-plants/{z}/{x}/{y}"],
+  "minzoom": 0,
+  "maxzoom": 12,
+  "bounds": [-171.71, 18.97, -67.4, 71.29],
+  "center": [-119.55, 45.13, 0],
+  "vector_layers": [
+    {
+      "id": "power-plants",
+      "fields": {
+        "capacityMw": "Number",
+        "fuelCategory": "String",
+        "name": "String",
+        "slug": "String",
+        "status": "String"
+      }
+    }
+  ]
+}
+```
+
+`minzoom`, `maxzoom`, `bounds`, and `vector_layers` are read from the tile archive itself at request
+time, so they always describe the tiles you're actually being served.
+
+#### Zoom range and overzooming
+
+All layers are built to **z0–z12**. Requests above z12 are served the highest-zoom ancestor tile, so
+your client can overzoom it locally. Respect the advertised `maxzoom` (TileJSON does this for you) —
+requesting z16 does not return more detail than z12, just the same payload again.
+
+z12 is not a precision compromise: a z12 tile at 40°N is ~7.5&nbsp;km across and MVT quantizes to 4096
+units, so one coordinate unit is roughly 1.8&nbsp;m — finer than the positional accuracy of the upstream
+sources.
+
+#### Attribute names differ from the JSON API
+
+Tile attributes are not always spelled the same as their REST counterparts. Most notably, power-plant
+tiles carry **`capacityMw`** while the JSON API returns `totalCapacityMw`. Always take field names
+from `vector_layers[].fields` in the TileJSON rather than from the REST schema.
+
+#### No clustering
+
+Tiles contain individual features, never cluster aggregates. Lower zooms are density-*thinned* (some
+features are omitted so a continental view stays legible), which is not the same as clustering. If you
+need clustered points, cluster client-side from a GeoJSON source, or pre-aggregate your own grid.
+
+#### Legacy `/tiles/...` paths
+
+`/tiles/{layer}/{z}/{x}/{y}.pbf` is a backwards-compatible alias for the canonical `/api/tiles/...`
+route and serves identical bytes. Prefer the canonical path in new code.
 
 ---
 
