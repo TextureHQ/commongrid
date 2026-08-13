@@ -81,28 +81,27 @@ export default function AboutPage() {
           <article className="cg-article">
             <h2>Energy data is public. Finding it shouldn&rsquo;t be a career.</h2>
             <p>
+              Anyone that touches energy infrastructure hits the same fragmented landscape. The data exists, but it
+              hasn&rsquo;t been assembled, normalized, or kept current.
+            </p>
+            <p>
               Utility territories are buried in PDFs. Rate structures are scattered across regulatory filings. Grid
               operator boundaries shift without notice. Service territory maps live in state PUC filing systems that
               require case-by-case requests. Primary identifiers vary by source.
             </p>
-            <p>
-              Anyone building software, research, or policy analysis that touches energy infrastructure hits the same
-              fragmented landscape. The data exists—it just hasn&rsquo;t been assembled, normalized, and kept current in
-              one place.
-            </p>
 
-            <h2>A connected graph, not a collection of spreadsheets.</h2>
+            <h2>A connected graph instead of a collection of spreadsheets.</h2>
             <p>
               CommonGrid structures data around entities and their relationships, not flat datasets. A utility links to
               its service territory. A territory links to its grid operator. A program links to the utilities offering
               it. A rate links to the territory it applies in. Every entity is a node in the same connected graph.
             </p>
             <p>
-              You can start anywhere—a zip code, a co-op name, an ISO—and navigate outward to everything related. No
-              manual joins. No spreadsheet archaeology.
+              You can start with a zip code, a co-op name, an ISO, or wherever you&rsquo;d like, and navigate outward to
+              everything related. No manual joins or spreadsheet archaeology required.
             </p>
 
-            <h2>Built by Texture. Opened to everyone.</h2>
+            <h2>Built by Texture. Open to everyone.</h2>
             <p>
               <a href="https://texturehq.com" target="_blank" rel="noopener noreferrer">
                 Texture
@@ -116,18 +115,9 @@ export default function AboutPage() {
               normalization work is tedious and repetitive. Doing it once for the whole industry makes more sense than
               having every team repeat it.
             </p>
-            <p>
-              Texture&rsquo;s competitive edge comes from combining this context with real operational data: device
-              telemetry, customer accounts, control systems. That layer stays proprietary. The registry—what every
-              energy software team needs—is the commons.
-            </p>
 
             <h2>Open, transparent, community-maintained.</h2>
-            <p>
-              CommonGrid runs on an open contribution model. Anyone can view and download the data. Editing requires an
-              account. Version history is public. Anyone can propose a change. Every change is attributable, reviewable,
-              and reversible.
-            </p>
+            <p>CommonGrid runs on an open contribution model.</p>
             <dl className="cg-article-defs">
               {CONTRIBUTION_ROLES.map((role) => (
                 <div key={role.term} className="cg-article-def">
@@ -137,7 +127,7 @@ export default function AboutPage() {
               ))}
             </dl>
 
-            <h2>Propose, review, merge—not edit and ship.</h2>
+            <h2>Propose, review, merge.</h2>
             <p>
               Energy data errors can be costly and hard to detect. A wrong territory boundary, an outdated rate
               schedule, or a misclassified ISO assignment can break downstream systems. CommonGrid uses a changeset
