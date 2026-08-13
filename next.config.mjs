@@ -99,24 +99,58 @@ const nextConfig = {
 
 export default withSentryConfig(nextConfig, {
   // Upload source maps to Sentry for readable stack traces
-  org: "texture",
-  project: "commongrid",
+  org: 'texture',
+  project: 'commongrid',
   authToken: process.env.SENTRY_AUTH_TOKEN,
 
   // Suppress source map upload logs
   silent: !process.env.CI,
 
-  // Don't fail the build if source map upload fails (e.g. missing auth token)
+  // Source map upload must not break the build (forks and local builds have no
+  // auth token at all), but a *misconfigured* token in a real deployment used
+  // to fail silently for months. Warn loudly and distinguish the two cases.
+  //
+  // History: from 2026-04 to 2026-08 every production build failed upload with
+  // `403 You do not have permission to perform this action` because the Vercel
+  // SENTRY_AUTH_TOKEN lacked release scopes. Because the message was a plain
+  // `console.warn`, nobody noticed, and every stack trace in Sentry was
+  // unsymbolicated minified output.
   errorHandler: (err) => {
-    console.warn('Sentry source map upload warning:', err.message);
+    if (!process.env.SENTRY_AUTH_TOKEN) {
+      console.warn(
+        '[sentry] Skipping source map upload: SENTRY_AUTH_TOKEN is not set. ' +
+          'Stack traces from this build will not be symbolicated.'
+      );
+      return;
+    }
+
+    console.error(
+      '\n' +
+        '='.repeat(78) +
+        '\n[sentry] SOURCE MAP UPLOAD FAILED \u2014 stack traces from this build will be\n' +
+        '[sentry] unreadable minified output in Sentry.\n' +
+        `[sentry] Reason: ${err.message}\n` +
+        '[sentry] A 403 means SENTRY_AUTH_TOKEN is missing the `project:releases`\n' +
+        '[sentry] scope. Rotate it at https://sentry.io/settings/account/api/auth-tokens/\n' +
+        '='.repeat(78) +
+        '\n'
+    );
   },
 
-  // Automatically tree-shake Sentry logger statements
-  disableLogger: true,
+  // Tree-shake Sentry's own debug logging out of production bundles.
+  // (Replaces the deprecated top-level `disableLogger` option.)
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+  },
 
   // Hide source maps from users
   hideSourceMaps: true,
 
   // Widen upload scope to include utility modules
   widenClientFileUpload: true,
+
+  // Route browser telemetry through our own domain so ad blockers and
+  // privacy extensions do not silently drop error reports. This was another
+  // source of missing events: 11 `network_error` client discards in 90 days.
+  tunnelRoute: '/monitoring',
 });

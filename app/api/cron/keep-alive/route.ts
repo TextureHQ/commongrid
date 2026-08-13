@@ -1,4 +1,16 @@
+import { flushTelemetry, reportError, withCronMonitor } from "@/lib/observability";
+
+// Keep in sync with the `crons` entry in vercel.json.
+const SCHEDULE = "*/4 7-19 * * 1-5";
+
 export async function GET() {
+  return withCronMonitor(
+    { slug: "cron-keep-alive", schedule: SCHEDULE, checkinMarginMinutes: 10, maxRuntimeMinutes: 5 },
+    runKeepAlive
+  );
+}
+
+async function runKeepAlive(): Promise<Response> {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] Keep-alive cron triggered`);
 
@@ -17,7 +29,8 @@ export async function GET() {
       const { neon } = await import("@neondatabase/serverless");
       sql = neon(process.env.DATABASE_URL);
     } catch (err) {
-      console.error(`[${timestamp}] Database client unavailable:`, err);
+      reportError(err, { scope: "cron.keep-alive", extra: { phase: "client-init", timestamp } });
+      await flushTelemetry();
       return Response.json({ status: "error", error: "Database client unavailable" }, { status: 503 });
     }
 
@@ -28,7 +41,8 @@ export async function GET() {
     return Response.json({ status: "ok", latencyMs, timestamp });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`[${timestamp}] Keep-alive failed:`, message);
+    reportError(err, { scope: "cron.keep-alive", extra: { phase: "query", timestamp } });
+    await flushTelemetry();
     return Response.json({ status: "error", error: message, timestamp }, { status: 503 });
   }
 }

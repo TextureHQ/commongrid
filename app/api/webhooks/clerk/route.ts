@@ -22,6 +22,7 @@ import { userNotificationPrefs } from "@/lib/db/schema/user-notification-prefs";
 import { users } from "@/lib/db/schema/users";
 import { deleteKnockUser, identifyKnockUser } from "@/lib/knock/sync";
 import { triggerWelcome } from "@/lib/knock/workflows";
+import { flushTelemetry, reportError, reportMessage } from "@/lib/observability";
 
 type ClerkEmailAddress = {
   email_address: string;
@@ -60,7 +61,8 @@ export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
-    console.error("CLERK_WEBHOOK_SECRET is not set");
+    reportMessage("CLERK_WEBHOOK_SECRET is not set", { scope: "webhook.clerk", level: "error" });
+    await flushTelemetry();
     return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
   }
 
@@ -86,6 +88,8 @@ export async function POST(req: Request) {
       "svix-signature": svixSignature,
     }) as ClerkWebhookEvent;
   } catch (err) {
+    // A failed signature check is expected background noise on a public
+    // endpoint, so log it without paging anyone.
     console.error("Webhook verification failed:", err);
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 });
   }
@@ -185,7 +189,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ received: true });
   } catch (err) {
-    console.error("Webhook handler error:", err);
+    reportError(err, { scope: "webhook.clerk", extra: { eventType: event.type } });
+    await flushTelemetry();
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

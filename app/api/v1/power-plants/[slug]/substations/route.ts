@@ -7,6 +7,7 @@
 
 import { neon } from "@neondatabase/serverless";
 import { notFound } from "next/navigation";
+import { reportError } from "@/lib/observability";
 
 interface InterconnectionResult {
   substationId: string;
@@ -83,7 +84,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
       }
     );
   } catch (error) {
-    console.error("Error fetching substations for power plant:", error);
+    reportError(error, { scope: "api.power-plants.substations" });
     return Response.json({ error: "Failed to fetch interconnected substations" }, { status: 500 });
   }
 }

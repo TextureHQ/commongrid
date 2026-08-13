@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { communityEditableFields } from "@/lib/db/schema/community-editable-fields";
+import { reportError } from "@/lib/observability";
 
 /**
  * GET /api/v1/editable-fields/[entityType]
@@ -34,7 +35,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json({ data: fields });
   } catch (error) {
-    console.error("Error fetching editable fields:", error);
+    reportError(error, { scope: "api.editable-fields" });
     return NextResponse.json({ error: "Failed to fetch editable fields" }, { status: 500 });
   }
 }
