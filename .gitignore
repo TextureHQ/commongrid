@@ -43,3 +43,7 @@ data/.snapshot/
 # EIA-860M monthly workbooks are large binary source files; sync script downloads them on demand
 data/eia-860m/*.xlsx
 data/.eia860m-last-sync
+
+# TypeScript incremental build cache — regenerated on every typecheck.
+# Tracking it churns diffs and blocks stash/rebase operations.
+*.tsbuildinfo

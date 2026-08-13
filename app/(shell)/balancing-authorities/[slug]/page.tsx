@@ -27,7 +27,9 @@ export default function BalancingAuthorityDetailPage() {
   return (
     <>
       <EntityPageHeader
-        breadcrumbs={[{ label: "Balancing Authorities", href: "/balancing-authorities" }, { label: ba.name }]}
+        // No `/balancing-authorities` index route exists yet, so this crumb is
+        // intentionally unlinked rather than pointing at a 404.
+        breadcrumbs={[{ label: "Balancing Authorities" }, { label: ba.name }]}
         entityName={ba.name}
         avatar={<Avatar fullName={ba.name} size="lg" />}
         subtitle={
