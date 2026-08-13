@@ -187,6 +187,33 @@ async function loadBySlugFromDb(slug: string): Promise<PowerPlant | null> {
   return rows.length > 0 ? dbRowToPowerPlant(rows[0]) : null;
 }
 
+/**
+ * Resolve an EIA plant code (EIA-860 `Plant Code`) to the plant's canonical
+ * slug.
+ *
+ * EIA plant codes are the de-facto industry identifier for a generating
+ * facility: they're what EIA-860/860M/923 filings, ISO/RTO node registries,
+ * and most third-party datasets key on. CommonGrid addresses plants by slug,
+ * so anything arriving with a plant code needs this hop to build a URL.
+ *
+ * Plant codes are unique across non-deleted plants, so a match is
+ * unambiguous. Returns null when no live plant carries the code.
+ */
+async function loadSlugByPlantCodeFromDb(plantCode: string): Promise<string | null> {
+  const { getDb } = await import("@/lib/db/client");
+  const { powerPlants } = await import("@/lib/db/schema");
+  const { and, eq, isNull } = await import("drizzle-orm");
+
+  const db = getDb();
+  const rows = await db
+    .select({ slug: powerPlants.slug })
+    .from(powerPlants)
+    .where(and(eq(powerPlants.plantCode, plantCode), isNull(powerPlants.deletedAt)))
+    .limit(1);
+
+  return rows.length > 0 ? ((rows[0] as { slug: string | null }).slug ?? null) : null;
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -239,5 +266,32 @@ export async function countPowerPlants(filters?: PowerPlantFilters): Promise<num
  * Returns null if not found.
  */
 export async function loadPowerPlantBySlug(slug: string): Promise<PowerPlant | null> {
+  return loadBySlugFromDb(slug);
+}
+
+/**
+ * A plant code is a bare EIA integer identifier (e.g. `2503`). Slugs always
+ * contain at least one letter, so the two namespaces can't collide — which
+ * lets `/power-plants/:idOrCode` accept either form unambiguously.
+ */
+export function isPlantCode(value: string): boolean {
+  return /^\d+$/.test(value);
+}
+
+/**
+ * Resolve an EIA plant code to the plant's canonical CommonGrid slug.
+ * Returns null when no live plant carries that code.
+ */
+export async function loadPowerPlantSlugByPlantCode(plantCode: string): Promise<string | null> {
+  return loadSlugByPlantCodeFromDb(plantCode);
+}
+
+/**
+ * Load a single power plant by EIA plant code.
+ * Returns null if no live plant carries that code.
+ */
+export async function loadPowerPlantByPlantCode(plantCode: string): Promise<PowerPlant | null> {
+  const slug = await loadSlugByPlantCodeFromDb(plantCode);
+  if (!slug) return null;
   return loadBySlugFromDb(slug);
 }

@@ -832,7 +832,9 @@ export default function UtilityDetailPage() {
             </div>
             <EntityList
               items={utilityPrograms.map((prog) => ({
-                href: `/programs/${prog.slug}`,
+                // Programs have no standalone `/programs/[slug]` route — they
+                // are viewed inside Explore. `/programs/<slug>` 404'd.
+                href: `/explore?tab=programs&slug=${prog.slug}`,
                 name: prog.name,
                 badge: (
                   <Badge size="sm" shape="pill" variant={prog.status === "ACTIVE" ? "success" : "neutral"}>

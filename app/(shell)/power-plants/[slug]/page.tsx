@@ -1,366 +1,39 @@
-"use client";
+/**
+ * Power plant detail page: /power-plants/[slug]
+ *
+ * Thin server wrapper around the client detail view. Its only job is to make
+ * EIA-plant-code URLs work: `/power-plants/2503` permanently redirects to the
+ * canonical slug URL (`/power-plants/59th-street-ny`).
+ *
+ * Why bother: EIA plant codes are the industry-standard identifier for a
+ * generating facility, so they're what people have in hand when they arrive
+ * from an EIA-860 filing, an ISO/RTO node registry, or a spreadsheet. Before
+ * this redirect existed, those URLs 404'd — and so did CommonGrid's own
+ * pricing-node → power-plant links, which are keyed on the EIA code.
+ *
+ * Plant codes are pure digits and slugs always contain letters, so the check
+ * is unambiguous and non-numeric slugs skip the DB hop entirely.
+ */
 
-import { Badge, InteractiveMap, Loader, layer } from "@texturehq/edges";
-import { notFound, useParams } from "next/navigation";
-import { useMemo } from "react";
-import { EntityActions } from "@/components/contributions/EntityActions";
-import {
-  BadgeList,
-  EntityList,
-  EntityMap,
-  EntityPageHeader,
-  EntitySection,
-  type EntityStat,
-  EntityStatsRow,
-  FieldList,
-  RelationshipCards,
-} from "@/components/entity";
-import { usePowerPlant } from "@/hooks/usePowerPlant";
-import { usePowerPlantList } from "@/hooks/usePowerPlantList";
-import { useUtilityList } from "@/hooks/useUtilityList";
-import { getBalancingAuthorityById } from "@/lib/data";
-import {
-  formatCapacity,
-  formatStateName,
-  getFuelBadgeVariant,
-  getFuelCategoryColor,
-  getFuelCategoryLabel,
-} from "@/lib/formatting";
+import { permanentRedirect } from "next/navigation";
+import { isPlantCode, loadPowerPlantSlugByPlantCode } from "@/lib/data/power-plants-api";
+import { PowerPlantDetailClient } from "./PowerPlantDetailClient";
 
-function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 3959; // miles
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+interface Props {
+  params: Promise<{ slug: string }>;
 }
 
-export default function PowerPlantDetailPage() {
-  const params = useParams<{ slug: string }>();
-  const { powerPlant: plant, isLoading } = usePowerPlant(params.slug);
-  const { utilities } = useUtilityList({ limit: 200 });
-  const { powerPlants: allPlants, isLoading: plantsLoading } = usePowerPlantList({ limit: 500, state: plant?.state });
+export default async function PowerPlantDetailPage({ params }: Props) {
+  const { slug } = await params;
 
-  const nearbyPlants = useMemo(() => {
-    if (!plant || allPlants.length === 0) return [];
-    return allPlants
-      .filter((p) => p.slug !== plant.slug)
-      .map((p) => ({
-        ...p,
-        distance: haversineDistance(plant.latitude, plant.longitude, p.latitude, p.longitude),
-      }))
-      .filter((p) => p.distance < 50) // within 50 miles
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 10);
-  }, [plant, allPlants]);
-
-  if (isLoading) {
-    return (
-      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
-        <div className="flex items-center justify-center py-24">
-          <Loader size={32} />
-        </div>
-      </div>
-    );
+  if (isPlantCode(slug)) {
+    const canonicalSlug = await loadPowerPlantSlugByPlantCode(slug);
+    // Unknown code falls through to the client view, which renders the
+    // standard 404 for a slug that doesn't resolve.
+    if (canonicalSlug) {
+      permanentRedirect(`/power-plants/${canonicalSlug}`);
+    }
   }
 
-  if (!plant) {
-    notFound();
-  }
-
-  const utility = plant.utilityId ? (utilities.find((u) => u.id === plant.utilityId) ?? null) : null;
-  const ba = plant.balancingAuthorityId ? getBalancingAuthorityById(plant.balancingAuthorityId) : null;
-
-  const pointGeoJSON = {
-    type: "FeatureCollection" as const,
-    features: [
-      {
-        type: "Feature" as const,
-        properties: { name: plant.name },
-        geometry: {
-          type: "Point" as const,
-          coordinates: [plant.longitude, plant.latitude],
-        },
-      },
-    ],
-  };
-
-  const isProposedOnly = plant.status === "proposed";
-  const effectiveCapacity = isProposedOnly ? plant.proposedCapacityMw : plant.totalCapacityMw;
-
-  // Header stats band — pass raw numbers + formatters so Kpi can apply
-  // edges typography roles and we keep one source of truth for formatting.
-  const headerStats: EntityStat[] = [
-    {
-      label: isProposedOnly ? "Proposed Capacity" : "Nameplate Capacity",
-      value: effectiveCapacity,
-      formatter: (v) => formatCapacity(v as number | null),
-    },
-    ...(!isProposedOnly && plant.generatorCount
-      ? [
-          {
-            label: "Generators",
-            value: plant.generatorCount,
-            formatter: (v) => (v as number).toLocaleString(),
-          } satisfies EntityStat,
-        ]
-      : []),
-    ...(!isProposedOnly && plant.operatingYear
-      ? [
-          {
-            label: "Operating Since",
-            value: plant.operatingYear,
-            formatter: (v) => String(v),
-          } satisfies EntityStat,
-        ]
-      : []),
-    ...(isProposedOnly && plant.proposedOnlineYear
-      ? [
-          {
-            label: "Expected Online",
-            value: plant.proposedOnlineYear,
-            formatter: (v) => String(v),
-          } satisfies EntityStat,
-        ]
-      : []),
-  ];
-
-  // Overview fields
-  const overviewFields = [
-    { id: "plantCode", label: "Plant Code", value: plant.plantCode, copyable: true },
-    {
-      id: "fuelType",
-      label: "Fuel Type",
-      value: <Badge variant="neutral">{getFuelCategoryLabel(plant.fuelCategory)}</Badge>,
-      editable: true,
-      fieldName: "primary_fuel",
-    },
-    {
-      id: "status",
-      label: "Status",
-      value: <Badge variant="neutral">{plant.status === "operable" ? "Operable" : "Proposed"}</Badge>,
-      editable: true,
-      fieldName: "status",
-    },
-    {
-      id: "capacity",
-      label: isProposedOnly ? "Proposed Capacity" : "Nameplate Capacity",
-      value: formatCapacity(effectiveCapacity),
-      editable: !isProposedOnly,
-      fieldName: "total_capacity_mw",
-    },
-    ...(!isProposedOnly
-      ? [
-          { id: "generators", label: "Generators", value: plant.generatorCount },
-          {
-            id: "operatingSince",
-            label: "Operating Since",
-            value: plant.operatingYear ?? null,
-            editable: true,
-            fieldName: "operating_year",
-          },
-        ]
-      : []),
-    ...(isProposedOnly && plant.proposedOnlineYear
-      ? [
-          {
-            id: "expectedOnline",
-            label: "Expected Online",
-            value: plant.proposedOnlineYear,
-            editable: true,
-            fieldName: "proposed_online_year",
-          },
-        ]
-      : []),
-    ...(!isProposedOnly && plant.proposedCapacityMw !== null && plant.proposedCapacityMw > 0
-      ? [
-          {
-            id: "additionalProposed",
-            label: "Additional Proposed",
-            value: formatCapacity(plant.proposedCapacityMw),
-            editable: true,
-            fieldName: "proposed_capacity_mw",
-          },
-          ...(plant.proposedOnlineYear
-            ? [
-                {
-                  id: "proposedOnlineYear",
-                  label: "Proposed Online Year",
-                  value: plant.proposedOnlineYear,
-                  editable: true,
-                  fieldName: "proposed_online_year",
-                },
-              ]
-            : []),
-        ]
-      : []),
-    { id: "state", label: "State", value: formatStateName(plant.state), editable: true, fieldName: "state" },
-    ...(plant.county
-      ? [{ id: "county", label: "County", value: plant.county, editable: true, fieldName: "county" }]
-      : []),
-    { id: "sector", label: "Sector", value: plant.sector ?? null, editable: false },
-    ...(plant.gridVoltageKv !== null
-      ? [
-          {
-            id: "gridVoltage",
-            label: "Grid Voltage",
-            value: `${plant.gridVoltageKv} kV`,
-            editable: true,
-            fieldName: "grid_voltage_kv",
-          },
-        ]
-      : []),
-    ...(plant.nercRegion ? [{ id: "nercRegion", label: "NERC Region", value: plant.nercRegion }] : []),
-    {
-      id: "coordinates",
-      label: "Coordinates",
-      value: `${plant.latitude.toFixed(4)}, ${plant.longitude.toFixed(4)}`,
-    },
-  ];
-
-  // Grid relationships
-  const hasRelationships = utility || plant.utilityName || ba || plant.baCode;
-  const relationshipItems = [
-    ...(utility || plant.utilityName
-      ? [
-          {
-            label: "Utility / Operator",
-            name: utility ? utility.name : plant.utilityName,
-            href: utility
-              ? `/grid-operators/${utility.slug}`
-              : `/grid-operators?q=${encodeURIComponent(plant.utilityName)}`,
-          },
-        ]
-      : []),
-    ...(ba || plant.baCode
-      ? [
-          {
-            label: "Balancing Authority",
-            name: ba ? ba.shortName : (plant.baCode ?? ""),
-            ...(ba ? { href: `/balancing-authorities/${ba.slug}` } : {}),
-          },
-        ]
-      : []),
-  ];
-
-  return (
-    <>
-      <EntityPageHeader
-        entityName={plant.name}
-        subtitle={
-          <>
-            {plant.utilityName && <span>{plant.utilityName}</span>}
-            {plant.utilityName && <span className="text-text-muted mx-2">·</span>}
-            <Badge variant="neutral">{plant.status === "operable" ? "Operable" : "Proposed"}</Badge>
-            <span className="text-text-muted mx-2">·</span>
-            <Badge variant="neutral">{getFuelCategoryLabel(plant.fuelCategory)}</Badge>
-          </>
-        }
-        breadcrumbs={[{ label: "Power Plants", href: "/power-plants" }, { label: plant.slug }]}
-        actions={
-          <EntityActions
-            entityType="power_plant"
-            entityId={plant.id ?? plant.slug}
-            entitySlug={plant.slug}
-            entityName={plant.name}
-            currentValues={plant as unknown as Record<string, unknown>}
-          />
-        }
-        dataSourcePaths={["data/power-plants.json"]}
-      />
-
-      <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
-        {/* Key stats band */}
-        {headerStats.length > 0 && <EntityStatsRow stats={headerStats} />}
-
-        {/* Overview */}
-        <EntitySection id="overview" title="Overview">
-          <FieldList
-            items={overviewFields}
-            columns={2}
-            enableInlineEdit
-            entityType="power_plant"
-            entityId={plant.id ?? plant.slug}
-            entityName={plant.name}
-            currentValues={plant as unknown as Record<string, unknown>}
-            onFieldEdited={() => {
-              window.location.reload();
-            }}
-          />
-        </EntitySection>
-
-        {/* Technologies */}
-        {plant.technologies.length > 0 && (
-          <EntitySection id="technologies" title="Technologies">
-            <BadgeList items={plant.technologies} variant="neutral" />
-            {plant.energySources.length > 0 && (
-              <div className="mt-6">
-                <BadgeList items={plant.energySources} variant="neutral" label="Energy Sources" />
-              </div>
-            )}
-          </EntitySection>
-        )}
-
-        {/* Location */}
-        <EntitySection id="location" title="Location">
-          <EntityMap>
-            <InteractiveMap
-              {...(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && {
-                mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
-              })}
-              initialViewState={{
-                longitude: plant.longitude,
-                latitude: plant.latitude,
-                zoom: 10,
-              }}
-              mapType="neutral"
-              controls={[{ type: "navigation", position: "bottom-right", showResetZoom: true }]}
-              layers={[
-                layer.geojson({
-                  id: "plant-location",
-                  data: pointGeoJSON,
-                  renderAs: "circle",
-                  style: {
-                    color: { hex: getFuelCategoryColor(plant.fuelCategory) },
-                    radius: 8,
-                    borderWidth: 2,
-                    borderColor: { hex: "#ffffff" },
-                  },
-                }),
-              ]}
-            />
-          </EntityMap>
-        </EntitySection>
-
-        {/* Grid Relationships */}
-        {hasRelationships && (
-          <EntitySection id="relationships" title="Grid Relationships">
-            <RelationshipCards items={relationshipItems} />
-          </EntitySection>
-        )}
-
-        {/* Nearby Plants */}
-        {!plantsLoading && nearbyPlants.length > 0 && (
-          <EntitySection id="nearby" title="Nearby Power Plants">
-            <EntityList
-              items={nearbyPlants.map((p) => ({
-                href: `/power-plants/${p.slug}`,
-                name: p.name,
-                dotColor: getFuelCategoryColor(p.fuelCategory),
-                badge: (
-                  <Badge size="sm" shape="pill" variant={getFuelBadgeVariant(p.fuelCategory)}>
-                    {getFuelCategoryLabel(p.fuelCategory)}
-                  </Badge>
-                ),
-                meta: `${formatCapacity(p.totalCapacityMw)} · ${Math.round(p.distance)} mi`,
-              }))}
-              headerMeta={`${nearbyPlants.length} plants within 50 miles`}
-            />
-          </EntitySection>
-        )}
-      </div>
-    </>
-  );
+  return <PowerPlantDetailClient />;
 }

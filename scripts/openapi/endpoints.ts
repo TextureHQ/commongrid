@@ -491,7 +491,13 @@ export const ENDPOINTS: EndpointDef[] = [
     path: "/power-plants/{slug}",
     method: "get",
     operationId: "getPowerPlant",
-    summary: "Get power plant by slug",
+    summary: "Get power plant by slug or EIA plant code",
+    description:
+      "Accepts either the CommonGrid slug (`59th-street-ny`) or the EIA plant code (`2503`). " +
+      "EIA plant codes are the industry-standard identifier for a generating facility, so they are " +
+      "accepted directly and no code\u2192slug crosswalk is needed. Plant codes are all digits and slugs " +
+      "always contain letters, so the two forms cannot collide. When resolved by plant code the " +
+      'response includes a `Link: </api/v1/power-plants/{slug}>; rel="canonical"` header.',
     tag: "Power Plants",
     parameters: [SLUG_REF],
     response: { kind: "singleInData", schemaRef: "PowerPlant" },
