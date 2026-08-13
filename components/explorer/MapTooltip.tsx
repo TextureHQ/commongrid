@@ -7,7 +7,6 @@
  * - Kicker label (type, mono uppercase, accent color)
  * - Entity name (bold)
  * - 2-column stat grid with mono labels
- * - "View details →" CTA
  *
  * These render inside the Edges InteractiveMap tooltip container.
  */
@@ -71,7 +70,6 @@ const styles = {
     display: "grid" as const,
     gridTemplateColumns: "1fr 1fr",
     gap: "8px 16px",
-    marginBottom: 12,
   },
   statValue: {
     fontFamily: FONTS.brand,
@@ -88,22 +86,6 @@ const styles = {
     color: COLORS.faint,
     lineHeight: 1,
     marginTop: 2,
-  },
-  cta: {
-    display: "flex" as const,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-    gap: 6,
-    padding: "8px 0",
-    border: `1px solid ${COLORS.rule}`,
-    borderRadius: 6,
-    marginTop: 12,
-    fontFamily: FONTS.sans,
-    fontSize: 12.5,
-    fontWeight: 500 as const,
-    color: COLORS.muted,
-    letterSpacing: "-0.01em",
-    cursor: "pointer" as const,
   },
 };
 
@@ -185,7 +167,6 @@ export function TerritoryTooltip({ name, segment, state, customerCount, baCode }
         <Stat value={state ?? "—"} label="State" />
         <Stat value={displaySegment} label="Segment" />
       </div>
-      <div style={styles.cta}>View details →</div>
     </div>
   );
 }
@@ -201,8 +182,7 @@ export function GridOperatorTooltip({ operatorName, operatorType }: GridOperator
   return (
     <div style={styles.container}>
       <div style={styles.kicker}>{operatorType}</div>
-      <div style={styles.name}>{operatorName}</div>
-      <div style={styles.cta}>View details →</div>
+      <div style={{ ...styles.name, marginBottom: 0 }}>{operatorName}</div>
     </div>
   );
 }
@@ -265,7 +245,6 @@ export function EVChargingTooltip({
         {dcFastCount > 0 && <Stat value={dcFastCount} label="DC Fast" />}
         {level2Count > 0 && <Stat value={level2Count} label="Level 2" />}
       </div>
-      <div style={styles.cta}>View details →</div>
     </div>
   );
 }
@@ -300,7 +279,6 @@ export function PricingNodeTooltip({ name, iso, nodeType, zone }: PricingNodePro
         <Stat value={iso} label="ISO / RTO" />
         {zone && <Stat value={zone} label="Zone" />}
       </div>
-      <div style={styles.cta}>View details →</div>
     </div>
   );
 }
@@ -339,7 +317,6 @@ export function ProgramTerritoryTooltip({ programName, programStatus }: ProgramT
       <div style={styles.statGrid}>
         <Stat value={<span style={{ color: statusColor }}>{statusLabel}</span>} label="Status" />
       </div>
-      <div style={styles.cta}>View details →</div>
     </div>
   );
 }
@@ -415,7 +392,6 @@ export function SubstationTooltip({
         <Stat value={state ?? "—"} label="State" />
         {ownerName && <Stat value={ownerName} label="Owner" />}
       </div>
-      <div style={styles.cta}>View details →</div>
     </div>
   );
 }
@@ -432,7 +408,6 @@ export function PowerPlantTooltip({ name, fuelCategory, capacityMw, status }: Po
         <Stat value={fuelLabel} label="Fuel" />
         {status === "proposed" && <Stat value="Proposed" label="Status" />}
       </div>
-      <div style={styles.cta}>View details →</div>
     </div>
   );
 }
