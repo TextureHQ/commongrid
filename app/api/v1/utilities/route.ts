@@ -66,6 +66,21 @@ function parseBooleanFlag(raw: string | null): boolean | null {
   return null;
 }
 
+/**
+ * Encode cursor, returning null if CURSOR_SECRET is not set (dev degraded mode).
+ *
+ * Matches the behaviour of the other list routes (power-plants, programs,
+ * ev-stations, pricing-nodes, transmission-lines) so a missing CURSOR_SECRET
+ * costs you pagination rather than 500ing the whole endpoint.
+ */
+function tryEncodeCursor(data: Parameters<typeof encodeCursor>[0]): string | null {
+  try {
+    return encodeCursor(data);
+  } catch {
+    return null;
+  }
+}
+
 function parseEiaIds(raw: string | null): string[] | null {
   if (raw === null || raw.trim() === "") return null;
   const ids = raw
@@ -269,7 +284,7 @@ async function handleDatabaseMode(params: DbFilterParams) {
 
   const nextCursor =
     hasMore && data.length > 0
-      ? encodeCursor({
+      ? tryEncodeCursor({
           v: 1,
           s: {
             value: String(data[data.length - 1][sortKey] ?? ""),
