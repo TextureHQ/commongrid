@@ -48,6 +48,38 @@ const PROTECTED_DB_HOSTS = (process.env.PROTECTED_DB_HOSTS ?? "")
 
 const CLERK_API = "https://api.clerk.com/v1";
 
+/**
+ * Emails and Clerk ids are masked by default because this runs inside the
+ * Vercel build and its output lands in build logs on every preview deploy.
+ * `--verbose` prints them in full for local debugging.
+ */
+const VERBOSE = process.argv.includes("--verbose");
+
+function maskEmail(email: string): string {
+  if (VERBOSE) return email;
+  const at = email.indexOf("@");
+  if (at < 1) return "***";
+  return `${email.slice(0, Math.min(2, at))}***${email.slice(at)}`;
+}
+
+function maskId(id: string | null): string {
+  if (!id) return "(none)";
+  return VERBOSE ? id : `${id.slice(0, 9)}…`;
+}
+
+/**
+ * Host of a connection string, or null when it cannot be parsed. Callers must
+ * treat null as a refusal: a guard that cannot read the host is a guard that
+ * is not guarding.
+ */
+function hostOf(databaseUrl: string): string | null {
+  try {
+    return new URL(databaseUrl).hostname || null;
+  } catch {
+    return null;
+  }
+}
+
 interface ClerkUser {
   id: string;
   email_addresses: Array<{ id: string; email_address: string }>;
@@ -81,10 +113,14 @@ function assertNotProduction(databaseUrl: string, clerkSecret: string): void {
     failures.push("VERCEL_ENV is 'production'.");
   }
 
-  const host = databaseUrl.replace(/^.*@/, "").replace(/[/:?].*$/, "");
-  for (const protectedHost of PROTECTED_DB_HOSTS) {
-    if (host.includes(protectedHost)) {
-      failures.push(`DATABASE_URL points at a protected host (${host}).`);
+  const host = hostOf(databaseUrl);
+  if (host === null) {
+    failures.push("DATABASE_URL could not be parsed, so its host cannot be checked against PROTECTED_DB_HOSTS.");
+  } else {
+    for (const protectedHost of PROTECTED_DB_HOSTS) {
+      if (host.includes(protectedHost)) {
+        failures.push(`DATABASE_URL points at a protected host (${host}).`);
+      }
     }
   }
 
@@ -137,8 +173,7 @@ async function main() {
 
   assertNotProduction(databaseUrl, clerkSecret);
 
-  const host = databaseUrl.replace(/^.*@/, "").replace(/[/:?].*$/, "");
-  console.log(`database    : ${host}`);
+  console.log(`database    : ${hostOf(databaseUrl) ?? "?"}`);
   console.log(`clerk       : development (${clerkSecret.slice(0, 12)}…)`);
   console.log(`mode        : ${apply ? "APPLY" : "dry run"}\n`);
 
@@ -154,9 +189,13 @@ async function main() {
   const db = drizzle(client);
 
   try {
+    // Ordered so that when one address has several rows, the same one claims
+    // the development id on every run. Which row that is remains arbitrary —
+    // the point is that it does not change between builds.
     const rows = await db
       .select({ id: users.id, email: users.email, role: users.role, clerkUserId: users.clerkUserId })
-      .from(users);
+      .from(users)
+      .orderBy(users.id);
 
     // `users.clerk_user_id` is UNIQUE but `email` is not, and production
     // already contains two rows for the same address — one per Clerk instance.
@@ -180,6 +219,12 @@ async function main() {
         blocked.push({ email, role: row.role, to: clerkUser.id });
       } else {
         planned.push({ rowId: row.id, email, from: row.clerkUserId, to: clerkUser.id, role: row.role });
+        // Claim the target immediately. Two rows can share an address, and if
+        // neither currently holds the development id both would otherwise plan
+        // onto it — the second update then violates the unique constraint.
+        // Reporting the second as blocked surfaces the "which row gets the
+        // role" question instead of letting whichever row sorts first win it.
+        takenIds.add(clerkUser.id);
       }
     }
 
@@ -190,25 +235,25 @@ async function main() {
     } else {
       console.log(`Will remap ${planned.length} user(s):\n`);
       for (const p of planned) {
-        console.log(`  ${p.email}  [${p.role}]`);
-        console.log(`    ${p.from}  ->  ${p.to}`);
+        console.log(`  ${maskEmail(p.email)}  [${p.role}]`);
+        console.log(`    ${maskId(p.from)}  ->  ${maskId(p.to)}`);
       }
       console.log("");
     }
 
     if (alreadyMapped.length > 0) {
-      console.log(`Already mapped: ${alreadyMapped.join(", ")}`);
+      console.log(`Already mapped: ${alreadyMapped.map(maskEmail).join(", ")}`);
     }
 
     if (blocked.length > 0) {
       console.log(`\nSkipped ${blocked.length} row(s) — another row already holds the target Clerk id:`);
       for (const b of blocked) {
-        console.log(`  ${b.email} [${b.role}] -> ${b.to} (taken)`);
+        console.log(`  ${maskEmail(b.email)} [${b.role}] -> ${maskId(b.to)} (taken)`);
       }
       console.log("  This address has a row per Clerk instance. Check which one carries the role you need.");
     }
     if (unmatchedClerk.length > 0) {
-      console.log(`In Clerk but not in this database: ${unmatchedClerk.join(", ")}`);
+      console.log(`In Clerk but not in this database: ${unmatchedClerk.map(maskEmail).join(", ")}`);
       console.log("  (they will sign in but resolve to no user — add a row, or ignore)");
     }
 
@@ -217,12 +262,16 @@ async function main() {
       return;
     }
 
-    for (const p of planned) {
-      // Keyed on the primary key, not the email: `users.email` has no unique
-      // constraint and production already holds two rows for the same address,
-      // one per Clerk instance. Matching on email would update both.
-      await db.update(users).set({ clerkUserId: p.to, updatedAt: sql`now()` }).where(eq(users.id, p.rowId));
-    }
+    // One transaction so a constraint violation mid-loop cannot leave the table
+    // half-remapped — some rows on development ids, the rest on production ones.
+    await db.transaction(async (tx) => {
+      for (const p of planned) {
+        // Keyed on the primary key, not the email: `users.email` has no unique
+        // constraint and production already holds two rows for the same address,
+        // one per Clerk instance. Matching on email would update both.
+        await tx.update(users).set({ clerkUserId: p.to, updatedAt: sql`now()` }).where(eq(users.id, p.rowId));
+      }
+    });
     console.log(`\nUpdated ${planned.length} row(s).`);
   } finally {
     await client.end().catch(() => {});
@@ -230,6 +279,11 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error("failed:", e);
-  process.exit(1);
+  // Guard refusals call process.exit(1) directly and never reach here — a
+  // misconfigured script is always fatal. This handles post-guard failure only:
+  // a Clerk outage, a dropped connection. Inside a build that is a convenience
+  // that did not happen, not a reason to fail an otherwise good deploy.
+  const bestEffort = process.argv.includes("--only-preview");
+  console.error(bestEffort ? "warning: Clerk id mapping skipped —" : "failed:", e);
+  process.exit(bestEffort ? 0 : 1);
 });
