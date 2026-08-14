@@ -32,7 +32,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.2.2",
+    "@clerk/nextjs": "^7.7.5",
     "@floating-ui/dom": "^1.7.5",
     "@knocklabs/node": "^1.30.0",
     "@neondatabase/serverless": "^1.0.2",
@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.0",
-    "@clerk/testing": "^2.2.2",
+    "@clerk/testing": "^2.2.23",
     "@playwright/test": "^1.61.1",
     "@types/adm-zip": "^0.5.7",
     "@types/geojson": "^7946.0.16",
