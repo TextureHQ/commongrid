@@ -5,86 +5,40 @@
  * Uses the power_plant_interconnections join table to find nearest substations.
  */
 
-import { neon } from "@neondatabase/serverless";
-import { notFound } from "next/navigation";
-import { reportError } from "@/lib/observability";
+import {
+  ApiError,
+  jsonResponse,
+  type RouteContext,
+  withCors,
+  withErrorHandling,
+  withRequestId,
+  withTiming,
+} from "@/lib/api";
+import { loadPowerPlantInterconnectionsBySlug } from "@/lib/data/power-plants-api";
 
-interface InterconnectionResult {
-  substationId: string;
-  substationName: string;
-  substationType: string;
-  voltageClass: string;
-  owner: string;
-  distanceKm: number;
-  isPrimary: boolean;
-}
-
-export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
-  const databaseUrl = process.env.DATABASE_URL;
 
-  if (!databaseUrl) {
-    return Response.json({ error: "Database not configured" }, { status: 503 });
-  }
+  return withRequestId(
+    withErrorHandling(
+      withTiming(
+        withCors(async (_r: Request, _ctx: RouteContext) => {
+          const result = await loadPowerPlantInterconnectionsBySlug(slug);
 
-  try {
-    const sql = neon(databaseUrl);
+          if (!result) {
+            throw new ApiError("NOT_FOUND", `Power plant '${slug}' not found`);
+          }
 
-    // 1. Find power plant by slug
-    const plantResult = await sql`
-      SELECT id FROM power_plants
-      WHERE slug = ${slug} AND deleted_at IS NULL
-      LIMIT 1
-    `;
-
-    if (plantResult.length === 0) {
-      return notFound();
-    }
-
-    const plantId = (plantResult[0] as { id: string }).id;
-
-    // 2. Fetch interconnected substations via join table
-    const substations = (await sql`
-      SELECT
-        s.id as "substationId",
-        s.name as "substationName",
-        s.substation_type as "substationType",
-        s.voltage_class as "voltageClass",
-        s.owner_name as "owner",
-        (ppi.distance_meters / 1000.0) as "distanceKm",
-        ppi.is_primary as "isPrimary"
-      FROM power_plant_interconnections ppi
-      JOIN substations s ON ppi.substation_id = s.id
-      WHERE
-        ppi.power_plant_id = ${plantId}
-        AND s.deleted_at IS NULL
-      ORDER BY ppi.is_primary DESC, ppi.distance_meters ASC
-    `) as unknown as InterconnectionResult[];
-
-    // 3. Separate primary from secondaries
-    const primary = substations.find((s) => s.isPrimary);
-    const secondaries = substations.filter((s) => !s.isPrimary);
-
-    return Response.json(
-      {
-        power_plant_id: plantId,
-        primary_interconnection: primary || null,
-        secondary_interconnections: secondaries,
-        total_candidate_substations: substations.length,
-        distance_range_km: {
-          min: substations.length > 0 ? Math.min(...substations.map((s) => s.distanceKm)) : null,
-          max: substations.length > 0 ? Math.max(...substations.map((s) => s.distanceKm)) : null,
-        },
-      },
-      {
-        headers: {
-          "Cache-Control": "public, max-age=3600",
-          "Content-Type": "application/json",
-        },
-      }
-    );
-  } catch (error) {
-    reportError(error, { scope: "api.power-plants.substations" });
-    return Response.json({ error: "Failed to fetch interconnected substations" }, { status: 500 });
-  }
+          return jsonResponse(
+            { data: result.interconnections },
+            200,
+            {
+              "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600",
+              "Cache-Tag": `power-plant:${slug}:substations`,
+            }
+          );
+        })
+      )
+    )
+  )(req, { requestId: "" });
 }

@@ -295,3 +295,78 @@ export async function loadPowerPlantByPlantCode(plantCode: string): Promise<Powe
   if (!slug) return null;
   return loadBySlugFromDb(slug);
 }
+
+/** Public interconnection row for GET /power-plants/{slug}/substations. */
+export interface PowerPlantInterconnection {
+  substationId: string;
+  substationName: string;
+  substationType: string;
+  /** Derived voltage band from substation max/min kV (substations have no voltage_class column). */
+  voltageClass: string;
+  owner: string | null;
+  distanceKm: number;
+  isPrimary: boolean;
+}
+
+function voltageClassForKv(kv: number | null): string {
+  if (kv === null) return "unknown";
+  if (kv >= 345) return "extra-high";
+  if (kv >= 230) return "high";
+  if (kv >= 115) return "medium";
+  if (kv >= 69) return "sub-trans";
+  return "unknown";
+}
+
+/**
+ * Load interconnected substations for a power plant slug.
+ * Returns null when the plant does not exist; empty `interconnections` when none are linked.
+ */
+export async function loadPowerPlantInterconnectionsBySlug(
+  slug: string
+): Promise<{ plantId: string; interconnections: PowerPlantInterconnection[] } | null> {
+  const { getDb } = await import("@/lib/db/client");
+  const { powerPlantInterconnections, powerPlants, substations } = await import("@/lib/db/schema");
+  const { and, asc, desc, eq, isNull } = await import("drizzle-orm");
+
+  const db = getDb();
+
+  const plantRows = await db
+    .select({ id: powerPlants.id })
+    .from(powerPlants)
+    .where(and(eq(powerPlants.slug, slug), isNull(powerPlants.deletedAt)))
+    .limit(1);
+
+  if (plantRows.length === 0) {
+    return null;
+  }
+
+  const plantId = plantRows[0].id;
+
+  const rows = await db
+    .select({
+      substationId: substations.id,
+      substationName: substations.name,
+      substationType: substations.substationType,
+      minVoltageKv: substations.minVoltageKv,
+      maxVoltageKv: substations.maxVoltageKv,
+      owner: substations.ownerName,
+      distanceMeters: powerPlantInterconnections.distanceMeters,
+      isPrimary: powerPlantInterconnections.isPrimary,
+    })
+    .from(powerPlantInterconnections)
+    .innerJoin(substations, eq(powerPlantInterconnections.substationId, substations.id))
+    .where(and(eq(powerPlantInterconnections.powerPlantId, plantId), isNull(substations.deletedAt)))
+    .orderBy(desc(powerPlantInterconnections.isPrimary), asc(powerPlantInterconnections.distanceMeters));
+
+  const interconnections: PowerPlantInterconnection[] = rows.map((row) => ({
+    substationId: row.substationId,
+    substationName: row.substationName,
+    substationType: row.substationType,
+    voltageClass: voltageClassForKv(row.maxVoltageKv ?? row.minVoltageKv),
+    owner: row.owner,
+    distanceKm: row.distanceMeters / 1000,
+    isPrimary: row.isPrimary,
+  }));
+
+  return { plantId, interconnections };
+}
