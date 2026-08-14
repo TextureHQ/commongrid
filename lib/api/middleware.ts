@@ -215,11 +215,15 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
     let apiKeyId: string | null = null;
     let keyTier: string | undefined;
 
-    // ── Authentication ─────────────────────────────────────────────────────
-    // Credentials, when present, are always looked up. Only known active keys
-    // elevate to registered/bulk. Unknown / revoked / malformed tokens get 401
-    // — they must not elevate tier and must not silently fall back to anonymous.
-    // Missing Authorization remains anonymous on public routes.
+    // ── Authentication (Variant A) ─────────────────────────────────────────
+    // Only `Authorization: Bearer <key>` is accepted. Any other Authorization
+    // scheme (Basic, raw token without a scheme, empty Bearer, …) is treated
+    // as malformed credentials → 401. Known active keys elevate to
+    // registered/bulk; unknown / revoked tokens also 401 (no silent anonymous
+    // downgrade). Missing Authorization remains anonymous on public routes.
+    //
+    // `X-API-Key` is unsupported and ignored: it does not authenticate, does
+    // not elevate tier, and does not 401. Clients must use Bearer.
     if (authHeader || requireAuth) {
       const authResult = await validateApiKey(
         authHeader,

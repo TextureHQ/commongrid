@@ -75,6 +75,20 @@ function normalizeTier(tier: string | null | undefined): ApiKeyTier {
 // ---------------------------------------------------------------------------
 
 /**
+ * Extract a Bearer token from an Authorization header value.
+ *
+ * Variant A contract: only `Authorization: Bearer <key>` is accepted
+ * (scheme is case-insensitive per RFC 7235). Any other scheme (`Basic`,
+ * raw token without a scheme, etc.) returns null so callers can 401.
+ */
+export function parseBearerToken(authHeader: string): string | null {
+  const match = /^Bearer\s+(.+)$/i.exec(authHeader.trim());
+  if (!match) return null;
+  const key = match[1].trim();
+  return key.length > 0 ? key : null;
+}
+
+/**
  * Validates a Bearer API key from an Authorization header.
  *
  * Performs a database lookup by hash, checks expiry and active status,
@@ -87,6 +101,10 @@ function normalizeTier(tier: string | null | undefined): ApiKeyTier {
  * rate-limit tier.
  *
  * The `lastUsedAt` timestamp is updated fire-and-forget.
+ *
+ * Credential form (Variant A): only `Authorization: Bearer <cg_…>` is
+ * accepted. Non-Bearer `Authorization` values are malformed credentials.
+ * `X-API-Key` is not read by this module — see middleware.
  */
 export async function validateApiKey(
   authHeader: string | null,
@@ -97,12 +115,7 @@ export async function validateApiKey(
     return { valid: false, error: "Missing Authorization header" };
   }
 
-  if (!authHeader.startsWith("Bearer ")) {
-    return { valid: false, error: "Invalid Authorization header format" };
-  }
-
-  const key = authHeader.slice(7).trim();
-
+  const key = parseBearerToken(authHeader);
   if (!key) {
     return { valid: false, error: "Invalid Authorization header format" };
   }
