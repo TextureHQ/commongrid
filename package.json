@@ -28,7 +28,8 @@
     "openapi:check": "tsx scripts/generate-openapi.ts --check",
     "sync:all": "npx tsx scripts/sync-all.ts",
     "seed": "tsx scripts/seed-database.ts",
-    "test:api": "tsx scripts/test-api-endpoints.ts"
+    "test:api": "tsx scripts/test-api-endpoints.ts",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.2.2",
