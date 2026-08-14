@@ -32,6 +32,10 @@ jobs:
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.event == 'schedule'
     runs-on: ubuntu-latest
+    # Hoisted to job level because the `secrets` context is not available in
+    # step-level `if:` conditions — only `env` is.
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - name: Open or update failure tracking issue
         env:
@@ -83,3 +87,22 @@ jobs:
               --label sync-failure \
               --body "$BODY"
           fi
+
+      - name: Post to Slack #commongrid
+        # Optional second channel. Skipped entirely until SLACK_WEBHOOK_URL is
+        # added as a repo secret pointing at an incoming webhook for
+        # #commongrid, so this never fails the alert job on its own.
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          WF_NAME: ${{ github.event.workflow_run.name }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        shell: bash -euo pipefail {0}
+        run: |
+          payload=$(jq -n \
+            --arg text "🔴 Scheduled sync failing: *${WF_NAME}*" \
+            --arg url "$RUN_URL" \
+            '{text: ($text + "\n<" + $url + "|View the failed run>")}')
+          curl -sS --fail-with-body -X POST \
+            -H 'Content-Type: application/json' \
+            --data "$payload" \
+            "$SLACK_WEBHOOK_URL"

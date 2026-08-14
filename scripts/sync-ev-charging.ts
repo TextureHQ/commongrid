@@ -11,18 +11,26 @@
  * Output:
  *   data/ev-charging.json
  *
- * API docs: https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/
+ * API docs: https://developer.nlr.gov/docs/transportation/alt-fuel-stations-v1/
+ *
+ * Host note: NREL retired the `nrel.gov` zone and moved its developer APIs to
+ * `nlr.gov`. `developer.nrel.gov` no longer resolves anywhere (ENOTFOUND), which
+ * is why this sync failed every run for ~5 months (CIR-1271). DOE's own AFDC
+ * download page now links to developer.nlr.gov. Override with AFDC_API_BASE_URL
+ * if the host moves again, so a future rename does not require a code change.
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { pathToFileURL } from "node:url";
 import { Pool } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { evStations } from "../lib/db/schema";
 
 const API_KEY = process.env.NREL_API_KEY ?? "DEMO_KEY";
-const BASE_URL = "https://developer.nrel.gov/api/alt-fuel-stations/v1.json";
+export const DEFAULT_BASE_URL = "https://developer.nlr.gov/api/alt-fuel-stations/v1.json";
+const BASE_URL = process.env.AFDC_API_BASE_URL ?? DEFAULT_BASE_URL;
 const BATCH_SIZE = 500;
 
 function slugify(str: string): string {
@@ -88,8 +96,47 @@ async function fetchAll(attempt = 0): Promise<AFDCResponse> {
   return res.json() as Promise<AFDCResponse>;
 }
 
+/** Smallest station count we treat as a credible full-US ELEC sync. */
+export const MIN_EXPECTED_STATIONS = 10_000;
+
+/**
+ * Guards against replacing a healthy dataset with a degraded API response.
+ * Throws when the incoming count is implausibly small, or when it collapses to
+ * under half of what is already on disk.
+ */
+export function assertPlausibleStationCount(
+  incoming: number,
+  existingPath: string,
+  readExisting: (p: string) => number | null = defaultExistingCount
+): void {
+  if (incoming < MIN_EXPECTED_STATIONS) {
+    throw new Error(
+      `AFDC returned only ${incoming} usable stations, below the ${MIN_EXPECTED_STATIONS} minimum. ` +
+        "Refusing to overwrite data/ev-charging.json with a likely-degraded response."
+    );
+  }
+
+  const existing = readExisting(existingPath);
+  if (existing !== null && existing > 0 && incoming < existing / 2) {
+    throw new Error(
+      `AFDC returned ${incoming} stations but ${existing} are already on disk — a >50% drop. ` +
+        "Refusing to overwrite; re-run or investigate upstream before committing."
+    );
+  }
+}
+
+function defaultExistingCount(p: string): number | null {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(p, "utf-8"));
+    return Array.isArray(parsed) ? parsed.length : null;
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
-  console.log(`Syncing EV charging stations from AFDC API (key: ${API_KEY === "DEMO_KEY" ? "DEMO_KEY" : "****"})\n`);
+  console.log(`Syncing EV charging stations from AFDC API (key: ${API_KEY === "DEMO_KEY" ? "DEMO_KEY" : "****"})`);
+  console.log(`Endpoint: ${BASE_URL}\n`);
 
   // ── 1. Fetch all stations in a single request ───────────────────────────
   // The AFDC API supports limit=all to return every station at once.
@@ -147,6 +194,12 @@ async function main() {
   // ── 4. Write JSON output ───────────────────────────────────────────────
   console.log("\n3. Writing JSON output...");
   const outPath = path.join(process.cwd(), "data", "ev-charging.json");
+
+  // Refuse to clobber a good dataset with a degraded response. A 200 carrying an
+  // empty or truncated station list would otherwise silently replace ~90k
+  // stations and get committed as a "successful" sync (CIR-1271).
+  assertPlausibleStationCount(stations.length, outPath);
+
   fs.writeFileSync(outPath, `${JSON.stringify(stations)}\n`);
   const sizeMb = (fs.statSync(outPath).size / 1024 / 1024).toFixed(1);
   console.log(`   Wrote ${outPath} (${sizeMb} MB)`);
@@ -262,7 +315,13 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error("Sync failed:", err);
-  process.exit(1);
-});
+// Only run when invoked directly, so tests can import the guard helpers above
+// without triggering a live 90k-station sync.
+const isDirectRun = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error("Sync failed:", err);
+    process.exit(1);
+  });
+}
