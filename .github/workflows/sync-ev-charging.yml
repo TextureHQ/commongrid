@@ -5,6 +5,15 @@ on:
     - cron: '0 10 * * 1' # Monday 10am UTC (AFDC updates frequently)
   workflow_dispatch: {} # Manual trigger
 
+# Data syncs commit to the same branch. Without serialisation two
+# overlapping runs race on `git push` and the loser dies with
+# non-fast-forward (CIR-1271). sync-annual and sync-pricing-nodes are
+# both scheduled for Oct 1 12:00 UTC, so this is a real collision, not
+# just a manual-dispatch artefact.
+concurrency:
+  group: data-sync-commit
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -53,4 +62,20 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/ev-charging.json public/tiles/ev-charging.pmtiles
-          git diff --staged --quiet || (git commit -m "data: update EV charging stations (AFDC weekly)" && git push)
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "data: update EV charging stations (AFDC weekly)"
+          # Retry around concurrent pushes to the same branch: rebase onto
+          # whatever landed while this job was building tiles, then push again.
+          for attempt in 1 2 3; do
+            if git push; then
+              echo "Pushed on attempt $attempt."
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt) — rebasing on origin/$GITHUB_REF_NAME."
+            git pull --rebase --autostash origin "$GITHUB_REF_NAME"
+          done
+          echo "::error title=Sync push failed::Could not push after 3 rebase attempts."
+          exit 1
