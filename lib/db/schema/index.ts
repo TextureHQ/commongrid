@@ -86,6 +86,11 @@ export type {
 export { moderationResponseTemplates } from "./moderation-response-templates";
 export type { NotificationInsert, NotificationSelect } from "./notifications";
 export { notifications } from "./notifications";
+export type {
+  PowerPlantInterconnectionInsert,
+  PowerPlantInterconnectionSelect,
+} from "./power-plant-interconnections";
+export { powerPlantInterconnections } from "./power-plant-interconnections";
 export type { PowerPlantInsert, PowerPlantSelect } from "./power-plants";
 // Extended Entity Tables
 export { powerPlants } from "./power-plants";
