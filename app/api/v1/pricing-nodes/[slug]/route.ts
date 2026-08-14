@@ -4,15 +4,7 @@
  * Fetch a single pricing node by slug. Returns 404 if not found.
  */
 
-import {
-  ApiError,
-  corsHeaders,
-  jsonResponse,
-  type RouteContext,
-  withErrorHandling,
-  withRequestId,
-  withTiming,
-} from "@/lib/api";
+import { ApiError, corsHeaders, jsonResponse, type RouteContext, withApiMiddleware } from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
 import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
 
@@ -23,21 +15,17 @@ import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
 
-  return withRequestId(
-    withErrorHandling(
-      withTiming(async (_r: Request, _ctx: RouteContext) => {
-        const node = await loadPricingNodeBySlug(slug);
+  return withApiMiddleware(async (_r: Request, _ctx: RouteContext) => {
+    const node = await loadPricingNodeBySlug(slug);
 
-        if (!node) {
-          throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
-        }
+    if (!node) {
+      throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
+    }
 
-        return jsonResponse({ data: stripInternal(node) }, 200, {
-          "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
-          "Cache-Tag": `pricing-node:${slug}`,
-          ...corsHeaders(),
-        });
-      })
-    )
-  )(req, { requestId: "" });
+    return jsonResponse({ data: stripInternal(node) }, 200, {
+      "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
+      "Cache-Tag": `pricing-node:${slug}`,
+      ...corsHeaders(),
+    });
+  })(req, { requestId: "" });
 }

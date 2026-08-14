@@ -5,15 +5,7 @@
  * table in the database.
  */
 
-import {
-  ApiError,
-  corsHeaders,
-  jsonResponse,
-  type RouteContext,
-  withErrorHandling,
-  withRequestId,
-  withTiming,
-} from "@/lib/api";
+import { ApiError, corsHeaders, jsonResponse, type RouteContext, withApiMiddleware } from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
 import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
 
@@ -74,29 +66,25 @@ async function loadVersionsFromDb(entityId: string): Promise<VersionEntry[]> {
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
 
-  return withRequestId(
-    withErrorHandling(
-      withTiming(async (_r: Request, _ctx: RouteContext) => {
-        // Verify the node exists (works in both JSON and DB mode)
-        const node = await loadPricingNodeBySlug(slug);
-        if (!node) {
-          throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
-        }
+  return withApiMiddleware(async (_r: Request, _ctx: RouteContext) => {
+    // Verify the node exists (works in both JSON and DB mode)
+    const node = await loadPricingNodeBySlug(slug);
+    if (!node) {
+      throw new ApiError("NOT_FOUND", `Pricing node '${slug}' not found`);
+    }
 
-        const versions = await loadVersionsFromDb(node.id);
+    const versions = await loadVersionsFromDb(node.id);
 
-        return jsonResponse(
-          {
-            data: stripInternal(versions),
-          },
-          200,
-          {
-            "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-            "Cache-Tag": `pricing-node:${slug}:versions`,
-            ...corsHeaders(),
-          }
-        );
-      })
-    )
-  )(req, { requestId: "" });
+    return jsonResponse(
+      {
+        data: stripInternal(versions),
+      },
+      200,
+      {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        "Cache-Tag": `pricing-node:${slug}:versions`,
+        ...corsHeaders(),
+      }
+    );
+  })(req, { requestId: "" });
 }

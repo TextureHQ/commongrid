@@ -17,7 +17,7 @@
 
 import { z } from "zod";
 
-import { ApiError, corsHeaders, jsonResponse, withErrorHandling, withRequestId, withTiming } from "@/lib/api";
+import { ApiError, corsHeaders, jsonResponse, withApiMiddleware } from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
 import { type EntityType, type SearchResult, searchAll } from "@/lib/data/search";
 
@@ -102,7 +102,7 @@ async function handler(req: Request): Promise<Response> {
 }
 
 export async function GET(req: Request): Promise<Response> {
-  return withRequestId(withErrorHandling(withTiming(handler)))(req, {
+  return withApiMiddleware(handler)(req, {
     requestId: "",
   });
 }

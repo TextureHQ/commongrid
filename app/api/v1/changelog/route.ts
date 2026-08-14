@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 import changelogJson from "@/data/changelog.json";
 import { corsHeaders } from "@/lib/api/cors";
-import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
+import { generateRequestId, withApiMiddleware } from "@/lib/api/middleware";
 import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
@@ -139,7 +139,7 @@ async function handleGet(req: Request, _ctx: RouteContext) {
 // Export with middleware
 // ---------------------------------------------------------------------------
 
-const handler = withRequestId(withErrorHandling(withTiming(handleGet)));
+const handler = withApiMiddleware(handleGet);
 
 export async function GET(req: NextRequest) {
   return handler(req, { requestId: generateRequestId() });

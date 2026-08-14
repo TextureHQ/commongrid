@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { ApiError } from "@/lib/api/errors";
-import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
+import { generateRequestId, withApiMiddleware } from "@/lib/api/middleware";
 import { publicJsonResponse } from "@/lib/api/public-response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
@@ -167,7 +167,7 @@ async function handleGet(req: Request, ctx: RouteContext) {
   return publicJsonResponse(utility, 200, extraHeaders, { fields });
 }
 
-const handler = withRequestId(withErrorHandling(withTiming(handleGet)));
+const handler = withApiMiddleware(handleGet);
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

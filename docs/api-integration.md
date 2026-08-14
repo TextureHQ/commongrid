@@ -104,13 +104,18 @@ The server looks up the SHA-256 of the key in `api_keys`, checks `is_active` and
 the scope matches the requested resource+action (e.g., `utilities:read` or `*:read`), and rate-limits
 by the key's tier. `lastUsedAt` is updated fire-and-forget on every request.
 
+Presented-key validation runs on **every public** `/api/v1/*` route (list, detail, search, geometry,
+lookup, resolve). A fabricated or revoked Bearer token returns `401` from any of those endpoints — not
+only the rate-limited geometry/lookup paths. Clerk-session routes (`/me`, `/contributions`, …) are
+separate and may carry a Clerk JWT in `Authorization`.
+
 **Unsupported credentials**
 
 | Presented as | Behavior |
 |---|---|
 | No `Authorization` | Anonymous tier (public reads). |
 | `Authorization: Bearer <valid cg_ key>` | Registered / bulk tier for that key. |
-| `Authorization: Bearer <unknown / revoked / empty>` | `401 UNAUTHORIZED`. |
+| `Authorization: Bearer <unknown / revoked / empty>` | `401 UNAUTHORIZED` on every public `/api/v1/*` route. |
 | `Authorization: Basic …`, raw token without a scheme, or any other scheme | `401 UNAUTHORIZED` (malformed credentials). |
 | `X-API-Key: …` | **Ignored.** Does not authenticate, elevate, or 401. Use Bearer instead. |
 

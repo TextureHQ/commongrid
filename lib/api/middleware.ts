@@ -2,11 +2,13 @@
  * Composable middleware for CommonGrid API routes.
  *
  * Each `with*` function wraps a RouteHandler, adding cross-cutting concerns
- * (request IDs, error handling, timing, CORS) without coupling routes to
- * framework-specific middleware infrastructure.
+ * (request IDs, error handling, timing, CORS, API-key auth, rate limiting)
+ * without coupling routes to framework-specific middleware infrastructure.
  *
- * `withApiMiddleware` is the single convenience wrapper that route handlers
- * should use — it composes all layers in the correct order.
+ * Public `/api/v1/*` handlers should use `withApiMiddleware`. Auth validation
+ * (presented key → 401 if invalid) and rate limiting both run by default.
+ * Auth is a separate layer from rate limiting so credentials are always
+ * checked even when a caller disables the limiter via options.
  *
  * See docs/specs/persistence-api.md §4.10 and §12.4.
  */
@@ -156,16 +158,70 @@ export function withTiming(handler: RouteHandler): RouteHandler {
 }
 
 // ---------------------------------------------------------------------------
-// Composed middleware
+// API key auth (always-on for presented credentials)
 // ---------------------------------------------------------------------------
 
-export interface ApiMiddlewareOptions {
+export interface ApiKeyAuthOptions {
   /** When true, requests without a valid Bearer key receive 401. */
   requireAuth?: boolean;
   /** Resource name used for scope validation (e.g., "utilities"). */
   resource?: string;
   /** Action name used for scope validation (e.g., "read", "write"). */
   action?: string;
+}
+
+export type ApiKeyAuthContext = {
+  isAuthenticated: boolean;
+  apiKeyId: string | null;
+  keyTier: string | undefined;
+};
+
+/**
+ * Middleware: validate a presented API key (Variant A).
+ *
+ * This layer is intentionally separate from rate limiting:
+ *   - Present-but-invalid credentials → 401 on every public route
+ *   - Missing Authorization → anonymous (unless `requireAuth`)
+ *   - Valid key → elevates identity for downstream rate-limit / usage layers
+ *
+ * Only `Authorization: Bearer <key>` is accepted. Other schemes (Basic, raw
+ * token, empty Bearer) are malformed credentials → 401. `X-API-Key` is ignored.
+ *
+ * Use this on all public `/api/v1/*` handlers. Do **not** apply it to
+ * Clerk-session routes (`/me`, `/contributions`, …): those may carry a Clerk
+ * JWT in `Authorization`, which is not a `cg_` API key.
+ */
+export function withApiKeyAuth(
+  handler: (req: Request, ctx: RouteContext, auth: ApiKeyAuthContext) => Promise<Response>,
+  options: ApiKeyAuthOptions = {}
+): RouteHandler {
+  const { requireAuth = false, resource = "", action = "" } = options;
+
+  return async (req: Request, ctx: RouteContext): Promise<Response> => {
+    const authHeader = req.headers.get("Authorization");
+    let isAuthenticated = false;
+    let apiKeyId: string | null = null;
+    let keyTier: string | undefined;
+
+    if (authHeader || requireAuth) {
+      const authResult = await validateApiKey(authHeader, requireAuth ? resource : "", requireAuth ? action : "");
+      if (!authResult.valid) {
+        return unauthorizedResponse(authResult.error ?? "Unauthorized", ctx.requestId);
+      }
+      isAuthenticated = true;
+      apiKeyId = authResult.apiKeyId ?? null;
+      keyTier = authResult.tier;
+    }
+
+    return handler(req, ctx, { isAuthenticated, apiKeyId, keyTier });
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Composed middleware
+// ---------------------------------------------------------------------------
+
+export interface ApiMiddlewareOptions extends ApiKeyAuthOptions {
   /**
    * Enable rate limiting. Defaults to true.
    * Set to false only for health-check / internal endpoints.
@@ -179,14 +235,15 @@ export interface ApiMiddlewareOptions {
 }
 
 /**
- * Single wrapper for API route handlers.
+ * Single wrapper for public `/api/v1/*` route handlers.
  *
  * Layer order (outer → inner):
  *   withErrorHandling → withRequestId → withTiming → withCors
  *   → auth → rate limiting → handler → usage tracking (fire-and-forget)
  *
  * Auth runs before rate limiting so only validated keys receive the
- * registered/bulk budget. Present-but-invalid credentials return 401.
+ * registered/bulk budget. Present-but-invalid credentials return 401 on
+ * every public route.
  *
  * Rate-limit headers are appended to every successful response.
  * Usage events are recorded asynchronously and never block the response.
@@ -196,94 +253,68 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
     requireAuth = false,
     resource = "",
     action = "",
-    rateLimit = true,
+    rateLimit: enableRateLimit = true,
     trackUsage: enableTracking = true,
   } = options;
 
-  const core: RouteHandler = async (req: Request, ctx: RouteContext): Promise<Response> => {
-    const start = performance.now();
-    const authHeader = req.headers.get("Authorization");
-    const method = req.method;
-    const isWrite = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
-    const isBulk = new URL(req.url).pathname.includes("/bulk");
+  const core = withApiKeyAuth(
+    async (req, ctx, auth) => {
+      const start = performance.now();
+      const method = req.method;
+      const isWrite = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
+      const isBulk = new URL(req.url).pathname.includes("/bulk");
+      const { isAuthenticated, apiKeyId, keyTier } = auth;
 
-    // Track API key ID for usage events (set during auth validation)
-    let isAuthenticated = false;
-    let apiKeyId: string | null = null;
-    let keyTier: string | undefined;
+      let rlResult: Awaited<ReturnType<typeof checkRateLimit>> | null = null;
 
-    // ── Authentication (Variant A) ─────────────────────────────────────────
-    // Only `Authorization: Bearer <key>` is accepted. Any other Authorization
-    // scheme (Basic, raw token without a scheme, empty Bearer, …) is treated
-    // as malformed credentials → 401. Known active keys elevate to
-    // registered/bulk; unknown / revoked tokens also 401 (no silent anonymous
-    // downgrade). Missing Authorization remains anonymous on public routes.
-    //
-    // `X-API-Key` is unsupported and ignored: it does not authenticate, does
-    // not elevate tier, and does not 401. Clients must use Bearer.
-    if (authHeader || requireAuth) {
-      const authResult = await validateApiKey(authHeader, requireAuth ? resource : "", requireAuth ? action : "");
-      if (!authResult.valid) {
-        return unauthorizedResponse(authResult.error ?? "Unauthorized", ctx.requestId);
-      }
-      isAuthenticated = true;
-      apiKeyId = authResult.apiKeyId ?? null;
-      keyTier = authResult.tier;
-    }
+      if (enableRateLimit) {
+        const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+        const identifier = isAuthenticated && apiKeyId ? `auth:${apiKeyId}` : `ip:${ip}`;
 
-    // ── Rate limiting ──────────────────────────────────────────────────────
-    let rlResult: Awaited<ReturnType<typeof checkRateLimit>> | null = null;
+        rlResult = await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk, keyTier);
 
-    if (rateLimit) {
-      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-      const identifier = isAuthenticated && apiKeyId ? `auth:${apiKeyId}` : `ip:${ip}`;
-
-      rlResult = await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk, keyTier);
-
-      if (!rlResult.success) {
-        // Track the 429 event
-        if (enableTracking) {
-          const elapsed = performance.now() - start;
-          trackUsage({
-            endpoint: normalizeEndpoint(req.url),
-            method,
-            statusCode: 429,
-            responseTimeMs: Math.round(elapsed),
-            isAuthenticated,
-            tier: usageTier(rlResult.tier, isAuthenticated),
-            apiKeyId,
-          });
+        if (!rlResult.success) {
+          if (enableTracking) {
+            const elapsed = performance.now() - start;
+            trackUsage({
+              endpoint: normalizeEndpoint(req.url),
+              method,
+              statusCode: 429,
+              responseTimeMs: Math.round(elapsed),
+              isAuthenticated,
+              tier: usageTier(rlResult.tier, isAuthenticated),
+              apiKeyId,
+            });
+          }
+          return rateLimitResponse(rlResult, ctx.requestId);
         }
-        return rateLimitResponse(rlResult, ctx.requestId);
       }
-    }
 
-    // ── Handler ────────────────────────────────────────────────────────────
-    const response = await handler(req, ctx);
+      const response = await handler(req, ctx);
 
-    // Attach rate-limit headers to the outgoing response.
-    if (rlResult) {
-      for (const [key, value] of Object.entries(rateLimitHeaders(rlResult))) {
-        response.headers.set(key, value);
+      if (rlResult) {
+        for (const [key, value] of Object.entries(rateLimitHeaders(rlResult))) {
+          response.headers.set(key, value);
+        }
       }
-    }
 
-    // ── Usage tracking (fire-and-forget) ───────────────────────────────────
-    if (enableTracking) {
-      const elapsed = performance.now() - start;
-      trackUsage({
-        endpoint: normalizeEndpoint(req.url),
-        method,
-        statusCode: response.status,
-        responseTimeMs: Math.round(elapsed),
-        isAuthenticated,
-        tier: usageTier(rlResult?.tier, isAuthenticated),
-        apiKeyId,
-      });
-    }
+      if (enableTracking) {
+        const elapsed = performance.now() - start;
+        trackUsage({
+          endpoint: normalizeEndpoint(req.url),
+          method,
+          statusCode: response.status,
+          responseTimeMs: Math.round(elapsed),
+          isAuthenticated,
+          tier: usageTier(rlResult?.tier, isAuthenticated),
+          apiKeyId,
+        });
+      }
 
-    return response;
-  };
+      return response;
+    },
+    { requireAuth, resource, action }
+  );
 
   return withErrorHandling(withRequestId(withTiming(withCors(core))));
 }

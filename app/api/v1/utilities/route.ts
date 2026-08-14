@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gt, gte, ilike, inArray, isNotNull, isNull, lt, lte, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
-import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
+import { generateRequestId, withApiMiddleware } from "@/lib/api/middleware";
 import { encodeCursor, parsePaginationParams } from "@/lib/api/pagination";
 import { parseFieldsParam, selectFields, stripInternal } from "@/lib/api/public-response";
 import { jsonResponse, paginatedResponse } from "@/lib/api/response";
@@ -385,7 +385,7 @@ async function fetchEntitiesById(
   return map;
 }
 
-const handler = withRequestId(withErrorHandling(withTiming(handleGet)));
+const handler = withApiMiddleware(handleGet);
 
 export async function GET(req: NextRequest) {
   return handler(req, { requestId: generateRequestId() });
