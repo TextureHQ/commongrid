@@ -88,11 +88,7 @@ function normalizeTier(tier: string | null | undefined): ApiKeyTier {
  *
  * The `lastUsedAt` timestamp is updated fire-and-forget.
  */
-export async function validateApiKey(
-  authHeader: string | null,
-  resource: string,
-  action: string
-): Promise<AuthResult> {
+export async function validateApiKey(authHeader: string | null, resource: string, action: string): Promise<AuthResult> {
   if (!authHeader) {
     return { valid: false, error: "Missing Authorization header" };
   }

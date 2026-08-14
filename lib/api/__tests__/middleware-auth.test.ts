@@ -67,13 +67,7 @@ describe("withApiMiddleware Bearer validation", () => {
 
     expect(response.status).toBe(200);
     expect(validateApiKey).not.toHaveBeenCalled();
-    expect(checkRateLimit).toHaveBeenCalledWith(
-      expect.stringMatching(/^ip:/),
-      false,
-      false,
-      false,
-      undefined
-    );
+    expect(checkRateLimit).toHaveBeenCalledWith(expect.stringMatching(/^ip:/), false, false, false, undefined);
   });
 
   it("valid Bearer key → registered tier with key id identity", async () => {

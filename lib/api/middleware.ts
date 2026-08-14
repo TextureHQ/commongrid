@@ -27,10 +27,7 @@ function unauthorizedResponse(message: string, requestId: string | undefined): R
   });
 }
 
-function usageTier(
-  rlTier: string | undefined,
-  isAuthenticated: boolean
-): "anonymous" | "registered" | "bulk" {
+function usageTier(rlTier: string | undefined, isAuthenticated: boolean): "anonymous" | "registered" | "bulk" {
   if (rlTier === "write") return isAuthenticated ? "registered" : "anonymous";
   if (rlTier === "bulk" || rlTier === "registered" || rlTier === "anonymous") return rlTier;
   return isAuthenticated ? "registered" : "anonymous";
@@ -221,11 +218,7 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
     // — they must not elevate tier and must not silently fall back to anonymous.
     // Missing Authorization remains anonymous on public routes.
     if (authHeader || requireAuth) {
-      const authResult = await validateApiKey(
-        authHeader,
-        requireAuth ? resource : "",
-        requireAuth ? action : ""
-      );
+      const authResult = await validateApiKey(authHeader, requireAuth ? resource : "", requireAuth ? action : "");
       if (!authResult.valid) {
         return unauthorizedResponse(authResult.error ?? "Unauthorized", ctx.requestId);
       }
