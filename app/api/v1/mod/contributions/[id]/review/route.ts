@@ -22,23 +22,9 @@ import { generateRequestId, withErrorHandling, withRequestId, withTiming } from 
 import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
-import {
-  balancingAuthorities,
-  contributions,
-  entityVersions,
-  evStations,
-  isos,
-  moderationActions,
-  powerPlants,
-  pricingNodes,
-  programs,
-  regions,
-  rtos,
-  territories,
-  transmissionLines,
-  users,
-  utilities,
-} from "@/lib/db/schema";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { contributions, moderationActions, users } from "@/lib/db/schema";
+import { applyContribution, isKnownEntityType, markContributionApplied } from "@/lib/mod/apply-contribution";
 import { detectChangeType } from "@/lib/mod/detect-change-type";
 import { requireModerator } from "@/lib/mod/require-moderator";
 import { createNotification } from "@/lib/notifications/create-notification";
@@ -57,76 +43,8 @@ const ACTION_TO_STATUS: Record<ReviewAction, string> = {
   request_changes: "changes_requested",
 };
 
-type EntityType =
-  | "utility"
-  | "power_plant"
-  | "ev_station"
-  | "territory"
-  | "transmission_line"
-  | "pricing_node"
-  | "iso"
-  | "rto"
-  | "balancing_authority"
-  | "region"
-  | "program";
-
-// biome-ignore lint/suspicious/noExplicitAny: Drizzle table types vary
-function getEntityTable(entityType: EntityType): any {
-  const tableMap: Record<EntityType, unknown> = {
-    utility: utilities,
-    power_plant: powerPlants,
-    ev_station: evStations,
-    territory: territories,
-    transmission_line: transmissionLines,
-    pricing_node: pricingNodes,
-    iso: isos,
-    rto: rtos,
-    balancing_authority: balancingAuthorities,
-    region: regions,
-    program: programs,
-  };
-  return tableMap[entityType];
-}
-
-/**
- * Convert snake_case field names (from community_editable_fields) to camelCase
- * Drizzle property names. e.g., "customer_count" → "customerCount"
- */
-function snakeToCamel(str: string): string {
-  return str.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
-}
-
-/**
- * Normalize a contribution's changes to { field: { old, new } } format.
- * Handles both the canonical format and the flat { field: value } format
- * that the EditEntityPanel might send.
- */
-function normalizeChanges(changes: Record<string, unknown>): Record<string, { old: unknown; new: unknown }> {
-  const result: Record<string, { old: unknown; new: unknown }> = {};
-  for (const [key, value] of Object.entries(changes)) {
-    if (
-      value !== null &&
-      typeof value === "object" &&
-      !Array.isArray(value) &&
-      "new" in (value as Record<string, unknown>)
-    ) {
-      // Already in { old, new } format
-      result[key] = value as { old: unknown; new: unknown };
-    } else {
-      // Flat format: wrap into { old: null, new: value }
-      result[key] = { old: null, new: value };
-    }
-  }
-  return result;
-}
-
-/**
- * Check whether a Drizzle table schema has a specific column.
- */
-// biome-ignore lint/suspicious/noExplicitAny: Drizzle table types vary
-function tableHasColumn(table: any, columnProp: string): boolean {
-  return table[columnProp] !== undefined;
-}
+// The entity table map, field-name conversion and `changes` normalization all
+// live in lib/mod/apply-contribution.ts, alongside the writes that use them.
 
 // ---------------------------------------------------------------------------
 // POST handler
@@ -177,307 +95,158 @@ async function handlePost(req: Request, ctx: RouteContext) {
   // --- Apply the review ---
 
   if (action === "approve") {
-    // For approvals, we need to apply changes to the entity
-    const entityTable = getEntityTable(contribution.entityType as EntityType);
-    if (!entityTable) {
+    if (!isKnownEntityType(contribution.entityType)) {
       throw new ApiError("INTERNAL_ERROR", `Unknown entity type: ${contribution.entityType}`);
     }
 
     const changeType = detectChangeType(contribution);
 
-    if (changeType === "create") {
-      // --- Handle create: INSERT a new entity ---
-      const rawChanges = contribution.changes as Record<string, unknown>;
-      const changes = normalizeChanges(rawChanges);
-
-      const insertValues: Record<string, unknown> = {
-        id: contribution.entityId,
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      // Only set slug/version if the entity table supports them
-      if (tableHasColumn(entityTable, "slug")) {
-        insertValues.slug = contribution.entitySlug;
-      }
-      if (tableHasColumn(entityTable, "version")) {
-        insertValues.version = 1;
-      }
-      if (tableHasColumn(entityTable, "submittedBy")) {
-        insertValues.submittedBy = contribution.userId;
-      }
-
-      // Extract field values from changes, converting snake_case → camelCase
-      for (const [field, change] of Object.entries(changes)) {
-        const camelField = snakeToCamel(field);
-        insertValues[camelField] = change.new;
-      }
-
-      await db.insert(entityTable).values(insertValues);
-
-      // Create entity_versions record (v1 = full snapshot)
-      await db.insert(entityVersions).values({
-        entityType: contribution.entityType,
-        entityId: contribution.entityId,
-        versionNumber: 1,
-        snapshot: insertValues,
-        delta: null,
-        changedBy: moderator.id,
-        changedAt: now,
-        changeType: "create",
-        changeSummary: contribution.editSummary,
-        contributionId: contributionId,
+    // Writes go through the pooled client so the entity write, its
+    // entity_versions row, the contribution status and the contributor's stats
+    // all land together. lib/db/client.ts speaks Neon's stateless HTTP
+    // protocol, which has no session for BEGIN/COMMIT to live in — that is why
+    // this route previously issued them as independent statements and could
+    // leave an entity mutated with no corresponding version row.
+    //
+    // applyContribution is shared with the auto-approval path, so an accepted
+    // edit is applied and versioned identically regardless of who accepted it.
+    const pooled = getPooledDb();
+    const outcome = await pooled.transaction(async (tx) => {
+      const applied = await applyContribution(tx, contribution, {
+        actorId: moderator.id,
         sourceType: "community",
+        changeType,
+        now,
       });
 
-      // Update contribution status
-      await db
-        .update(contributions)
-        .set({
-          status: newStatus,
-          reviewedBy: moderator.id,
-          reviewedAt: now,
-          moderatorComment: comment ?? null,
-          appliedVersion: 1,
-          updatedAt: now,
-        })
-        .where(eq(contributions.id, contributionId));
-    } else if (changeType === "delete") {
-      // --- Handle delete: soft-delete the entity ---
-
-      // Read entity to verify it exists
-      const [entity] = await db.select().from(entityTable).where(eq(entityTable.id, contribution.entityId)).limit(1);
-
-      if (!entity) {
-        throw new ApiError("NOT_FOUND", `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`);
+      // Both non-applied outcomes bail before any mutation, so returning here
+      // commits an empty transaction rather than rolling one back.
+      if (applied.status !== "applied") {
+        return applied;
       }
 
-      // Optimistic concurrency check (same as update path — ERD §5)
-      const currentVersion = entity.version ?? 0;
-      if (currentVersion !== contribution.entityVersion) {
-        await db
+      await markContributionApplied(tx, contributionId, {
+        status: "approved",
+        appliedVersion: applied.appliedVersion,
+        reviewedBy: moderator.id,
+        moderatorComment: comment ?? null,
+        now,
+      });
+
+      if (contribution.userId) {
+        await tx
+          .update(users)
+          .set({ approvedCount: sql`${users.approvedCount} + 1`, updatedAt: now })
+          .where(eq(users.id, contribution.userId));
+      }
+
+      // Inside the transaction: the audit record must land with the change it
+      // describes, not after a separate commit.
+      await tx.insert(moderationActions).values({
+        moderatorId: moderator.id,
+        actionType: action,
+        targetType: "contribution",
+        targetId: contributionId,
+        comment: comment ?? null,
+        internalNote: internal_note ?? null,
+        metadata: {
+          previous_status: contribution.status,
+          new_status: newStatus,
+          entity_type: contribution.entityType,
+          entity_id: contribution.entityId,
+          applied_version: applied.appliedVersion,
+        },
+      });
+
+      return applied;
+    });
+
+    if (outcome.status === "unknown_fields") {
+      throw new ApiError(
+        "VALIDATION_ERROR",
+        `Cannot approve: ${outcome.fields.join(", ")} ${outcome.fields.length === 1 ? "is not a field" : "are not fields"} on ${contribution.entityType}.`,
+        { field: outcome.fields[0] }
+      );
+    }
+
+    if (outcome.status === "entity_missing") {
+      throw new ApiError("NOT_FOUND", `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`);
+    }
+
+    if (outcome.status === "version_conflict") {
+      const conflictMessage = `Version conflict: entity was at version ${outcome.entityVersion}, contribution was based on version ${outcome.contributionVersion}.`;
+
+      await pooled.transaction(async (tx) => {
+        await tx
           .update(contributions)
           .set({
             status: "version_conflict",
             reviewedBy: moderator.id,
             reviewedAt: now,
-            moderatorComment:
-              comment ??
-              `Version conflict: entity was at version ${currentVersion}, contribution was based on version ${contribution.entityVersion}.`,
+            moderatorComment: comment ?? conflictMessage,
             updatedAt: now,
           })
           .where(eq(contributions.id, contributionId));
 
-        await db.insert(moderationActions).values({
+        await tx.insert(moderationActions).values({
           moderatorId: moderator.id,
           actionType: "approve",
           targetType: "contribution",
           targetId: contributionId,
-          comment: `Version conflict detected during delete. Entity version ${currentVersion} != contribution version ${contribution.entityVersion}.`,
+          comment: conflictMessage,
           internalNote: internal_note ?? null,
           metadata: {
             result: "version_conflict",
-            entity_version: currentVersion,
-            contribution_version: contribution.entityVersion,
-            change_type: "delete",
+            entity_version: outcome.entityVersion,
+            contribution_version: outcome.contributionVersion,
+            change_type: changeType,
           },
         });
-
-        throw new ApiError(
-          "CONFLICT",
-          `Version conflict: the entity was modified since this delete was submitted (entity v${currentVersion}, contribution based on v${contribution.entityVersion}).`
-        );
-      }
-
-      const newVersion = currentVersion + 1;
-
-      // Soft-delete: set deletedAt + bump version
-      await db
-        .update(entityTable)
-        .set({
-          deletedAt: now,
-          updatedAt: now,
-          version: newVersion,
-        })
-        .where(eq(entityTable.id, contribution.entityId));
-
-      // Create entity_versions record for the deletion
-      await db.insert(entityVersions).values({
-        entityType: contribution.entityType,
-        entityId: contribution.entityId,
-        versionNumber: newVersion,
-        snapshot: null,
-        delta: { deletedAt: { old: null, new: now.toISOString() } },
-        changedBy: moderator.id,
-        changedAt: now,
-        changeType: "delete",
-        changeSummary: contribution.editSummary,
-        contributionId: contributionId,
-        sourceType: "community",
       });
 
-      // Update contribution status
-      await db
-        .update(contributions)
-        .set({
-          status: newStatus,
-          reviewedBy: moderator.id,
-          reviewedAt: now,
-          moderatorComment: comment ?? null,
-          appliedVersion: newVersion,
-          updatedAt: now,
-        })
-        .where(eq(contributions.id, contributionId));
-    } else {
-      // --- Handle update: apply field changes ---
-
-      // Read entity to check version — optimistic concurrency (ERD §5)
-      const [entity] = await db.select().from(entityTable).where(eq(entityTable.id, contribution.entityId)).limit(1);
-
-      if (!entity) {
-        throw new ApiError("NOT_FOUND", `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`);
-      }
-
-      // Check if entity version still matches (optimistic concurrency)
-      // Skip version check for entity tables without version column (e.g., territories)
-      const currentVersion = entity.version ?? 0;
-      const hasVersioning = tableHasColumn(entityTable, "version");
-      if (hasVersioning && currentVersion !== contribution.entityVersion) {
-        // Mark as version_conflict
-        await db
-          .update(contributions)
-          .set({
-            status: "version_conflict",
-            reviewedBy: moderator.id,
-            reviewedAt: now,
-            moderatorComment:
-              comment ??
-              `Version conflict: entity was at version ${currentVersion}, contribution was based on version ${contribution.entityVersion}.`,
-            updatedAt: now,
-          })
-          .where(
-            // Optimistic lock: only update if status hasn't changed
-            eq(contributions.id, contributionId)
-          );
-
-        // Log the conflict action
-        await db.insert(moderationActions).values({
-          moderatorId: moderator.id,
-          actionType: "approve",
-          targetType: "contribution",
-          targetId: contributionId,
-          comment: `Version conflict detected. Entity version ${currentVersion} != contribution version ${contribution.entityVersion}.`,
-          internalNote: internal_note ?? null,
-          metadata: {
-            result: "version_conflict",
-            entity_version: currentVersion,
-            contribution_version: contribution.entityVersion,
-          },
-        });
-
-        throw new ApiError(
-          "CONFLICT",
-          `Version conflict: the entity was modified since this contribution was submitted (entity v${currentVersion}, contribution based on v${contribution.entityVersion}).`
-        );
-      }
-
-      // Apply changes to the entity table, converting snake_case → camelCase
-      const rawChanges = contribution.changes as Record<string, unknown>;
-      const changes = normalizeChanges(rawChanges);
-      const entityUpdates: Record<string, unknown> = {};
-      for (const [fieldName, change] of Object.entries(changes)) {
-        const camelField = snakeToCamel(fieldName);
-        entityUpdates[camelField] = change.new;
-      }
-
-      // Update entity with version bump
-      if (Object.keys(entityUpdates).length > 0) {
-        entityUpdates.updatedAt = now;
-        if (tableHasColumn(entityTable, "version")) {
-          entityUpdates.version = currentVersion + 1;
-        }
-        await db.update(entityTable).set(entityUpdates).where(eq(entityTable.id, contribution.entityId));
-      }
-
-      // Create entity_versions record for the update
-      await db.insert(entityVersions).values({
-        entityType: contribution.entityType,
-        entityId: contribution.entityId,
-        versionNumber: currentVersion + 1,
-        snapshot: null,
-        delta: changes,
-        changedBy: moderator.id,
-        changedAt: now,
-        changeType: "update",
-        changeSummary: contribution.editSummary,
-        contributionId: contributionId,
-        sourceType: "community",
-      });
-
-      // Update contribution status
-      await db
-        .update(contributions)
-        .set({
-          status: newStatus,
-          reviewedBy: moderator.id,
-          reviewedAt: now,
-          moderatorComment: comment ?? null,
-          appliedVersion: currentVersion + 1,
-          updatedAt: now,
-        })
-        .where(eq(contributions.id, contributionId));
-    }
-
-    // Update contributor stats (shared for all approve paths)
-    if (contribution.userId) {
-      await db
-        .update(users)
-        .set({
-          approvedCount: sql`${users.approvedCount} + 1`,
-          updatedAt: now,
-        })
-        .where(eq(users.id, contribution.userId));
+      throw new ApiError(
+        "CONFLICT",
+        `Version conflict: the entity was modified since this contribution was submitted (entity v${outcome.entityVersion}, contribution based on v${outcome.contributionVersion}).`
+      );
     }
   } else {
-    // Return or request_changes — just update the contribution status
-    await db
-      .update(contributions)
-      .set({
-        status: newStatus,
-        reviewedBy: moderator.id,
-        reviewedAt: now,
-        moderatorComment: comment ?? null,
-        updatedAt: now,
-      })
-      .where(eq(contributions.id, contributionId));
-
-    // Update contributor returned_count for 'return' action
-    if (action === "return" && contribution.userId) {
-      await db
-        .update(users)
+    // Return or request_changes — status, contributor stats and the audit
+    // record commit together for the same reason the approve path does.
+    await getPooledDb().transaction(async (tx) => {
+      await tx
+        .update(contributions)
         .set({
-          returnedCount: sql`${users.returnedCount} + 1`,
+          status: newStatus,
+          reviewedBy: moderator.id,
+          reviewedAt: now,
+          moderatorComment: comment ?? null,
           updatedAt: now,
         })
-        .where(eq(users.id, contribution.userId));
-    }
-  }
+        .where(eq(contributions.id, contributionId));
 
-  // --- Log the moderation action ---
-  await db.insert(moderationActions).values({
-    moderatorId: moderator.id,
-    actionType: action,
-    targetType: "contribution",
-    targetId: contributionId,
-    comment: comment ?? null,
-    internalNote: internal_note ?? null,
-    metadata: {
-      previous_status: contribution.status,
-      new_status: newStatus,
-      entity_type: contribution.entityType,
-      entity_id: contribution.entityId,
-    },
-  });
+      if (action === "return" && contribution.userId) {
+        await tx
+          .update(users)
+          .set({ returnedCount: sql`${users.returnedCount} + 1`, updatedAt: now })
+          .where(eq(users.id, contribution.userId));
+      }
+
+      await tx.insert(moderationActions).values({
+        moderatorId: moderator.id,
+        actionType: action,
+        targetType: "contribution",
+        targetId: contributionId,
+        comment: comment ?? null,
+        internalNote: internal_note ?? null,
+        metadata: {
+          previous_status: contribution.status,
+          new_status: newStatus,
+          entity_type: contribution.entityType,
+          entity_id: contribution.entityId,
+        },
+      });
+    });
+  }
 
   // --- Notify the contributor ---
   if (contribution.userId) {

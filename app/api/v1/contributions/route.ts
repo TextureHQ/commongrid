@@ -17,25 +17,12 @@ import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
-import {
-  balancingAuthorities,
-  contributions,
-  entityLocks,
-  evStations,
-  isos,
-  powerPlants,
-  pricingNodes,
-  programs,
-  regions,
-  rtos,
-  territories,
-  transmissionLines,
-  utilities,
-} from "@/lib/db/schema";
+import { contributions, entityLocks } from "@/lib/db/schema";
 import { users } from "@/lib/db/schema/users";
 import { isKnockConfigured } from "@/lib/knock/client";
 import { triggerContributionSubmitted, triggerModNewContribution } from "@/lib/knock/workflows";
-import { tryAutoApprove } from "@/lib/mod/auto-approve";
+import { type ChangeType, getEntityTable } from "@/lib/mod/apply-contribution";
+import { type AutoApproveResult, tryAutoApprove } from "@/lib/mod/auto-approve";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -80,27 +67,9 @@ const VALID_STATUSES = [
 
 type EntityType = (typeof VALID_ENTITY_TYPES)[number];
 
-// ---------------------------------------------------------------------------
-// Entity table lookup — maps entity_type to its Drizzle table
-// ---------------------------------------------------------------------------
-
-// biome-ignore lint/suspicious/noExplicitAny: Drizzle table types vary; a union would be unwieldy
-function getEntityTable(entityType: EntityType): any {
-  const tableMap: Record<EntityType, unknown> = {
-    utility: utilities,
-    power_plant: powerPlants,
-    ev_station: evStations,
-    territory: territories,
-    transmission_line: transmissionLines,
-    pricing_node: pricingNodes,
-    iso: isos,
-    rto: rtos,
-    balancing_authority: balancingAuthorities,
-    region: regions,
-    program: programs,
-  };
-  return tableMap[entityType];
-}
+// The entity_type -> Drizzle table map lives in lib/mod/apply-contribution.ts,
+// which is also where writes happen. Keeping one copy means a new entity type
+// cannot be contributable but unappliable (or vice versa).
 
 // ---------------------------------------------------------------------------
 // POST /api/v1/contributions — Submit a contribution
@@ -282,29 +251,17 @@ async function handlePost(req: Request, ctx: RouteContext) {
     .returning();
 
   // --- Try auto-approval ---
-  let autoApproveResult: { autoApproved: boolean; reason?: string; newSlug?: string } = { autoApproved: false };
+  // tryAutoApprove now applies the edit itself, through the same
+  // applyContribution path a moderator approval uses — entity write, version
+  // row, status and stats in one transaction. It previously only flipped the
+  // status, so auto-approved edits were accepted and then discarded.
+  let autoApproveResult: AutoApproveResult & { newSlug?: string } = { autoApproved: false };
   if (!geometry_change_type) {
     // Geometry changes always require manual review
-    autoApproveResult = await tryAutoApprove(
-      db,
-      user,
-      contribution.id,
-      entity_type,
-      changes as Record<string, unknown>,
-      isCreate,
-      isDelete
-    );
+    const changeType: ChangeType = isCreate ? "create" : isDelete ? "delete" : "update";
+    autoApproveResult = await tryAutoApprove(user, contribution, changeType);
 
-    // If create was auto-approved, we need to insert the entity
     if (isCreate && autoApproveResult.autoApproved) {
-      await createEntity(
-        db,
-        entity_type as EntityType,
-        entity_id,
-        changes as Record<string, { old: null; new: unknown }>,
-        entitySlug,
-        user.id
-      );
       autoApproveResult.newSlug = entitySlug;
     }
   }
@@ -434,41 +391,6 @@ async function handleGet(req: Request, ctx: RouteContext) {
     ...corsHeaders(),
     "X-Request-Id": ctx.requestId,
   });
-}
-
-// ---------------------------------------------------------------------------
-// createEntity — Insert a new entity when a create contribution is auto-approved
-// ---------------------------------------------------------------------------
-
-async function createEntity(
-  db: ReturnType<typeof getDb>,
-  entityType: EntityType,
-  entityId: string,
-  changes: Record<string, { old: null; new: unknown }>,
-  entitySlug: string,
-  userId: string
-): Promise<string> {
-  const entityTable = getEntityTable(entityType);
-
-  // Build the insert values from changes
-  const insertValues: Record<string, unknown> = {
-    id: entityId,
-    slug: entitySlug,
-    version: 1,
-    submittedBy: userId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  // Extract field values from changes { field: { old: null, new: value } }
-  for (const [field, change] of Object.entries(changes)) {
-    insertValues[field] = change.new;
-  }
-
-  // Insert the entity
-  await db.insert(entityTable).values(insertValues);
-
-  return entityId;
 }
 
 // ---------------------------------------------------------------------------

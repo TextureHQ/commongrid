@@ -105,6 +105,8 @@ export const territories = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    /** Optimistic concurrency counter for community contributions. */
+    version: integer("version").notNull().default(1),
   },
   (table) => [
     index("idx_territories_region_id").on(table.regionId),
