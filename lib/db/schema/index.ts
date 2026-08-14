@@ -86,6 +86,11 @@ export type {
 export { moderationResponseTemplates } from "./moderation-response-templates";
 export type { NotificationInsert, NotificationSelect } from "./notifications";
 export { notifications } from "./notifications";
+export type {
+  PowerPlantInterconnectionInsert,
+  PowerPlantInterconnectionSelect,
+} from "./power-plant-interconnections";
+export { powerPlantInterconnections } from "./power-plant-interconnections";
 export type { PowerPlantInsert, PowerPlantSelect } from "./power-plants";
 // Extended Entity Tables
 export { powerPlants } from "./power-plants";
@@ -104,6 +109,11 @@ export { substations } from "./substations";
 export type { TerritoryInsert, TerritorySelect } from "./territories";
 // Spatial Table
 export { territories } from "./territories";
+export type {
+  TransmissionLineEndpointInsert,
+  TransmissionLineEndpointSelect,
+} from "./transmission-line-endpoints";
+export { transmissionLineEndpoints } from "./transmission-line-endpoints";
 export type {
   TransmissionLineInsert,
   TransmissionLineSelect,
