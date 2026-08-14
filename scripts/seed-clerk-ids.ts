@@ -1,25 +1,16 @@
 /**
  * Point existing `users` rows at development-instance Clerk IDs.
  *
- * Preview and development deployments authenticate against Clerk's DEVELOPMENT
- * instance, but their database is a copy-on-write fork of production and so
- * holds PRODUCTION Clerk IDs. Clerk cannot transfer user data between
- * instances, so the IDs never line up: you sign in successfully, then
- * `getCurrentUser()` finds no row and every write path 401s.
+ * Previews authenticate against Clerk's development instance, but their
+ * database is forked from production and holds production Clerk IDs. Clerk
+ * cannot transfer users between instances, so the IDs never line up: sign-in
+ * succeeds, then `getCurrentUser()` finds no row and writes 401.
  *
- * This matches on email — the one identifier stable across both instances —
- * and rewrites `users.clerk_user_id` to the development ID.
- *
- * It creates nothing. Users must already exist in the development instance;
- * rows with no match are left alone and reported.
- *
- * Preview branches are forked per git branch, so this needs re-running when a
- * new branch's database is created.
+ * Matches on email and rewrites `users.clerk_user_id`. Creates nothing;
+ * unmatched rows are reported. Needs re-running per preview branch.
  *
  *   npm run db:seed:clerk:dev            # dry run, prints the plan
  *   npm run db:seed:clerk:dev -- --apply # write
- *
- * REFUSES TO TOUCH PRODUCTION. See the guards below.
  */
 import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -29,17 +20,6 @@ import { users } from "@/lib/db/schema";
 /**
  * Database hosts this script must never write to — the production endpoint,
  * comma-separated if more than one.
- *
- * Kept out of the repo because this one is public, and naming the production
- * endpoint hands anyone the exact host to aim at.
- *
- * Must be set in TWO places: `.env.local` for local runs, AND in Vercel for
- * every environment — `.env.local` is not read by Vercel, so without the Vercel
- * variable the script refuses to run there, including from the build.
- *
- * Crucially this FAILS CLOSED: if the variable is missing the script refuses to
- * run at all. An unset variable disables the script, never the guard. Match is
- * on the endpoint id, so it covers both the pooled and direct hostnames.
  */
 const PROTECTED_DB_HOSTS = (process.env.PROTECTED_DB_HOSTS ?? "")
   .split(",")
@@ -48,11 +28,7 @@ const PROTECTED_DB_HOSTS = (process.env.PROTECTED_DB_HOSTS ?? "")
 
 const CLERK_API = "https://api.clerk.com/v1";
 
-/**
- * Emails and Clerk ids are masked by default because this runs inside the
- * Vercel build and its output lands in build logs on every preview deploy.
- * `--verbose` prints them in full for local debugging.
- */
+/** Verbose logging for local debugging. */
 const VERBOSE = process.argv.includes("--verbose");
 
 function maskEmail(email: string): string {
@@ -67,11 +43,7 @@ function maskId(id: string | null): string {
   return VERBOSE ? id : `${id.slice(0, 9)}…`;
 }
 
-/**
- * Host of a connection string, or null when it cannot be parsed. Callers must
- * treat null as a refusal: a guard that cannot read the host is a guard that
- * is not guarding.
- */
+/** Host of a connection string, or null when it cannot be parsed. */
 function hostOf(databaseUrl: string): string | null {
   try {
     return new URL(databaseUrl).hostname || null;
@@ -86,12 +58,7 @@ interface ClerkUser {
   primary_email_address_id: string | null;
 }
 
-/**
- * Every guard is independent, and any one of them failing aborts. The first is
- * the important one: a development Clerk instance is the only source of IDs
- * this script can legitimately write, so a live key means it is pointed
- * somewhere it should not be — regardless of what the database says.
- */
+/** Any one failure aborts. Runs before a database connection is opened. */
 function assertNotProduction(databaseUrl: string, clerkSecret: string): void {
   const failures: string[] = [];
 
@@ -151,9 +118,8 @@ function primaryEmail(u: ClerkUser): string | null {
 async function main() {
   const apply = process.argv.includes("--apply");
 
-  // For use inside the Vercel build, where a non-preview environment must be a
-  // no-op rather than a failure. Run by hand the guards stay loud; with this
-  // flag anything that is not a preview exits 0 without touching the database.
+  // For the Vercel build, where a non-preview environment must be a no-op
+  // rather than a failure.
   if (process.argv.includes("--only-preview") && process.env.VERCEL_ENV !== "preview") {
     console.log(`db:seed:clerk:dev — skipped (VERCEL_ENV=${process.env.VERCEL_ENV ?? "unset"}, not a preview)`);
     return;
@@ -189,18 +155,14 @@ async function main() {
   const db = drizzle(client);
 
   try {
-    // Ordered so that when one address has several rows, the same one claims
-    // the development id on every run. Which row that is remains arbitrary —
-    // the point is that it does not change between builds.
+    // Stable order, so the same row claims the id on every run.
     const rows = await db
       .select({ id: users.id, email: users.email, role: users.role, clerkUserId: users.clerkUserId })
       .from(users)
       .orderBy(users.id);
 
-    // `users.clerk_user_id` is UNIQUE but `email` is not, and production
-    // already contains two rows for the same address — one per Clerk instance.
-    // Remapping a row onto an id another row already holds would violate that
-    // constraint, so those are reported rather than attempted.
+    // `clerk_user_id` is UNIQUE but `email` is not, so one address can hold a
+    // row per Clerk instance. Rows targeting a taken id are reported, not moved.
     const takenIds = new Set(rows.map((r) => r.clerkUserId));
 
     const planned: Array<{ rowId: string; email: string; from: string; to: string; role: string }> = [];
@@ -219,11 +181,8 @@ async function main() {
         blocked.push({ email, role: row.role, to: clerkUser.id });
       } else {
         planned.push({ rowId: row.id, email, from: row.clerkUserId, to: clerkUser.id, role: row.role });
-        // Claim the target immediately. Two rows can share an address, and if
-        // neither currently holds the development id both would otherwise plan
-        // onto it — the second update then violates the unique constraint.
-        // Reporting the second as blocked surfaces the "which row gets the
-        // role" question instead of letting whichever row sorts first win it.
+        // Claim it now, or a second row with the same address plans onto the
+        // same id and the update violates the unique constraint.
         takenIds.add(clerkUser.id);
       }
     }
@@ -262,13 +221,11 @@ async function main() {
       return;
     }
 
-    // One transaction so a constraint violation mid-loop cannot leave the table
-    // half-remapped — some rows on development ids, the rest on production ones.
+    // One transaction so a mid-loop failure cannot leave the table half-remapped.
     await db.transaction(async (tx) => {
       for (const p of planned) {
-        // Keyed on the primary key, not the email: `users.email` has no unique
-        // constraint and production already holds two rows for the same address,
-        // one per Clerk instance. Matching on email would update both.
+        // Keyed on the primary key — matching on email would update every
+        // row sharing the address.
         await tx.update(users).set({ clerkUserId: p.to, updatedAt: sql`now()` }).where(eq(users.id, p.rowId));
       }
     });
@@ -279,10 +236,8 @@ async function main() {
 }
 
 main().catch((e) => {
-  // Guard refusals call process.exit(1) directly and never reach here — a
-  // misconfigured script is always fatal. This handles post-guard failure only:
-  // a Clerk outage, a dropped connection. Inside a build that is a convenience
-  // that did not happen, not a reason to fail an otherwise good deploy.
+  // Guard refusals exit(1) directly and never reach here. This is post-guard
+  // failure only — a Clerk outage should not fail an otherwise good deploy.
   const bestEffort = process.argv.includes("--only-preview");
   console.error(bestEffort ? "warning: Clerk id mapping skipped —" : "failed:", e);
   process.exit(bestEffort ? 0 : 1);
