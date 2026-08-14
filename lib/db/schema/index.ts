@@ -110,6 +110,11 @@ export type { TerritoryInsert, TerritorySelect } from "./territories";
 // Spatial Table
 export { territories } from "./territories";
 export type {
+  TransmissionLineEndpointInsert,
+  TransmissionLineEndpointSelect,
+} from "./transmission-line-endpoints";
+export { transmissionLineEndpoints } from "./transmission-line-endpoints";
+export type {
   TransmissionLineInsert,
   TransmissionLineSelect,
 } from "./transmission-lines";
