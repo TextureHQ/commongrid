@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS power_plant_interconnections (
 );
 
 -- Indexes for common queries
-CREATE INDEX idx_pp_intercon_plant_id ON power_plant_interconnections(power_plant_id);
-CREATE INDEX idx_pp_intercon_sub_id ON power_plant_interconnections(substation_id);
-CREATE INDEX idx_pp_intercon_primary ON power_plant_interconnections(power_plant_id) WHERE is_primary = true;
-CREATE INDEX idx_pp_intercon_distance ON power_plant_interconnections(distance_meters);
+CREATE INDEX IF NOT EXISTS idx_pp_intercon_plant_id ON power_plant_interconnections(power_plant_id);
+CREATE INDEX IF NOT EXISTS idx_pp_intercon_sub_id ON power_plant_interconnections(substation_id);
+CREATE INDEX IF NOT EXISTS idx_pp_intercon_primary ON power_plant_interconnections(power_plant_id) WHERE is_primary = true;
+CREATE INDEX IF NOT EXISTS idx_pp_intercon_distance ON power_plant_interconnections(distance_meters);

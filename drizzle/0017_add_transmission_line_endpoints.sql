@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS transmission_line_endpoints (
 );
 
 -- Indexes for common queries
-CREATE INDEX idx_tl_endpoints_tl_id ON transmission_line_endpoints(transmission_line_id);
-CREATE INDEX idx_tl_endpoints_sub_id ON transmission_line_endpoints(substation_id);
-CREATE INDEX idx_tl_endpoints_role ON transmission_line_endpoints(role);
-CREATE INDEX idx_tl_endpoints_confidence ON transmission_line_endpoints(match_confidence) WHERE match_confidence < 0.9;
+CREATE INDEX IF NOT EXISTS idx_tl_endpoints_tl_id ON transmission_line_endpoints(transmission_line_id);
+CREATE INDEX IF NOT EXISTS idx_tl_endpoints_sub_id ON transmission_line_endpoints(substation_id);
+CREATE INDEX IF NOT EXISTS idx_tl_endpoints_role ON transmission_line_endpoints(role);
+CREATE INDEX IF NOT EXISTS idx_tl_endpoints_confidence ON transmission_line_endpoints(match_confidence) WHERE match_confidence < 0.9;
