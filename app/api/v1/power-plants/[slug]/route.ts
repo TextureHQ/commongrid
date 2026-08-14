@@ -20,15 +20,7 @@
  * Returns 404 if not found.
  */
 
-import {
-  ApiError,
-  jsonResponse,
-  type RouteContext,
-  withCors,
-  withErrorHandling,
-  withRequestId,
-  withTiming,
-} from "@/lib/api";
+import { ApiError, jsonResponse, type RouteContext, withApiMiddleware } from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
 import { isPlantCode, loadPowerPlantByPlantCode, loadPowerPlantBySlug } from "@/lib/data/power-plants-api";
 
@@ -39,32 +31,26 @@ import { isPlantCode, loadPowerPlantByPlantCode, loadPowerPlantBySlug } from "@/
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
 
-  return withRequestId(
-    withErrorHandling(
-      withTiming(
-        withCors(async (_r: Request, _ctx: RouteContext) => {
-          const byPlantCode = isPlantCode(slug);
-          const plant = byPlantCode ? await loadPowerPlantByPlantCode(slug) : await loadPowerPlantBySlug(slug);
+  return withApiMiddleware(async (_r: Request, _ctx: RouteContext) => {
+    const byPlantCode = isPlantCode(slug);
+    const plant = byPlantCode ? await loadPowerPlantByPlantCode(slug) : await loadPowerPlantBySlug(slug);
 
-          if (!plant) {
-            throw new ApiError(
-              "NOT_FOUND",
-              byPlantCode ? `Power plant with EIA plant code '${slug}' not found` : `Power plant '${slug}' not found`
-            );
-          }
+    if (!plant) {
+      throw new ApiError(
+        "NOT_FOUND",
+        byPlantCode ? `Power plant with EIA plant code '${slug}' not found` : `Power plant '${slug}' not found`
+      );
+    }
 
-          const headers: Record<string, string> = {
-            "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
-            "Cache-Tag": `power-plant:${plant.slug}`,
-          };
+    const headers: Record<string, string> = {
+      "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
+      "Cache-Tag": `power-plant:${plant.slug}`,
+    };
 
-          if (byPlantCode) {
-            headers.Link = `</api/v1/power-plants/${plant.slug}>; rel="canonical"`;
-          }
+    if (byPlantCode) {
+      headers.Link = `</api/v1/power-plants/${plant.slug}>; rel="canonical"`;
+    }
 
-          return jsonResponse({ data: stripInternal(plant) }, 200, headers);
-        })
-      )
-    )
-  )(req, { requestId: "" });
+    return jsonResponse({ data: stripInternal(plant) }, 200, headers);
+  })(req, { requestId: "" });
 }

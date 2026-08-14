@@ -5,15 +5,7 @@
  * table in the database.
  */
 
-import {
-  ApiError,
-  jsonResponse,
-  type RouteContext,
-  withCors,
-  withErrorHandling,
-  withRequestId,
-  withTiming,
-} from "@/lib/api";
+import { ApiError, jsonResponse, type RouteContext, withApiMiddleware } from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
 import { loadProgramBySlug } from "@/lib/data/programs";
 
@@ -74,30 +66,24 @@ async function loadVersionsFromDb(entityId: string): Promise<VersionEntry[]> {
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
 
-  return withRequestId(
-    withErrorHandling(
-      withTiming(
-        withCors(async (_r: Request, _ctx: RouteContext) => {
-          // Verify the program exists (works in both JSON and DB mode)
-          const program = await loadProgramBySlug(slug);
-          if (!program) {
-            throw new ApiError("NOT_FOUND", `Program '${slug}' not found`);
-          }
+  return withApiMiddleware(async (_r: Request, _ctx: RouteContext) => {
+    // Verify the program exists (works in both JSON and DB mode)
+    const program = await loadProgramBySlug(slug);
+    if (!program) {
+      throw new ApiError("NOT_FOUND", `Program '${slug}' not found`);
+    }
 
-          const versions = await loadVersionsFromDb(program.id);
+    const versions = await loadVersionsFromDb(program.id);
 
-          return jsonResponse(
-            {
-              data: stripInternal(versions),
-            },
-            200,
-            {
-              "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-              "Cache-Tag": `program:${slug}:versions`,
-            }
-          );
-        })
-      )
-    )
-  )(req, { requestId: "" });
+    return jsonResponse(
+      {
+        data: stripInternal(versions),
+      },
+      200,
+      {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        "Cache-Tag": `program:${slug}:versions`,
+      }
+    );
+  })(req, { requestId: "" });
 }

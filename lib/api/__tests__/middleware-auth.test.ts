@@ -5,6 +5,8 @@
  * Authorization schemes 401; X-API-Key is ignored (stays anonymous).
  * Known active keys elevate to registered/bulk; unknown tokens get 401
  * (no silent anonymous downgrade, no fabricated-key elevation).
+ *
+ * Auth runs before rate limiting on every public `/api/v1/*` route.
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";

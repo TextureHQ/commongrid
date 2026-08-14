@@ -15,9 +15,7 @@ import {
   encodeCursor,
   jsonResponse,
   paginatedResponse,
-  withErrorHandling,
-  withRequestId,
-  withTiming,
+  withApiMiddleware,
 } from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
 import { loadPricingNodes } from "@/lib/data/pricing-nodes";
@@ -198,7 +196,7 @@ async function handler(req: Request): Promise<Response> {
 }
 
 export async function GET(req: Request): Promise<Response> {
-  return withRequestId(withErrorHandling(withTiming(handler)))(req, {
+  return withApiMiddleware(handler)(req, {
     requestId: "",
   });
 }

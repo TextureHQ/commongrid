@@ -39,7 +39,7 @@ import { sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { ApiError } from "@/lib/api/errors";
-import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
+import { generateRequestId, withApiMiddleware } from "@/lib/api/middleware";
 import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
@@ -171,7 +171,7 @@ async function handleGet(req: Request, _ctx: RouteContext) {
   });
 }
 
-const handler = withRequestId(withErrorHandling(withTiming(handleGet)));
+const handler = withApiMiddleware(handleGet);
 
 export async function GET(req: NextRequest) {
   return handler(req, { requestId: generateRequestId() });

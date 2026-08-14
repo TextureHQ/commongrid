@@ -60,9 +60,9 @@
  */
 
 import { createHash } from "node:crypto";
-
 import type { Feature, FeatureCollection, MultiPolygon } from "geojson";
 
+import { type RouteContext, withApiMiddleware } from "@/lib/api";
 import { corsHeaders } from "@/lib/api/cors";
 
 // ---------------------------------------------------------------------------
@@ -159,26 +159,27 @@ function normaliseUpdatedAt(value: string | Date | null): string | null {
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
 
-  const url = new URL(req.url);
-  const simplify = url.searchParams.get("simplify");
-  const tolerance = Number(simplify) || 0.01;
+  const wrapped = withApiMiddleware(async (r: Request, _ctx: RouteContext) => {
+    const url = new URL(r.url);
+    const simplify = url.searchParams.get("simplify");
+    const tolerance = Number(simplify) || 0.01;
 
-  const { db } = await import("@/lib/db/client");
-  if (!db) {
-    return Response.json(
-      { error: "internal_error", message: "Database not configured" },
-      { status: 500, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
-    );
-  }
+    const { db } = await import("@/lib/db/client");
+    if (!db) {
+      return Response.json(
+        { error: "internal_error", message: "Database not configured" },
+        { status: 500, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
+      );
+    }
 
-  const { sql } = await import("drizzle-orm");
+    const { sql } = await import("drizzle-orm");
 
-  // Single-CTE resolution so we can distinguish "utility missing" from
-  // "region missing" from "territory polygon missing" in one round-trip.
-  // The three `EXISTS` flags drive the response branching below.
-  const result = await db.execute(
-    simplify
-      ? sql`
+    // Single-CTE resolution so we can distinguish "utility missing" from
+    // "region missing" from "territory polygon missing" in one round-trip.
+    // The three `EXISTS` flags drive the response branching below.
+    const result = await db.execute(
+      simplify
+        ? sql`
           WITH u AS (
             SELECT id, slug, name, eia_id, service_territory_id
             FROM utilities
@@ -226,7 +227,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
             (SELECT updated_at FROM t)          AS updated_at,
             (SELECT geojson FROM t)             AS geojson
         `
-      : sql`
+        : sql`
           WITH u AS (
             SELECT id, slug, name, eia_id, service_territory_id
             FROM utilities
@@ -272,44 +273,90 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
             (SELECT updated_at FROM t)          AS updated_at,
             (SELECT geojson FROM t)             AS geojson
         `
-  );
+    );
 
-  const rows = ((result as unknown as { rows: UtilityGeometryQueryRow[] }).rows ?? result) as UtilityGeometryQueryRow[];
-  const row = rows[0];
+    const rows = ((result as unknown as { rows: UtilityGeometryQueryRow[] }).rows ??
+      result) as UtilityGeometryQueryRow[];
+    const row = rows[0];
 
-  // ── 404: utility slug is not in the registry ──────────────────────────────
-  if (!row?.utility_exists) {
-    return utilityNotFoundResponse(slug);
-  }
+    // ── 404: utility slug is not in the registry ──────────────────────────────
+    if (!row?.utility_exists) {
+      return utilityNotFoundResponse(slug);
+    }
 
-  const utilityId = row.utility_id ?? slug;
-  const utilitySlug = row.utility_slug ?? slug;
-  const utilityName = row.utility_name ?? slug;
-  const eiaId = row.eia_id ?? "";
-  const regionSlug = row.region_slug;
+    const utilityId = row.utility_id ?? slug;
+    const utilitySlug = row.utility_slug ?? slug;
+    const utilityName = row.utility_name ?? slug;
+    const eiaId = row.eia_id ?? "";
+    const regionSlug = row.region_slug;
 
-  // ── 200 (empty) — utility exists but region has no polygon loaded ─────────
-  //
-  // "pending_backfill" covers two sub-cases that are indistinguishable to an
-  // API consumer:
-  //   (a) the utility has no SERVICE_TERRITORY region linked at all yet, or
-  //   (b) the region exists but its polygon hasn't been ingested.
-  // Both are data-gap states the backfill pipeline resolves over time. From
-  // the client's perspective the answer is the same: "known utility, geometry
-  // not available yet — try again after the next sync." Collapsing them into
-  // one machine-readable status keeps the contract simple.
-  if (!row.region_exists || !row.territory_exists || !row.geojson) {
+    // ── 200 (empty) — utility exists but region has no polygon loaded ─────────
+    //
+    // "pending_backfill" covers two sub-cases that are indistinguishable to an
+    // API consumer:
+    //   (a) the utility has no SERVICE_TERRITORY region linked at all yet, or
+    //   (b) the region exists but its polygon hasn't been ingested.
+    // Both are data-gap states the backfill pipeline resolves over time. From
+    // the client's perspective the answer is the same: "known utility, geometry
+    // not available yet — try again after the next sync." Collapsing them into
+    // one machine-readable status keeps the contract simple.
+    if (!row.region_exists || !row.territory_exists || !row.geojson) {
+      const payload: UtilityFeatureCollection = {
+        type: "FeatureCollection",
+        features: [],
+        metadata: {
+          utility_slug: utilitySlug,
+          utility_name: utilityName,
+          eia_id: eiaId,
+          region_slug: regionSlug,
+          territory_id: null,
+          geometry_status: "pending_backfill",
+          source: null,
+        },
+      };
+
+      return Response.json(payload, {
+        status: 200,
+        headers: {
+          ...corsHeaders(),
+          "Cache-Control": `public, max-age=${CACHE_MAX_AGE_PENDING}`,
+          "Content-Type": "application/geo+json",
+          ETag: computeETag(utilityId, "pending_backfill", null),
+          "Cache-Tag": `utility:${utilitySlug}:geometry`,
+        },
+      });
+    }
+
+    // ── 200 — geometry is loaded ──────────────────────────────────────────────
+    const geometry = JSON.parse(row.geojson) as MultiPolygon;
+    const updatedAt = normaliseUpdatedAt(row.updated_at);
+
+    const feature: Feature<MultiPolygon, UtilityFeatureCollection["features"][number]["properties"]> = {
+      type: "Feature",
+      geometry,
+      properties: {
+        utility_slug: utilitySlug,
+        utility_name: utilityName,
+        eia_id: eiaId,
+        region_slug: regionSlug,
+        territory_id: row.territory_id,
+      },
+    };
+
     const payload: UtilityFeatureCollection = {
       type: "FeatureCollection",
-      features: [],
+      features: [feature],
       metadata: {
         utility_slug: utilitySlug,
         utility_name: utilityName,
         eia_id: eiaId,
         region_slug: regionSlug,
-        territory_id: null,
-        geometry_status: "pending_backfill",
-        source: null,
+        territory_id: row.territory_id,
+        geometry_status: "loaded",
+        source: row.territory_source,
+        source_url: row.territory_source_url,
+        area_sq_km: row.area_sq_km,
+        updated_at: updatedAt,
       },
     };
 
@@ -317,55 +364,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       status: 200,
       headers: {
         ...corsHeaders(),
-        "Cache-Control": `public, max-age=${CACHE_MAX_AGE_PENDING}`,
+        "Cache-Control": `public, max-age=${CACHE_MAX_AGE_LOADED}`,
         "Content-Type": "application/geo+json",
-        ETag: computeETag(utilityId, "pending_backfill", null),
+        ETag: computeETag(utilityId, "loaded", updatedAt),
         "Cache-Tag": `utility:${utilitySlug}:geometry`,
       },
     });
-  }
-
-  // ── 200 — geometry is loaded ──────────────────────────────────────────────
-  const geometry = JSON.parse(row.geojson) as MultiPolygon;
-  const updatedAt = normaliseUpdatedAt(row.updated_at);
-
-  const feature: Feature<MultiPolygon, UtilityFeatureCollection["features"][number]["properties"]> = {
-    type: "Feature",
-    geometry,
-    properties: {
-      utility_slug: utilitySlug,
-      utility_name: utilityName,
-      eia_id: eiaId,
-      region_slug: regionSlug,
-      territory_id: row.territory_id,
-    },
-  };
-
-  const payload: UtilityFeatureCollection = {
-    type: "FeatureCollection",
-    features: [feature],
-    metadata: {
-      utility_slug: utilitySlug,
-      utility_name: utilityName,
-      eia_id: eiaId,
-      region_slug: regionSlug,
-      territory_id: row.territory_id,
-      geometry_status: "loaded",
-      source: row.territory_source,
-      source_url: row.territory_source_url,
-      area_sq_km: row.area_sq_km,
-      updated_at: updatedAt,
-    },
-  };
-
-  return Response.json(payload, {
-    status: 200,
-    headers: {
-      ...corsHeaders(),
-      "Cache-Control": `public, max-age=${CACHE_MAX_AGE_LOADED}`,
-      "Content-Type": "application/geo+json",
-      ETag: computeETag(utilityId, "loaded", updatedAt),
-      "Cache-Tag": `utility:${utilitySlug}:geometry`,
-    },
   });
+
+  return wrapped(req, { requestId: "" });
 }

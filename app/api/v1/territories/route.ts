@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gt, ilike, isNull, lt, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
-import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
+import { generateRequestId, withApiMiddleware } from "@/lib/api/middleware";
 import { encodeCursor, parsePaginationParams } from "@/lib/api/pagination";
 import { stripInternal } from "@/lib/api/public-response";
 import { jsonResponse, paginatedResponse } from "@/lib/api/response";
@@ -135,7 +135,7 @@ async function handleDatabaseMode(url: URL) {
   return jsonResponse(paginatedResponse(stripInternal(data), Number(count), nextCursor, limit), 200, corsHeaders());
 }
 
-const handler = withRequestId(withErrorHandling(withTiming(handleGet)));
+const handler = withApiMiddleware(handleGet);
 
 export async function GET(req: NextRequest) {
   return handler(req, { requestId: generateRequestId() });
