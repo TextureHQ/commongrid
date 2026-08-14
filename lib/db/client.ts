@@ -5,7 +5,8 @@ import { Pool } from "pg";
 
 let _db: ReturnType<typeof neonDrizzle> | ReturnType<typeof nodeDrizzle> | null = null;
 
-function isLocalUrl(url: string): boolean {
+/** Exported so client-pooled.ts switches drivers on exactly the same rule. */
+export function isLocalUrl(url: string): boolean {
   return url.includes("localhost") || url.includes("127.0.0.1") || url.includes("::1");
 }
 

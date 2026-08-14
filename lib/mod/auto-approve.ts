@@ -1,130 +1,174 @@
 /**
  * Auto-Approval Rules for Community Contributions
  *
- * Logic:
- * - If contributor has `trusted_contributor` role AND all edited fields
- *   are non-critical in `community_editable_fields` → auto-approve.
- * - Sets `contributions.auto_approved = true`, `status = 'auto_approved'`.
- * - Logs a `moderation_actions` record with moderator_id as the system user.
+ * Eligibility:
+ * - update: `trusted_contributor`, `moderator` or `admin`, and every edited
+ *   field must be non-critical and known in `community_editable_fields`
+ * - create: `moderator` or `admin`
+ * - delete: `admin` only (destructive)
  *
- * See ERD §3.14 for community_editable_fields and §3.4 for contribution status.
+ * An eligible contribution is APPLIED here, through the same
+ * `applyContribution` path a moderator approval uses. This previously only set
+ * `status = 'auto_approved'` and incremented the contributor's stats without
+ * touching the entity or writing an `entity_versions` row, so auto-approved
+ * edits were accepted and then silently discarded.
+ *
+ * See ERD §3.14 (community_editable_fields) and §3.4 (contribution status).
  */
 
-import { eq } from "drizzle-orm";
-import { communityEditableFields, contributions, moderationActions, users } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { communityEditableFields, moderationActions, users } from "@/lib/db/schema";
 import type { UserSelect } from "@/lib/db/schema/users";
+import {
+  type ApplicableContribution,
+  applyContribution,
+  type ChangeType,
+  markContributionApplied,
+} from "@/lib/mod/apply-contribution";
 
-// System user ID for auto-approval audit trail
+/** Moderator id recorded for machine-made decisions. */
 const SYSTEM_USER_ID = "system";
 
-interface AutoApproveResult {
+const AUTO_APPROVE_COMMENT = "Auto-approved: trusted contributor editing non-critical fields.";
+
+export interface AutoApproveResult {
   autoApproved: boolean;
   reason?: string;
+  appliedVersion?: number;
 }
 
 /**
- * Check whether a contribution qualifies for auto-approval and, if so,
- * apply it within the provided database transaction.
- *
- * @param db        - Drizzle database instance (may be a transaction)
- * @param user      - The contributing user
- * @param contributionId - ID of the contribution to check
- * @param entityType     - The entity type being edited
- * @param changes        - The changes JSONB (field_name → {old, new})
- * @param isCreate       - Whether this is a create (vs edit) contribution
+ * Decide whether a contribution qualifies for auto-approval on role and field
+ * criticality alone. Pure read — no writes.
  */
-export async function tryAutoApprove(
-  // biome-ignore lint/suspicious/noExplicitAny: Drizzle db/tx types are complex
-  db: any,
+async function checkEligibility(
   user: UserSelect,
-  contributionId: string,
   entityType: string,
   changes: Record<string, unknown>,
-  isCreate = false,
-  isDelete = false
-): Promise<AutoApproveResult> {
-  // Deletions: only admin can self-approve (destructive action)
-  if (isDelete) {
+  changeType: ChangeType
+): Promise<{ eligible: boolean; reason?: string }> {
+  if (changeType === "delete") {
     if (user.role !== "admin") {
-      return { autoApproved: false, reason: "Deletions require admin approval" };
+      return { eligible: false, reason: "Deletions require admin approval" };
     }
-  } else if (isCreate) {
-    // For creates, require moderator or admin role
+  } else if (changeType === "create") {
     if (user.role !== "moderator" && user.role !== "admin") {
-      return { autoApproved: false, reason: "Creates require moderator approval" };
+      return { eligible: false, reason: "Creates require moderator approval" };
     }
-  } else {
-    // For edits, only trusted_contributor role qualifies
-    if (user.role !== "trusted_contributor" && user.role !== "moderator" && user.role !== "admin") {
-      return { autoApproved: false, reason: "User is not a trusted contributor" };
-    }
+  } else if (user.role !== "trusted_contributor" && user.role !== "moderator" && user.role !== "admin") {
+    return { eligible: false, reason: "User is not a trusted contributor" };
   }
 
-  // Get the field names being edited
   const editedFields = Object.keys(changes);
   if (editedFields.length === 0) {
-    return { autoApproved: false, reason: "No fields in changes" };
+    return { eligible: false, reason: "No fields in changes" };
   }
 
-  // Look up the community_editable_fields for this entity type
+  const db = getDb();
   const fieldMeta = await db
     .select()
     .from(communityEditableFields)
     .where(eq(communityEditableFields.entityType, entityType));
 
-  // Build a set of critical field names
   const criticalFields = new Set(
     fieldMeta.filter((f: { isCritical: boolean }) => f.isCritical).map((f: { fieldName: string }) => f.fieldName)
   );
-
-  // Build a set of known editable field names
   const editableFields = new Set(fieldMeta.map((f: { fieldName: string }) => f.fieldName));
 
-  // Check if ANY edited field is critical or unknown (unknown = treat as critical)
   for (const field of editedFields) {
     if (criticalFields.has(field)) {
-      return { autoApproved: false, reason: `Field '${field}' is marked as critical` };
+      return { eligible: false, reason: `Field '${field}' is marked as critical` };
     }
     if (!editableFields.has(field)) {
-      // Unknown fields can't be auto-approved — need moderator review
-      return { autoApproved: false, reason: `Field '${field}' is not in community_editable_fields` };
+      // Unknown fields are treated as critical — a moderator must look.
+      return { eligible: false, reason: `Field '${field}' is not in community_editable_fields` };
     }
   }
 
-  // All fields are non-critical and known → auto-approve
-  await db
-    .update(contributions)
-    .set({
+  return { eligible: true };
+}
+
+/**
+ * Check whether a contribution qualifies for auto-approval and, if so, apply it
+ * atomically: entity write, `entity_versions` row, contribution status,
+ * moderation audit record and contributor stats all land together or not at all.
+ *
+ * Declines (leaving the contribution pending for a human) when the entity has
+ * moved on or vanished since the edit was drafted — an auto-approver should
+ * never resolve a conflict it cannot reason about.
+ */
+export async function tryAutoApprove(
+  user: UserSelect,
+  contribution: ApplicableContribution,
+  changeType: ChangeType
+): Promise<AutoApproveResult> {
+  const changes = (contribution.changes ?? {}) as Record<string, unknown>;
+
+  const eligibility = await checkEligibility(user, contribution.entityType, changes, changeType);
+  if (!eligibility.eligible) {
+    return { autoApproved: false, reason: eligibility.reason };
+  }
+
+  const db = getPooledDb();
+  const now = new Date();
+
+  return db.transaction(async (tx) => {
+    const outcome = await applyContribution(tx, contribution, {
+      actorId: SYSTEM_USER_ID,
+      sourceType: "community",
+      changeType,
+      now,
+    });
+
+    if (outcome.status === "unknown_fields") {
+      return {
+        autoApproved: false,
+        reason: `Fields do not exist on ${contribution.entityType}: ${outcome.fields.join(", ")}`,
+      };
+    }
+    if (outcome.status === "entity_missing") {
+      return { autoApproved: false, reason: "Entity no longer exists" };
+    }
+    if (outcome.status === "version_conflict") {
+      return {
+        autoApproved: false,
+        reason: `Entity has changed since this edit was drafted (entity v${outcome.entityVersion}, edit based on v${outcome.contributionVersion})`,
+      };
+    }
+
+    await markContributionApplied(tx, contribution.id, {
       status: "auto_approved",
+      appliedVersion: outcome.appliedVersion,
+      reviewedBy: null,
+      moderatorComment: AUTO_APPROVE_COMMENT,
       autoApproved: true,
-      reviewedAt: new Date(),
-      moderatorComment: "Auto-approved: trusted contributor editing non-critical fields.",
-      updatedAt: new Date(),
-    })
-    .where(eq(contributions.id, contributionId));
+      now,
+    });
 
-  // Log the moderation action
-  await db.insert(moderationActions).values({
-    moderatorId: SYSTEM_USER_ID,
-    actionType: "approve",
-    targetType: "contribution",
-    targetId: contributionId,
-    comment: "Auto-approved: trusted contributor editing non-critical fields.",
-    metadata: {
-      auto: true,
-      fields: editedFields,
-      user_role: user.role,
-    },
+    await tx.insert(moderationActions).values({
+      moderatorId: SYSTEM_USER_ID,
+      actionType: "approve",
+      targetType: "contribution",
+      targetId: contribution.id,
+      comment: AUTO_APPROVE_COMMENT,
+      metadata: {
+        auto: true,
+        fields: Object.keys(changes),
+        user_role: user.role,
+        change_type: changeType,
+        applied_version: outcome.appliedVersion,
+      },
+    });
+
+    if (contribution.userId) {
+      await tx
+        .update(users)
+        .set({ approvedCount: sql`${users.approvedCount} + 1`, updatedAt: now })
+        .where(eq(users.id, contribution.userId));
+    }
+
+    return { autoApproved: true, appliedVersion: outcome.appliedVersion };
   });
-
-  // Update user stats
-  await db
-    .update(users)
-    .set({
-      approvedCount: user.approvedCount + 1,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, user.id));
-
-  return { autoApproved: true };
 }

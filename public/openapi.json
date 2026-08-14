@@ -1148,13 +1148,17 @@
             "format": "date-time",
             "nullable": true,
             "description": "Soft-delete timestamp"
+          },
+          "version": {
+            "type": "integer"
           }
         },
         "required": [
           "id",
           "regionId",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "version"
         ]
       },
       "PowerPlant": {
