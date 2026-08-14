@@ -163,11 +163,12 @@ async function main() {
 
     // `clerk_user_id` is UNIQUE but `email` is not, so one address can hold a
     // row per Clerk instance. Rows targeting a taken id are reported, not moved.
-    const takenIds = new Set(rows.map((r) => r.clerkUserId));
+    const heldIds = new Set(rows.map((r) => r.clerkUserId));
+    const takenIds = new Set(heldIds);
 
     const planned: Array<{ rowId: string; email: string; from: string; to: string; role: string }> = [];
     const alreadyMapped: string[] = [];
-    const blocked: Array<{ email: string; role: string; to: string }> = [];
+    const blocked: Array<{ email: string; role: string; to: string; heldByRow: boolean }> = [];
 
     for (const row of rows) {
       const email = row.email?.toLowerCase();
@@ -178,7 +179,9 @@ async function main() {
       if (row.clerkUserId === clerkUser.id) {
         alreadyMapped.push(email);
       } else if (takenIds.has(clerkUser.id)) {
-        blocked.push({ email, role: row.role, to: clerkUser.id });
+        // Distinguish a row that genuinely holds the id from one that only
+        // claimed it earlier in this run — there is no such row to go look at.
+        blocked.push({ email, role: row.role, to: clerkUser.id, heldByRow: heldIds.has(clerkUser.id) });
       } else {
         planned.push({ rowId: row.id, email, from: row.clerkUserId, to: clerkUser.id, role: row.role });
         // Claim it now, or a second row with the same address plans onto the
@@ -205,9 +208,10 @@ async function main() {
     }
 
     if (blocked.length > 0) {
-      console.log(`\nSkipped ${blocked.length} row(s) — another row already holds the target Clerk id:`);
+      console.log(`\nSkipped ${blocked.length} row(s) — the target Clerk id is already spoken for:`);
       for (const b of blocked) {
-        console.log(`  ${maskEmail(b.email)} [${b.role}] -> ${maskId(b.to)} (taken)`);
+        const why = b.heldByRow ? "another row holds it" : "claimed by another row in this run";
+        console.log(`  ${maskEmail(b.email)} [${b.role}] -> ${maskId(b.to)} (${why})`);
       }
       console.log("  This address has a row per Clerk instance. Check which one carries the role you need.");
     }
@@ -239,6 +243,6 @@ main().catch((e) => {
   // Guard refusals exit(1) directly and never reach here. This is post-guard
   // failure only — a Clerk outage should not fail an otherwise good deploy.
   const bestEffort = process.argv.includes("--only-preview");
-  console.error(bestEffort ? "warning: Clerk id mapping skipped —" : "failed:", e);
+  console.error(bestEffort ? "warning: Clerk id mapping did not complete —" : "failed:", e);
   process.exit(bestEffort ? 0 : 1);
 });
