@@ -15,9 +15,17 @@ import { eq } from "drizzle-orm";
 // Types
 // ---------------------------------------------------------------------------
 
+export type ApiKeyTier = "registered" | "bulk";
+
 export type AuthResult = {
   valid: boolean;
+  /** Human-readable key name (for logs / AuthContext.identity). */
   identity?: string;
+  /** Primary key of the `api_keys` row — usage tracking / rate-limit identity. */
+  apiKeyId?: string;
+  /** Rate-limit tier from the key (`registered` | `bulk`). */
+  tier?: ApiKeyTier;
+  scopes?: string[];
   error?: string;
 };
 
@@ -58,6 +66,10 @@ export function hasScope(scopes: string[], resource: string, action: string): bo
   return false;
 }
 
+function normalizeTier(tier: string | null | undefined): ApiKeyTier {
+  return tier === "bulk" ? "bulk" : "registered";
+}
+
 // ---------------------------------------------------------------------------
 // Validation
 // ---------------------------------------------------------------------------
@@ -66,13 +78,21 @@ export function hasScope(scopes: string[], resource: string, action: string): bo
  * Validates a Bearer API key from an Authorization header.
  *
  * Performs a database lookup by hash, checks expiry and active status,
- * and verifies the key holds the requested scope. Uses a dynamic import
- * so the module can load even when DATABASE_URL is absent (e.g., static
- * builds or dev without a DB).
+ * and optionally verifies the key holds the requested scope. Uses a
+ * dynamic import so the module can load even when DATABASE_URL is absent
+ * (e.g., static builds or dev without a DB).
+ *
+ * When `resource` / `action` are empty, scope checks are skipped — used
+ * for optional auth on public routes where a valid key only elevates the
+ * rate-limit tier.
  *
  * The `lastUsedAt` timestamp is updated fire-and-forget.
  */
-export async function validateApiKey(authHeader: string | null, resource: string, action: string): Promise<AuthResult> {
+export async function validateApiKey(
+  authHeader: string | null,
+  resource: string,
+  action: string
+): Promise<AuthResult> {
   if (!authHeader) {
     return { valid: false, error: "Missing Authorization header" };
   }
@@ -82,6 +102,10 @@ export async function validateApiKey(authHeader: string | null, resource: string
   }
 
   const key = authHeader.slice(7).trim();
+
+  if (!key) {
+    return { valid: false, error: "Invalid Authorization header format" };
+  }
 
   if (!key.startsWith("cg_")) {
     return { valid: false, error: "Invalid API key format" };
@@ -113,7 +137,10 @@ export async function validateApiKey(authHeader: string | null, resource: string
     return { valid: false, error: "API key has expired" };
   }
 
-  if (!hasScope(apiKey.scopes, resource, action)) {
+  // Scope is only enforced when the caller asks for a specific resource/action
+  // (e.g. write routes with `requireAuth`). Public reads use an empty pair so
+  // any active key elevates to the registered/bulk tier.
+  if (resource && action && !hasScope(apiKey.scopes, resource, action)) {
     return { valid: false, error: "Insufficient scope" };
   }
 
@@ -123,5 +150,11 @@ export async function validateApiKey(authHeader: string | null, resource: string
     .where(eq(apiKeys.keyHash, keyHash))
     .catch((err: unknown) => console.error("Failed to update lastUsedAt:", err));
 
-  return { valid: true, identity: apiKey.name };
+  return {
+    valid: true,
+    identity: apiKey.name,
+    apiKeyId: apiKey.id,
+    tier: normalizeTier(apiKey.tier),
+    scopes: apiKey.scopes,
+  };
 }

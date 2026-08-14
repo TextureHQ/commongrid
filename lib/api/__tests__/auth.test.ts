@@ -1,6 +1,34 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { hashApiKey, hasScope } from "../auth";
+
+const selectLimit = vi.fn();
+const updateCatch = vi.fn();
+
+vi.mock("@/lib/db/client", () => ({
+  db: {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: (...args: unknown[]) => selectLimit(...args),
+        }),
+      }),
+    }),
+    update: () => ({
+      set: () => ({
+        where: () => ({
+          catch: (...args: unknown[]) => updateCatch(...args),
+        }),
+      }),
+    }),
+  },
+}));
+
+vi.mock("@/lib/db/schema", () => ({
+  apiKeys: {
+    keyHash: "key_hash",
+  },
+}));
 
 describe("hashApiKey", () => {
   it("returns a 64-char hex string", () => {
@@ -80,6 +108,129 @@ describe("hasScope", () => {
     it("skips malformed scope entries (no colon)", () => {
       expect(hasScope(["nocolon", "utilities:read"], "utilities", "read")).toBe(true);
       expect(hasScope(["nocolon"], "utilities", "read")).toBe(false);
+    });
+  });
+});
+
+describe("validateApiKey", () => {
+  beforeEach(() => {
+    selectLimit.mockReset();
+    updateCatch.mockReset();
+  });
+
+  it("rejects missing Authorization", async () => {
+    const { validateApiKey } = await import("../auth");
+    await expect(validateApiKey(null, "", "")).resolves.toEqual({
+      valid: false,
+      error: "Missing Authorization header",
+    });
+    expect(selectLimit).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-Bearer schemes", async () => {
+    const { validateApiKey } = await import("../auth");
+    await expect(validateApiKey("Basic abc", "", "")).resolves.toEqual({
+      valid: false,
+      error: "Invalid Authorization header format",
+    });
+  });
+
+  it("rejects empty Bearer token", async () => {
+    const { validateApiKey } = await import("../auth");
+    await expect(validateApiKey("Bearer   ", "", "")).resolves.toEqual({
+      valid: false,
+      error: "Invalid Authorization header format",
+    });
+  });
+
+  it("rejects keys that are not cg_-prefixed", async () => {
+    const { validateApiKey } = await import("../auth");
+    await expect(validateApiKey("Bearer not_a_cg_key", "", "")).resolves.toEqual({
+      valid: false,
+      error: "Invalid API key format",
+    });
+  });
+
+  it("rejects unknown keys", async () => {
+    selectLimit.mockResolvedValue([]);
+    const { validateApiKey } = await import("../auth");
+    await expect(validateApiKey("Bearer cg_unknown", "", "")).resolves.toEqual({
+      valid: false,
+      error: "Invalid API key",
+    });
+  });
+
+  it("rejects inactive keys", async () => {
+    selectLimit.mockResolvedValue([
+      {
+        id: "key_1",
+        name: "Revoked",
+        scopes: ["*:read"],
+        isActive: false,
+        expiresAt: null,
+        tier: "registered",
+      },
+    ]);
+    const { validateApiKey } = await import("../auth");
+    await expect(validateApiKey("Bearer cg_revoked", "", "")).resolves.toEqual({
+      valid: false,
+      error: "API key is inactive",
+    });
+  });
+
+  it("accepts active keys and returns registered tier without scope check", async () => {
+    selectLimit.mockResolvedValue([
+      {
+        id: "key_1",
+        name: "My App",
+        scopes: ["utilities:read"],
+        isActive: true,
+        expiresAt: null,
+        tier: "registered",
+      },
+    ]);
+    const { validateApiKey } = await import("../auth");
+    await expect(validateApiKey("Bearer cg_active-key", "", "")).resolves.toEqual({
+      valid: true,
+      identity: "My App",
+      apiKeyId: "key_1",
+      tier: "registered",
+      scopes: ["utilities:read"],
+    });
+  });
+
+  it("maps bulk tier from the key row", async () => {
+    selectLimit.mockResolvedValue([
+      {
+        id: "key_bulk",
+        name: "Bulk",
+        scopes: ["*:read"],
+        isActive: true,
+        expiresAt: null,
+        tier: "bulk",
+      },
+    ]);
+    const { validateApiKey } = await import("../auth");
+    const result = await validateApiKey("Bearer cg_bulk-key", "", "");
+    expect(result.valid).toBe(true);
+    expect(result.tier).toBe("bulk");
+  });
+
+  it("enforces scopes when resource and action are provided", async () => {
+    selectLimit.mockResolvedValue([
+      {
+        id: "key_1",
+        name: "Read only",
+        scopes: ["*:read"],
+        isActive: true,
+        expiresAt: null,
+        tier: "registered",
+      },
+    ]);
+    const { validateApiKey } = await import("../auth");
+    await expect(validateApiKey("Bearer cg_readonly", "utilities", "write")).resolves.toEqual({
+      valid: false,
+      error: "Insufficient scope",
     });
   });
 });
