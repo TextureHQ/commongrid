@@ -29,14 +29,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
             throw new ApiError("NOT_FOUND", `Power plant '${slug}' not found`);
           }
 
-          return jsonResponse(
-            { data: result.interconnections },
-            200,
-            {
-              "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600",
-              "Cache-Tag": `power-plant:${slug}:substations`,
-            }
-          );
+          return jsonResponse({ data: result.interconnections }, 200, {
+            "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600",
+            "Cache-Tag": `power-plant:${slug}:substations`,
+          });
         })
       )
     )
