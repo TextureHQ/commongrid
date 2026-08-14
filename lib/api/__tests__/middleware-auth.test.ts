@@ -1,9 +1,10 @@
 /**
  * Auth matrix for withApiMiddleware.
  *
- * Pins the contract that Bearer credentials are looked up against issued
- * keys: only known active keys elevate to registered/bulk; unknown tokens
- * get 401 (no silent anonymous downgrade, no fabricated-key elevation).
+ * Pins Variant A: only `Authorization: Bearer <key>` elevates; other
+ * Authorization schemes 401; X-API-Key is ignored (stays anonymous).
+ * Known active keys elevate to registered/bulk; unknown tokens get 401
+ * (no silent anonymous downgrade, no fabricated-key elevation).
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -19,7 +20,7 @@ vi.mock("../auth", () => ({
 
 vi.mock("../rate-limit", () => ({
   checkRateLimit: (...args: unknown[]) => checkRateLimit(...args),
-  rateLimitHeaders: (...args: unknown[]) => rateLimitHeaders(...args),
+  rateLimitHeaders: (result?: unknown) => rateLimitHeaders(result),
   rateLimitResponse: vi.fn(),
 }));
 
@@ -34,10 +35,13 @@ vi.mock("../cors", () => ({
 
 const { withApiMiddleware } = await import("../middleware");
 
-function request(auth?: string | null): Request {
+function request(options?: { authorization?: string | null; apiKey?: string }): Request {
   const headers = new Headers();
-  if (auth !== undefined && auth !== null) {
-    headers.set("Authorization", auth);
+  if (options?.authorization !== undefined && options.authorization !== null) {
+    headers.set("Authorization", options.authorization);
+  }
+  if (options?.apiKey !== undefined) {
+    headers.set("X-API-Key", options.apiKey);
   }
   return new Request("https://commongrid.info/api/v1/utilities", { headers });
 }
@@ -90,7 +94,9 @@ describe("withApiMiddleware Bearer validation", () => {
       trackUsage: false,
     });
 
-    const response = await handler(request("Bearer cg_valid-key"), { requestId: "req_reg" });
+    const response = await handler(request({ authorization: "Bearer cg_valid-key" }), {
+      requestId: "req_reg",
+    });
 
     expect(response.status).toBe(200);
     expect(validateApiKey).toHaveBeenCalledWith("Bearer cg_valid-key", "", "");
@@ -117,7 +123,9 @@ describe("withApiMiddleware Bearer validation", () => {
       trackUsage: false,
     });
 
-    const response = await handler(request("Bearer cg_bulk-key"), { requestId: "req_bulk" });
+    const response = await handler(request({ authorization: "Bearer cg_bulk-key" }), {
+      requestId: "req_bulk",
+    });
 
     expect(response.status).toBe(200);
     expect(checkRateLimit).toHaveBeenCalledWith("auth:key_bulk", true, false, false, "bulk");
@@ -129,7 +137,9 @@ describe("withApiMiddleware Bearer validation", () => {
     const inner = vi.fn(async () => Response.json({ ok: true }));
     const handler = withApiMiddleware(inner, { trackUsage: false });
 
-    const response = await handler(request("Bearer cg_unknown-key"), { requestId: "req_bad" });
+    const response = await handler(request({ authorization: "Bearer cg_unknown-key" }), {
+      requestId: "req_bad",
+    });
     const body = await response.json();
 
     expect(response.status).toBe(401);
@@ -149,13 +159,15 @@ describe("withApiMiddleware Bearer validation", () => {
       trackUsage: false,
     });
 
-    const response = await handler(request("Bearer "), { requestId: "req_empty" });
+    const response = await handler(request({ authorization: "Bearer " }), {
+      requestId: "req_empty",
+    });
 
     expect(response.status).toBe(401);
     expect(checkRateLimit).not.toHaveBeenCalled();
   });
 
-  it("malformed / non-Bearer Authorization → 401", async () => {
+  it("Basic Authorization → 401 (malformed credentials)", async () => {
     validateApiKey.mockResolvedValue({
       valid: false,
       error: "Invalid Authorization header format",
@@ -165,11 +177,52 @@ describe("withApiMiddleware Bearer validation", () => {
       trackUsage: false,
     });
 
-    const response = await handler(request("Basic dXNlcjpwYXNz"), { requestId: "req_basic" });
+    const response = await handler(request({ authorization: "Basic dXNlcjpwYXNz" }), {
+      requestId: "req_basic",
+    });
 
     expect(response.status).toBe(401);
     expect(validateApiKey).toHaveBeenCalledWith("Basic dXNlcjpwYXNz", "", "");
     expect(checkRateLimit).not.toHaveBeenCalled();
+  });
+
+  it("raw token without scheme → 401 (malformed credentials)", async () => {
+    validateApiKey.mockResolvedValue({
+      valid: false,
+      error: "Invalid Authorization header format",
+    });
+
+    const handler = withApiMiddleware(async () => Response.json({ ok: true }), {
+      trackUsage: false,
+    });
+
+    const response = await handler(request({ authorization: "cg_raw_token" }), {
+      requestId: "req_raw",
+    });
+
+    expect(response.status).toBe(401);
+    expect(validateApiKey).toHaveBeenCalledWith("cg_raw_token", "", "");
+    expect(checkRateLimit).not.toHaveBeenCalled();
+  });
+
+  it("X-API-Key alone → anonymous (ignored, not treated as a credential)", async () => {
+    const handler = withApiMiddleware(async () => Response.json({ ok: true }), {
+      trackUsage: false,
+    });
+
+    const response = await handler(request({ apiKey: "cg_via_x_api_key" }), {
+      requestId: "req_xapi",
+    });
+
+    expect(response.status).toBe(200);
+    expect(validateApiKey).not.toHaveBeenCalled();
+    expect(checkRateLimit).toHaveBeenCalledWith(
+      expect.stringMatching(/^ip:/),
+      false,
+      false,
+      false,
+      undefined
+    );
   });
 
   it("inactive key → 401", async () => {
@@ -179,7 +232,9 @@ describe("withApiMiddleware Bearer validation", () => {
       trackUsage: false,
     });
 
-    const response = await handler(request("Bearer cg_revoked"), { requestId: "req_inactive" });
+    const response = await handler(request({ authorization: "Bearer cg_revoked" }), {
+      requestId: "req_inactive",
+    });
 
     expect(response.status).toBe(401);
     expect(checkRateLimit).not.toHaveBeenCalled();

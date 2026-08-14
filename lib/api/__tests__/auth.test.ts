@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { hashApiKey, hasScope } from "../auth";
+import { hashApiKey, hasScope, parseBearerToken } from "../auth";
 
 const selectLimit = vi.fn();
 const updateCatch = vi.fn();
@@ -43,6 +43,32 @@ describe("hashApiKey", () => {
 
   it("produces different hashes for different keys", () => {
     expect(hashApiKey("cg_key_a")).not.toBe(hashApiKey("cg_key_b"));
+  });
+});
+
+describe("parseBearerToken", () => {
+  it("extracts the token from a Bearer header", () => {
+    expect(parseBearerToken("Bearer cg_abc")).toBe("cg_abc");
+  });
+
+  it("is case-insensitive on the scheme", () => {
+    expect(parseBearerToken("bearer cg_abc")).toBe("cg_abc");
+    expect(parseBearerToken("BEARER cg_abc")).toBe("cg_abc");
+  });
+
+  it("rejects Basic and other schemes", () => {
+    expect(parseBearerToken("Basic dXNlcjpwYXNz")).toBeNull();
+    expect(parseBearerToken("Digest abc")).toBeNull();
+  });
+
+  it("rejects a raw token without a scheme", () => {
+    expect(parseBearerToken("cg_abc")).toBeNull();
+  });
+
+  it("rejects empty Bearer tokens", () => {
+    expect(parseBearerToken("Bearer")).toBeNull();
+    expect(parseBearerToken("Bearer ")).toBeNull();
+    expect(parseBearerToken("Bearer   ")).toBeNull();
   });
 });
 
@@ -133,6 +159,27 @@ describe("validateApiKey", () => {
       valid: false,
       error: "Invalid Authorization header format",
     });
+    await expect(validateApiKey("cg_raw_token_no_scheme", "", "")).resolves.toEqual({
+      valid: false,
+      error: "Invalid Authorization header format",
+    });
+  });
+
+  it("accepts case-insensitive Bearer scheme", async () => {
+    selectLimit.mockResolvedValue([
+      {
+        id: "key_1",
+        name: "Test",
+        isActive: true,
+        expiresAt: null,
+        scopes: ["*:read"],
+        tier: "registered",
+      },
+    ]);
+    updateCatch.mockReturnValue(undefined);
+    const { validateApiKey } = await import("../auth");
+    const result = await validateApiKey("bearer cg_active-key", "", "");
+    expect(result.valid).toBe(true);
   });
 
   it("rejects empty Bearer token", async () => {

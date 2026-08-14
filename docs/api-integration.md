@@ -89,7 +89,7 @@ Each user can hold up to **10 active keys** at a time. Keys carry:
 
 ### Using a key
 
-Send the key as a Bearer token:
+Send the key as a Bearer token — this is the **only** accepted credential form:
 
 ```http
 Authorization: Bearer cg_a1b2c3d4-e5f6-7890-abcd-0123456789ab
@@ -103,6 +103,16 @@ curl -H "Authorization: Bearer $CG_KEY" \
 The server looks up the SHA-256 of the key in `api_keys`, checks `is_active` and `expires_at`, verifies
 the scope matches the requested resource+action (e.g., `utilities:read` or `*:read`), and rate-limits
 by the key's tier. `lastUsedAt` is updated fire-and-forget on every request.
+
+**Unsupported credentials**
+
+| Presented as | Behavior |
+|---|---|
+| No `Authorization` | Anonymous tier (public reads). |
+| `Authorization: Bearer <valid cg_ key>` | Registered / bulk tier for that key. |
+| `Authorization: Bearer <unknown / revoked / empty>` | `401 UNAUTHORIZED`. |
+| `Authorization: Basic …`, raw token without a scheme, or any other scheme | `401 UNAUTHORIZED` (malformed credentials). |
+| `X-API-Key: …` | **Ignored.** Does not authenticate, elevate, or 401. Use Bearer instead. |
 
 ### Rotating a key
 
@@ -233,7 +243,7 @@ Every error returns a consistent envelope:
 |---:|---|---|
 | 400 | `BAD_REQUEST` | Malformed request (bad JSON, missing required field, invalid cursor). |
 | 400 | `VALIDATION_ERROR` | Input failed validation (bad state code, out-of-range number, too long). |
-| 401 | `UNAUTHORIZED` | Missing / malformed `Authorization` header when required. |
+| 401 | `UNAUTHORIZED` | Missing `Authorization` when required, or present-but-invalid credentials (unknown / revoked key, empty Bearer, non-Bearer scheme). |
 | 403 | `FORBIDDEN` | Key is valid but lacks the required scope. |
 | 404 | `NOT_FOUND` | Entity does not exist (or has `deleted_at IS NOT NULL`). |
 | 409 | `CONFLICT` | Write-side conflict (duplicate idempotency key, optimistic-lock miss). |
