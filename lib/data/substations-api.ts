@@ -244,3 +244,88 @@ export async function countSubstations(filters?: SubstationFilters): Promise<num
 export async function loadSubstationBySlug(slug: string): Promise<SubstationRecord | null> {
   return loadBySlugFromDb(slug);
 }
+
+/** Public connected-line row for GET /substations/{slug}/transmission-lines. */
+export interface SubstationTransmissionLine {
+  lineId: string;
+  /** Derived from endpoint names — transmission_lines has no name column. */
+  lineName: string | null;
+  lineVoltageClass: string;
+  lineVoltage: number | null;
+  lineStatus: string;
+  lineOwner: string;
+  role: "from" | "to";
+  matchConfidence: number | null;
+}
+
+const ENDPOINT_PLACEHOLDERS = new Set(["", "NOT AVAILABLE", "UNKNOWN", "N/A", "NA", "NONE"]);
+
+function normalizeEndpointName(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed || ENDPOINT_PLACEHOLDERS.has(trimmed.toUpperCase())) return null;
+  return trimmed;
+}
+
+/** Display label for a line when no dedicated name column exists. */
+function lineNameFromEndpoints(sub1: string | null | undefined, sub2: string | null | undefined): string | null {
+  const from = normalizeEndpointName(sub1);
+  const to = normalizeEndpointName(sub2);
+  if (from && to) return `${from} → ${to}`;
+  return from ?? to;
+}
+
+/**
+ * Load transmission lines connected to a substation slug.
+ * Returns null when the substation does not exist; empty `lines` when none are linked.
+ */
+export async function loadSubstationTransmissionLinesBySlug(
+  slug: string
+): Promise<{ substationId: string; lines: SubstationTransmissionLine[] } | null> {
+  const { getDb } = await import("@/lib/db/client");
+  const { substations, transmissionLineEndpoints, transmissionLines } = await import("@/lib/db/schema");
+  const { and, asc, eq, isNull } = await import("drizzle-orm");
+
+  const db = getDb();
+
+  const substationRows = await db
+    .select({ id: substations.id })
+    .from(substations)
+    .where(and(eq(substations.slug, slug), isNull(substations.deletedAt)))
+    .limit(1);
+
+  if (substationRows.length === 0) {
+    return null;
+  }
+
+  const substationId = substationRows[0].id;
+
+  const rows = await db
+    .select({
+      lineId: transmissionLines.id,
+      sub1: transmissionLines.sub1,
+      sub2: transmissionLines.sub2,
+      lineVoltageClass: transmissionLines.voltageClass,
+      lineVoltage: transmissionLines.voltage,
+      lineStatus: transmissionLines.status,
+      lineOwner: transmissionLines.owner,
+      role: transmissionLineEndpoints.role,
+      matchConfidence: transmissionLineEndpoints.matchConfidence,
+    })
+    .from(transmissionLineEndpoints)
+    .innerJoin(transmissionLines, eq(transmissionLineEndpoints.transmissionLineId, transmissionLines.id))
+    .where(and(eq(transmissionLineEndpoints.substationId, substationId), isNull(transmissionLines.deletedAt)))
+    .orderBy(asc(transmissionLineEndpoints.role), asc(transmissionLines.id));
+
+  const lines: SubstationTransmissionLine[] = rows.map((row) => ({
+    lineId: row.lineId,
+    lineName: lineNameFromEndpoints(row.sub1, row.sub2),
+    lineVoltageClass: row.lineVoltageClass,
+    lineVoltage: row.lineVoltage,
+    lineStatus: row.lineStatus,
+    lineOwner: row.lineOwner,
+    role: row.role as "from" | "to",
+    matchConfidence: row.matchConfidence,
+  }));
+
+  return { substationId, lines };
+}
