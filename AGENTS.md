@@ -25,6 +25,17 @@ This is `TextureHQ/commongrid`, a **separate repo** from `TextureHQ/mono`. Next.
 - `drizzle/` — SQL migration files
 - `.env.example` — template for `.env.local`
 
+## Migrations
+- Write SQL into `drizzle/` and add a matching entry to `drizzle/meta/_journal.json`. Only journalled files are ever applied.
+- Use `Date.now()` for a hand-written entry's `when`. drizzle decides what to apply from the highest `when` already applied, so a migration whose timestamp is below that is skipped and never runs.
+- `npm run db:migrate` applies them (`drizzle-kit migrate`), against `DATABASE_URL_UNPOOLED` when set.
+- **Applied by the Vercel build**, as the last step of `buildCommand`. Not by hand. A failed migration fails the build, so the deployment is never promoted.
+- Each Vercel environment has its own Neon branch, so a preview build only migrates its own database. **If they are ever collapsed onto a shared `DATABASE_URL`, revert the build-time migration first.**
+- Migrations run **after** `next build`, so a failure leaves the schema untouched. This assumes the build does not read the database — **if `generateStaticParams` or `force-static` is ever added, move the migration before `next build`.**
+- **Migrations must be backward-compatible.** They land while the previous deployment is still serving. Add nullable columns and new tables; never drop or rename in the same release as the code change.
+- **Large backfills do not belong in `drizzle/`** — the build has a timeout. Run them out-of-band as scripts.
+- **Never run `drizzle-kit push` against a shared database.** `lib/db/schema/` does not describe the whole database — `utility_resolver_cache` and `utility_name_manual_overrides` exist but are not declared, and push would offer to drop them. `generate` is safe.
+
 ## Verification
 - `curl -s -o /dev/null -w "%{http_code}" http://localhost:3060` → 200
 - `curl -s -o /dev/null -w "%{http_code}" http://localhost:3060/sign-in` → 200

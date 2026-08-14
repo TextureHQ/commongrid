@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "npm run prebuild && next build",
+  "buildCommand": "npm run prebuild && next build && npm run db:migrate",
   "outputDirectory": ".next",
   "crons": [
     {

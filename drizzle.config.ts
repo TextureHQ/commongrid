@@ -5,7 +5,9 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    // Neon sets both, and recommends a direct connection for schema changes.
+    // `||` so an empty value falls through rather than counting as set.
+    url: process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL!,
   },
   tablesFilter: ["!spatial_ref_sys", "!geography_columns", "!geometry_columns"],
 });
