@@ -19,6 +19,20 @@ import { checkRateLimit, rateLimitHeaders, rateLimitResponse } from "./rate-limi
 import type { RouteContext, RouteHandler } from "./types";
 import { normalizeEndpoint, trackUsage } from "./usage-tracker";
 
+function unauthorizedResponse(message: string, requestId: string | undefined): Response {
+  const id = requestId ?? generateRequestId();
+  return Response.json(formatError(new ApiError("UNAUTHORIZED", message), id), {
+    status: 401,
+    headers: { "X-Request-Id": id },
+  });
+}
+
+function usageTier(rlTier: string | undefined, isAuthenticated: boolean): "anonymous" | "registered" | "bulk" {
+  if (rlTier === "write") return isAuthenticated ? "registered" : "anonymous";
+  if (rlTier === "bulk" || rlTier === "registered" || rlTier === "anonymous") return rlTier;
+  return isAuthenticated ? "registered" : "anonymous";
+}
+
 // ---------------------------------------------------------------------------
 // Request ID
 // ---------------------------------------------------------------------------
@@ -169,7 +183,10 @@ export interface ApiMiddlewareOptions {
  *
  * Layer order (outer → inner):
  *   withErrorHandling → withRequestId → withTiming → withCors
- *   → rate limiting → auth → handler → usage tracking (fire-and-forget)
+ *   → auth → rate limiting → handler → usage tracking (fire-and-forget)
+ *
+ * Auth runs before rate limiting so only validated keys receive the
+ * registered/bulk budget. Present-but-invalid credentials return 401.
  *
  * Rate-limit headers are appended to every successful response.
  * Usage events are recorded asynchronously and never block the response.
@@ -186,21 +203,40 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
   const core: RouteHandler = async (req: Request, ctx: RouteContext): Promise<Response> => {
     const start = performance.now();
     const authHeader = req.headers.get("Authorization");
-    const isAuthenticated = !!authHeader;
     const method = req.method;
     const isWrite = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
     const isBulk = new URL(req.url).pathname.includes("/bulk");
 
     // Track API key ID for usage events (set during auth validation)
+    let isAuthenticated = false;
     let apiKeyId: string | null = null;
     let keyTier: string | undefined;
+
+    // ── Authentication (Variant A) ─────────────────────────────────────────
+    // Only `Authorization: Bearer <key>` is accepted. Any other Authorization
+    // scheme (Basic, raw token without a scheme, empty Bearer, …) is treated
+    // as malformed credentials → 401. Known active keys elevate to
+    // registered/bulk; unknown / revoked tokens also 401 (no silent anonymous
+    // downgrade). Missing Authorization remains anonymous on public routes.
+    //
+    // `X-API-Key` is unsupported and ignored: it does not authenticate, does
+    // not elevate tier, and does not 401. Clients must use Bearer.
+    if (authHeader || requireAuth) {
+      const authResult = await validateApiKey(authHeader, requireAuth ? resource : "", requireAuth ? action : "");
+      if (!authResult.valid) {
+        return unauthorizedResponse(authResult.error ?? "Unauthorized", ctx.requestId);
+      }
+      isAuthenticated = true;
+      apiKeyId = authResult.apiKeyId ?? null;
+      keyTier = authResult.tier;
+    }
 
     // ── Rate limiting ──────────────────────────────────────────────────────
     let rlResult: Awaited<ReturnType<typeof checkRateLimit>> | null = null;
 
     if (rateLimit) {
       const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-      const identifier = isAuthenticated ? `auth:${authHeader}` : `ip:${ip}`;
+      const identifier = isAuthenticated && apiKeyId ? `auth:${apiKeyId}` : `ip:${ip}`;
 
       rlResult = await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk, keyTier);
 
@@ -214,36 +250,11 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
             statusCode: 429,
             responseTimeMs: Math.round(elapsed),
             isAuthenticated,
-            tier: rlResult.tier === "write" ? (isAuthenticated ? "registered" : "anonymous") : rlResult.tier,
+            tier: usageTier(rlResult.tier, isAuthenticated),
             apiKeyId,
           });
         }
         return rateLimitResponse(rlResult, ctx.requestId);
-      }
-    }
-
-    // ── Authentication ─────────────────────────────────────────────────────
-    if (requireAuth) {
-      const authResult = await validateApiKey(authHeader, resource, action);
-      if (!authResult.valid) {
-        return Response.json(
-          {
-            error: {
-              code: "UNAUTHORIZED",
-              message: authResult.error ?? "Unauthorized",
-              request_id: ctx.requestId,
-              timestamp: new Date().toISOString(),
-            },
-          },
-          {
-            status: 401,
-            headers: { "X-Request-Id": ctx.requestId },
-          }
-        );
-      }
-      // Store the key identity for usage tracking
-      if (authResult.identity) {
-        apiKeyId = authResult.identity;
       }
     }
 
@@ -260,14 +271,13 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
     // ── Usage tracking (fire-and-forget) ───────────────────────────────────
     if (enableTracking) {
       const elapsed = performance.now() - start;
-      const tier = rlResult?.tier ?? (isAuthenticated ? "registered" : "anonymous");
       trackUsage({
         endpoint: normalizeEndpoint(req.url),
         method,
         statusCode: response.status,
         responseTimeMs: Math.round(elapsed),
         isAuthenticated,
-        tier: tier === "write" ? (isAuthenticated ? "registered" : "anonymous") : tier,
+        tier: usageTier(rlResult?.tier, isAuthenticated),
         apiKeyId,
       });
     }
