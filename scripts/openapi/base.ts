@@ -14,7 +14,7 @@ export const INFO = {
   title: "CommonGrid API",
   version: "1.0.0",
   description:
-    'The CommonGrid open-source energy infrastructure API. Access data on utilities, grid operators, power plants, EV charging stations, transmission lines, pricing nodes, and more.\n\n## Authentication\n\nAll endpoints are publicly accessible at the Anonymous tier (60 requests/hr). To unlock the Registered tier (5,000 requests/hr), create a free API key in the [Developer Dashboard](/developers) and include it as a Bearer token:\n\n```\nAuthorization: Bearer cg_your_api_key\n```\n\nOnly `Authorization: Bearer <key>` is accepted. Other `Authorization` schemes (e.g. `Basic`, a raw token without a scheme) return `401`. The `X-API-Key` header is unsupported and ignored — it does not authenticate or elevate rate limits.\n\nPresent-but-invalid credentials (unknown, revoked, or malformed Bearer tokens) also return `401`; they do not fall back to the anonymous tier.\n\n## Rate Limits\n\n| Tier | Limit | Auth Required |\n|------|-------|---------------|\n| Anonymous | 60/hr | No |\n| Registered | 5,000/hr | API key |\n| Bulk | 50,000/hr | Contact us |\n\n## Pagination\n\nList endpoints return cursor-based pagination:\n\n```json\n{\n  "data": [...],\n  "meta": {\n    "total": 3000,\n    "limit": 50,\n    "nextCursor": "eyJ2IjoxLCJzIjp7InZhbHVlIjoiYWNtZS11dGlsaXR5In0sImlkIjoiYWJjMTIzIn0"\n  }\n}\n```\n\nPass `cursor=<nextCursor>` to fetch the next page. Use the `limit` parameter (max 200) to control page size.\n\n## Spec generation\n\nThis OpenAPI document is auto-generated from the Drizzle schema via `npm run generate:openapi`. CI verifies the committed spec is up to date on every PR; if you change a table or route and the spec diverges, `npm run check:openapi` will fail.',
+    'The CommonGrid open-source energy infrastructure API. Access data on utilities, grid operators, power plants, EV charging stations, transmission lines, pricing nodes, and more.\n\n## Authentication\n\nAll endpoints are publicly accessible at the Anonymous tier (60 requests/hr, no per-minute burst). To unlock the Registered tier (5,000 requests/hr + 100/min burst), create a free API key in the [Developer Dashboard](/developers) and include it as a Bearer token:\n\n```\nAuthorization: Bearer cg_your_api_key\n```\n\nOnly `Authorization: Bearer <key>` is accepted. Other `Authorization` schemes (e.g. `Basic`, a raw token without a scheme) return `401`. The `X-API-Key` header is unsupported and ignored — it does not authenticate or elevate rate limits.\n\nPresent-but-invalid credentials (unknown, revoked, or malformed Bearer tokens) also return `401`; they do not fall back to the anonymous tier. Missing credentials use the anonymous tier.\n\n## Rate Limits\n\nAuthenticated read tiers check **both** a rolling hourly budget and a short burst window (whichever trips first returns `429`). Anonymous is hourly-only. Mutating requests use the write tier.\n\n| Tier | Hourly | Burst | Auth Required |\n|------|--------|-------|---------------|\n| Anonymous | 60/hr | — | No |\n| Registered | 5,000/hr | 100/min | API key |\n| Bulk | 50,000/hr | 500/min | Contact us |\n| Write | — | 100/min | Any mutating request |\n\nEvery limited response includes `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, and `X-RateLimit-Tier` for the window that applied. On `429 RATE_LIMITED`, `Retry-After` is also set and matches that same window (burst rejections often show a short `Retry-After` and a burst-sized `X-RateLimit-Limit`).\n\n## Pagination\n\nList endpoints return cursor-based pagination:\n\n```json\n{\n  "data": [...],\n  "meta": {\n    "total": 3000,\n    "limit": 50,\n    "nextCursor": "eyJ2IjoxLCJzIjp7InZhbHVlIjoiYWNtZS11dGlsaXR5In0sImlkIjoiYWJjMTIzIn0"\n  }\n}\n```\n\nPass `cursor=<nextCursor>` to fetch the next page. Use the `limit` parameter (max 200) to control page size.\n\n## Spec generation\n\nThis OpenAPI document is auto-generated from the Drizzle schema via `npm run generate:openapi`. CI verifies the committed spec is up to date on every PR; if you change a table or route and the spec diverges, `npm run check:openapi` will fail.',
   contact: {
     name: "CommonGrid Support",
     email: "hello@texturehq.com",
@@ -100,6 +100,43 @@ export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
         properties: {
           code: { type: "string", example: "NOT_FOUND" },
           message: { type: "string", example: "Resource not found" },
+        },
+      },
+    },
+  },
+  RateLimitedError: {
+    type: "object",
+    description:
+      "Returned when either the hourly or burst rate-limit window is exceeded. Header values describe the window that tripped.",
+    properties: {
+      error: {
+        type: "object",
+        required: ["code", "message", "request_id", "currentTier", "currentLimit", "retryAfter"],
+        properties: {
+          code: { type: "string", enum: ["RATE_LIMITED"], example: "RATE_LIMITED" },
+          message: { type: "string", example: "Too many requests. Please slow down." },
+          request_id: { type: "string", example: "req_abc123" },
+          timestamp: { type: "string", format: "date-time" },
+          currentTier: {
+            type: "string",
+            enum: ["anonymous", "registered", "bulk", "write"],
+            example: "registered",
+          },
+          currentLimit: {
+            type: "integer",
+            description: "Budget of the window that was enforced (hourly or burst)",
+            example: 100,
+          },
+          retryAfter: {
+            type: "integer",
+            description: "Seconds until X-RateLimit-Reset for the window that tripped",
+            example: 12,
+          },
+          docs: { type: "string", format: "uri" },
+          upgrade: {
+            type: "string",
+            description: "Present on anonymous 429s — points callers at free API key registration",
+          },
         },
       },
     },

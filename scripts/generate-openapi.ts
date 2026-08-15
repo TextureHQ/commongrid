@@ -26,6 +26,33 @@ import type { JsonSchema } from "./openapi/schema-from-drizzle";
 // Response builders
 // ---------------------------------------------------------------------------
 
+/** Rate-limit headers attached to every limited `/api/v1` success and 429. */
+const RATE_LIMIT_HEADERS: Record<string, JsonSchema> = {
+  "X-RateLimit-Limit": {
+    schema: { type: "integer" },
+    description:
+      "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000.",
+  },
+  "X-RateLimit-Remaining": {
+    schema: { type: "integer" },
+    description: "Requests remaining in that same window.",
+  },
+  "X-RateLimit-Reset": {
+    schema: { type: "integer" },
+    description: "Unix timestamp (seconds) when the applied window resets.",
+  },
+  "X-RateLimit-Tier": {
+    schema: { type: "string", enum: ["anonymous", "registered", "bulk", "write"] },
+    description: "Rate-limit tier that was applied for this request.",
+  },
+};
+
+const RETRY_AFTER_HEADER: JsonSchema = {
+  schema: { type: "integer" },
+  description:
+    "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly).",
+};
+
 function buildResponses(ep: EndpointDef): JsonSchema {
   const has404 = ep.has404 ?? ep.path.includes("{");
   const has400 = ep.has400 ?? ep.method === "post";
@@ -81,8 +108,22 @@ function buildResponses(ep: EndpointDef): JsonSchema {
   const responses: Record<string, JsonSchema> = {
     "200": {
       description: okDescription,
+      headers: RATE_LIMIT_HEADERS,
       content: {
         "application/json": { schema: content200 },
+      },
+    },
+    "429": {
+      description:
+        "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+      headers: {
+        ...RATE_LIMIT_HEADERS,
+        "Retry-After": RETRY_AFTER_HEADER,
+      },
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/RateLimitedError" },
+        },
       },
     },
   };
