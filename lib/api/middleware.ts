@@ -17,7 +17,7 @@ import * as Sentry from "@sentry/nextjs";
 import { validateApiKey } from "./auth";
 import { withCors } from "./cors";
 import { ApiError, formatError } from "./errors";
-import { checkRateLimit, rateLimitHeaders, rateLimitResponse } from "./rate-limit";
+import { checkRateLimit, rateLimitHeaders, rateLimitIdentifier, rateLimitResponse } from "./rate-limit";
 import type { RouteContext, RouteHandler } from "./types";
 import { normalizeEndpoint, trackUsage } from "./usage-tracker";
 
@@ -269,7 +269,9 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
 
       if (enableRateLimit) {
         const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-        const identifier = isAuthenticated && apiKeyId ? `auth:${apiKeyId}` : `ip:${ip}`;
+        // Validated key id → registered/bulk bucket; otherwise IP → anonymous.
+        // Fabricated keys never land here (401 from withApiKeyAuth).
+        const identifier = rateLimitIdentifier({ isAuthenticated, apiKeyId, ip });
 
         rlResult = await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk, keyTier);
 
