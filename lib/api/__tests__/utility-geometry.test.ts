@@ -59,8 +59,16 @@ const FIXTURE_MULTIPOLYGON = {
   ],
 };
 
+let requestId = 0;
+
 function makeRequest(url: string): Request {
-  return new Request(url, { method: "GET" });
+  requestId += 1;
+  return new Request(url, {
+    method: "GET",
+    // Each case represents an independent anonymous client. Keep the
+    // stateful rate limiter from coupling unrelated route assertions.
+    headers: { "x-forwarded-for": `198.51.100.${requestId}` },
+  });
 }
 
 function makeParams(slug: string): { params: Promise<{ slug: string }> } {
