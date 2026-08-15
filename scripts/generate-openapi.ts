@@ -30,8 +30,7 @@ import type { JsonSchema } from "./openapi/schema-from-drizzle";
 const RATE_LIMIT_HEADERS: Record<string, JsonSchema> = {
   "X-RateLimit-Limit": {
     schema: { type: "integer" },
-    description:
-      "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000.",
+    description: "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000.",
   },
   "X-RateLimit-Remaining": {
     schema: { type: "integer" },
