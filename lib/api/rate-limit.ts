@@ -9,7 +9,7 @@
  * Upstash in every deployed environment.
  *
  * PRD-aligned tiers:
- *   anonymous     60 req/hr   (burst: 10 req/min)
+ *   anonymous     60 req/hr   (no per-minute burst)
  *   registered  5000 req/hr   (burst: 100 req/min)
  *   bulk       50000 req/hr   (burst: 500 req/min)
  *   write        100 req/min  — any mutating request
@@ -58,9 +58,10 @@ export const TIER_LIMITS = {
   write: { limit: 100, windowMs: MINUTE_MS },
 } as const;
 
-/** Burst limiters — short-window throttle to prevent stampedes. */
-export const BURST_LIMITS = {
-  anonymous: { limit: 10, windowMs: MINUTE_MS },
+/** Burst limiters — per-minute stampede guard for keyed tiers only (min 100/min). */
+export type BurstTier = "registered" | "bulk";
+
+export const BURST_LIMITS: Record<BurstTier, { limit: number; windowMs: number }> = {
   registered: { limit: 100, windowMs: MINUTE_MS },
   bulk: { limit: 500, windowMs: MINUTE_MS },
 } as const;
@@ -72,8 +73,7 @@ const TIER_CONFIG: Record<RateLimitTier, WindowConfig> = {
   write: { ...TIER_LIMITS.write, prefix: "cg:rl:write" },
 };
 
-const BURST_CONFIG: Record<Exclude<RateLimitTier, "write">, WindowConfig> = {
-  anonymous: { ...BURST_LIMITS.anonymous, prefix: "cg:rl:anon:burst" },
+const BURST_CONFIG: Record<BurstTier, WindowConfig> = {
   registered: { ...BURST_LIMITS.registered, prefix: "cg:rl:reg:burst" },
   bulk: { ...BURST_LIMITS.bulk, prefix: "cg:rl:bulk:burst" },
 };
@@ -138,7 +138,7 @@ function createMemoryLimiters(): MemoryLimiters {
 
 interface UpstashLimiters {
   hourly: Record<Exclude<RateLimitTier, "write">, Ratelimit>;
-  burst: Record<Exclude<RateLimitTier, "write">, Ratelimit>;
+  burst: Record<BurstTier, Ratelimit>;
   write: Ratelimit;
 }
 
@@ -156,7 +156,7 @@ export function createRateLimiter(): UpstashLimiters | null {
   const redis = Redis.fromEnv();
 
   const hourly = {} as Record<Exclude<RateLimitTier, "write">, Ratelimit>;
-  const burst = {} as Record<Exclude<RateLimitTier, "write">, Ratelimit>;
+  const burst = {} as Record<BurstTier, Ratelimit>;
 
   for (const tier of ["anonymous", "registered", "bulk"] as const) {
     const hc = TIER_CONFIG[tier];
@@ -165,7 +165,9 @@ export function createRateLimiter(): UpstashLimiters | null {
       limiter: Ratelimit.slidingWindow(hc.limit, UPSTASH_WINDOW.hourly),
       prefix: hc.prefix,
     });
+  }
 
+  for (const tier of ["registered", "bulk"] as const) {
     const bc = BURST_CONFIG[tier];
     burst[tier] = new Ratelimit({
       redis,
@@ -286,13 +288,15 @@ async function checkWithUpstash(
     return fromUpstash(result, tier);
   }
 
-  const readTier = tier;
-  const burstResult = await limiters.burst[readTier].limit(identifier);
-  if (!burstResult.success) {
-    return fromUpstash(burstResult, tier);
+  // Anonymous: hourly only — no per-minute burst.
+  if (tier === "registered" || tier === "bulk") {
+    const burstResult = await limiters.burst[tier].limit(identifier);
+    if (!burstResult.success) {
+      return fromUpstash(burstResult, tier);
+    }
   }
 
-  const hourlyResult = await limiters.hourly[readTier].limit(identifier);
+  const hourlyResult = await limiters.hourly[tier].limit(identifier);
   return fromUpstash(hourlyResult, tier);
 }
 
@@ -303,15 +307,17 @@ function checkWithMemory(limiters: MemoryLimiters, identifier: string, tier: Rat
     return { ...result, tier };
   }
 
-  const burstCfg = BURST_CONFIG[tier];
-  const burstResult = memoryLimit(
-    limiters.burst,
-    `${burstCfg.prefix}:${identifier}`,
-    burstCfg.limit,
-    burstCfg.windowMs
-  );
-  if (!burstResult.success) {
-    return { ...burstResult, tier };
+  if (tier === "registered" || tier === "bulk") {
+    const burstCfg = BURST_CONFIG[tier];
+    const burstResult = memoryLimit(
+      limiters.burst,
+      `${burstCfg.prefix}:${identifier}`,
+      burstCfg.limit,
+      burstCfg.windowMs
+    );
+    if (!burstResult.success) {
+      return { ...burstResult, tier };
+    }
   }
 
   const hourlyCfg = TIER_CONFIG[tier];
@@ -361,13 +367,11 @@ export function rateLimitHeaders(result: RateLimitResult): Record<string, string
     "X-RateLimit-Tier": result.tier,
   };
 
-  // Nudge anonymous users to register when they've used 80% of their limit
-  if (result.tier === "anonymous") {
+  // Nudge anonymous users to register when they've used 80% of their hourly limit
+  if (result.tier === "anonymous" && result.success) {
     const tierLimit = TIER_LIMITS.anonymous.limit;
     const used = tierLimit - result.remaining;
-    // Only nudge against the hourly budget (not a burst rejection whose
-    // `limit` is the per-minute cap).
-    if (result.limit === tierLimit && used >= tierLimit * 0.8) {
+    if (used >= tierLimit * 0.8) {
       headers["X-CommonGrid-Register"] =
         "You're approaching the anonymous rate limit. Register for a free API key at https://commongrid.info/developers for 5,000 req/hr.";
     }

@@ -139,31 +139,35 @@ utilities:*       → matches any action on 'utilities'
 ## Rate limits
 
 Limits apply to the JSON API under `/api/v1/*`. They are enforced per key (authenticated) or per IP
-(anonymous). Both an **hourly** window and a short **burst** window apply.
+(anonymous). Authenticated read tiers check **both** a rolling **hourly** budget and a short **burst**
+window — whichever trips first returns `429`. Anonymous has **hourly only** (no per-minute burst).
+Write requests use the write tier only.
 
 | Tier | Hourly | Burst | How to get it |
 |---|---:|---|---|
-| `anonymous` | 60 req/hr | 10 req/min | No key required. |
+| `anonymous` | 60 req/hr | — | No key required. |
 | `registered` | 5,000 req/hr | 100 req/min | Any active API key. |
 | `bulk` | 50,000 req/hr | 500 req/min | API key with `tier = 'bulk'`. Contact us to upgrade. |
-| `write` | 100 req/min | — | Applied automatically to any mutating request (currently `POST /utilities/resolve`). |
+| `write` | — | 100 req/min | Applied automatically to any mutating request (currently `POST /utilities/resolve`). |
 
 **Vector tiles (`/api/tiles/*`) are not rate-limited** and do not consume this quota. See
 [Vector tiles](#vector-tiles).
 
 Every limited `/api/v1` response (success **and** `429`) includes the usual
 [`RateLimit-*`](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/) headers plus
-CommonGrid's own — values are the real tier budget and remaining count (never placeholders):
+CommonGrid's own — values are the real budget for the window that applied (never placeholders):
 
 | Header | Description |
 |---|---|
-| `X-RateLimit-Limit` | Limit for the active window (e.g. `60`, `5000`). |
-| `X-RateLimit-Remaining` | Requests left before throttling. |
-| `X-RateLimit-Reset` | Unix timestamp (seconds) when the window resets. |
+| `X-RateLimit-Limit` | Budget of the window that applied (hourly **or** burst — e.g. `5000` or `100`). |
+| `X-RateLimit-Remaining` | Requests left in that same window. |
+| `X-RateLimit-Reset` | Unix timestamp (seconds) when that window resets. |
 | `X-RateLimit-Tier` | Tier that was applied (`anonymous` / `registered` / `bulk` / `write`). |
-| `Retry-After` | Seconds to wait, set only on 429 responses. |
+| `Retry-After` | Seconds until reset; set only on 429. Matches the window that tripped (burst → often a few seconds; hourly → up to ~1 hour). |
 
 When you exceed a window you get a `429 RATE_LIMITED` error (see [Error model](#error-model)).
+Keyed clients that fire faster than their burst cap will hit **burst** first; pace under the burst
+cap to consume the full hourly budget. Anonymous can use the full 60/hr without a per-minute gate.
 
 ---
 

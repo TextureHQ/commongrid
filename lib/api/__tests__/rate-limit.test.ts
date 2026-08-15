@@ -103,12 +103,12 @@ describe("rateLimitHeaders", () => {
     expect(headers["X-CommonGrid-Register"]).toBeUndefined();
   });
 
-  it("does NOT add nudge on anonymous burst rejections", () => {
+  it("does NOT add nudge on anonymous 429 responses", () => {
     const result: RateLimitResult = {
       success: false,
       remaining: 0,
       reset: 1713400000,
-      limit: BURST_LIMITS.anonymous.limit,
+      limit: TIER_LIMITS.anonymous.limit,
       tier: "anonymous",
     };
     const headers = rateLimitHeaders(result);
@@ -189,26 +189,26 @@ describe("checkRateLimit enforcement (in-process fallback)", () => {
     expect(result.limit).toBe(TIER_LIMITS.registered.limit);
   });
 
-  it("trips anonymous burst (10/min) with Retry-After metadata", async () => {
-    const id = "ip:burst-test";
-    for (let i = 0; i < BURST_LIMITS.anonymous.limit; i++) {
+  it("anonymous has no burst — rapid fire reaches the hourly ceiling", async () => {
+    const id = "ip:no-burst-anon";
+    for (let i = 0; i < TIER_LIMITS.anonymous.limit; i++) {
       const ok = await checkRateLimit(id, false, false, false);
       expect(ok.success).toBe(true);
+      expect(ok.limit).toBe(TIER_LIMITS.anonymous.limit);
     }
 
     const blocked = await checkRateLimit(id, false, false, false);
     expect(blocked.success).toBe(false);
     expect(blocked.remaining).toBe(0);
-    expect(blocked.limit).toBe(BURST_LIMITS.anonymous.limit);
+    expect(blocked.limit).toBe(TIER_LIMITS.anonymous.limit);
     expect(blocked.tier).toBe("anonymous");
-    expect(blocked.reset).toBeGreaterThan(Math.floor(Date.now() / 1000) - 1);
 
-    const response = rateLimitResponse(blocked, "req_burst");
+    const response = rateLimitResponse(blocked, "req_anon_hourly");
     expect(response.status).toBe(429);
-    expect(response.headers.get("Retry-After")).toBeDefined();
+    expect(Number(response.headers.get("Retry-After"))).toBeGreaterThan(3000);
   });
 
-  it("trips anonymous hourly budget (60/hr) when paced under burst", async () => {
+  it("trips anonymous hourly budget (60/hr)", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
 
@@ -217,8 +217,7 @@ describe("checkRateLimit enforcement (in-process fallback)", () => {
       const ok = await checkRateLimit(id, false, false, false);
       expect(ok.success).toBe(true);
       expect(ok.limit).toBe(TIER_LIMITS.anonymous.limit);
-      // Stay under burst (10/min): one request every 6s → 10/min max.
-      vi.advanceTimersByTime(6_000);
+      vi.advanceTimersByTime(2_000);
     }
 
     const blocked = await checkRateLimit(id, false, false, false);
@@ -260,24 +259,20 @@ describe("checkRateLimit enforcement (in-process fallback)", () => {
     expect(b.remaining).toBe(TIER_LIMITS.registered.limit - 1);
   });
 
-  it("trips registered hourly budget (5000/hr) when paced under burst", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
-
-    const id = "auth:key_hourly_reg";
-    for (let i = 0; i < TIER_LIMITS.registered.limit; i++) {
+  it("trips registered burst (100/min) before the hourly ceiling", async () => {
+    const id = "auth:key_reg_burst";
+    for (let i = 0; i < BURST_LIMITS.registered.limit; i++) {
       const ok = await checkRateLimit(id, true, false, false, "registered");
       expect(ok.success).toBe(true);
-      // Stay under burst (100/min): one request every 600ms.
-      vi.advanceTimersByTime(600);
     }
 
     const blocked = await checkRateLimit(id, true, false, false, "registered");
     expect(blocked.success).toBe(false);
-    expect(blocked.limit).toBe(TIER_LIMITS.registered.limit);
+    expect(blocked.remaining).toBe(0);
+    expect(blocked.limit).toBe(BURST_LIMITS.registered.limit);
     expect(blocked.tier).toBe("registered");
 
-    const response = rateLimitResponse(blocked, "req_reg_hourly");
+    const response = rateLimitResponse(blocked, "req_reg_burst");
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBeDefined();
   });
