@@ -138,8 +138,8 @@ utilities:*       → matches any action on 'utilities'
 
 ## Rate limits
 
-Limits are enforced per key (authenticated) or per IP (anonymous). Both an **hourly** window and a
-short **burst** window apply.
+Limits apply to the JSON API under `/api/v1/*`. They are enforced per key (authenticated) or per IP
+(anonymous). Both an **hourly** window and a short **burst** window apply.
 
 | Tier | Hourly | Burst | How to get it |
 |---|---:|---|---|
@@ -148,11 +148,16 @@ short **burst** window apply.
 | `bulk` | 50,000 req/hr | 500 req/min | API key with `tier = 'bulk'`. Contact us to upgrade. |
 | `write` | 100 req/min | — | Applied automatically to any mutating request (currently `POST /utilities/resolve`). |
 
-Every response includes the usual [`RateLimit-*`](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/) headers plus CommonGrid's own:
+**Vector tiles (`/api/tiles/*`) are not rate-limited** and do not consume this quota. See
+[Vector tiles](#vector-tiles).
+
+Every limited `/api/v1` response (success **and** `429`) includes the usual
+[`RateLimit-*`](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/) headers plus
+CommonGrid's own — values are the real tier budget and remaining count (never placeholders):
 
 | Header | Description |
 |---|---|
-| `X-RateLimit-Limit` | Limit for the active window. |
+| `X-RateLimit-Limit` | Limit for the active window (e.g. `60`, `5000`). |
 | `X-RateLimit-Remaining` | Requests left before throttling. |
 | `X-RateLimit-Reset` | Unix timestamp (seconds) when the window resets. |
 | `X-RateLimit-Tier` | Tier that was applied (`anonymous` / `registered` / `bulk` / `write`). |
@@ -752,8 +757,8 @@ live at `/api/tiles/...` (not under `/api/v1`) because the tile ABI is fixed by 
 ```
 
 Each endpoint returns `application/x-protobuf` MVT tiles with long TTLs. Point your Mapbox GL / MapLibre
-client directly at these URLs. They're anonymous-callable and backed by the same auth/rate-limit
-stack as the JSON API (authenticate with an API key to pick up the higher tier).
+client directly at these URLs. They're anonymous-callable, CDN-cached, and **not rate-limited** — tile
+traffic does not share or consume the `/api/v1` quota (see [Rate limits](#rate-limits)).
 
 ---
 

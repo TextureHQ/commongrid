@@ -1,7 +1,8 @@
 /**
  * Rate-limit wiring inside withApiMiddleware.
  *
- * Covers 429 + Retry-After, correct auth:/ip: counter keying, and that
+ * Covers 429 + Retry-After, correct auth:/ip: counter keying, real
+ * X-RateLimit-* budgets on success and 429 (no placeholder 999), and that
  * fabricated keys never reach the limiter (401 from auth — Epic 2).
  */
 
@@ -9,20 +10,31 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const validateApiKey = vi.fn();
 const checkRateLimit = vi.fn();
-const rateLimitHeaders = vi.fn(() => ({}));
-const rateLimitResponse = vi.fn((result: { reset: number }, requestId: string) => {
-  const retryAfter = Math.max(0, result.reset - Math.floor(Date.now() / 1000));
-  return Response.json(
-    { error: { code: "RATE_LIMITED", request_id: requestId, retryAfter } },
-    {
-      status: 429,
-      headers: {
-        "Retry-After": String(retryAfter),
-        "X-Request-Id": requestId,
-      },
-    }
-  );
-});
+const rateLimitHeaders = vi.fn((result: { limit: number; remaining: number; reset: number; tier: string }) => ({
+  "X-RateLimit-Limit": String(result.limit),
+  "X-RateLimit-Remaining": String(result.remaining),
+  "X-RateLimit-Reset": String(result.reset),
+  "X-RateLimit-Tier": result.tier,
+}));
+const rateLimitResponse = vi.fn(
+  (result: { reset: number; limit: number; remaining: number; tier: string }, requestId: string) => {
+    const retryAfter = Math.max(0, result.reset - Math.floor(Date.now() / 1000));
+    return Response.json(
+      { error: { code: "RATE_LIMITED", request_id: requestId, retryAfter } },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": String(result.limit),
+          "X-RateLimit-Remaining": String(result.remaining),
+          "X-RateLimit-Reset": String(result.reset),
+          "X-RateLimit-Tier": result.tier,
+          "Retry-After": String(retryAfter),
+          "X-Request-Id": requestId,
+        },
+      }
+    );
+  }
+);
 const rateLimitIdentifier = vi.fn((opts: { isAuthenticated: boolean; apiKeyId: string | null; ip: string }) =>
   opts.isAuthenticated && opts.apiKeyId ? `auth:${opts.apiKeyId}` : `ip:${opts.ip || "unknown"}`
 );
@@ -34,7 +46,7 @@ vi.mock("../auth", () => ({
 
 vi.mock("../rate-limit", () => ({
   checkRateLimit: (...args: unknown[]) => checkRateLimit(...args),
-  rateLimitHeaders: (result?: unknown) => rateLimitHeaders(result),
+  rateLimitHeaders: (...args: unknown[]) => rateLimitHeaders(...(args as [never])),
   rateLimitResponse: (...args: unknown[]) => rateLimitResponse(...(args as [never, string])),
   rateLimitIdentifier: (...args: unknown[]) => rateLimitIdentifier(...(args as [never])),
 }));
@@ -64,16 +76,24 @@ function request(options?: { authorization?: string | null; apiKey?: string; for
   return new Request("https://commongrid.info/api/v1/utilities", { headers });
 }
 
+function expectRateLimitHeaders(
+  response: Response,
+  expected: { limit: string; remaining: string; tier: string }
+): void {
+  expect(response.headers.get("X-RateLimit-Limit")).toBe(expected.limit);
+  expect(response.headers.get("X-RateLimit-Remaining")).toBe(expected.remaining);
+  expect(response.headers.get("X-RateLimit-Tier")).toBe(expected.tier);
+  expect(response.headers.get("X-RateLimit-Reset")).toBeTruthy();
+  // Placeholder budgets from the pre-Upstash fallback must never reappear.
+  expect(response.headers.get("X-RateLimit-Limit")).not.toBe("999");
+  expect(response.headers.get("X-RateLimit-Remaining")).not.toBe("999");
+}
+
 describe("withApiMiddleware rate limiting", () => {
   beforeEach(() => {
     validateApiKey.mockReset();
     checkRateLimit.mockReset();
-    rateLimitHeaders.mockReset().mockReturnValue({
-      "X-RateLimit-Limit": "60",
-      "X-RateLimit-Remaining": "59",
-      "X-RateLimit-Reset": "0",
-      "X-RateLimit-Tier": "anonymous",
-    });
+    rateLimitHeaders.mockClear();
     rateLimitResponse.mockClear();
     rateLimitIdentifier.mockClear();
     trackUsage.mockReset();
@@ -81,13 +101,13 @@ describe("withApiMiddleware rate limiting", () => {
     checkRateLimit.mockResolvedValue({
       success: true,
       remaining: 59,
-      reset: 0,
+      reset: 1_714_000_000,
       limit: 60,
       tier: "anonymous",
     });
   });
 
-  it("anonymous → IP identifier, anonymous tier", async () => {
+  it("anonymous success → real X-RateLimit-* budgets on the response", async () => {
     const handler = withApiMiddleware(async () => Response.json({ ok: true }), {
       trackUsage: false,
     });
@@ -103,9 +123,13 @@ describe("withApiMiddleware rate limiting", () => {
       ip: "203.0.113.10",
     });
     expect(checkRateLimit).toHaveBeenCalledWith("ip:203.0.113.10", false, false, false, undefined);
+    expect(rateLimitHeaders).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 60, remaining: 59, tier: "anonymous" })
+    );
+    expectRateLimitHeaders(response, { limit: "60", remaining: "59", tier: "anonymous" });
   });
 
-  it("valid key → auth:<keyId> identifier, registered tier", async () => {
+  it("valid key success → registered budget headers (not 999)", async () => {
     validateApiKey.mockResolvedValue({
       valid: true,
       identity: "My App key",
@@ -116,7 +140,7 @@ describe("withApiMiddleware rate limiting", () => {
     checkRateLimit.mockResolvedValue({
       success: true,
       remaining: 4999,
-      reset: 0,
+      reset: 1_714_000_000,
       limit: 5000,
       tier: "registered",
     });
@@ -136,9 +160,10 @@ describe("withApiMiddleware rate limiting", () => {
       ip: "unknown",
     });
     expect(checkRateLimit).toHaveBeenCalledWith("auth:key_123", true, false, false, "registered");
+    expectRateLimitHeaders(response, { limit: "5000", remaining: "4999", tier: "registered" });
   });
 
-  it("valid bulk key → auth:<keyId> identifier, bulk tier", async () => {
+  it("valid bulk key → auth:<keyId> identifier, bulk tier headers", async () => {
     validateApiKey.mockResolvedValue({
       valid: true,
       identity: "Bulk key",
@@ -149,7 +174,7 @@ describe("withApiMiddleware rate limiting", () => {
     checkRateLimit.mockResolvedValue({
       success: true,
       remaining: 49999,
-      reset: 0,
+      reset: 1_714_000_000,
       limit: 50000,
       tier: "bulk",
     });
@@ -169,9 +194,10 @@ describe("withApiMiddleware rate limiting", () => {
       ip: "unknown",
     });
     expect(checkRateLimit).toHaveBeenCalledWith("auth:key_bulk", true, false, false, "bulk");
+    expectRateLimitHeaders(response, { limit: "50000", remaining: "49999", tier: "bulk" });
   });
 
-  it("bulk key over budget → 429 with Retry-After", async () => {
+  it("bulk key over budget → 429 with Retry-After and rate-limit headers", async () => {
     validateApiKey.mockResolvedValue({
       valid: true,
       identity: "Bulk key",
@@ -199,9 +225,10 @@ describe("withApiMiddleware rate limiting", () => {
     expect(response.headers.get("Retry-After")).toBeTruthy();
     expect(inner).not.toHaveBeenCalled();
     expect(checkRateLimit).toHaveBeenCalledWith("auth:key_bulk", true, false, false, "bulk");
+    expectRateLimitHeaders(response, { limit: "50000", remaining: "0", tier: "bulk" });
   });
 
-  it("over budget → 429 with Retry-After (does not call handler)", async () => {
+  it("over budget → 429 with Retry-After and real anonymous budget headers", async () => {
     const reset = Math.floor(Date.now() / 1000) + 120;
     checkRateLimit.mockResolvedValue({
       success: false,
@@ -223,6 +250,7 @@ describe("withApiMiddleware rate limiting", () => {
     expect(Number(response.headers.get("Retry-After"))).toBeGreaterThan(0);
     expect(inner).not.toHaveBeenCalled();
     expect(rateLimitResponse).toHaveBeenCalled();
+    expectRateLimitHeaders(response, { limit: "60", remaining: "0", tier: "anonymous" });
   });
 
   it("fabricated Bearer → 401 before rate limit (no registered bypass)", async () => {
@@ -239,5 +267,6 @@ describe("withApiMiddleware rate limiting", () => {
     expect(inner).not.toHaveBeenCalled();
     expect(checkRateLimit).not.toHaveBeenCalled();
     expect(rateLimitIdentifier).not.toHaveBeenCalled();
+    expect(response.headers.get("X-RateLimit-Limit")).toBeNull();
   });
 });

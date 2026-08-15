@@ -129,6 +129,11 @@ describe("rateLimitResponse", () => {
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBeTruthy();
     expect(Number(response.headers.get("Retry-After"))).toBeGreaterThan(0);
+    expect(response.headers.get("X-RateLimit-Limit")).toBe("60");
+    expect(response.headers.get("X-RateLimit-Remaining")).toBe("0");
+    expect(response.headers.get("X-RateLimit-Tier")).toBe("anonymous");
+    expect(response.headers.get("X-RateLimit-Reset")).toBeTruthy();
+    expect(response.headers.get("X-RateLimit-Limit")).not.toBe("999");
 
     const body = await response.json();
     expect(body.error.code).toBe("RATE_LIMITED");
