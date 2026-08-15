@@ -24,6 +24,8 @@ vi.mock("../rate-limit", () => ({
   checkRateLimit: (...args: unknown[]) => checkRateLimit(...args),
   rateLimitHeaders: (result?: unknown) => rateLimitHeaders(result),
   rateLimitResponse: vi.fn(),
+  rateLimitIdentifier: (opts: { isAuthenticated: boolean; apiKeyId: string | null; ip: string }) =>
+    opts.isAuthenticated && opts.apiKeyId ? `auth:${opts.apiKeyId}` : `ip:${opts.ip || "unknown"}`,
 }));
 
 vi.mock("../usage-tracker", () => ({
