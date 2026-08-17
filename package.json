@@ -31,7 +31,8 @@
     "test:api": "tsx scripts/test-api-endpoints.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:seed:clerk:dev": "tsx scripts/seed-clerk-ids.ts",
-    "db:backfill:versions": "tsx scripts/backfill-entity-versions.ts"
+    "db:backfill:versions": "tsx scripts/backfill-entity-versions.ts",
+    "db:replay-contribution": "tsx scripts/replay-contribution.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.7.5",
