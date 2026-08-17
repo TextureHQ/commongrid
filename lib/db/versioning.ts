@@ -62,6 +62,30 @@ export function generateChangeSummary(delta: Record<string, { old: unknown; new:
 }
 
 /**
+ * Human label for a changelog entry, whichever property the table uses. Most
+ * have `name`, ev_stations has `stationName`, territories and
+ * transmission_lines have none.
+ *
+ * Denormalized onto entity_versions because (entity_type, entity_id) is
+ * polymorphic with no foreign key — rendering a feed row otherwise means a join
+ * across whichever of eleven entity tables the pair points at, per row.
+ *
+ * Expects a Drizzle-shaped row (camelCase). The backfill imports this rather
+ * than reimplementing it, so live-written and backfilled rows agree.
+ */
+export function entityLabel(row: Record<string, unknown> | null): {
+  entityName: string | null;
+  entitySlug: string | null;
+} {
+  if (!row) return { entityName: null, entitySlug: null };
+  const name = row.name ?? row.stationName ?? row.title ?? null;
+  return {
+    entityName: typeof name === "string" ? name : null,
+    entitySlug: typeof row.slug === "string" ? row.slug : null,
+  };
+}
+
+/**
  * Build a version record for insertion.
  * Returns the data to insert into entity_versions table.
  */
@@ -83,6 +107,8 @@ export function buildVersionRecord(
   changedBy: string;
   changeType: string;
   changeSummary: string;
+  entityName: string | null;
+  entitySlug: string | null;
 } {
   if (versionNumber === 1) {
     // First version: store full snapshot
@@ -95,6 +121,7 @@ export function buildVersionRecord(
       changedBy,
       changeType,
       changeSummary: changeSummary || "Initial creation",
+      ...entityLabel(newData),
     };
   }
 
@@ -111,6 +138,9 @@ export function buildVersionRecord(
     changedBy,
     changeType,
     changeSummary: changeSummary || generateChangeSummary(delta),
+    // From newData, so the label reflects the entity as of this version — a
+    // rename shows the new name on the version that renamed it.
+    ...entityLabel(newData),
   };
 }
 

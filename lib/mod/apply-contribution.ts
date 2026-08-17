@@ -38,7 +38,7 @@ import {
   transmissionLines,
   utilities,
 } from "@/lib/db/schema";
-import { buildVersionRecord } from "@/lib/db/versioning";
+import { buildVersionRecord, entityLabel } from "@/lib/db/versioning";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -252,6 +252,7 @@ async function ensureBaselineVersion(
       changeType: "create",
       changeSummary: "Initial recorded state",
       sourceType: "sync",
+      ...entityLabel(currentState),
     })
     .onConflictDoNothing();
 
