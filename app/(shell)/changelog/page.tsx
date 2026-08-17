@@ -173,19 +173,22 @@ export default function ChangelogPage() {
     (e) => e.kind === "updated" || e.kind === "corrected" || e.kind === "synced"
   ).length;
   const newCount = allEntries.filter((e) => e.kind === "added").length;
+  // Every entry in the feed, not a time-windowed figure. The label used to say
+  // "this week" while counting all of them, which read as a busy week when the
+  // newest entry was months old.
   const totalCount = allEntries.length;
 
   const _lastUpdated = changelog.updatedAt ? formatLastUpdated(changelog.updatedAt) : null;
 
   return (
     <PageShell className="cg-changelog">
-      <PageHeader title="Changelog" subtitle="Synced from authoritative sources daily" />
+      <PageHeader title="Changelog" subtitle="Recent changes to CommonGrid data" />
 
       {/* Stats band */}
       <KpiGroup cols={{ base: 3 }} gap="md" className="cl-stats-kpi">
         <Kpi label="Updated" value={updatedCount} size="lg" />
         <Kpi label="Newly added" value={newCount} size="lg" />
-        <Kpi label="Total changes this week" value={totalCount} size="lg" />
+        <Kpi label="Total changes" value={totalCount} size="lg" />
       </KpiGroup>
 
       {/* Feed */}

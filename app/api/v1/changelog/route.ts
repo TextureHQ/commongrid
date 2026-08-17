@@ -14,6 +14,20 @@ import type { ChangelogEntry } from "@/types/changelog";
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** One row of the unioned feed: either a collapsed batch or a lone version. */
+interface FeedRow {
+  row_kind: "batch" | "version";
+  key: string;
+  name: string;
+  source_type: string | null;
+  item_count: number | string;
+  ts: string | Date;
+  entity_type: string | null;
+  slug: string | null;
+  summary: string | null;
+  change_type: string | null;
+}
+
 /** Map entity_versions.changeType → ChangelogEntry.kind */
 function mapChangeType(changeType: string): "updated" | "added" {
   return changeType === "create" ? "added" : "updated";
@@ -91,41 +105,93 @@ async function handleGet(req: Request, _ctx: RouteContext) {
   const db = getDb();
   if (db) {
     try {
-      // Baselines are excluded. The backfill wrote one per entity — 166k rows
-      // sharing a timestamp — recording the state each entity was already in.
-      // They are what makes history reconstructable, not events anyone changed
-      // anything, and unfiltered they bury every real edit.
-      const conditions = [ne(entityVersions.changeType, "baseline")];
-      if (entityType) conditions.push(eq(entityVersions.entityType, entityType));
-      if (since) conditions.push(gte(entityVersions.changedAt, new Date(since)));
+      // The feed is a union of two things: one row per change_batch, and one
+      // row per version that belongs to no batch.
+      //
+      // Batches exist because a single operation can write thousands of
+      // versions. A monthly EIA sync produces one entry reading
+      // "EIA-861 sync · 12,431 records" instead of 12,431 rows that bury every
+      // community edit made that month. The backfill already proved the failure
+      // mode: 166k baseline rows flooded this feed.
+      //
+      // Baselines stay excluded on both sides. They record the state an entity
+      // was already in — what makes history reconstructable, not an event where
+      // anyone changed anything.
+      const typeFilter = entityType ? sql`and v.entity_type = ${entityType}` : sql``;
+      const sinceFilter = since ? sql`and v.changed_at >= ${new Date(since)}` : sql``;
+      const batchSinceFilter = since ? sql`and b.started_at >= ${new Date(since)}` : sql``;
 
-      const where = and(...conditions);
+      const feed = sql`
+        with feed as (
+          select
+            'batch'                  as row_kind,
+            b.id                     as key,
+            b.title                  as name,
+            b.source_type            as source_type,
+            -- Counted live rather than read from b.version_count. That column is
+            -- maintained by writers and drifts if a batch is interrupted, and a
+            -- feed that misreports how many records an operation touched is
+            -- worse than a slower one. idx_ev_batch is partial on batch_id and
+            -- exists for exactly this lookup.
+            (select count(*) from entity_versions v
+              where v.batch_id = b.id and v.change_type <> 'baseline') as item_count,
+            b.started_at             as ts,
+            (select v.entity_type from entity_versions v
+              where v.batch_id = b.id ${typeFilter}
+              group by v.entity_type order by count(*) desc limit 1) as entity_type,
+            null::text               as slug,
+            null::text               as summary,
+            null::text               as change_type
+          from change_batches b
+          where exists (
+            select 1 from entity_versions v
+            where v.batch_id = b.id and v.change_type <> 'baseline' ${typeFilter}
+          ) ${batchSinceFilter}
+          union all
+          select
+            'version', v.id::text, coalesce(v.entity_name, v.entity_type || ' ' || v.entity_id),
+            v.source_type, 1, v.changed_at, v.entity_type,
+            coalesce(v.entity_slug, v.entity_id), v.change_summary, v.change_type
+          from entity_versions v
+          where v.batch_id is null and v.change_type <> 'baseline' ${typeFilter} ${sinceFilter}
+        )
+        select * from feed order by ts desc limit ${limit} offset ${offset}
+      `;
 
-      const countResult = await db.select({ count: sql<number>`count(*)` }).from(entityVersions).where(where);
+      const countQuery = sql`
+        select
+          (select count(*) from change_batches b where exists (
+            select 1 from entity_versions v
+            where v.batch_id = b.id and v.change_type <> 'baseline' ${typeFilter}
+          ) ${batchSinceFilter})
+          +
+          (select count(*) from entity_versions v
+            where v.batch_id is null and v.change_type <> 'baseline' ${typeFilter} ${sinceFilter})
+          as count
+      `;
 
-      const total = Number(countResult[0]?.count ?? 0);
+      const countResult = await db.execute(countQuery);
+      const total = Number((countResult.rows[0] as { count: string | number })?.count ?? 0);
 
       if (total > 0) {
-        const rows = await db
-          .select()
-          .from(entityVersions)
-          .where(where)
-          .orderBy(desc(entityVersions.changedAt))
-          .limit(limit)
-          .offset(offset);
+        const { rows } = await db.execute(feed);
 
-        const entries: ChangelogEntry[] = rows.map((row) => ({
-          kind: mapChangeType(row.changeType),
-          entityType: row.entityType as ChangelogEntry["entityType"],
-          entityTypeLabel: entityTypeLabel(row.entityType),
-          // entity_name/entity_slug exist precisely so a feed row can name its
-          // subject without joining across eleven entity tables. Falling back to
-          // changeSummary put "Updated 1 fields: ..." in the name column.
-          name: row.entityName ?? row.changeSummary ?? `${row.entityType} ${row.entityId}`,
-          slug: row.entitySlug ?? row.entityId,
-          detail: row.changeSummary ?? `Version ${row.versionNumber}`,
-          isoTimestamp: (row.changedAt ?? new Date()).toISOString(),
-        }));
+        const entries: ChangelogEntry[] = (rows as unknown as FeedRow[]).map((row) => {
+          const isBatch = row.row_kind === "batch";
+          const type = row.entity_type ?? "utility";
+          return {
+            // 'synced' already exists on ChangelogOperation and is what a
+            // machine-run batch is; community batches read as 'updated'.
+            kind: isBatch && row.source_type === "sync" ? "synced" : mapChangeType(row.change_type ?? "update"),
+            entityType: type as ChangelogEntry["entityType"],
+            entityTypeLabel: entityTypeLabel(type),
+            name: row.name,
+            slug: row.slug ?? row.key,
+            detail: isBatch ? `${Number(row.item_count).toLocaleString()} records` : (row.summary ?? "Updated"),
+            isoTimestamp: new Date(row.ts).toISOString(),
+            ...(row.source_type ? { source: row.source_type } : {}),
+          };
+        });
 
         return jsonResponse({ entries, total, hasMore: offset + limit < total, source: "database" }, 200, {
           ...cors,
