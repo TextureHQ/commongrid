@@ -314,6 +314,34 @@ describe("applyContribution", () => {
     expect(new Set(versionNumbers).size).toBe(versionNumbers.length);
   });
 
+  it("excludes PostGIS columns given snake_case keys too", async () => {
+    // The exclusion list was built from Drizzle property names only, so a row
+    // keyed by SQL column name — what to_jsonb() returns — slipped multi-word
+    // geometry columns through while single-word ones matched by coincidence.
+    // The backfill hit exactly this and shipped 29 MB of leaked geometry.
+    const { tx, recorded } = makeTx({
+      entity: {
+        id: "territory-1",
+        version: 1,
+        source: "Some Source",
+        geography: "0106000020E6100000...",
+        simplified_1km: "0106000020E6100000...",
+      },
+      hasVersionHistory: false,
+    });
+
+    await applyContribution(
+      tx,
+      contribution({ entityType: "territory", entityVersion: 1, changes: { source: { old: "a", new: "b" } } }),
+      { ...opts, changeType: "update" }
+    );
+
+    const snapshot = recorded.versionInserts.find((v) => v.versionNumber === 1)?.snapshot as Record<string, unknown>;
+    expect(snapshot).toHaveProperty("source");
+    expect(snapshot).not.toHaveProperty("geography");
+    expect(snapshot).not.toHaveProperty("simplified_1km");
+  });
+
   it("excludes PostGIS columns from snapshots", async () => {
     // entity_versions holds ~100-byte deltas; a single territories.geography is
     // megabytes. Spatial history belongs in entity_geometry_versions.

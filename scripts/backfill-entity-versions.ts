@@ -18,7 +18,7 @@
  *   npm run db:backfill:versions -- --apply --only utility
  */
 
-import { sql } from "drizzle-orm";
+import { and, asc, eq, gt, isNull, notExists, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
 import { changeBatches, entityVersions } from "@/lib/db/schema";
@@ -49,26 +49,22 @@ const TYPES: Array<{ entityType: string; table: string }> = [
 ];
 
 /**
- * Which column holds the human label, in preference order. The tables disagree:
- * most use `name`, ev_stations uses `station_name`, and territories and
- * transmission_lines have none at all. Resolved per table at runtime rather
- * than hardcoded — a hardcoded list is what hid ev_stations' shape, and it is
- * the largest type by half.
+ * Human label, whichever property the table happens to use. Most have `name`,
+ * ev_stations has `stationName`, and territories and transmission_lines have
+ * none. Read off the row rather than resolved from information_schema, so it
+ * cannot disagree with the Drizzle definition.
  */
-const NAME_COLUMNS = ["name", "station_name", "title"];
-
-async function resolveLabelColumns(db: Db, table: string): Promise<{ name: string | null; slug: string | null }> {
-  const { rows } = await db.execute(sql`
-    select column_name from information_schema.columns where table_name = ${table}
-  `);
-  const present = new Set(rows.map((r) => (r as { column_name: string }).column_name));
+function labelOf(row: Record<string, unknown>): { name: string | null; slug: string | null } {
+  const name = row.name ?? row.stationName ?? row.title ?? null;
   return {
-    name: NAME_COLUMNS.find((c) => present.has(c)) ?? null,
-    slug: present.has("slug") ? "slug" : null,
+    name: typeof name === "string" ? name : null,
+    slug: typeof row.slug === "string" ? row.slug : null,
   };
 }
 
 type Db = ReturnType<typeof drizzle>;
+// biome-ignore lint/suspicious/noExplicitAny: Drizzle table types vary per table.
+type AnyTable = any;
 
 /**
  * Drizzle silently drops keys that do not match a column, so running this
@@ -99,38 +95,41 @@ async function assertSchemaReady(db: Db): Promise<void> {
   }
 }
 
-/** Entities with no version row yet, paged by primary key. */
-async function* pendingRows(
-  db: Db,
-  entityType: string,
-  table: string,
-  labels: { name: string | null; slug: string | null }
-) {
+/**
+ * Entities with no version row yet, paged by primary key.
+ *
+ * Selected through Drizzle rather than `to_jsonb(e)` so keys arrive camelCase,
+ * exactly as the write path produces them. `to_jsonb` returns snake_case column
+ * names, which silently defeated the geometry exclusion in
+ * `toVersionableSnapshot` — it matches on Drizzle property names, so
+ * single-word columns matched by luck while `simplified_1km` and
+ * `search_vector` leaked into the snapshot — and left backfilled snapshots
+ * keyed differently from live-written ones, which breaks delta reconstruction.
+ */
+async function* pendingRows(db: Db, entityType: string, table: AnyTable) {
   let after = "";
   for (;;) {
-    const nameCol = sql.raw(labels.name ? `e.${labels.name}` : "null");
-    const slugCol = sql.raw(labels.slug ? `e.${labels.slug}` : "null");
-    const { rows } = await db.execute(sql`
-      select e.id, e.version, ${nameCol} as entity_name, ${slugCol} as entity_slug, to_jsonb(e) as full_row
-      from ${sql.raw(table)} e
-      where e.deleted_at is null
-        and e.id > ${after}
-        and not exists (
-          select 1 from entity_versions v
-          where v.entity_type = ${entityType} and v.entity_id = e.id
+    const rows: Array<Record<string, unknown>> = await db
+      .select()
+      .from(table)
+      .where(
+        and(
+          isNull(table.deletedAt),
+          gt(table.id, after),
+          notExists(
+            db
+              .select({ one: sql`1` })
+              .from(entityVersions)
+              .where(and(eq(entityVersions.entityType, entityType), eq(entityVersions.entityId, table.id)))
+          )
         )
-      order by e.id
-      limit ${BATCH_SIZE}
-    `);
+      )
+      .orderBy(asc(table.id))
+      .limit(BATCH_SIZE);
+
     if (rows.length === 0) return;
-    yield rows as Array<{
-      id: string;
-      version: number;
-      entity_name: string | null;
-      entity_slug: string | null;
-      full_row: Record<string, unknown>;
-    }>;
-    after = (rows[rows.length - 1] as { id: string }).id;
+    yield rows;
+    after = rows[rows.length - 1].id as string;
   }
 }
 
@@ -191,32 +190,35 @@ async function main() {
         continue;
       }
 
-      const labels = await resolveLabelColumns(db, target.table);
-      if (!labels.name) {
-        console.log(`  ${target.entityType.padEnd(20)} (no label column — entity_name stays null)`);
-      }
-
       let written = 0;
-      for await (const page of pendingRows(db, target.entityType, target.table, labels)) {
+      let labelWarned = false;
+      for await (const page of pendingRows(db, target.entityType, table)) {
         if (!apply) {
           written += page.length;
           continue;
         }
 
-        const values = page.map((row) => ({
-          entityType: target.entityType,
-          entityId: row.id,
-          // The entity's CURRENT version, not 1. An entity already at v5 has had
-          // five states; calling its present state "version 1" would make every
-          // later reconstruction report the wrong history.
-          versionNumber: row.version ?? 1,
-          snapshot: toVersionableSnapshot(row.full_row, table),
-          changeType: BASELINE_CHANGE_TYPE,
-          sourceType: "backfill",
-          batchId,
-          entityName: row.entity_name,
-          entitySlug: row.entity_slug,
-        }));
+        const values = page.map((row) => {
+          const label = labelOf(row);
+          if (!label.name && !labelWarned) {
+            console.log(`  ${target.entityType.padEnd(20)} (no label property — entity_name stays null)`);
+            labelWarned = true;
+          }
+          return {
+            entityType: target.entityType,
+            entityId: row.id as string,
+            // The entity's CURRENT version, not 1. An entity already at v5 has
+            // had five states; calling its present state "version 1" would make
+            // every later reconstruction report the wrong history.
+            versionNumber: (row.version as number) ?? 1,
+            snapshot: toVersionableSnapshot(row, table),
+            changeType: BASELINE_CHANGE_TYPE,
+            sourceType: "backfill",
+            batchId,
+            entityName: label.name,
+            entitySlug: label.slug,
+          };
+        });
 
         await db.insert(entityVersions).values(values).onConflictDoNothing();
         written += values.length;

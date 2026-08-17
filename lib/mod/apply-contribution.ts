@@ -174,6 +174,12 @@ function geometryColumns(table: AnyTable): Set<string> {
     const sqlType = (column as { getSQLType?: () => string })?.getSQLType?.();
     if (typeof sqlType === "string" && /^(geography|geometry|box2d|box3d)/i.test(sqlType)) {
       names.add(prop);
+      // Also the underlying SQL column name. Callers should pass Drizzle rows
+      // (camelCase), but a snake_case row would otherwise slip multi-word
+      // geometry columns like `simplified_1km` straight through — single-word
+      // ones match either way, so the failure is silent and partial.
+      const sqlName = (column as { name?: string })?.name;
+      if (typeof sqlName === "string") names.add(sqlName);
     }
   }
   return names;
