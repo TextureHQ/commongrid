@@ -115,15 +115,6 @@ export function EditEntityPanel({
   const summaryLongEnough = editSummary.trim().length >= 10;
   const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
 
-  // Help text under the disabled submit button explaining what's missing.
-  const submitBlockedReason = isSubmitting
-    ? null
-    : !hasChanges
-      ? "Change a field to enable submit"
-      : !summaryLongEnough
-        ? `Add an edit summary (${editSummary.trim().length}/25 chars)`
-        : null;
-
   const handleFieldChange = (fieldName: string, value: unknown) => {
     setFormValues((prev) => ({ ...prev, [fieldName]: value }));
   };
