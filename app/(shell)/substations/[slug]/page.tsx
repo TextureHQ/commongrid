@@ -187,21 +187,8 @@ async function SubstationDetailContentWrapper({ params }: Props) {
   return <SubstationDetailContent slug={slug} />;
 }
 
-export async function generateMetadata({ params }: Props) {
-  const { slug } = await params;
-  try {
-    const substation = await loadSubstationBySlug(slug);
-    if (substation) {
-      return {
-        title: `${substation.name} | Substations | CommonGrid`,
-        description: `${substation.name} substation in ${substation.state}. ${substation.voltageBand || "Voltage"} class, operated by ${substation.ownerName || "Unknown operator"}.`,
-      };
-    }
-  } catch {
-    // Fall back to default
-  }
-
-  return {
-    title: "Substation | CommonGrid",
-  };
-}
+// Metadata for this route lives in the sibling `layout.tsx`, which uses
+// `buildMetadata`/`PAGE_TITLES` from `@/lib/metadata`. The brand suffix comes
+// only from the root layout's `title.template` ("%s - CommonGrid"), so nothing
+// here may hardcode it (CIR-1291). A `generateMetadata` export in this file
+// would take precedence over the layout and reintroduce a double suffix.
