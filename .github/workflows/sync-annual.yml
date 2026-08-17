@@ -5,6 +5,15 @@ on:
     - cron: '0 12 1 10 *' # Oct 1 at noon UTC (after EIA-860 typically releases in Sept)
   workflow_dispatch: {} # Manual trigger
 
+# Data syncs commit to the same branch. Without serialisation two
+# overlapping runs race on `git push` and the loser dies with
+# non-fast-forward (CIR-1271). sync-annual and sync-pricing-nodes are
+# both scheduled for Oct 1 12:00 UTC, so this is a real collision, not
+# just a manual-dispatch artefact.
+concurrency:
+  group: data-sync-commit
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -22,11 +31,25 @@ jobs:
           sudo apt-get install -y -qq libsqlite3-dev zlib1g-dev
           git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
           cd /tmp/tippecanoe && make -j$(nproc) && sudo make install
+      - name: Check tile build prerequisites
+        # Surfaces optional-but-missing inputs in the log instead of letting a
+        # layer vanish from the published tiles unnoticed (CIR-1271).
+        run: |
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "::warning title=Substation tiles skipped::DATABASE_URL secret is not configured; substation tiles will not be rebuilt by this run."
+          else
+            echo "DATABASE_URL present — substation layer will be rebuilt."
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: Rebuild tiles
         env:
-          # Required by prepare-substations-geojson.mjs, which reads substation
-          # geometry from Neon. Without it build-tiles.sh exits 1 and the whole
-          # sync job fails *after* regenerating the other layers (CIR-1271).
+          # Used by prepare-substations-geojson.mjs, which reads substation
+          # geometry from Neon. It is optional: when absent the substation layer
+          # is skipped with a warning and the other layers still publish. The
+          # secret is NOT currently configured on this repo, so substation tiles
+          # are never refreshed by these syncs — see the warning emitted by the
+          # "Check tile build prerequisites" step above (CIR-1271).
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: bash scripts/build-tiles.sh
       - name: Commit & push if changed
@@ -34,4 +57,20 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/power-plants.json public/tiles/*.pmtiles
-          git diff --staged --quiet || (git commit -m "data: update power plants (EIA-860 annual)" && git push)
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "data: update power plants (EIA-860 annual)"
+          # Retry around concurrent pushes to the same branch: rebase onto
+          # whatever landed while this job was building tiles, then push again.
+          for attempt in 1 2 3; do
+            if git push; then
+              echo "Pushed on attempt $attempt."
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt) — rebasing on origin/$GITHUB_REF_NAME."
+            git pull --rebase --autostash origin "$GITHUB_REF_NAME"
+          done
+          echo "::error title=Sync push failed::Could not push after 3 rebase attempts."
+          exit 1

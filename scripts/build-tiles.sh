@@ -151,26 +151,33 @@ rm -f "$ROOT_DIR/.tmp-territories.geojson" \
 
 echo ""
 echo "=== Results ==="
-pmtiles show "$OUT_DIR/territories.pmtiles"
-echo ""
-pmtiles show "$OUT_DIR/power-plants.pmtiles"
-echo ""
-if [ -f "$OUT_DIR/transmission-lines.pmtiles" ]; then
-  pmtiles show "$OUT_DIR/transmission-lines.pmtiles"
+
+# Required layers. Every workflow that runs this script commits these, so a
+# missing archive here means the build silently produced nothing publishable.
+for required in territories power-plants; do
+  if [ ! -s "$OUT_DIR/$required.pmtiles" ]; then
+    echo "❌ Expected tile archive $OUT_DIR/$required.pmtiles is missing or empty." >&2
+    exit 1
+  fi
+done
+
+# `pmtiles show` is diagnostic output only. The CLI is a separate binary from
+# tippecanoe and most sync workflows never install it, so a bare call here used
+# to abort the whole job with exit 127 *after* every tile had been built
+# successfully — discarding the fresh tiles and turning the run red (CIR-1271).
+# Summarise when the CLI exists, and fall back to a plain listing when it does not.
+if command -v pmtiles >/dev/null 2>&1; then
+  for layer in territories power-plants transmission-lines ev-charging pricing-nodes substations; do
+    if [ -f "$OUT_DIR/$layer.pmtiles" ]; then
+      pmtiles show "$OUT_DIR/$layer.pmtiles" || echo "⚠️  pmtiles show failed for $layer — continuing."
+      echo ""
+    fi
+  done
+else
+  echo "ℹ️  pmtiles CLI not installed — skipping per-archive summaries."
   echo ""
 fi
-if [ -f "$OUT_DIR/ev-charging.pmtiles" ]; then
-  pmtiles show "$OUT_DIR/ev-charging.pmtiles"
-  echo ""
-fi
-if [ -f "$OUT_DIR/pricing-nodes.pmtiles" ]; then
-  pmtiles show "$OUT_DIR/pricing-nodes.pmtiles"
-  echo ""
-fi
-if [ -f "$OUT_DIR/substations.pmtiles" ]; then
-  pmtiles show "$OUT_DIR/substations.pmtiles"
-  echo ""
-fi
+
 ls -lh "$OUT_DIR"/*.pmtiles
 echo ""
 echo "✅ Tile generation complete!"
