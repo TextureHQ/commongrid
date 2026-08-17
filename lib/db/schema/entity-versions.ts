@@ -69,7 +69,8 @@ export const entityVersions = pgTable(
     index("idx_ev_changed_at").on(table.changedAt),
     index("idx_ev_change_type").on(table.changeType),
     index("idx_ev_source_type").on(table.sourceType),
-    index("idx_ev_batch").on(table.batchId),
+    // Partial index — defined in migration DDL:
+    // CREATE INDEX idx_ev_batch ON entity_versions(batch_id) WHERE batch_id IS NOT NULL;
     // Partial index — defined in migration DDL:
     // CREATE INDEX idx_ev_contribution ON entity_versions(contribution_id)
     //   WHERE contribution_id IS NOT NULL;

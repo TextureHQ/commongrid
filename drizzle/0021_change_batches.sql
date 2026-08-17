@@ -36,4 +36,7 @@ BEGIN
   END IF;
 END $$;
 
-CREATE INDEX IF NOT EXISTS idx_ev_batch ON entity_versions (batch_id);
+-- Partial: batch_id is NULL for every row written before batching, and stays
+-- NULL for any version not part of a grouped operation. Indexing those adds
+-- nothing a query would use.
+CREATE INDEX IF NOT EXISTS idx_ev_batch ON entity_versions (batch_id) WHERE batch_id IS NOT NULL;

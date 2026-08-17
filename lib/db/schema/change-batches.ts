@@ -16,7 +16,13 @@ export const changeBatches = pgTable(
   {
     id: text("id").primaryKey().default(sql`gen_random_uuid()`),
 
-    /** 'sync' | 'community' | 'admin' | 'backfill' — mirrors entity_versions.source_type */
+    /**
+     * 'sync' | 'community' | 'admin' | 'backfill'
+     *
+     * Overlaps entity_versions.source_type without matching it. 'backfill' is a
+     * batch that has no per-version meaning; 'merge' and 'community_override'
+     * describe how one version was resolved and have no batch equivalent.
+     */
     sourceType: text("source_type").notNull(),
 
     /** Shown in the changelog, e.g. "EIA-861 monthly sync" */
