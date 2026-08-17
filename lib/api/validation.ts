@@ -45,11 +45,7 @@ export function parseEnumFilterParam(raw: string | null, allowed: readonly strin
  * Parse an optional single-value enum query param. Unknown values → 400
  * (`VALIDATION_ERROR`). Absent / blank → `null`.
  */
-export function parseOptionalEnumParam(
-  raw: string | null,
-  allowed: readonly string[],
-  field: string
-): string | null {
+export function parseOptionalEnumParam(raw: string | null, allowed: readonly string[], field: string): string | null {
   if (raw === null || raw.trim() === "") return null;
   const value = raw.trim();
   if (!allowed.includes(value)) {

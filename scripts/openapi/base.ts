@@ -132,7 +132,7 @@ export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
           },
           details: {
             description:
-              "Optional structured context (e.g. `{ \"slug\": \"…\" }` on geometry 404s, or validation field errors).",
+              'Optional structured context (e.g. `{ "slug": "…" }` on geometry 404s, or validation field errors).',
             nullable: true,
           },
         },
