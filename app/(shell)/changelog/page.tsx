@@ -1,10 +1,10 @@
 "use client";
 
 import { Badge, Kpi, KpiGroup } from "@texturehq/edges";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageHeader, PageShell } from "@/components/ui/layout";
 import { getChangelog } from "@/lib/data";
-import type { ChangelogEntry, ChangelogOperation } from "@/types/changelog";
+import type { Changelog, ChangelogEntry, ChangelogOperation } from "@/types/changelog";
 import "./changelog.css";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -157,8 +157,39 @@ function DateGroup({ date, entries }: { date: string; entries: ChangelogEntry[] 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ChangelogPage() {
-  const changelog = getChangelog();
+  // Seeded from data/changelog.json so the first paint has content, then
+  // replaced by the live feed. The API already resolves "database, else
+  // static", so this inherits the fallback rather than duplicating it — and a
+  // failed fetch simply leaves the seed data in place.
+  const [changelog, setChangelog] = useState<Changelog>(() => getChangelog());
   const [visibleGroups, setVisibleGroups] = useState(INITIAL_GROUPS);
+
+  useEffect(() => {
+    let cancelled = false;
+    // no-store because the endpoint advertises stale-while-revalidate=300 for
+    // shared caches. That is right for API consumers and wrong here: a
+    // contribution approved a minute ago should show on the changelog now, not
+    // in five minutes.
+    fetch("/api/v1/changelog?limit=200", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (cancelled || !json?.entries) return;
+        // The API returns one flat, already-sorted list; the page splits by
+        // kind only to compute the two counters.
+        const entries = json.entries as ChangelogEntry[];
+        setChangelog({
+          updatedAt: new Date().toISOString(),
+          recentlyUpdated: entries.filter((e) => e.kind !== "added"),
+          newlyAdded: entries.filter((e) => e.kind === "added"),
+        });
+      })
+      .catch(() => {
+        /* keep the seed data */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Merge and sort all entries newest-first
   const allEntries = [...changelog.recentlyUpdated, ...changelog.newlyAdded].sort(
