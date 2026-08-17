@@ -7,6 +7,15 @@
  * - create: `moderator` or `admin`
  * - delete: `admin` only (destructive)
  *
+ * The field-criticality condition applies to `update` only, and deliberately so.
+ * Criticality marks fields that are risky to *change* on an entity the registry
+ * already publishes — renaming a utility, flipping a program's status. On a
+ * create there is no prior value to protect, and the same fields are mandatory:
+ * every new program necessarily sets `name` and `status`, both of which are
+ * marked critical. Applying the condition to creates therefore rejected every
+ * one of them regardless of role, so `create: moderator or admin` above could
+ * never actually be satisfied.
+ *
  * An eligible contribution is APPLIED here, through the same
  * `applyContribution` path a moderator approval uses. This previously only set
  * `status = 'auto_approved'` and incremented the contributor's stats without
@@ -42,8 +51,11 @@ export interface AutoApproveResult {
 /**
  * Decide whether a contribution qualifies for auto-approval on role and field
  * criticality alone. Pure read — no writes.
+ *
+ * Exported for tests: this gating matrix is security-relevant and worth pinning
+ * directly, without standing up the transactional apply path around it.
  */
-async function checkEligibility(
+export async function checkEligibility(
   user: UserSelect,
   entityType: string,
   changes: Record<string, unknown>,
@@ -66,24 +78,29 @@ async function checkEligibility(
     return { eligible: false, reason: "No fields in changes" };
   }
 
-  const db = getDb();
-  const fieldMeta = await db
-    .select()
-    .from(communityEditableFields)
-    .where(eq(communityEditableFields.entityType, entityType));
+  // Creates and deletes are gated on role only (above). Updates must also
+  // avoid critical or unknown fields so that trusted contributors cannot
+  // quietly modify high-stakes data or fields the system does not recognize.
+  if (changeType === "update") {
+    const db = getDb();
+    const fieldMeta = await db
+      .select()
+      .from(communityEditableFields)
+      .where(eq(communityEditableFields.entityType, entityType));
 
-  const criticalFields = new Set(
-    fieldMeta.filter((f: { isCritical: boolean }) => f.isCritical).map((f: { fieldName: string }) => f.fieldName)
-  );
-  const editableFields = new Set(fieldMeta.map((f: { fieldName: string }) => f.fieldName));
+    const criticalFields = new Set(
+      fieldMeta.filter((f: { isCritical: boolean }) => f.isCritical).map((f: { fieldName: string }) => f.fieldName)
+    );
+    const editableFields = new Set(fieldMeta.map((f: { fieldName: string }) => f.fieldName));
 
-  for (const field of editedFields) {
-    if (criticalFields.has(field)) {
-      return { eligible: false, reason: `Field '${field}' is marked as critical` };
-    }
-    if (!editableFields.has(field)) {
-      // Unknown fields are treated as critical — a moderator must look.
-      return { eligible: false, reason: `Field '${field}' is not in community_editable_fields` };
+    for (const field of editedFields) {
+      if (criticalFields.has(field)) {
+        return { eligible: false, reason: `Field '${field}' is marked as critical` };
+      }
+      if (!editableFields.has(field)) {
+        // Unknown fields are treated as critical — a moderator must look.
+        return { eligible: false, reason: `Field '${field}' is not in community_editable_fields` };
+      }
     }
   }
 
