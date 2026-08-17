@@ -17,7 +17,12 @@ import { isKnownEntityType } from "@/lib/mod/apply-contribution";
 const API_ROOT = join(process.cwd(), "app/api/v1");
 
 /** Every `<segment>/[slug]/versions/route.ts` and the entityType it declares. */
-function findVersionsRoutes(): Array<{ segment: string; entityType: string | null; usesFactory: boolean }> {
+function findVersionsRoutes(): Array<{
+  segment: string;
+  entityType: string | null;
+  cacheTag: string | null;
+  usesFactory: boolean;
+}> {
   return readdirSync(API_ROOT, { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => {
@@ -31,10 +36,11 @@ function findVersionsRoutes(): Array<{ segment: string; entityType: string | nul
       return {
         segment: d.name,
         entityType: source.match(/entityType:\s*"([^"]+)"/)?.[1] ?? null,
+        cacheTag: source.match(/cacheTag:\s*"([^"]+)"/)?.[1] ?? null,
         usesFactory: source.includes("createVersionsRoute"),
       };
     })
-    .filter((r): r is { segment: string; entityType: string; usesFactory: boolean } => r !== null);
+    .filter((r): r is { segment: string; entityType: string; cacheTag: string; usesFactory: boolean } => r !== null);
 }
 
 describe("versions routes", () => {
@@ -51,6 +57,40 @@ describe("versions routes", () => {
 
   it.each(routes)("$segment goes through the shared factory", ({ usesFactory }) => {
     expect(usesFactory).toBe(true);
+  });
+
+  // `scripts/openapi/endpoints.ts` is hand-curated, so `openapi:check` compares
+  // the generated spec against the committed one — both blind to a route nobody
+  // registered. Seven endpoints shipped undocumented with the check passing.
+  it.each(routes)("$segment is documented in the OpenAPI spec", ({ segment }) => {
+    const spec = JSON.parse(readFileSync(join(process.cwd(), "public/openapi.json"), "utf8"));
+    expect(Object.keys(spec.paths)).toContain(`/${segment}/{slug}/versions`);
+  });
+
+  it("documents every field the factory returns on EntityVersion", () => {
+    const spec = JSON.parse(readFileSync(join(process.cwd(), "public/openapi.json"), "utf8"));
+    const documented = Object.keys(spec.components.schemas.EntityVersion.properties);
+    // Mirrors the VersionEntry interface in lib/api/versions-route.ts.
+    for (const field of [
+      "id",
+      "versionNumber",
+      "changeType",
+      "changeSummary",
+      "changedBy",
+      "changedAt",
+      "sourceType",
+      "delta",
+    ]) {
+      expect(documented, `EntityVersion is missing '${field}'`).toContain(field);
+    }
+  });
+
+  // Cache tags are kebab-case repo-wide; entity_type is snake_case. Defaulting
+  // one from the other silently rewrote an existing route's tag, and
+  // POST /api/revalidate accepts any string, so stale purges no-op rather than error.
+  it.each(routes)("$segment uses a kebab-case cache tag", ({ cacheTag }) => {
+    expect(cacheTag).not.toBeNull();
+    expect(cacheTag).not.toMatch(/_/);
   });
 
   it("declares each entity type exactly once", () => {

@@ -230,6 +230,11 @@
             "type": "string",
             "format": "date-time"
           },
+          "sourceType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Origin of this version: sync, community, admin, merge, or community_override"
+          },
           "delta": {
             "type": "object",
             "nullable": true,
@@ -7172,6 +7177,881 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/utilities/{slug}/versions": {
+      "get": {
+        "operationId": "getUtilityVersions",
+        "summary": "Get utility version history",
+        "description": "Returns every version of the utility from the `entity_versions` audit table.",
+        "tags": [
+          "Utilities"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EntityVersion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/power-plants/{slug}/versions": {
+      "get": {
+        "operationId": "getPowerPlantVersions",
+        "summary": "Get power plant version history",
+        "description": "Returns every version of the power plant from the `entity_versions` audit table.",
+        "tags": [
+          "Power Plants"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EntityVersion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ev-stations/{slug}/versions": {
+      "get": {
+        "operationId": "getEvStationVersions",
+        "summary": "Get ev station version history",
+        "description": "Returns every version of the ev station from the `entity_versions` audit table.",
+        "tags": [
+          "EV Stations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EntityVersion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/isos/{slug}/versions": {
+      "get": {
+        "operationId": "getIsoVersions",
+        "summary": "Get iso version history",
+        "description": "Returns every version of the iso from the `entity_versions` audit table.",
+        "tags": [
+          "ISOs"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EntityVersion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rtos/{slug}/versions": {
+      "get": {
+        "operationId": "getRtoVersions",
+        "summary": "Get rto version history",
+        "description": "Returns every version of the rto from the `entity_versions` audit table.",
+        "tags": [
+          "RTOs"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EntityVersion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/balancing-authorities/{slug}/versions": {
+      "get": {
+        "operationId": "getBalancingAuthorityVersions",
+        "summary": "Get balancing authority version history",
+        "description": "Returns every version of the balancing authority from the `entity_versions` audit table.",
+        "tags": [
+          "Balancing Authorities"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EntityVersion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/regions/{slug}/versions": {
+      "get": {
+        "operationId": "getRegionVersions",
+        "summary": "Get region version history",
+        "description": "Returns every version of the region from the `entity_versions` audit table.",
+        "tags": [
+          "Regions"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EntityVersion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }

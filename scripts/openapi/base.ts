@@ -160,6 +160,11 @@ export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
       changeSummary: { type: "string", nullable: true },
       changedBy: { type: "string", nullable: true },
       changedAt: { type: "string", format: "date-time" },
+      sourceType: {
+        type: "string",
+        nullable: true,
+        description: "Origin of this version: sync, community, admin, merge, or community_override",
+      },
       delta: {
         type: "object",
         nullable: true,

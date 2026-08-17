@@ -11,7 +11,7 @@
  * column and are addressed by id, so they need a different resolver.
  */
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { ApiError, corsHeaders, jsonResponse, type RouteContext, withApiMiddleware } from "@/lib/api";
 import { generateRequestId } from "@/lib/api/middleware";
@@ -19,6 +19,9 @@ import { stripInternal } from "@/lib/api/public-response";
 import { getDb } from "@/lib/db/client";
 import { entityVersions } from "@/lib/db/schema";
 import { getEntityTable } from "@/lib/mod/apply-contribution";
+
+/** Statuses whose rows point at a replacement entity. Utilities only today. */
+const REDIRECT_STATUSES = new Set(["MERGED", "ACQUIRED"]);
 
 export interface VersionEntry {
   id: number;
@@ -34,19 +37,22 @@ export interface VersionEntry {
 export interface VersionsRouteConfig {
   /** Discriminator stored in `entity_versions.entity_type`, e.g. "power_plant". */
   entityType: string;
-  /** Human label used in the not-found message, e.g. "Power plant". */
+  /** Human label for the not-found message, e.g. "Power plant". */
   label: string;
-  /** Cache-Tag prefix, conventionally the entity type, e.g. `power_plant:<slug>:versions`. */
-  cacheTag?: string;
+  /**
+   * Cache-Tag prefix. Required, and deliberately not defaulted from
+   * `entityType`: tags are kebab-case repo-wide (`pricing-node`) while
+   * `entityType` is snake_case (`pricing_node`). Defaulting silently changed
+   * the tag on an existing route, and `POST /api/revalidate` accepts any string,
+   * so a stale purge no-ops instead of erroring.
+   */
+  cacheTag: string;
+  /** Route segment, for the canonical Link on superseded entities. */
+  apiSegment: string;
 }
 
-/**
- * Build the GET handler. Returns versions oldest-first, which is the order the
- * delta chain has to be replayed in to reconstruct a given version.
- */
 export function createVersionsRoute(config: VersionsRouteConfig) {
-  const { entityType, label } = config;
-  const cacheTag = config.cacheTag ?? entityType;
+  const { entityType, label, cacheTag, apiSegment } = config;
 
   async function handleGet(_req: Request, ctx: RouteContext) {
     const slug = ctx.params?.slug;
@@ -56,13 +62,19 @@ export function createVersionsRoute(config: VersionsRouteConfig) {
 
     const table = getEntityTable(entityType);
     if (!table) {
-      // Unreachable via the exported routes below, which are all registry
-      // members. Guards against a typo'd entityType silently returning [].
       throw new ApiError("INTERNAL_ERROR", `Unknown entity type '${entityType}'`);
     }
 
     const db = getDb();
-    const [entity] = await db.select({ id: table.id }).from(table).where(eq(table.slug, slug)).limit(1);
+
+    // deleted_at IS NULL to match the detail routes. Without it a soft-deleted
+    // entity 404s on its detail route while still serving history here.
+    const [entity] = await db
+      .select({ id: table.id })
+      .from(table)
+      .where(and(eq(table.slug, slug), isNull(table.deletedAt)))
+      .limit(1);
+
     if (!entity) {
       throw new ApiError("NOT_FOUND", `${label} '${slug}' not found`);
     }
@@ -93,14 +105,39 @@ export function createVersionsRoute(config: VersionsRouteConfig) {
       delta: (row.delta as Record<string, { old: unknown; new: unknown }>) ?? null,
     }));
 
-    // CORS on every one of these: they are public read-only endpoints on an
-    // open-data API. The previous pricing-nodes route sent them and programs
-    // did not, which is the kind of drift a shared factory exists to stop.
-    return jsonResponse({ data: stripInternal(versions) }, 200, {
+    const headers: Record<string, string> = {
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
       "Cache-Tag": `${cacheTag}:${slug}:versions`,
       ...corsHeaders(),
-    });
+    };
+
+    // Superseded entities return their OWN history, not the successor's, and
+    // advertise the successor via Link. The detail route follows the successor
+    // because callers want current facts; history is the opposite — replaying
+    // the successor's versions under this slug would attribute another entity's
+    // edits to this one, which for an audit surface is worse than a redirect.
+    // Second lookup rather than widening the select above: only `utilities`
+    // carries these columns, so eight of the nine routes never run it.
+    if (table.successorId && table.status) {
+      const [meta] = await db
+        .select({ status: table.status, successorId: table.successorId })
+        .from(table)
+        .where(eq(table.id, entity.id))
+        .limit(1);
+
+      if (meta?.successorId && REDIRECT_STATUSES.has(meta.status)) {
+        const [successor] = await db
+          .select({ slug: table.slug })
+          .from(table)
+          .where(eq(table.id, meta.successorId))
+          .limit(1);
+        if (successor?.slug) {
+          headers.Link = `</api/v1/${apiSegment}/${successor.slug}/versions>; rel="successor"`;
+        }
+      }
+    }
+
+    return jsonResponse({ data: stripInternal(versions) }, 200, headers);
   }
 
   const handler = withApiMiddleware(handleGet);

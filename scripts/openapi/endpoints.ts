@@ -904,6 +904,154 @@ export const ENDPOINTS: EndpointDef[] = [
     has404: false,
   },
 
+  {
+    path: "/utilities/{slug}/versions",
+    method: "get",
+    operationId: "getUtilityVersions",
+    summary: "Get utility version history",
+    description: "Returns every version of the utility from the `entity_versions` audit table.",
+    tag: "Utilities",
+    parameters: [SLUG_REF],
+    response: {
+      kind: "raw",
+      schema: {
+        type: "object",
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/EntityVersion" },
+          },
+        },
+      },
+    },
+  },
+  {
+    path: "/power-plants/{slug}/versions",
+    method: "get",
+    operationId: "getPowerPlantVersions",
+    summary: "Get power plant version history",
+    description: "Returns every version of the power plant from the `entity_versions` audit table.",
+    tag: "Power Plants",
+    parameters: [SLUG_REF],
+    response: {
+      kind: "raw",
+      schema: {
+        type: "object",
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/EntityVersion" },
+          },
+        },
+      },
+    },
+  },
+  {
+    path: "/ev-stations/{slug}/versions",
+    method: "get",
+    operationId: "getEvStationVersions",
+    summary: "Get ev station version history",
+    description: "Returns every version of the ev station from the `entity_versions` audit table.",
+    tag: "EV Stations",
+    parameters: [SLUG_REF],
+    response: {
+      kind: "raw",
+      schema: {
+        type: "object",
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/EntityVersion" },
+          },
+        },
+      },
+    },
+  },
+  {
+    path: "/isos/{slug}/versions",
+    method: "get",
+    operationId: "getIsoVersions",
+    summary: "Get iso version history",
+    description: "Returns every version of the iso from the `entity_versions` audit table.",
+    tag: "ISOs",
+    parameters: [SLUG_REF],
+    response: {
+      kind: "raw",
+      schema: {
+        type: "object",
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/EntityVersion" },
+          },
+        },
+      },
+    },
+  },
+  {
+    path: "/rtos/{slug}/versions",
+    method: "get",
+    operationId: "getRtoVersions",
+    summary: "Get rto version history",
+    description: "Returns every version of the rto from the `entity_versions` audit table.",
+    tag: "RTOs",
+    parameters: [SLUG_REF],
+    response: {
+      kind: "raw",
+      schema: {
+        type: "object",
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/EntityVersion" },
+          },
+        },
+      },
+    },
+  },
+  {
+    path: "/balancing-authorities/{slug}/versions",
+    method: "get",
+    operationId: "getBalancingAuthorityVersions",
+    summary: "Get balancing authority version history",
+    description: "Returns every version of the balancing authority from the `entity_versions` audit table.",
+    tag: "Balancing Authorities",
+    parameters: [SLUG_REF],
+    response: {
+      kind: "raw",
+      schema: {
+        type: "object",
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/EntityVersion" },
+          },
+        },
+      },
+    },
+  },
+  {
+    path: "/regions/{slug}/versions",
+    method: "get",
+    operationId: "getRegionVersions",
+    summary: "Get region version history",
+    description: "Returns every version of the region from the `entity_versions` audit table.",
+    tag: "Regions",
+    parameters: [SLUG_REF],
+    response: {
+      kind: "raw",
+      schema: {
+        type: "object",
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/EntityVersion" },
+          },
+        },
+      },
+    },
+  },
+
   // -----------------------
   // Changelog
   // -----------------------
