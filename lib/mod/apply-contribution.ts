@@ -186,7 +186,7 @@ function geometryColumns(table: AnyTable): Set<string> {
  * territories.geography is megabytes. Spatial history belongs in
  * entity_geometry_versions, which stores it as PostGIS rather than JSONB.
  */
-function toVersionableSnapshot(entity: Record<string, unknown>, table: AnyTable): Record<string, unknown> {
+export function toVersionableSnapshot(entity: Record<string, unknown>, table: AnyTable): Record<string, unknown> {
   const excluded = geometryColumns(table);
   excluded.add("searchVector");
 

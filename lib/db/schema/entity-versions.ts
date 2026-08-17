@@ -32,7 +32,9 @@ export const entityVersions = pgTable(
 
     changedBy: text("changed_by"), // who made this change
     changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
-    changeType: text("change_type").notNull(), // 'create', 'update', 'delete'
+    // 'create' | 'update' | 'delete' | 'baseline' — baseline records the state
+    // an already-existing entity was in when history started being kept.
+    changeType: text("change_type").notNull(),
     changeSummary: text("change_summary"), // human-readable summary
 
     // Enhanced provenance (ERD §4.2)

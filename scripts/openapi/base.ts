@@ -156,7 +156,7 @@ export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
     properties: {
       id: { type: "integer" },
       versionNumber: { type: "integer" },
-      changeType: { type: "string", description: "One of: create, update, delete" },
+      changeType: { type: "string", description: "One of: create, update, delete, baseline" },
       changeSummary: { type: "string", nullable: true },
       changedBy: { type: "string", nullable: true },
       changedAt: { type: "string", format: "date-time" },

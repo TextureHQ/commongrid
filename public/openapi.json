@@ -216,7 +216,7 @@
           },
           "changeType": {
             "type": "string",
-            "description": "One of: create, update, delete"
+            "description": "One of: create, update, delete, baseline"
           },
           "changeSummary": {
             "type": "string",
