@@ -120,6 +120,13 @@
       "when": 1786650000000,
       "tag": "0020_territories_version",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1786650600000,
+      "tag": "0021_change_batches",
+      "breakpoints": true
     }
   ]
 }

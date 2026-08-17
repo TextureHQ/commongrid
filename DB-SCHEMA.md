@@ -521,6 +521,7 @@ dashboards and the public REST API surface only a subset of them.
 | `contributions` | Community-submitted changes to any entity. State machine: `pending → approved / returned / appealed`. |
 | `contribution_appeals` | Structured appeals for returned contributions. |
 | `changesets` | Moderator/admin-initiated batch changes that group contributions or scripted edits. |
+| `change_batches` | Groups the `entity_versions` rows written by one operation (a sync run, a backfill), so the changelog renders one entry instead of thousands. Distinct from `changesets`, which groups contributions through review; a sync has no contributions to group. |
 | `community_editable_fields` | Whitelist of which fields are safe for community editing per entity type. |
 | `moderation_actions` | Audit trail of every moderator decision. |
 | `moderation_response_templates` | Reusable rationale templates for moderators. |
@@ -537,7 +538,12 @@ dashboards and the public REST API surface only a subset of them.
 - `api_keys`: `key_hash` (SHA-256 hex), `key_prefix` (first 8 chars of plaintext for display), `scopes`
   (`text[]` — e.g., `['utilities:read', '*:read', '*:*']`), `tier` (`registered` or `bulk`),
   `rotation_group` (used for zero-downtime rotation).
-- `entity_versions`: `entity_type`, `entity_id`, `version`, `diff jsonb`, `actor_id`, `created_at`.
+- `entity_versions`: `entity_type`, `entity_id`, `version_number`, `snapshot jsonb` (v1 only),
+  `delta jsonb` (v2+), `change_type`, `source_type`, `changed_by`, `changed_at`, `contribution_id`,
+  `batch_id` (FK to `change_batches`, `ON DELETE SET NULL`), and `entity_name` / `entity_slug`
+  denormalized so a changelog entry renders without joining across twelve entity tables.
+- `change_batches`: `source_type`, `title`, `description`, `initiated_by`, `version_count`,
+  `started_at`, `completed_at`.
 
 ---
 
