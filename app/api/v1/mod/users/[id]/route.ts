@@ -24,7 +24,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Get the current user to check if they're an admin
     const [currentUser] = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId)).limit(1);
 
-    if (!currentUser || currentUser.role !== "admin") {
+    if (currentUser?.role !== "admin") {
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 

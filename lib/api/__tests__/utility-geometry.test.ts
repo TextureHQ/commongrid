@@ -10,7 +10,8 @@
  * #agent-ops with Atlas / Talos / Lyra:
  *
  *   1. New `/api/v1/utilities/{slug}/geometry`:
- *        - 404 `{ error: "utility_not_found", slug }` for unknown slugs
+ *        - 404 standard envelope `{ error: { code: "NOT_FOUND", …, details: { slug } } }`
+ *          for unknown slugs
  *        - 200 FeatureCollection with `metadata.geometry_status: "pending_backfill"`
  *          + empty `features` for utilities whose polygon is not loaded yet
  *          (the 71 SERVICE_TERRITORY regions, including VEC as of 2026-05-08)
@@ -93,7 +94,7 @@ describe("GET /api/v1/utilities/[slug]/geometry", () => {
     vi.clearAllMocks();
   });
 
-  it("returns flat 404 { error: 'utility_not_found', slug } when the slug is unknown", async () => {
+  it("returns standard 404 envelope with NOT_FOUND and details.slug when the slug is unknown", async () => {
     execute.mockResolvedValue({
       rows: [
         {
@@ -122,8 +123,15 @@ describe("GET /api/v1/utilities/[slug]/geometry", () => {
     );
 
     expect(res.status).toBe(404);
+    expect(res.headers.get("Cache-Control")).toBe("public, max-age=60");
+    expect(res.headers.get("X-Request-Id")).toBeTruthy();
+
     const body = await res.json();
-    expect(body).toEqual({ error: "utility_not_found", slug: "does-not-exist" });
+    expect(body.error.code).toBe("NOT_FOUND");
+    expect(body.error.message).toBe("Utility 'does-not-exist' not found");
+    expect(body.error.request_id).toBeTruthy();
+    expect(body.error.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(body.error.details).toEqual({ slug: "does-not-exist" });
   });
 
   it("returns 200 + empty features + geometry_status='pending_backfill' when utility exists but region is missing", async () => {

@@ -77,32 +77,50 @@ export function decodeCursor(cursor: string): CursorV1 {
 // Query-param convenience parser
 // ---------------------------------------------------------------------------
 
+export const SORT_ORDERS = ["asc", "desc"] as const;
+export type SortOrder = (typeof SORT_ORDERS)[number];
+
 export interface PaginationParams {
   cursor: CursorV1 | null;
   limit: number;
   sort: string | undefined;
-  order: "asc" | "desc";
+  order: SortOrder;
+}
+
+export interface ParsePaginationOptions {
+  /**
+   * Allowed `sort` field names for this endpoint. When provided, absent `sort`
+   * falls back to `defaultSort` (or the first allowlist entry) and unknown
+   * values throw `VALIDATION_ERROR` — matching Zod-validated list routes.
+   */
+  allowedSorts?: readonly string[];
+  /** Default when `sort` is absent. Defaults to `allowedSorts[0]`. */
+  defaultSort?: string;
 }
 
 /**
  * Extract and validate pagination params from a URLSearchParams instance.
  *
- * This is a lightweight parser intended for use *before* Zod schemas run,
- * so route handlers can get decoded cursor data early. For full validation,
- * prefer the Zod `paginationSchema` in `validation.ts`.
+ * Soft list routes pass `allowedSorts` so invalid `sort` / `order` return 400
+ * (`VALIDATION_ERROR`) instead of silently defaulting. Zod-validated routes
+ * continue to use `paginationSchema` in `validation.ts`.
  *
  * Supports two cursor formats:
  * - `page:N` (legacy JSON mode) - decoded and handled by JSON mode routes
  * - HMAC-signed cursors (database mode) - decoded here
  */
-export function parsePaginationParams(searchParams: URLSearchParams): PaginationParams {
+export function parsePaginationParams(
+  searchParams: URLSearchParams,
+  options: ParsePaginationOptions = {}
+): PaginationParams {
   const rawCursor = searchParams.get("cursor");
   const rawLimit = searchParams.get("limit");
   const rawSort = searchParams.get("sort");
   const rawOrder = searchParams.get("order");
 
   const limit = rawLimit ? Math.min(Math.max(parseInt(rawLimit, 10) || 50, 1), 200) : 50;
-  const order = rawOrder === "desc" ? "desc" : "asc";
+  const order = parseSortOrder(rawOrder);
+  const sort = parseSortField(rawSort, options);
 
   // Handle page:N format cursors (JSON mode)
   // These are not decoded here - they're handled by JSON mode routes
@@ -114,7 +132,44 @@ export function parsePaginationParams(searchParams: URLSearchParams): Pagination
   return {
     cursor,
     limit,
-    sort: rawSort ?? undefined,
+    sort,
     order,
   };
+}
+
+function parseSortOrder(rawOrder: string | null): SortOrder {
+  if (rawOrder === null || rawOrder.trim() === "") {
+    return "asc";
+  }
+  if (rawOrder === "asc" || rawOrder === "desc") {
+    return rawOrder;
+  }
+  throw new ApiError("VALIDATION_ERROR", `order must be one of: ${SORT_ORDERS.join(", ")}`, {
+    field: "order",
+    allowed: [...SORT_ORDERS],
+    invalid: [rawOrder],
+  });
+}
+
+function parseSortField(rawSort: string | null, options: ParsePaginationOptions): string | undefined {
+  const { allowedSorts, defaultSort } = options;
+
+  if (!allowedSorts || allowedSorts.length === 0) {
+    return rawSort ?? undefined;
+  }
+
+  const fallback = defaultSort ?? allowedSorts[0];
+  if (rawSort === null || rawSort.trim() === "") {
+    return fallback;
+  }
+
+  if (!allowedSorts.includes(rawSort)) {
+    throw new ApiError("VALIDATION_ERROR", `sort must be one of: ${allowedSorts.join(", ")}`, {
+      field: "sort",
+      allowed: [...allowedSorts],
+      invalid: [rawSort],
+    });
+  }
+
+  return rawSort;
 }

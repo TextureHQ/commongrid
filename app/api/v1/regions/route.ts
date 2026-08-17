@@ -20,8 +20,11 @@ async function handleGet(req: Request, _ctx: RouteContext) {
   const type = url.searchParams.get("type");
   const state = url.searchParams.get("state");
 
+  const { cursor, limit, sort, order } = parsePaginationParams(url.searchParams, {
+    allowedSorts: ["slug", "name", "type", "state"],
+    defaultSort: "slug",
+  });
   const db = getDb();
-  const { cursor, limit, sort, order } = parsePaginationParams(url.searchParams);
 
   const sortColumn =
     sort === "name" ? regions.name : sort === "type" ? regions.type : sort === "state" ? regions.state : regions.slug;

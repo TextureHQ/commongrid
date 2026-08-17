@@ -189,7 +189,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getUtilityGeometry",
     summary: "Get utility service-territory geometry (GeoJSON FeatureCollection)",
     description:
-      'Resolves a utility slug to its service-territory polygon and returns a GeoJSON `FeatureCollection` with a `metadata` block describing the resolved utility and `geometry_status`. Resolution follows utilities \u2192 regions (`SERVICE_TERRITORY`) \u2192 territories internally, so consumers only need the utility slug. Returns `200` with `features: []` and `metadata.geometry_status: "pending_backfill"` for utilities whose territory polygon has not been ingested yet (a known data gap that the backfill pipeline resolves over time) and `200` with one `Feature<MultiPolygon>` and `metadata.geometry_status: "loaded"` when geometry is available. Returns `404 { error: "utility_not_found", slug }` only when the slug is not in the registry. Responses are served as `application/geo+json` with cache headers that differentiate loaded (1h) from pending (5m).',
+      'Resolves a utility slug to its service-territory polygon and returns a GeoJSON `FeatureCollection` with a `metadata` block describing the resolved utility and `geometry_status`. Resolution follows utilities \u2192 regions (`SERVICE_TERRITORY`) \u2192 territories internally, so consumers only need the utility slug. Returns `200` with `features: []` and `metadata.geometry_status: "pending_backfill"` for utilities whose territory polygon has not been ingested yet (a known data gap that the backfill pipeline resolves over time) and `200` with one `Feature<MultiPolygon>` and `metadata.geometry_status: "loaded"` when geometry is available. Returns `404` with the standard `ErrorResponse` envelope (`code: "NOT_FOUND"`, `details.slug`) only when the slug is not in the registry. Responses are served as `application/geo+json` with cache headers that differentiate loaded (1h) from pending (5m).',
     tag: "Utilities",
     parameters: [
       SLUG_REF,
@@ -1101,8 +1101,8 @@ export const ENDPOINTS: EndpointDef[] = [
       {
         name: "kind",
         in: "query",
-        description: "Filter by kind (added, updated)",
-        schema: { type: "string", enum: ["added", "updated"] },
+        description: "Filter by kind (added, updated, corrected, synced)",
+        schema: { type: "string", enum: ["added", "updated", "corrected", "synced"] },
       },
     ],
     response: { kind: "raw", schema: { $ref: "#/components/schemas/ChangelogResponse" } },

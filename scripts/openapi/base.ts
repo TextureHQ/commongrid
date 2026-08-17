@@ -102,12 +102,39 @@ export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
   },
   ErrorResponse: {
     type: "object",
+    description:
+      "Standard public API error envelope produced by `formatError`. All public `/api/v1` error responses use this shape (including geometry unknown-slug 404s).",
+    required: ["error"],
     properties: {
       error: {
         type: "object",
+        required: ["code", "message", "request_id", "timestamp"],
         properties: {
-          code: { type: "string", example: "NOT_FOUND" },
-          message: { type: "string", example: "Resource not found" },
+          code: {
+            type: "string",
+            description: "Stable machine-readable code (e.g. `NOT_FOUND`, `VALIDATION_ERROR`).",
+            example: "NOT_FOUND",
+          },
+          message: {
+            type: "string",
+            description: "Human-readable explanation.",
+            example: "Utility 'does-not-exist' not found",
+          },
+          request_id: {
+            type: "string",
+            description: "Correlates with the `X-Request-Id` response header.",
+            example: "req_8b2c3d4e5f67",
+          },
+          timestamp: {
+            type: "string",
+            format: "date-time",
+            description: "ISO-8601 time when the error was formatted.",
+          },
+          details: {
+            description:
+              'Optional structured context (e.g. `{ "slug": "…" }` on geometry 404s, or validation field errors).',
+            nullable: true,
+          },
         },
       },
     },
@@ -368,15 +395,6 @@ export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
           },
         },
       },
-    },
-  },
-  UtilityNotFoundError: {
-    type: "object",
-    description: "Flat 404 shape returned when a utility slug is not in the registry.",
-    required: ["error", "slug"],
-    properties: {
-      error: { type: "string", enum: ["utility_not_found"] },
-      slug: { type: "string" },
     },
   },
   SearchResults: {

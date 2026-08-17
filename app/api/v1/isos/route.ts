@@ -16,8 +16,11 @@ import { isos } from "@/lib/db/schema";
 async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
 
+  const { cursor, limit, sort, order } = parsePaginationParams(url.searchParams, {
+    allowedSorts: ["slug", "name", "shortName"],
+    defaultSort: "slug",
+  });
   const db = getDb();
-  const { cursor, limit, sort, order } = parsePaginationParams(url.searchParams);
 
   const sortColumn = sort === "name" ? isos.name : sort === "shortName" ? isos.shortName : isos.slug;
   const orderFn = order === "desc" ? desc : asc;

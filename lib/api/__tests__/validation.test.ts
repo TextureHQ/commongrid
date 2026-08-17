@@ -5,7 +5,12 @@
 
 import { describe, expect, it } from "vitest";
 import { ApiError } from "@/lib/api/errors";
-import { parseEnumFilterParam, UTILITY_SEGMENT_VALUES, UTILITY_STATUS_VALUES } from "@/lib/api/validation";
+import {
+  parseEnumFilterParam,
+  parseOptionalEnumParam,
+  UTILITY_SEGMENT_VALUES,
+  UTILITY_STATUS_VALUES,
+} from "@/lib/api/validation";
 
 describe("parseEnumFilterParam", () => {
   it("returns null when param is absent or blank", () => {
@@ -38,5 +43,31 @@ describe("parseEnumFilterParam", () => {
 
   it("rejects lowercase status values", () => {
     expect(() => parseEnumFilterParam("active", UTILITY_STATUS_VALUES, "status")).toThrow(ApiError);
+  });
+});
+
+describe("parseOptionalEnumParam", () => {
+  const kinds = ["added", "updated", "corrected", "synced"] as const;
+
+  it("returns null when param is absent or blank", () => {
+    expect(parseOptionalEnumParam(null, kinds, "kind")).toBeNull();
+    expect(parseOptionalEnumParam("  ", kinds, "kind")).toBeNull();
+  });
+
+  it("accepts a valid value", () => {
+    expect(parseOptionalEnumParam("synced", kinds, "kind")).toBe("synced");
+  });
+
+  it("rejects unknown values with VALIDATION_ERROR", () => {
+    try {
+      parseOptionalEnumParam("deleted", kinds, "kind");
+      expect.unreachable("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError);
+      const e = err as ApiError;
+      expect(e.code).toBe("VALIDATION_ERROR");
+      expect(e.message).toContain("added");
+      expect(e.details).toMatchObject({ field: "kind", invalid: ["deleted"] });
+    }
   });
 });

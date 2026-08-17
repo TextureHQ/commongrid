@@ -152,8 +152,11 @@ async function handleGet(req: Request, _ctx: RouteContext) {
 // ---------------------------------------------------------------------------
 
 async function handleDatabaseMode(params: DbFilterParams) {
+  const { cursor, limit, sort, order } = parsePaginationParams(params.url.searchParams, {
+    allowedSorts: ["slug", "name", "customerCount", "segment"],
+    defaultSort: "slug",
+  });
   const db = getDb();
-  const { cursor, limit, sort, order } = parsePaginationParams(params.url.searchParams);
 
   const sortColumn =
     sort === "name"

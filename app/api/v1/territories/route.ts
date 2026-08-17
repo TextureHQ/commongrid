@@ -25,8 +25,11 @@ async function handleGet(req: Request, _ctx: RouteContext) {
 // ---------------------------------------------------------------------------
 
 async function handleDatabaseMode(url: URL) {
+  const { cursor, limit, sort, order } = parsePaginationParams(url.searchParams, {
+    allowedSorts: ["slug", "name", "state", "type"],
+    defaultSort: "slug",
+  });
   const db = getDb();
-  const { cursor, limit, sort, order } = parsePaginationParams(url.searchParams);
 
   // Filters
   const state = url.searchParams.get("state");

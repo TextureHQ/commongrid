@@ -79,14 +79,47 @@ describe("parsePaginationParams", () => {
     expect(params.order).toBe("desc");
   });
 
-  it("defaults to asc for unknown order values", () => {
-    const params = parsePaginationParams(new URLSearchParams("order=random"));
-    expect(params.order).toBe("asc");
+  it("rejects unknown order values with VALIDATION_ERROR", () => {
+    expect(() => parsePaginationParams(new URLSearchParams("order=random"))).toThrowError(/order must be one of/);
+    try {
+      parsePaginationParams(new URLSearchParams("order=random"));
+    } catch (err) {
+      expect(err).toMatchObject({
+        code: "VALIDATION_ERROR",
+        details: { field: "order", invalid: ["random"] },
+      });
+    }
   });
 
   it("parses sort field", () => {
     const params = parsePaginationParams(new URLSearchParams("sort=name"));
     expect(params.sort).toBe("name");
+  });
+
+  it("rejects unknown sort when allowedSorts is set", () => {
+    expect(() =>
+      parsePaginationParams(new URLSearchParams("sort=nope"), {
+        allowedSorts: ["slug", "name"],
+        defaultSort: "slug",
+      })
+    ).toThrowError(/sort must be one of/);
+  });
+
+  it("defaults sort to defaultSort when allowedSorts is set and sort is absent", () => {
+    const params = parsePaginationParams(new URLSearchParams(), {
+      allowedSorts: ["slug", "name", "customerCount"],
+      defaultSort: "slug",
+    });
+    expect(params.sort).toBe("slug");
+  });
+
+  it("accepts an allowlisted sort field", () => {
+    const params = parsePaginationParams(new URLSearchParams("sort=name&order=desc"), {
+      allowedSorts: ["slug", "name"],
+      defaultSort: "slug",
+    });
+    expect(params.sort).toBe("name");
+    expect(params.order).toBe("desc");
   });
 
   it("decodes a valid cursor token", () => {
