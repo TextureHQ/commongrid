@@ -157,7 +157,7 @@ export async function pointInTimeJsonResponse(options: {
   headers?: Record<string, string>;
   fields?: string[] | string | null;
   /** Normalize historical snapshots to the same public shape as live reads. */
-  transform?: (entity: Record<string, unknown>) => Record<string, unknown>;
+  transform?: (entity: Record<string, unknown>) => object;
 }): Promise<Response> {
   const snap = await loadEntityAtTimestamp(options.entityType, options.entityId, options.at);
   if (!snap) {
