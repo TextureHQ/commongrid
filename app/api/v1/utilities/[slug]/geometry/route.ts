@@ -37,15 +37,16 @@
  *       }
  *     }
  *
- *   404 — utility slug is not in the registry:
- *     { error: "utility_not_found", slug: "…" }
+ *   404 — utility slug is not in the registry (standard error envelope):
+ *     { error: { code: "NOT_FOUND", message, request_id, timestamp, details: { slug } } }
  *
  * The empty-200 shape for "pending" lets map/dashboard consumers render a
  * "coverage coming soon" state without treating a known utility as an error.
  * Mapbox `addSource` treats an empty FeatureCollection as a no-op, so Relay
  * (and any other client) gets graceful degradation for free — just branch on
  * `metadata.geometry_status` and skip `addLayer` when `features.length === 0`.
- * The 404 stays flat and predictable for unknown-slug detection.
+ * Unknown-slug 404s use the same `ApiError` / `formatError` envelope as the
+ * rest of the public API (`NOT_FOUND`, with `details.slug`).
  *
  * Query params:
  *   ?simplify=0.01 — topology-preserving simplification tolerance (default 0.01).
@@ -62,7 +63,7 @@
 import { createHash } from "node:crypto";
 import type { Feature, FeatureCollection, MultiPolygon } from "geojson";
 
-import { type RouteContext, withApiMiddleware } from "@/lib/api";
+import { ApiError, formatError, type RouteContext, withApiMiddleware } from "@/lib/api";
 import { corsHeaders } from "@/lib/api/cors";
 
 // ---------------------------------------------------------------------------
@@ -118,13 +119,14 @@ type UtilityGeometryQueryRow = {
 const CACHE_MAX_AGE_LOADED = 3600; // 1h — territories are effectively static between sync runs
 const CACHE_MAX_AGE_PENDING = 300; // 5m — tighter so backfills propagate quickly
 
-function utilityNotFoundResponse(slug: string): Response {
+function utilityNotFoundResponse(slug: string, requestId: string): Response {
+  // Return (do not throw) so withCors still attaches headers. Thrown ApiErrors
+  // are formatted outside withCors and would lose Access-Control-* on 404.
   return Response.json(
-    { error: "utility_not_found", slug },
+    formatError(new ApiError("NOT_FOUND", `Utility '${slug}' not found`, { slug }), requestId),
     {
       status: 404,
       headers: {
-        ...corsHeaders(),
         "Cache-Control": "public, max-age=60",
         "Content-Type": "application/json",
       },
@@ -159,17 +161,14 @@ function normaliseUpdatedAt(value: string | Date | null): string | null {
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
 
-  const wrapped = withApiMiddleware(async (r: Request, _ctx: RouteContext) => {
+  const wrapped = withApiMiddleware(async (r: Request, ctx: RouteContext) => {
     const url = new URL(r.url);
     const simplify = url.searchParams.get("simplify");
     const tolerance = Number(simplify) || 0.01;
 
     const { db } = await import("@/lib/db/client");
     if (!db) {
-      return Response.json(
-        { error: "internal_error", message: "Database not configured" },
-        { status: 500, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
-      );
+      throw new ApiError("INTERNAL_ERROR", "Database not configured");
     }
 
     const { sql } = await import("drizzle-orm");
@@ -281,7 +280,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
     // ── 404: utility slug is not in the registry ──────────────────────────────
     if (!row?.utility_exists) {
-      return utilityNotFoundResponse(slug);
+      return utilityNotFoundResponse(slug, ctx.requestId);
     }
 
     const utilityId = row.utility_id ?? slug;

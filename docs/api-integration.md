@@ -240,7 +240,7 @@ Responses include `ETag` when a stable hash is cheap to compute; pair with `If-N
 
 ## Error model
 
-Every error returns a consistent envelope:
+Every public API error returns the same envelope (`ApiError` / `formatError`):
 
 ```json
 {
@@ -248,10 +248,16 @@ Every error returns a consistent envelope:
     "code": "NOT_FOUND",
     "message": "Utility 'nonexistent-utility' not found",
     "request_id": "req_8b2c3d4e5f67",
-    "timestamp": "2026-05-08T20:15:22.412Z"
+    "timestamp": "2026-05-08T20:15:22.412Z",
+    "details": { "slug": "nonexistent-utility" }
   }
 }
 ```
+
+`details` is optional — present when the handler attaches structured context
+(for example `slug` on geometry unknown-slug 404s, or field-level validation
+failures). Clients should key off `error.code` and treat `details` as opaque
+extra context.
 
 | HTTP | `code` | Meaning |
 |---:|---|---|
@@ -464,17 +470,26 @@ a newer EIA-861 filing adds a utility before its polygon lands):
 > **Why empty-200 instead of 404 for pending?** An empty `FeatureCollection` is
 > a no-op on `mapboxgl.Map.addSource`, so clients get graceful degradation for
 > free — just branch on `metadata.geometry_status` and skip `addLayer` when
-> `features.length === 0`. The `404` shape stays reserved for unknown slugs,
-> so consumers never have to parse error codes to distinguish “bad slug” from
-> “known utility, geometry coming soon.”
+> `features.length === 0`. The `404` stays reserved for unknown slugs and uses
+> the standard [error envelope](#error-model) (`NOT_FOUND`), so consumers can
+> distinguish “bad slug” from “known utility, geometry coming soon” without a
+> separate error shape.
 
 *404 — utility slug not in the registry:*
 
 ```json
-{ "error": "utility_not_found", "slug": "…" }
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Utility 'does-not-exist' not found",
+    "request_id": "req_8b2c3d4e5f67",
+    "timestamp": "2026-05-08T20:15:22.412Z",
+    "details": { "slug": "does-not-exist" }
+  }
+}
 ```
 
-**Content-Type:** `application/geo+json`.
+**Content-Type:** `application/geo+json` on `200`; `application/json` on `404`.
 
 **Cache:**
 
@@ -482,7 +497,7 @@ a newer EIA-861 filing adds a utility before its polygon lands):
 |---|---|---|
 | `loaded` | `public, max-age=3600` | Territories are effectively static between sync runs. |
 | `pending_backfill` | `public, max-age=300` | Tight window so backfills propagate quickly once the polygon lands. |
-| `utility_not_found` | `public, max-age=60` | Minimal caching. |
+| `404 NOT_FOUND` | `public, max-age=60` | Minimal caching for unknown slugs. |
 
 `ETag: sha256(utility_id | geometry_status | updated_at)` — flips the moment a
 pending utility becomes loaded, so `If-None-Match` / CDN caches invalidate

@@ -6,9 +6,13 @@ import { corsHeaders } from "@/lib/api/cors";
 import { generateRequestId, withApiMiddleware } from "@/lib/api/middleware";
 import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
+import { parseOptionalEnumParam } from "@/lib/api/validation";
 import { getDb } from "@/lib/db/client";
 import { entityVersions } from "@/lib/db/schema/entity-versions";
-import type { ChangelogEntry } from "@/types/changelog";
+import type { ChangelogEntry, ChangelogOperation } from "@/types/changelog";
+
+/** Allowed `kind` filter values — matches ChangelogOperation / OpenAPI. */
+const CHANGELOG_KIND_VALUES: readonly ChangelogOperation[] = ["updated", "added", "corrected", "synced"];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -97,7 +101,7 @@ async function handleGet(req: Request, _ctx: RouteContext) {
   const offset = Math.max(Number(url.searchParams.get("offset")) || 0, 0);
   const entityType = url.searchParams.get("entity_type");
   const since = url.searchParams.get("since");
-  const kind = url.searchParams.get("kind");
+  const kind = parseOptionalEnumParam(url.searchParams.get("kind"), CHANGELOG_KIND_VALUES, "kind");
 
   const cors = corsHeaders();
 
