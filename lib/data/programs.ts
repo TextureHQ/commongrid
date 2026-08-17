@@ -85,7 +85,7 @@ function normalizeCompensationTiers(raw: unknown): Program["compensationTiers"] 
 // DB source
 // ---------------------------------------------------------------------------
 
-function dbRowToProgram(row: Record<string, unknown>): Program {
+export function dbRowToProgram(row: Record<string, unknown>): Program {
   return {
     id: row.id as string,
     slug: row.slug as string,

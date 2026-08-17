@@ -29,7 +29,12 @@ import {
   withApiMiddleware,
 } from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
-import { isPlantCode, loadPowerPlantByPlantCode, loadPowerPlantBySlug } from "@/lib/data/power-plants-api";
+import {
+  dbRowToPowerPlant,
+  isPlantCode,
+  loadPowerPlantByPlantCode,
+  loadPowerPlantBySlug,
+} from "@/lib/data/power-plants-api";
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -67,6 +72,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         label: "Power plant",
         slug: plant.slug,
         headers,
+        transform: dbRowToPowerPlant,
       });
     }
 

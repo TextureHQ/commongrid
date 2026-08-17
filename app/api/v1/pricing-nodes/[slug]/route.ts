@@ -14,7 +14,7 @@ import {
   withApiMiddleware,
 } from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
-import { loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
+import { dbRowToPricingNode, loadPricingNodeBySlug } from "@/lib/data/pricing-nodes";
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -45,6 +45,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         label: "Pricing node",
         slug,
         headers,
+        transform: dbRowToPricingNode,
       });
     }
 

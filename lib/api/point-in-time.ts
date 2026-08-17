@@ -156,6 +156,8 @@ export async function pointInTimeJsonResponse(options: {
   slug: string;
   headers?: Record<string, string>;
   fields?: string[] | string | null;
+  /** Normalize historical snapshots to the same public shape as live reads. */
+  transform?: (entity: Record<string, unknown>) => Record<string, unknown>;
 }): Promise<Response> {
   const snap = await loadEntityAtTimestamp(options.entityType, options.entityId, options.at);
   if (!snap) {
@@ -166,8 +168,10 @@ export async function pointInTimeJsonResponse(options: {
     );
   }
 
+  const entity = options.transform ? options.transform(snap.entity) : snap.entity;
+
   return publicJsonResponse(
-    { ...snap.entity, _as_of: asOfMeta(snap) },
+    { ...entity, _as_of: asOfMeta(snap) },
     200,
     {
       "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",

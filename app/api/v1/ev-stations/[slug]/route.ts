@@ -13,7 +13,7 @@ import {
   withApiMiddleware,
 } from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
-import { loadEVStationBySlug } from "@/lib/data/ev-stations";
+import { dbRowToEVStation, loadEVStationBySlug } from "@/lib/data/ev-stations";
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -43,6 +43,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         label: "EV station",
         slug,
         headers,
+        transform: dbRowToEVStation,
       });
     }
 

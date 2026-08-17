@@ -22,7 +22,7 @@ export interface PricingNodeFilters {
 // DB source
 // ---------------------------------------------------------------------------
 
-function dbRowToPricingNode(row: Record<string, unknown>): PricingNode {
+export function dbRowToPricingNode(row: Record<string, unknown>): PricingNode {
   return {
     id: row.id as string,
     slug: row.slug as string,

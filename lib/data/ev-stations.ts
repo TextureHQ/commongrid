@@ -32,7 +32,7 @@ export interface EVStationQueryOptions {
 // DB source
 // ---------------------------------------------------------------------------
 
-function dbRowToEVStation(row: Record<string, unknown>): EVStation {
+export function dbRowToEVStation(row: Record<string, unknown>): EVStation {
   return {
     id: row.id as string,
     slug: row.slug as string,

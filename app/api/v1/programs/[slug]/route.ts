@@ -13,7 +13,7 @@ import {
   withApiMiddleware,
 } from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
-import { loadProgramBySlug } from "@/lib/data/programs";
+import { dbRowToProgram, loadProgramBySlug } from "@/lib/data/programs";
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -43,6 +43,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         label: "Program",
         slug,
         headers,
+        transform: dbRowToProgram,
       });
     }
 

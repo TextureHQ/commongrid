@@ -11,6 +11,7 @@ import {
   parseAtParam,
   supportsPointInTimeReads,
 } from "@/lib/api/point-in-time";
+import { dbRowToProgram } from "@/lib/data/programs";
 import { reconstructEntityAtVersion } from "@/lib/db/versioning";
 
 describe("parseAtParam", () => {
@@ -69,6 +70,33 @@ describe("enforceAtQueryPolicy", () => {
       expect(e.code).toBe("VALIDATION_ERROR");
       expect(e.message).toMatch(/detail endpoints/i);
     }
+  });
+});
+
+describe("historical loader normalization", () => {
+  it("normalizes program snapshots to the live public shape", () => {
+    const program = dbRowToProgram({
+      id: "program-1",
+      slug: "acme-program",
+      name: "Acme Program",
+      organizations: ["utility-1"],
+      assetTypes: [],
+      marketSegments: [],
+      participationModels: [],
+      incentiveStructures: [],
+      gridServices: [],
+      regions: [],
+      compensationTiers: ["flat-rate"],
+      status: "ACTIVE",
+      variants: [],
+      createdAt: new Date("2025-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2025-01-02T00:00:00.000Z"),
+      source: "internal-only",
+    });
+
+    expect(program.organizations).toEqual([{ entityId: "utility-1", role: "ADMINISTRATOR" }]);
+    expect(program.compensationTiers).toEqual([{ tier: 1, type: "FLAT", amount: 0, unit: "FLAT" }]);
+    expect(program).not.toHaveProperty("source");
   });
 });
 
