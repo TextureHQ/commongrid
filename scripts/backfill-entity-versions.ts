@@ -22,6 +22,7 @@ import { and, asc, eq, gt, isNull, notExists, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
 import { changeBatches, entityVersions } from "@/lib/db/schema";
+import { entityLabel } from "@/lib/db/versioning";
 import { getEntityTable, toVersionableSnapshot } from "@/lib/mod/apply-contribution";
 
 /**
@@ -47,20 +48,6 @@ const TYPES: Array<{ entityType: string; table: string }> = [
   { entityType: "transmission_line", table: "transmission_lines" },
   { entityType: "ev_station", table: "ev_stations" },
 ];
-
-/**
- * Human label, whichever property the table happens to use. Most have `name`,
- * ev_stations has `stationName`, and territories and transmission_lines have
- * none. Read off the row rather than resolved from information_schema, so it
- * cannot disagree with the Drizzle definition.
- */
-function labelOf(row: Record<string, unknown>): { name: string | null; slug: string | null } {
-  const name = row.name ?? row.stationName ?? row.title ?? null;
-  return {
-    name: typeof name === "string" ? name : null,
-    slug: typeof row.slug === "string" ? row.slug : null,
-  };
-}
 
 type Db = ReturnType<typeof drizzle>;
 // biome-ignore lint/suspicious/noExplicitAny: Drizzle table types vary per table.
@@ -199,8 +186,8 @@ async function main() {
         }
 
         const values = page.map((row) => {
-          const label = labelOf(row);
-          if (!label.name && !labelWarned) {
+          const label = entityLabel(row);
+          if (!label.entityName && !labelWarned) {
             console.log(`  ${target.entityType.padEnd(20)} (no label property — entity_name stays null)`);
             labelWarned = true;
           }
@@ -215,8 +202,8 @@ async function main() {
             changeType: BASELINE_CHANGE_TYPE,
             sourceType: "backfill",
             batchId,
-            entityName: label.name,
-            entitySlug: label.slug,
+            entityName: label.entityName,
+            entitySlug: label.entitySlug,
           };
         });
 
