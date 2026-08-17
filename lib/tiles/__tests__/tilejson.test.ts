@@ -52,7 +52,11 @@ describe("TileJSON archive metadata matches hardcoded reality", () => {
     const { getArchiveMetadata } = await import("@/lib/pmtiles-server");
 
     const expected: Record<string, string[]> = {
-      territories: ["customerCount", "eiaId", "name", "segment", "slug", "state"],
+      // Mirrors the `properties` object in scripts/prepare-territory-geojson.mjs.
+      // baCode has been emitted there since #170 (April), but the committed
+      // archives were not rebuilt between February and #342, so this list was
+      // written against six-month-old tiles rather than against the generator.
+      territories: ["baCode", "customerCount", "eiaId", "name", "segment", "slug", "state"],
       "power-plants": ["capacityMw", "fuelCategory", "name", "slug", "status"],
       substations: [
         "county",
