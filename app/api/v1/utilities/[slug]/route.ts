@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { ApiError } from "@/lib/api/errors";
 import { generateRequestId, withApiMiddleware } from "@/lib/api/middleware";
+import { parseAtParam, pointInTimeJsonResponse } from "@/lib/api/point-in-time";
 import { publicJsonResponse } from "@/lib/api/public-response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
@@ -63,9 +64,11 @@ async function handleGet(req: Request, ctx: RouteContext) {
   const url = new URL(req.url);
   const include = url.searchParams.get("include");
   const fields = url.searchParams.get("fields");
+  const at = parseAtParam(url.searchParams);
   // Opt-out: `?follow_successor=false` returns the deprecated stub verbatim
   // (useful for forensic / audit consumers who need to see the original row).
-  const followSuccessor = url.searchParams.get("follow_successor") !== "false";
+  // Point-in-time reads never follow successors — they return the slug's own history.
+  const followSuccessor = !at && url.searchParams.get("follow_successor") !== "false";
 
   const db = getDb();
   const [initial] = (await db.select().from(utilities).where(eq(utilities.slug, slug)).limit(1)) as unknown as [
@@ -74,6 +77,18 @@ async function handleGet(req: Request, ctx: RouteContext) {
 
   if (!initial) {
     throw new ApiError("NOT_FOUND", `Utility '${slug}' not found`);
+  }
+
+  if (at) {
+    return pointInTimeJsonResponse({
+      entityType: "utility",
+      entityId: initial.id,
+      at,
+      label: "Utility",
+      slug,
+      headers: { "Cache-Control": CACHE_CONTROL, "Cache-Tag": `utility:${slug}` },
+      fields,
+    });
   }
 
   let utility: UtilityRow = initial;

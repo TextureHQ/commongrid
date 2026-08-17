@@ -28,6 +28,11 @@ export const ENTITY_API_SEGMENTS: Record<string, string> = {
   program: "programs",
 };
 
+/** Reverse of `ENTITY_API_SEGMENTS` — API path segment → entity_type. */
+export const API_SEGMENT_TO_ENTITY_TYPE: Record<string, string> = Object.fromEntries(
+  Object.entries(ENTITY_API_SEGMENTS).map(([entityType, segment]) => [segment, entityType])
+);
+
 /**
  * API segment for an entity type, or null when the type has no public
  * slug-addressed endpoint — `territory` and `transmission_line` are keyed by
@@ -35,6 +40,11 @@ export const ENTITY_API_SEGMENTS: Record<string, string> = {
  */
 export function apiSegmentFor(entityType: string): string | null {
   return ENTITY_API_SEGMENTS[entityType] ?? null;
+}
+
+/** entity_type for a public API path segment, or null when unknown. */
+export function entityTypeForApiSegment(segment: string): string | null {
+  return API_SEGMENT_TO_ENTITY_TYPE[segment] ?? null;
 }
 
 /** Path to an entity's version history, or null if the type has no endpoint. */

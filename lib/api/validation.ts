@@ -7,8 +7,39 @@
  */
 
 import { z } from "zod";
+import { UtilitySegment, UtilityStatus } from "@/types/entities";
 
 import { ApiError } from "./errors";
+
+/** Allowed `segment` filter values for GET /utilities (matches DB + UtilitySegment). */
+export const UTILITY_SEGMENT_VALUES = Object.values(UtilitySegment) as string[];
+
+/** Allowed `status` filter values for GET /utilities (matches DB + UtilityStatus). */
+export const UTILITY_STATUS_VALUES = Object.values(UtilityStatus) as string[];
+
+/**
+ * Parse a single-value or comma-separated enum filter. Unknown values → 400
+ * with the allowed set listed (never a silent empty `data[]`).
+ */
+export function parseEnumFilterParam(raw: string | null, allowed: readonly string[], field: string): string[] | null {
+  if (raw === null || raw.trim() === "") return null;
+  const values = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  if (values.length === 0) return null;
+
+  const allowedSet = new Set(allowed);
+  const invalid = values.filter((v) => !allowedSet.has(v));
+  if (invalid.length > 0) {
+    throw new ApiError(
+      "VALIDATION_ERROR",
+      `${field} must be one of: ${allowed.join(", ")}. Unknown: ${invalid.join(", ")}`,
+      { field, allowed, invalid }
+    );
+  }
+  return values;
+}
 
 // ---------------------------------------------------------------------------
 // Pagination

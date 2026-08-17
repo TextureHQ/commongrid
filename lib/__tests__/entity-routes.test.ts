@@ -11,7 +11,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { apiSegmentFor, ENTITY_API_SEGMENTS, versionsPath } from "@/lib/entity-routes";
+import { apiSegmentFor, ENTITY_API_SEGMENTS, entityTypeForApiSegment, versionsPath } from "@/lib/entity-routes";
 
 describe("entity route map", () => {
   const entries = Object.entries(ENTITY_API_SEGMENTS);
@@ -23,6 +23,10 @@ describe("entity route map", () => {
   it.each(entries)("%s route declares the same entity type the map claims", (entityType, segment) => {
     const source = readFileSync(join(process.cwd(), "app/api/v1", segment, "[slug]", "versions", "route.ts"), "utf8");
     expect(source).toContain(`entityType: "${entityType}"`);
+  });
+
+  it.each(entries)("entityTypeForApiSegment(%s) reverses the map", (entityType, segment) => {
+    expect(entityTypeForApiSegment(segment)).toBe(entityType);
   });
 
   it("would have caught the naive-pluralisation bug", () => {

@@ -310,10 +310,18 @@ async function testUtilities() {
     assertEqual(utility.segment, "MUNICIPAL_UTILITY");
   });
 
-  await test("Utilities segment filter returns empty for invalid segment", async () => {
-    const { data } = await apiRequest("/api/v1/utilities?segment=NONEXISTENT_SEGMENT");
-    assertEqual(data.data.length, 0, "Should return no results for invalid segment");
-    assertEqual(data.pagination.total, 0);
+  await test("Utilities segment filter rejects invalid segment with 400", async () => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/utilities?segment=cooperative`);
+    assertEqual(response.status, 400, "Should reject lowercase / alias segment values");
+    const body = await response.json();
+    assertEqual(body.error.code, "VALIDATION_ERROR");
+  });
+
+  await test("Utilities status filter rejects invalid status with 400", async () => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/utilities?status=active`);
+    assertEqual(response.status, 400, "Should reject lowercase status values");
+    const body = await response.json();
+    assertEqual(body.error.code, "VALIDATION_ERROR");
   });
 
   await test("Utilities status filter works", async () => {

@@ -6,6 +6,7 @@ import { encodeCursor, parsePaginationParams } from "@/lib/api/pagination";
 import { parseFieldsParam, selectFields, stripInternal } from "@/lib/api/public-response";
 import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
+import { parseEnumFilterParam, UTILITY_SEGMENT_VALUES, UTILITY_STATUS_VALUES } from "@/lib/api/validation";
 import { getDb } from "@/lib/db/client";
 import { balancingAuthorities, isos, rtos, utilities } from "@/lib/db/schema";
 
@@ -15,8 +16,8 @@ import { balancingAuthorities, isos, rtos, utilities } from "@/lib/db/schema";
 
 interface FilterParams {
   url: URL;
-  segment: string | null;
-  status: string | null;
+  segments: string[] | null;
+  statuses: string[] | null;
   state: string | null;
   iso: string | null;
   rto: string | null;
@@ -94,9 +95,9 @@ function parseEiaIds(raw: string | null): string[] | null {
 async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
 
-  // Common filter params
-  const segment = url.searchParams.get("segment");
-  const status = url.searchParams.get("status");
+  // Common filter params — segment/status validated against DB enums (400 on unknown)
+  const segments = parseEnumFilterParam(url.searchParams.get("segment"), UTILITY_SEGMENT_VALUES, "segment");
+  const statuses = parseEnumFilterParam(url.searchParams.get("status"), UTILITY_STATUS_VALUES, "status");
   const state = url.searchParams.get("state");
   const isoParam = url.searchParams.get("iso");
   const rtoParam = url.searchParams.get("rto");
@@ -122,8 +123,8 @@ async function handleGet(req: Request, _ctx: RouteContext) {
 
   const filterParams: FilterParams = {
     url,
-    segment,
-    status,
+    segments,
+    statuses,
     state,
     iso: isoParam,
     rto: rtoParam,
@@ -168,11 +169,15 @@ async function handleDatabaseMode(params: DbFilterParams) {
   const conditions = [];
   // Exclude soft-deleted entities
   conditions.push(isNull(utilities.deletedAt));
-  if (params.segment) {
-    conditions.push(eq(utilities.segment, params.segment));
+  if (params.segments && params.segments.length === 1) {
+    conditions.push(eq(utilities.segment, params.segments[0]));
+  } else if (params.segments && params.segments.length > 1) {
+    conditions.push(inArray(utilities.segment, params.segments));
   }
-  if (params.status) {
-    conditions.push(eq(utilities.status, params.status));
+  if (params.statuses && params.statuses.length === 1) {
+    conditions.push(eq(utilities.status, params.statuses[0]));
+  } else if (params.statuses && params.statuses.length > 1) {
+    conditions.push(inArray(utilities.status, params.statuses));
   }
   if (params.state) {
     conditions.push(ilike(utilities.jurisdiction, `%${params.state.toUpperCase()}%`));

@@ -79,6 +79,15 @@
         "schema": {
           "type": "string"
         }
+      },
+      "at": {
+        "name": "at",
+        "in": "query",
+        "description": "Point-in-time read. Reconstructs the entity from version history at the latest version with changed_at ≤ this instant. Accepts YYYY-MM-DD (end of that UTC day) or an ISO-8601 timestamp. Response includes `_as_of: { requested, versionNumber, changedAt }`. Returns 404 when no version exists at or before the requested time.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "2025-12-01"
       }
     },
     "schemas": {
@@ -654,8 +663,10 @@
             "enum": [
               "COMMUNITY_CHOICE_AGGREGATOR",
               "DISTRIBUTION_COOPERATIVE",
+              "FEDERAL",
               "GENERATION_AND_TRANSMISSION",
               "INVESTOR_OWNED_UTILITY",
+              "JOINT_ACTION_AGENCY",
               "MUNICIPAL_UTILITY",
               "POLITICAL_SUBDIVISION",
               "TRANSMISSION_OPERATOR"
@@ -665,9 +676,11 @@
             "type": "string",
             "description": "Operational status of the utility.",
             "enum": [
+              "ACQUIRED",
               "ACTIVE",
               "DEFUNCT",
-              "MERGED"
+              "MERGED",
+              "PENDING"
             ]
           },
           "customerCount": {
@@ -2077,17 +2090,35 @@
           {
             "name": "segment",
             "in": "query",
-            "description": "Filter by segment (electric, gas, water, combined)",
+            "description": "Filter by UtilitySegment (exact match). Comma-separated for multiple. Unknown values return 400.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "COMMUNITY_CHOICE_AGGREGATOR",
+                "DISTRIBUTION_COOPERATIVE",
+                "FEDERAL",
+                "GENERATION_AND_TRANSMISSION",
+                "INVESTOR_OWNED_UTILITY",
+                "JOINT_ACTION_AGENCY",
+                "MUNICIPAL_UTILITY",
+                "POLITICAL_SUBDIVISION",
+                "TRANSMISSION_OPERATOR"
+              ]
             }
           },
           {
             "name": "status",
             "in": "query",
-            "description": "Filter by operational status",
+            "description": "Filter by UtilityStatus (exact match). Comma-separated for multiple. Unknown values return 400.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "ACQUIRED",
+                "ACTIVE",
+                "DEFUNCT",
+                "MERGED",
+                "PENDING"
+              ]
             }
           },
           {
@@ -2274,6 +2305,16 @@
               }
             }
           },
+          "400": {
+            "description": "Request validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
             "headers": {
@@ -2335,6 +2376,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/slug"
+          },
+          {
+            "$ref": "#/components/parameters/at"
           }
         ],
         "responses": {
@@ -2381,6 +2425,16 @@
                       "$ref": "#/components/schemas/Utility"
                     }
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -2829,6 +2883,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/slug"
+          },
+          {
+            "$ref": "#/components/parameters/at"
           }
         ],
         "responses": {
@@ -3194,6 +3251,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/slug"
+          },
+          {
+            "$ref": "#/components/parameters/at"
           }
         ],
         "responses": {
@@ -3559,6 +3619,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/slug"
+          },
+          {
+            "$ref": "#/components/parameters/at"
           }
         ],
         "responses": {
@@ -3924,6 +3987,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/slug"
+          },
+          {
+            "$ref": "#/components/parameters/at"
           }
         ],
         "responses": {
@@ -4830,6 +4896,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/slug"
+          },
+          {
+            "$ref": "#/components/parameters/at"
           }
         ],
         "responses": {
@@ -6118,6 +6187,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/slug"
+          },
+          {
+            "$ref": "#/components/parameters/at"
           }
         ],
         "responses": {
@@ -6423,6 +6495,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/slug"
+          },
+          {
+            "$ref": "#/components/parameters/at"
           }
         ],
         "responses": {
@@ -6860,6 +6935,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/slug"
+          },
+          {
+            "$ref": "#/components/parameters/at"
           }
         ],
         "responses": {

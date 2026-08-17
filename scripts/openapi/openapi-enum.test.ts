@@ -54,6 +54,8 @@ describe("OpenAPI spec — enum emission", () => {
     expect(segment.enum).toContain("MUNICIPAL_UTILITY");
     expect(segment.enum).toContain("INVESTOR_OWNED_UTILITY");
     expect(segment.enum).toContain("GENERATION_AND_TRANSMISSION");
+    expect(segment.enum).toContain("FEDERAL");
+    expect(segment.enum).toContain("JOINT_ACTION_AGENCY");
 
     // The old buggy description must not survive.
     expect(segment.description ?? "").not.toMatch(/electric,\s*gas,\s*water/i);
@@ -67,6 +69,26 @@ describe("OpenAPI spec — enum emission", () => {
     expect(status.type).toBe("string");
     expect(Array.isArray(status.enum)).toBe(true);
     expect(status.enum).toContain("ACTIVE");
+    expect(status.enum).toContain("ACQUIRED");
+    expect(status.enum).toContain("PENDING");
+  });
+
+  it("listUtilities segment/status query params use the same enums as the response schema", () => {
+    const spec = loadSpec() as OpenApiSpec & {
+      paths: {
+        "/utilities": {
+          get: {
+            parameters: Array<{ name?: string; schema?: { enum?: string[] }; $ref?: string }>;
+          };
+        };
+      };
+    };
+    const params = spec.paths["/utilities"].get.parameters;
+    const segmentParam = params.find((p) => p.name === "segment");
+    const statusParam = params.find((p) => p.name === "status");
+
+    expect(segmentParam?.schema?.enum).toEqual(spec.components.schemas.Utility.properties.segment.enum);
+    expect(statusParam?.schema?.enum).toEqual(spec.components.schemas.Utility.properties.status.enum);
   });
 
   it("Utility.segment enum values are uppercase snake_case (no surprises)", () => {

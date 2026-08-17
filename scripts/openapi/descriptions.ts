@@ -1,3 +1,5 @@
+import { UtilitySegment, UtilityStatus } from "@/types/entities";
+
 /**
  * Per-field descriptions for OpenAPI schemas.
  *
@@ -20,6 +22,12 @@ export interface FieldDescriptionWithEnum {
 
 export type FieldDescription = string | FieldDescriptionWithEnum;
 export type FieldDescriptionMap = Record<string, FieldDescription>;
+
+/** Keep alphabetized; must match `UtilitySegment` / DB `utilities.segment`. */
+export const UTILITY_SEGMENT_ENUM = Object.values(UtilitySegment).sort();
+
+/** Keep alphabetized; must match `UtilityStatus` / DB `utilities.status`. */
+export const UTILITY_STATUS_ENUM = Object.values(UtilityStatus).sort();
 
 export const SHARED_DESCRIPTIONS: FieldDescriptionMap = {
   id: "Stable internal identifier",
@@ -44,23 +52,11 @@ export const DESCRIPTIONS: Record<string, FieldDescriptionMap> = {
     segment: {
       description:
         "Ownership / structural category of the utility. Sourced from EIA Form 861 filings plus manual review.",
-      // Pulled from `SELECT DISTINCT segment FROM utilities WHERE deleted_at IS NULL`.
-      // Keep alphabetized. Re-run the query and update this list whenever a new
-      // segment is introduced (rare; a PR to this file + regenerate the spec).
-      enum: [
-        "COMMUNITY_CHOICE_AGGREGATOR",
-        "DISTRIBUTION_COOPERATIVE",
-        "GENERATION_AND_TRANSMISSION",
-        "INVESTOR_OWNED_UTILITY",
-        "MUNICIPAL_UTILITY",
-        "POLITICAL_SUBDIVISION",
-        "TRANSMISSION_OPERATOR",
-      ],
+      enum: UTILITY_SEGMENT_ENUM,
     },
     status: {
       description: "Operational status of the utility.",
-      // Pulled from `SELECT DISTINCT status FROM utilities WHERE deleted_at IS NULL`.
-      enum: ["ACTIVE", "DEFUNCT", "MERGED"],
+      enum: UTILITY_STATUS_ENUM,
     },
     customerCount: "Number of retail customers served (EIA-861)",
     peakDemandMw: "Summer peak demand in megawatts",
