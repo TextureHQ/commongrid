@@ -22,7 +22,7 @@
 import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Client } from "pg";
-import { contributions, users } from "@/lib/db/schema";
+import { contributions, moderationActions, users } from "@/lib/db/schema";
 import {
   type ApplicableContribution,
   applyContribution,
@@ -114,14 +114,34 @@ async function main() {
         autoApproved: row.status === "auto_approved",
       });
 
-      // The interrupted auto-approve would have credited the contributor after
-      // writing the entity. Replaying without this leaves someone with an
-      // approved contribution and a zeroed count.
-      if (row.userId) {
+      // Credit the contributor, but only if the original run never got that far.
+      //
+      // Pre-#340 auto-approve ran three unwrapped steps in order: flip status,
+      // insert a moderation_action, increment approvedCount. Whether the credit
+      // happened depends on where that sequence died, and status alone cannot
+      // tell you — an `auto_approved` contribution may or may not have been
+      // credited.
+      //
+      // The moderation_action is the marker. Present means the run got past
+      // step 2 and therefore reached step 3, so crediting again would double
+      // count. Absent means it died at step 2 — which is what happened to the
+      // one record in production, where the insert hit an FK violation on
+      // moderator_id='system' before that user existed.
+      const [alreadyCredited] = await tx
+        .select({ id: moderationActions.id })
+        .from(moderationActions)
+        .where(eq(moderationActions.targetId, row.id))
+        .limit(1);
+
+      if (row.userId && !alreadyCredited) {
         await tx
           .update(users)
           .set({ approvedCount: sql`${users.approvedCount} + 1`, updatedAt: new Date() })
           .where(eq(users.id, row.userId));
+      }
+
+      if (alreadyCredited) {
+        console.log("Contributor already credited by the original run — not incrementing.");
       }
 
       return result;
