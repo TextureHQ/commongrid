@@ -9,8 +9,8 @@ import {
   EntityFormFields,
   SourceCitationFields,
 } from "@/components/contributions/EntityFormFields";
+import { UtilityAutocomplete } from "@/components/UtilityAutocomplete";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useUtilityList } from "@/hooks/useUtilityList";
 
 export default function CreateProgramPage() {
   const router = useRouter();
@@ -22,7 +22,6 @@ export default function CreateProgramPage() {
 
   // Utility association (not part of editable-fields since it's a complex type)
   const [adminUtilitySlug, setAdminUtilitySlug] = useState("");
-  const { utilities, isLoading: utilitiesLoading } = useUtilityList({ limit: 200 });
 
   // Form state
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
@@ -241,28 +240,12 @@ export default function CreateProgramPage() {
               <EntityFormFields fields={fields} formValues={formValues} onChange={handleFieldChange} mode="create" />
 
               {/* Utility Association */}
-              <div className="space-y-1">
-                <label htmlFor="adminUtility" className="flex items-center gap-2 text-sm font-medium text-text-body">
-                  Administrator Utility
-                </label>
-                <select
-                  id="adminUtility"
-                  value={adminUtilitySlug}
-                  onChange={(e) => setAdminUtilitySlug(e.target.value)}
-                  disabled={utilitiesLoading}
-                  className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                >
-                  <option value="">-- Select a utility --</option>
-                  {utilities.map((u) => (
-                    <option key={u.slug} value={u.slug}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-text-muted">
-                  The utility that administers this demand-response or rebate program.
-                </p>
-              </div>
+              <UtilityAutocomplete
+                label="Administrator Utility"
+                description="The utility that administers this demand-response or rebate program."
+                value={adminUtilitySlug}
+                onChange={setAdminUtilitySlug}
+              />
 
               {/* Source Citation */}
               <SourceCitationFields
