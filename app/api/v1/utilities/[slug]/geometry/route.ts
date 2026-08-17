@@ -122,16 +122,13 @@ const CACHE_MAX_AGE_PENDING = 300; // 5m — tighter so backfills propagate quic
 function utilityNotFoundResponse(slug: string, requestId: string): Response {
   // Return (do not throw) so withCors still attaches headers. Thrown ApiErrors
   // are formatted outside withCors and would lose Access-Control-* on 404.
-  return Response.json(
-    formatError(new ApiError("NOT_FOUND", `Utility '${slug}' not found`, { slug }), requestId),
-    {
-      status: 404,
-      headers: {
-        "Cache-Control": "public, max-age=60",
-        "Content-Type": "application/json",
-      },
-    }
-  );
+  return Response.json(formatError(new ApiError("NOT_FOUND", `Utility '${slug}' not found`, { slug }), requestId), {
+    status: 404,
+    headers: {
+      "Cache-Control": "public, max-age=60",
+      "Content-Type": "application/json",
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------

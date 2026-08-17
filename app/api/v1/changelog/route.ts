@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, ne, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
 import changelogJson from "@/data/changelog.json";
@@ -8,7 +8,6 @@ import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { parseOptionalEnumParam } from "@/lib/api/validation";
 import { getDb } from "@/lib/db/client";
-import { entityVersions } from "@/lib/db/schema/entity-versions";
 import type { ChangelogEntry, ChangelogOperation } from "@/types/changelog";
 
 /** Allowed `kind` filter values — matches ChangelogOperation / OpenAPI. */
