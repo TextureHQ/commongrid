@@ -1,4 +1,5 @@
 import { bigserial, index, integer, jsonb, pgTable, text, timestamp, unique } from "drizzle-orm/pg-core";
+import { changeBatches } from "./change-batches";
 import { contributions } from "./contributions";
 
 /**
@@ -46,6 +47,17 @@ export const entityVersions = pgTable(
      * 'community_override' = moderator approved a community value over an official sync value.
      */
     sourceType: text("source_type"),
+
+    /** FK to change_batches; ON DELETE SET NULL — version history preserved */
+    batchId: text("batch_id").references(() => changeBatches.id, { onDelete: "set null" }),
+
+    /**
+     * Entity name and slug as of this version. Denormalized so the changelog can
+     * render an entry without joining out to whichever of the 12 entity tables
+     * the polymorphic (entity_type, entity_id) pair points at.
+     */
+    entityName: text("entity_name"),
+    entitySlug: text("entity_slug"),
   },
   (table) => [
     unique("entity_versions_entity_type_entity_id_version_number_unique").on(
@@ -57,6 +69,7 @@ export const entityVersions = pgTable(
     index("idx_ev_changed_at").on(table.changedAt),
     index("idx_ev_change_type").on(table.changeType),
     index("idx_ev_source_type").on(table.sourceType),
+    index("idx_ev_batch").on(table.batchId),
     // Partial index — defined in migration DDL:
     // CREATE INDEX idx_ev_contribution ON entity_versions(contribution_id)
     //   WHERE contribution_id IS NOT NULL;

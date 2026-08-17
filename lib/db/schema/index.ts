@@ -31,6 +31,8 @@ export type {
   BulkOperationSelect,
 } from "./bulk-operations";
 export { bulkOperations } from "./bulk-operations";
+export type { ChangeBatchInsert, ChangeBatchSelect } from "./change-batches";
+export { changeBatches } from "./change-batches";
 export type { ChangesetInsert, ChangesetSelect } from "./changesets";
 export { changesets } from "./changesets";
 export type {
