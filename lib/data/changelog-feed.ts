@@ -110,27 +110,30 @@ export async function fetchChangelogFeed(params: ChangelogQuery): Promise<Change
   const since = params.since ?? null;
   const kind = params.kind ?? null;
 
-  // Try database first
-  const db = getDb();
-  if (db) {
-    try {
-      // The feed is a union of two things: one row per change_batch, and one
-      // row per version that belongs to no batch.
-      //
-      // Batches exist because a single operation can write thousands of
-      // versions. A monthly EIA sync produces one entry reading
-      // "EIA-861 sync · 12,431 records" instead of 12,431 rows that bury every
-      // community edit made that month. The backfill already proved the failure
-      // mode: 166k baseline rows flooded this feed.
-      //
-      // Baselines stay excluded on both sides. They record the state an entity
-      // was already in — what makes history reconstructable, not an event where
-      // anyone changed anything.
-      const typeFilter = entityType ? sql`and v.entity_type = ${entityType}` : sql``;
-      const sinceFilter = since ? sql`and v.changed_at >= ${new Date(since)}` : sql``;
-      const batchSinceFilter = since ? sql`and b.started_at >= ${new Date(since)}` : sql``;
+  // Try the database first, but never require it. getDb() throws when
+  // DATABASE_URL is unset, and this function runs during `next build` while
+  // prerendering the changelog page — where CI has no database. A build with no
+  // database should render the static feed, not fail. The same path covers a
+  // database that is simply unreachable at runtime.
+  try {
+    const db = getDb();
+    // The feed is a union of two things: one row per change_batch, and one
+    // row per version that belongs to no batch.
+    //
+    // Batches exist because a single operation can write thousands of
+    // versions. A monthly EIA sync produces one entry reading
+    // "EIA-861 sync · 12,431 records" instead of 12,431 rows that bury every
+    // community edit made that month. The backfill already proved the failure
+    // mode: 166k baseline rows flooded this feed.
+    //
+    // Baselines stay excluded on both sides. They record the state an entity
+    // was already in — what makes history reconstructable, not an event where
+    // anyone changed anything.
+    const typeFilter = entityType ? sql`and v.entity_type = ${entityType}` : sql``;
+    const sinceFilter = since ? sql`and v.changed_at >= ${new Date(since)}` : sql``;
+    const batchSinceFilter = since ? sql`and b.started_at >= ${new Date(since)}` : sql``;
 
-      const feed = sql`
+    const feed = sql`
         with feed as (
           select
             'batch'                  as row_kind,
@@ -167,7 +170,7 @@ export async function fetchChangelogFeed(params: ChangelogQuery): Promise<Change
         select * from feed order by ts desc limit ${limit} offset ${offset}
       `;
 
-      const countQuery = sql`
+    const countQuery = sql`
         select
           (select count(*) from change_batches b where exists (
             select 1 from entity_versions v
@@ -179,34 +182,33 @@ export async function fetchChangelogFeed(params: ChangelogQuery): Promise<Change
           as count
       `;
 
-      const countResult = await db.execute(countQuery);
-      const total = Number((countResult.rows[0] as { count: string | number })?.count ?? 0);
+    const countResult = await db.execute(countQuery);
+    const total = Number((countResult.rows[0] as { count: string | number })?.count ?? 0);
 
-      if (total > 0) {
-        const { rows } = await db.execute(feed);
+    if (total > 0) {
+      const { rows } = await db.execute(feed);
 
-        const entries: ChangelogEntry[] = (rows as unknown as FeedRow[]).map((row) => {
-          const isBatch = row.row_kind === "batch";
-          const type = row.entity_type ?? "utility";
-          return {
-            // 'synced' already exists on ChangelogOperation and is what a
-            // machine-run batch is; community batches read as 'updated'.
-            kind: isBatch && row.source_type === "sync" ? "synced" : mapChangeType(row.change_type ?? "update"),
-            entityType: type as ChangelogEntry["entityType"],
-            entityTypeLabel: entityTypeLabel(type),
-            name: row.name,
-            slug: row.slug ?? row.key,
-            detail: isBatch ? `${Number(row.item_count).toLocaleString()} records` : (row.summary ?? "Updated"),
-            isoTimestamp: new Date(row.ts).toISOString(),
-            ...(row.source_type ? { source: row.source_type } : {}),
-          };
-        });
+      const entries: ChangelogEntry[] = (rows as unknown as FeedRow[]).map((row) => {
+        const isBatch = row.row_kind === "batch";
+        const type = row.entity_type ?? "utility";
+        return {
+          // 'synced' already exists on ChangelogOperation and is what a
+          // machine-run batch is; community batches read as 'updated'.
+          kind: isBatch && row.source_type === "sync" ? "synced" : mapChangeType(row.change_type ?? "update"),
+          entityType: type as ChangelogEntry["entityType"],
+          entityTypeLabel: entityTypeLabel(type),
+          name: row.name,
+          slug: row.slug ?? row.key,
+          detail: isBatch ? `${Number(row.item_count).toLocaleString()} records` : (row.summary ?? "Updated"),
+          isoTimestamp: new Date(row.ts).toISOString(),
+          ...(row.source_type ? { source: row.source_type } : {}),
+        };
+      });
 
-        return { entries, total, hasMore: offset + limit < total, source: "database" };
-      }
-    } catch {
-      // Database unavailable or empty — fall through to static
+      return { entries, total, hasMore: offset + limit < total, source: "database" };
     }
+  } catch {
+    // No database configured, unreachable, or the query failed — fall through.
   }
 
   // Fallback to static data
