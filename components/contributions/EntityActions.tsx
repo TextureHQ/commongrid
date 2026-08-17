@@ -4,11 +4,9 @@ import { Button, Icon, Tooltip } from "@texturehq/edges";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { apiSegmentFor } from "@/lib/entity-routes";
 import { DeleteEntityDialog } from "./DeleteEntityDialog";
 import { EditEntityPanel } from "./EditEntityPanel";
-import { VersionHistory } from "./VersionHistory";
-import { VersionHistoryButton } from "./VersionHistoryButton";
+import { EntityVersionHistory } from "./EntityVersionHistory";
 
 interface EntityActionsProps {
   entityType: string;
@@ -46,7 +44,6 @@ export function EntityActions({ entityType, entityId, entitySlug, entityName, cu
     }
   }, [searchParams, user, isLoading]);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -73,9 +70,7 @@ export function EntityActions({ entityType, entityId, entitySlug, entityName, cu
   return (
     <>
       <div className="flex items-center gap-2">
-        {/* Only for types with a slug-addressed versions endpoint. territory
-            and transmission_line are keyed by id and have none. */}
-        {apiSegmentFor(entityType) && <VersionHistoryButton onClick={() => setIsHistoryOpen(true)} />}
+        <EntityVersionHistory entityType={entityType} entitySlug={entitySlug} />
 
         {!isSignedIn && !isLoading ? (
           <Tooltip content="Sign in to suggest edits" placement="bottom">
@@ -130,13 +125,6 @@ export function EntityActions({ entityType, entityId, entitySlug, entityName, cu
           }}
         />
       )}
-
-      <VersionHistory
-        entityType={entityType}
-        entitySlug={entitySlug}
-        isOpen={isHistoryOpen}
-        onClose={() => setIsHistoryOpen(false)}
-      />
 
       {isDeleteOpen && (
         <DeleteEntityDialog

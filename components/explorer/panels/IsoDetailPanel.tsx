@@ -3,6 +3,7 @@
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect } from "react";
+import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
 import { useIso } from "@/hooks/useIso";
 import { useUtilityList } from "@/hooks/useUtilityList";
@@ -61,6 +62,10 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
         <div className="cg-explore-detail-name">{iso.name}</div>
         <div className="cg-explore-detail-sub">
           {iso.shortName} · {formatStates(iso.states)}
+        </div>
+
+        <div className="mt-3">
+          <EntityVersionHistory entityType="iso" entitySlug={slug} />
         </div>
 
         <div className="cg-explore-kv-table">

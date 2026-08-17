@@ -3,6 +3,7 @@
 import type { Feature, FeatureCollection } from "geojson";
 import { useEffect, useMemo, useState } from "react";
 import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
+import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useProgram } from "@/hooks/useProgram";
 import { useUtilityList } from "@/hooks/useUtilityList";
@@ -138,6 +139,10 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           <span style={{ color: statusColor(program.status), fontWeight: 500 }}>{statusLabel(program.status)}</span>
           {program.description &&
             ` · ${program.description.slice(0, 100)}${program.description.length > 100 ? "…" : ""}`}
+        </div>
+
+        <div className="mt-3">
+          <EntityVersionHistory entityType="program" entitySlug={slug} />
         </div>
 
         {/* Overview KV table */}
