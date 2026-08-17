@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
+import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePowerPlant } from "@/hooks/usePowerPlant";
 import { useExplorer } from "../ExplorerContext";
@@ -36,6 +37,10 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
           <span>{statusLabel}</span>
           {powerPlant.primaryFuel && ` · ${powerPlant.primaryFuel}`}
           {` · ${capacityDisplay}`}
+        </div>
+
+        <div className="mt-3">
+          <EntityVersionHistory entityType="power_plant" entitySlug={slug} />
         </div>
 
         <div className="cg-explore-kv-table">

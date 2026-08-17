@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { DeleteEntityDialog } from "./DeleteEntityDialog";
 import { EditEntityPanel } from "./EditEntityPanel";
+import { EntityVersionHistory } from "./EntityVersionHistory";
 
 interface EntityActionsProps {
   entityType: string;
@@ -18,8 +19,10 @@ interface EntityActionsProps {
 /**
  * EntityActions
  *
- * Action buttons for entity detail pages: "Suggest Edit" + "..." menu with
- * "Request Deletion". Disabled for anonymous users with a tooltip.
+ * Action buttons for entity detail pages: "History", "Suggest Edit", and a
+ * "..." menu with "Request Deletion". Edit and delete are disabled for
+ * anonymous users; history is public, since the point of an open dataset is
+ * that anyone can audit how a value got there without an account.
  */
 export function EntityActions({ entityType, entityId, entitySlug, entityName, currentValues }: EntityActionsProps) {
   const { user, isLoading } = useCurrentUser();
@@ -67,6 +70,8 @@ export function EntityActions({ entityType, entityId, entitySlug, entityName, cu
   return (
     <>
       <div className="flex items-center gap-2">
+        <EntityVersionHistory entityType={entityType} entitySlug={entitySlug} />
+
         {!isSignedIn && !isLoading ? (
           <Tooltip content="Sign in to suggest edits" placement="bottom">
             {editButton}

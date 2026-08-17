@@ -3,6 +3,7 @@
 import { Avatar, Badge, Loader } from "@texturehq/edges";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
+import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { EntityPageHeader, EntitySection, RelationshipCards } from "@/components/entity";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useIso } from "@/hooks/useIso";
@@ -32,6 +33,7 @@ export default function BalancingAuthorityDetailPage() {
         breadcrumbs={[{ label: "Balancing Authorities" }, { label: ba.name }]}
         entityName={ba.name}
         avatar={<Avatar fullName={ba.name} size="lg" />}
+        actions={<EntityVersionHistory entityType="balancing_authority" entitySlug={ba.slug} />}
         subtitle={
           <div className="flex items-center gap-2 flex-wrap">
             <Badge>Balancing Authority</Badge>

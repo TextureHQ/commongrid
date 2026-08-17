@@ -3,6 +3,7 @@
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
+import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
@@ -128,6 +129,10 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
         <div className="cg-explore-detail-sub">
           {getSegmentLabel(utility.segment)} · {formatCustomerCount(utility.customerCount)} customers ·{" "}
           {getStatusLabel(utility.status)}
+        </div>
+
+        <div className="mt-3">
+          <EntityVersionHistory entityType="utility" entitySlug={slug} />
         </div>
 
         {/* Registry data KV table */}

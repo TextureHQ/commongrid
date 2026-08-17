@@ -3,6 +3,7 @@
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect } from "react";
+import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useRto } from "@/hooks/useRto";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
@@ -59,6 +60,10 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
         <div className="cg-explore-detail-name">{rto.name}</div>
         <div className="cg-explore-detail-sub">
           {rto.shortName} · {formatStates(rto.states)}
+        </div>
+
+        <div className="mt-3">
+          <EntityVersionHistory entityType="rto" entitySlug={slug} />
         </div>
 
         <div className="cg-explore-kv-table">

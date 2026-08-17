@@ -2,6 +2,7 @@
 
 import { Badge, Button, Card, Icon, Loader, Timeline, TimelineItem } from "@texturehq/edges";
 import { useCallback, useEffect, useState } from "react";
+import { versionsPath } from "@/lib/entity-routes";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,7 +70,15 @@ export function VersionHistory({ entityType, entitySlug, isOpen, onClose }: Vers
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/${entityType}s/${entitySlug}/versions`);
+      // Not `${entityType}s`: that yields `utilitys`, and leaves the underscore
+      // in every multi-word type. Four of nine happened to work.
+      const path = versionsPath(entityType, entitySlug);
+      if (!path) {
+        setVersions([]);
+        setError(`No version history available for ${entityType}`);
+        return;
+      }
+      const res = await fetch(path);
       if (!res.ok) throw new Error(`Failed to load history (${res.status})`);
       const json = await res.json();
       setVersions(json.data ?? []);

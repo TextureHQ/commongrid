@@ -3,6 +3,7 @@
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect } from "react";
+import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
@@ -71,6 +72,10 @@ export function BADetailPanel({ slug }: { slug: string }) {
         <div className="cg-explore-detail-name">{ba.name}</div>
         <div className="cg-explore-detail-sub">
           {ba.shortName} · {formatStates(ba.states)}
+        </div>
+
+        <div className="mt-3">
+          <EntityVersionHistory entityType="balancing_authority" entitySlug={slug} />
         </div>
 
         <div className="cg-explore-kv-table">
