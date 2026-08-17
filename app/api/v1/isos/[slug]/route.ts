@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { ApiError } from "@/lib/api/errors";
 import { generateRequestId, withApiMiddleware } from "@/lib/api/middleware";
+import { parseAtParam, pointInTimeJsonResponse } from "@/lib/api/point-in-time";
 import { publicJsonResponse } from "@/lib/api/public-response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
@@ -11,17 +12,29 @@ import { isos } from "@/lib/db/schema";
 // GET /api/v1/isos/[slug] — Get ISO by slug
 // ---------------------------------------------------------------------------
 
-async function handleGet(_req: Request, ctx: RouteContext) {
+async function handleGet(req: Request, ctx: RouteContext) {
   const slug = ctx.params?.slug;
   if (!slug) {
     throw new ApiError("BAD_REQUEST", "Missing slug parameter");
   }
 
+  const at = parseAtParam(new URL(req.url).searchParams);
   const db = getDb();
   const [iso] = await db.select().from(isos).where(eq(isos.slug, slug)).limit(1);
 
   if (!iso) {
     throw new ApiError("NOT_FOUND", `ISO '${slug}' not found`);
+  }
+
+  if (at) {
+    return pointInTimeJsonResponse({
+      entityType: "iso",
+      entityId: iso.id,
+      at,
+      label: "ISO",
+      slug,
+      headers: { "Cache-Tag": `iso:${slug}` },
+    });
   }
 
   return publicJsonResponse(iso, 200);

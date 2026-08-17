@@ -72,6 +72,14 @@ export const PARAMETERS: Record<string, JsonSchema> = {
     description: "Unique URL-safe identifier for the resource",
     schema: { type: "string" },
   },
+  at: {
+    name: "at",
+    in: "query",
+    description:
+      "Point-in-time read. Reconstructs the entity from version history at the latest version with changed_at ≤ this instant. Accepts YYYY-MM-DD (end of that UTC day) or an ISO-8601 timestamp. Response includes `_as_of: { requested, versionNumber, changedAt }`. Returns 404 when no version exists at or before the requested time.",
+    schema: { type: "string" },
+    example: "2025-12-01",
+  },
 };
 
 /**

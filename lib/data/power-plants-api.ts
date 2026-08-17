@@ -34,7 +34,7 @@ export interface PowerPlantQueryOptions {
 // DB source
 // ---------------------------------------------------------------------------
 
-function dbRowToPowerPlant(row: Record<string, unknown>): PowerPlant {
+export function dbRowToPowerPlant(row: Record<string, unknown>): PowerPlant {
   return {
     id: row.id as string,
     slug: row.slug as string,

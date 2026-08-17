@@ -97,7 +97,7 @@ Authorization: Bearer cg_a1b2c3d4-e5f6-7890-abcd-0123456789ab
 
 ```bash
 curl -H "Authorization: Bearer $CG_KEY" \
-  "https://commongrid.info/api/v1/utilities?segment=cooperative&state=KY"
+  "https://commongrid.info/api/v1/utilities?segment=DISTRIBUTION_COOPERATIVE&state=KY"
 ```
 
 The server looks up the SHA-256 of the key in `api_keys`, checks `is_active` and `expires_at`, verifies
@@ -283,8 +283,8 @@ List utilities with rich filtering, sorting, cursor pagination, and sparse field
 
 | Param | Type | Description |
 |---|---|---|
-| `segment` | enum | `investor_owned`, `municipal`, `cooperative`, `federal`, `state`, `political_subdivision`, `cca`, `retail`, `wholesale`, `other`. |
-| `status` | enum | `active`, `inactive`, `merged`, `retired`. |
+| `segment` | enum | Exact `UtilitySegment` values (comma-separated for multiple): `INVESTOR_OWNED_UTILITY`, `DISTRIBUTION_COOPERATIVE`, `GENERATION_AND_TRANSMISSION`, `MUNICIPAL_UTILITY`, `COMMUNITY_CHOICE_AGGREGATOR`, `POLITICAL_SUBDIVISION`, `TRANSMISSION_OPERATOR`, `JOINT_ACTION_AGENCY`, `FEDERAL`. Unknown values → `400 VALIDATION_ERROR`. |
+| `status` | enum | Exact `UtilityStatus` values (comma-separated for multiple): `ACTIVE`, `MERGED`, `ACQUIRED`, `DEFUNCT`, `PENDING`. Unknown values → `400 VALIDATION_ERROR`. |
 | `state` | string | Two-letter USPS code; matches `jurisdiction ILIKE '%XX%'`. |
 | `iso`, `rto`, `ba` | string | Filter by `iso_id` / `rto_id` / `balancing_authority_id`. |
 | `search` / `q` | string | Full-text against name, eia_name, short_name, jurisdiction (weighted). |
@@ -317,7 +317,7 @@ snake_case equivalents (`min_customers`, `has_logo`, etc.) are accepted.
 
 ```bash
 # All active co-ops in KY, sorted by customer count
-curl "https://commongrid.info/api/v1/utilities?segment=cooperative&status=active&state=KY&sort=customerCount&order=desc"
+curl "https://commongrid.info/api/v1/utilities?segment=DISTRIBUTION_COOPERATIVE&status=ACTIVE&state=KY&sort=customerCount&order=desc"
 
 # Bulk lookup: 3 utilities by EIA ID, only the fields we need
 curl "https://commongrid.info/api/v1/utilities?eiaIds=3046,19791,20388&fields=id,slug,name,eiaId,customerCount"
@@ -352,8 +352,17 @@ Response:
 Single utility by slug. Supports `?include=iso,rto,ba` and `?fields=...`. Returns `404 NOT_FOUND` if
 missing or soft-deleted.
 
+Point-in-time reads via `?at=<date|timestamp>` reconstruct the entity from
+`entity_versions` (latest version with `changed_at` ≤ the requested instant).
+Date-only values (`YYYY-MM-DD`) mean end of that UTC day. The response includes
+`_as_of: { requested, versionNumber, changedAt }`. Successor following is
+disabled for historical reads. When no version exists at or before `at`, the
+API returns `404 NOT_FOUND`. Full history remains available at
+`GET /utilities/{slug}/versions`.
+
 ```bash
 curl "https://commongrid.info/api/v1/utilities/duke-energy-carolinas-llc?include=iso,ba"
+curl "https://commongrid.info/api/v1/utilities/austin-energy?at=2025-12-01"
 ```
 
 **Cache:** `public, s-maxage=3600, stale-while-revalidate=86400`.
@@ -803,8 +812,8 @@ Content-Type: application/json
   "match_source": "exact",
   "canonical_name": "Duke Energy Carolinas, LLC",
   "candidates": [
-    { "eia_id": "3046", "name": "Duke Energy Carolinas, LLC", "score": 0.97, "segment": "investor_owned", "state": "NC" },
-    { "eia_id": "4939", "name": "Duke Energy Progress, LLC", "score": 0.81, "segment": "investor_owned", "state": "NC" }
+    { "eia_id": "3046", "name": "Duke Energy Carolinas, LLC", "score": 0.97, "segment": "INVESTOR_OWNED_UTILITY", "state": "NC" },
+    { "eia_id": "4939", "name": "Duke Energy Progress, LLC", "score": 0.81, "segment": "INVESTOR_OWNED_UTILITY", "state": "NC" }
   ],
   "resolver_version": "1.0.0"
 }

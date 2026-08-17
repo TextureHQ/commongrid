@@ -17,6 +17,7 @@ import * as Sentry from "@sentry/nextjs";
 import { validateApiKey } from "./auth";
 import { withCors } from "./cors";
 import { ApiError, formatError } from "./errors";
+import { enforceAtQueryPolicy } from "./point-in-time";
 import { checkRateLimit, rateLimitHeaders, rateLimitIdentifier, rateLimitResponse } from "./rate-limit";
 import type { RouteContext, RouteHandler } from "./types";
 import { normalizeEndpoint, trackUsage } from "./usage-tracker";
@@ -291,6 +292,11 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
           return rateLimitResponse(rlResult, ctx.requestId);
         }
       }
+
+      // `?at=` is only meaningful on versioned slug detail routes. Validate
+      // format and path eligibility before handlers so list/sub-resource URLs
+      // never silently ignore a historical-looking query.
+      enforceAtQueryPolicy(new URL(req.url));
 
       const response = await handler(req, ctx);
 

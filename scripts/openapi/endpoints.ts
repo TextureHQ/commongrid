@@ -15,6 +15,7 @@
  *     me, editable-fields, webhooks, revalidate, health, tiles.
  */
 
+import { UTILITY_SEGMENT_ENUM, UTILITY_STATUS_ENUM } from "./descriptions";
 import type { JsonSchema } from "./schema-from-drizzle";
 
 export interface ParamDef {
@@ -71,6 +72,7 @@ export const LIMIT_REF = { $ref: "#/components/parameters/limit" };
 export const CURSOR_REF = { $ref: "#/components/parameters/cursor" };
 export const SLUG_REF = { $ref: "#/components/parameters/slug" };
 export const FIELDS_REF = { $ref: "#/components/parameters/fields" };
+export const AT_REF = { $ref: "#/components/parameters/at" };
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -105,10 +107,15 @@ export const ENDPOINTS: EndpointDef[] = [
       {
         name: "segment",
         in: "query",
-        description: "Filter by segment (electric, gas, water, combined)",
-        schema: STRING,
+        description: "Filter by UtilitySegment (exact match). Comma-separated for multiple. Unknown values return 400.",
+        schema: { type: "string", enum: UTILITY_SEGMENT_ENUM },
       },
-      { name: "status", in: "query", description: "Filter by operational status", schema: STRING },
+      {
+        name: "status",
+        in: "query",
+        description: "Filter by UtilityStatus (exact match). Comma-separated for multiple. Unknown values return 400.",
+        schema: { type: "string", enum: UTILITY_STATUS_ENUM },
+      },
       { name: "state", in: "query", description: "Filter by two-letter US state code", schema: STRING },
       { name: "iso", in: "query", description: "Filter by ISO id", schema: STRING },
       { name: "rto", in: "query", description: "Filter by RTO id", schema: STRING },
@@ -164,6 +171,7 @@ export const ENDPOINTS: EndpointDef[] = [
       },
     ],
     response: { kind: "list", itemSchemaRef: "Utility" },
+    has400: true,
   },
   {
     path: "/utilities/{slug}",
@@ -171,8 +179,9 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getUtility",
     summary: "Get utility by slug",
     tag: "Utilities",
-    parameters: [SLUG_REF],
+    parameters: [SLUG_REF, AT_REF],
     response: { kind: "singleInData", schemaRef: "Utility" },
+    has400: true,
   },
   {
     path: "/utilities/{slug}/geometry",
@@ -234,7 +243,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getIso",
     summary: "Get ISO by slug",
     tag: "Grid Operators",
-    parameters: [SLUG_REF],
+    parameters: [SLUG_REF, AT_REF],
     response: { kind: "singleInData", schemaRef: "Iso" },
   },
   {
@@ -267,7 +276,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getRto",
     summary: "Get RTO by slug",
     tag: "Grid Operators",
-    parameters: [SLUG_REF],
+    parameters: [SLUG_REF, AT_REF],
     response: { kind: "singleInData", schemaRef: "Rto" },
   },
   {
@@ -300,7 +309,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getBalancingAuthority",
     summary: "Get balancing authority by slug",
     tag: "Grid Operators",
-    parameters: [SLUG_REF],
+    parameters: [SLUG_REF, AT_REF],
     response: { kind: "singleInData", schemaRef: "BalancingAuthority" },
   },
   {
@@ -333,7 +342,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getRegion",
     summary: "Get region by slug",
     tag: "Regions",
-    parameters: [SLUG_REF],
+    parameters: [SLUG_REF, AT_REF],
     response: { kind: "singleInData", schemaRef: "Region" },
   },
 
@@ -499,7 +508,7 @@ export const ENDPOINTS: EndpointDef[] = [
       "always contain letters, so the two forms cannot collide. When resolved by plant code the " +
       'response includes a `Link: </api/v1/power-plants/{slug}>; rel="canonical"` header.',
     tag: "Power Plants",
-    parameters: [SLUG_REF],
+    parameters: [SLUG_REF, AT_REF],
     response: { kind: "singleInData", schemaRef: "PowerPlant" },
   },
   {
@@ -722,7 +731,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getEvStation",
     summary: "Get EV station by slug",
     tag: "EV Stations",
-    parameters: [SLUG_REF],
+    parameters: [SLUG_REF, AT_REF],
     response: { kind: "singleInData", schemaRef: "EvStation" },
   },
 
@@ -770,7 +779,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getPricingNode",
     summary: "Get pricing node by slug",
     tag: "Pricing Nodes",
-    parameters: [SLUG_REF],
+    parameters: [SLUG_REF, AT_REF],
     response: { kind: "singleInData", schemaRef: "PricingNode" },
   },
   {
@@ -841,7 +850,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getProgram",
     summary: "Get program by slug",
     tag: "Programs",
-    parameters: [SLUG_REF],
+    parameters: [SLUG_REF, AT_REF],
     response: { kind: "singleInData", schemaRef: "Program" },
   },
   {

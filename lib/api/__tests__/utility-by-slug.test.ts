@@ -18,6 +18,9 @@
  *   7. Deprecated row with NULL `successor_id` returns the row itself
  *      (no redirect to follow).
  *   8. Unknown slug → 404.
+ *   9. `?at=` reconstructs from entity_versions and attaches `_as_of`
+ *      (and never follows successors).
+ *  10. `?at=` before any version → 404.
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -91,8 +94,10 @@ const HOP3 = { ...ACTIVE_ROW, id: "h3", slug: "hop-final" };
 
 function setupDb(responses: Array<unknown[] | null>) {
   let call = 0;
-  const limit = vi.fn(() => Promise.resolve(responses[call++] ?? []));
-  const where = vi.fn(() => ({ limit }));
+  const resolve = () => Promise.resolve(responses[call++] ?? []);
+  const limit = vi.fn(resolve);
+  const orderBy = vi.fn(resolve);
+  const where = vi.fn(() => ({ limit, orderBy }));
   const from = vi.fn(() => ({ where }));
   const select = vi.fn(() => ({ from }));
   vi.mocked(getDb).mockReturnValue({ select } as unknown as ReturnType<typeof getDb>);
@@ -227,5 +232,102 @@ describe("GET /api/v1/utilities/[slug]", () => {
     });
 
     expect(res.status).toBe(404);
+  });
+
+  it("?at= returns reconstructed snapshot with _as_of (no successor follow)", async () => {
+    const versionRows = [
+      {
+        versionNumber: 1,
+        snapshot: {
+          id: ACTIVE_ROW.id,
+          slug: ACTIVE_ROW.slug,
+          name: "Burt County PPD (historical)",
+          status: "ACTIVE",
+          customerCount: 1000,
+        },
+        delta: null,
+        changedAt: new Date("2024-01-15T12:00:00.000Z"),
+      },
+      {
+        versionNumber: 2,
+        snapshot: null,
+        delta: { customerCount: { old: 1000, new: 2500 } },
+        changedAt: new Date("2025-06-01T00:00:00.000Z"),
+      },
+    ];
+    // 1) slug lookup → live row; 2) entity_versions for reconstruction
+    setupDb([[ACTIVE_ROW], versionRows]);
+
+    const res = await GET(makeReq("burt-county-public-power-district", "?at=2025-12-01") as never, {
+      params: asPromise({ slug: "burt-county-public-power-district" }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.name).toBe("Burt County PPD (historical)");
+    expect(body.data.customerCount).toBe(2500);
+    expect(body.data._as_of).toEqual({
+      requested: "2025-12-01T23:59:59.999Z",
+      versionNumber: 2,
+      changedAt: "2025-06-01T00:00:00.000Z",
+    });
+    expect(body.data._redirected_from).toBeUndefined();
+  });
+
+  it("?at= before any version returns 404", async () => {
+    setupDb([
+      [ACTIVE_ROW],
+      [
+        {
+          versionNumber: 1,
+          snapshot: { id: ACTIVE_ROW.id, slug: ACTIVE_ROW.slug, name: ACTIVE_ROW.name },
+          delta: null,
+          changedAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      ],
+    ]);
+
+    const res = await GET(makeReq("burt-county-public-power-district", "?at=2025-01-01") as never, {
+      params: asPromise({ slug: "burt-county-public-power-district" }),
+    });
+
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error.code).toBe("NOT_FOUND");
+    expect(body.error.message).toMatch(/at or before/i);
+  });
+
+  it("?at= on a MERGED slug returns that slug's history (does not follow successor)", async () => {
+    const versionRows = [
+      {
+        versionNumber: 1,
+        snapshot: {
+          id: MERGED_STUB.id,
+          slug: MERGED_STUB.slug,
+          name: MERGED_STUB.name,
+          status: "ACTIVE",
+        },
+        delta: null,
+        changedAt: new Date("2020-01-01T00:00:00.000Z"),
+      },
+      {
+        versionNumber: 2,
+        snapshot: null,
+        delta: { status: { old: "ACTIVE", new: "MERGED" } },
+        changedAt: new Date("2023-05-01T00:00:00.000Z"),
+      },
+    ];
+    setupDb([[MERGED_STUB], versionRows]);
+
+    const res = await GET(makeReq("burt-county-ppd", "?at=2024-01-01") as never, {
+      params: asPromise({ slug: "burt-county-ppd" }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.slug).toBe("burt-county-ppd");
+    expect(body.data.status).toBe("MERGED");
+    expect(body.data._redirected_from).toBeUndefined();
+    expect(body.data._as_of.versionNumber).toBe(2);
   });
 });

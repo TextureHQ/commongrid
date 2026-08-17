@@ -20,9 +20,21 @@
  * Returns 404 if not found.
  */
 
-import { ApiError, jsonResponse, type RouteContext, withApiMiddleware } from "@/lib/api";
+import {
+  ApiError,
+  jsonResponse,
+  parseAtParam,
+  pointInTimeJsonResponse,
+  type RouteContext,
+  withApiMiddleware,
+} from "@/lib/api";
 import { stripInternal } from "@/lib/api/public-response";
-import { isPlantCode, loadPowerPlantByPlantCode, loadPowerPlantBySlug } from "@/lib/data/power-plants-api";
+import {
+  dbRowToPowerPlant,
+  isPlantCode,
+  loadPowerPlantByPlantCode,
+  loadPowerPlantBySlug,
+} from "@/lib/data/power-plants-api";
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -31,7 +43,8 @@ import { isPlantCode, loadPowerPlantByPlantCode, loadPowerPlantBySlug } from "@/
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
 
-  return withApiMiddleware(async (_r: Request, _ctx: RouteContext) => {
+  return withApiMiddleware(async (r: Request, _ctx: RouteContext) => {
+    const at = parseAtParam(new URL(r.url).searchParams);
     const byPlantCode = isPlantCode(slug);
     const plant = byPlantCode ? await loadPowerPlantByPlantCode(slug) : await loadPowerPlantBySlug(slug);
 
@@ -49,6 +62,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
     if (byPlantCode) {
       headers.Link = `</api/v1/power-plants/${plant.slug}>; rel="canonical"`;
+    }
+
+    if (at) {
+      return pointInTimeJsonResponse({
+        entityType: "power_plant",
+        entityId: plant.id,
+        at,
+        label: "Power plant",
+        slug: plant.slug,
+        headers,
+        transform: dbRowToPowerPlant,
+      });
     }
 
     return jsonResponse({ data: stripInternal(plant) }, 200, headers);
