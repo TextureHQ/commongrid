@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ne, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
 import changelogJson from "@/data/changelog.json";
@@ -91,11 +91,15 @@ async function handleGet(req: Request, _ctx: RouteContext) {
   const db = getDb();
   if (db) {
     try {
-      const conditions = [];
+      // Baselines are excluded. The backfill wrote one per entity — 166k rows
+      // sharing a timestamp — recording the state each entity was already in.
+      // They are what makes history reconstructable, not events anyone changed
+      // anything, and unfiltered they bury every real edit.
+      const conditions = [ne(entityVersions.changeType, "baseline")];
       if (entityType) conditions.push(eq(entityVersions.entityType, entityType));
       if (since) conditions.push(gte(entityVersions.changedAt, new Date(since)));
 
-      const where = conditions.length > 0 ? and(...conditions) : undefined;
+      const where = and(...conditions);
 
       const countResult = await db.select({ count: sql<number>`count(*)` }).from(entityVersions).where(where);
 
@@ -114,8 +118,11 @@ async function handleGet(req: Request, _ctx: RouteContext) {
           kind: mapChangeType(row.changeType),
           entityType: row.entityType as ChangelogEntry["entityType"],
           entityTypeLabel: entityTypeLabel(row.entityType),
-          name: row.changeSummary ?? `${row.entityType} ${row.entityId}`,
-          slug: row.entityId,
+          // entity_name/entity_slug exist precisely so a feed row can name its
+          // subject without joining across eleven entity tables. Falling back to
+          // changeSummary put "Updated 1 fields: ..." in the name column.
+          name: row.entityName ?? row.changeSummary ?? `${row.entityType} ${row.entityId}`,
+          slug: row.entitySlug ?? row.entityId,
           detail: row.changeSummary ?? `Version ${row.versionNumber}`,
           isoTimestamp: (row.changedAt ?? new Date()).toISOString(),
         }));
