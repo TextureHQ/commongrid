@@ -44,6 +44,81 @@ describe("scheduled sync workflows", () => {
     // hooks; staging it again would reintroduce the MODULE_NOT_FOUND-era paths.
     expect(text).not.toMatch(/git add[^\n]*public\/data\/(?!territories)/);
   });
+
+  it.each(syncWorkflows)("%s does not download release assets from a guessed /latest/download/ path", (file) => {
+    const text = workflowText(file);
+    // go-pmtiles (and most goreleaser projects) embed the version in the asset
+    // filename, so `/releases/latest/download/<name-without-version>` 404s. Piped
+    // into `tar -xz` under `curl -sL`, the 404 HTML surfaced as "gzip: stdin: not
+    // in gzip format" and failed sync-pricing-nodes on every run (CIR-1271).
+    // Comments are stripped so prose describing the old bug neither satisfies
+    // nor trips the assertion.
+    const code = text
+      .split("\n")
+      .filter((line) => !line.trimStart().startsWith("#"))
+      .join("\n");
+    const badDownloads = [...code.matchAll(/releases\/latest\/download\/\S+/g)].map((m) => m[0]);
+    expect(badDownloads, `${path.basename(file)} guesses a versioned release asset name`).toEqual([]);
+  });
+});
+
+describe("sync-failure-alert.yml", () => {
+  const alertFile = path.join(WORKFLOW_DIR, "sync-failure-alert.yml");
+  const alertText = fs.readFileSync(alertFile, "utf-8");
+
+  /** `name:` of every workflow that runs on a `schedule:` trigger. */
+  function scheduledWorkflowNames(): string[] {
+    return fs
+      .readdirSync(WORKFLOW_DIR)
+      .filter((f) => f.endsWith(".yml") && f !== "sync-failure-alert.yml")
+      .map((f) => fs.readFileSync(path.join(WORKFLOW_DIR, f), "utf-8"))
+      .filter((text) => /^\s*schedule:/m.test(text))
+      .map((text) => text.match(/^name:\s*(.+)$/m)?.[1]?.trim())
+      .filter((n): n is string => Boolean(n))
+      .sort();
+  }
+
+  /** Workflow names listed under the alert's `workflow_run.workflows:` key. */
+  function watchedWorkflowNames(): string[] {
+    const block = alertText.match(/workflows:\n((?:\s*-\s*.+\n)+)/)?.[1] ?? "";
+    return block
+      .split("\n")
+      .map((line) => line.replace(/^\s*-\s*/, "").trim())
+      .filter(Boolean)
+      .sort();
+  }
+
+  it("watches every scheduled workflow by its exact name", () => {
+    // GitHub silently ignores a workflow_run entry whose name matches no
+    // workflow. "Sync Pricing Nodes" was listed while the workflow is actually
+    // named "Sync Pricing Nodes Data", so its failures alerted nobody for the
+    // entire time the alerting was believed to be in place (CIR-1271).
+    const scheduled = scheduledWorkflowNames();
+    const watched = watchedWorkflowNames();
+
+    expect(scheduled.length).toBeGreaterThanOrEqual(5);
+
+    const unwatched = scheduled.filter((n) => !watched.includes(n));
+    expect(unwatched, "scheduled workflow(s) whose failures would alert nobody").toEqual([]);
+
+    const dangling = watched.filter((n) => !scheduled.includes(n));
+    expect(dangling, "watched name(s) matching no scheduled workflow (typo?)").toEqual([]);
+  });
+
+  it("only alerts on failed scheduled runs", () => {
+    expect(alertText).toMatch(/conclusion == 'failure'/);
+    expect(alertText).toMatch(/event == 'schedule'/);
+  });
+
+  it("can write issues and does not require a non-default secret to alert", () => {
+    // The GITHUB_TOKEN path must work with no repo configuration, otherwise the
+    // alerting is only theoretical until someone adds a secret (CIR-1271).
+    expect(alertText).toMatch(/issues:\s*write/);
+    expect(alertText).toMatch(/secrets\.GITHUB_TOKEN/);
+    // The optional Slack step must be conditional so a missing webhook cannot
+    // fail the alert job and re-silence the pipeline.
+    expect(alertText).toMatch(/if:\s*env\.SLACK_WEBHOOK_URL != ''/);
+  });
 });
 
 describe("build-tiles.sh", () => {

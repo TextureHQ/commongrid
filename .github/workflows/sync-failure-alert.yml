@@ -9,13 +9,18 @@ name: Sync Failure Alert
 # state and opens (or updates) a single tracking issue so the failure is visible
 # in the normal triage flow. No secrets required — uses the default GITHUB_TOKEN.
 
+# These must match the `name:` of each watched workflow *exactly*. GitHub
+# silently ignores a workflow_run entry that matches nothing, so a typo here
+# reintroduces exactly the silent rot this workflow exists to prevent — as
+# happened with "Sync Pricing Nodes" vs its real name "Sync Pricing Nodes Data".
+# scripts/__tests__/sync-workflows.test.ts asserts this list stays in sync.
 on:
   workflow_run:
     workflows:
       - Sync Monthly Data
       - Sync Annual Data
       - Sync Transmission Lines
-      - Sync Pricing Nodes
+      - Sync Pricing Nodes Data
       - Sync EV Charging Data
       - Weekly Database Snapshot
     types: [completed]
