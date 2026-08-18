@@ -11,10 +11,18 @@ import { fetchChangelogFeed } from "@/lib/data/changelog-feed";
 import type { Changelog } from "@/types/changelog";
 import { ChangelogView } from "./ChangelogView";
 
-// The feed changes when a contribution is approved, so it must not be baked in
-// at build time. Revalidating on an interval keeps the page prerendered — and
-// therefore instant and indexable — while staying close to current.
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+
+// Rendered per request, never at build time.
+//
+// Prerendering this page meant querying the database during `next build`. On
+// Vercel that hung: both builds of this branch sat at 46 minutes and were killed
+// by the 45-minute limit, while every other branch built in four. A caught
+// exception cannot save you from a call that simply never returns, so the fix is
+// not to make the build talk to the database at all.
+//
+// Server rendering is what removes the flash; prerendering was only an
+// optimisation on top, and not one worth a build that can hang.
 
 export default async function ChangelogPage() {
   const feed = await fetchChangelogFeed({ limit: 200 });
