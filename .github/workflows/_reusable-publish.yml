@@ -1,0 +1,79 @@
+name: Reusable Package Publish
+
+on:
+  workflow_call:
+    inputs:
+      package-name:
+        required: true
+        type: string
+      package-path:
+        required: true
+        type: string
+      npm-token:
+        required: true
+        type: string
+    outputs:
+      status:
+        description: "Publish status: published, skipped, or failed"
+        value: ${{ jobs.publish.outputs.status }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.set-final-status.outputs.status }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org/'
+          scope: '@texturehq'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Get package version
+        id: get-version
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./${{ inputs.package-path }}/package.json').version")
+          PACKAGE_NAME=$(node -p "require('./${{ inputs.package-path }}/package.json').name")
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Check if package version exists
+        id: check-package-existence
+        run: |
+          PACKAGE_NAME="${{ steps.get-version.outputs.PACKAGE_NAME }}"
+          PACKAGE_VERSION="${{ steps.get-version.outputs.PACKAGE_VERSION }}"
+          
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null | grep -q "^${PACKAGE_VERSION}$"; then
+            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists. Skipping publish."
+            echo "outcome=skipped" >> $GITHUB_OUTPUT
+          else
+            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} does not exist. Proceeding with publish."
+            echo "outcome=new" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish package
+        id: do-publish
+        if: steps.check-package-existence.outputs.outcome == 'new'
+        run: |
+          npm publish ${{ inputs.package-path }} --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ inputs.npm-token }}
+
+      - name: Set final publish status
+        id: set-final-status
+        if: always()
+        run: |
+          FINAL_STATUS="failed" # Default to failed if anything unexpected happens or publish fails
+          if [ "${{ steps.check-package-existence.outputs.outcome }}" == "skipped" ]; then
+            FINAL_STATUS="skipped"
+          elif [ "${{ steps.do-publish.outcome }}" == "success" ]; then
+            FINAL_STATUS="published"
+          fi
+          echo "status=$FINAL_STATUS" >> $GITHUB_OUTPUT
