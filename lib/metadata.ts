@@ -19,6 +19,7 @@ export const PAGE_TITLES = {
   programs: "Utility Programs",
   moderation: "Moderation",
   moderationUsers: "Moderation - Users",
+  moderationQueue: "Moderation - Review Queue",
   moderationContributions: "Reviewing Contribution", // This will be dynamic
   signIn: "Sign In",
   signUp: "Sign Up",

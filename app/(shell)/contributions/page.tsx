@@ -366,6 +366,16 @@ export default function ContributionsDashboard() {
                       {/* Contributor actions — only on contributions still in the queue. */}
                       {(contribution.status === "pending" || contribution.status === "changes_requested") && (
                         <div className="mt-3 flex items-center gap-2">
+                          {(appUser?.role === "moderator" || appUser?.role === "admin") && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              icon="ArrowRight"
+                              href={`/mod/contributions/${contribution.id}`}
+                            >
+                              Review →
+                            </Button>
+                          )}
                           {changeCount === 1 ? (
                             <Button
                               variant="secondary"
