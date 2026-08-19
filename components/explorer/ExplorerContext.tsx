@@ -8,6 +8,7 @@ import {
 import type { FeatureCollection } from "geojson";
 import { useSearchParams } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import { detailViewToTab } from "@/lib/explorer/detail-view-tab";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -354,10 +355,30 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   }, [stack]);
 
   const navigateToDetail = useCallback(
-    (_view: DetailView, slug: string) => {
-      const currentList = stack.routes.find((r) => r.type === "list");
-      const entityKind: EntityTab = currentList?.payload.tab ?? DEFAULT_TAB;
-      stack.push(makeDetailRoute(entityKind, slug));
+    (view: DetailView, slug: string) => {
+      // The destination entity type — NOT the tab the user is currently on.
+      // Cross-entity links (program → utility, utility → program) previously
+      // reused `currentList.payload.tab`, so a utility link opened from the
+      // Programs tab kept `tab=programs` and rendered ProgramDetailPanel with
+      // a utility slug → "Program not found". Map the DetailView to its tab.
+      const targetTab = detailViewToTab(view);
+      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+
+      if (currentList?.payload.tab === targetTab) {
+        // Same entity type: drill in on top of the current (filtered) list so
+        // the back-arrow returns the user to their filtered list view.
+        stack.push(makeDetailRoute(targetTab, slug));
+        return;
+      }
+
+      // Different entity type: swap the underlying list route to the target
+      // tab so the correct detail panel renders, the URL carries the right
+      // `tab`, and the back-arrow returns to the destination entity's list.
+      stack.close();
+      stack.push(makeOverviewRoute());
+      stack.push(makeListRoute(targetTab));
+      stack.push(makeDetailRoute(targetTab, slug));
+      dispatch({ type: "SET_LIST_SOURCE", listSource: targetTab });
     },
     [stack]
   );

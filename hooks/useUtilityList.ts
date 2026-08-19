@@ -21,6 +21,7 @@ interface UtilityListFilters {
   hasTransmission?: boolean;
   hasDistribution?: boolean;
   eiaIds?: string[];
+  slugs?: string[];
   minCustomers?: number;
   maxCustomers?: number;
   minAmiMeters?: number;
@@ -77,6 +78,7 @@ function buildQueryString(filters: UtilityListFilters): string {
   if (filters.hasTransmission !== undefined) params.set("hasTransmission", filters.hasTransmission ? "true" : "false");
   if (filters.hasDistribution !== undefined) params.set("hasDistribution", filters.hasDistribution ? "true" : "false");
   if (filters.eiaIds && filters.eiaIds.length > 0) params.set("eiaIds", filters.eiaIds.join(","));
+  if (filters.slugs && filters.slugs.length > 0) params.set("slugs", [...filters.slugs].sort().join(","));
   if (filters.minCustomers !== undefined) params.set("minCustomers", filters.minCustomers.toString());
   if (filters.maxCustomers !== undefined) params.set("maxCustomers", filters.maxCustomers.toString());
   if (filters.minAmiMeters !== undefined) params.set("minAmiMeters", filters.minAmiMeters.toString());
@@ -95,7 +97,12 @@ function buildQueryString(filters: UtilityListFilters): string {
 
 export function useUtilityList(filters: UtilityListFilters = {}): UseUtilityListResult {
   const queryString = buildQueryString(filters);
-  const url = `/api/v1/utilities${queryString ? `?${queryString}` : ""}`;
+  // An explicitly empty bulk filter means "no utilities wanted" — skip the
+  // request instead of falling through to an unfiltered list fetch.
+  const isEmptyBulkFilter =
+    (filters.slugs !== undefined && filters.slugs.length === 0) ||
+    (filters.eiaIds !== undefined && filters.eiaIds.length === 0);
+  const url = isEmptyBulkFilter ? null : `/api/v1/utilities${queryString ? `?${queryString}` : ""}`;
 
   const { data, error, mutate } = useSWR<UtilityListResponse>(url, fetcher, {
     revalidateOnFocus: false,
@@ -106,7 +113,7 @@ export function useUtilityList(filters: UtilityListFilters = {}): UseUtilityList
 
   return {
     utilities: data?.data ?? [],
-    isLoading: !data && !error,
+    isLoading: !data && !error && url !== null,
     error: error ?? null,
     mutate,
     pagination: data?.pagination ?? null,

@@ -302,6 +302,7 @@ List utilities with rich filtering, sorting, cursor pagination, and sparse field
 | Param | Type | Description |
 |---|---|---|
 | `eiaIds` (aliases: `eia_ids`) | csv | Up to **500** EIA Utility IDs per request. |
+| `slugs` | csv | Up to **500** utility slugs per request. Case-insensitive, de-duplicated. |
 | `minCustomers` / `maxCustomers` | int | Bounds on `customer_count`. |
 | `minAmiMeters` / `minTotalMeters` | int | Bounds on meter counts. |
 | `hasLogo` / `hasWebsite` / `hasTerritory` | bool | Presence flags — useful for filling coverage gaps. |
@@ -327,6 +328,9 @@ curl "https://commongrid.info/api/v1/utilities?segment=DISTRIBUTION_COOPERATIVE&
 
 # Bulk lookup: 3 utilities by EIA ID, only the fields we need
 curl "https://commongrid.info/api/v1/utilities?eiaIds=3046,19791,20388&fields=id,slug,name,eiaId,customerCount"
+
+# Bulk slug → name resolution (e.g. rendering program administrators)
+curl "https://commongrid.info/api/v1/utilities?slugs=central-georgia-el-member,oconto-electric-cooperative&fields=id,slug,name"
 ```
 
 Response:
@@ -951,6 +955,9 @@ See [`CHANGELOG.md`](../CHANGELOG.md) for the full history. Significant recent c
   website-derived sources. Enables `POST /utilities/resolve` domain-match path.
 - **`GET /utilities/by-eia-id/{eiaId}`** — added as a sibling to the slug route for consumers that
   already store canonical EIA IDs.
+- **Bulk slug lookup on `GET /utilities`** — `slugs` (up to 500/request) resolves a known set of
+  utility slugs to full records in one call. Use this instead of paging the full list and filtering
+  client-side.
 - **Bulk + numeric + presence filters on `GET /utilities`** — `eiaIds` (up to 500/request),
   `minCustomers` / `maxCustomers`, `minAmiMeters`, `minTotalMeters`, `hasLogo`, `hasWebsite`,
   `hasTerritory`.

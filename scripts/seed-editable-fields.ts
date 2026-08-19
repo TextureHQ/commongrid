@@ -154,17 +154,15 @@ const fields: EditableFieldDefinition[] = [
     enumSource: "utility_segment",
     validationRules: {
       enum: [
-        "investor_owned",
-        "municipal",
-        "cooperative",
-        "political_subdivision",
-        "federal",
-        "tribal",
-        "community_choice",
-        "transmission",
-        "independent_power_producer",
-        "energy_service_provider",
-        "retail_power_marketer",
+        "INVESTOR_OWNED_UTILITY",
+        "DISTRIBUTION_COOPERATIVE",
+        "GENERATION_AND_TRANSMISSION",
+        "MUNICIPAL_UTILITY",
+        "COMMUNITY_CHOICE_AGGREGATOR",
+        "POLITICAL_SUBDIVISION",
+        "TRANSMISSION_OPERATOR",
+        "JOINT_ACTION_AGENCY",
+        "FEDERAL",
       ],
     },
   },
@@ -177,7 +175,7 @@ const fields: EditableFieldDefinition[] = [
     section: "basic",
     enumSource: "utility_status",
     validationRules: {
-      enum: ["active", "inactive", "merged", "acquired", "defunct"],
+      enum: ["ACTIVE", "MERGED", "ACQUIRED", "DEFUNCT", "PENDING"],
     },
   },
   {
@@ -641,7 +639,7 @@ const fields: EditableFieldDefinition[] = [
     section: "basic",
     enumSource: "program_status",
     validationRules: {
-      enum: ["active", "enrolling", "full", "paused", "ended"],
+      enum: ["DRAFT", "ACTIVE", "PAUSED", "FULL", "ARCHIVED"],
     },
   },
   {

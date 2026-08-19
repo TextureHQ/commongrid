@@ -29,6 +29,8 @@ interface FilterParams {
   fields: string | null;
   // Bulk multi-id filter: ?eiaIds=19791,19792,19793
   eiaIds: string[] | null;
+  // Bulk multi-slug filter: ?slugs=duke-energy-carolinas,central-georgia-el-member
+  slugs: string[] | null;
   // Numeric bounds on scale metrics
   minCustomers: number | null;
   maxCustomers: number | null;
@@ -51,6 +53,9 @@ interface DbFilterParams extends FilterParams {
 // Bulk-id request cap. Keeps a single call under Postgres's parameter limit and
 // makes rate limits predictable. Consumers needing more should paginate.
 const MAX_EIA_IDS_PER_REQUEST = 500;
+
+// Same cap for the slug variant of the bulk filter.
+const MAX_SLUGS_PER_REQUEST = 500;
 
 function parsePositiveInt(raw: string | null): number | null {
   if (raw === null || raw.trim() === "") return null;
@@ -92,6 +97,29 @@ function parseEiaIds(raw: string | null): string[] | null {
   return ids.slice(0, MAX_EIA_IDS_PER_REQUEST);
 }
 
+/**
+ * Parse `?slugs=a,b,c` into a de-duplicated slug list.
+ *
+ * Motivating case: a detail view holds a handful of utility slugs (e.g. the
+ * administrator slugs on a program) and needs their display names. Without a
+ * bulk-by-slug filter the only option is fetching the first N utilities
+ * alphabetically and hoping the wanted slug is in the page — which silently
+ * fails for anything past the cap.
+ */
+function parseSlugs(raw: string | null): string[] | null {
+  if (raw === null || raw.trim() === "") return null;
+  const slugs = [
+    ...new Set(
+      raw
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter((s) => s.length > 0)
+    ),
+  ];
+  if (slugs.length === 0) return null;
+  return slugs.slice(0, MAX_SLUGS_PER_REQUEST);
+}
+
 async function handleGet(req: Request, _ctx: RouteContext) {
   const url = new URL(req.url);
 
@@ -111,6 +139,7 @@ async function handleGet(req: Request, _ctx: RouteContext) {
 
   // Bulk + numeric + presence filters
   const eiaIds = parseEiaIds(url.searchParams.get("eiaIds") ?? url.searchParams.get("eia_ids"));
+  const slugs = parseSlugs(url.searchParams.get("slugs"));
   const minCustomers = parsePositiveInt(url.searchParams.get("minCustomers") ?? url.searchParams.get("min_customers"));
   const maxCustomers = parsePositiveInt(url.searchParams.get("maxCustomers") ?? url.searchParams.get("max_customers"));
   const minAmiMeters = parsePositiveInt(url.searchParams.get("minAmiMeters") ?? url.searchParams.get("min_ami_meters"));
@@ -135,6 +164,7 @@ async function handleGet(req: Request, _ctx: RouteContext) {
     hasDistribution,
     fields,
     eiaIds,
+    slugs,
     minCustomers,
     maxCustomers,
     minAmiMeters,
@@ -205,6 +235,9 @@ async function handleDatabaseMode(params: DbFilterParams) {
   }
   if (params.eiaIds && params.eiaIds.length > 0) {
     conditions.push(inArray(utilities.eiaId, params.eiaIds));
+  }
+  if (params.slugs && params.slugs.length > 0) {
+    conditions.push(inArray(utilities.slug, params.slugs));
   }
   if (params.minCustomers !== null) {
     conditions.push(gte(utilities.customerCount, params.minCustomers));
