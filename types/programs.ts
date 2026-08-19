@@ -7,6 +7,13 @@ export enum ProgramOrganizationRole {
   REGULATOR = "REGULATOR",
 }
 
+export const ProgramOrganizationRoleLabel: Record<ProgramOrganizationRole, string> = {
+  [ProgramOrganizationRole.ADMINISTRATOR]: "Administrator",
+  [ProgramOrganizationRole.IMPLEMENTER]: "Implementer",
+  [ProgramOrganizationRole.FUNDER]: "Funder",
+  [ProgramOrganizationRole.REGULATOR]: "Regulator",
+};
+
 export enum AssetType {
   BATTERY = "BATTERY",
   THERMOSTAT = "THERMOSTAT",
