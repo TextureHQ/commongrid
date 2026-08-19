@@ -17,7 +17,7 @@ import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
-import { contributions, entityLocks } from "@/lib/db/schema";
+import { communityEditableFields, contributions, entityLocks } from "@/lib/db/schema";
 import { users } from "@/lib/db/schema/users";
 import { isKnockConfigured } from "@/lib/knock/client";
 import { triggerContributionSubmitted, triggerModNewContribution } from "@/lib/knock/workflows";
@@ -228,7 +228,47 @@ async function handlePost(req: Request, ctx: RouteContext) {
     }
   }
 
-  // --- Insert the contribution ---
+  // --- Validate multi_enum field values against the registered option list ---
+  // multi_enum fields are JSONB enum arrays (e.g. program grid_services). Their
+  // values must be an array whose members are all in community_editable_fields
+  // validation_rules.enum, so invalid members cannot slip in via any approval
+  // path (a non-critical multi_enum can auto-approve for trusted contributors).
+  const multiEnumMeta = await db
+    .select({
+      fieldName: communityEditableFields.fieldName,
+      validationRules: communityEditableFields.validationRules,
+    })
+    .from(communityEditableFields)
+    .where(
+      and(eq(communityEditableFields.entityType, entity_type), eq(communityEditableFields.fieldType, "multi_enum"))
+    );
+
+  for (const meta of multiEnumMeta) {
+    const change = normalizedChanges[meta.fieldName];
+    if (!change) continue;
+    const next = change.new;
+    // null/undefined clears the field; that is allowed.
+    if (next === null || next === undefined) continue;
+    if (!Array.isArray(next)) {
+      throw new ApiError("VALIDATION_ERROR", `${meta.fieldName} must be an array of enum values.`, {
+        field: meta.fieldName,
+      });
+    }
+    const allowed = ((meta.validationRules as { enum?: string[] } | null)?.enum ?? []) as string[];
+    const invalid = next.filter((v) => typeof v !== "string" || !allowed.includes(v));
+    if (invalid.length > 0) {
+      throw new ApiError("VALIDATION_ERROR", `${meta.fieldName} contains invalid values: ${invalid.join(", ")}`, {
+        field: meta.fieldName,
+      });
+    }
+    // Reject duplicates so the stored array is a clean set.
+    if (new Set(next).size !== next.length) {
+      throw new ApiError("VALIDATION_ERROR", `${meta.fieldName} contains duplicate values.`, {
+        field: meta.fieldName,
+      });
+    }
+  }
+
   const [contribution] = await db
     .insert(contributions)
     .values({

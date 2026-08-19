@@ -1,10 +1,17 @@
 "use client";
 
 import { Badge } from "@texturehq/edges";
+import {
+  AssetTypeLabel,
+  GridServiceLabel,
+  IncentiveStructureLabel,
+  MarketSegmentLabel,
+  ParticipationModelLabel,
+} from "@/types/programs";
 
 export interface EditableField {
   fieldName: string;
-  fieldType: "text" | "integer" | "float" | "boolean" | "enum" | "url";
+  fieldType: "text" | "integer" | "float" | "boolean" | "enum" | "multi_enum" | "url";
   isCritical: boolean;
   displayName: string;
   validationRules?: {
@@ -15,6 +22,66 @@ export interface EditableField {
     pattern?: string;
     enum?: string[];
   };
+}
+
+// Human-readable labels for the enum options rendered by the select /
+// multi-select controls. Sourced from types/programs.ts so the labels can
+// never drift from the canonical enum members.
+const ENUM_LABEL_OVERRIDES: Record<string, string> = {
+  ...AssetTypeLabel,
+  ...MarketSegmentLabel,
+  ...ParticipationModelLabel,
+  ...GridServiceLabel,
+  ...IncentiveStructureLabel,
+};
+
+function humanizeOptionLabel(value: string): string {
+  return ENUM_LABEL_OVERRIDES[value] ?? value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Multi-select control for `multi_enum` fields (JSONB enum arrays such as
+ * asset_types, market_segments, grid_services). Emits a string[] of the
+ * selected enum members, preserving the canonical option order.
+ */
+function MultiSelectFieldInput({
+  field,
+  value,
+  onChange,
+}: {
+  field: EditableField;
+  value: unknown;
+  onChange: (fieldName: string, value: unknown) => void;
+}) {
+  const selected = Array.isArray(value) ? (value as string[]) : [];
+  const options = field.validationRules?.enum ?? [];
+
+  return (
+    <div className="space-y-2 rounded-md border border-border-default bg-background-body p-3">
+      <div className="grid gap-2 sm:grid-cols-2">
+        {options.map((option) => {
+          const checked = selected.includes(option);
+          return (
+            <label key={option} className="flex items-start gap-2 text-sm text-text-body">
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={(e) => {
+                  // Rebuild from the canonical option order so output is stable
+                  // regardless of click order.
+                  const next = options.filter((item) => (item === option ? e.target.checked : selected.includes(item)));
+                  onChange(field.fieldName, next);
+                }}
+                className="mt-1 h-4 w-4 rounded border-border-default text-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+              />
+              <span>{humanizeOptionLabel(option)}</span>
+            </label>
+          );
+        })}
+      </div>
+      <p className="text-xs text-text-muted">Select one or more values.</p>
+    </div>
+  );
 }
 
 interface EntityFormFieldsProps {
@@ -235,6 +302,9 @@ function renderFieldInput(field: EditableField, value: unknown, onChange: (field
         </div>
       );
 
+    case "multi_enum":
+      return <MultiSelectFieldInput field={field} value={value} onChange={onChange} />;
+
     case "enum":
       return (
         <select
@@ -246,7 +316,7 @@ function renderFieldInput(field: EditableField, value: unknown, onChange: (field
           <option value="">-- Select --</option>
           {field.validationRules?.enum?.map((option) => (
             <option key={option} value={option}>
-              {option.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              {humanizeOptionLabel(option)}
             </option>
           ))}
         </select>

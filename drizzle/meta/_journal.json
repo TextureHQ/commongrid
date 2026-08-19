@@ -134,6 +134,13 @@
       "when": 1786650660000,
       "tag": "0022_program_status_enum_drift",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1787172900000,
+      "tag": "0023_program_multi_enum_fields",
+      "breakpoints": true
     }
   ]
 }
