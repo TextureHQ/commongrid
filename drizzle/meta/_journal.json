@@ -127,6 +127,13 @@
       "when": 1786650600000,
       "tag": "0021_change_batches",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787151000000,
+      "tag": "0022_program_status_enum_drift",
+      "breakpoints": true
     }
   ]
 }
