@@ -8,7 +8,7 @@
  * docs/specs/community-contributions-api-prd.md for full specification.
  */
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { ApiError } from "@/lib/api/errors";
@@ -16,6 +16,7 @@ import { generateRequestId, withErrorHandling, withRequestId, withTiming } from 
 import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
+import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/contributions/edit-summary";
 import { getDb } from "@/lib/db/client";
 import { communityEditableFields, contributions, entityLocks } from "@/lib/db/schema";
 import { users } from "@/lib/db/schema/users";
@@ -71,6 +72,13 @@ type EntityType = (typeof VALID_ENTITY_TYPES)[number];
 // which is also where writes happen. Keeping one copy means a new entity type
 // cannot be contributable but unappliable (or vice versa).
 
+// Not every entity table has a slug column (territories and transmission_lines
+// do not). A Drizzle table exposes each column as a property, so an undefined
+// `slug` means "no such column" and the slug fallback must be skipped.
+function tableHasSlugColumn(table: unknown): boolean {
+  return !!table && typeof table === "object" && (table as Record<string, unknown>).slug !== undefined;
+}
+
 // ---------------------------------------------------------------------------
 // POST /api/v1/contributions — Submit a contribution
 // ---------------------------------------------------------------------------
@@ -125,11 +133,16 @@ async function handlePost(req: Request, ctx: RouteContext) {
     });
   }
 
-  // edit_summary (min 25 chars)
-  if (!edit_summary || typeof edit_summary !== "string" || edit_summary.trim().length < 25) {
-    throw new ApiError("VALIDATION_ERROR", "edit_summary is required and must be at least 25 characters.", {
-      field: "edit_summary",
-    });
+  // edit_summary — floor shared with the submit form so the counter, the
+  // client-side gate, and this check cannot disagree.
+  if (!edit_summary || typeof edit_summary !== "string" || edit_summary.trim().length < EDIT_SUMMARY_MIN_LENGTH) {
+    throw new ApiError(
+      "VALIDATION_ERROR",
+      `edit_summary is required and must be at least ${EDIT_SUMMARY_MIN_LENGTH} characters.`,
+      {
+        field: "edit_summary",
+      }
+    );
   }
 
   // source_type
@@ -168,8 +181,24 @@ async function handlePost(req: Request, ctx: RouteContext) {
     // Derive state from changes if available
     entityState = (changes.state?.new || changes.jurisdiction?.new?.split(",")[0]?.trim() || null) as string | null;
   } else {
-    // For edits, entity must exist
-    [entity] = await db.select().from(entityTable).where(eq(entityTable.id, entity_id)).limit(1);
+    // For edits, entity must exist.
+    //
+    // Resolve by primary key OR slug. Callers legitimately hold one or the
+    // other: the full detail pages pass `entity.id`, while the explorer detail
+    // panels only have the slug from the URL, because that is what the public
+    // API is addressed by. Matching on `id` alone made every edit and deletion
+    // request submitted from an explorer panel fail with a 404 naming an entity
+    // that plainly exists — and for the 12 sync-seeded entity types whose ids
+    // happen to be `<prefix>-<slug>`, it failed only for community-created rows
+    // (UUID ids), which is why it went unnoticed.
+    const matchesSlug = tableHasSlugColumn(entityTable);
+    [entity] = await db
+      .select()
+      .from(entityTable)
+      .where(
+        matchesSlug ? or(eq(entityTable.id, entity_id), eq(entityTable.slug, entity_id)) : eq(entityTable.id, entity_id)
+      )
+      .limit(1);
 
     if (!entity) {
       throw new ApiError("NOT_FOUND", `Entity ${entity_type}/${entity_id} not found.`);
@@ -180,6 +209,12 @@ async function handlePost(req: Request, ctx: RouteContext) {
     entityState = entity.state ?? entity.jurisdiction?.split(",")[0]?.trim() ?? null;
   }
 
+  // From here on, address the entity by its primary key. `entity_id` may have
+  // arrived as a slug; the lock check, the contribution row, and every
+  // downstream apply keyed on `entity_id` must use the resolved id or they will
+  // silently target nothing.
+  const resolvedEntityId: string = isCreate ? entity_id : (entity.id as string);
+
   // --- Entity lock check (skip for creates) ---
   if (!isCreate) {
     const [lock] = await db
@@ -188,7 +223,11 @@ async function handlePost(req: Request, ctx: RouteContext) {
       .where(
         and(
           eq(entityLocks.entityType, entity_type),
-          eq(entityLocks.entityId, entity_id),
+          // Match the resolved id. Also match the raw `entity_id` in case a
+          // lock was ever recorded under a slug; both point at one entity.
+          resolvedEntityId === entity_id
+            ? eq(entityLocks.entityId, resolvedEntityId)
+            : or(eq(entityLocks.entityId, resolvedEntityId), eq(entityLocks.entityId, entity_id)),
           // Only respect non-expired locks
           sql`(${entityLocks.expiresAt} IS NULL OR ${entityLocks.expiresAt} > NOW())`
         )
@@ -275,7 +314,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
       userId: user.id,
       changesetId: changeset_id ?? null,
       entityType: entity_type,
-      entityId: entity_id,
+      entityId: resolvedEntityId,
       entityVersion: entity_version,
       entitySlug: entitySlug,
       entityState: entityState,

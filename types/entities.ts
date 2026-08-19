@@ -168,6 +168,11 @@ export interface PowerPlant {
   status: "operable" | "proposed";
   proposedCapacityMw: number | null;
   proposedOnlineYear: number | null;
+  /**
+   * Optimistic-concurrency version, echoed back on edit/delete requests.
+   * Missing on legacy payloads; treat absent as 1.
+   */
+  version?: number;
 }
 
 export type FuelCategory =

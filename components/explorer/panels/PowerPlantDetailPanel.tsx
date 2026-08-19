@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DeleteEntityDialog } from "@/components/contributions/DeleteEntityDialog";
 import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -10,6 +11,7 @@ import { useExplorer } from "../ExplorerContext";
 export function PowerPlantDetailPanel({ slug }: { slug: string }) {
   const { user } = useCurrentUser();
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const { navigateToDetail } = useExplorer();
   const { powerPlant } = usePowerPlant(slug);
 
@@ -133,19 +135,39 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
             <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsEditOpen(true)}>
               Suggest Edit
             </button>
+            <button
+              type="button"
+              className="cg-explore-fullpage-link"
+              onClick={() => setIsDeleteOpen(true)}
+              style={{ color: "var(--color-feedback-error)" }}
+            >
+              Request Deletion
+            </button>
           </div>
         )}
       </div>
 
       {isEditOpen && powerPlant && (
         <EditEntityPanel
-          entityType="power-plant"
-          entityId={powerPlant.slug}
+          entityType="power_plant"
+          entityId={powerPlant.id}
           entitySlug={powerPlant.slug}
           entityName={powerPlant.name}
           currentValues={powerPlant as unknown as Record<string, unknown>}
           onClose={() => setIsEditOpen(false)}
           onSubmitted={() => setIsEditOpen(false)}
+        />
+      )}
+
+      {isDeleteOpen && powerPlant && (
+        <DeleteEntityDialog
+          entityType="power_plant"
+          entityId={powerPlant.id}
+          entityName={powerPlant.name}
+          entityVersion={powerPlant.version ?? 1}
+          isOpen={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+          onSuccess={() => setIsDeleteOpen(false)}
         />
       )}
     </div>

@@ -61,6 +61,7 @@ export function dbRowToPowerPlant(row: Record<string, unknown>): PowerPlant {
     status: row.status as "operable" | "proposed",
     proposedCapacityMw: row.proposedCapacityMw as number | null,
     proposedOnlineYear: row.proposedOnlineYear as number | null,
+    version: (row.version as number | null) ?? undefined,
   };
 }
 
