@@ -9,7 +9,14 @@
 
 import { describe, expect, it } from "vitest";
 import { UtilitySegment, UtilityStatus } from "@/types/entities";
-import { ProgramStatus } from "@/types/programs";
+import {
+  AssetType,
+  GridService,
+  IncentiveStructure,
+  MarketSegment,
+  ParticipationModel,
+  ProgramStatus,
+} from "@/types/programs";
 
 /**
  * Mapping of (entity_type, field_name) -> array of allowed values for
@@ -18,6 +25,12 @@ import { ProgramStatus } from "@/types/programs";
  */
 const EXPECTED_ENUM_FIELDS: Record<string, readonly string[]> = {
   "program:status": Object.values(ProgramStatus),
+  // multi_enum fields — JSONB enum arrays authored via the multi-select control
+  "program:asset_types": Object.values(AssetType),
+  "program:market_segments": Object.values(MarketSegment),
+  "program:grid_services": Object.values(GridService),
+  "program:participation_models": Object.values(ParticipationModel),
+  "program:incentive_structures": Object.values(IncentiveStructure),
   "utility:segment": Object.values(UtilitySegment),
   "utility:status": Object.values(UtilityStatus),
   "power_plant:status": ["operable", "proposed"],

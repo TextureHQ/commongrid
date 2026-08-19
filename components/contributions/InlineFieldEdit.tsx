@@ -129,6 +129,10 @@ export function InlineFieldEdit({
     // Normalize null/undefined and empty strings
     const normalizedCurrent = currentValue === undefined || currentValue === "" ? null : currentValue;
     const normalizedNew = value === undefined || value === "" ? null : value;
+    // Arrays/objects (multi_enum) compare by value, not reference.
+    if (typeof normalizedCurrent === "object" || typeof normalizedNew === "object") {
+      return JSON.stringify(normalizedNew) !== JSON.stringify(normalizedCurrent);
+    }
     return normalizedNew !== normalizedCurrent;
   }, [currentValue, value]);
 
@@ -284,6 +288,36 @@ export function InlineFieldEdit({
             </div>
           </div>
         );
+
+      case "multi_enum": {
+        const options = field.validationRules?.enum ?? [];
+        const selected = Array.isArray(value) ? (value as string[]) : [];
+        const humanize = (option: string) => option.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+        return (
+          <div className="space-y-2">
+            <div className="text-sm font-medium text-text-body">{field.displayName}</div>
+            <div className="grid gap-2 rounded-md border border-border-default bg-background-body p-3 sm:grid-cols-2">
+              {options.map((option) => (
+                <label key={option} className="flex items-start gap-2 text-sm text-text-body">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(option)}
+                    onChange={(e) => {
+                      const next = options.filter((item) =>
+                        item === option ? e.target.checked : selected.includes(item)
+                      );
+                      setValue(next);
+                    }}
+                    className="mt-1 h-4 w-4 rounded border-border-default text-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  />
+                  <span>{humanize(option)}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      }
 
       case "enum": {
         const enumOptions = (field.validationRules?.enum ?? []).map((option) => ({

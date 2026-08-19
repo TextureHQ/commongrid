@@ -14,11 +14,12 @@
 import { sql } from "drizzle-orm";
 import { db } from "../lib/db/client";
 import { communityEditableFields } from "../lib/db/schema/community-editable-fields";
+import { AssetType, GridService, IncentiveStructure, MarketSegment, ParticipationModel } from "../types/programs";
 
 interface EditableFieldDefinition {
   entityType: string;
   fieldName: string;
-  fieldType: "text" | "integer" | "float" | "boolean" | "enum" | "url";
+  fieldType: "text" | "integer" | "float" | "boolean" | "enum" | "multi_enum" | "url";
   isCritical: boolean;
   displayName: string;
   validationRules?: Record<string, unknown>;
@@ -673,6 +674,59 @@ const fields: EditableFieldDefinition[] = [
     isCritical: false,
     displayName: "Contact URL",
     section: "contact",
+  },
+  // Multi-value enum arrays (JSONB). Options are sourced from the canonical
+  // enums in types/programs.ts so the registered option list cannot drift from
+  // the values the app writes (see enum-subset test + CIR-1506).
+  {
+    entityType: "program",
+    fieldName: "asset_types",
+    fieldType: "multi_enum",
+    isCritical: true,
+    displayName: "Asset Types",
+    section: "attributes",
+    enumSource: "asset_type",
+    validationRules: { enum: Object.values(AssetType) },
+  },
+  {
+    entityType: "program",
+    fieldName: "market_segments",
+    fieldType: "multi_enum",
+    isCritical: false,
+    displayName: "Market Segments",
+    section: "attributes",
+    enumSource: "market_segment",
+    validationRules: { enum: Object.values(MarketSegment) },
+  },
+  {
+    entityType: "program",
+    fieldName: "grid_services",
+    fieldType: "multi_enum",
+    isCritical: true,
+    displayName: "Grid Services",
+    section: "attributes",
+    enumSource: "grid_service",
+    validationRules: { enum: Object.values(GridService) },
+  },
+  {
+    entityType: "program",
+    fieldName: "participation_models",
+    fieldType: "multi_enum",
+    isCritical: false,
+    displayName: "Participation",
+    section: "attributes",
+    enumSource: "participation_model",
+    validationRules: { enum: Object.values(ParticipationModel) },
+  },
+  {
+    entityType: "program",
+    fieldName: "incentive_structures",
+    fieldType: "multi_enum",
+    isCritical: false,
+    displayName: "Incentive Structures",
+    section: "attributes",
+    enumSource: "incentive_structure",
+    validationRules: { enum: Object.values(IncentiveStructure) },
   },
 ];
 
