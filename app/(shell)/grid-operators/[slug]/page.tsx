@@ -514,11 +514,15 @@ export default function UtilityDetailPage() {
     limit: 200,
   });
 
-  const { programs: allPrograms, isLoading: programsLoading } = useProgramList({ limit: 200 });
-  const utilityPrograms = useMemo(
-    () => (utility ? allPrograms.filter((p) => p.organizations.some((o) => o.entityId === utility.slug)) : []),
-    [utility, allPrograms]
-  );
+  // Server-side filter by organization. Previously this fetched the first 200
+  // of 600+ programs and filtered client-side, so any program alphabetically
+  // past the cap was invisible on the utility page even though the association
+  // existed in the DB.
+  const { programs: utilityPrograms, isLoading: programsLoading } = useProgramList({
+    organization: utility?.slug,
+    limit: 200,
+    enabled: Boolean(utility?.slug),
+  });
 
   const { transmissionLines: utilityLines, isLoading: linesLoading } = useTransmissionLineList({
     owner: utility?.name,

@@ -24,11 +24,27 @@ import type { Program } from "@/types/programs";
 // Validation schema
 // ---------------------------------------------------------------------------
 
+const ORGANIZATION_ROLES = ["ADMINISTRATOR", "IMPLEMENTER", "FUNDER", "REGULATOR"] as const;
+
 const querySchema = z.object({
   status: z.string().optional(),
   assetType: z.string().optional(),
   marketSegment: z.string().optional(),
   gridService: z.string().optional(),
+  /**
+   * Slug of an associated organization (usually a utility), e.g.
+   * `vermont-electric-cooperative`. Filters server-side against
+   * `organizations[].entityId` so callers never have to page the whole
+   * collection and filter client-side.
+   */
+  organization: z
+    .string()
+    .min(1)
+    .max(200)
+    .regex(/^[a-z0-9-]+$/, "organization must be a lowercase entity slug")
+    .optional(),
+  /** Optionally narrow `organization` to one role. */
+  organizationRole: z.enum(ORGANIZATION_ROLES).optional(),
   search: z.string().min(2).max(200).optional(),
   fields: z.string().optional(),
   sort: z.enum(["name", "status"]).default("name"),
@@ -157,6 +173,8 @@ async function handler(req: Request): Promise<Response> {
     assetType,
     marketSegment,
     gridService,
+    organization,
+    organizationRole,
     search,
     fields,
     sort,
@@ -164,6 +182,12 @@ async function handler(req: Request): Promise<Response> {
     limit,
     cursor: rawCursor,
   } = parsed.data;
+
+  // `organizationRole` alone is ambiguous — it would silently widen to "all
+  // programs" rather than an error. Fail loudly instead.
+  if (organizationRole && !organization) {
+    throw new ApiError("VALIDATION_ERROR", "organizationRole requires organization");
+  }
 
   // Decode cursor if provided
   let cursor: CursorV1 | null = null;
@@ -177,6 +201,8 @@ async function handler(req: Request): Promise<Response> {
     assetType,
     marketSegment,
     gridService,
+    organization,
+    organizationRole,
     search,
   });
 

@@ -95,11 +95,14 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     limit: 200,
   });
 
-  const { programs: allPrograms } = useProgramList({ limit: 200 });
-  const utilityPrograms = useMemo(
-    () => (utility ? allPrograms.filter((p) => p.organizations.some((o) => o.entityId === utility.slug)) : []),
-    [utility, allPrograms]
-  );
+  // Server-side filter by organization — see grid-operators/[slug]. Fetching a
+  // capped page and filtering client-side silently hid any program past the
+  // 200-row cap.
+  const { programs: utilityPrograms } = useProgramList({
+    organization: utility?.slug,
+    limit: 200,
+    enabled: Boolean(utility?.slug),
+  });
 
   if (utilitiesLoading) {
     return <div className="cg-explore-loading">Loading…</div>;
