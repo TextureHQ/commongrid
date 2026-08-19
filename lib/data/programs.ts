@@ -27,6 +27,17 @@ export interface ProgramFilters {
   gridService?: string;
   /** Min 2 chars. Matches against name and slug (case-insensitive). */
   search?: string;
+  /**
+   * Entity slug of an organization associated with the program (any role).
+   * Matches against `organizations[].entityId` — e.g. `vermont-electric-cooperative`
+   * returns every program that utility administers or participates in.
+   */
+  organization?: string;
+  /**
+   * Narrow `organization` to a single role, e.g. `ADMINISTRATOR`. Ignored when
+   * `organization` is absent.
+   */
+  organizationRole?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -175,6 +186,17 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
   }
   if (filters?.gridService) {
     result = result.filter((p) => p.gridServices.includes(filters.gridService as GridService));
+  }
+
+  // Organization association filter. Applied post-normalization so it works
+  // uniformly across both storage shapes handled by normalizeOrganizations()
+  // (object entries and legacy bare slug strings).
+  if (filters?.organization) {
+    const wantedEntity = filters.organization;
+    const wantedRole = filters.organizationRole;
+    result = result.filter((p) =>
+      p.organizations.some((o) => o.entityId === wantedEntity && (!wantedRole || o.role === wantedRole))
+    );
   }
 
   return result;

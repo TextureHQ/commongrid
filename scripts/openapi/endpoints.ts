@@ -829,6 +829,19 @@ export const ENDPOINTS: EndpointDef[] = [
       { name: "marketSegment", in: "query", description: "Filter by market segment", schema: STRING },
       { name: "gridService", in: "query", description: "Filter by grid service", schema: STRING },
       {
+        name: "organization",
+        in: "query",
+        description:
+          "Filter by associated organization slug (matches any element in the program's `organizations` array), e.g. `vermont-electric-cooperative` for every program that utility is involved in.",
+        schema: { type: "string", pattern: "^[a-z0-9-]+$" },
+      },
+      {
+        name: "organizationRole",
+        in: "query",
+        description: "Narrow `organization` to a single role. Requires `organization`.",
+        schema: { type: "string", enum: ["ADMINISTRATOR", "IMPLEMENTER", "FUNDER", "REGULATOR"] },
+      },
+      {
         name: "search",
         in: "query",
         description: "Name/description search (min 2 chars)",
