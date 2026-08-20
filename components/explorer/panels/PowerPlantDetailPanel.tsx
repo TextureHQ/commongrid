@@ -39,6 +39,10 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
       : `${powerPlant.totalCapacityMw.toLocaleString()} MW`;
 
   const statusLabel = powerPlant.status === "operable" ? "Operable" : "Proposed";
+  const utilityId = powerPlant.utilityId;
+  const utilityName = powerPlant.utilityName;
+  const balancingAuthorityId = powerPlant.balancingAuthorityId;
+  const balancingAuthorityLabel = powerPlant.baCode ?? balancingAuthorityId;
 
   return (
     <div className="flex flex-col h-full">
@@ -56,16 +60,16 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
         </div>
 
         <div className="cg-explore-kv-table">
-          {powerPlant.utilityId && powerPlant.utilityName && (
+          {utilityId && utilityName && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Utility</span>
               <span className="cg-explore-kv-val">
                 <button
                   type="button"
-                  onClick={() => navigateToDetail("utility", powerPlant.utilityId)}
+                  onClick={() => navigateToDetail("utility", utilityId)}
                   style={linkButtonStyle}
                 >
-                  {powerPlant.utilityName}
+                  {utilityName}
                 </button>
               </span>
             </div>
@@ -114,16 +118,16 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
               {powerPlant.county ? `${powerPlant.county}, ${powerPlant.state}` : powerPlant.state}
             </span>
           </div>
-          {powerPlant.balancingAuthorityId && (
+          {balancingAuthorityId && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Balancing Authority</span>
               <span className="cg-explore-kv-val">
                 <button
                   type="button"
-                  onClick={() => navigateToDetail("ba", powerPlant.balancingAuthorityId)}
+                  onClick={() => navigateToDetail("ba", balancingAuthorityId)}
                   style={linkButtonStyle}
                 >
-                  {powerPlant.baCode ?? powerPlant.balancingAuthorityId}
+                  {balancingAuthorityLabel}
                 </button>
               </span>
             </div>
