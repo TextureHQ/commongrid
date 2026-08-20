@@ -57,7 +57,7 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigateToDetail("utility", utilityId);
+                    navigateToDetail("utility", utilityId!);
                   }}
                 >
                   {utilityName}
