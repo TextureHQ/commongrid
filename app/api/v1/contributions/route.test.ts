@@ -83,16 +83,25 @@ describe("POST /api/v1/contributions — entity resolution", () => {
       bannedAt: null,
     });
 
-    // First select() = entity lookup; second = entity-lock lookup (none).
+    // First select() = entity lookup; second = entity-lock lookup (none);
+    // third = multi_enum metadata lookup (none).
     let call = 0;
     mockSelect.mockImplementation(() => ({
       from: () => ({
-        where: () => ({
-          limit: () => {
-            call += 1;
-            return Promise.resolve(call === 1 ? [PROGRAM_ROW] : []);
-          },
-        }),
+        where: () => {
+          call += 1;
+          if (call === 1) {
+            return {
+              limit: () => Promise.resolve([PROGRAM_ROW]),
+            };
+          }
+          if (call === 2) {
+            return {
+              limit: () => Promise.resolve([]),
+            };
+          }
+          return Promise.resolve([]);
+        },
       }),
     }));
 

@@ -282,7 +282,9 @@ async function handlePost(req: Request, ctx: RouteContext) {
       and(eq(communityEditableFields.entityType, entity_type), eq(communityEditableFields.fieldType, "multi_enum"))
     );
 
-  for (const meta of multiEnumMeta) {
+  const multiEnumMetaRows = Array.isArray(multiEnumMeta) ? multiEnumMeta : [];
+
+  for (const meta of multiEnumMetaRows) {
     const change = normalizedChanges[meta.fieldName];
     if (!change) continue;
     const next = change.new;
