@@ -9,6 +9,7 @@ export const PAGE_TITLES = {
   substations: "US Electric Substations",
   evCharging: "EV Charging Stations",
   pricingNodes: "Pricing Nodes",
+  rates: "Rates & Tariffs",
   api: "API Reference",
   developers: "Developers",
   contributions: "Contributions",
