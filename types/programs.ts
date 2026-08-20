@@ -94,6 +94,18 @@ export enum IncentiveStructure {
   NONE = "NONE",
 }
 
+export const IncentiveStructureLabel: Record<IncentiveStructure, string> = {
+  [IncentiveStructure.REBATE]: "Rebate",
+  [IncentiveStructure.BILL_CREDIT]: "Bill Credit",
+  [IncentiveStructure.RATE_DISCOUNT]: "Rate Discount",
+  [IncentiveStructure.DIRECT_PAYMENT]: "Direct Payment",
+  [IncentiveStructure.CAPACITY_PAYMENT]: "Capacity Payment",
+  [IncentiveStructure.PERFORMANCE_BASED]: "Performance-Based",
+  [IncentiveStructure.TAX_CREDIT]: "Tax Credit",
+  [IncentiveStructure.LOAN]: "Loan",
+  [IncentiveStructure.NONE]: "None",
+};
+
 export enum GridService {
   DEMAND_RESPONSE = "DEMAND_RESPONSE",
   PEAK_SHAVING = "PEAK_SHAVING",
