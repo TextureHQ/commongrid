@@ -91,11 +91,13 @@ describe("historical loader normalization", () => {
       variants: [],
       createdAt: new Date("2025-01-01T00:00:00.000Z"),
       updatedAt: new Date("2025-01-02T00:00:00.000Z"),
+      version: 3,
       source: "internal-only",
     });
 
     expect(program.organizations).toEqual([{ entityId: "utility-1", role: "ADMINISTRATOR" }]);
     expect(program.compensationTiers).toEqual([{ tier: 1, type: "FLAT", amount: 0, unit: "FLAT" }]);
+    expect(program.version).toBe(3);
     expect(program).not.toHaveProperty("source");
   });
 });

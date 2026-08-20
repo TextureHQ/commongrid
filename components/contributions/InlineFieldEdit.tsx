@@ -3,7 +3,13 @@
 import { Button, Dialog, Icon, Select, TextField } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { type EditableField, SOURCE_TYPE_OPTIONS } from "./EntityFormFields";
+import {
+  deepEqual,
+  type EditableField,
+  humanizeOptionLabel,
+  normalizeJsonText,
+  SOURCE_TYPE_OPTIONS,
+} from "./EntityFormFields";
 
 interface InlineFieldEditProps {
   isOpen: boolean;
@@ -129,10 +135,10 @@ export function InlineFieldEdit({
     // Normalize null/undefined and empty strings
     const normalizedCurrent = currentValue === undefined || currentValue === "" ? null : currentValue;
     const normalizedNew = value === undefined || value === "" ? null : value;
-    return normalizedNew !== normalizedCurrent;
+    return !deepEqual(normalizedNew, normalizedCurrent);
   }, [currentValue, value]);
 
-  const summaryLongEnough = editSummary.trim().length >= 10;
+  const summaryLongEnough = editSummary.trim().length >= 25;
   const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
 
   const handleSubmit = async () => {
@@ -226,6 +232,34 @@ export function InlineFieldEdit({
           />
         );
 
+      case "json":
+        return (
+          <div className="space-y-2">
+            <label htmlFor={`field-${field.fieldName}`} className="text-sm font-medium text-text-body">
+              {field.displayName}
+            </label>
+            <textarea
+              id={`field-${field.fieldName}`}
+              value={normalizeJsonText(value)}
+              onChange={(e) => {
+                const nextText = e.target.value;
+                if (nextText.trim() === "") {
+                  setValue(null);
+                  return;
+                }
+                try {
+                  setValue(JSON.parse(nextText));
+                } catch {
+                  setValue(nextText);
+                }
+              }}
+              rows={6}
+              placeholder="[]"
+              className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 font-mono text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+            />
+          </div>
+        );
+
       case "integer":
         return (
           <div className="space-y-2">
@@ -288,15 +322,51 @@ export function InlineFieldEdit({
       case "enum": {
         const enumOptions = (field.validationRules?.enum ?? []).map((option) => ({
           id: option,
-          label: option.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          label: humanizeOptionLabel(option),
           value: option,
         }));
 
-        const currentLabel = currentValue
-          ? String(currentValue)
-              .replace(/_/g, " ")
-              .replace(/\b\w/g, (c) => c.toUpperCase())
-          : "None";
+        const currentLabel = Array.isArray(currentValue)
+          ? (currentValue as string[]).map(humanizeOptionLabel).join(", ") || "None"
+          : currentValue
+            ? humanizeOptionLabel(String(currentValue))
+            : "None";
+
+        if (field.validationRules?.multiple) {
+          const selected = Array.isArray(value) ? (value as string[]) : [];
+          return (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-text-body">Current Value</div>
+                <div className="text-sm text-text-muted">{currentLabel}</div>
+              </div>
+              <div className="space-y-2 rounded-md border border-border-default bg-background-body p-3">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {enumOptions.map((option) => {
+                    const checked = selected.includes(option.value);
+                    return (
+                      <label key={option.id} className="flex items-start gap-2 text-sm text-text-body">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...selected.filter((item) => item !== option.value), option.value]
+                              : selected.filter((item) => item !== option.value);
+                            setValue(next);
+                          }}
+                          className="mt-1 h-4 w-4 rounded border-border-default text-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-text-muted">Select one or more values.</p>
+              </div>
+            </div>
+          );
+        }
 
         return (
           <div className="space-y-3">
@@ -360,7 +430,7 @@ export function InlineFieldEdit({
                 </label>
                 <div className="flex items-center gap-1">
                   <span className={`text-xs ${summaryLongEnough ? "text-feedback-success" : "text-text-muted"}`}>
-                    {editSummary.trim().length}/10
+                    {editSummary.trim().length}/25
                   </span>
                   {summaryLongEnough && <Icon name="CheckCircle" size="sm" className="text-feedback-success" />}
                 </div>
@@ -369,7 +439,7 @@ export function InlineFieldEdit({
                 id="edit-summary"
                 value={editSummary}
                 onChange={(e) => setEditSummary(e.target.value)}
-                placeholder="Describe your change (minimum 10 characters)"
+                placeholder="Describe your change (minimum 25 characters)"
                 rows={2}
                 className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
               />

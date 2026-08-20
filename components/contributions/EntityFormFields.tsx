@@ -1,10 +1,11 @@
 "use client";
 
 import { Badge } from "@texturehq/edges";
+import { useEffect, useState } from "react";
 
 export interface EditableField {
   fieldName: string;
-  fieldType: "text" | "integer" | "float" | "boolean" | "enum" | "url";
+  fieldType: "text" | "integer" | "float" | "boolean" | "enum" | "url" | "json";
   isCritical: boolean;
   displayName: string;
   validationRules?: {
@@ -14,7 +15,143 @@ export interface EditableField {
     maxLength?: number;
     pattern?: string;
     enum?: string[];
+    multiple?: boolean;
   };
+}
+
+const HUMAN_LABEL_OVERRIDES: Record<string, string> = {
+  active: "Active",
+  enrolling: "Enrolling",
+  ended: "Ended",
+  full: "Full",
+  paused: "Paused",
+};
+
+export function humanizeOptionLabel(value: string): string {
+  return HUMAN_LABEL_OVERRIDES[value] ?? value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function deepEqual(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (a === null || b === null || a === undefined || b === undefined) return false;
+  if (typeof a !== "object" || typeof b !== "object") return false;
+
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
+
+export function normalizeJsonText(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "";
+
+  if (typeof value === "string") {
+    try {
+      return JSON.stringify(JSON.parse(value), null, 2);
+    } catch {
+      return value;
+    }
+  }
+
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+function MultiSelectFieldInput({
+  field,
+  value,
+  onChange,
+}: {
+  field: EditableField;
+  value: unknown;
+  onChange: (fieldName: string, value: unknown) => void;
+}) {
+  const selected = Array.isArray(value) ? value : [];
+  const options = field.validationRules?.enum ?? [];
+
+  return (
+    <div className="space-y-2 rounded-md border border-border-default bg-background-body p-3">
+      <div className="grid gap-2 sm:grid-cols-2">
+        {options.map((option) => {
+          const checked = selected.includes(option);
+          return (
+            <label key={option} className="flex items-start gap-2 text-sm text-text-body">
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={(e) => {
+                  const next = e.target.checked
+                    ? [...selected.filter((item): item is string => typeof item === "string"), option]
+                    : selected.filter((item) => item !== option);
+                  onChange(field.fieldName, next);
+                }}
+                className="mt-1 h-4 w-4 rounded border-border-default text-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+              />
+              <span>{humanizeOptionLabel(option)}</span>
+            </label>
+          );
+        })}
+      </div>
+      <p className="text-xs text-text-muted">Select one or more values.</p>
+    </div>
+  );
+}
+
+function JsonFieldInput({
+  field,
+  value,
+  onChange,
+}: {
+  field: EditableField;
+  value: unknown;
+  onChange: (fieldName: string, value: unknown) => void;
+}) {
+  const [text, setText] = useState(() => normalizeJsonText(value));
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setText(normalizeJsonText(value));
+    setError(null);
+  }, [value]);
+
+  const handleChange = (nextText: string) => {
+    setText(nextText);
+
+    if (nextText.trim() === "") {
+      onChange(field.fieldName, null);
+      setError(null);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(nextText);
+      if (!deepEqual(parsed, value)) {
+        onChange(field.fieldName, parsed);
+      }
+      setError(null);
+    } catch {
+      setError("Enter valid JSON");
+    }
+  };
+
+  return (
+    <div className="space-y-1">
+      <textarea
+        id={field.fieldName}
+        value={text}
+        onChange={(e) => handleChange(e.target.value)}
+        rows={6}
+        placeholder="[]"
+        className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 font-mono text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+      />
+      <p className="text-xs text-text-muted">Edit as JSON.</p>
+      {error && <p className="text-xs text-feedback-error">{error}</p>}
+    </div>
+  );
 }
 
 interface EntityFormFieldsProps {
@@ -136,7 +273,7 @@ interface EditSummaryFieldProps {
   placeholder?: string;
 }
 
-export function EditSummaryField({ value, onChange, minLength = 10, placeholder }: EditSummaryFieldProps) {
+export function EditSummaryField({ value, onChange, minLength = 25, placeholder }: EditSummaryFieldProps) {
   return (
     <div className="space-y-1">
       <label htmlFor="editSummary" className="flex items-center justify-between text-sm font-medium text-text-body">
@@ -235,7 +372,14 @@ function renderFieldInput(field: EditableField, value: unknown, onChange: (field
         </div>
       );
 
+    case "json":
+      return <JsonFieldInput field={field} value={value} onChange={onChange} />;
+
     case "enum":
+      if (field.validationRules?.multiple) {
+        return <MultiSelectFieldInput field={field} value={value} onChange={onChange} />;
+      }
+
       return (
         <select
           id={field.fieldName}
@@ -246,7 +390,7 @@ function renderFieldInput(field: EditableField, value: unknown, onChange: (field
           <option value="">-- Select --</option>
           {field.validationRules?.enum?.map((option) => (
             <option key={option} value={option}>
-              {option.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              {humanizeOptionLabel(option)}
             </option>
           ))}
         </select>

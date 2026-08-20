@@ -125,6 +125,7 @@ export function dbRowToProgram(row: Record<string, unknown>): Program {
     variants: (row.variants as Program["variants"]) ?? [],
     createdAt: row.createdAt instanceof Date ? (row.createdAt as Date).toISOString() : (row.createdAt as string),
     updatedAt: row.updatedAt instanceof Date ? (row.updatedAt as Date).toISOString() : (row.updatedAt as string),
+    version: (row.version as number | null) ?? 1,
   };
 }
 
@@ -171,6 +172,7 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
       variants: programs.variants,
       createdAt: programs.createdAt,
       updatedAt: programs.updatedAt,
+      version: programs.version,
     })
     .from(programs)
     .where(and(...conditions));
@@ -237,6 +239,7 @@ async function loadBySlugFromDb(slug: string): Promise<Program | null> {
       variants: programs.variants,
       createdAt: programs.createdAt,
       updatedAt: programs.updatedAt,
+      version: programs.version,
     })
     .from(programs)
     .where(eq(programs.slug, slug))

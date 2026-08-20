@@ -61,6 +61,7 @@ export function dbRowToPowerPlant(row: Record<string, unknown>): PowerPlant {
     status: row.status as "operable" | "proposed",
     proposedCapacityMw: row.proposedCapacityMw as number | null,
     proposedOnlineYear: row.proposedOnlineYear as number | null,
+    version: (row.version as number | null) ?? 1,
   };
 }
 
@@ -129,6 +130,7 @@ async function loadFromDb(options?: PowerPlantQueryOptions): Promise<PowerPlant[
       status: powerPlants.status,
       proposedCapacityMw: powerPlants.proposedCapacityMw,
       proposedOnlineYear: powerPlants.proposedOnlineYear,
+      version: powerPlants.version,
     })
     .from(powerPlants)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -179,6 +181,7 @@ async function loadBySlugFromDb(slug: string): Promise<PowerPlant | null> {
       status: powerPlants.status,
       proposedCapacityMw: powerPlants.proposedCapacityMw,
       proposedOnlineYear: powerPlants.proposedOnlineYear,
+      version: powerPlants.version,
     })
     .from(powerPlants)
     .where(eq(powerPlants.slug, slug))

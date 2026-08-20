@@ -14,7 +14,7 @@ import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
-import { contributions } from "@/lib/db/schema";
+import { communityEditableFields, contributions } from "@/lib/db/schema";
 
 // ---------------------------------------------------------------------------
 // Allowed source types (same as in the main route)
@@ -32,6 +32,43 @@ const VALID_SOURCE_TYPES = [
   "personal_observation",
   "other",
 ] as const;
+
+type EditableFieldMeta = {
+  fieldName: string;
+  fieldType: string;
+  validationRules: { enum?: unknown; multiple?: unknown } | null;
+};
+
+function getStringEnumOptions(validationRules: EditableFieldMeta["validationRules"]): string[] {
+  if (!validationRules || !Array.isArray(validationRules.enum)) return [];
+  return validationRules.enum.filter((value): value is string => typeof value === "string");
+}
+
+function validateMultiEnumChange(fieldName: string, newValue: unknown, meta: EditableFieldMeta): void {
+  if (meta.fieldType !== "enum" || meta.validationRules?.multiple !== true) return;
+
+  if (!Array.isArray(newValue)) {
+    throw new ApiError("VALIDATION_ERROR", `Field '${fieldName}' must be an array of enum values.`, {
+      field: fieldName,
+    });
+  }
+
+  const allowedValues = new Set(getStringEnumOptions(meta.validationRules));
+  if (allowedValues.size === 0) {
+    throw new ApiError("VALIDATION_ERROR", `Field '${fieldName}' has no registered enum options.`, {
+      field: fieldName,
+    });
+  }
+
+  const invalidValues = newValue.filter((value) => typeof value !== "string" || !allowedValues.has(value));
+  if (invalidValues.length > 0) {
+    throw new ApiError(
+      "VALIDATION_ERROR",
+      `Field '${fieldName}' contains invalid enum values: ${invalidValues.map(String).join(", ")}`,
+      { field: fieldName }
+    );
+  }
+}
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/contributions/:id — Get contribution detail
@@ -89,6 +126,19 @@ async function handlePatch(req: Request, ctx: RouteContext) {
     );
   }
 
+  const editableFieldRows = await db
+    .select({
+      fieldName: communityEditableFields.fieldName,
+      fieldType: communityEditableFields.fieldType,
+      validationRules: communityEditableFields.validationRules,
+    })
+    .from(communityEditableFields)
+    .where(eq(communityEditableFields.entityType, existing.entityType));
+
+  const editableFieldsByName = new Map<string, EditableFieldMeta>(
+    editableFieldRows.map((row) => [row.fieldName, row as EditableFieldMeta])
+  );
+
   const body = await req.json();
   const { edit_summary, changes, source_type, source_url, source_date } = body;
 
@@ -127,6 +177,11 @@ async function handlePatch(req: Request, ctx: RouteContext) {
         // value was at the time of the first submission.
         const priorOld = existingChanges[key]?.old ?? null;
         normalized[key] = { old: priorOld, new: value };
+      }
+
+      const meta = editableFieldsByName.get(key);
+      if (meta) {
+        validateMultiEnumChange(key, normalized[key].new, meta);
       }
     }
     updates.changes = normalized;

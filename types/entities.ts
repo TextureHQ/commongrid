@@ -168,6 +168,7 @@ export interface PowerPlant {
   status: "operable" | "proposed";
   proposedCapacityMw: number | null;
   proposedOnlineYear: number | null;
+  version: number;
 }
 
 export type FuelCategory =

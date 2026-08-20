@@ -233,4 +233,5 @@ export interface Program {
   variants: ProgramVariant[];
   createdAt: string;
   updatedAt: string;
+  version: number;
 }
