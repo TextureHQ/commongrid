@@ -123,7 +123,7 @@ export function dbRowToProgram(row: Record<string, unknown>): Program {
     termsUrl: (row.termsUrl as string | null) ?? undefined,
     contactUrl: (row.contactUrl as string | null) ?? undefined,
     variants: (row.variants as Program["variants"]) ?? [],
-    version: (row.version as number | null) ?? undefined,
+    version: (row.version as number | null) ?? 1,
     createdAt: row.createdAt instanceof Date ? (row.createdAt as Date).toISOString() : (row.createdAt as string),
     updatedAt: row.updatedAt instanceof Date ? (row.updatedAt as Date).toISOString() : (row.updatedAt as string),
   };
