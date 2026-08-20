@@ -64,11 +64,7 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Utility</span>
               <span className="cg-explore-kv-val">
-                <button
-                  type="button"
-                  onClick={() => navigateToDetail("utility", utilityId)}
-                  style={linkButtonStyle}
-                >
+                <button type="button" onClick={() => navigateToDetail("utility", utilityId)} style={linkButtonStyle}>
                   {utilityName}
                 </button>
               </span>

@@ -2,7 +2,7 @@
 
 import "@/app/(shell)/explore/explore.css";
 import { ExploreShell } from "@texturehq/edges-explore/layout";
-import { type ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { type EntityTab, type ExploreRoute, ExplorerProvider, useExplorer } from "./ExplorerContext";
 import { ExplorerMap, type MapOverlays, type MapRegion } from "./ExplorerMap";
 import { ExplorerPanel } from "./ExplorerPanel";
@@ -218,18 +218,10 @@ interface MapLayoutProps {
   mapRegion: MapRegion;
   mapOverlays: MapOverlays;
   onOverlayToggle?: (key: keyof MapOverlays) => void;
-  onMapRegionChange?: (region: MapRegion) => void;
   topBar?: ReactNode;
 }
 
-function MapLayout({
-  mapboxAccessToken,
-  mapRegion,
-  mapOverlays,
-  onOverlayToggle,
-  onMapRegionChange,
-  topBar,
-}: MapLayoutProps) {
+function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays, onOverlayToggle, topBar }: MapLayoutProps) {
   const { state, stack } = useExplorer();
 
   return (
@@ -360,7 +352,6 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
         mapRegion={mapRegion}
         mapOverlays={mapOverlays}
         onOverlayToggle={toggleOverlay}
-        onMapRegionChange={setMapRegion}
         topBar={topBar}
       />
     </div>
