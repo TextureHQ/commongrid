@@ -2,14 +2,10 @@
 
 import "@/app/(shell)/explore/explore.css";
 import { ExploreShell } from "@texturehq/edges-explore/layout";
-import { type ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { type EntityTab, type ExploreRoute, ExplorerProvider, useExplorer } from "./ExplorerContext";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { type EntityTab, type ExploreRoute, ExplorerProvider, useExplorer, type ViewMode } from "./ExplorerContext";
 import { ExplorerMap, type MapOverlays, type MapRegion } from "./ExplorerMap";
 import { ExplorerPanel } from "./ExplorerPanel";
-
-// ---------------------------------------------------------------------------
-// SVG icons used in the filter bar
-// ---------------------------------------------------------------------------
 
 const FilterIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Filter">
@@ -52,10 +48,6 @@ const CheckIcon = () => (
   </svg>
 );
 
-// ---------------------------------------------------------------------------
-// Region selector options for the map view
-// ---------------------------------------------------------------------------
-
 const REGION_OPTIONS: { value: MapRegion; label: string }[] = [
   { value: "utilities", label: "Utilities" },
   { value: "grid-operators", label: "Grid operators" },
@@ -90,9 +82,18 @@ const ENTITY_LABELS: Record<EntityTab, string> = {
   substations: "Substations",
 };
 
-// ---------------------------------------------------------------------------
-// Multi-select dropdown for overlays
-// ---------------------------------------------------------------------------
+function ViewModeToggle({ value, onChange }: { value: ViewMode; onChange: (value: ViewMode) => void }) {
+  return (
+    <div className="cg-explore-view-toggle" role="tablist" aria-label="Explorer view mode">
+      <button type="button" data-active={value === "map" || undefined} onClick={() => onChange("map")}>
+        Map
+      </button>
+      <button type="button" data-active={value === "table" || undefined} onClick={() => onChange("table")}>
+        Table
+      </button>
+    </div>
+  );
+}
 
 function OverlayDropdown({
   overlays,
@@ -142,10 +143,6 @@ function OverlayDropdown({
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Region dropdown
-// ---------------------------------------------------------------------------
 
 function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: MapRegion) => void }) {
   const [open, setOpen] = useState(false);
@@ -200,73 +197,29 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
 
 const VALID_MAP_REGIONS: MapRegion[] = ["utilities", "grid-operators", "programs", "pricing-nodes"];
 
-// ---------------------------------------------------------------------------
-// Map layout — ExploreShell from @texturehq/edges-explore/layout owns the
-// split/stacked switch, the floating "Open Overview" affordance, and the
-// stacked-overlay slide animation. We just hand it the route stack, slot
-// the existing top bar / map / panel children in, and let it run.
-// ---------------------------------------------------------------------------
-
 function getExploreRouteLabel(route: ExploreRoute): string | null {
   if (route.type === "overview") return "Overview";
   if (route.type === "list") return ENTITY_LABELS[route.payload.tab];
   return null;
 }
 
-interface MapLayoutProps {
-  mapboxAccessToken?: string;
-  mapRegion: MapRegion;
-  mapOverlays: MapOverlays;
-  onOverlayToggle?: (key: keyof MapOverlays) => void;
-  onMapRegionChange?: (region: MapRegion) => void;
-  topBar?: ReactNode;
-}
-
-function MapLayout({
-  mapboxAccessToken,
-  mapRegion,
-  mapOverlays,
-  onOverlayToggle,
-  onMapRegionChange,
-  topBar,
-}: MapLayoutProps) {
-  const { state, stack } = useExplorer();
-
-  return (
-    <ExploreShell<ExploreRoute>
-      stack={stack}
-      topBar={topBar}
-      map={
-        <ExplorerMap
-          mapboxAccessToken={mapboxAccessToken}
-          mapRegion={mapRegion}
-          mapOverlays={mapOverlays}
-          onOverlayToggle={onOverlayToggle}
-        />
-      }
-      getRouteLabel={getExploreRouteLabel}
-      homeRoute={{ type: "overview", id: "overview" }}
-      homeRouteLabel="Open Overview"
-      panelChildren={<ExplorerPanel listSource={state.listSource} />}
-    />
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Map filter bar — region + overlays + filter (desktop top-bar row 2)
-// ---------------------------------------------------------------------------
-
 function MapFilterBar({
   mapRegion,
   setMapRegion,
   mapOverlays,
   toggleOverlay,
+  viewMode,
+  setViewMode,
+  showViewModeToggle,
   onOpenFilter,
 }: {
   mapRegion: MapRegion;
   setMapRegion: (r: MapRegion) => void;
   mapOverlays: MapOverlays;
   toggleOverlay: (key: keyof MapOverlays) => void;
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
+  showViewModeToggle: boolean;
   onOpenFilter?: () => void;
 }) {
   return (
@@ -274,6 +227,12 @@ function MapFilterBar({
       <RegionDropdown value={mapRegion} onChange={setMapRegion} />
       <div className="cg-explore-divider" />
       <OverlayDropdown overlays={mapOverlays} onToggle={toggleOverlay} />
+      {showViewModeToggle && (
+        <>
+          <div className="cg-explore-divider" />
+          <ViewModeToggle value={viewMode} onChange={setViewMode} />
+        </>
+      )}
       {onOpenFilter && (
         <>
           <div className="cg-explore-divider" />
@@ -286,21 +245,12 @@ function MapFilterBar({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Layout — ExploreShell owns everything below the filter bar. The Map/List
-// mode toggle that used to live here is gone: switching between the map
-// surface and an entity list happens inside the panel now (tap a bucket in
-// the overview → push a list route).
-// ---------------------------------------------------------------------------
-
-interface ExplorerLayoutProps {
-  mapboxAccessToken?: string;
-}
-
-function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
-  const { state, setListSource } = useExplorer();
+function ExplorerLayout({ mapboxAccessToken }: { mapboxAccessToken?: string }) {
+  const { state, stack, setListSource, setViewMode } = useExplorer();
 
   const [mapRegion, setMapRegion] = useState<MapRegion>("utilities");
+  const [mapOverlays, setMapOverlays] = useState<MapOverlays>(DEFAULT_MAP_OVERLAYS);
+
   const handleMapRegionChange = useCallback(
     (region: MapRegion) => {
       setMapRegion(region);
@@ -309,25 +259,15 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
     [setListSource]
   );
 
-  const [mapOverlays, setMapOverlays] = useState<MapOverlays>(DEFAULT_MAP_OVERLAYS);
   const toggleOverlay = useCallback((key: keyof MapOverlays) => {
     setMapOverlays((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
-  // Reflect the active entity tab onto the map. Region-backed entities
-  // (utilities / grid-operators / programs / pricing-nodes) switch the
-  // fill region. Point/line overlays (power-plants, transmission-lines,
-  // substations, ev-charging, pricing-nodes) get auto-enabled so markers
-  // appear the instant the user picks the bucket from the overview — no
-  // extra "+ Points & lines" toggle hunt required.
   useEffect(() => {
     const tab = state.listSource;
     if (VALID_MAP_REGIONS.includes(tab as MapRegion)) {
       setMapRegion(tab as MapRegion);
     } else {
-      // Overlay-only tabs (power-plants, transmission-lines, etc.) don't
-      // have their own fill region — reset to utilities so the map shows
-      // territory polygons instead of stale grid/program boundaries.
       setMapRegion("utilities");
     }
     const overlayKeys: (keyof MapOverlays)[] = [
@@ -349,27 +289,42 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
         setMapRegion={handleMapRegionChange}
         mapOverlays={mapOverlays}
         toggleOverlay={toggleOverlay}
+        viewMode={state.viewMode}
+        setViewMode={setViewMode}
+        showViewModeToggle={state.mode === "list"}
       />
     </div>
   );
 
+  const panelChildren = <ExplorerPanel listSource={state.listSource} />;
+  const isTableMode = state.viewMode === "table";
+
   return (
     <div className="cg-explore flex flex-col h-full overflow-hidden">
-      <MapLayout
-        mapboxAccessToken={mapboxAccessToken}
-        mapRegion={mapRegion}
-        mapOverlays={mapOverlays}
-        onOverlayToggle={toggleOverlay}
-        onMapRegionChange={setMapRegion}
+      <ExploreShell<ExploreRoute>
+        stack={stack}
         topBar={topBar}
+        map={
+          isTableMode ? (
+            <div className="h-full w-full bg-background-surface" />
+          ) : (
+            <ExplorerMap
+              mapboxAccessToken={mapboxAccessToken}
+              mapRegion={mapRegion}
+              mapOverlays={mapOverlays}
+              onOverlayToggle={toggleOverlay}
+            />
+          )
+        }
+        getRouteLabel={getExploreRouteLabel}
+        homeRoute={isTableMode ? undefined : { type: "overview", id: "overview" }}
+        homeRouteLabel="Open Overview"
+        panelChildren={panelChildren}
+        layout={isTableMode ? "stacked" : undefined}
       />
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Shell
-// ---------------------------------------------------------------------------
 
 interface ExplorerShellProps {
   mapboxAccessToken?: string;
