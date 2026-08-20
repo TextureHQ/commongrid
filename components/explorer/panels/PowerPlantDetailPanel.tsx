@@ -8,6 +8,16 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePowerPlant } from "@/hooks/usePowerPlant";
 import { useExplorer } from "../ExplorerContext";
 
+const linkButtonStyle = {
+  background: "none",
+  border: 0,
+  padding: 0,
+  color: "inherit",
+  font: "inherit",
+  cursor: "pointer",
+  textAlign: "left" as const,
+};
+
 export function PowerPlantDetailPanel({ slug }: { slug: string }) {
   const { user } = useCurrentUser();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -50,15 +60,13 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Utility</span>
               <span className="cg-explore-kv-val">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigateToDetail("utility", powerPlant.utilityId!);
-                  }}
+                <button
+                  type="button"
+                  onClick={() => navigateToDetail("utility", powerPlant.utilityId)}
+                  style={linkButtonStyle}
                 >
                   {powerPlant.utilityName}
-                </a>
+                </button>
               </span>
             </div>
           )}
@@ -110,15 +118,13 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Balancing Authority</span>
               <span className="cg-explore-kv-val">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigateToDetail("ba", powerPlant.balancingAuthorityId!);
-                  }}
+                <button
+                  type="button"
+                  onClick={() => navigateToDetail("ba", powerPlant.balancingAuthorityId)}
+                  style={linkButtonStyle}
                 >
                   {powerPlant.baCode ?? powerPlant.balancingAuthorityId}
-                </a>
+                </button>
               </span>
             </div>
           )}
