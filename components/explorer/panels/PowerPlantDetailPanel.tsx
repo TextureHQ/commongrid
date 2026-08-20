@@ -28,6 +28,11 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
 
   const statusLabel = powerPlant.status === "operable" ? "Operable" : "Proposed";
 
+  const utilityId = powerPlant.utilityId;
+  const utilityName = powerPlant.utilityName;
+  const balancingAuthorityId = powerPlant.balancingAuthorityId;
+  const baLabel = powerPlant.baCode ?? balancingAuthorityId;
+
   return (
     <div className="flex flex-col h-full">
       <div className="cg-explore-detail">
@@ -44,7 +49,7 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
         </div>
 
         <div className="cg-explore-kv-table">
-          {powerPlant.utilityId && powerPlant.utilityName && (
+          {utilityId && utilityName && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Utility</span>
               <span className="cg-explore-kv-val">
@@ -52,10 +57,10 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigateToDetail("utility", powerPlant.utilityId!);
+                    navigateToDetail("utility", utilityId);
                   }}
                 >
-                  {powerPlant.utilityName}
+                  {utilityName}
                 </a>
               </span>
             </div>
@@ -104,7 +109,7 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
               {powerPlant.county ? `${powerPlant.county}, ${powerPlant.state}` : powerPlant.state}
             </span>
           </div>
-          {powerPlant.balancingAuthorityId && (
+          {balancingAuthorityId && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Balancing Authority</span>
               <span className="cg-explore-kv-val">
@@ -112,10 +117,10 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigateToDetail("ba", powerPlant.balancingAuthorityId!);
+                    navigateToDetail("ba", balancingAuthorityId);
                   }}
                 >
-                  {powerPlant.baCode ?? powerPlant.balancingAuthorityId}
+                  {baLabel}
                 </a>
               </span>
             </div>
