@@ -170,6 +170,7 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
       termsUrl: programs.termsUrl,
       contactUrl: programs.contactUrl,
       variants: programs.variants,
+      version: programs.version,
       createdAt: programs.createdAt,
       updatedAt: programs.updatedAt,
     })
@@ -236,6 +237,7 @@ async function loadBySlugFromDb(slug: string): Promise<Program | null> {
       termsUrl: programs.termsUrl,
       contactUrl: programs.contactUrl,
       variants: programs.variants,
+      version: programs.version,
       createdAt: programs.createdAt,
       updatedAt: programs.updatedAt,
     })

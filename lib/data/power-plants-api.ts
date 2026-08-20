@@ -130,6 +130,7 @@ async function loadFromDb(options?: PowerPlantQueryOptions): Promise<PowerPlant[
       status: powerPlants.status,
       proposedCapacityMw: powerPlants.proposedCapacityMw,
       proposedOnlineYear: powerPlants.proposedOnlineYear,
+      version: powerPlants.version,
     })
     .from(powerPlants)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -180,6 +181,7 @@ async function loadBySlugFromDb(slug: string): Promise<PowerPlant | null> {
       status: powerPlants.status,
       proposedCapacityMw: powerPlants.proposedCapacityMw,
       proposedOnlineYear: powerPlants.proposedOnlineYear,
+      version: powerPlants.version,
     })
     .from(powerPlants)
     .where(eq(powerPlants.slug, slug))
