@@ -22,7 +22,9 @@ export type EntityTab =
   | "transmission-lines"
   | "ev-charging"
   | "pricing-nodes"
-  | "substations";
+  | "substations"
+  | "rates";
+export type ExploreViewMode = "map" | "table";
 export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
 
 /**
@@ -45,6 +47,7 @@ export interface ListRoutePayload {
   segment: string;
   type: string;
   jurisdictions: string[];
+  mode: ExploreViewMode;
 }
 
 export interface DetailRoutePayload {
@@ -58,22 +61,38 @@ export type ExploreRoute =
   | (ExploreRouteDescriptor<DetailRoutePayload> & { type: "detail"; id: string; payload: DetailRoutePayload });
 
 const DEFAULT_TAB: EntityTab = "utilities";
-const DEFAULT_FILTERS: Omit<ListRoutePayload, "tab"> = {
+const DEFAULT_FILTERS: Omit<ListRoutePayload, "tab" | "mode"> = {
   q: "",
   segment: "all",
   type: "all",
   jurisdictions: [],
 };
 
+export const DEFAULT_MODE_FOR_TAB: Record<EntityTab, ExploreViewMode> = {
+  utilities: "table",
+  "grid-operators": "table",
+  programs: "table",
+  rates: "table",
+  "power-plants": "map",
+  "transmission-lines": "map",
+  "ev-charging": "map",
+  "pricing-nodes": "map",
+  substations: "map",
+};
+
 function makeOverviewRoute(): ExploreRoute {
   return { type: "overview", id: "overview" };
 }
 
-function makeListRoute(tab: EntityTab, filters: Partial<Omit<ListRoutePayload, "tab">> = {}): ExploreRoute {
+function makeListRoute(
+  tab: EntityTab,
+  mode?: ExploreViewMode,
+  filters: Partial<Omit<ListRoutePayload, "tab" | "mode">> = {}
+): ExploreRoute {
   return {
     type: "list",
     id: `list:${tab}`,
-    payload: { tab, ...DEFAULT_FILTERS, ...filters },
+    payload: { tab, mode: mode ?? DEFAULT_MODE_FOR_TAB[tab], ...DEFAULT_FILTERS, ...filters },
   };
 }
 
@@ -126,7 +145,11 @@ function parseRoutes(params: URLSearchParams): ExploreRoute[] {
   if (!tabParam) return [makeOverviewRoute()];
 
   const tab = parseTab(tabParam);
-  const list = makeListRoute(tab, {
+
+  const modeParam = params.get("mode") as ExploreViewMode | null;
+  const mode = modeParam === "map" || modeParam === "table" ? modeParam : DEFAULT_MODE_FOR_TAB[tab];
+
+  const list = makeListRoute(tab, mode, {
     q: params.get("q") ?? "",
     segment: params.get("segment") ?? "all",
     type: params.get("type") ?? "all",
@@ -147,6 +170,9 @@ function serializeRoutes(routes: ExploreRoute[]): URLSearchParams {
 
   if (list) {
     params.set("tab", list.payload.tab);
+    if (list.payload.mode !== DEFAULT_MODE_FOR_TAB[list.payload.tab]) {
+      params.set("mode", list.payload.mode);
+    }
     if (list.payload.q) params.set("q", list.payload.q);
     if (list.payload.segment && list.payload.segment !== "all") params.set("segment", list.payload.segment);
     if (list.payload.type && list.payload.type !== "all") params.set("type", list.payload.type);
@@ -210,6 +236,7 @@ export interface ExplorerState {
   tab: EntityTab;
   listSource: EntityTab;
   mode: "overview" | "list" | "detail";
+  viewMode: ExploreViewMode;
   slug: string | null;
   q: string;
   segment: string;
@@ -235,6 +262,7 @@ interface ExplorerContextValue {
   setHoveredSlug: (slug: string | null) => void;
   setFilteredUtilitySlugs: (slugs: string[] | null) => void;
   goBack: () => void;
+  setViewMode: (mode: ExploreViewMode) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -253,7 +281,13 @@ export function useExplorer(): ExplorerContextValue {
 // Provider
 // ---------------------------------------------------------------------------
 
-export function ExplorerProvider({ children }: { children: ReactNode }) {
+interface ExplorerProviderProps {
+  children: ReactNode;
+  initialView?: EntityTab;
+  initialMode?: ExploreViewMode;
+}
+
+export function ExplorerProvider({ children, initialView, initialMode }: ExplorerProviderProps) {
   const searchParams = useSearchParams();
   const [view, dispatch] = useReducer(viewReducer, initialView);
 
@@ -281,7 +315,14 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   const state = useMemo<ExplorerState>(() => {
     const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
     const tab = currentList?.payload.tab ?? DEFAULT_TAB;
-    const filters = currentList?.payload ?? { q: "", segment: "all", type: "all", jurisdictions: [], tab: DEFAULT_TAB };
+    const filters = currentList?.payload ?? {
+      q: "",
+      segment: "all",
+      type: "all",
+      jurisdictions: [],
+      tab: DEFAULT_TAB,
+      mode: DEFAULT_MODE_FOR_TAB[DEFAULT_TAB],
+    };
     const detail = stack.current?.type === "detail" ? stack.current : null;
     const current = stack.current;
     const mode: ExplorerState["mode"] = detail ? "detail" : current?.type === "overview" ? "overview" : "list";
@@ -289,6 +330,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       tab,
       listSource: view.listSource,
       mode,
+      viewMode: filters.mode,
       slug: detail?.payload.slug ?? null,
       q: filters.q,
       segment: filters.segment,
@@ -306,11 +348,11 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   // current top of the stack when a filter setter fires — a plain
   // `replace` is sufficient.
   const updateActiveListFilters = useCallback(
-    (patch: Partial<Omit<ListRoutePayload, "tab">>) => {
+    (patch: Partial<Omit<ListRoutePayload, "tab" | "mode">>) => {
       const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
       if (!currentList) return;
       stack.replace(
-        makeListRoute(currentList.payload.tab, {
+        makeListRoute(currentList.payload.tab, currentList.payload.mode, {
           q: currentList.payload.q,
           segment: currentList.payload.segment,
           type: currentList.payload.type,
@@ -383,6 +425,22 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     [stack]
   );
 
+  const setViewMode = useCallback(
+    (mode: ExploreViewMode) => {
+      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+      if (!currentList) return;
+      stack.replace(
+        makeListRoute(currentList.payload.tab, mode, {
+          q: currentList.payload.q,
+          segment: currentList.payload.segment,
+          type: currentList.payload.type,
+          jurisdictions: currentList.payload.jurisdictions,
+        })
+      );
+    },
+    [stack]
+  );
+
   const setListSource = useCallback((listSource: EntityTab) => dispatch({ type: "SET_LIST_SOURCE", listSource }), []);
   const setSearch = useCallback((q: string) => updateActiveListFilters({ q }), [updateActiveListFilters]);
   const setSegment = useCallback((segment: string) => updateActiveListFilters({ segment }), [updateActiveListFilters]);
@@ -426,6 +484,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       setHoveredSlug,
       setFilteredUtilitySlugs,
       goBack,
+      setViewMode,
     }),
     [
       state,
@@ -442,6 +501,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       setHoveredSlug,
       setFilteredUtilitySlugs,
       goBack,
+      setViewMode,
     ]
   );
 
