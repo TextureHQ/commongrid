@@ -50,6 +50,13 @@ runIfDb("search — live DB smoke", () => {
     expect(isos.some((i) => /pjm/i.test(i.name))).toBe(true);
   }, 15_000);
 
+  it("finds CAISO in the isos bucket by short name", async () => {
+    const { results } = await searchAll("caiso", { types: ["isos"], limit: 5 });
+    const isos = results.get("iso") ?? [];
+    expect(isos.length).toBeGreaterThan(0);
+    expect(isos.some((i) => /caiso/i.test(i.name))).toBe(true);
+  }, 15_000);
+
   it("returns results across multiple buckets for a broad query", async () => {
     const { results, source } = await searchAll("tri-state", { limit: 3 });
     expect(source).toBe("db");
