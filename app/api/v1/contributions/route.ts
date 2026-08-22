@@ -16,6 +16,7 @@ import { generateRequestId, withErrorHandling, withRequestId, withTiming } from 
 import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
+import { describeInvalidEnumValue, findInvalidEnumValues } from "@/lib/community-editable-fields/validate-enum-values";
 import { getDb } from "@/lib/db/client";
 import { communityEditableFields, contributions, entityLocks } from "@/lib/db/schema";
 import { users } from "@/lib/db/schema/users";
@@ -147,6 +148,21 @@ async function handlePost(req: Request, ctx: RouteContext) {
   if (!changes || typeof changes !== "object" || Array.isArray(changes) || Object.keys(changes).length === 0) {
     throw new ApiError("VALIDATION_ERROR", "changes is required and must be a non-empty object with field changes.", {
       field: "changes",
+    });
+  }
+
+  // Enum values must be members of the field's declared domain. Without this,
+  // a stale option list (cached response, client open across a deploy, or an
+  // out-of-date row in community_editable_fields) can persist a value no code
+  // path recognizes — and auto-approval writes it straight onto the entity.
+  // See CIR-1506: one program reached production with status 'active' while the
+  // other 607 held 'ACTIVE', breaking ?status= filtering in both directions.
+  const invalidEnums = findInvalidEnumValues(entity_type, changes as Record<string, unknown>);
+  if (invalidEnums.length > 0) {
+    const [first] = invalidEnums;
+    throw new ApiError("VALIDATION_ERROR", describeInvalidEnumValue(first), {
+      field: first.field,
+      invalid_fields: invalidEnums.map((i) => i.field),
     });
   }
 
