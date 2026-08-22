@@ -65,6 +65,8 @@ function bucketCount(counts: ReturnType<typeof useEntityCounts>, tab: EntityTab)
       return counts.pricingNodes;
     case "substations":
       return counts.substations;
+    case "rates":
+      return null;
   }
 }
 
