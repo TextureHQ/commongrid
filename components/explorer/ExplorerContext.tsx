@@ -19,6 +19,7 @@ export type EntityTab =
   | "grid-operators"
   | "power-plants"
   | "programs"
+  | "rates"
   | "transmission-lines"
   | "ev-charging"
   | "pricing-nodes"
@@ -94,6 +95,7 @@ const VALID_TABS: ReadonlySet<EntityTab> = new Set([
   "grid-operators",
   "power-plants",
   "programs",
+  "rates",
   "transmission-lines",
   "ev-charging",
   "pricing-nodes",
