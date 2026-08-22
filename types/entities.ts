@@ -146,6 +146,7 @@ export interface PowerPlant {
   id: string;
   slug: string;
   name: string;
+  version: number;
   plantCode: string;
   utilityId: string | null;
   utilityName: string;

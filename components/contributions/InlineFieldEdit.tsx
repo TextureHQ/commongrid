@@ -3,6 +3,7 @@
 import { Button, Dialog, Icon, Select, TextField } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import { type EditableField, SOURCE_TYPE_OPTIONS } from "./EntityFormFields";
 
 interface InlineFieldEditProps {
@@ -136,7 +137,7 @@ export function InlineFieldEdit({
     return normalizedNew !== normalizedCurrent;
   }, [currentValue, value]);
 
-  const summaryLongEnough = editSummary.trim().length >= 10;
+  const summaryLongEnough = editSummary.trim().length >= EDIT_SUMMARY_MIN_LENGTH;
   const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
 
   const handleSubmit = async () => {
@@ -394,7 +395,7 @@ export function InlineFieldEdit({
                 </label>
                 <div className="flex items-center gap-1">
                   <span className={`text-xs ${summaryLongEnough ? "text-feedback-success" : "text-text-muted"}`}>
-                    {editSummary.trim().length}/10
+                    {editSummary.trim().length}/{EDIT_SUMMARY_MIN_LENGTH}
                   </span>
                   {summaryLongEnough && <Icon name="CheckCircle" size="sm" className="text-feedback-success" />}
                 </div>
@@ -403,7 +404,7 @@ export function InlineFieldEdit({
                 id="edit-summary"
                 value={editSummary}
                 onChange={(e) => setEditSummary(e.target.value)}
-                placeholder="Describe your change (minimum 10 characters)"
+                placeholder={`Describe your change (minimum ${EDIT_SUMMARY_MIN_LENGTH} characters)`}
                 rows={2}
                 className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
               />

@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@texturehq/edges";
+import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import {
   AssetTypeLabel,
   GridServiceLabel,
@@ -203,7 +204,12 @@ interface EditSummaryFieldProps {
   placeholder?: string;
 }
 
-export function EditSummaryField({ value, onChange, minLength = 10, placeholder }: EditSummaryFieldProps) {
+export function EditSummaryField({
+  value,
+  onChange,
+  minLength = EDIT_SUMMARY_MIN_LENGTH,
+  placeholder,
+}: EditSummaryFieldProps) {
   return (
     <div className="space-y-1">
       <label htmlFor="editSummary" className="flex items-center justify-between text-sm font-medium text-text-body">

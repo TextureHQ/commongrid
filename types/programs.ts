@@ -221,6 +221,7 @@ export interface Program {
   id: string;
   slug: string;
   name: string;
+  version: number;
   description?: string;
   organizations: ProgramOrganization[];
   assetTypes: AssetType[];

@@ -2,6 +2,7 @@
 
 import type { Feature, FeatureCollection } from "geojson";
 import { useEffect, useMemo, useState } from "react";
+import { DeleteEntityDialog } from "@/components/contributions/DeleteEntityDialog";
 import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -58,6 +59,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
   const { user } = useCurrentUser();
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const { program } = useProgram(slug);
 
@@ -354,6 +356,9 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
             <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsEditOpen(true)}>
               Suggest Edit
             </button>
+            <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsDeleteOpen(true)}>
+              Request Deletion
+            </button>
           </div>
         )}
       </div>
@@ -361,12 +366,24 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
       {isEditOpen && program && (
         <EditEntityPanel
           entityType="program"
-          entityId={program.slug}
+          entityId={program.id}
           entitySlug={program.slug}
           entityName={program.name}
           currentValues={program as unknown as Record<string, unknown>}
           onClose={() => setIsEditOpen(false)}
           onSubmitted={() => setIsEditOpen(false)}
+        />
+      )}
+
+      {isDeleteOpen && program && (
+        <DeleteEntityDialog
+          entityType="program"
+          entityId={program.id}
+          entityName={program.name}
+          entityVersion={program.version ?? 1}
+          isOpen={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+          onSuccess={() => setIsDeleteOpen(false)}
         />
       )}
     </div>
