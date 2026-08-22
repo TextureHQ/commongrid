@@ -117,6 +117,7 @@ const VALID_TABS: ReadonlySet<EntityTab> = new Set([
   "ev-charging",
   "pricing-nodes",
   "substations",
+  "rates",
 ]);
 
 function parseTab(value: string | null): EntityTab {
