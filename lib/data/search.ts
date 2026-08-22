@@ -242,18 +242,33 @@ async function searchFromDb(entityType: EntityType, query: string, limit: number
 
     if (config.hasSearchVector) {
       result = (await db.execute(sql`
-        SELECT
-          ${slugRef} AS slug,
-          ${nameRef} AS name
-        FROM ${tableRef}
-        WHERE deleted_at IS NULL
-          AND (
-            search_vector @@ websearch_to_tsquery('english', ${trimmed})
-            OR ${nameRef} ILIKE ${ilikePattern}
-          )
-        ORDER BY
-          ts_rank(search_vector, websearch_to_tsquery('english', ${trimmed})) DESC,
-          ${nameRef} ASC
+        WITH fts_match AS (
+          SELECT
+            ${slugRef} AS slug,
+            ${nameRef} AS name,
+            ts_rank(search_vector, websearch_to_tsquery('english', ${trimmed})) AS rank
+          FROM ${tableRef}
+          WHERE deleted_at IS NULL
+            AND search_vector @@ websearch_to_tsquery('english', ${trimmed})
+          ORDER BY rank DESC, name ASC
+          LIMIT ${limit}
+        ),
+        ilike_match AS (
+          SELECT
+            ${slugRef} AS slug,
+            ${nameRef} AS name,
+            0.0 AS rank
+          FROM ${tableRef}
+          WHERE deleted_at IS NULL
+            AND ${nameRef} ILIKE ${ilikePattern}
+            AND ${slugRef} NOT IN (SELECT slug FROM fts_match)
+          ORDER BY name ASC
+          LIMIT ${limit}
+        )
+        SELECT slug, name, rank FROM fts_match
+        UNION ALL
+        SELECT slug, name, rank FROM ilike_match
+        ORDER BY rank DESC, name ASC
         LIMIT ${limit}
       `)) as unknown as DbExecuteResult<DbSearchRow>;
     } else {
