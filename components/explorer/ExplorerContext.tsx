@@ -202,7 +202,7 @@ type ViewAction =
   | { type: "SET_HOVERED_SLUG"; slug: string | null }
   | { type: "SET_FILTERED_UTILITY_SLUGS"; slugs: string[] | null };
 
-const initialView: ViewState = {
+const INITIAL_VIEW_STATE: ViewState = {
   listSource: DEFAULT_TAB,
   highlightGeoJSON: null,
   hoveredSlug: null,
@@ -284,13 +284,16 @@ export function useExplorer(): ExplorerContextValue {
 
 interface ExplorerProviderProps {
   children: ReactNode;
-  initialView?: EntityTab;
-  initialMode?: ExploreViewMode;
 }
 
-export function ExplorerProvider({ children, initialView, initialMode }: ExplorerProviderProps) {
+/**
+ * The active layer (`?view=`/`?tab=`) and projection (`?mode=`) are derived
+ * from the URL by `parseRoutes`, so they are intentionally NOT accepted as
+ * props here — a second source of truth would drift from the route stack.
+ */
+export function ExplorerProvider({ children }: ExplorerProviderProps) {
   const searchParams = useSearchParams();
-  const [view, dispatch] = useReducer(viewReducer, initialView);
+  const [view, dispatch] = useReducer(viewReducer, INITIAL_VIEW_STATE);
 
   const stack = useUrlExploreRouteStack<ExploreRoute>({
     parse: parseRoutes,
