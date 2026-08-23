@@ -25,7 +25,8 @@ export type EntityTab =
   | "transmission-lines"
   | "ev-charging"
   | "pricing-nodes"
-  | "substations";
+  | "substations"
+  | "rates";
 
 export const DETAIL_VIEW_TO_TAB: Record<DetailView, EntityTab> = {
   utility: "utilities",
@@ -34,6 +35,7 @@ export const DETAIL_VIEW_TO_TAB: Record<DetailView, EntityTab> = {
   iso: "grid-operators",
   rto: "grid-operators",
   ba: "grid-operators",
+  rates: "rates",
 };
 
 /** Resolve the list tab that owns a given detail entity view. */
