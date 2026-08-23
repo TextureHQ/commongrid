@@ -110,6 +110,7 @@ const REGION_OPTIONS: { value: MapRegion; label: string }[] = [
   { value: "grid-operators", label: "Grid operators" },
   { value: "programs", label: "Programs" },
   { value: "pricing-nodes", label: "Pricing nodes" },
+  { value: "rates", label: "Rates" },
 ];
 
 const OVERLAY_OPTIONS: { key: keyof MapOverlays; label: string }[] = [
@@ -248,7 +249,7 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
   );
 }
 
-const VALID_MAP_REGIONS: MapRegion[] = ["utilities", "grid-operators", "programs", "pricing-nodes"];
+const VALID_MAP_REGIONS: MapRegion[] = ["utilities", "grid-operators", "programs", "pricing-nodes", "rates"];
 
 // ---------------------------------------------------------------------------
 // Map layout — ExploreShell from @texturehq/edges-explore/layout owns the
