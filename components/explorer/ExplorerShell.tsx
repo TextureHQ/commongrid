@@ -139,7 +139,6 @@ const ENTITY_LABELS: Record<EntityTab, string> = {
   "ev-charging": "EV Charging",
   "pricing-nodes": "Pricing Nodes",
   substations: "Substations",
-  rates: "Rates",
 };
 
 // ---------------------------------------------------------------------------
