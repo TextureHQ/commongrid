@@ -219,6 +219,13 @@ export function EditEntityPanel({
               )}
 
               {/* Changes Summary */}
+              {hasChanges && !summaryLongEnough && (
+                <div className="rounded-md bg-yellow-50 p-3 border border-yellow-200">
+                  <p className="text-sm text-yellow-800">
+                    Please provide an edit summary of at least {EDIT_SUMMARY_MIN_LENGTH} characters to submit your changes.
+                  </p>
+                </div>
+              )}
               {hasChanges && (
                 <div className="rounded-md bg-background-muted p-3 space-y-2">
                   <h4 className="text-sm font-semibold text-text-heading">
