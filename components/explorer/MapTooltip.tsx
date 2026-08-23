@@ -286,6 +286,7 @@ export function PricingNodeTooltip({ name, iso, nodeType, zone }: PricingNodePro
 /* ── Program territory tooltip ─────────────────────────────────────────────── */
 
 interface ProgramTerritoryProps {
+  utilityName?: string;
   programName: string;
   programStatus: string;
 }
@@ -306,13 +307,14 @@ const programStatusColors: Record<string, string> = {
   ARCHIVED: "var(--color-gray-400)",
 };
 
-export function ProgramTerritoryTooltip({ programName, programStatus }: ProgramTerritoryProps) {
+export function ProgramTerritoryTooltip({ programName, programStatus, utilityName }: ProgramTerritoryProps) {
   const statusLabel = programStatusLabels[programStatus] ?? programStatus;
   const statusColor = programStatusColors[programStatus] ?? COLORS.muted;
   return (
     <div style={styles.container}>
       <div style={styles.kicker}>Program</div>
       <div style={styles.name}>{programName}</div>
+      {utilityName && <div style={{ fontSize: 13, color: "var(--color-text-muted)", marginTop: 2, marginBottom: 8, fontWeight: 500 }}>{utilityName}</div>}
       <div style={styles.divider} />
       <div style={styles.statGrid}>
         <Stat value={<span style={{ color: statusColor }}>{statusLabel}</span>} label="Status" />
