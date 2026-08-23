@@ -652,6 +652,22 @@ export const editableFieldDefinitions: EditableFieldDefinition[] = [
   },
   {
     entityType: "program",
+    fieldName: "derms_vendor",
+    fieldType: "string",
+    isCritical: false,
+    displayName: "DERMS Vendor",
+    section: "overview",
+  },
+  {
+    entityType: "program",
+    fieldName: "other_notes",
+    fieldType: "text",
+    isCritical: false,
+    displayName: "Other Notes",
+    section: "overview",
+  },
+  {
+    entityType: "program",
     fieldName: "program_website",
     fieldType: "url",
     isCritical: false,

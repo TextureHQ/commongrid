@@ -244,6 +244,8 @@ export interface Program {
   termsUrl?: string;
   contactUrl?: string;
   variants: ProgramVariant[];
+  dermsVendor?: string;
+  otherNotes?: string;
   createdAt: string;
   updatedAt: string;
 }

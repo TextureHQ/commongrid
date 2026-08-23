@@ -52,6 +52,8 @@ export const programs = pgTable(
     faqUrl: text("faq_url"),
     termsUrl: text("terms_url"),
     contactUrl: text("contact_url"),
+    dermsVendor: text("derms_vendor"),
+    otherNotes: text("other_notes"),
     /** ProgramVariant[] — full variant objects */
     variants: jsonb("variants").notNull().default([]),
 
