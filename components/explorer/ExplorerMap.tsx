@@ -365,7 +365,7 @@ const DEFAULT_OVERLAYS: MapOverlays = {
   "pricing-nodes": false,
 };
 
-export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOverlays }: ExplorerMapProps = {}) {
+export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOverlays, onOverlayToggle }: ExplorerMapProps = {}) {
   const effectiveToken = mapboxAccessToken ?? process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
   const hasMapboxToken = !!effectiveToken;
   const { state, navigateToDetail } = useExplorer();
@@ -1077,6 +1077,11 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
             position: "bottom-right",
             currentMapType: mapType,
             onMapTypeChange: setMapType,
+            onLayerToggle: (layerId) => {
+              if (onOverlayToggle) {
+                onOverlayToggle(layerId as keyof MapOverlays);
+              }
+            },
           },
         ]}
         layers={layers}
