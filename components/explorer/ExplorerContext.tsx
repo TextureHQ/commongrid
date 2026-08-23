@@ -226,6 +226,7 @@ interface ExplorerContextValue {
   navigateToOverview: () => void;
   navigateToDetail: (view: DetailView, slug: string) => void;
   setListSource: (listSource: EntityTab) => void;
+  setFilters: (patch: Partial<Omit<ListRoutePayload, "tab">>) => void;
   setSearch: (q: string) => void;
   setSegment: (segment: string) => void;
   setTypeFilter: (type: string) => void;
@@ -363,6 +364,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   );
 
   const setListSource = useCallback((listSource: EntityTab) => dispatch({ type: "SET_LIST_SOURCE", listSource }), []);
+  const setFilters = updateActiveListFilters;
   const setSearch = useCallback((q: string) => updateActiveListFilters({ q }), [updateActiveListFilters]);
   const setSegment = useCallback((segment: string) => updateActiveListFilters({ segment }), [updateActiveListFilters]);
   const setTypeFilter = useCallback(
@@ -397,6 +399,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       navigateToOverview,
       navigateToDetail,
       setListSource,
+      setFilters,
       setSearch,
       setSegment,
       setTypeFilter,
@@ -413,6 +416,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       navigateToOverview,
       navigateToDetail,
       setListSource,
+      setFilters,
       setSearch,
       setSegment,
       setTypeFilter,

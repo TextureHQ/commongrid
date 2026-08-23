@@ -185,7 +185,7 @@ const FilterIcon = () => (
 );
 
 export function UtilityListPanel() {
-  const { state, setSearch, setSegment, setJurisdictions, navigateToDetail } = useExplorer();
+  const { state, setSearch, setFilters, navigateToDetail } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
 
@@ -278,16 +278,20 @@ export function UtilityListPanel() {
 
   const handleApplyFilters = useCallback(
     (newFilters: FilterState) => {
-      setSegment(filtersToSegment(newFilters));
-      setJurisdictions(filtersToJurisdictions(newFilters));
+      setFilters({
+        segment: filtersToSegment(newFilters),
+        jurisdictions: filtersToJurisdictions(newFilters),
+      });
     },
-    [setSegment, setJurisdictions]
+    [setFilters]
   );
 
   const handleClearFilters = useCallback(() => {
-    setSegment("all");
-    setJurisdictions([]);
-  }, [setSegment, setJurisdictions]);
+    setFilters({
+      segment: "all",
+      jurisdictions: [],
+    });
+  }, [setFilters]);
 
   const activeFilterCount = getFilterFields(filterState).length;
 
