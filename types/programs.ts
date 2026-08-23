@@ -204,6 +204,7 @@ export interface Program {
   name: string;
   description?: string;
   organizations: ProgramOrganization[];
+  organizationNames?: string[];
   assetTypes: AssetType[];
   marketSegments: MarketSegment[];
   participationModels: ParticipationModel[];

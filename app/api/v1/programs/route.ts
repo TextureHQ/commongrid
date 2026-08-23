@@ -120,6 +120,7 @@ const ALL_FIELDS = new Set<string>([
   "name",
   "description",
   "organizations",
+  "organizationNames",
   "assetTypes",
   "marketSegments",
   "participationModels",
