@@ -16,6 +16,7 @@ import { SubstationListPanel } from "./panels/SubstationListPanel";
 import { TransmissionListPanel } from "./panels/TransmissionListPanel";
 import { UtilityDetailPanel } from "./panels/UtilityDetailPanel";
 import { UtilityListPanel } from "./panels/UtilityListPanel";
+import { RatesListPanel } from "./panels/RatesListPanel";
 
 interface ExplorerPanelProps {
   // In map view, listSource overrides state.tab to control which list is shown.
@@ -60,6 +61,8 @@ export function ExplorerPanel({ listSource }: ExplorerPanelProps = {}) {
       return <PowerPlantListPanel />;
     case "programs":
       return <ProgramListPanel />;
+    case "rates":
+      return <RatesListPanel />;
     case "transmission-lines":
       return <TransmissionListPanel />;
     case "ev-charging":

@@ -24,7 +24,7 @@ export type EntityTab =
   | "ev-charging"
   | "pricing-nodes"
   | "substations";
-export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
+export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant" | "rates";
 
 /**
  * Route shape for CommonGrid's explore stack.
@@ -42,6 +42,7 @@ export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-p
  */
 export interface ListRoutePayload {
   tab: EntityTab;
+  mode: "map" | "table";
   q: string;
   segment: string;
   type: string;
@@ -60,6 +61,7 @@ export type ExploreRoute =
 
 const DEFAULT_TAB: EntityTab = "utilities";
 const DEFAULT_FILTERS: Omit<ListRoutePayload, "tab"> = {
+  mode: "map",
   q: "",
   segment: "all",
   type: "all",
@@ -123,12 +125,22 @@ function parseTab(value: string | null): EntityTab {
  * peer eviction replaces the list route with a fresh one).
  */
 function parseRoutes(params: URLSearchParams): ExploreRoute[] {
-  // Backwards-compat for the old `view` param name.
-  const tabParam = params.get("tab") ?? params.get("view");
+  // Backwards-compat for the old `tab` param name.
+  const tabParam = params.get("view") ?? params.get("tab");
   if (!tabParam) return [makeOverviewRoute()];
 
   const tab = parseTab(tabParam);
+  let mode: "map" | "table" = "map";
+  const modeParam = params.get("mode");
+  if (modeParam === "table" || modeParam === "map") {
+    mode = modeParam;
+  } else {
+    // Sensible defaults if not provided in URL
+    mode = ["utilities", "grid-operators", "programs", "rates"].includes(tab) ? "table" : "map";
+  }
+
   const list = makeListRoute(tab, {
+    mode,
     q: params.get("q") ?? "",
     segment: params.get("segment") ?? "all",
     type: params.get("type") ?? "all",
@@ -148,7 +160,8 @@ function serializeRoutes(routes: ExploreRoute[]): URLSearchParams {
   const detail = routes.find((r): r is Extract<ExploreRoute, { type: "detail" }> => r.type === "detail");
 
   if (list) {
-    params.set("tab", list.payload.tab);
+    params.set("view", list.payload.tab);
+    params.set("mode", list.payload.mode);
     if (list.payload.q) params.set("q", list.payload.q);
     if (list.payload.segment && list.payload.segment !== "all") params.set("segment", list.payload.segment);
     if (list.payload.type && list.payload.type !== "all") params.set("type", list.payload.type);
@@ -212,6 +225,7 @@ export interface ExplorerState {
   tab: EntityTab;
   listSource: EntityTab;
   mode: "overview" | "list" | "detail";
+  displayMode: "map" | "table";
   slug: string | null;
   q: string;
   segment: string;
@@ -229,6 +243,7 @@ interface ExplorerContextValue {
   navigateToOverview: () => void;
   navigateToDetail: (view: DetailView, slug: string) => void;
   setListSource: (listSource: EntityTab) => void;
+  setDisplayMode: (displayMode: "map" | "table") => void;
   setSearch: (q: string) => void;
   setSegment: (segment: string) => void;
   setTypeFilter: (type: string) => void;
@@ -283,7 +298,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   const state = useMemo<ExplorerState>(() => {
     const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
     const tab = currentList?.payload.tab ?? DEFAULT_TAB;
-    const filters = currentList?.payload ?? { q: "", segment: "all", type: "all", jurisdictions: [], tab: DEFAULT_TAB };
+    const filters = currentList?.payload ?? { mode: "map" as const, q: "", segment: "all", type: "all", jurisdictions: [], tab: DEFAULT_TAB };
     const detail = stack.current?.type === "detail" ? stack.current : null;
     const current = stack.current;
     const mode: ExplorerState["mode"] = detail ? "detail" : current?.type === "overview" ? "overview" : "list";
@@ -291,6 +306,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       tab,
       listSource: view.listSource,
       mode,
+      displayMode: filters.mode,
       slug: detail?.payload.slug ?? null,
       q: filters.q,
       segment: filters.segment,
@@ -313,6 +329,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       if (!currentList) return;
       stack.replace(
         makeListRoute(currentList.payload.tab, {
+          mode: currentList.payload.mode,
           q: currentList.payload.q,
           segment: currentList.payload.segment,
           type: currentList.payload.type,
@@ -386,6 +403,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   );
 
   const setListSource = useCallback((listSource: EntityTab) => dispatch({ type: "SET_LIST_SOURCE", listSource }), []);
+  const setDisplayMode = useCallback((displayMode: "map" | "table") => updateActiveListFilters({ mode: displayMode }), [updateActiveListFilters]);
   const setSearch = useCallback((q: string) => updateActiveListFilters({ q }), [updateActiveListFilters]);
   const setSegment = useCallback((segment: string) => updateActiveListFilters({ segment }), [updateActiveListFilters]);
   const setTypeFilter = useCallback(
@@ -420,6 +438,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       navigateToOverview,
       navigateToDetail,
       setListSource,
+      setDisplayMode,
       setSearch,
       setSegment,
       setTypeFilter,
@@ -436,6 +455,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       navigateToOverview,
       navigateToDetail,
       setListSource,
+      setDisplayMode,
       setSearch,
       setSegment,
       setTypeFilter,

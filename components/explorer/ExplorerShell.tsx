@@ -255,7 +255,7 @@ function MapLayout({
 }
 
 // ---------------------------------------------------------------------------
-// Map filter bar — region + overlays + filter (desktop top-bar row 2)
+// Map filter bar — region + overlays + filter + mode toggle (desktop top-bar row 2)
 // ---------------------------------------------------------------------------
 
 function MapFilterBar({
@@ -263,27 +263,61 @@ function MapFilterBar({
   setMapRegion,
   mapOverlays,
   toggleOverlay,
+  displayMode,
+  setDisplayMode,
   onOpenFilter,
 }: {
   mapRegion: MapRegion;
   setMapRegion: (r: MapRegion) => void;
   mapOverlays: MapOverlays;
   toggleOverlay: (key: keyof MapOverlays) => void;
+  displayMode: "map" | "table";
+  setDisplayMode: (mode: "map" | "table") => void;
   onOpenFilter?: () => void;
 }) {
   return (
-    <div className="cg-explore-filter-row">
-      <RegionDropdown value={mapRegion} onChange={setMapRegion} />
-      <div className="cg-explore-divider" />
-      <OverlayDropdown overlays={mapOverlays} onToggle={toggleOverlay} />
-      {onOpenFilter && (
-        <>
-          <div className="cg-explore-divider" />
-          <button type="button" className="cg-explore-icon-btn" onClick={onOpenFilter}>
-            <FilterIcon /> Filter
-          </button>
-        </>
-      )}
+    <div className="cg-explore-filter-row" style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <RegionDropdown value={mapRegion} onChange={setMapRegion} />
+        <div className="cg-explore-divider" />
+        <OverlayDropdown overlays={mapOverlays} onToggle={toggleOverlay} />
+        {onOpenFilter && (
+          <>
+            <div className="cg-explore-divider" />
+            <button type="button" className="cg-explore-icon-btn" onClick={onOpenFilter}>
+              <FilterIcon /> Filter
+            </button>
+          </>
+        )}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, background: "var(--color-background-surface)", padding: 4, borderRadius: 6, border: "1px solid var(--color-border-default)" }}>
+        <button
+          type="button"
+          className="cg-explore-icon-btn"
+          style={{ 
+            background: displayMode === "map" ? "var(--color-background-paper)" : "transparent",
+            color: displayMode === "map" ? "var(--color-text-heading)" : "var(--color-text-muted)",
+            boxShadow: displayMode === "map" ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
+            padding: "4px 8px"
+          }}
+          onClick={() => setDisplayMode("map")}
+        >
+          Map
+        </button>
+        <button
+          type="button"
+          className="cg-explore-icon-btn"
+          style={{ 
+            background: displayMode === "table" ? "var(--color-background-paper)" : "transparent",
+            color: displayMode === "table" ? "var(--color-text-heading)" : "var(--color-text-muted)",
+            boxShadow: displayMode === "table" ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
+            padding: "4px 8px"
+          }}
+          onClick={() => setDisplayMode("table")}
+        >
+          Table
+        </button>
+      </div>
     </div>
   );
 }
@@ -300,7 +334,7 @@ interface ExplorerLayoutProps {
 }
 
 function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
-  const { state, setListSource } = useExplorer();
+  const { state, setListSource, setDisplayMode } = useExplorer();
 
   const [mapRegion, setMapRegion] = useState<MapRegion>("utilities");
   const handleMapRegionChange = useCallback(
@@ -351,9 +385,23 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
         setMapRegion={handleMapRegionChange}
         mapOverlays={mapOverlays}
         toggleOverlay={toggleOverlay}
+        displayMode={state.displayMode}
+        setDisplayMode={setDisplayMode}
       />
     </div>
   );
+
+  // If displayMode is table, we show the panel taking up the full area instead of the map
+  if (state.displayMode === "table" && state.mode !== "overview") {
+     return (
+       <div className="cg-explore flex flex-col h-full overflow-hidden bg-background-body">
+         {topBar}
+         <div className="flex-1 overflow-auto p-4 max-w-[1400px] mx-auto w-full">
+           <ExplorerPanel listSource={state.listSource} />
+         </div>
+       </div>
+     );
+  }
 
   return (
     <div className="cg-explore flex flex-col h-full overflow-hidden">
