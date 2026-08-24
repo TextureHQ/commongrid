@@ -103,7 +103,7 @@ function utilityToResult(u: Utility): SearchResult {
     slug: u.slug,
     name: u.name,
     subtitle: [u.jurisdiction, u.segment].filter(Boolean).join(" · "),
-    href: `/grid-operators/${u.slug}`,
+    href: `/explore?view=utilities&slug=${u.slug}`,
     dotColor: KIND_DOT_COLOR.utility,
   };
 }
@@ -114,7 +114,7 @@ function isoToResult(iso: Iso): SearchResult {
     slug: iso.slug,
     name: iso.name,
     subtitle: `ISO · ${iso.shortName}`,
-    href: `/grid-operators/${iso.slug}`,
+    href: `/explore?view=grid-operators&slug=${iso.slug}`,
     dotColor: KIND_DOT_COLOR.iso,
   };
 }
@@ -125,7 +125,7 @@ function rtoToResult(rto: Rto): SearchResult {
     slug: rto.slug,
     name: rto.name,
     subtitle: `RTO · ${rto.shortName}`,
-    href: `/grid-operators/${rto.slug}`,
+    href: `/explore?view=grid-operators&slug=${rto.slug}`,
     dotColor: KIND_DOT_COLOR.rto,
   };
 }
@@ -136,7 +136,7 @@ function baToResult(ba: BalancingAuthority): SearchResult {
     slug: ba.slug,
     name: ba.name,
     subtitle: `Balancing Authority · ${ba.shortName}`,
-    href: `/balancing-authorities/${ba.slug}`,
+    href: `/explore?view=grid-operators&slug=${ba.slug}`,
     dotColor: KIND_DOT_COLOR.ba,
   };
 }
@@ -147,18 +147,21 @@ function pricingNodeToResult(node: PricingNode): SearchResult {
     slug: node.slug,
     name: node.name,
     subtitle: [node.iso, node.state].filter(Boolean).join(" · "),
-    href: `/pricing-nodes/${node.slug}`,
+    href: `/explore?view=pricing-nodes&slug=${node.slug}`,
     dotColor: KIND_DOT_COLOR["pricing-node"],
   };
 }
 
 function programToResult(program: Program): SearchResult {
+  const orgName = program.organizationNames?.[0];
+  const subtitle = orgName ? `${orgName} · Program · ${program.status}` : `Program · ${program.status}`;
+
   return {
     kind: "program",
     slug: program.slug,
     name: program.name,
-    subtitle: `Program · ${program.status}`,
-    href: `/explore?tab=programs&slug=${program.slug}`,
+    subtitle,
+    href: `/explore?view=programs&slug=${program.slug}`,
     dotColor: KIND_DOT_COLOR.program,
   };
 }
@@ -169,7 +172,7 @@ function plantToResult(plant: PowerPlant): SearchResult {
     slug: plant.slug,
     name: plant.name,
     subtitle: [plant.fuelCategory, plant.state].filter(Boolean).join(" · "),
-    href: `/power-plants/${plant.slug}`,
+    href: `/explore?view=power-plants&slug=${plant.slug}`,
     dotColor: KIND_DOT_COLOR["power-plant"],
   };
 }
@@ -180,7 +183,7 @@ function stationToResult(station: EVStation): SearchResult {
     slug: station.slug,
     name: station.stationName,
     subtitle: [station.evNetwork, station.city, station.state].filter(Boolean).join(" · "),
-    href: `/ev-charging/${station.slug}`,
+    href: `/explore?view=ev-charging&slug=${station.slug}`,
     dotColor: KIND_DOT_COLOR["ev-station"],
   };
 }

@@ -9,13 +9,6 @@ import type { FeatureCollection } from "geojson";
 import { useSearchParams } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
 import { detailViewToTab } from "@/lib/explorer/detail-view-tab";
-import {
-  carryViewMode,
-  type ExploreViewMode,
-  parseViewMode,
-  resolveViewMode,
-  viewModeToggleAction,
-} from "@/lib/explorer/view-mode";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -30,8 +23,9 @@ export type EntityTab =
   | "transmission-lines"
   | "ev-charging"
   | "pricing-nodes"
-  | "substations";
-export type { ExploreViewMode };
+  | "substations"
+  | "rates";
+export type ExploreViewMode = "map" | "table";
 export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
 
 /**
@@ -125,6 +119,7 @@ const VALID_TABS: ReadonlySet<EntityTab> = new Set([
   "ev-charging",
   "pricing-nodes",
   "substations",
+  "rates",
 ]);
 
 function parseTab(value: string | null): EntityTab {
@@ -154,9 +149,8 @@ function parseRoutes(params: URLSearchParams): ExploreRoute[] {
 
   const tab = parseTab(tabParam);
 
-  // An explicit `?mode=` wins; otherwise the per-tab default applies. URL
-  // entry points are the only place the per-tab default grammar belongs.
-  const mode = parseViewMode(params.get("mode")) ?? DEFAULT_MODE_FOR_TAB[tab];
+  const modeParam = params.get("mode") as ExploreViewMode | null;
+  const mode = modeParam === "map" || modeParam === "table" ? modeParam : DEFAULT_MODE_FOR_TAB[tab];
 
   const list = makeListRoute(tab, mode, {
     q: params.get("q") ?? "",
@@ -263,6 +257,7 @@ interface ExplorerContextValue {
   navigateToOverview: () => void;
   navigateToDetail: (view: DetailView, slug: string) => void;
   setListSource: (listSource: EntityTab) => void;
+  setFilters: (patch: Partial<Omit<ListRoutePayload, "tab">>) => void;
   setSearch: (q: string) => void;
   setSegment: (segment: string) => void;
   setTypeFilter: (type: string) => void;
@@ -338,15 +333,11 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     const detail = stack.current?.type === "detail" ? stack.current : null;
     const current = stack.current;
     const mode: ExplorerState["mode"] = detail ? "detail" : current?.type === "overview" ? "overview" : "list";
-    // The overview root has no list route, so it has no per-layer projection
-    // of its own. See lib/explorer/view-mode.ts for why this is not simply
-    // DEFAULT_MODE_FOR_TAB[DEFAULT_TAB].
-    const viewMode = resolveViewMode(currentList?.payload.mode);
     return {
       tab,
       listSource: view.listSource,
       mode,
-      viewMode,
+      viewMode: filters.mode,
       slug: detail?.payload.slug ?? null,
       q: filters.q,
       segment: filters.segment,
@@ -392,18 +383,13 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
 
   const navigateToTab = useCallback(
     (tab: EntityTab) => {
-      // Preserve the projection the user is currently looking at — switching
-      // layers changes the subject, not the projection. See
-      // lib/explorer/view-mode.ts.
-      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
-      const carriedMode = carryViewMode(currentList?.payload.mode);
       // Tab switch resets the stack to [overview, list(newTab)]. Plain
       // `push` would keep an open detail (different type, peer eviction
       // misses it) on top of the new list — landing the user on a detail
       // from the OLD tab. Close + push the canonical 2-deep shape.
       stack.close();
       stack.push(makeOverviewRoute());
-      stack.push(makeListRoute(tab, carriedMode));
+      stack.push(makeListRoute(tab));
       // Keep the panel's list-source in lock-step with the destination tab
       // so the right list panel renders immediately (the MapLayout reads
       // listSource, not state.tab, to decide which list panel to show).
@@ -449,44 +435,21 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
   const setViewMode = useCallback(
     (mode: ExploreViewMode) => {
       const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
-      const action = viewModeToggleAction(mode, currentList?.payload.mode);
-
-      if (action === "noop") return;
-
-      // Overview has no list route to reproject, so "Table" opens the layer
-      // the map is currently showing (per the region selector sitting
-      // immediately left of the toggle) as a table. The old code early
-      // -returned here, which is what made both buttons inert on `/explore`.
-      if (action === "open-list" || !currentList) {
-        stack.push(makeListRoute(view.listSource, mode));
-        return;
-      }
-
-      const nextList = makeListRoute(currentList.payload.tab, mode, {
-        q: currentList.payload.q,
-        segment: currentList.payload.segment,
-        type: currentList.payload.type,
-        jurisdictions: currentList.payload.jurisdictions,
-      });
-
-      // `stack.replace` swaps the TOP of the stack. With a detail open that
-      // silently ate the detail route instead of re-projecting the list
-      // underneath it, so rebuild the stack and put the detail back on top.
-      const detail = stack.routes.find((r): r is Extract<ExploreRoute, { type: "detail" }> => r.type === "detail");
-      if (detail) {
-        stack.close();
-        stack.push(makeOverviewRoute());
-        stack.push(nextList);
-        stack.push(detail);
-        return;
-      }
-
-      stack.replace(nextList);
+      if (!currentList) return;
+      stack.replace(
+        makeListRoute(currentList.payload.tab, mode, {
+          q: currentList.payload.q,
+          segment: currentList.payload.segment,
+          type: currentList.payload.type,
+          jurisdictions: currentList.payload.jurisdictions,
+        })
+      );
     },
-    [stack, view.listSource]
+    [stack]
   );
 
   const setListSource = useCallback((listSource: EntityTab) => dispatch({ type: "SET_LIST_SOURCE", listSource }), []);
+  const setFilters = updateActiveListFilters;
   const setSearch = useCallback((q: string) => updateActiveListFilters({ q }), [updateActiveListFilters]);
   const setSegment = useCallback((segment: string) => updateActiveListFilters({ segment }), [updateActiveListFilters]);
   const setTypeFilter = useCallback(
@@ -521,6 +484,7 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       navigateToOverview,
       navigateToDetail,
       setListSource,
+      setFilters,
       setSearch,
       setSegment,
       setTypeFilter,
@@ -538,6 +502,7 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       navigateToOverview,
       navigateToDetail,
       setListSource,
+      setFilters,
       setSearch,
       setSegment,
       setTypeFilter,

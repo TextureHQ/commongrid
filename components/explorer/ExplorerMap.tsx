@@ -420,6 +420,20 @@ export function ExplorerMap({
 
   const isGridOperatorView = mapRegion === "grid-operators";
   const isProgramView = mapRegion === "programs";
+
+  // Build type filters for vector overlays when they are the active tab
+  const typeFilter = state.type && state.type !== "all" ? state.type : null;
+  const powerPlantsFilter =
+    state.listSource === "power-plants" && typeFilter ? ["==", ["get", "fuelCategory"], typeFilter] : undefined;
+  const transmissionLinesFilter =
+    state.listSource === "transmission-lines" && typeFilter ? ["==", ["get", "voltageClass"], typeFilter] : undefined;
+  const substationsFilter =
+    state.listSource === "substations" && typeFilter ? ["==", ["get", "voltageBand"], typeFilter] : undefined;
+  const evChargingFilter =
+    state.listSource === "ev-charging" && typeFilter ? ["==", ["get", "network"], typeFilter] : undefined;
+  const pricingNodesFilter =
+    state.listSource === "pricing-nodes" && typeFilter ? ["==", ["get", "iso"], typeFilter] : undefined;
+
   const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView, resolvedOperatorPalette);
   const programBoundaryData = useProgramBoundaries(isProgramView, resolvedOperatorPalette);
 
@@ -795,6 +809,7 @@ export function ExplorerMap({
         id: "transmission-lines",
         tileset: getTransmissionTileUrl(),
         sourceLayer: "transmission-lines",
+        ...(transmissionLinesFilter ? { filter: transmissionLinesFilter as unknown } : {}),
         renderAs: "line",
         minZoom: 3,
         visible: visible["transmission-lines"] !== false,
@@ -839,6 +854,7 @@ export function ExplorerMap({
         id: "substations",
         tileset: getSubstationsTileUrl(),
         sourceLayer: "substations",
+        ...(substationsFilter ? { filter: substationsFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 5,
         visible: visible.substations === true,
@@ -887,6 +903,7 @@ export function ExplorerMap({
         id: "ev-charging",
         tileset: getEvChargingTileUrl(),
         sourceLayer: "ev-charging",
+        ...(evChargingFilter ? { filter: evChargingFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 5,
         visible: visible["ev-charging"] === true,
@@ -934,6 +951,7 @@ export function ExplorerMap({
         id: "pricing-nodes",
         tileset: getPricingNodesTileUrl(),
         sourceLayer: "pricing-nodes",
+        ...(pricingNodesFilter ? { filter: pricingNodesFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 3,
         visible: visible["pricing-nodes"] === true,
@@ -980,6 +998,7 @@ export function ExplorerMap({
         id: "power-plants",
         tileset: getPowerPlantTileUrl(),
         sourceLayer: "power-plants",
+        ...(powerPlantsFilter ? { filter: powerPlantsFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 5,
         visible: visible["power-plants"] !== false,
@@ -1055,6 +1074,11 @@ export function ExplorerMap({
     resolvedPricingNodeIsoColorMapping,
     resolvedEvNetworkColorMapping,
     resolvedHighlightColor,
+    evChargingFilter,
+    pricingNodesFilter,
+    transmissionLinesFilter,
+    powerPlantsFilter,
+    substationsFilter,
   ]);
 
   if (!hasMapboxToken) {
