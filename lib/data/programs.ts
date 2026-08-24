@@ -101,7 +101,7 @@ export function dbRowToProgram(row: Record<string, unknown>): Program {
     id: row.id as string,
     slug: row.slug as string,
     name: row.name as string,
-    version: row.version as number,
+    version: (row.version as number | null) ?? 1,
     description: (row.description as string | null) ?? undefined,
     organizations: normalizeOrganizations(row.organizations),
     assetTypes: (row.assetTypes as AssetType[]) ?? [],

@@ -244,7 +244,7 @@ export function EditEntityPanel({
               />
 
               {/* Edit Summary */}
-              <EditSummaryField value={editSummary} onChange={setEditSummary} />
+              <EditSummaryField value={editSummary} onChange={setEditSummary} minLength={EDIT_SUMMARY_MIN_LENGTH} />
 
               {/* Submit Error */}
               {submitError && (

@@ -350,13 +350,18 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           </>
         )}
 
-        {/* Suggest Edit */}
+        {/* Suggest Edit / Request Deletion */}
         {user && (
           <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
             <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsEditOpen(true)}>
               Suggest Edit
             </button>
-            <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsDeleteOpen(true)}>
+            <button
+              type="button"
+              className="cg-explore-fullpage-link"
+              onClick={() => setIsDeleteOpen(true)}
+              style={{ color: "var(--color-feedback-error)" }}
+            >
               Request Deletion
             </button>
           </div>
