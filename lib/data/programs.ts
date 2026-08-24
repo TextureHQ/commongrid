@@ -96,14 +96,20 @@ function normalizeCompensationTiers(raw: unknown): Program["compensationTiers"] 
 // DB source
 // ---------------------------------------------------------------------------
 
-export function dbRowToProgram(row: Record<string, unknown>): Program {
+export function dbRowToProgram(row: Record<string, unknown>, utilityMap?: Map<string, string>): Program {
+  const orgs = normalizeOrganizations(row.organizations);
+  const orgNames = utilityMap
+    ? orgs.map((org) => utilityMap.get(org.entityId)).filter(Boolean) as string[]
+    : undefined;
+
   return {
     id: row.id as string,
     slug: row.slug as string,
     name: row.name as string,
-    version: (row.version as number | null) ?? 1,
+    version: row.version as number,
     description: (row.description as string | null) ?? undefined,
-    organizations: normalizeOrganizations(row.organizations),
+    organizations: orgs,
+    organizationNames: orgNames,
     assetTypes: (row.assetTypes as AssetType[]) ?? [],
     marketSegments: (row.marketSegments as MarketSegment[]) ?? [],
     participationModels: (row.participationModels as Program["participationModels"]) ?? [],
@@ -133,6 +139,7 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
   const { getDb } = await import("@/lib/db/client");
   const { programs } = await import("@/lib/db/schema");
   const { eq, ilike, and, isNull } = await import("drizzle-orm");
+  const { getAllUtilities } = await import("@/lib/data-utilities");
   type DrizzleSQL = ReturnType<typeof eq>;
 
   const db = getDb();
@@ -177,7 +184,14 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
     .from(programs)
     .where(and(...conditions));
 
-  let result = rows.map(dbRowToProgram);
+  const allUtils = getAllUtilities();
+  const utilityMap = new Map<string, string>();
+  for (const u of allUtils) {
+    utilityMap.set(u.slug, u.name);
+    utilityMap.set(u.id, u.name);
+  }
+
+  let result = rows.map((r) => dbRowToProgram(r, utilityMap));
 
   // Apply array-based filters in memory (JSONB array contains)
   if (filters?.assetType) {
@@ -245,7 +259,16 @@ async function loadBySlugFromDb(slug: string): Promise<Program | null> {
     .where(eq(programs.slug, slug))
     .limit(1);
 
-  return rows.length > 0 ? dbRowToProgram(rows[0] as Record<string, unknown>) : null;
+  if (rows.length === 0) return null;
+  const { getAllUtilities } = await import("@/lib/data-utilities");
+  const allUtils = getAllUtilities();
+  const utilityMap = new Map<string, string>();
+  for (const u of allUtils) {
+    utilityMap.set(u.slug, u.name);
+    utilityMap.set(u.id, u.name);
+  }
+
+  return dbRowToProgram(rows[0] as Record<string, unknown>, utilityMap);
 }
 
 // ---------------------------------------------------------------------------
