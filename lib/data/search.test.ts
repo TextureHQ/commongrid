@@ -120,15 +120,15 @@ describe("search", () => {
       expect(sqlText).not.toMatch(/plainto_tsquery/);
     });
 
-    it("uses strict trigram word operators for tables without search_vector", async () => {
+    it("uses ILIKE fallback for tables without search_vector", async () => {
       const { searchAll } = await import("@/lib/data/search");
       await searchAll("caiso", { types: ["isos"] });
 
       expect(captured).toHaveLength(1);
       const { sql: sqlText } = captured[0];
-      expect(sqlText).toMatch(/%>>/);
-      expect(sqlText).toMatch(/<<->/);
-      expect(sqlText).not.toMatch(/ILIKE/i);
+      expect(sqlText).toMatch(/ILIKE/i);
+      expect(sqlText).not.toMatch(/%>>/);
+      expect(sqlText).not.toMatch(/<<->/);
       expect(sqlText).not.toMatch(/websearch_to_tsquery/);
       expect(sqlText).not.toMatch(/search_vector/);
       expect(sqlText).toMatch(/deleted_at IS NULL/);
