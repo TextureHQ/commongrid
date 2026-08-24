@@ -365,7 +365,12 @@ const DEFAULT_OVERLAYS: MapOverlays = {
   "pricing-nodes": false,
 };
 
-export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOverlays, onOverlayToggle }: ExplorerMapProps = {}) {
+export function ExplorerMap({
+  mapboxAccessToken,
+  mapRegion = "utilities",
+  mapOverlays,
+  onOverlayToggle,
+}: ExplorerMapProps = {}) {
   const effectiveToken = mapboxAccessToken ?? process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
   const hasMapboxToken = !!effectiveToken;
   const { state, navigateToDetail } = useExplorer();
