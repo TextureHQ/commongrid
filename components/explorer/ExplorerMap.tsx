@@ -314,6 +314,7 @@ function useProgramBoundaries(isActive: boolean, operatorPalette: string[]) {
                 programName: entry.programName,
                 programSlug: entry.programSlug,
                 programStatus: entry.programStatus,
+                utilityName: (feature.properties?.name as string | undefined) || "Unknown Utility",
                 colorKey: entry.colorKey,
               },
             });
@@ -750,6 +751,7 @@ export function ExplorerMap({
               <ProgramTerritoryTooltip
                 programName={feature.properties.programName}
                 programStatus={feature.properties.programStatus}
+                utilityName={feature.properties.utilityName}
               />
             ),
           },
