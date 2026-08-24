@@ -262,6 +262,14 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
               </span>
             </div>
           )}
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">DERMS Vendor</span>
+            <span className="cg-explore-kv-val">{program.dermsVendor || "—"}</span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Other Notes</span>
+            <span className="cg-explore-kv-val">{program.otherNotes || "—"}</span>
+          </div>
         </div>
 
         {/* Compensation */}
@@ -350,18 +358,13 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           </>
         )}
 
-        {/* Suggest Edit / Request Deletion */}
+        {/* Suggest Edit */}
         {user && (
           <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
             <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsEditOpen(true)}>
               Suggest Edit
             </button>
-            <button
-              type="button"
-              className="cg-explore-fullpage-link"
-              onClick={() => setIsDeleteOpen(true)}
-              style={{ color: "var(--color-feedback-error)" }}
-            >
+            <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsDeleteOpen(true)}>
               Request Deletion
             </button>
           </div>
