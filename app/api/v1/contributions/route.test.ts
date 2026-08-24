@@ -18,10 +18,16 @@ vi.mock("@/lib/db/client", () => ({
   }),
 }));
 
-// The programs table stands in for "a table that has a slug column".
-vi.mock("@/lib/mod/apply-contribution", () => ({
-  getEntityTable: () => ({ id: { name: "id" }, slug: { name: "slug" } }),
-}));
+// The programs table stands in for "a table that has a slug column". Everything
+// else in the module is kept real via importOriginal so shared constants like
+// EDIT_SUMMARY_MIN_LENGTH stay in sync with the source instead of drifting.
+vi.mock("@/lib/mod/apply-contribution", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/mod/apply-contribution")>();
+  return {
+    ...actual,
+    getEntityTable: () => ({ id: { name: "id" }, slug: { name: "slug" } }),
+  };
+});
 
 vi.mock("@/lib/mod/auto-approve", () => ({
   tryAutoApprove: vi.fn(async () => ({ autoApproved: false })),
