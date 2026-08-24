@@ -137,7 +137,7 @@ export function InlineFieldEdit({
     return normalizedNew !== normalizedCurrent;
   }, [currentValue, value]);
 
-  const summaryLongEnough = editSummary.trim().length >= 10;
+  const summaryLongEnough = editSummary.trim().length >= EDIT_SUMMARY_MIN_LENGTH;
   const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
 
   const handleSubmit = async () => {

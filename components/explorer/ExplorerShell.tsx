@@ -109,6 +109,7 @@ const REGION_OPTIONS: { value: MapRegion; label: string }[] = [
   { value: "utilities", label: "Utilities" },
   { value: "grid-operators", label: "Grid operators" },
   { value: "programs", label: "Programs" },
+  { value: "rates", label: "Rates" },
   { value: "pricing-nodes", label: "Pricing nodes" },
   { value: "rates", label: "Rates" },
 ];
@@ -134,6 +135,7 @@ const ENTITY_LABELS: Record<EntityTab, string> = {
   "grid-operators": "Grid Operators",
   "power-plants": "Power Plants",
   programs: "Programs",
+  rates: "Rates",
   "transmission-lines": "Transmission",
   "ev-charging": "EV Charging",
   "pricing-nodes": "Pricing Nodes",
@@ -249,7 +251,7 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
   );
 }
 
-const VALID_MAP_REGIONS: MapRegion[] = ["utilities", "grid-operators", "programs", "pricing-nodes", "rates"];
+const VALID_MAP_REGIONS: MapRegion[] = ["utilities", "grid-operators", "programs", "rates", "pricing-nodes"];
 
 // ---------------------------------------------------------------------------
 // Map layout — ExploreShell from @texturehq/edges-explore/layout owns the

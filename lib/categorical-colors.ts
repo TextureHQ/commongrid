@@ -146,6 +146,7 @@ export type EntityKind =
   | "grid-operators"
   | "power-plants"
   | "programs"
+  | "rates"
   | "transmission-lines"
   | "ev-charging"
   | "pricing-nodes"
@@ -157,6 +158,7 @@ const ENTITY_KIND_COLOR: Record<EntityKind, string> = {
   "grid-operators": VIZ(5), // purple
   "power-plants": VIZ(3), // orange
   programs: VIZ(7), // teal
+  rates: VIZ(8), // magenta
   "transmission-lines": VIZ(12), // deep blue
   "ev-charging": VIZ(10), // green
   "pricing-nodes": VIZ(11), // coral
