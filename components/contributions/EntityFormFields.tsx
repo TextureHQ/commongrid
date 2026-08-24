@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@texturehq/edges";
-import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/contributions/edit-summary";
+import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import {
   AssetTypeLabel,
   GridServiceLabel,
