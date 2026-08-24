@@ -29,7 +29,17 @@ const typeFilterOptions = [
 ];
 
 const SearchIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    aria-hidden="true"
+    focusable="false"
+    role="presentation"
+  >
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
   </svg>

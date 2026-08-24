@@ -99,7 +99,7 @@ function normalizeCompensationTiers(raw: unknown): Program["compensationTiers"] 
 export function dbRowToProgram(row: Record<string, unknown>, utilityMap?: Map<string, string>): Program {
   const orgs = normalizeOrganizations(row.organizations);
   const orgNames = utilityMap
-    ? orgs.map((org) => utilityMap.get(org.entityId)).filter(Boolean) as string[]
+    ? (orgs.map((org) => utilityMap.get(org.entityId)).filter(Boolean) as string[])
     : undefined;
 
   return {
