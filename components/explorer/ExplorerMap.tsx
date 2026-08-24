@@ -1087,11 +1087,6 @@ export function ExplorerMap({
                 onOverlayToggle(layerId as keyof MapOverlays);
               }
             },
-            onLayerToggle: (layerId) => {
-              if (onOverlayToggle) {
-                onOverlayToggle(layerId as keyof MapOverlays);
-              }
-            },
           },
         ]}
         layers={layers}
