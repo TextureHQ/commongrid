@@ -340,7 +340,7 @@ function useProgramBoundaries(isActive: boolean, operatorPalette: string[]) {
 }
 
 // Region = which fill/territory layer is shown on the map
-export type MapRegion = "utilities" | "grid-operators" | "programs" | "pricing-nodes";
+export type MapRegion = "utilities" | "grid-operators" | "programs" | "rates" | "pricing-nodes";
 
 // Overlay toggles for point/line layers
 export interface MapOverlays {
