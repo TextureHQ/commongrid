@@ -227,7 +227,6 @@ async function handlePost(req: Request, ctx: RouteContext) {
   // arrived as a slug; the lock check, the contribution row, and every
   // downstream apply keyed on `entity_id` must use the resolved id or they will
   // silently target nothing.
-  const resolvedEntityId: string = isCreate ? entity_id : (entity.id as string);
 
   // --- Entity lock check (skip for creates) ---
   if (!isCreate) {
