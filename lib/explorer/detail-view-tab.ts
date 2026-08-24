@@ -15,13 +15,14 @@
  * React hook, the edges route stack, or a DOM.
  */
 
-export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
+export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant" | "rates";
 
 export type EntityTab =
   | "utilities"
   | "grid-operators"
   | "power-plants"
   | "programs"
+  | "rates"
   | "transmission-lines"
   | "ev-charging"
   | "pricing-nodes"
@@ -31,6 +32,7 @@ export const DETAIL_VIEW_TO_TAB: Record<DetailView, EntityTab> = {
   utility: "utilities",
   program: "programs",
   "power-plant": "power-plants",
+  rates: "rates",
   iso: "grid-operators",
   rto: "grid-operators",
   ba: "grid-operators",

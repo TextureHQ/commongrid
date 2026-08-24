@@ -9,11 +9,16 @@ import {
   getFilterFields,
 } from "@texturehq/edges";
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { type Rate } from "@/types/entities"; // Assuming a Rate type exists or will be created
 import { useExplorer } from "../ExplorerContext";
+
+interface Rate {
+  slug: string;
+  name: string;
+  utilityName: string;
+  tariffType: string;
+  status: string;
+}
 
 interface RateRow {
   slug: string;
@@ -38,9 +43,57 @@ const sortOptions = [
 ];
 
 const ALL_STATE_CODES = [
-  "AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA",
-  "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR",
-  "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY",
+  "AK",
+  "AL",
+  "AR",
+  "AZ",
+  "CA",
+  "CO",
+  "CT",
+  "DC",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "IA",
+  "ID",
+  "IL",
+  "IN",
+  "KS",
+  "KY",
+  "LA",
+  "MA",
+  "MD",
+  "ME",
+  "MI",
+  "MN",
+  "MO",
+  "MS",
+  "MT",
+  "NC",
+  "ND",
+  "NE",
+  "NH",
+  "NJ",
+  "NM",
+  "NV",
+  "NY",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VA",
+  "VT",
+  "WA",
+  "WI",
+  "WV",
+  "WY",
 ];
 
 const FACET_CONFIGS: FacetConfig[] = [
@@ -125,22 +178,20 @@ function buildApiParams(
 }
 
 const SearchIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
   </svg>
 );
 
 const FilterIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M22 3H2l8 9.46V19l4 2V12.46z" />
   </svg>
 );
 
 export function RatesListPanel() {
   const { state, setSearch, setTypeFilter, setJurisdictions, navigateToDetail } = useExplorer();
-  const router = useRouter();
-  const { user } = useCurrentUser();
 
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [sortValue, setSortValue] = useState("name:asc");
@@ -325,10 +376,12 @@ export function RatesListPanel() {
           rows.map((row) => (
             <PanelEntityRow
               key={row.slug}
-              leading={<span className="h-2 w-2 rounded-full" style={{ background: "var(--color-feedback-info-dark)" }} />}
+              leading={
+                <span className="h-2 w-2 rounded-full" style={{ background: "var(--color-feedback-info-dark)" }} />
+              }
               title={row.name}
               subtitle={`${row.utilityName} · ${row.tariffType}`}
-              onSelect={() => navigateToDetail("rates", row.slug)} // Assuming "rates" is a valid DetailView or will be mapped
+              onSelect={() => navigateToDetail("rates", row.slug)}
             />
           ))
         )}

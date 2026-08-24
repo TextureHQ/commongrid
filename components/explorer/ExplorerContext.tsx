@@ -24,7 +24,7 @@ export type EntityTab =
   | "ev-charging"
   | "pricing-nodes"
   | "substations";
-export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant" | "rates";
+export type DetailView = import("@/lib/explorer/detail-view-tab").DetailView;
 
 /**
  * Route shape for CommonGrid's explore stack.
@@ -298,7 +298,14 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   const state = useMemo<ExplorerState>(() => {
     const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
     const tab = currentList?.payload.tab ?? DEFAULT_TAB;
-    const filters = currentList?.payload ?? { mode: "map" as const, q: "", segment: "all", type: "all", jurisdictions: [], tab: DEFAULT_TAB };
+    const filters = currentList?.payload ?? {
+      mode: "map" as const,
+      q: "",
+      segment: "all",
+      type: "all",
+      jurisdictions: [],
+      tab: DEFAULT_TAB,
+    };
     const detail = stack.current?.type === "detail" ? stack.current : null;
     const current = stack.current;
     const mode: ExplorerState["mode"] = detail ? "detail" : current?.type === "overview" ? "overview" : "list";
@@ -403,7 +410,10 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   );
 
   const setListSource = useCallback((listSource: EntityTab) => dispatch({ type: "SET_LIST_SOURCE", listSource }), []);
-  const setDisplayMode = useCallback((displayMode: "map" | "table") => updateActiveListFilters({ mode: displayMode }), [updateActiveListFilters]);
+  const setDisplayMode = useCallback(
+    (displayMode: "map" | "table") => updateActiveListFilters({ mode: displayMode }),
+    [updateActiveListFilters]
+  );
   const setSearch = useCallback((q: string) => updateActiveListFilters({ q }), [updateActiveListFilters]);
   const setSegment = useCallback((segment: string) => updateActiveListFilters({ segment }), [updateActiveListFilters]);
   const setTypeFilter = useCallback(

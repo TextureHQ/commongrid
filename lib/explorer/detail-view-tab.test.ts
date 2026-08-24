@@ -25,7 +25,7 @@ describe("detailViewToTab", () => {
   });
 
   it("resolves a tab for every DetailView (no undefined lands on a panel)", () => {
-    const views: DetailView[] = ["utility", "iso", "rto", "ba", "program", "power-plant"];
+    const views: DetailView[] = ["utility", "iso", "rto", "ba", "program", "power-plant", "rates"];
     for (const view of views) {
       expect(detailViewToTab(view)).toBeTruthy();
     }
