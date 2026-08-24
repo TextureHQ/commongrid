@@ -7,6 +7,13 @@ export enum ProgramOrganizationRole {
   REGULATOR = "REGULATOR",
 }
 
+export const ProgramOrganizationRoleLabel: Record<ProgramOrganizationRole, string> = {
+  [ProgramOrganizationRole.ADMINISTRATOR]: "Administrator",
+  [ProgramOrganizationRole.IMPLEMENTER]: "Implementer",
+  [ProgramOrganizationRole.FUNDER]: "Funder",
+  [ProgramOrganizationRole.REGULATOR]: "Regulator",
+};
+
 export enum AssetType {
   BATTERY = "BATTERY",
   THERMOSTAT = "THERMOSTAT",
@@ -86,6 +93,18 @@ export enum IncentiveStructure {
   LOAN = "LOAN",
   NONE = "NONE",
 }
+
+export const IncentiveStructureLabel: Record<IncentiveStructure, string> = {
+  [IncentiveStructure.REBATE]: "Rebate",
+  [IncentiveStructure.BILL_CREDIT]: "Bill Credit",
+  [IncentiveStructure.RATE_DISCOUNT]: "Rate Discount",
+  [IncentiveStructure.DIRECT_PAYMENT]: "Direct Payment",
+  [IncentiveStructure.CAPACITY_PAYMENT]: "Capacity Payment",
+  [IncentiveStructure.PERFORMANCE_BASED]: "Performance-Based",
+  [IncentiveStructure.TAX_CREDIT]: "Tax Credit",
+  [IncentiveStructure.LOAN]: "Loan",
+  [IncentiveStructure.NONE]: "None",
+};
 
 export enum GridService {
   DEMAND_RESPONSE = "DEMAND_RESPONSE",
@@ -202,6 +221,7 @@ export interface Program {
   id: string;
   slug: string;
   name: string;
+  version: number;
   description?: string;
   organizations: ProgramOrganization[];
   assetTypes: AssetType[];

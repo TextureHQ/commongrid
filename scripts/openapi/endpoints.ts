@@ -117,6 +117,20 @@ export const ENDPOINTS: EndpointDef[] = [
         schema: { type: "string", enum: UTILITY_STATUS_ENUM },
       },
       { name: "state", in: "query", description: "Filter by two-letter US state code", schema: STRING },
+      {
+        name: "slugs",
+        in: "query",
+        description:
+          "Comma-separated utility slugs (max 500 per request, case-insensitive). Bulk slug → record lookup; " +
+          "use instead of paging the full list and filtering client-side.",
+        schema: STRING,
+      },
+      {
+        name: "eiaIds",
+        in: "query",
+        description: "Comma-separated EIA Utility IDs (max 500 per request). Alias: eia_ids.",
+        schema: STRING,
+      },
       { name: "iso", in: "query", description: "Filter by ISO id", schema: STRING },
       { name: "rto", in: "query", description: "Filter by RTO id", schema: STRING },
       { name: "ba", in: "query", description: "Filter by balancing authority id", schema: STRING },

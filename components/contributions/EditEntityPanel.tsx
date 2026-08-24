@@ -3,6 +3,7 @@
 import { Button, Drawer, Icon, Loader } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import { type EditableField, EditSummaryField, EntityFormFields, SourceCitationFields } from "./EntityFormFields";
 
 // Convert snake_case field name to camelCase for object lookups against
@@ -112,7 +113,7 @@ export function EditEntityPanel({
   }, [formValues, lookupCurrentValue]);
 
   const hasChanges = Object.keys(changedFields).length > 0;
-  const summaryLongEnough = editSummary.trim().length >= 10;
+  const summaryLongEnough = editSummary.trim().length >= EDIT_SUMMARY_MIN_LENGTH;
   const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
 
   const handleFieldChange = (fieldName: string, value: unknown) => {

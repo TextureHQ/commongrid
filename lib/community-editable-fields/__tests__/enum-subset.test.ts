@@ -15,7 +15,14 @@
 import { describe, expect, it } from "vitest";
 import { editableFieldDefinitions } from "@/lib/community-editable-fields/definitions";
 import { UtilitySegment, UtilityStatus } from "@/types/entities";
-import { ProgramStatus } from "@/types/programs";
+import {
+  AssetType,
+  GridService,
+  IncentiveStructure,
+  MarketSegment,
+  ParticipationModel,
+  ProgramStatus,
+} from "@/types/programs";
 
 /** Fields whose domain IS a TypeScript enum. Options must match exactly. */
 const TS_ENUM_BACKED_FIELDS: ReadonlyArray<{
@@ -24,6 +31,11 @@ const TS_ENUM_BACKED_FIELDS: ReadonlyArray<{
   enumValues: readonly string[];
 }> = [
   { entityType: "program", fieldName: "status", enumValues: Object.values(ProgramStatus) },
+  { entityType: "program", fieldName: "asset_types", enumValues: Object.values(AssetType) },
+  { entityType: "program", fieldName: "market_segments", enumValues: Object.values(MarketSegment) },
+  { entityType: "program", fieldName: "grid_services", enumValues: Object.values(GridService) },
+  { entityType: "program", fieldName: "participation_models", enumValues: Object.values(ParticipationModel) },
+  { entityType: "program", fieldName: "incentive_structures", enumValues: Object.values(IncentiveStructure) },
   { entityType: "utility", fieldName: "segment", enumValues: Object.values(UtilitySegment) },
   { entityType: "utility", fieldName: "status", enumValues: Object.values(UtilityStatus) },
 ];
@@ -39,8 +51,8 @@ const NON_TS_ENUM_FIELDS: ReadonlyArray<{
   mustInclude: readonly string[];
 }> = [
   // power_plants.status is stored lowercase in Postgres.
-  { entityType: "power_plant", fieldName: "status", mustInclude: ["operable", "proposed"] },
-  { entityType: "ev_station", fieldName: "access_code", mustInclude: ["public", "private"] },
+  { entityType: "power_plant", fieldName: "status", mustInclude: ["operable", "proposed", "retired"] },
+  { entityType: "ev_station", fieldName: "access_code", mustInclude: ["public", "private", "restricted"] },
   { entityType: "ev_station", fieldName: "status_code", mustInclude: ["E", "P", "T"] },
 ];
 
@@ -96,8 +108,8 @@ describe("community-editable enum options match their source of truth", () => {
     });
   }
 
-  it("every enum field declares a non-empty, duplicate-free option list or an external source", () => {
-    const enumFields = editableFieldDefinitions.filter((f) => f.fieldType === "enum");
+  it("every enum or multi_enum field declares a non-empty, duplicate-free option list or an external source", () => {
+    const enumFields = editableFieldDefinitions.filter((f) => f.fieldType === "enum" || f.fieldType === "multi_enum");
     expect(enumFields.length).toBeGreaterThan(0);
 
     for (const field of enumFields) {

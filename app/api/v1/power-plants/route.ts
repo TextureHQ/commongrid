@@ -124,6 +124,7 @@ const ALL_FIELDS = new Set<string>([
   "id",
   "slug",
   "name",
+  "version",
   "plantCode",
   "utilityId",
   "utilityName",

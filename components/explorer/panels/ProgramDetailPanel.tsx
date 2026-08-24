@@ -2,14 +2,21 @@
 
 import type { Feature, FeatureCollection } from "geojson";
 import { useEffect, useMemo, useState } from "react";
+import { DeleteEntityDialog } from "@/components/contributions/DeleteEntityDialog";
 import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useProgram } from "@/hooks/useProgram";
-import { useUtilityList } from "@/hooks/useUtilityList";
+import { useUtilityNames } from "@/hooks/useUtilityNames";
 import { entityKindColor } from "@/lib/categorical-colors";
 import { getRegionById } from "@/lib/data";
 import { safeHostname } from "@/lib/geo";
+import {
+  administratorOrganizations,
+  nonAdministratorOrganizations,
+  programOrganizationSlugs,
+  resolveProgramOrganizations,
+} from "@/lib/programs/resolve-organizations";
 import {
   AssetTypeLabel,
   CompensationTypeLabel,
@@ -17,7 +24,6 @@ import {
   GridServiceLabel,
   MarketSegmentLabel,
   ParticipationModelLabel,
-  ProgramOrganizationRole,
   ProgramStatus,
 } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
@@ -31,18 +37,40 @@ const ArrowIcon = () => (
     fill="none"
     stroke="currentColor"
     strokeWidth="1.8"
+    aria-hidden="true"
+    focusable="false"
+    role="presentation"
   >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
 
+const linkButtonStyle = {
+  background: "none",
+  border: 0,
+  padding: 0,
+  color: "inherit",
+  font: "inherit",
+  cursor: "pointer",
+  textAlign: "left" as const,
+};
+
 export function ProgramDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
   const { user } = useCurrentUser();
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const { program } = useProgram(slug);
-  const { utilities } = useUtilityList({ limit: 200 });
+
+  // Resolve the program's organization slugs directly instead of scanning the
+  // first N utilities alphabetically. The old `useUtilityList({ limit: 200 })`
+  // lookup silently rendered no administrator at all for any utility past the
+  // alphabetical cap (3,133 utilities, 200 fetched) — e.g. "AC Load Management"
+  // administered by central-georgia-el-member showed a website but no utility.
+  const organizationSlugs = useMemo(() => programOrganizationSlugs(program), [program]);
+
+  const { utilitiesBySlug } = useUtilityNames(organizationSlugs);
 
   // Resolve territory file keys for all program regions
   const territoryFileKeys = useMemo(() => {
@@ -110,8 +138,12 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
     );
   }
 
-  const adminOrgs = program.organizations.filter((o) => o.role === ProgramOrganizationRole.ADMINISTRATOR);
-  const adminUtilities = adminOrgs.map((o) => utilities.find((u) => u.slug === o.entityId)).filter(Boolean);
+  // Every organization on the program, resolved to a utility where possible.
+  // Unresolved slugs still render (humanized) so the panel never hides the
+  // utility a program belongs to.
+  const organizations = resolveProgramOrganizations(program, utilitiesBySlug);
+  const adminOrganizations = administratorOrganizations(organizations);
+  const otherOrganizations = nonAdministratorOrganizations(organizations);
 
   const statusLabel = (s: string) => {
     const labels: Record<string, string> = {
@@ -147,28 +179,43 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
 
         {/* Overview KV table */}
         <div className="cg-explore-kv-table">
-          {adminUtilities.length > 0 && (
+          {adminOrganizations.length > 0 && (
             <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Administrator</span>
+              <span className="cg-explore-kv-key">Utility</span>
               <span className="cg-explore-kv-val">
-                {adminUtilities.map(
-                  (u) =>
-                    u && (
-                      <a
-                        key={u.slug}
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          navigateToDetail("utility", u.slug);
-                        }}
+                {adminOrganizations.map((o, i) => (
+                  <span key={o.entityId}>
+                    {i > 0 && ", "}
+                    {o.resolved ? (
+                      <button
+                        type="button"
+                        onClick={() => navigateToDetail("utility", o.entityId)}
+                        style={linkButtonStyle}
                       >
-                        {u.name}
-                      </a>
-                    )
-                )}
+                        {o.name}
+                      </button>
+                    ) : (
+                      o.name
+                    )}
+                  </span>
+                ))}
               </span>
             </div>
           )}
+          {otherOrganizations.map((o) => (
+            <div key={`${o.role}-${o.entityId}`} className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">{o.roleLabel}</span>
+              <span className="cg-explore-kv-val">
+                {o.resolved ? (
+                  <button type="button" onClick={() => navigateToDetail("utility", o.entityId)} style={linkButtonStyle}>
+                    {o.name}
+                  </button>
+                ) : (
+                  o.name
+                )}
+              </span>
+            </div>
+          ))}
           <div className="cg-explore-kv-row">
             <span className="cg-explore-kv-key">Asset Types</span>
             <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
@@ -236,29 +283,29 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           </>
         )}
 
-        {/* Related: administrator utilities */}
-        {adminUtilities.length > 0 && (
+        {/* Related: organizations behind the program */}
+        {organizations.length > 0 && (
           <>
             <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
               Related
             </div>
-            {adminUtilities.map(
-              (u) =>
-                u && (
-                  <div
-                    key={u.slug}
-                    className="cg-explore-related-row"
-                    onClick={() => navigateToDetail("utility", u.slug)}
-                  >
-                    <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
-                    <div style={{ flex: 1 }}>
-                      <div className="cg-explore-related-name">{u.name}</div>
-                      <div className="cg-explore-related-type">Administrator</div>
-                    </div>
-                    <ArrowIcon />
-                  </div>
-                )
-            )}
+            {organizations.map((o) => (
+              <button
+                key={`${o.role}-${o.entityId}`}
+                className="cg-explore-related-row"
+                type="button"
+                onClick={o.resolved ? () => navigateToDetail("utility", o.entityId) : undefined}
+                disabled={!o.resolved}
+                style={o.resolved ? undefined : { cursor: "default" }}
+              >
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{o.name}</div>
+                  <div className="cg-explore-related-type">{o.roleLabel}</div>
+                </div>
+                {o.resolved && <ArrowIcon />}
+              </button>
+            ))}
           </>
         )}
 
@@ -309,6 +356,9 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
             <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsEditOpen(true)}>
               Suggest Edit
             </button>
+            <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsDeleteOpen(true)}>
+              Request Deletion
+            </button>
           </div>
         )}
       </div>
@@ -316,12 +366,24 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
       {isEditOpen && program && (
         <EditEntityPanel
           entityType="program"
-          entityId={program.slug}
+          entityId={program.id}
           entitySlug={program.slug}
           entityName={program.name}
           currentValues={program as unknown as Record<string, unknown>}
           onClose={() => setIsEditOpen(false)}
           onSubmitted={() => setIsEditOpen(false)}
+        />
+      )}
+
+      {isDeleteOpen && program && (
+        <DeleteEntityDialog
+          entityType="program"
+          entityId={program.id}
+          entityName={program.name}
+          entityVersion={program.version ?? 1}
+          isOpen={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+          onSuccess={() => setIsDeleteOpen(false)}
         />
       )}
     </div>

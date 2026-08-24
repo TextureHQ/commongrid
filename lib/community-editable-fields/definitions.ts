@@ -2,9 +2,9 @@
  * Canonical definitions for community-editable fields.
  *
  * This is the single source of truth for which entity fields the community may
- * edit, and for the option lists offered on enum fields. `scripts/seed-editable-fields.ts`
- * writes these rows into `community_editable_fields`; the API serves them to the
- * contribution UI.
+ * edit, and for the option lists offered on enum fields.
+ * `scripts/seed-editable-fields.ts` writes these rows into `community_editable_fields`;
+ * the API serves them to the contribution UI.
  *
  * It lives in `lib/` rather than `scripts/` so tests and runtime validation can
  * import it. Enum option lists previously existed only inside the seed script,
@@ -20,12 +20,19 @@
  */
 
 import { UtilitySegment, UtilityStatus } from "@/types/entities";
-import { ProgramStatus } from "@/types/programs";
+import {
+  AssetType,
+  GridService,
+  IncentiveStructure,
+  MarketSegment,
+  ParticipationModel,
+  ProgramStatus,
+} from "@/types/programs";
 
 export interface EditableFieldDefinition {
   entityType: string;
   fieldName: string;
-  fieldType: "text" | "integer" | "float" | "boolean" | "enum" | "url";
+  fieldType: "text" | "integer" | "float" | "boolean" | "enum" | "multi_enum" | "url";
   isCritical: boolean;
   displayName: string;
   validationRules?: Record<string, unknown>;
@@ -320,10 +327,9 @@ export const editableFieldDefinitions: EditableFieldDefinition[] = [
     isCritical: true,
     displayName: "Status",
     section: "basic",
-    // Deliberately lowercase literals: power_plants.status is genuinely stored
-    // lowercase ('operable' / 'proposed'), so this domain is NOT a TS enum and
-    // must not be uppercased along with the others.
     enumSource: "power_plant_status",
+    // Deliberately lowercase literals: power_plants.status is genuinely stored
+    // lowercase in Postgres and is not a TypeScript enum.
     validationRules: { enum: ["operable", "proposed", "retired"] },
   },
   {
@@ -675,5 +681,58 @@ export const editableFieldDefinitions: EditableFieldDefinition[] = [
     isCritical: false,
     displayName: "Contact URL",
     section: "contact",
+  },
+  // Multi-value enum arrays (JSONB). Options are sourced from the canonical
+  // enums in types/programs.ts so the registered option list cannot drift from
+  // the values the app writes (see enum-subset test + CIR-1506).
+  {
+    entityType: "program",
+    fieldName: "asset_types",
+    fieldType: "multi_enum",
+    isCritical: true,
+    displayName: "Asset Types",
+    section: "attributes",
+    enumSource: "asset_type",
+    validationRules: { enum: Object.values(AssetType) },
+  },
+  {
+    entityType: "program",
+    fieldName: "market_segments",
+    fieldType: "multi_enum",
+    isCritical: false,
+    displayName: "Market Segments",
+    section: "attributes",
+    enumSource: "market_segment",
+    validationRules: { enum: Object.values(MarketSegment) },
+  },
+  {
+    entityType: "program",
+    fieldName: "grid_services",
+    fieldType: "multi_enum",
+    isCritical: true,
+    displayName: "Grid Services",
+    section: "attributes",
+    enumSource: "grid_service",
+    validationRules: { enum: Object.values(GridService) },
+  },
+  {
+    entityType: "program",
+    fieldName: "participation_models",
+    fieldType: "multi_enum",
+    isCritical: false,
+    displayName: "Participation",
+    section: "attributes",
+    enumSource: "participation_model",
+    validationRules: { enum: Object.values(ParticipationModel) },
+  },
+  {
+    entityType: "program",
+    fieldName: "incentive_structures",
+    fieldType: "multi_enum",
+    isCritical: false,
+    displayName: "Incentive Structures",
+    section: "attributes",
+    enumSource: "incentive_structure",
+    validationRules: { enum: Object.values(IncentiveStructure) },
   },
 ];

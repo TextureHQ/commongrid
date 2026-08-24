@@ -14,6 +14,7 @@
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+import { ApiError } from "@/lib/api/errors";
 import { getDb } from "@/lib/db/client";
 import type { UserSelect } from "@/lib/db/schema/users";
 import { users } from "@/lib/db/schema/users";
@@ -69,7 +70,10 @@ export async function getCurrentUser(): Promise<UserSelect | null> {
 export async function requireCurrentUser(): Promise<UserSelect> {
   const user = await getCurrentUser();
   if (!user) {
-    throw new Error("Authentication required");
+    // Typed 401 so the API middleware returns UNAUTHORIZED instead of a 500.
+    // Per withErrorHandling, 4xx ApiErrors are expected traffic and are not
+    // reported to Sentry — this is what stops the developer-keys noise.
+    throw new ApiError("UNAUTHORIZED", "Authentication required.");
   }
   return user;
 }
