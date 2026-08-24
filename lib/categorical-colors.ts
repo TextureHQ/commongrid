@@ -150,8 +150,7 @@ export type EntityKind =
   | "transmission-lines"
   | "ev-charging"
   | "pricing-nodes"
-  | "substations"
-  | "rates";
+  | "substations";
 
 const ENTITY_KIND_COLOR: Record<EntityKind, string> = {
   utilities: VIZ(4), // blue
@@ -163,7 +162,6 @@ const ENTITY_KIND_COLOR: Record<EntityKind, string> = {
   "ev-charging": VIZ(10), // green
   "pricing-nodes": VIZ(11), // coral
   substations: VIZ(2), // pink-red
-  rates: VIZ(9), // yellow
 };
 
 export function entityKindColor(kind: EntityKind): string {
