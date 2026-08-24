@@ -101,7 +101,7 @@ export function dbRowToProgram(row: Record<string, unknown>): Program {
     id: row.id as string,
     slug: row.slug as string,
     name: row.name as string,
-    version: row.version as number,
+    version: (row.version as number | null) ?? 1,
     description: (row.description as string | null) ?? undefined,
     organizations: normalizeOrganizations(row.organizations),
     assetTypes: (row.assetTypes as AssetType[]) ?? [],
@@ -124,7 +124,6 @@ export function dbRowToProgram(row: Record<string, unknown>): Program {
     termsUrl: (row.termsUrl as string | null) ?? undefined,
     contactUrl: (row.contactUrl as string | null) ?? undefined,
     variants: (row.variants as Program["variants"]) ?? [],
-    version: (row.version as number | null) ?? 1,
     createdAt: row.createdAt instanceof Date ? (row.createdAt as Date).toISOString() : (row.createdAt as string),
     updatedAt: row.updatedAt instanceof Date ? (row.updatedAt as Date).toISOString() : (row.updatedAt as string),
   };
@@ -172,7 +171,6 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
       termsUrl: programs.termsUrl,
       contactUrl: programs.contactUrl,
       variants: programs.variants,
-      version: programs.version,
       createdAt: programs.createdAt,
       updatedAt: programs.updatedAt,
     })
@@ -240,7 +238,6 @@ async function loadBySlugFromDb(slug: string): Promise<Program | null> {
       termsUrl: programs.termsUrl,
       contactUrl: programs.contactUrl,
       variants: programs.variants,
-      version: programs.version,
       createdAt: programs.createdAt,
       updatedAt: programs.updatedAt,
     })

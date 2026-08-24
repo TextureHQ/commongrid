@@ -146,6 +146,10 @@ export interface PowerPlant {
   id: string;
   slug: string;
   name: string;
+  /**
+   * Optimistic-concurrency version, echoed back on edit/delete requests.
+   * Legacy payloads that predate the column are normalized to 1 on read.
+   */
   version: number;
   plantCode: string;
   utilityId: string | null;
@@ -169,11 +173,6 @@ export interface PowerPlant {
   status: "operable" | "proposed";
   proposedCapacityMw: number | null;
   proposedOnlineYear: number | null;
-  /**
-   * Optimistic-concurrency version, echoed back on edit/delete requests.
-   * Missing on legacy payloads; treat absent as 1.
-   */
-  version?: number;
 }
 
 export type FuelCategory =

@@ -221,6 +221,11 @@ export interface Program {
   id: string;
   slug: string;
   name: string;
+  /**
+   * Optimistic-concurrency version. Sent back on edit/delete requests so a
+   * contribution against a stale copy is caught. Legacy payloads that predate
+   * the column are normalized to 1 on read.
+   */
   version: number;
   description?: string;
   organizations: ProgramOrganization[];
@@ -244,12 +249,6 @@ export interface Program {
   termsUrl?: string;
   contactUrl?: string;
   variants: ProgramVariant[];
-  /**
-   * Optimistic-concurrency version. Sent back on edit/delete requests so a
-   * contribution against a stale copy is caught. Omitted only for legacy
-   * payloads that predate the column; consumers should treat missing as 1.
-   */
-  version?: number;
   createdAt: string;
   updatedAt: string;
 }
