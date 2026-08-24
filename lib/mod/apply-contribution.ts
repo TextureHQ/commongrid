@@ -60,6 +60,8 @@ export type EntityType =
   | "region"
   | "program";
 
+export const EDIT_SUMMARY_MIN_LENGTH = 25;
+
 export type ChangeType = "create" | "update" | "delete";
 
 /** Where an accepted change came from, recorded on the version row. */
