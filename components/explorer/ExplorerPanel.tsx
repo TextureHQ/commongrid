@@ -11,6 +11,7 @@ import { PowerPlantListPanel } from "./panels/PowerPlantListPanel";
 import { PricingNodeListPanel } from "./panels/PricingNodeListPanel";
 import { ProgramDetailPanel } from "./panels/ProgramDetailPanel";
 import { ProgramListPanel } from "./panels/ProgramListPanel";
+import { RatesListPanel } from "./panels/RatesListPanel";
 import { RtoDetailPanel } from "./panels/RtoDetailPanel";
 import { SubstationListPanel } from "./panels/SubstationListPanel";
 import { TransmissionListPanel } from "./panels/TransmissionListPanel";
@@ -21,13 +22,14 @@ interface ExplorerPanelProps {
   // In map view, listSource overrides state.tab to control which list is shown.
   // In list view, leave undefined and the tab bar controls it via state.tab.
   listSource?: EntityTab;
+  forceTable?: boolean;
 }
 
-export function ExplorerPanel({ listSource }: ExplorerPanelProps = {}) {
+export function ExplorerPanel({ listSource, forceTable }: ExplorerPanelProps = {}) {
   const { state } = useExplorer();
 
   // Overview is the stack root — shows the top-level entity buckets.
-  if (state.mode === "overview") {
+  if (state.mode === "overview" && !forceTable) {
     return <OverviewPanel />;
   }
 
@@ -68,6 +70,8 @@ export function ExplorerPanel({ listSource }: ExplorerPanelProps = {}) {
       return <PricingNodeListPanel />;
     case "substations":
       return <SubstationListPanel />;
+    case "rates":
+      return <RatesListPanel />;
     default:
       return <UtilityListPanel />;
   }

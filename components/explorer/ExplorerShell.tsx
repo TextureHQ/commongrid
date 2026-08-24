@@ -2,8 +2,14 @@
 
 import "@/app/(shell)/explore/explore.css";
 import { ExploreShell } from "@texturehq/edges-explore/layout";
-import { type ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { type EntityTab, type ExploreRoute, ExplorerProvider, useExplorer } from "./ExplorerContext";
+import { type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type EntityTab,
+  type ExploreRoute,
+  ExplorerProvider,
+  type ExploreViewMode,
+  useExplorer,
+} from "./ExplorerContext";
 import { ExplorerMap, type MapOverlays, type MapRegion } from "./ExplorerMap";
 import { ExplorerPanel } from "./ExplorerPanel";
 
@@ -52,6 +58,49 @@ const CheckIcon = () => (
   </svg>
 );
 
+const ListIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Table">
+    <title>Table</title>
+    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+  </svg>
+);
+
+const MapIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Map">
+    <title>Map</title>
+    <path d="M9 20v-8M15 20v-8M3 10V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4M3 14v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4M9 3v7M15 3v7M9 14v7M15 14v7" />
+  </svg>
+);
+
+function MapTableToggle({ mode, setMode }: { mode: ExploreViewMode; setMode: (m: ExploreViewMode) => void }) {
+  return (
+    <div className="flex items-center bg-background-surface border border-border-default rounded-md p-0.5 ml-auto">
+      <button
+        type="button"
+        className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-sm transition-colors ${
+          mode === "map"
+            ? "bg-brand-primary/10 text-brand-primary shadow-sm"
+            : "text-text-muted hover:text-text-heading hover:bg-background-hover"
+        }`}
+        onClick={() => setMode("map")}
+      >
+        <MapIcon /> Map
+      </button>
+      <button
+        type="button"
+        className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-sm transition-colors ${
+          mode === "table"
+            ? "bg-brand-primary/10 text-brand-primary shadow-sm"
+            : "text-text-muted hover:text-text-heading hover:bg-background-hover"
+        }`}
+        onClick={() => setMode("table")}
+      >
+        <ListIcon /> Table
+      </button>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Region selector options for the map view
 // ---------------------------------------------------------------------------
@@ -60,6 +109,7 @@ const REGION_OPTIONS: { value: MapRegion; label: string }[] = [
   { value: "utilities", label: "Utilities" },
   { value: "grid-operators", label: "Grid operators" },
   { value: "programs", label: "Programs" },
+  { value: "rates", label: "Rates" },
   { value: "pricing-nodes", label: "Pricing nodes" },
 ];
 
@@ -84,6 +134,7 @@ const ENTITY_LABELS: Record<EntityTab, string> = {
   "grid-operators": "Grid Operators",
   "power-plants": "Power Plants",
   programs: "Programs",
+  rates: "Rates",
   "transmission-lines": "Transmission",
   "ev-charging": "EV Charging",
   "pricing-nodes": "Pricing Nodes",
@@ -198,7 +249,7 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
   );
 }
 
-const VALID_MAP_REGIONS: MapRegion[] = ["utilities", "grid-operators", "programs", "pricing-nodes"];
+const VALID_MAP_REGIONS: MapRegion[] = ["utilities", "grid-operators", "programs", "rates", "pricing-nodes"];
 
 // ---------------------------------------------------------------------------
 // Map layout — ExploreShell from @texturehq/edges-explore/layout owns the
@@ -218,18 +269,10 @@ interface MapLayoutProps {
   mapRegion: MapRegion;
   mapOverlays: MapOverlays;
   onOverlayToggle?: (key: keyof MapOverlays) => void;
-  onMapRegionChange?: (region: MapRegion) => void;
   topBar?: ReactNode;
 }
 
-function MapLayout({
-  mapboxAccessToken,
-  mapRegion,
-  mapOverlays,
-  onOverlayToggle,
-  onMapRegionChange,
-  topBar,
-}: MapLayoutProps) {
+function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays, onOverlayToggle, topBar }: MapLayoutProps) {
   const { state, stack } = useExplorer();
 
   return (
@@ -262,15 +305,19 @@ function MapFilterBar({
   mapOverlays,
   toggleOverlay,
   onOpenFilter,
+  viewMode,
+  setViewMode,
 }: {
   mapRegion: MapRegion;
   setMapRegion: (r: MapRegion) => void;
   mapOverlays: MapOverlays;
   toggleOverlay: (key: keyof MapOverlays) => void;
   onOpenFilter?: () => void;
+  viewMode?: ExploreViewMode;
+  setViewMode?: (m: ExploreViewMode) => void;
 }) {
   return (
-    <div className="cg-explore-filter-row">
+    <div className="cg-explore-filter-row w-full flex items-center">
       <RegionDropdown value={mapRegion} onChange={setMapRegion} />
       <div className="cg-explore-divider" />
       <OverlayDropdown overlays={mapOverlays} onToggle={toggleOverlay} />
@@ -282,6 +329,7 @@ function MapFilterBar({
           </button>
         </>
       )}
+      {viewMode && setViewMode && <MapTableToggle mode={viewMode} setMode={setViewMode} />}
     </div>
   );
 }
@@ -298,7 +346,7 @@ interface ExplorerLayoutProps {
 }
 
 function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
-  const { state, setListSource } = useExplorer();
+  const { state, setListSource, setViewMode } = useExplorer();
 
   const [mapRegion, setMapRegion] = useState<MapRegion>("utilities");
   const handleMapRegionChange = useCallback(
@@ -343,26 +391,36 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
   }, [state.listSource]);
 
   const topBar = (
-    <div className="cg-explore-filter-bar">
+    <div className="cg-explore-filter-bar flex w-full">
       <MapFilterBar
         mapRegion={mapRegion}
         setMapRegion={handleMapRegionChange}
         mapOverlays={mapOverlays}
         toggleOverlay={toggleOverlay}
+        viewMode={state.viewMode}
+        setViewMode={setViewMode}
       />
     </div>
   );
 
   return (
     <div className="cg-explore flex flex-col h-full overflow-hidden">
-      <MapLayout
-        mapboxAccessToken={mapboxAccessToken}
-        mapRegion={mapRegion}
-        mapOverlays={mapOverlays}
-        onOverlayToggle={toggleOverlay}
-        onMapRegionChange={setMapRegion}
-        topBar={topBar}
-      />
+      {state.viewMode === "map" ? (
+        <MapLayout
+          mapboxAccessToken={mapboxAccessToken}
+          mapRegion={mapRegion}
+          mapOverlays={mapOverlays}
+          onOverlayToggle={toggleOverlay}
+          topBar={topBar}
+        />
+      ) : (
+        <div className="flex flex-col h-full bg-background-body">
+          {topBar}
+          <div className="flex-1 overflow-auto bg-background-body">
+            <ExplorerPanel listSource={state.listSource} forceTable />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

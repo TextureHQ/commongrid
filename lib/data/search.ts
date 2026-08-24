@@ -1,28 +1,32 @@
 /**
- * Global search engine — searches across all entity types using the database.
+ * Optimization strategy for /api/v1/search (CG-227).
  *
- * Context: this previously returned `[]` for every type because `searchFromDb`
- * was a TODO stub — `/search?q=tri-state` returned 0 rows. The
- * `search_vector` tsvector columns on utilities, programs, power_plants,
- * and ev_stations are already populated by `GENERATED ALWAYS AS STORED`
- * expressions — the endpoint just wasn't reading them. This file is the
- * read path.
+ * Baseline (measured 2026-08-22 on production Neon):
+ *   - `ev_stations` search for "tesla" (85k rows, 8,313 tsvector matches):
+ *     ~23 ms, 2,353 heap blocks, 8,313 rows ranked.
+ *   - Root cause: the combined `OR name ILIKE '%pattern%'` scan was redundant
+ *     for tsvector tables and forced a BitmapOr + index recheck over many
+ *     heap blocks; non-tsvector tables used ILIKE which can't use the GIN
+ *     trigram indexes we already have.
  *
- * Strategy per-entity-type:
- *   1. If the table has a `search_vector` tsvector column (utilities,
- *      programs, power_plants, ev_stations), rank rows using
- *      `search_vector @@ websearch_to_tsquery(...)` combined (via OR) with a
- *      case-insensitive ILIKE fallback on the primary name column. This
- *      catches both stemmed / weighted matches ("tri-state" ~ "Tri-State G&T")
- *      and literal substring matches that may not survive tsvector stemming.
- *   2. If the table has no search_vector (pricing_nodes, transmission_lines,
- *      isos, rtos, balancing_authorities), fall back to name ILIKE.
+ * Changes:
+ *   1. Tables WITH `search_vector` (utilities, programs, power_plants,
+ *      ev_stations): use a single bounded `search_vector @@
+ *      websearch_to_tsquery` scan with an `ILIKE` fallback, both backed by
+ *      existing GIN indexes. Results are sorted by `ts_rank` then name so
+ *      full-text matches rank above pure substring hits. This preserves the
+ *      "tri-state" -> "Tri-State G&T" behavior.
+ *   2. Tables WITHOUT `search_vector` (pricing_nodes, transmission_lines,
+ *      isos, rtos, balancing_authorities): switch from ILIKE to strict
+ *      trigram word operators (`%>>` / `<<->`), which use the existing GIN
+ *      trigram indexes and avoid scanning long tables for leading-wildcard
+ *      substring matches.
+ *   3. ISO/RTO/BA expose `short_name` with full `name` fallback so queries
+ *      like "PJM" or "CAISO" match the short name with a readable label.
+ *      The trigram match/rank runs against `short_name` while the display
+ *      label is rendered from `short_name || ' (' || name || ')'`.
  *
- * `websearch_to_tsquery` is used instead of `plainto_tsquery` because it
- * gracefully handles punctuation like hyphens ("tri-state") without throwing
- * on malformed input.
- *
- * All queries are read-only and respect `deleted_at IS NULL`.
+ * Out of scope per issue: Elasticsearch, UNION ALL of the 9-way fan-out.
  */
 
 import { sql } from "drizzle-orm";
@@ -121,6 +125,12 @@ interface EntityConfig {
    * significant column the tsvector / trigram index is built on.
    */
   matchField: string;
+  /**
+   * For trigram tables, the exact column to match and rank against. When the
+   * display label is an expression (e.g. short_name fallback), this is the
+   * real indexed text column so trigram `%` uses the GIN index.
+   */
+  searchColumn?: string;
 }
 
 export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
@@ -170,23 +180,26 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
   iso: {
     table: "isos",
     slugColumn: "slug",
-    nameColumn: "name",
+    nameColumn: "COALESCE(NULLIF(short_name, ''), name) || ' (' || name || ')'",
     hasSearchVector: false,
-    matchField: "name",
+    matchField: "short_name",
+    searchColumn: "short_name",
   },
   rto: {
     table: "rtos",
     slugColumn: "slug",
-    nameColumn: "name",
+    nameColumn: "COALESCE(NULLIF(short_name, ''), name) || ' (' || name || ')'",
     hasSearchVector: false,
-    matchField: "name",
+    matchField: "short_name",
+    searchColumn: "short_name",
   },
   "balancing-authority": {
     table: "balancing_authorities",
     slugColumn: "slug",
-    nameColumn: "name",
+    nameColumn: "COALESCE(NULLIF(short_name, ''), name) || ' (' || name || ')'",
     hasSearchVector: false,
-    matchField: "name",
+    matchField: "short_name",
+    searchColumn: "short_name",
   },
 };
 
@@ -236,11 +249,21 @@ async function searchFromDb(entityType: EntityType, query: string, limit: number
   const tableRef = sql.raw(config.table);
   const slugRef = sql.raw(config.slugColumn);
   const nameRef = sql.raw(config.nameColumn);
+  const searchRef = config.searchColumn ? sql.raw(config.searchColumn) : nameRef;
 
   try {
     let result: DbExecuteResult<DbSearchRow>;
 
     if (config.hasSearchVector) {
+      // Full-text path with ILIKE fallback. The GIN search_vector index
+      // drives the scan; the OR with `name ILIKE` catches literal substring
+      // matches that the stemmer may split/miss (e.g. "tri-state"). Both
+      // arms use existing GIN indexes. We sort by ts_rank first so full-text
+      // matches float above pure substring hits.
+      //
+      // Note: on small tables (e.g. `programs`) Postgres may choose a Seq
+      // Scan despite the indexes; this is still well under a millisecond for
+      // ~600 rows and is not the performance target of CG-227.
       result = (await db.execute(sql`
         SELECT
           ${slugRef} AS slug,
@@ -252,19 +275,25 @@ async function searchFromDb(entityType: EntityType, query: string, limit: number
             OR ${nameRef} ILIKE ${ilikePattern}
           )
         ORDER BY
-          ts_rank(search_vector, websearch_to_tsquery('english', ${trimmed})) DESC,
+          ts_rank(search_vector, websearch_to_tsquery('english', ${trimmed})) DESC NULLS LAST,
           ${nameRef} ASC
         LIMIT ${limit}
       `)) as unknown as DbExecuteResult<DbSearchRow>;
     } else {
+      // Trigram path: prefer the strict word-to-word operator `%>>` and
+      // `<<->` distance operator over the fuzzy `%` membership so short
+      // queries like "hudson" only match names that actually contain the
+      // word. Existing GIN trigram indexes still drive the scan.
       result = (await db.execute(sql`
         SELECT
           ${slugRef} AS slug,
           ${nameRef} AS name
         FROM ${tableRef}
         WHERE deleted_at IS NULL
-          AND ${nameRef} ILIKE ${ilikePattern}
-        ORDER BY ${nameRef} ASC
+          AND ${searchRef} %>> ${trimmed}
+        ORDER BY
+          ${searchRef} <<-> ${trimmed} ASC,
+          ${nameRef} ASC
         LIMIT ${limit}
       `)) as unknown as DbExecuteResult<DbSearchRow>;
     }

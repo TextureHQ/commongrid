@@ -25,8 +25,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useInfiniteList } from "@/hooks/useInfiniteList";
-import { useUtilityList } from "@/hooks/useUtilityList";
+import { useUtilityNames } from "@/hooks/useUtilityNames";
 import { entityKindColor } from "@/lib/categorical-colors";
+import { humanizeSlug } from "@/lib/slugify";
 import { AssetTypeLabel, CompensationTypeLabel, CompensationUnitLabel, type Program } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
 import { InfiniteListShell } from "./InfiniteListShell";
@@ -74,9 +75,6 @@ export function ProgramListPanel() {
   const router = useRouter();
   const { user } = useCurrentUser();
 
-  // Load utility names for displaying in the list (slug → name lookup)
-  const { utilities } = useUtilityList({ limit: 200 });
-
   const params = useMemo(
     () => ({
       search: state.q,
@@ -103,6 +101,17 @@ export function ProgramListPanel() {
   // re-render (because state object identity changes on every dispatch
   // throughout the explore tree) — which storm'd the map's utility tile
   // fetches. Gating on the slug-string fixes it.
+  // Resolve utility names for the visible rows by slug. The previous
+  // `useUtilityList({ limit: 200 })` fetched the first 200 utilities
+  // alphabetically, so any program administered by a utility past that cap
+  // rendered its raw slug (or nothing) instead of the utility's name.
+  const visibleUtilitySlugs = useMemo(
+    () => [...new Set(items.map(getAdminUtilitySlug).filter((s): s is string => s !== null))].sort(),
+    [items]
+  );
+
+  const { utilitiesBySlug } = useUtilityNames(visibleUtilitySlugs);
+
   const hasActiveFilter = state.q !== "" || state.type !== "all";
   const slugsKey = useMemo(() => {
     if (!hasActiveFilter) return "__none__";
@@ -158,7 +167,7 @@ export function ProgramListPanel() {
       {items.map((row) => {
         const adminOrg = row.organizations.find((o) => o.role === "ADMINISTRATOR");
         const adminSlug = adminOrg?.entityId ?? null;
-        const utilityName = adminSlug ? (utilities.find((u) => u.slug === adminSlug)?.name ?? adminSlug) : "—";
+        const utilityName = adminSlug ? (utilitiesBySlug.get(adminSlug)?.name ?? humanizeSlug(adminSlug)) : "—";
         const compensationSummary = getPrimaryCompensationSummary(row);
         return (
           <PanelEntityRow

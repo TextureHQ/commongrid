@@ -3,6 +3,7 @@
 import { Button, Dialog, Icon, Select, TextField } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import { type EditableField, SOURCE_TYPE_OPTIONS } from "./EntityFormFields";
 
 interface InlineFieldEditProps {
@@ -129,10 +130,14 @@ export function InlineFieldEdit({
     // Normalize null/undefined and empty strings
     const normalizedCurrent = currentValue === undefined || currentValue === "" ? null : currentValue;
     const normalizedNew = value === undefined || value === "" ? null : value;
+    // Arrays/objects (multi_enum) compare by value, not reference.
+    if (typeof normalizedCurrent === "object" || typeof normalizedNew === "object") {
+      return JSON.stringify(normalizedNew) !== JSON.stringify(normalizedCurrent);
+    }
     return normalizedNew !== normalizedCurrent;
   }, [currentValue, value]);
 
-  const summaryLongEnough = editSummary.trim().length >= 10;
+  const summaryLongEnough = editSummary.trim().length >= EDIT_SUMMARY_MIN_LENGTH;
   const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
 
   const handleSubmit = async () => {
@@ -285,6 +290,36 @@ export function InlineFieldEdit({
           </div>
         );
 
+      case "multi_enum": {
+        const options = field.validationRules?.enum ?? [];
+        const selected = Array.isArray(value) ? (value as string[]) : [];
+        const humanize = (option: string) => option.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+        return (
+          <div className="space-y-2">
+            <div className="text-sm font-medium text-text-body">{field.displayName}</div>
+            <div className="grid gap-2 rounded-md border border-border-default bg-background-body p-3 sm:grid-cols-2">
+              {options.map((option) => (
+                <label key={option} className="flex items-start gap-2 text-sm text-text-body">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(option)}
+                    onChange={(e) => {
+                      const next = options.filter((item) =>
+                        item === option ? e.target.checked : selected.includes(item)
+                      );
+                      setValue(next);
+                    }}
+                    className="mt-1 h-4 w-4 rounded border-border-default text-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  />
+                  <span>{humanize(option)}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
       case "enum": {
         const enumOptions = (field.validationRules?.enum ?? []).map((option) => ({
           id: option,
@@ -360,7 +395,7 @@ export function InlineFieldEdit({
                 </label>
                 <div className="flex items-center gap-1">
                   <span className={`text-xs ${summaryLongEnough ? "text-feedback-success" : "text-text-muted"}`}>
-                    {editSummary.trim().length}/10
+                    {editSummary.trim().length}/{EDIT_SUMMARY_MIN_LENGTH}
                   </span>
                   {summaryLongEnough && <Icon name="CheckCircle" size="sm" className="text-feedback-success" />}
                 </div>
@@ -369,7 +404,7 @@ export function InlineFieldEdit({
                 id="edit-summary"
                 value={editSummary}
                 onChange={(e) => setEditSummary(e.target.value)}
-                placeholder="Describe your change (minimum 10 characters)"
+                placeholder={`Describe your change (minimum ${EDIT_SUMMARY_MIN_LENGTH} characters)`}
                 rows={2}
                 className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
               />

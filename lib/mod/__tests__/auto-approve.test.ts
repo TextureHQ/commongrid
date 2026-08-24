@@ -68,6 +68,11 @@ const programFields = [
   { entityType: "program", fieldName: "description", isCritical: false },
   { entityType: "program", fieldName: "status", isCritical: true },
   { entityType: "program", fieldName: "organizations", isCritical: false },
+  { entityType: "program", fieldName: "asset_types", isCritical: true },
+  { entityType: "program", fieldName: "market_segments", isCritical: false },
+  { entityType: "program", fieldName: "grid_services", isCritical: true },
+  { entityType: "program", fieldName: "participation_models", isCritical: false },
+  { entityType: "program", fieldName: "incentive_structures", isCritical: false },
 ];
 
 const fullProgramCreate = {
@@ -142,6 +147,16 @@ describe("checkEligibility", () => {
       expect(result.reason).toMatch(/not in community_editable_fields/i);
     });
 
+    it("treats multi_enum fields as known editable fields", async () => {
+      const result = await checkEligibility(
+        user("trusted_contributor"),
+        "program",
+        { market_segments: ["RESIDENTIAL"] },
+        "update"
+      );
+      expect(result).toEqual({ eligible: true });
+    });
+
     it("rejects a contributor editing non-critical fields", async () => {
       const result = await checkEligibility(user("contributor"), "program", { description: "Updated" }, "update");
       expect(result.eligible).toBe(false);
@@ -150,6 +165,12 @@ describe("checkEligibility", () => {
 
     it("rejects a moderator editing a critical field (same field gating as trusted contributor)", async () => {
       const result = await checkEligibility(user("moderator"), "program", { name: "Renamed Program" }, "update");
+      expect(result.eligible).toBe(false);
+      expect(result.reason).toMatch(/critical/i);
+    });
+
+    it("rejects a moderator editing a critical multi_enum field", async () => {
+      const result = await checkEligibility(user("moderator"), "program", { asset_types: ["BATTERY"] }, "update");
       expect(result.eligible).toBe(false);
       expect(result.reason).toMatch(/critical/i);
     });
