@@ -115,6 +115,7 @@ const VALID_TABS: ReadonlySet<EntityTab> = new Set([
   "power-plants",
   "programs",
   "rates",
+  "rates",
   "transmission-lines",
   "ev-charging",
   "pricing-nodes",

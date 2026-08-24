@@ -756,12 +756,12 @@ export default function LandingPage() {
                 The data
               </h5>
               {[
-                { href: "/grid-operators", label: "Utilities" },
+                { href: "/explore?view=utilities", label: "Utilities" },
                 { href: "/explore", label: "Territories" },
-                { href: "/grid-operators", label: "Operators" },
-                { href: "/power-plants", label: "Power plants" },
-                { href: "/substations", label: "Substations" },
-                { href: "/ev-charging", label: "EV charging" },
+                { href: "/explore?view=grid-operators", label: "Operators" },
+                { href: "/explore?view=power-plants", label: "Power plants" },
+                { href: "/explore?view=substations", label: "Substations" },
+                { href: "/explore?view=ev-charging", label: "EV charging" },
                 { href: "/changelog", label: "Full changelog" },
               ].map((link) => (
                 <Link
