@@ -33,6 +33,7 @@ const ArrowIcon = () => (
     fill="none"
     stroke="currentColor"
     strokeWidth="1.8"
+    aria-hidden="true"
   >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>

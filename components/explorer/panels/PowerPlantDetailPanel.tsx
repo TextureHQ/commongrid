@@ -48,15 +48,9 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Utility</span>
               <span className="cg-explore-kv-val">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigateToDetail("utility", powerPlant.utilityId!);
-                  }}
-                >
+                <button type="button" onClick={() => navigateToDetail("utility", powerPlant.utilityId)}>
                   {powerPlant.utilityName}
-                </a>
+                </button>
               </span>
             </div>
           )}
@@ -108,15 +102,9 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Balancing Authority</span>
               <span className="cg-explore-kv-val">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigateToDetail("ba", powerPlant.balancingAuthorityId!);
-                  }}
-                >
+                <button type="button" onClick={() => navigateToDetail("ba", powerPlant.balancingAuthorityId)}>
                   {powerPlant.baCode ?? powerPlant.balancingAuthorityId}
-                </a>
+                </button>
               </span>
             </div>
           )}

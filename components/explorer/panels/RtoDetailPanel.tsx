@@ -20,6 +20,7 @@ const ArrowIcon = () => (
     fill="none"
     stroke="currentColor"
     strokeWidth="1.8"
+    aria-hidden="true"
   >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
@@ -91,7 +92,12 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
           <>
             <div className="cg-explore-related-heading">Utilities ({utilities.length})</div>
             {utilities.slice(0, 15).map((u) => (
-              <div key={u.id} className="cg-explore-related-row" onClick={() => navigateToDetail("utility", u.slug)}>
+              <button
+                key={u.id}
+                type="button"
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("utility", u.slug)}
+              >
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{u.name}</div>
@@ -100,7 +106,7 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
                   </div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             ))}
             {utilities.length > 15 && (
               <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>

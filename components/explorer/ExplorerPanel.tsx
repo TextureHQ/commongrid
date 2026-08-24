@@ -11,12 +11,12 @@ import { PowerPlantListPanel } from "./panels/PowerPlantListPanel";
 import { PricingNodeListPanel } from "./panels/PricingNodeListPanel";
 import { ProgramDetailPanel } from "./panels/ProgramDetailPanel";
 import { ProgramListPanel } from "./panels/ProgramListPanel";
+import { RatesListPanel } from "./panels/RatesListPanel";
 import { RtoDetailPanel } from "./panels/RtoDetailPanel";
 import { SubstationListPanel } from "./panels/SubstationListPanel";
 import { TransmissionListPanel } from "./panels/TransmissionListPanel";
 import { UtilityDetailPanel } from "./panels/UtilityDetailPanel";
 import { UtilityListPanel } from "./panels/UtilityListPanel";
-import { RatesListPanel } from "./panels/RatesListPanel";
 
 interface ExplorerPanelProps {
   // In map view, listSource overrides state.tab to control which list is shown.

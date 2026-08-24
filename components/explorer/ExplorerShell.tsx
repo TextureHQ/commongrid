@@ -2,7 +2,7 @@
 
 import "@/app/(shell)/explore/explore.css";
 import { ExploreShell } from "@texturehq/edges-explore/layout";
-import { type ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, Suspense, useCallback, useEffect, useState } from "react";
 import { type EntityTab, type ExploreRoute, ExplorerProvider, useExplorer } from "./ExplorerContext";
 import { ExplorerMap, type MapOverlays, type MapRegion } from "./ExplorerMap";
 import { ExplorerPanel } from "./ExplorerPanel";
@@ -108,14 +108,15 @@ function OverlayDropdown({
 
   useEffect(() => {
     if (!open) return;
+    const node = ref.current;
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (node && !node.contains(e.target as Node)) {
         setOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  }, [open, ref.current]);
 
   const activeCount = OVERLAY_OPTIONS.filter((o) => overlays[o.key]).length;
 
@@ -155,14 +156,15 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
 
   useEffect(() => {
     if (!open) return;
+    const node = ref.current;
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (node && !node.contains(e.target as Node)) {
         setOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  }, [open, ref.current]);
 
   const currentLabel = REGION_OPTIONS.find((o) => o.value === value)?.label ?? "Utilities";
 
@@ -224,14 +226,7 @@ interface MapLayoutProps {
   topBar?: ReactNode;
 }
 
-function MapLayout({
-  mapboxAccessToken,
-  mapRegion,
-  mapOverlays,
-  onOverlayToggle,
-  onMapRegionChange,
-  topBar,
-}: MapLayoutProps) {
+function MapLayout({ mapboxAccessToken, mapRegion, mapOverlays, onOverlayToggle, topBar }: MapLayoutProps) {
   const { state, stack } = useExplorer();
 
   return (
@@ -290,15 +285,25 @@ function MapFilterBar({
           </>
         )}
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 4, background: "var(--color-background-surface)", padding: 4, borderRadius: 6, border: "1px solid var(--color-border-default)" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          background: "var(--color-background-surface)",
+          padding: 4,
+          borderRadius: 6,
+          border: "1px solid var(--color-border-default)",
+        }}
+      >
         <button
           type="button"
           className="cg-explore-icon-btn"
-          style={{ 
+          style={{
             background: displayMode === "map" ? "var(--color-background-paper)" : "transparent",
             color: displayMode === "map" ? "var(--color-text-heading)" : "var(--color-text-muted)",
             boxShadow: displayMode === "map" ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
-            padding: "4px 8px"
+            padding: "4px 8px",
           }}
           onClick={() => setDisplayMode("map")}
         >
@@ -307,11 +312,11 @@ function MapFilterBar({
         <button
           type="button"
           className="cg-explore-icon-btn"
-          style={{ 
+          style={{
             background: displayMode === "table" ? "var(--color-background-paper)" : "transparent",
             color: displayMode === "table" ? "var(--color-text-heading)" : "var(--color-text-muted)",
             boxShadow: displayMode === "table" ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
-            padding: "4px 8px"
+            padding: "4px 8px",
           }}
           onClick={() => setDisplayMode("table")}
         >
@@ -393,14 +398,14 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
 
   // If displayMode is table, we show the panel taking up the full area instead of the map
   if (state.displayMode === "table" && state.mode !== "overview") {
-     return (
-       <div className="cg-explore flex flex-col h-full overflow-hidden bg-background-body">
-         {topBar}
-         <div className="flex-1 overflow-auto p-4 max-w-[1400px] mx-auto w-full">
-           <ExplorerPanel listSource={state.listSource} />
-         </div>
-       </div>
-     );
+    return (
+      <div className="cg-explore flex flex-col h-full overflow-hidden bg-background-body">
+        {topBar}
+        <div className="flex-1 overflow-auto p-4 max-w-[1400px] mx-auto w-full">
+          <ExplorerPanel listSource={state.listSource} />
+        </div>
+      </div>
+    );
   }
 
   return (
