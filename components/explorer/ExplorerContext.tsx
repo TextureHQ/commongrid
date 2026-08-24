@@ -8,6 +8,7 @@ import {
 import type { FeatureCollection } from "geojson";
 import { useSearchParams } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import { detailViewToTab } from "@/lib/explorer/detail-view-tab";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -18,10 +19,13 @@ export type EntityTab =
   | "grid-operators"
   | "power-plants"
   | "programs"
+  | "rates"
   | "transmission-lines"
   | "ev-charging"
   | "pricing-nodes"
-  | "substations";
+  | "substations"
+  | "rates";
+export type ExploreViewMode = "map" | "table";
 export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
 
 /**
@@ -44,6 +48,7 @@ export interface ListRoutePayload {
   segment: string;
   type: string;
   jurisdictions: string[];
+  mode: ExploreViewMode;
 }
 
 export interface DetailRoutePayload {
@@ -57,22 +62,38 @@ export type ExploreRoute =
   | (ExploreRouteDescriptor<DetailRoutePayload> & { type: "detail"; id: string; payload: DetailRoutePayload });
 
 const DEFAULT_TAB: EntityTab = "utilities";
-const DEFAULT_FILTERS: Omit<ListRoutePayload, "tab"> = {
+const DEFAULT_FILTERS: Omit<ListRoutePayload, "tab" | "mode"> = {
   q: "",
   segment: "all",
   type: "all",
   jurisdictions: [],
 };
 
+export const DEFAULT_MODE_FOR_TAB: Record<EntityTab, ExploreViewMode> = {
+  utilities: "table",
+  "grid-operators": "table",
+  programs: "table",
+  rates: "table",
+  "power-plants": "map",
+  "transmission-lines": "map",
+  "ev-charging": "map",
+  "pricing-nodes": "map",
+  substations: "map",
+};
+
 function makeOverviewRoute(): ExploreRoute {
   return { type: "overview", id: "overview" };
 }
 
-function makeListRoute(tab: EntityTab, filters: Partial<Omit<ListRoutePayload, "tab">> = {}): ExploreRoute {
+function makeListRoute(
+  tab: EntityTab,
+  mode?: ExploreViewMode,
+  filters: Partial<Omit<ListRoutePayload, "tab" | "mode">> = {}
+): ExploreRoute {
   return {
     type: "list",
     id: `list:${tab}`,
-    payload: { tab, ...DEFAULT_FILTERS, ...filters },
+    payload: { tab, mode: mode ?? DEFAULT_MODE_FOR_TAB[tab], ...DEFAULT_FILTERS, ...filters },
   };
 }
 
@@ -93,10 +114,12 @@ const VALID_TABS: ReadonlySet<EntityTab> = new Set([
   "grid-operators",
   "power-plants",
   "programs",
+  "rates",
   "transmission-lines",
   "ev-charging",
   "pricing-nodes",
   "substations",
+  "rates",
 ]);
 
 function parseTab(value: string | null): EntityTab {
@@ -125,7 +148,11 @@ function parseRoutes(params: URLSearchParams): ExploreRoute[] {
   if (!tabParam) return [makeOverviewRoute()];
 
   const tab = parseTab(tabParam);
-  const list = makeListRoute(tab, {
+
+  const modeParam = params.get("mode") as ExploreViewMode | null;
+  const mode = modeParam === "map" || modeParam === "table" ? modeParam : DEFAULT_MODE_FOR_TAB[tab];
+
+  const list = makeListRoute(tab, mode, {
     q: params.get("q") ?? "",
     segment: params.get("segment") ?? "all",
     type: params.get("type") ?? "all",
@@ -146,6 +173,9 @@ function serializeRoutes(routes: ExploreRoute[]): URLSearchParams {
 
   if (list) {
     params.set("tab", list.payload.tab);
+    if (list.payload.mode !== DEFAULT_MODE_FOR_TAB[list.payload.tab]) {
+      params.set("mode", list.payload.mode);
+    }
     if (list.payload.q) params.set("q", list.payload.q);
     if (list.payload.segment && list.payload.segment !== "all") params.set("segment", list.payload.segment);
     if (list.payload.type && list.payload.type !== "all") params.set("type", list.payload.type);
@@ -174,7 +204,7 @@ type ViewAction =
   | { type: "SET_HOVERED_SLUG"; slug: string | null }
   | { type: "SET_FILTERED_UTILITY_SLUGS"; slugs: string[] | null };
 
-const initialView: ViewState = {
+const INITIAL_VIEW_STATE: ViewState = {
   listSource: DEFAULT_TAB,
   highlightGeoJSON: null,
   hoveredSlug: null,
@@ -209,6 +239,7 @@ export interface ExplorerState {
   tab: EntityTab;
   listSource: EntityTab;
   mode: "overview" | "list" | "detail";
+  viewMode: ExploreViewMode;
   slug: string | null;
   q: string;
   segment: string;
@@ -234,6 +265,7 @@ interface ExplorerContextValue {
   setHoveredSlug: (slug: string | null) => void;
   setFilteredUtilitySlugs: (slugs: string[] | null) => void;
   goBack: () => void;
+  setViewMode: (mode: ExploreViewMode) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -252,9 +284,18 @@ export function useExplorer(): ExplorerContextValue {
 // Provider
 // ---------------------------------------------------------------------------
 
-export function ExplorerProvider({ children }: { children: ReactNode }) {
+interface ExplorerProviderProps {
+  children: ReactNode;
+}
+
+/**
+ * The active layer (`?view=`/`?tab=`) and projection (`?mode=`) are derived
+ * from the URL by `parseRoutes`, so they are intentionally NOT accepted as
+ * props here — a second source of truth would drift from the route stack.
+ */
+export function ExplorerProvider({ children }: ExplorerProviderProps) {
   const searchParams = useSearchParams();
-  const [view, dispatch] = useReducer(viewReducer, initialView);
+  const [view, dispatch] = useReducer(viewReducer, INITIAL_VIEW_STATE);
 
   const stack = useUrlExploreRouteStack<ExploreRoute>({
     parse: parseRoutes,
@@ -280,7 +321,14 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   const state = useMemo<ExplorerState>(() => {
     const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
     const tab = currentList?.payload.tab ?? DEFAULT_TAB;
-    const filters = currentList?.payload ?? { q: "", segment: "all", type: "all", jurisdictions: [], tab: DEFAULT_TAB };
+    const filters = currentList?.payload ?? {
+      q: "",
+      segment: "all",
+      type: "all",
+      jurisdictions: [],
+      tab: DEFAULT_TAB,
+      mode: DEFAULT_MODE_FOR_TAB[DEFAULT_TAB],
+    };
     const detail = stack.current?.type === "detail" ? stack.current : null;
     const current = stack.current;
     const mode: ExplorerState["mode"] = detail ? "detail" : current?.type === "overview" ? "overview" : "list";
@@ -288,6 +336,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       tab,
       listSource: view.listSource,
       mode,
+      viewMode: filters.mode,
       slug: detail?.payload.slug ?? null,
       q: filters.q,
       segment: filters.segment,
@@ -305,11 +354,11 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   // current top of the stack when a filter setter fires — a plain
   // `replace` is sufficient.
   const updateActiveListFilters = useCallback(
-    (patch: Partial<Omit<ListRoutePayload, "tab">>) => {
+    (patch: Partial<Omit<ListRoutePayload, "tab" | "mode">>) => {
       const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
       if (!currentList) return;
       stack.replace(
-        makeListRoute(currentList.payload.tab, {
+        makeListRoute(currentList.payload.tab, currentList.payload.mode, {
           q: currentList.payload.q,
           segment: currentList.payload.segment,
           type: currentList.payload.type,
@@ -354,10 +403,46 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
   }, [stack]);
 
   const navigateToDetail = useCallback(
-    (_view: DetailView, slug: string) => {
-      const currentList = stack.routes.find((r) => r.type === "list");
-      const entityKind: EntityTab = currentList?.payload.tab ?? DEFAULT_TAB;
-      stack.push(makeDetailRoute(entityKind, slug));
+    (view: DetailView, slug: string) => {
+      // The destination entity type — NOT the tab the user is currently on.
+      // Cross-entity links (program → utility, utility → program) previously
+      // reused `currentList.payload.tab`, so a utility link opened from the
+      // Programs tab kept `tab=programs` and rendered ProgramDetailPanel with
+      // a utility slug → "Program not found". Map the DetailView to its tab.
+      const targetTab = detailViewToTab(view);
+      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+
+      if (currentList?.payload.tab === targetTab) {
+        // Same entity type: drill in on top of the current (filtered) list so
+        // the back-arrow returns the user to their filtered list view.
+        stack.push(makeDetailRoute(targetTab, slug));
+        return;
+      }
+
+      // Different entity type: swap the underlying list route to the target
+      // tab so the correct detail panel renders, the URL carries the right
+      // `tab`, and the back-arrow returns to the destination entity's list.
+      stack.close();
+      stack.push(makeOverviewRoute());
+      stack.push(makeListRoute(targetTab));
+      stack.push(makeDetailRoute(targetTab, slug));
+      dispatch({ type: "SET_LIST_SOURCE", listSource: targetTab });
+    },
+    [stack]
+  );
+
+  const setViewMode = useCallback(
+    (mode: ExploreViewMode) => {
+      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+      if (!currentList) return;
+      stack.replace(
+        makeListRoute(currentList.payload.tab, mode, {
+          q: currentList.payload.q,
+          segment: currentList.payload.segment,
+          type: currentList.payload.type,
+          jurisdictions: currentList.payload.jurisdictions,
+        })
+      );
     },
     [stack]
   );
@@ -405,6 +490,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       setHoveredSlug,
       setFilteredUtilitySlugs,
       goBack,
+      setViewMode,
     }),
     [
       state,
@@ -421,6 +507,7 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
       setHoveredSlug,
       setFilteredUtilitySlugs,
       goBack,
+      setViewMode,
     ]
   );
 

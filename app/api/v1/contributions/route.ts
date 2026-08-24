@@ -8,7 +8,7 @@
  * docs/specs/community-contributions-api-prd.md for full specification.
  */
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { ApiError } from "@/lib/api/errors";
@@ -16,12 +16,13 @@ import { generateRequestId, withErrorHandling, withRequestId, withTiming } from 
 import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
+import { describeInvalidEnumValue, findInvalidEnumValues } from "@/lib/community-editable-fields/validate-enum-values";
 import { getDb } from "@/lib/db/client";
-import { contributions, entityLocks } from "@/lib/db/schema";
+import { communityEditableFields, contributions, entityLocks } from "@/lib/db/schema";
 import { users } from "@/lib/db/schema/users";
 import { isKnockConfigured } from "@/lib/knock/client";
 import { triggerContributionSubmitted, triggerModNewContribution } from "@/lib/knock/workflows";
-import { type ChangeType, getEntityTable } from "@/lib/mod/apply-contribution";
+import { type ChangeType, EDIT_SUMMARY_MIN_LENGTH, getEntityTable } from "@/lib/mod/apply-contribution";
 import { type AutoApproveResult, tryAutoApprove } from "@/lib/mod/auto-approve";
 
 // ---------------------------------------------------------------------------
@@ -126,10 +127,14 @@ async function handlePost(req: Request, ctx: RouteContext) {
   }
 
   // edit_summary (min 25 chars)
-  if (!edit_summary || typeof edit_summary !== "string" || edit_summary.trim().length < 25) {
-    throw new ApiError("VALIDATION_ERROR", "edit_summary is required and must be at least 25 characters.", {
-      field: "edit_summary",
-    });
+  if (!edit_summary || typeof edit_summary !== "string" || edit_summary.trim().length < EDIT_SUMMARY_MIN_LENGTH) {
+    throw new ApiError(
+      "VALIDATION_ERROR",
+      `edit_summary is required and must be at least ${EDIT_SUMMARY_MIN_LENGTH} characters.`,
+      {
+        field: "edit_summary",
+      }
+    );
   }
 
   // source_type
@@ -146,6 +151,21 @@ async function handlePost(req: Request, ctx: RouteContext) {
     });
   }
 
+  // Enum values must be members of the field's declared domain. Without this,
+  // a stale option list (cached response, client open across a deploy, or an
+  // out-of-date row in community_editable_fields) can persist a value no code
+  // path recognizes — and auto-approval writes it straight onto the entity.
+  // See CIR-1506: one program reached production with status 'active' while the
+  // other 607 held 'ACTIVE', breaking ?status= filtering in both directions.
+  const invalidEnums = findInvalidEnumValues(entity_type, changes as Record<string, unknown>);
+  if (invalidEnums.length > 0) {
+    const [first] = invalidEnums;
+    throw new ApiError("VALIDATION_ERROR", describeInvalidEnumValue(first), {
+      field: first.field,
+      invalid_fields: invalidEnums.map((i) => i.field),
+    });
+  }
+
   const db = getDb();
 
   // --- Entity existence check (skip for creates) ---
@@ -154,6 +174,8 @@ async function handlePost(req: Request, ctx: RouteContext) {
   let entity: any = null;
   let entitySlug: string;
   let entityState: string | null = null;
+
+  let resolved_entity_id = entity_id;
 
   if (isCreate) {
     // For creates, generate a slug from the name
@@ -169,12 +191,18 @@ async function handlePost(req: Request, ctx: RouteContext) {
     entityState = (changes.state?.new || changes.jurisdiction?.new?.split(",")[0]?.trim() || null) as string | null;
   } else {
     // For edits, entity must exist
-    [entity] = await db.select().from(entityTable).where(eq(entityTable.id, entity_id)).limit(1);
+    const idCondition = eq(entityTable.id, entity_id);
+    const slugCondition =
+      "slug" in entityTable ? eq((entityTable as { slug: (typeof entityTable)["id"] }).slug, entity_id) : undefined;
+    const condition = slugCondition ? or(idCondition, slugCondition) : idCondition;
+
+    [entity] = await db.select().from(entityTable).where(condition).limit(1);
 
     if (!entity) {
       throw new ApiError("NOT_FOUND", `Entity ${entity_type}/${entity_id} not found.`);
     }
 
+    resolved_entity_id = entity.id;
     entitySlug = entity.slug ?? entity.id;
     // Try common state column names
     entityState = entity.state ?? entity.jurisdiction?.split(",")[0]?.trim() ?? null;
@@ -188,7 +216,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
       .where(
         and(
           eq(entityLocks.entityType, entity_type),
-          eq(entityLocks.entityId, entity_id),
+          eq(entityLocks.entityId, resolved_entity_id),
           // Only respect non-expired locks
           sql`(${entityLocks.expiresAt} IS NULL OR ${entityLocks.expiresAt} > NOW())`
         )
@@ -228,14 +256,54 @@ async function handlePost(req: Request, ctx: RouteContext) {
     }
   }
 
-  // --- Insert the contribution ---
+  // --- Validate multi_enum field values against the registered option list ---
+  // multi_enum fields are JSONB enum arrays (e.g. program grid_services). Their
+  // values must be an array whose members are all in community_editable_fields
+  // validation_rules.enum, so invalid members cannot slip in via any approval
+  // path (a non-critical multi_enum can auto-approve for trusted contributors).
+  const multiEnumMeta = await db
+    .select({
+      fieldName: communityEditableFields.fieldName,
+      validationRules: communityEditableFields.validationRules,
+    })
+    .from(communityEditableFields)
+    .where(
+      and(eq(communityEditableFields.entityType, entity_type), eq(communityEditableFields.fieldType, "multi_enum"))
+    );
+
+  for (const meta of multiEnumMeta) {
+    const change = normalizedChanges[meta.fieldName];
+    if (!change) continue;
+    const next = change.new;
+    // null/undefined clears the field; that is allowed.
+    if (next === null || next === undefined) continue;
+    if (!Array.isArray(next)) {
+      throw new ApiError("VALIDATION_ERROR", `${meta.fieldName} must be an array of enum values.`, {
+        field: meta.fieldName,
+      });
+    }
+    const allowed = ((meta.validationRules as { enum?: string[] } | null)?.enum ?? []) as string[];
+    const invalid = next.filter((v) => typeof v !== "string" || !allowed.includes(v));
+    if (invalid.length > 0) {
+      throw new ApiError("VALIDATION_ERROR", `${meta.fieldName} contains invalid values: ${invalid.join(", ")}`, {
+        field: meta.fieldName,
+      });
+    }
+    // Reject duplicates so the stored array is a clean set.
+    if (new Set(next).size !== next.length) {
+      throw new ApiError("VALIDATION_ERROR", `${meta.fieldName} contains duplicate values.`, {
+        field: meta.fieldName,
+      });
+    }
+  }
+
   const [contribution] = await db
     .insert(contributions)
     .values({
       userId: user.id,
       changesetId: changeset_id ?? null,
       entityType: entity_type,
-      entityId: entity_id,
+      entityId: resolved_entity_id,
       entityVersion: entity_version,
       entitySlug: entitySlug,
       entityState: entityState,

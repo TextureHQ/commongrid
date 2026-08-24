@@ -5,7 +5,7 @@
  * See docs/specs/community-contributions-api-erd.md §3
  */
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { ApiError } from "@/lib/api/errors";
@@ -14,7 +14,7 @@ import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
-import { contributions } from "@/lib/db/schema";
+import { communityEditableFields, contributions } from "@/lib/db/schema";
 
 // ---------------------------------------------------------------------------
 // Allowed source types (same as in the main route)
@@ -32,6 +32,51 @@ const VALID_SOURCE_TYPES = [
   "personal_observation",
   "other",
 ] as const;
+
+async function validateMultiEnumChanges(
+  db: ReturnType<typeof getDb>,
+  entityType: string,
+  changes: Record<string, { old: unknown; new: unknown }>
+) {
+  const multiEnumMeta = await db
+    .select({
+      fieldName: communityEditableFields.fieldName,
+      validationRules: communityEditableFields.validationRules,
+    })
+    .from(communityEditableFields)
+    .where(
+      and(eq(communityEditableFields.entityType, entityType), eq(communityEditableFields.fieldType, "multi_enum"))
+    );
+
+  for (const meta of multiEnumMeta) {
+    const change = changes[meta.fieldName];
+    if (!change) continue;
+
+    const next = change.new;
+    // null/undefined clears the field; that is allowed.
+    if (next === null || next === undefined) continue;
+
+    if (!Array.isArray(next)) {
+      throw new ApiError("VALIDATION_ERROR", `${meta.fieldName} must be an array of enum values.`, {
+        field: meta.fieldName,
+      });
+    }
+
+    const allowed = ((meta.validationRules as { enum?: string[] } | null)?.enum ?? []) as string[];
+    const invalid = next.filter((value) => typeof value !== "string" || !allowed.includes(value));
+    if (invalid.length > 0) {
+      throw new ApiError("VALIDATION_ERROR", `${meta.fieldName} contains invalid values: ${invalid.join(", ")}`, {
+        field: meta.fieldName,
+      });
+    }
+
+    if (new Set(next).size !== next.length) {
+      throw new ApiError("VALIDATION_ERROR", `${meta.fieldName} contains duplicate values.`, {
+        field: meta.fieldName,
+      });
+    }
+  }
+}
 
 // ---------------------------------------------------------------------------
 // GET /api/v1/contributions/:id — Get contribution detail
@@ -129,6 +174,8 @@ async function handlePatch(req: Request, ctx: RouteContext) {
         normalized[key] = { old: priorOld, new: value };
       }
     }
+
+    await validateMultiEnumChanges(db, existing.entityType, normalized);
     updates.changes = normalized;
   }
 

@@ -76,9 +76,11 @@ const ASSET_TYPE_MAP: Record<string, string[]> = {
   EV: ["EV_CHARGER"],
   "Water Heater": ["WATER_HEATER"],
   Battery: ["BATTERY"],
-  Behavioral: ["NON_DEVICE"],
+  Behavioral: ["BEHAVIORAL"],
   Irrigation: ["IRRIGATION"],
   "C&I": ["COMMERCIAL_LOAD"],
+  "Heating and Cooling": ["HEATING_AND_COOLING"],
+  "Load Management Switch": ["LOAD_MANAGEMENT_SWITCH"],
 };
 
 const PARTICIPATION_MODEL_MAP: Record<string, string[]> = {
@@ -141,6 +143,16 @@ const PROGRAM_TYPE_INFERRED: Record<
     marketSegments: ["COMMERCIAL", "INDUSTRIAL"],
     gridServices: ["DEMAND_RESPONSE", "DEMAND_CHARGE_REDUCTION"],
     incentiveStructures: ["CAPACITY_PAYMENT"],
+  },
+  "Heating and Cooling": {
+    marketSegments: ["RESIDENTIAL", "COMMERCIAL"],
+    gridServices: ["DEMAND_RESPONSE", "PEAK_SHAVING"],
+    incentiveStructures: ["REBATE", "BILL_CREDIT"],
+  },
+  "Load Management Switch": {
+    marketSegments: ["RESIDENTIAL", "COMMERCIAL"],
+    gridServices: ["DEMAND_RESPONSE", "DIRECT_CONTROL"],
+    incentiveStructures: ["BILL_CREDIT", "REBATE"],
   },
 };
 
@@ -247,6 +259,12 @@ function getSelect(props: Record<string, unknown>, key: string): string | null {
   return p.select?.name ?? null;
 }
 
+function getMultiSelect(props: Record<string, unknown>, key: string): string[] {
+  const p = props[key] as { type: string; multi_select: Array<{ name: string }> } | undefined;
+  if (!p || p.type !== "multi_select") return [];
+  return p.multi_select.map((s) => s.name);
+}
+
 function getNumber(props: Record<string, unknown>, key: string): number | null {
   const p = props[key] as { type: string; number: number | null } | undefined;
   if (!p || p.type !== "number") return null;
@@ -285,6 +303,7 @@ function transformProgram(notionPage: unknown, utilitiesByNotionId: Map<string, 
   if (!name) return null; // skip pages without a name
 
   const programType = getSelect(props, "Program Type");
+  const deviceTypes = getMultiSelect(props, "Device Type");
   const dispatchStrategy = getSelect(props, "Dispatch Strategy");
   const compType1 = getSelect(props, "Compensation Type 1");
   const compAmount1 = getNumber(props, "Compensation Amount 1");
@@ -305,6 +324,13 @@ function transformProgram(notionPage: unknown, utilitiesByNotionId: Map<string, 
 
   // Asset types
   const assetTypes = programType ? (ASSET_TYPE_MAP[programType] ?? []) : [];
+  for (const dt of deviceTypes) {
+    if (ASSET_TYPE_MAP[dt]) {
+      assetTypes.push(...ASSET_TYPE_MAP[dt]);
+    }
+  }
+  // Deduplicate asset types
+  const uniqueAssetTypes = [...new Set(assetTypes)];
 
   // Participation models
   const participationModels = dispatchStrategy
@@ -349,7 +375,7 @@ function transformProgram(notionPage: unknown, utilitiesByNotionId: Map<string, 
     slug,
     name,
     organizations,
-    assetTypes,
+    assetTypes: uniqueAssetTypes,
     marketSegments,
     participationModels,
     incentiveStructures,

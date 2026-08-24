@@ -28,7 +28,7 @@ const isos: Iso[] = isosData as Iso[];
 const rtos: Rto[] = rtosData as Rto[];
 const balancingAuthorities: BalancingAuthority[] = basData as BalancingAuthority[];
 const regions: Region[] = regionsData as Region[];
-const programs: Program[] = programsData as Program[];
+const programs: Program[] = programsData as unknown as Program[];
 
 export function getAllIsos(): Iso[] {
   return isos;
