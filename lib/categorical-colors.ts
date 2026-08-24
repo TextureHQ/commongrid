@@ -150,8 +150,7 @@ export type EntityKind =
   | "transmission-lines"
   | "ev-charging"
   | "pricing-nodes"
-  | "substations"
-  | "rates";
+  | "substations";
 
 const ENTITY_KIND_COLOR: Record<EntityKind, string> = {
   utilities: VIZ(4), // blue
