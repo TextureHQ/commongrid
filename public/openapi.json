@@ -2016,6 +2016,14 @@
             "nullable": true,
             "description": "Contact URL"
           },
+          "dermsVendor": {
+            "type": "string",
+            "nullable": true
+          },
+          "otherNotes": {
+            "type": "string",
+            "nullable": true
+          },
           "variants": {
             "type": "array",
             "items": {
