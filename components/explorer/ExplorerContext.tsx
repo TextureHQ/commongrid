@@ -356,8 +356,15 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     // The URL changed externally. Rebuild the stack to match.
     // Close clears the stack, then we push the new routes in order.
     stack.close();
+    let newTab: EntityTab | null = null;
     for (const route of newRoutes) {
       stack.push(route);
+      if (route.type === "list") {
+        newTab = route.payload.tab;
+      }
+    }
+    if (newTab) {
+      dispatch({ type: "SET_LIST_SOURCE", listSource: newTab });
     }
     lastSyncedSearch.current = currentSearch;
   }, [searchParams, stack]);
