@@ -304,9 +304,11 @@ export async function applyContribution(
   // entity_versions delta asserting a change that never happened. Auto-approval
   // is incidentally shielded by the community_editable_fields lookup; the
   // moderator path has no field validation at all.
-  const unknownFields = Object.keys(changes).filter((field) => !tableHasColumn(entityTable, snakeToCamel(field)));
-  if (unknownFields.length > 0) {
-    return { status: "unknown_fields", fields: unknownFields };
+  if (changeType !== "delete") {
+    const unknownFields = Object.keys(changes).filter((field) => !tableHasColumn(entityTable, snakeToCamel(field)));
+    if (unknownFields.length > 0) {
+      return { status: "unknown_fields", fields: unknownFields };
+    }
   }
 
   // --- create ---------------------------------------------------------------
