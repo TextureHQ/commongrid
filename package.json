@@ -26,6 +26,7 @@
     "generate:changelog": "npx tsx scripts/generate-changelog.ts",
     "openapi": "tsx scripts/generate-openapi.ts",
     "openapi:check": "tsx scripts/generate-openapi.ts --check",
+    "db:check-journal": "tsx scripts/check-migration-journal.ts",
     "sync:all": "npx tsx scripts/sync-all.ts",
     "seed": "tsx scripts/seed-database.ts",
     "test:api": "tsx scripts/test-api-endpoints.ts",

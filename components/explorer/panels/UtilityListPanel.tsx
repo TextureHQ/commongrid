@@ -172,14 +172,32 @@ function buildApiParams(
 }
 
 const SearchIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    role="img"
+    aria-label="Search"
+  >
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
   </svg>
 );
 
 const FilterIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    role="img"
+    aria-label="Filter"
+  >
     <path d="M22 3H2l8 9.46V19l4 2V12.46z" />
   </svg>
 );
