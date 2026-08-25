@@ -1,2 +1,2 @@
-ALTER TABLE "programs" ADD COLUMN "derms_vendor" text;
-ALTER TABLE "programs" ADD COLUMN "other_notes" text;
+ALTER TABLE "programs" ADD COLUMN IF NOT EXISTS "derms_vendor" text;--> statement-breakpoint
+ALTER TABLE "programs" ADD COLUMN IF NOT EXISTS "other_notes" text;
