@@ -17,6 +17,7 @@ import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
 import { describeInvalidEnumValue, findInvalidEnumValues } from "@/lib/community-editable-fields/validate-enum-values";
+import { absoluteUrl } from "@/lib/config/app-url";
 import { getDb } from "@/lib/db/client";
 import { communityEditableFields, contributions, entityLocks } from "@/lib/db/schema";
 import { users } from "@/lib/db/schema/users";
@@ -381,7 +382,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
           contributorName: user.displayName,
           entityType: entity_type,
           entitySlug: entitySlug,
-          contributionUrl: `${process.env.NEXT_PUBLIC_APP_URL}/contributions/${contribution.id}`,
+          contributionUrl: absoluteUrl(`/contributions/${contribution.id}`),
           changeType: change_type ?? "update",
           fieldSummary: edit_summary.substring(0, 100),
         },
@@ -395,8 +396,8 @@ async function handlePost(req: Request, ctx: RouteContext) {
         contributionId: contribution.id,
         entityType: entity_type,
         entitySlug: entitySlug,
-        entityUrl: `${process.env.NEXT_PUBLIC_APP_URL}/${entity_type}s/${entitySlug}`,
-        contributionUrl: `${process.env.NEXT_PUBLIC_APP_URL}/contributions/${contribution.id}`,
+        entityUrl: absoluteUrl(`/${entity_type}s/${entitySlug}`),
+        contributionUrl: absoluteUrl(`/contributions/${contribution.id}`),
       },
       `${contribution.id}-submitted`
     );

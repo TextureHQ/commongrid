@@ -10,6 +10,7 @@
  * list short-circuits before hitting the network.
  */
 
+import { reportError } from "@/lib/observability";
 import { getKnockClient, isKnockConfigured } from "./client";
 import type {
   AdminNewUserData,
@@ -34,6 +35,32 @@ interface TriggerOptions {
 }
 
 /**
+ * Detects errors returned by Knock when a workflow trigger references a
+ * recipient that does not exist or has no email address. These failures were
+ * previously swallowed, so notifications silently disappeared.
+ */
+function isMissingRecipientError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+
+  const status = (err as { status?: number }).status;
+  if (status === 404) return true;
+
+  const body = (err as { error?: Record<string, unknown> }).error;
+  const code = typeof body?.code === "string" ? body.code.toLowerCase() : undefined;
+  if (code === "resource_missing" || code === "no_email" || code === "recipient_has_no_email") {
+    return true;
+  }
+
+  const message = err.message.toLowerCase();
+  return (
+    message.includes("no email") ||
+    message.includes("missing email") ||
+    message.includes("does not have an email") ||
+    message.includes("recipient not found")
+  );
+}
+
+/**
  * Generic workflow trigger. Returns the workflow_run_id or null when
  * Knock is unconfigured, the recipient list is empty, or an error occurs.
  */
@@ -51,7 +78,20 @@ export async function triggerWorkflow(opts: TriggerOptions): Promise<string | nu
     });
     return result.workflow_run_id ?? null;
   } catch (err) {
-    console.error(`[knock] triggerWorkflow failed for workflow "${opts.workflow}":`, err);
+    if (isMissingRecipientError(err)) {
+      reportError(err, {
+        scope: "knock.workflows",
+        level: "warning",
+        extra: {
+          workflow: opts.workflow,
+          recipients: opts.recipients,
+          actor: opts.actor,
+          cancellationKey: opts.cancellationKey,
+        },
+      });
+    } else {
+      console.error(`[knock] triggerWorkflow failed for workflow "${opts.workflow}":`, err);
+    }
     return null;
   }
 }
