@@ -7,7 +7,7 @@ import {
 } from "@texturehq/edges-explore";
 import type { FeatureCollection } from "geojson";
 import { useSearchParams } from "next/navigation";
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
 import { detailViewToTab } from "@/lib/explorer/detail-view-tab";
 import {
   carryViewMode,
@@ -334,17 +334,17 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
   // re-parse and reset the stack here.
   useEffect(() => {
     const currentSearch = searchParams?.toString() ?? "";
-    
+
     // Ignore changes if the URL matches what we just wrote, or if it
     // matches the current stack (no-op).
     if (currentSearch === lastSyncedSearch.current || currentSearch === stack.serializedSearch) {
       return;
     }
-    
+
     // Parse the new incoming URL.
     const incomingParams = new URLSearchParams(currentSearch);
     const newRoutes = parseRoutes(incomingParams);
-    
+
     // Check if adopting this URL would actually change our serialized state.
     // This prevents ping-pong loops if parse+serialize isn't perfectly idempotent.
     const newSerialized = serializeRoutes(newRoutes).toString();
