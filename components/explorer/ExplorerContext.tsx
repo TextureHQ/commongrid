@@ -7,7 +7,7 @@ import {
 } from "@texturehq/edges-explore";
 import type { FeatureCollection } from "geojson";
 import { useSearchParams } from "next/navigation";
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
 import { detailViewToTab } from "@/lib/explorer/detail-view-tab";
 import {
   carryViewMode,
@@ -311,17 +311,56 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     getRouteKey: (route) => route.id,
   });
 
+  // Track the last search string we synced to the URL to avoid loops.
+  const lastSyncedSearch = useRef(stack.serializedSearch);
+
   // Stack → URL sync. Use raw history.replaceState to avoid triggering
   // Next.js routing machinery (router.replace causes re-renders that can
   // create feedback loops with useSearchParams / initialSearch serialization).
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const next = serializeRoutes(stack.routes).toString();
+    const next = stack.serializedSearch;
     const current = window.location.search.replace(/^\?/, "");
     if (next !== current) {
       window.history.replaceState(null, "", next ? `${window.location.pathname}?${next}` : window.location.pathname);
+      lastSyncedSearch.current = next;
     }
-  }, [stack.routes]);
+  }, [stack.serializedSearch]);
+
+  // URL → Stack sync for in-app navigations.
+  // Next's router.push updates searchParams but doesn't fire popstate, so
+  // useUrlExploreRouteStack misses it. If the URL changes externally (e.g.
+  // clicking a global search result while already on /explore), we need to
+  // re-parse and reset the stack here.
+  useEffect(() => {
+    const currentSearch = searchParams?.toString() ?? "";
+
+    // Ignore changes if the URL matches what we just wrote, or if it
+    // matches the current stack (no-op).
+    if (currentSearch === lastSyncedSearch.current || currentSearch === stack.serializedSearch) {
+      return;
+    }
+
+    // Parse the new incoming URL.
+    const incomingParams = new URLSearchParams(currentSearch);
+    const newRoutes = parseRoutes(incomingParams);
+
+    // Check if adopting this URL would actually change our serialized state.
+    // This prevents ping-pong loops if parse+serialize isn't perfectly idempotent.
+    const newSerialized = serializeRoutes(newRoutes).toString();
+    if (newSerialized === stack.serializedSearch) {
+      lastSyncedSearch.current = currentSearch;
+      return;
+    }
+
+    // The URL changed externally. Rebuild the stack to match.
+    // Close clears the stack, then we push the new routes in order.
+    stack.close();
+    for (const route of newRoutes) {
+      stack.push(route);
+    }
+    lastSyncedSearch.current = currentSearch;
+  }, [searchParams, stack]);
 
   // Derive the legacy ExplorerState shape from the stack + view state so
   // consuming panels continue to read `state.tab`, `state.slug`, etc.
