@@ -345,6 +345,16 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     const incomingParams = new URLSearchParams(currentSearch);
     const newRoutes = parseRoutes(incomingParams);
 
+    // If the external URL didn't explicitly request a mode, preserve the user's
+    // current projection (map vs table) just like an internal tab switch does.
+    if (!incomingParams.has("mode")) {
+      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+      const newList = newRoutes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+      if (currentList && newList) {
+        newList.payload.mode = carryViewMode(currentList.payload.mode);
+      }
+    }
+
     // Check if adopting this URL would actually change our serialized state.
     // This prevents ping-pong loops if parse+serialize isn't perfectly idempotent.
     const newSerialized = serializeRoutes(newRoutes).toString();
