@@ -276,6 +276,38 @@ describe("applyContribution", () => {
     expect(recorded.versionInserts[recorded.versionInserts.length - 1]).toMatchObject({ changeType: "delete" });
   });
 
+  it("approves a deletion whose changes carry _deletion metadata rather than columns", async () => {
+    // Regression: DeleteEntityDialog submits `{ _deletion: { reason, ... } }`,
+    // which is metadata, not field values — the delete branch never reads it.
+    // Running the unknown-column guard over it failed every deletion approval
+    // with "_deletion is not a field on <entity>".
+    const { tx, recorded } = makeTx({
+      entity: { id: "entity-1", version: 3, amiMeterCount: 100 },
+      hasVersionHistory: true,
+    });
+
+    const outcome = await applyContribution(
+      tx,
+      contribution({
+        entityType: "program",
+        changeType: "delete",
+        changes: {
+          _deletion: {
+            reason: "duplicate",
+            duplicateOf: "flexible load residential battery",
+            justification: "duplicate of flexible load residential battery on website",
+          },
+        },
+      }),
+      { ...opts, changeType: "delete" }
+    );
+
+    expect(outcome).toEqual({ status: "applied", appliedVersion: 4, changeType: "delete" });
+    expect(recorded.entityUpdates[0]).toHaveProperty("deletedAt");
+    // The metadata must not leak onto the row as a column write.
+    expect(recorded.entityUpdates[0]).not.toHaveProperty("_deletion");
+  });
+
   it("creates at version 1 with a full snapshot and no lock", async () => {
     const { tx, recorded } = makeTx({ entity: null, hasVersionHistory: false });
 
