@@ -1,9 +1,9 @@
 "use client";
 
-import { Button, Dialog, Icon, Loader } from "@texturehq/edges";
-import { useState, useEffect } from "react";
+import { Dialog } from "@texturehq/edges";
+import { useEffect, useState } from "react";
 import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
-import { SourceCitationFields, EditSummaryField } from "./EntityFormFields";
+import { EditSummaryField, SourceCitationFields } from "./EntityFormFields";
 
 interface SubmitConfirmationDialogProps {
   isOpen: boolean;
@@ -41,8 +41,7 @@ export function SubmitConfirmationDialog({
     setSourceType(initialSourceType);
     setSourceUrl(initialSourceUrl);
     setSourceDate(initialSourceDate);
-  }, [isOpen, initialEditSummary, initialSourceType, initialSourceUrl, initialSourceDate]);
-
+  }, [initialEditSummary, initialSourceType, initialSourceUrl, initialSourceDate]);
 
   const summaryLongEnough = editSummary.trim().length >= EDIT_SUMMARY_MIN_LENGTH;
   const canConfirm = summaryLongEnough && hasChanges && !isSubmitting;
