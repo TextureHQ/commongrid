@@ -314,6 +314,7 @@ function useProgramBoundaries(isActive: boolean, operatorPalette: string[]) {
                 programName: entry.programName,
                 programSlug: entry.programSlug,
                 programStatus: entry.programStatus,
+                utilityName: (feature.properties?.name as string | undefined) || "Unknown Utility",
                 colorKey: entry.colorKey,
               },
             });
@@ -365,7 +366,12 @@ const DEFAULT_OVERLAYS: MapOverlays = {
   "pricing-nodes": false,
 };
 
-export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOverlays }: ExplorerMapProps = {}) {
+export function ExplorerMap({
+  mapboxAccessToken,
+  mapRegion = "utilities",
+  mapOverlays,
+  onOverlayToggle,
+}: ExplorerMapProps = {}) {
   const effectiveToken = mapboxAccessToken ?? process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
   const hasMapboxToken = !!effectiveToken;
   const { state, navigateToDetail } = useExplorer();
@@ -414,6 +420,20 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
 
   const isGridOperatorView = mapRegion === "grid-operators";
   const isProgramView = mapRegion === "programs";
+
+  // Build type filters for vector overlays when they are the active tab
+  const typeFilter = state.type && state.type !== "all" ? state.type : null;
+  const powerPlantsFilter =
+    state.listSource === "power-plants" && typeFilter ? ["==", ["get", "fuelCategory"], typeFilter] : undefined;
+  const transmissionLinesFilter =
+    state.listSource === "transmission-lines" && typeFilter ? ["==", ["get", "voltageClass"], typeFilter] : undefined;
+  const substationsFilter =
+    state.listSource === "substations" && typeFilter ? ["==", ["get", "voltageBand"], typeFilter] : undefined;
+  const evChargingFilter =
+    state.listSource === "ev-charging" && typeFilter ? ["==", ["get", "network"], typeFilter] : undefined;
+  const pricingNodesFilter =
+    state.listSource === "pricing-nodes" && typeFilter ? ["==", ["get", "iso"], typeFilter] : undefined;
+
   const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView, resolvedOperatorPalette);
   const programBoundaryData = useProgramBoundaries(isProgramView, resolvedOperatorPalette);
 
@@ -745,6 +765,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
               <ProgramTerritoryTooltip
                 programName={feature.properties.programName}
                 programStatus={feature.properties.programStatus}
+                utilityName={feature.properties.utilityName}
               />
             ),
           },
@@ -788,6 +809,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         id: "transmission-lines",
         tileset: getTransmissionTileUrl(),
         sourceLayer: "transmission-lines",
+        ...(transmissionLinesFilter ? { filter: transmissionLinesFilter as unknown } : {}),
         renderAs: "line",
         minZoom: 3,
         visible: visible["transmission-lines"] !== false,
@@ -832,6 +854,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         id: "substations",
         tileset: getSubstationsTileUrl(),
         sourceLayer: "substations",
+        ...(substationsFilter ? { filter: substationsFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 5,
         visible: visible.substations === true,
@@ -880,6 +903,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         id: "ev-charging",
         tileset: getEvChargingTileUrl(),
         sourceLayer: "ev-charging",
+        ...(evChargingFilter ? { filter: evChargingFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 5,
         visible: visible["ev-charging"] === true,
@@ -927,6 +951,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         id: "pricing-nodes",
         tileset: getPricingNodesTileUrl(),
         sourceLayer: "pricing-nodes",
+        ...(pricingNodesFilter ? { filter: pricingNodesFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 3,
         visible: visible["pricing-nodes"] === true,
@@ -973,6 +998,7 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
         id: "power-plants",
         tileset: getPowerPlantTileUrl(),
         sourceLayer: "power-plants",
+        ...(powerPlantsFilter ? { filter: powerPlantsFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 5,
         visible: visible["power-plants"] !== false,
@@ -1048,6 +1074,11 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
     resolvedPricingNodeIsoColorMapping,
     resolvedEvNetworkColorMapping,
     resolvedHighlightColor,
+    evChargingFilter,
+    pricingNodesFilter,
+    transmissionLinesFilter,
+    powerPlantsFilter,
+    substationsFilter,
   ]);
 
   if (!hasMapboxToken) {
@@ -1077,6 +1108,11 @@ export function ExplorerMap({ mapboxAccessToken, mapRegion = "utilities", mapOve
             position: "bottom-right",
             currentMapType: mapType,
             onMapTypeChange: setMapType,
+            onLayerToggle: (layerId) => {
+              if (onOverlayToggle) {
+                onOverlayToggle(layerId as keyof MapOverlays);
+              }
+            },
           },
         ]}
         layers={layers}

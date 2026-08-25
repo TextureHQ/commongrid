@@ -26,13 +26,15 @@
     "generate:changelog": "npx tsx scripts/generate-changelog.ts",
     "openapi": "tsx scripts/generate-openapi.ts",
     "openapi:check": "tsx scripts/generate-openapi.ts --check",
+    "db:check-journal": "tsx scripts/check-migration-journal.ts",
     "sync:all": "npx tsx scripts/sync-all.ts",
     "seed": "tsx scripts/seed-database.ts",
     "test:api": "tsx scripts/test-api-endpoints.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:seed:clerk:dev": "tsx scripts/seed-clerk-ids.ts",
     "db:backfill:versions": "tsx scripts/backfill-entity-versions.ts",
-    "db:replay-contribution": "tsx scripts/replay-contribution.ts"
+    "db:replay-contribution": "tsx scripts/replay-contribution.ts",
+    "knock:backfill-users": "tsx scripts/knock/backfill-users.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.7.5",

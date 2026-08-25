@@ -21,6 +21,9 @@ const ArrowIcon = () => (
     fill="none"
     stroke="currentColor"
     strokeWidth="1.8"
+    aria-hidden="true"
+    focusable="false"
+    role="presentation"
   >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
@@ -94,7 +97,12 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
           <>
             <div className="cg-explore-related-heading">Utilities ({utilities.length})</div>
             {utilities.slice(0, 15).map((u) => (
-              <div key={u.id} className="cg-explore-related-row" onClick={() => navigateToDetail("utility", u.slug)}>
+              <button
+                key={u.id}
+                type="button"
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("utility", u.slug)}
+              >
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{u.name}</div>
@@ -103,7 +111,7 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
                   </div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             ))}
             {utilities.length > 15 && (
               <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
@@ -120,7 +128,12 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
               Balancing Authorities ({balancingAuthorities.length})
             </div>
             {balancingAuthorities.map((ba) => (
-              <div key={ba.id} className="cg-explore-related-row" onClick={() => navigateToDetail("ba", ba.slug)}>
+              <button
+                key={ba.id}
+                type="button"
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("ba", ba.slug)}
+              >
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("grid-operators") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{ba.name}</div>
@@ -130,7 +143,7 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
                   </div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             ))}
           </>
         )}

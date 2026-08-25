@@ -39,7 +39,7 @@ export function dbRowToPowerPlant(row: Record<string, unknown>): PowerPlant {
     id: row.id as string,
     slug: row.slug as string,
     name: row.name as string,
-    version: row.version as number,
+    version: (row.version as number | null) ?? 1,
     plantCode: row.plantCode as string,
     utilityId: row.utilityId as string | null,
     utilityName: row.utilityName as string,

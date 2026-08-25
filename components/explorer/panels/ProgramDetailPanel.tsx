@@ -262,6 +262,14 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
               </span>
             </div>
           )}
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">DERMS Vendor</span>
+            <span className="cg-explore-kv-val">{program.dermsVendor || "—"}</span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Other Notes</span>
+            <span className="cg-explore-kv-val">{program.otherNotes || "—"}</span>
+          </div>
         </div>
 
         {/* Compensation */}

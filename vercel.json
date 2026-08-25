@@ -10,6 +10,10 @@
     {
       "path": "/api/cron/notification-retry",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/knock-user-reconcile",
+      "schedule": "0 9 * * *"
     }
   ]
 }

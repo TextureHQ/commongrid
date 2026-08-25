@@ -154,11 +154,13 @@ export default function ModerationReviewPage() {
       setContribution(json.data);
       setComment("");
 
-      // Refresh the router to clear the Next.js client cache for the dashboard
-      router.refresh();
-
-      // Redirect back to dashboard after successful action
+      // Redirect back to dashboard after successful action.
+      // router.refresh() invalidates the client-side Router Cache so the
+      // dashboard remounts and refetches the queue instead of restoring the
+      // stale pre-approval list (an approved item lingered until a manual hard
+      // refresh — CG-243).
       setTimeout(() => {
+        router.refresh();
         router.push("/mod");
       }, 1500);
     } catch (err) {

@@ -3,12 +3,17 @@
 import { Button, Drawer, Icon, Loader } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  buildContributionPayload,
+  canContinueToConfirm,
+  canSubmitContribution,
+  computeChangedFields,
+  isEditSummaryValid,
+  lookupEntityValue,
+} from "@/lib/contributions/edit-submission";
 import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
-import { type EditableField, EditSummaryField, EntityFormFields, SourceCitationFields } from "./EntityFormFields";
-
-// Convert snake_case field name to camelCase for object lookups against
-// the entity payload (which is camelCase). e.g. "customer_count" -> "customerCount".
-const snakeToCamel = (str: string): string => str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+import { type EditableField, EntityFormFields } from "./EntityFormFields";
+import { type ChangeSummaryItem, SubmitEditConfirmDialog } from "./SubmitEditConfirmDialog";
 
 interface EditEntityPanelProps {
   entityType: string;
@@ -19,6 +24,9 @@ interface EditEntityPanelProps {
   onClose: () => void;
   onSubmitted: () => void;
 }
+
+/** Which step of the two-step Suggest Edit flow is on screen. */
+type EditStep = "fields" | "confirm";
 
 export function EditEntityPanel({
   entityType,
@@ -41,19 +49,17 @@ export function EditEntityPanel({
   const [sourceDate, setSourceDate] = useState("");
   const [editSummary, setEditSummary] = useState("");
 
+  // Flow state: the citation + summary are collected in a confirm step that
+  // opens after the contributor clicks through from the field drawer.
+  const [step, setStep] = useState<EditStep>("fields");
+
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  // Look up the current value for a field, trying snake_case first then
-  // camelCase. The editable-fields API returns snake_case fieldNames, but
-  // the entity payload is camelCase, so we need both for safety.
   const lookupCurrentValue = useCallback(
-    (fieldName: string): unknown => {
-      const camelCaseKey = snakeToCamel(fieldName);
-      return currentValues[fieldName] ?? currentValues[camelCaseKey];
-    },
+    (fieldName: string): unknown => lookupEntityValue(currentValues, fieldName),
     [currentValues]
   );
 
@@ -88,55 +94,54 @@ export function EditEntityPanel({
     fetchFields();
   }, [entityType, lookupCurrentValue]);
 
-  // Calculate changed fields.
-  //
-  // IMPORTANT: `formValues` is keyed by `field.fieldName` (snake_case from the
-  // editable-fields API), but `currentValues` is the entity payload, which is
-  // camelCase. Comparing `formValues[snake_key] !== currentValues[snake_key]`
-  // always evaluates to true on first render because `currentValues[snake_key]`
-  // is undefined — which previously caused every editable field to look
-  // "changed" without the user touching anything, AND prevented us from
-  // detecting when a user reverted a field back to its original value.
-  const changedFields = useMemo(() => {
-    const changes: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(formValues)) {
-      const currentValue = lookupCurrentValue(key);
-      // Normalize null/undefined and treat empty string as "no value" so a
-      // pristine-empty field doesn't count as a change.
-      const normalizedCurrent = currentValue === undefined || currentValue === "" ? null : currentValue;
-      const normalizedNew = value === undefined || value === "" ? null : value;
-      if (normalizedNew !== normalizedCurrent) {
-        changes[key] = value;
-      }
-    }
-    return changes;
-  }, [formValues, lookupCurrentValue]);
+  const changedFields = useMemo(() => computeChangedFields(formValues, currentValues), [formValues, currentValues]);
 
-  const hasChanges = Object.keys(changedFields).length > 0;
-  const summaryLongEnough = editSummary.trim().length >= EDIT_SUMMARY_MIN_LENGTH;
-  const canSubmit = hasChanges && summaryLongEnough && !isSubmitting;
+  const changeSummary: ChangeSummaryItem[] = useMemo(
+    () =>
+      Object.keys(changedFields).map((fieldName) => ({
+        fieldName,
+        displayName: fields.find((f) => f.fieldName === fieldName)?.displayName ?? fieldName,
+      })),
+    [changedFields, fields]
+  );
+
+  const hasChanges = canContinueToConfirm(changedFields);
+  const summaryLongEnough = isEditSummaryValid(editSummary, EDIT_SUMMARY_MIN_LENGTH);
+  const canSubmit = canSubmitContribution(changedFields, editSummary, EDIT_SUMMARY_MIN_LENGTH);
 
   const handleFieldChange = (fieldName: string, value: unknown) => {
     setFormValues((prev) => ({ ...prev, [fieldName]: value }));
   };
 
+  // Step 1 -> step 2. Nothing is sent yet; this only opens the confirm dialog.
+  const handleContinue = () => {
+    if (!hasChanges) return;
+    setSubmitError(null);
+    setStep("confirm");
+  };
+
+  // Step 2 -> step 1. Field edits are preserved because this component stays
+  // mounted across the transition.
+  const handleBackToFields = () => {
+    if (isSubmitting) return;
+    setStep("fields");
+  };
+
   const handleSubmit = async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || isSubmitting) return;
 
     try {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      const payload = {
-        entity_type: entityType,
-        entity_id: entityId,
-        entity_version: (currentValues.version as number) ?? 1,
+      const payload = buildContributionPayload({
+        entityType,
+        entityId,
+        entityVersion: (currentValues.version as number) ?? 1,
         changes: changedFields,
-        edit_summary: editSummary.trim(),
-        source_type: sourceType,
-        source_url: sourceUrl || null,
-        source_date: sourceDate || null,
-      };
+        editSummary,
+        citation: { sourceType, sourceUrl, sourceDate },
+      });
 
       const res = await fetch("/api/v1/contributions", {
         method: "POST",
@@ -150,8 +155,8 @@ export function EditEntityPanel({
         throw new Error(errMsg ?? "Failed to submit contribution");
       }
 
-      const _json = await res.json();
       setSubmitSuccess(true);
+      setStep("fields");
 
       // Show success for 2 seconds, then close
       setTimeout(() => {
@@ -165,6 +170,31 @@ export function EditEntityPanel({
       setIsSubmitting(false);
     }
   };
+
+  // The confirm dialog replaces the drawer rather than stacking on top of it,
+  // so there is exactly one modal surface on screen at a time.
+  if (step === "confirm") {
+    return (
+      <SubmitEditConfirmDialog
+        isOpen
+        entityName={entityName}
+        changes={changeSummary}
+        editSummary={editSummary}
+        onEditSummaryChange={setEditSummary}
+        sourceType={sourceType}
+        sourceUrl={sourceUrl}
+        sourceDate={sourceDate}
+        onSourceTypeChange={setSourceType}
+        onSourceUrlChange={setSourceUrl}
+        onSourceDateChange={setSourceDate}
+        canSubmit={canSubmit}
+        isSubmitting={isSubmitting}
+        submitError={submitError}
+        onBack={handleBackToFields}
+        onSubmit={handleSubmit}
+      />
+    );
+  }
 
   return (
     <Drawer isOpen onClose={onClose}>
@@ -221,32 +251,21 @@ export function EditEntityPanel({
               {/* Changes Summary */}
               {hasChanges && (
                 <div className="rounded-md bg-background-muted p-3 space-y-2">
-                  <h4 className="text-sm font-semibold text-text-heading">
-                    Changes ({Object.keys(changedFields).length})
-                  </h4>
+                  <h4 className="text-sm font-semibold text-text-heading">Changes ({changeSummary.length})</h4>
                   <ul className="text-xs text-text-muted space-y-1">
-                    {Object.keys(changedFields).map((fieldName) => {
-                      const field = fields.find((f) => f.fieldName === fieldName);
-                      return <li key={fieldName}>• {field?.displayName ?? fieldName}</li>;
-                    })}
+                    {changeSummary.map((change) => (
+                      <li key={change.fieldName}>• {change.displayName}</li>
+                    ))}
                   </ul>
+                  {summaryLongEnough && (
+                    <p className="text-xs text-text-muted">
+                      Your edit summary is saved. Continue to review and submit.
+                    </p>
+                  )}
                 </div>
               )}
 
-              {/* Source Citation */}
-              <SourceCitationFields
-                sourceType={sourceType}
-                sourceUrl={sourceUrl}
-                sourceDate={sourceDate}
-                onSourceTypeChange={setSourceType}
-                onSourceUrlChange={setSourceUrl}
-                onSourceDateChange={setSourceDate}
-              />
-
-              {/* Edit Summary */}
-              <EditSummaryField value={editSummary} onChange={setEditSummary} />
-
-              {/* Submit Error */}
+              {/* Submit Error (surfaced here too if the user backed out of the confirm step) */}
               {submitError && (
                 <div className="rounded-md bg-red-50 p-4 border border-red-200">
                   <p className="text-sm font-medium text-red-800">Submission failed</p>
@@ -270,19 +289,13 @@ export function EditEntityPanel({
         {/* Footer */}
         {!isLoadingFields && !fieldsError && fields.length > 0 && (
           <div className="border-t border-border-default p-4 space-y-2">
+            {!hasChanges && <p className="text-xs text-text-muted">Change at least one field to continue.</p>}
             <div className="flex items-center justify-end gap-3">
               <Button variant="secondary" size="md" onPress={onClose}>
                 Cancel
               </Button>
-              <Button variant="primary" size="md" onPress={handleSubmit} isDisabled={!canSubmit}>
-                {isSubmitting ? (
-                  <>
-                    <Loader size={16} />
-                    <span>Submitting...</span>
-                  </>
-                ) : (
-                  "Submit Edit"
-                )}
+              <Button variant="primary" size="md" onPress={handleContinue} isDisabled={!hasChanges || submitSuccess}>
+                Continue
               </Button>
             </div>
           </div>

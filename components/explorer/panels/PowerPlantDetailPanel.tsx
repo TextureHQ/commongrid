@@ -8,6 +8,16 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePowerPlant } from "@/hooks/usePowerPlant";
 import { useExplorer } from "../ExplorerContext";
 
+const linkButtonStyle = {
+  background: "none",
+  border: 0,
+  padding: 0,
+  color: "inherit",
+  font: "inherit",
+  cursor: "pointer",
+  textAlign: "left" as const,
+};
+
 export function PowerPlantDetailPanel({ slug }: { slug: string }) {
   const { user } = useCurrentUser();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -29,6 +39,10 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
       : `${powerPlant.totalCapacityMw.toLocaleString()} MW`;
 
   const statusLabel = powerPlant.status === "operable" ? "Operable" : "Proposed";
+  const utilityId = powerPlant.utilityId;
+  const utilityName = powerPlant.utilityName;
+  const balancingAuthorityId = powerPlant.balancingAuthorityId;
+  const balancingAuthorityLabel = powerPlant.baCode ?? balancingAuthorityId;
 
   return (
     <div className="flex flex-col h-full">
@@ -46,19 +60,13 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
         </div>
 
         <div className="cg-explore-kv-table">
-          {powerPlant.utilityId && powerPlant.utilityName && (
+          {utilityId && utilityName && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Utility</span>
               <span className="cg-explore-kv-val">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigateToDetail("utility", powerPlant.utilityId!);
-                  }}
-                >
-                  {powerPlant.utilityName}
-                </a>
+                <button type="button" onClick={() => navigateToDetail("utility", utilityId)} style={linkButtonStyle}>
+                  {utilityName}
+                </button>
               </span>
             </div>
           )}
@@ -106,19 +114,17 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
               {powerPlant.county ? `${powerPlant.county}, ${powerPlant.state}` : powerPlant.state}
             </span>
           </div>
-          {powerPlant.balancingAuthorityId && (
+          {balancingAuthorityId && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Balancing Authority</span>
               <span className="cg-explore-kv-val">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigateToDetail("ba", powerPlant.balancingAuthorityId!);
-                  }}
+                <button
+                  type="button"
+                  onClick={() => navigateToDetail("ba", balancingAuthorityId)}
+                  style={linkButtonStyle}
                 >
-                  {powerPlant.baCode ?? powerPlant.balancingAuthorityId}
-                </a>
+                  {balancingAuthorityLabel}
+                </button>
               </span>
             </div>
           )}
@@ -135,7 +141,12 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
             <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsEditOpen(true)}>
               Suggest Edit
             </button>
-            <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsDeleteOpen(true)}>
+            <button
+              type="button"
+              className="cg-explore-fullpage-link"
+              onClick={() => setIsDeleteOpen(true)}
+              style={{ color: "var(--color-feedback-error)" }}
+            >
               Request Deletion
             </button>
           </div>

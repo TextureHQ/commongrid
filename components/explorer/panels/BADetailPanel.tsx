@@ -29,9 +29,10 @@ const ArrowIcon = () => (
     fill="none"
     stroke="currentColor"
     strokeWidth="1.8"
-    aria-label="Navigate"
+    aria-hidden="true"
+    focusable="false"
+    role="presentation"
   >
-    <title>Navigate</title>
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
@@ -124,18 +125,11 @@ export function BADetailPanel({ slug }: { slug: string }) {
           <>
             <div className="cg-explore-related-heading">Utilities ({utilities.length})</div>
             {utilities.slice(0, 15).map((u) => (
-              <div
+              <button
                 key={u.id}
+                type="button"
                 className="cg-explore-related-row"
-                role="button"
-                tabIndex={0}
                 onClick={() => navigateToDetail("utility", u.slug)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigateToDetail("utility", u.slug);
-                  }
-                }}
               >
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
@@ -145,7 +139,7 @@ export function BADetailPanel({ slug }: { slug: string }) {
                   </div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             ))}
             {utilities.length > 15 && (
               <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { FeatureCollection } from "geojson";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
@@ -33,6 +34,9 @@ const ArrowIcon = () => (
     fill="none"
     stroke="currentColor"
     strokeWidth="1.8"
+    aria-hidden="true"
+    focusable="false"
+    role="presentation"
   >
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
@@ -124,7 +128,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
       <div className="cg-explore-detail">
         {utility.logo && (
           <div className="cg-explore-detail-logo">
-            <img src={utility.logo} alt={`${utility.name} logo`} />
+            <Image src={utility.logo} alt={`${utility.name} logo`} width={64} height={64} unoptimized />
           </div>
         )}
         <div className="cg-explore-detail-type">Utility</div>
@@ -189,34 +193,42 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           <>
             <div className="cg-explore-related-heading">Related</div>
             {iso && (
-              <div className="cg-explore-related-row" onClick={() => navigateToDetail("iso", iso.slug)}>
+              <button
+                type="button"
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("iso", iso.slug)}
+              >
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("grid-operators") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{iso.shortName}</div>
                   <div className="cg-explore-related-type">ISO</div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             )}
             {rto && (
-              <div className="cg-explore-related-row" onClick={() => navigateToDetail("rto", rto.slug)}>
+              <button
+                type="button"
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("rto", rto.slug)}
+              >
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("grid-operators") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{rto.shortName}</div>
                   <div className="cg-explore-related-type">RTO</div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             )}
             {ba && (
-              <div className="cg-explore-related-row" onClick={() => navigateToDetail("ba", ba.slug)}>
+              <button type="button" className="cg-explore-related-row" onClick={() => navigateToDetail("ba", ba.slug)}>
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("grid-operators") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{ba.shortName}</div>
                   <div className="cg-explore-related-type">Balancing Authority</div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             )}
           </>
         )}
@@ -226,24 +238,32 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           <>
             {!hasGridRelationships && <div className="cg-explore-related-heading">Related</div>}
             {parent && (
-              <div className="cg-explore-related-row" onClick={() => navigateToDetail("utility", parent.slug)}>
+              <button
+                type="button"
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("utility", parent.slug)}
+              >
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{parent.name}</div>
                   <div className="cg-explore-related-type">Parent</div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             )}
             {successor && (
-              <div className="cg-explore-related-row" onClick={() => navigateToDetail("utility", successor.slug)}>
+              <button
+                type="button"
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("utility", successor.slug)}
+              >
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{successor.name}</div>
                   <div className="cg-explore-related-type">Successor</div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             )}
           </>
         )}
@@ -255,8 +275,9 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
               Subsidiaries ({childUtilities.length})
             </div>
             {childUtilities.slice(0, 15).map((child) => (
-              <div
+              <button
                 key={child.id}
+                type="button"
                 className="cg-explore-related-row"
                 onClick={() => navigateToDetail("utility", child.slug)}
               >
@@ -268,7 +289,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
                   </div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             ))}
             {childUtilities.length > 15 && (
               <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
@@ -319,8 +340,9 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
               Programs ({utilityPrograms.length})
             </div>
             {utilityPrograms.slice(0, 15).map((prog) => (
-              <div
+              <button
                 key={prog.slug}
+                type="button"
                 className="cg-explore-related-row"
                 onClick={() => navigateToDetail("program", prog.slug)}
               >
@@ -330,7 +352,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
                   <div className="cg-explore-related-type">{prog.status}</div>
                 </div>
                 <ArrowIcon />
-              </div>
+              </button>
             ))}
             {utilityPrograms.length > 15 && (
               <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>

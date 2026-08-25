@@ -3,7 +3,7 @@
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { Badge, Button, Card, Icon, Loader } from "@texturehq/edges";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ContentPage } from "@/components/ContentPage";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -97,11 +97,7 @@ export default function ModerationDashboardPage() {
   const [statsError, setStatsError] = useState<string | null>(null);
   const [contribError, setContribError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) return;
-
-    let mounted = true;
-
+  const loadDashboard = useCallback(() => {
     // Fetch stats
     fetch("/api/v1/mod/stats")
       .then((res) => {
@@ -109,16 +105,13 @@ export default function ModerationDashboardPage() {
         return res.json();
       })
       .then((json) => {
-        if (mounted) {
-          setStats(json.data);
-          setStatsLoading(false);
-        }
+        setStats(json.data);
+        setStatsError(null);
+        setStatsLoading(false);
       })
       .catch((err) => {
-        if (mounted) {
-          setStatsError(err.message);
-          setStatsLoading(false);
-        }
+        setStatsError(err.message);
+        setStatsLoading(false);
       });
 
     // Fetch pending contributions
@@ -128,22 +121,35 @@ export default function ModerationDashboardPage() {
         return res.json();
       })
       .then((json: ContributionsResponse) => {
-        if (mounted) {
-          setContributions(json.data);
-          setContribLoading(false);
-        }
+        setContributions(json.data);
+        setContribError(null);
+        setContribLoading(false);
       })
       .catch((err) => {
-        if (mounted) {
-          setContribError(err.message);
-          setContribLoading(false);
-        }
+        setContribError(err.message);
+        setContribLoading(false);
       });
+  }, []);
 
-    return () => {
-      mounted = false;
+  useEffect(() => {
+    if (!user) return;
+    loadDashboard();
+
+    // The dashboard is served from Next's client-side Router Cache when a
+    // moderator navigates back from a review, which previously restored the
+    // stale pre-approval queue (an approved item lingered until a manual hard
+    // refresh — CG-243). Refetch whenever the tab regains focus/visibility so
+    // the queue and stat cards self-heal to the current DB state.
+    const refetchOnVisible = () => {
+      if (document.visibilityState === "visible") loadDashboard();
     };
-  }, [user]);
+    window.addEventListener("focus", refetchOnVisible);
+    document.addEventListener("visibilitychange", refetchOnVisible);
+    return () => {
+      window.removeEventListener("focus", refetchOnVisible);
+      document.removeEventListener("visibilitychange", refetchOnVisible);
+    };
+  }, [user, loadDashboard]);
 
   // Show loader while user is loading
   if (!clerkLoaded || (clerkUser && userLoading)) {

@@ -17,6 +17,7 @@ import { jsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
 import { describeInvalidEnumValue, findInvalidEnumValues } from "@/lib/community-editable-fields/validate-enum-values";
+import { absoluteUrl } from "@/lib/config/app-url";
 import { getDb } from "@/lib/db/client";
 import { communityEditableFields, contributions, entityLocks } from "@/lib/db/schema";
 import { users } from "@/lib/db/schema/users";
@@ -68,9 +69,12 @@ const VALID_STATUSES = [
 
 type EntityType = (typeof VALID_ENTITY_TYPES)[number];
 
-// The entity_type -> Drizzle table map lives in lib/mod/apply-contribution.ts,
-// which is also where writes happen. Keeping one copy means a new entity type
-// cannot be contributable but unappliable (or vice versa).
+// Not every entity table has a slug column (territories and transmission_lines
+// do not). A Drizzle table exposes each column as a property, so an undefined
+// `slug` means "no such column" and the slug fallback must be skipped.
+function tableHasSlugColumn(table: unknown): boolean {
+  return !!table && typeof table === "object" && (table as Record<string, unknown>).slug !== undefined;
+}
 
 // ---------------------------------------------------------------------------
 // POST /api/v1/contributions — Submit a contribution
@@ -126,7 +130,8 @@ async function handlePost(req: Request, ctx: RouteContext) {
     });
   }
 
-  // edit_summary (min 25 chars)
+  // edit_summary — floor shared with the submit form so the counter, the
+  // client-side gate, and this check cannot disagree.
   if (!edit_summary || typeof edit_summary !== "string" || edit_summary.trim().length < EDIT_SUMMARY_MIN_LENGTH) {
     throw new ApiError(
       "VALIDATION_ERROR",
@@ -175,7 +180,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
   let entitySlug: string;
   let entityState: string | null = null;
 
-  let resolved_entity_id = entity_id;
+  let resolvedEntityId = entity_id;
 
   if (isCreate) {
     // For creates, generate a slug from the name
@@ -190,23 +195,39 @@ async function handlePost(req: Request, ctx: RouteContext) {
     // Derive state from changes if available
     entityState = (changes.state?.new || changes.jurisdiction?.new?.split(",")[0]?.trim() || null) as string | null;
   } else {
-    // For edits, entity must exist
-    const idCondition = eq(entityTable.id, entity_id);
-    const slugCondition =
-      "slug" in entityTable ? eq((entityTable as { slug: (typeof entityTable)["id"] }).slug, entity_id) : undefined;
-    const condition = slugCondition ? or(idCondition, slugCondition) : idCondition;
-
-    [entity] = await db.select().from(entityTable).where(condition).limit(1);
+    // For edits, entity must exist.
+    //
+    // Resolve by primary key OR slug. Callers legitimately hold one or the
+    // other: the full detail pages pass `entity.id`, while the explorer detail
+    // panels only have the slug from the URL, because that is what the public
+    // API is addressed by. Matching on `id` alone made every edit and deletion
+    // request submitted from an explorer panel fail with a 404 naming an entity
+    // that plainly exists — and for the 12 sync-seeded entity types whose ids
+    // happen to be `<prefix>-<slug>`, it failed only for community-created rows
+    // (UUID ids), which is why it went unnoticed.
+    const matchesSlug = tableHasSlugColumn(entityTable);
+    [entity] = await db
+      .select()
+      .from(entityTable)
+      .where(
+        matchesSlug ? or(eq(entityTable.id, entity_id), eq(entityTable.slug, entity_id)) : eq(entityTable.id, entity_id)
+      )
+      .limit(1);
 
     if (!entity) {
       throw new ApiError("NOT_FOUND", `Entity ${entity_type}/${entity_id} not found.`);
     }
 
-    resolved_entity_id = entity.id;
+    resolvedEntityId = entity.id;
     entitySlug = entity.slug ?? entity.id;
     // Try common state column names
     entityState = entity.state ?? entity.jurisdiction?.split(",")[0]?.trim() ?? null;
   }
+
+  // From here on, address the entity by its primary key. `entity_id` may have
+  // arrived as a slug; the lock check, the contribution row, and every
+  // downstream apply keyed on `entity_id` must use the resolved id or they will
+  // silently target nothing.
 
   // --- Entity lock check (skip for creates) ---
   if (!isCreate) {
@@ -216,7 +237,11 @@ async function handlePost(req: Request, ctx: RouteContext) {
       .where(
         and(
           eq(entityLocks.entityType, entity_type),
-          eq(entityLocks.entityId, resolved_entity_id),
+          // Match the resolved id. Also match the raw `entity_id` in case a
+          // lock was ever recorded under a slug; both point at one entity.
+          resolvedEntityId === entity_id
+            ? eq(entityLocks.entityId, resolvedEntityId)
+            : or(eq(entityLocks.entityId, resolvedEntityId), eq(entityLocks.entityId, entity_id)),
           // Only respect non-expired locks
           sql`(${entityLocks.expiresAt} IS NULL OR ${entityLocks.expiresAt} > NOW())`
         )
@@ -303,7 +328,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
       userId: user.id,
       changesetId: changeset_id ?? null,
       entityType: entity_type,
-      entityId: resolved_entity_id,
+      entityId: resolvedEntityId,
       entityVersion: entity_version,
       entitySlug: entitySlug,
       entityState: entityState,
@@ -357,7 +382,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
           contributorName: user.displayName,
           entityType: entity_type,
           entitySlug: entitySlug,
-          contributionUrl: `${process.env.NEXT_PUBLIC_APP_URL}/contributions/${contribution.id}`,
+          contributionUrl: absoluteUrl(`/contributions/${contribution.id}`),
           changeType: change_type ?? "update",
           fieldSummary: edit_summary.substring(0, 100),
         },
@@ -371,8 +396,8 @@ async function handlePost(req: Request, ctx: RouteContext) {
         contributionId: contribution.id,
         entityType: entity_type,
         entitySlug: entitySlug,
-        entityUrl: `${process.env.NEXT_PUBLIC_APP_URL}/${entity_type}s/${entitySlug}`,
-        contributionUrl: `${process.env.NEXT_PUBLIC_APP_URL}/contributions/${contribution.id}`,
+        entityUrl: absoluteUrl(`/${entity_type}s/${entitySlug}`),
+        contributionUrl: absoluteUrl(`/contributions/${contribution.id}`),
       },
       `${contribution.id}-submitted`
     );
