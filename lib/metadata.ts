@@ -17,6 +17,7 @@ export const PAGE_TITLES = {
   about: "About",
   components: "Components",
   programs: "Utility Programs",
+  rates: "Rates & Tariffs",
   moderation: "Moderation",
   moderationUsers: "Moderation - Users",
   moderationQueue: "Moderation - Review Queue",

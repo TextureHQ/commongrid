@@ -141,6 +141,13 @@
       "when": 1787172900000,
       "tag": "0023_program_multi_enum_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1787616000000,
+      "tag": "0024_add_program_details_fields",
+      "breakpoints": true
     }
   ]
 }

@@ -1,15 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock the Knock client before importing workflows
+// Mock the Knock client and observability before importing workflows
 vi.mock("../client", () => ({
   isKnockConfigured: vi.fn(),
   getKnockClient: vi.fn(),
 }));
 
+vi.mock("@/lib/observability", () => ({
+  reportError: vi.fn(),
+  flushTelemetry: vi.fn(),
+}));
+
+import { reportError } from "@/lib/observability";
 import { getKnockClient, isKnockConfigured } from "../client";
 import { triggerContributionApproved, triggerWorkflow } from "../workflows";
 
 const mockTrigger = vi.fn();
+const mockReportError = vi.mocked(reportError);
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -65,7 +72,57 @@ describe("triggerWorkflow", () => {
     expect(result).toBe("run-abc-123");
   });
 
-  it("logs error and returns null when the Knock API throws", async () => {
+  it("reports a missing recipient error via reportError and returns null", async () => {
+    vi.mocked(isKnockConfigured).mockReturnValue(true);
+    const missingRecipientError = Object.assign(new Error("404 resource_missing: recipient not found"), {
+      status: 404,
+      error: { code: "resource_missing", message: "recipient not found" },
+    });
+    mockTrigger.mockRejectedValue(missingRecipientError);
+
+    const result = await triggerWorkflow({
+      workflow: "contribution-approved",
+      recipients: ["missing-user"],
+      data: {},
+    });
+
+    expect(result).toBeNull();
+    expect(mockReportError).toHaveBeenCalledWith(missingRecipientError, {
+      scope: "knock.workflows",
+      level: "warning",
+      extra: expect.objectContaining({
+        workflow: "contribution-approved",
+        recipients: ["missing-user"],
+      }),
+    });
+  });
+
+  it("reports a no-email recipient error via reportError and returns null", async () => {
+    vi.mocked(isKnockConfigured).mockReturnValue(true);
+    const noEmailError = Object.assign(new Error("recipient has no email"), {
+      status: 422,
+      error: { code: "no_email", message: "recipient has no email" },
+    });
+    mockTrigger.mockRejectedValue(noEmailError);
+
+    const result = await triggerWorkflow({
+      workflow: "contribution-approved",
+      recipients: ["no-email-user"],
+      data: {},
+    });
+
+    expect(result).toBeNull();
+    expect(mockReportError).toHaveBeenCalledWith(noEmailError, {
+      scope: "knock.workflows",
+      level: "warning",
+      extra: expect.objectContaining({
+        workflow: "contribution-approved",
+        recipients: ["no-email-user"],
+      }),
+    });
+  });
+
+  it("logs a generic error and returns null for non-recipient failures", async () => {
     vi.mocked(isKnockConfigured).mockReturnValue(true);
     mockTrigger.mockRejectedValue(new Error("Network failure"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -77,6 +134,7 @@ describe("triggerWorkflow", () => {
     });
 
     expect(result).toBeNull();
+    expect(mockReportError).not.toHaveBeenCalled();
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("triggerWorkflow failed"), expect.any(Error));
     consoleSpy.mockRestore();
   });

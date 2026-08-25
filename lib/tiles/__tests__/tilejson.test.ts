@@ -18,9 +18,12 @@ describe("TileJSON document generation from archive metadata", () => {
       const { getArchiveMetadata } = await import("@/lib/pmtiles-server");
       const metadata = await getArchiveMetadata(layer.id);
       expect(metadata).not.toBeNull();
+      if (!metadata) {
+        throw new Error(`Missing archive metadata for ${layer.id}`);
+      }
 
       const req = makeRequest("commongrid.info");
-      const doc = buildTileJson(req, layer, metadata!);
+      const doc = buildTileJson(req, layer, metadata);
 
       expect(doc.tilejson).toBe("3.0.0");
       expect(doc.name).toBeTruthy();
@@ -29,8 +32,8 @@ describe("TileJSON document generation from archive metadata", () => {
       expect(doc.scheme).toBe("xyz");
       expect(doc.tiles).toHaveLength(1);
       expect(doc.tiles[0]).toMatch(/^https:\/\/commongrid\.info\/api\/tiles\/[^/]+\/\{z\}\/\{x\}\/\{y\}$/);
-      expect(doc.minzoom).toBe(metadata!.minzoom);
-      expect(doc.maxzoom).toBe(metadata!.maxzoom);
+      expect(doc.minzoom).toBe(metadata.minzoom);
+      expect(doc.maxzoom).toBe(metadata.maxzoom);
       expect(doc.bounds).toHaveLength(4);
       expect(doc.bounds[0]).toBeLessThanOrEqual(doc.bounds[2]); // west <= east
       expect(doc.bounds[1]).toBeLessThanOrEqual(doc.bounds[3]); // south <= north
@@ -100,10 +103,10 @@ describe("TileJSON archive metadata matches hardcoded reality", () => {
     for (const layer of TILE_LAYERS) {
       const metadata = await getArchiveMetadata(layer.id);
       expect(metadata).not.toBeNull();
-      const layerIds = metadata!.vectorLayers.map((vl) => vl.id);
+      const layerIds = metadata?.vectorLayers.map((vl) => vl.id) ?? [];
       expect(layerIds.length).toBeGreaterThan(0);
 
-      const fields = Object.keys(metadata!.vectorLayers[0].fields).sort();
+      const fields = Object.keys(metadata?.vectorLayers[0].fields ?? {}).sort();
       expect(fields).toEqual(expected[layer.id].sort());
     }
   });

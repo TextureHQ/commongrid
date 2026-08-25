@@ -172,20 +172,38 @@ function buildApiParams(
 }
 
 const SearchIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    role="img"
+    aria-label="Search"
+  >
     <circle cx="11" cy="11" r="7" />
     <path d="m20 20-3-3" />
   </svg>
 );
 
 const FilterIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    role="img"
+    aria-label="Filter"
+  >
     <path d="M22 3H2l8 9.46V19l4 2V12.46z" />
   </svg>
 );
 
 export function UtilityListPanel() {
-  const { state, setSearch, setSegment, setJurisdictions, navigateToDetail } = useExplorer();
+  const { state, setSearch, setFilters, navigateToDetail } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
 
@@ -278,16 +296,20 @@ export function UtilityListPanel() {
 
   const handleApplyFilters = useCallback(
     (newFilters: FilterState) => {
-      setSegment(filtersToSegment(newFilters));
-      setJurisdictions(filtersToJurisdictions(newFilters));
+      setFilters({
+        segment: filtersToSegment(newFilters),
+        jurisdictions: filtersToJurisdictions(newFilters),
+      });
     },
-    [setSegment, setJurisdictions]
+    [setFilters]
   );
 
   const handleClearFilters = useCallback(() => {
-    setSegment("all");
-    setJurisdictions([]);
-  }, [setSegment, setJurisdictions]);
+    setFilters({
+      segment: "all",
+      jurisdictions: [],
+    });
+  }, [setFilters]);
 
   const activeFilterCount = getFilterFields(filterState).length;
 

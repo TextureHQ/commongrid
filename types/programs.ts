@@ -224,6 +224,7 @@ export interface Program {
   version: number;
   description?: string;
   organizations: ProgramOrganization[];
+  organizationNames?: string[];
   assetTypes: AssetType[];
   marketSegments: MarketSegment[];
   participationModels: ParticipationModel[];
@@ -244,6 +245,8 @@ export interface Program {
   termsUrl?: string;
   contactUrl?: string;
   variants: ProgramVariant[];
+  dermsVendor?: string;
+  otherNotes?: string;
   createdAt: string;
   updatedAt: string;
 }
