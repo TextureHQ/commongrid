@@ -304,9 +304,17 @@ export async function applyContribution(
   // entity_versions delta asserting a change that never happened. Auto-approval
   // is incidentally shielded by the community_editable_fields lookup; the
   // moderator path has no field validation at all.
-  const unknownFields = Object.keys(changes).filter((field) => !tableHasColumn(entityTable, snakeToCamel(field)));
-  if (unknownFields.length > 0) {
-    return { status: "unknown_fields", fields: unknownFields };
+  //
+  // Deletes are exempt: their `changes` payload is deletion METADATA, not field
+  // values. DeleteEntityDialog sends `{ _deletion: { reason, justification } }`
+  // and the delete branch below never reads `changes` at all — it only sets
+  // deletedAt. Validating those keys as columns made every deletion approval
+  // fail with "_deletion is not a field on <entity>", across all entity types.
+  if (changeType !== "delete") {
+    const unknownFields = Object.keys(changes).filter((field) => !tableHasColumn(entityTable, snakeToCamel(field)));
+    if (unknownFields.length > 0) {
+      return { status: "unknown_fields", fields: unknownFields };
+    }
   }
 
   // --- create ---------------------------------------------------------------
