@@ -3,7 +3,7 @@
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { Badge, Button, Card, Icon, Loader } from "@texturehq/edges";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ContentPage } from "@/components/ContentPage";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -97,9 +97,7 @@ export default function ModerationDashboardPage() {
   const [statsError, setStatsError] = useState<string | null>(null);
   const [contribError, setContribError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) return;
-
+  const loadDashboard = useCallback(() => {
     // Fetch stats
     fetch("/api/v1/mod/stats")
       .then((res) => {
@@ -108,6 +106,7 @@ export default function ModerationDashboardPage() {
       })
       .then((json) => {
         setStats(json.data);
+        setStatsError(null);
         setStatsLoading(false);
       })
       .catch((err) => {
@@ -123,13 +122,34 @@ export default function ModerationDashboardPage() {
       })
       .then((json: ContributionsResponse) => {
         setContributions(json.data);
+        setContribError(null);
         setContribLoading(false);
       })
       .catch((err) => {
         setContribError(err.message);
         setContribLoading(false);
       });
-  }, [user]);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    loadDashboard();
+
+    // The dashboard is served from Next's client-side Router Cache when a
+    // moderator navigates back from a review, which previously restored the
+    // stale pre-approval queue (an approved item lingered until a manual hard
+    // refresh — CG-243). Refetch whenever the tab regains focus/visibility so
+    // the queue and stat cards self-heal to the current DB state.
+    const refetchOnVisible = () => {
+      if (document.visibilityState === "visible") loadDashboard();
+    };
+    window.addEventListener("focus", refetchOnVisible);
+    document.addEventListener("visibilitychange", refetchOnVisible);
+    return () => {
+      window.removeEventListener("focus", refetchOnVisible);
+      document.removeEventListener("visibilitychange", refetchOnVisible);
+    };
+  }, [user, loadDashboard]);
 
   // Show loader while user is loading
   if (!clerkLoaded || (clerkUser && userLoading)) {
