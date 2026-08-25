@@ -154,6 +154,9 @@ export default function ModerationReviewPage() {
       setContribution(json.data);
       setComment("");
 
+      // Refresh the router to clear the Next.js client cache for the dashboard
+      router.refresh();
+
       // Redirect back to dashboard after successful action
       setTimeout(() => {
         router.push("/mod");

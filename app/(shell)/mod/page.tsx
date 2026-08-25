@@ -100,6 +100,8 @@ export default function ModerationDashboardPage() {
   useEffect(() => {
     if (!user) return;
 
+    let mounted = true;
+
     // Fetch stats
     fetch("/api/v1/mod/stats")
       .then((res) => {
@@ -107,12 +109,16 @@ export default function ModerationDashboardPage() {
         return res.json();
       })
       .then((json) => {
-        setStats(json.data);
-        setStatsLoading(false);
+        if (mounted) {
+          setStats(json.data);
+          setStatsLoading(false);
+        }
       })
       .catch((err) => {
-        setStatsError(err.message);
-        setStatsLoading(false);
+        if (mounted) {
+          setStatsError(err.message);
+          setStatsLoading(false);
+        }
       });
 
     // Fetch pending contributions
@@ -122,13 +128,21 @@ export default function ModerationDashboardPage() {
         return res.json();
       })
       .then((json: ContributionsResponse) => {
-        setContributions(json.data);
-        setContribLoading(false);
+        if (mounted) {
+          setContributions(json.data);
+          setContribLoading(false);
+        }
       })
       .catch((err) => {
-        setContribError(err.message);
-        setContribLoading(false);
+        if (mounted) {
+          setContribError(err.message);
+          setContribLoading(false);
+        }
       });
+
+    return () => {
+      mounted = false;
+    };
   }, [user]);
 
   // Show loader while user is loading
