@@ -49,7 +49,8 @@ const ArrowIcon = () => (
 // Program launch/enrollment/end fields are stored as free-text dates. Render an
 // ISO/parseable value as a friendly date, but never mangle a value we cannot
 // parse — show it verbatim so provenance is preserved.
-function formatProgramDate(value: string): string {
+function formatProgramDate(value: string | undefined): string {
+  if (!value) return "—";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
   return parsed.toLocaleDateString(undefined, {
@@ -59,6 +60,16 @@ function formatProgramDate(value: string): string {
     timeZone: "UTC",
   });
 }
+
+// Join a list of enum values through their label map, falling back to an
+// em-dash when the program has none. Every edit-form field is rendered on the
+// detail page even when empty so the two views stay at parity (CG-250).
+function formatEnumList<T extends string>(values: T[], labels: Record<string, string>): string {
+  if (!values || values.length === 0) return "—";
+  return values.map((v) => labels[v] ?? v).join(", ");
+}
+
+const enumValStyle = { fontFamily: "var(--font-family-sans)", fontSize: 12 } as const;
 
 const linkButtonStyle = {
   background: "none",
@@ -233,60 +244,34 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           ))}
           <div className="cg-explore-kv-row">
             <span className="cg-explore-kv-key">Asset Types</span>
-            <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-              {program.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", ")}
+            <span className="cg-explore-kv-val" style={enumValStyle}>
+              {formatEnumList(program.assetTypes, AssetTypeLabel)}
             </span>
           </div>
-          {program.marketSegments.length > 0 && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Market Segments</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-                {program.marketSegments
-                  .map((ms) => MarketSegmentLabel[ms as keyof typeof MarketSegmentLabel] ?? ms)
-                  .join(", ")}
-              </span>
-            </div>
-          )}
-          {program.gridServices.length > 0 && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Grid Services</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-                {program.gridServices
-                  .map((gs) => GridServiceLabel[gs as keyof typeof GridServiceLabel] ?? gs)
-                  .join(", ")}
-              </span>
-            </div>
-          )}
-          {program.participationModels.length > 0 && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Participation</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-                {program.participationModels
-                  .map((pm) => ParticipationModelLabel[pm as keyof typeof ParticipationModelLabel] ?? pm)
-                  .join(", ")}
-              </span>
-            </div>
-          )}
-          {program.incentiveStructures.length > 0 && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Incentives</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-                {program.incentiveStructures
-                  .map((is) => IncentiveStructureLabel[is as keyof typeof IncentiveStructureLabel] ?? is)
-                  .join(", ")}
-              </span>
-            </div>
-          )}
-          {program.programWebsite && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Website</span>
-              <span className="cg-explore-kv-val">
-                <a href={program.programWebsite} target="_blank" rel="noopener noreferrer">
-                  {safeHostname(program.programWebsite)}
-                </a>
-              </span>
-            </div>
-          )}
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Market Segments</span>
+            <span className="cg-explore-kv-val" style={enumValStyle}>
+              {formatEnumList(program.marketSegments, MarketSegmentLabel)}
+            </span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Grid Services</span>
+            <span className="cg-explore-kv-val" style={enumValStyle}>
+              {formatEnumList(program.gridServices, GridServiceLabel)}
+            </span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Participation</span>
+            <span className="cg-explore-kv-val" style={enumValStyle}>
+              {formatEnumList(program.participationModels, ParticipationModelLabel)}
+            </span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Incentives</span>
+            <span className="cg-explore-kv-val" style={enumValStyle}>
+              {formatEnumList(program.incentiveStructures, IncentiveStructureLabel)}
+            </span>
+          </div>
           <div className="cg-explore-kv-row">
             <span className="cg-explore-kv-key">DERMS Vendor</span>
             <span className="cg-explore-kv-val">{program.dermsVendor || "—"}</span>
@@ -297,59 +282,44 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           </div>
         </div>
 
-        {/* Capacity & enrollment targets */}
-        {(program.capacityTarget != null || program.maxEnrollments != null) && (
-          <>
-            <div className="cg-explore-related-heading">Capacity</div>
-            <div className="cg-explore-kv-table">
-              {program.capacityTarget != null && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Capacity Target</span>
-                  <span className="cg-explore-kv-val">{program.capacityTarget.toLocaleString()} MW</span>
-                </div>
-              )}
-              {program.maxEnrollments != null && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Max Enrollments</span>
-                  <span className="cg-explore-kv-val">{program.maxEnrollments.toLocaleString()}</span>
-                </div>
-              )}
-            </div>
-          </>
-        )}
+        {/* Capacity & enrollment targets. Always rendered so the detail page
+            mirrors every field on the Suggest Edit form, even when blank. */}
+        <div className="cg-explore-related-heading">Capacity</div>
+        <div className="cg-explore-kv-table">
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Capacity Target</span>
+            <span className="cg-explore-kv-val">
+              {program.capacityTarget != null ? `${program.capacityTarget.toLocaleString()} MW` : "—"}
+            </span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Max Enrollments</span>
+            <span className="cg-explore-kv-val">
+              {program.maxEnrollments != null ? program.maxEnrollments.toLocaleString() : "—"}
+            </span>
+          </div>
+        </div>
 
         {/* Program dates */}
-        {(program.launchedAt || program.enrollmentOpens || program.enrollmentCloses || program.endsAt) && (
-          <>
-            <div className="cg-explore-related-heading">Dates</div>
-            <div className="cg-explore-kv-table">
-              {program.launchedAt && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Launched</span>
-                  <span className="cg-explore-kv-val">{formatProgramDate(program.launchedAt)}</span>
-                </div>
-              )}
-              {program.enrollmentOpens && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Enrollment Opens</span>
-                  <span className="cg-explore-kv-val">{formatProgramDate(program.enrollmentOpens)}</span>
-                </div>
-              )}
-              {program.enrollmentCloses && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Enrollment Closes</span>
-                  <span className="cg-explore-kv-val">{formatProgramDate(program.enrollmentCloses)}</span>
-                </div>
-              )}
-              {program.endsAt && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Ends</span>
-                  <span className="cg-explore-kv-val">{formatProgramDate(program.endsAt)}</span>
-                </div>
-              )}
-            </div>
-          </>
-        )}
+        <div className="cg-explore-related-heading">Dates</div>
+        <div className="cg-explore-kv-table">
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Launched</span>
+            <span className="cg-explore-kv-val">{formatProgramDate(program.launchedAt)}</span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Enrollment Opens</span>
+            <span className="cg-explore-kv-val">{formatProgramDate(program.enrollmentOpens)}</span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Enrollment Closes</span>
+            <span className="cg-explore-kv-val">{formatProgramDate(program.enrollmentCloses)}</span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Ends</span>
+            <span className="cg-explore-kv-val">{formatProgramDate(program.endsAt)}</span>
+          </div>
+        </div>
 
         {/* Compensation */}
         {program.compensationTiers.length > 0 && (
@@ -396,46 +366,61 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
           </>
         )}
 
-        {/* Links */}
-        {(program.faqUrl || program.termsUrl || program.contactUrl) && (
-          <>
-            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
-              Links
-            </div>
-            <div className="cg-explore-kv-table">
-              {program.faqUrl && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">FAQ</span>
-                  <span className="cg-explore-kv-val">
-                    <a href={program.faqUrl} target="_blank" rel="noopener noreferrer">
-                      {safeHostname(program.faqUrl)}
-                    </a>
-                  </span>
-                </div>
+        {/* Links. All URL fields the edit form exposes are rendered here even
+            when unset, so the detail page and edit form stay at parity. */}
+        <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+          Links
+        </div>
+        <div className="cg-explore-kv-table">
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Website</span>
+            <span className="cg-explore-kv-val">
+              {program.programWebsite ? (
+                <a href={program.programWebsite} target="_blank" rel="noopener noreferrer">
+                  {safeHostname(program.programWebsite)}
+                </a>
+              ) : (
+                "—"
               )}
-              {program.termsUrl && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Terms</span>
-                  <span className="cg-explore-kv-val">
-                    <a href={program.termsUrl} target="_blank" rel="noopener noreferrer">
-                      {safeHostname(program.termsUrl)}
-                    </a>
-                  </span>
-                </div>
+            </span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">FAQ</span>
+            <span className="cg-explore-kv-val">
+              {program.faqUrl ? (
+                <a href={program.faqUrl} target="_blank" rel="noopener noreferrer">
+                  {safeHostname(program.faqUrl)}
+                </a>
+              ) : (
+                "—"
               )}
-              {program.contactUrl && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Contact</span>
-                  <span className="cg-explore-kv-val">
-                    <a href={program.contactUrl} target="_blank" rel="noopener noreferrer">
-                      {safeHostname(program.contactUrl)}
-                    </a>
-                  </span>
-                </div>
+            </span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Terms</span>
+            <span className="cg-explore-kv-val">
+              {program.termsUrl ? (
+                <a href={program.termsUrl} target="_blank" rel="noopener noreferrer">
+                  {safeHostname(program.termsUrl)}
+                </a>
+              ) : (
+                "—"
               )}
-            </div>
-          </>
-        )}
+            </span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Contact</span>
+            <span className="cg-explore-kv-val">
+              {program.contactUrl ? (
+                <a href={program.contactUrl} target="_blank" rel="noopener noreferrer">
+                  {safeHostname(program.contactUrl)}
+                </a>
+              ) : (
+                "—"
+              )}
+            </span>
+          </div>
+        </div>
 
         {/* Suggest Edit */}
         {user && (
