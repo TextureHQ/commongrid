@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { useProgramList } from "@/hooks/useProgramList";
@@ -23,6 +24,7 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
+import { buildNewProgramHref } from "@/lib/programs/new-program-link";
 import { useExplorer } from "../ExplorerContext";
 
 const ArrowIcon = () => (
@@ -44,6 +46,7 @@ const ArrowIcon = () => (
 
 export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
+  const { user } = useCurrentUser();
 
   const { utility } = useUtility(slug);
   const { utilities, isLoading: utilitiesLoading } = useUtilityList({ limit: 500 });
@@ -333,12 +336,32 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           </>
         )}
 
-        {/* Programs */}
-        {utilityPrograms.length > 0 && (
+        {/*
+          Programs. Rendered even at zero programs so the "Add a program" entry
+          point exists precisely where a contributor notices the gap — a utility
+          with no programs on file is the case most in need of a contribution.
+        */}
+        {(utilityPrograms.length > 0 || user) && (
           <>
-            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
-              Programs ({utilityPrograms.length})
+            <div
+              className="cg-explore-related-heading"
+              style={{ marginTop: 16, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}
+            >
+              <span>Programs ({utilityPrograms.length})</span>
+              {user && (
+                <Link
+                  href={buildNewProgramHref(utility.slug)}
+                  style={{ fontSize: 11, fontWeight: 500, color: "var(--color-brand-primary)" }}
+                >
+                  + Add a program
+                </Link>
+              )}
             </div>
+            {utilityPrograms.length === 0 && (
+              <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginBottom: 6 }}>
+                No programs on file for this utility yet.
+              </div>
+            )}
             {utilityPrograms.slice(0, 15).map((prog) => (
               <button
                 key={prog.slug}
