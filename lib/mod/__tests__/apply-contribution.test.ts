@@ -186,6 +186,24 @@ describe("applyContribution", () => {
     expect(recorded.versionInserts).toHaveLength(0);
   });
 
+  describe("delete path", () => {
+    it("allows deletion metadata in changes without unknown_fields errors", async () => {
+      const { tx, recorded } = makeTx({
+        entity: { id: "entity-1", version: 3, amiMeterCount: 100 },
+        hasVersionHistory: true,
+      });
+
+      const outcome = await applyContribution(
+        tx,
+        contribution({ changeType: "delete", changes: { _deletion: { reason: "duplicate" } } }),
+        { ...opts, changeType: "delete" }
+      );
+
+      expect(outcome).toMatchObject({ status: "applied", changeType: "delete" });
+      expect(recorded.entityUpdates[0]).toHaveProperty("deletedAt");
+    });
+  });
+
   it("reports a missing entity rather than resurrecting it", async () => {
     const { tx, recorded } = makeTx({ entity: null, hasVersionHistory: false });
 
