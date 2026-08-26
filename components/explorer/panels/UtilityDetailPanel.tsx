@@ -1,5 +1,6 @@
 "use client";
 
+import { SignInButton } from "@clerk/nextjs";
 import type { FeatureCollection } from "geojson";
 import Image from "next/image";
 import Link from "next/link";
@@ -337,53 +338,70 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
         )}
 
         {/*
-          Programs. Rendered even at zero programs so the "Add a program" entry
-          point exists precisely where a contributor notices the gap — a utility
-          with no programs on file is the case most in need of a contribution.
+          Programs. Rendered even at zero programs, and the "Add a program" entry
+          point is shown to everyone — signed-out visitors included — so the
+          contribution path is discoverable. Anonymous users are routed through
+          the sign-in modal and returned to the prefilled form; the auth gate
+          lives at the action, not the visibility of the entry point.
         */}
-        {(utilityPrograms.length > 0 || user) && (
-          <>
-            <div
-              className="cg-explore-related-heading"
-              style={{ marginTop: 16, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}
-            >
-              <span>Programs ({utilityPrograms.length})</span>
-              {user && (
-                <Link
-                  href={buildNewProgramHref(utility.slug)}
-                  style={{ fontSize: 11, fontWeight: 500, color: "var(--color-brand-primary)" }}
+        <div className="cg-explore-programs-section">
+          <div
+            className="cg-explore-related-heading"
+            style={{ marginTop: 16, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}
+          >
+            <span>Programs ({utilityPrograms.length})</span>
+            {user ? (
+              <Link
+                href={buildNewProgramHref(utility.slug)}
+                style={{ fontSize: 11, fontWeight: 500, color: "var(--color-brand-primary)" }}
+              >
+                + Add a program
+              </Link>
+            ) : (
+              <SignInButton mode="modal" forceRedirectUrl={buildNewProgramHref(utility.slug)}>
+                <button
+                  type="button"
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: "var(--color-brand-primary)",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                  }}
                 >
                   + Add a program
-                </Link>
-              )}
+                </button>
+              </SignInButton>
+            )}
+          </div>
+          {utilityPrograms.length === 0 && (
+            <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginBottom: 6 }}>
+              No programs on file for this utility yet.
             </div>
-            {utilityPrograms.length === 0 && (
-              <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginBottom: 6 }}>
-                No programs on file for this utility yet.
+          )}
+          {utilityPrograms.slice(0, 15).map((prog) => (
+            <button
+              key={prog.slug}
+              type="button"
+              className="cg-explore-related-row"
+              onClick={() => navigateToDetail("program", prog.slug)}
+            >
+              <span className="cg-explore-related-dot" style={{ background: entityKindColor("programs") }} />
+              <div style={{ flex: 1 }}>
+                <div className="cg-explore-related-name">{prog.name}</div>
+                <div className="cg-explore-related-type">{prog.status}</div>
               </div>
-            )}
-            {utilityPrograms.slice(0, 15).map((prog) => (
-              <button
-                key={prog.slug}
-                type="button"
-                className="cg-explore-related-row"
-                onClick={() => navigateToDetail("program", prog.slug)}
-              >
-                <span className="cg-explore-related-dot" style={{ background: entityKindColor("programs") }} />
-                <div style={{ flex: 1 }}>
-                  <div className="cg-explore-related-name">{prog.name}</div>
-                  <div className="cg-explore-related-type">{prog.status}</div>
-                </div>
-                <ArrowIcon />
-              </button>
-            ))}
-            {utilityPrograms.length > 15 && (
-              <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
-                + {utilityPrograms.length - 15} more
-              </div>
-            )}
-          </>
-        )}
+              <ArrowIcon />
+            </button>
+          ))}
+          {utilityPrograms.length > 15 && (
+            <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
+              + {utilityPrograms.length - 15} more
+            </div>
+          )}
+        </div>
 
         {/* Full page link */}
         <div style={{ display: "flex", gap: 7, marginTop: 16 }}>

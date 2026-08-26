@@ -834,16 +834,17 @@ export default function UtilityDetailPage() {
         )}
 
         {/*
-          Shown even with zero programs when signed in, so the "Add a program"
-          action is reachable from the utility whose coverage is thinnest.
+          Shown even with zero programs, and to signed-out visitors too, so the
+          "Add a program" action is always discoverable. Anonymous users are
+          routed through the sign-in modal and returned to the prefilled form.
         */}
-        {!programsLoading && (utilityPrograms.length > 0 || user) && (
+        {!programsLoading && (
           <EntitySection id="programs" title="Programs">
             <div className="flex items-center justify-between gap-4">
               <div className="detail-list-meta">
                 {utilityPrograms.length} program{utilityPrograms.length !== 1 ? "s" : ""}
               </div>
-              {user && (
+              {user ? (
                 <Button
                   variant="secondary"
                   size="sm"
@@ -853,6 +854,13 @@ export default function UtilityDetailPage() {
                   <Icon name="Plus" size="sm" />
                   <span>Add a program</span>
                 </Button>
+              ) : (
+                <SignInButton mode="modal" forceRedirectUrl={buildNewProgramHref(utility.slug)}>
+                  <Button variant="secondary" size="sm" className="gap-2">
+                    <Icon name="Plus" size="sm" />
+                    <span>Add a program</span>
+                  </Button>
+                </SignInButton>
               )}
             </div>
             {utilityPrograms.length > 0 && (

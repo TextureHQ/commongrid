@@ -1,5 +1,6 @@
 "use client";
 
+import { SignInButton } from "@clerk/nextjs";
 import { Button, Icon, Loader, PageLayout } from "@texturehq/edges";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -12,7 +13,7 @@ import {
 import { UtilityAutocomplete } from "@/components/UtilityAutocomplete";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useUtility } from "@/hooks/useUtility";
-import { parseNewProgramUtilityParam } from "@/lib/programs/new-program-link";
+import { buildNewProgramHref, parseNewProgramUtilityParam } from "@/lib/programs/new-program-link";
 import type { UtilityOption } from "@/lib/utility-search";
 
 function CreateProgramForm() {
@@ -209,14 +210,29 @@ function CreateProgramForm() {
   }
 
   if (!user) {
+    // Return to this same form (with the preselected utility intact) after
+    // sign-in, so a contributor who arrived via an "Add a program" entry point
+    // lands back on the prefilled form rather than a generic page.
+    const returnHref = buildNewProgramHref(initialUtilitySlug || null);
     return (
       <PageLayout>
         <PageLayout.Header title="Add New Program" />
         <PageLayout.Content>
           <div className="max-w-2xl mx-auto py-8">
             <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
-              <p className="text-sm font-medium text-blue-800">Sign in required</p>
-              <p className="text-sm text-blue-700 mt-1">You need to be signed in to add a new program.</p>
+              <p className="text-sm font-medium text-blue-800">Sign in to contribute</p>
+              <p className="text-sm text-blue-700 mt-1">
+                Adding a program is a community contribution. Sign in to submit a new program and help keep CommonGrid
+                accurate for everyone.
+              </p>
+              <div className="mt-4">
+                <SignInButton mode="modal" forceRedirectUrl={returnHref}>
+                  <Button variant="primary" size="md">
+                    <Icon name="SignIn" size="sm" />
+                    <span>Sign in</span>
+                  </Button>
+                </SignInButton>
+              </div>
             </div>
           </div>
         </PageLayout.Content>
