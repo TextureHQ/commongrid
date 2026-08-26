@@ -313,18 +313,6 @@ export function UtilityListPanel() {
 
   const activeFilterCount = getFilterFields(filterState).length;
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col h-full overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
-            <PanelEntityRow key={skeletonKey} loading leadingShape="dot" title="" onSelect={() => {}} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Panel header with search and controls */}
@@ -387,7 +375,11 @@ export function UtilityListPanel() {
 
       {/* Entity list */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {rows.length === 0 ? (
+        {isLoading ? (
+          Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
+            <PanelEntityRow key={skeletonKey} loading leadingShape="dot" title="" onSelect={() => {}} />
+          ))
+        ) : rows.length === 0 ? (
           <div className="cg-explore-empty">
             <div className="cg-explore-empty-title">No utilities found</div>
             <div>

@@ -99,7 +99,7 @@ export default function ModerationDashboardPage() {
 
   const loadDashboard = useCallback(() => {
     // Fetch stats
-    fetch("/api/v1/mod/stats")
+    fetch("/api/v1/mod/stats", { cache: "no-store" })
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch stats");
         return res.json();
@@ -115,7 +115,7 @@ export default function ModerationDashboardPage() {
       });
 
     // Fetch pending contributions
-    fetch("/api/v1/mod/contributions?status=pending&limit=20")
+    fetch("/api/v1/mod/contributions?status=pending&limit=20", { cache: "no-store" })
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch contributions");
         return res.json();
