@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  type ExploreRouteDescriptor,
   pushDeeperExploreRoute,
   pushExploreRoute,
   type UrlExploreRouteStackController,
@@ -12,52 +11,24 @@ import { useSearchParams } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
 import { detailViewToTab } from "@/lib/explorer/detail-view-tab";
 import {
-  carryViewMode,
-  type ExploreViewMode,
-  parseViewMode,
-  resolveViewMode,
-  viewModeToggleAction,
-} from "@/lib/explorer/view-mode";
+  DEFAULT_MODE_FOR_TAB,
+  type EntityTab,
+  type ExploreRoute,
+  type ListRoutePayload,
+  makeDetailRoute,
+  makeListRoute,
+  makeOverviewRoute,
+  parseRoutes,
+  serializeRoutes,
+} from "@/lib/explorer/explorer-routes";
+import { carryViewMode, type ExploreViewMode, resolveViewMode, viewModeToggleAction } from "@/lib/explorer/view-mode";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type EntityTab =
-  | "utilities"
-  | "grid-operators"
-  | "power-plants"
-  | "programs"
-  | "rates"
-  | "transmission-lines"
-  | "ev-charging"
-  | "pricing-nodes"
-  | "substations";
-export type { ExploreViewMode };
+export type { EntityTab, ExploreRoute, ExploreViewMode, ListRoutePayload };
 export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
-
-/**
- * Route shape for CommonGrid's explore stack.
- *
- * A `list` route owns its filter state in `payload`. Mutating a filter on
- * the active list route is a `stack.replace(routeWithUpdatedFilter)` call —
- * which both updates the in-memory stack and re-serializes to the URL.
- * Switching tabs (push of a different list peer) evicts the prior list
- * peer and its filter state — matching the existing behavior where
- * tab switches clear filters.
- *
- * A `detail` route only carries the entity slug. `entityKind` records which
- * tab context the user was in when they drilled in, so the back-arrow returns
- * them to the right list view.
- */
-export interface ListRoutePayload {
-  tab: EntityTab;
-  q: string;
-  segment: string;
-  type: string;
-  jurisdictions: string[];
-  mode: ExploreViewMode;
-}
 
 export interface DetailRoutePayload {
   entityKind: EntityTab;
@@ -77,160 +48,7 @@ function deriveDetailKind(detail: Extract<ExploreRoute, { type: "detail" }>): De
   }
 }
 
-export type ExploreRoute =
-  | (ExploreRouteDescriptor & { type: "overview"; id: "overview" })
-  | (ExploreRouteDescriptor<ListRoutePayload> & { type: "list"; id: string; payload: ListRoutePayload })
-  | (ExploreRouteDescriptor<DetailRoutePayload> & { type: "detail"; id: string; payload: DetailRoutePayload });
-
 const DEFAULT_TAB: EntityTab = "utilities";
-const DEFAULT_FILTERS: Omit<ListRoutePayload, "tab" | "mode"> = {
-  q: "",
-  segment: "all",
-  type: "all",
-  jurisdictions: [],
-};
-
-export const DEFAULT_MODE_FOR_TAB: Record<EntityTab, ExploreViewMode> = {
-  utilities: "table",
-  "grid-operators": "table",
-  programs: "table",
-  rates: "table",
-  "power-plants": "map",
-  "transmission-lines": "map",
-  "ev-charging": "map",
-  "pricing-nodes": "map",
-  substations: "map",
-};
-
-function makeOverviewRoute(): ExploreRoute {
-  return { type: "overview", id: "overview" };
-}
-
-function makeListRoute(
-  tab: EntityTab,
-  mode?: ExploreViewMode,
-  filters: Partial<Omit<ListRoutePayload, "tab" | "mode">> = {}
-): ExploreRoute {
-  return {
-    type: "list",
-    id: `list:${tab}`,
-    payload: { tab, mode: mode ?? DEFAULT_MODE_FOR_TAB[tab], ...DEFAULT_FILTERS, ...filters },
-  };
-}
-
-function makeDetailRoute(entityKind: EntityTab, slug: string): ExploreRoute {
-  return {
-    type: "detail",
-    id: `detail:${slug}`,
-    payload: { entityKind, slug },
-  };
-}
-
-// ---------------------------------------------------------------------------
-// URL ↔ stack serialization
-// ---------------------------------------------------------------------------
-
-const VALID_TABS: ReadonlySet<EntityTab> = new Set([
-  "utilities",
-  "grid-operators",
-  "power-plants",
-  "programs",
-  "rates",
-  "transmission-lines",
-  "ev-charging",
-  "pricing-nodes",
-  "substations",
-]);
-
-function parseTab(value: string | null): EntityTab {
-  if (value && VALID_TABS.has(value as EntityTab)) return value as EntityTab;
-  return DEFAULT_TAB;
-}
-
-/**
- * Parse URLSearchParams into a stack of explore routes.
- *
- * Overview is always the stack root — `/explore` (no params) lands on
- * overview, and back-from-list returns to it.
- *
- * - empty URL → `[overview]`
- * - `?tab=utilities` → `[overview, list(utilities)]`
- * - `?tab=plants&slug=sunrise` → `[overview, list(plants), detail(sunrise, plants)]`
- *
- * Filter params (`q`, `segment`, `type`, `jurisdictions`) attach to the
- * current list route's payload. They survive the back-arrow popping a
- * detail route off, but are cleared when the user switches tabs (because
- * peer eviction replaces the list route with a fresh one).
- */
-function parseRoutes(params: URLSearchParams): ExploreRoute[] {
-  // Backwards-compat for the old `view` param name.
-  const tabParam = params.get("tab") ?? params.get("view");
-  if (!tabParam) return [makeOverviewRoute()];
-
-  const tab = parseTab(tabParam);
-
-  // An explicit `?mode=` wins; otherwise the per-tab default applies. URL
-  // entry points are the only place the per-tab default grammar belongs.
-  const mode = parseViewMode(params.get("mode")) ?? DEFAULT_MODE_FOR_TAB[tab];
-
-  const list = makeListRoute(tab, mode, {
-    q: params.get("q") ?? "",
-    segment: params.get("segment") ?? "all",
-    type: params.get("type") ?? "all",
-    jurisdictions: params.get("jurisdictions")?.split(",").filter(Boolean) ?? [],
-  });
-
-  const slug = params.get("slug");
-  if (!slug) return [makeOverviewRoute(), list];
-
-  const fromParam = params.get("from");
-  const ancestorPairs =
-    fromParam
-      ?.split(",")
-      .map((pair) => {
-        const colonIndex = pair.indexOf(":");
-        if (colonIndex <= 0 || colonIndex === pair.length - 1) return null;
-        const ancestorTab = pair.slice(0, colonIndex);
-        const ancestorSlug = pair.slice(colonIndex + 1);
-        return { tab: parseTab(ancestorTab), slug: ancestorSlug };
-      })
-      .filter((p): p is { tab: EntityTab; slug: string } => p !== null) ?? [];
-
-  const routes: ExploreRoute[] = [makeOverviewRoute(), list];
-  for (const ancestor of ancestorPairs) {
-    routes.push(makeDetailRoute(ancestor.tab, ancestor.slug));
-  }
-  routes.push(makeDetailRoute(tab, slug));
-  return routes;
-}
-
-function serializeRoutes(routes: ExploreRoute[]): URLSearchParams {
-  // Overview emits no params — `[overview]` serializes to an empty URL
-  // so `/explore` stays clean as the landing state.
-  const params = new URLSearchParams();
-  const list = routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
-  const details = routes.filter((r): r is Extract<ExploreRoute, { type: "detail" }> => r.type === "detail");
-  const detail = details.length > 0 ? details[details.length - 1] : null;
-
-  if (list) {
-    params.set("tab", list.payload.tab);
-    if (list.payload.mode !== DEFAULT_MODE_FOR_TAB[list.payload.tab]) {
-      params.set("mode", list.payload.mode);
-    }
-    if (list.payload.q) params.set("q", list.payload.q);
-    if (list.payload.segment && list.payload.segment !== "all") params.set("segment", list.payload.segment);
-    if (list.payload.type && list.payload.type !== "all") params.set("type", list.payload.type);
-    if (list.payload.jurisdictions.length > 0) params.set("jurisdictions", list.payload.jurisdictions.join(","));
-  }
-  if (detail) {
-    params.set("slug", detail.payload.slug);
-    const ancestors = details.slice(0, -1);
-    if (ancestors.length > 0) {
-      params.set("from", ancestors.map((d) => `${d.payload.entityKind}:${d.payload.slug}`).join(","));
-    }
-  }
-  return params;
-}
 
 // ---------------------------------------------------------------------------
 // View-only reducer (everything orthogonal to the route stack)
