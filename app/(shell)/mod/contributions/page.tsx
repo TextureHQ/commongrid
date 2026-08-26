@@ -130,7 +130,7 @@ function ModerationContributionsPageInner() {
           params.set("cursor", cursor);
         }
 
-        const res = await fetch(`/api/v1/mod/contributions?${params.toString()}`);
+        const res = await fetch(`/api/v1/mod/contributions?${params.toString()}`, { cache: "no-store" });
         if (!res.ok) {
           const json = await res.json().catch(() => ({}));
           throw new Error(json?.error?.message ?? `Failed to load contributions (${res.status})`);
