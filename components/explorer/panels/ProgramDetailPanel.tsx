@@ -76,7 +76,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const { program } = useProgram(slug);
+  const { program, isLoading: isProgramLoading } = useProgram(slug);
 
   // Resolve the program's organization slugs directly instead of scanning the
   // first N utilities alphabetically. The old `useUtilityList({ limit: 200 })`
@@ -144,6 +144,14 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
       setHighlight(null);
     };
   }, [territoryFileKeys, setHighlight]);
+
+  // Distinguish "still fetching" from "genuinely missing". Rendering the
+  // not-found empty state while the SWR request is in flight is what made a
+  // program opened from a utility flash "Program not found" before the data
+  // arrived — a jarring false-negative on every cross-entity navigation.
+  if (isProgramLoading) {
+    return <div className="cg-explore-loading">Loading…</div>;
+  }
 
   if (!program) {
     return (

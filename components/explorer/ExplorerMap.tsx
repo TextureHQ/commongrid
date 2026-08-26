@@ -569,15 +569,22 @@ export function ExplorerMap({
           duration: 1200,
         });
       }
-    } else if ((!state.segment || state.segment === "all") && !state.q) {
-      // No highlight and no filter = reset to US overview
+    } else if (state.mode !== "detail" && (!state.segment || state.segment === "all") && !state.q) {
+      // No highlight and no filter = reset to US overview.
+      //
+      // Only when we are NOT sitting in a detail view. On a detail→detail
+      // navigation (e.g. opening a program from a utility) the outgoing
+      // panel's cleanup nulls the highlight for a beat before the incoming
+      // panel's territory loads. Without the mode guard the map flew all the
+      // way out to the US overview and then snapped back in — the jarring
+      // zoom-out/zoom-in bounce. Staying put keeps the transition smooth.
       map.flyTo({
         center: [US_CENTER.longitude, US_CENTER.latitude],
         zoom: US_CENTER.zoom,
         duration: 1200,
       });
     }
-  }, [state.highlightGeoJSON, state.segment, state.q]);
+  }, [state.highlightGeoJSON, state.segment, state.q, state.mode]);
 
   // Fit map bounds when filters change (utility territories)
   const hasActiveFilter =
