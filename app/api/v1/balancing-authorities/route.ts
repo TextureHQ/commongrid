@@ -4,7 +4,7 @@ import { corsHeaders } from "@/lib/api/cors";
 import { generateRequestId, withApiMiddleware } from "@/lib/api/middleware";
 import { encodeCursor, parsePaginationParams } from "@/lib/api/pagination";
 import { stripInternal } from "@/lib/api/public-response";
-import { jsonResponse, paginatedResponse } from "@/lib/api/response";
+import { cachedJsonResponse, paginatedResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { balancingAuthorities } from "@/lib/db/schema";
@@ -93,7 +93,11 @@ async function handleGet(req: Request, _ctx: RouteContext) {
 
   const [{ count }] = await countQuery;
 
-  return jsonResponse(paginatedResponse(stripInternal(data), Number(count), nextCursor, limit), 200, corsHeaders());
+  return cachedJsonResponse(
+    paginatedResponse(stripInternal(data), Number(count), nextCursor, limit),
+    200,
+    corsHeaders()
+  );
 }
 
 const handler = withApiMiddleware(handleGet);
