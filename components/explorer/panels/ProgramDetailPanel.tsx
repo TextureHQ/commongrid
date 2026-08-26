@@ -22,6 +22,7 @@ import {
   CompensationTypeLabel,
   CompensationUnitLabel,
   GridServiceLabel,
+  IncentiveStructureLabel,
   MarketSegmentLabel,
   ParticipationModelLabel,
   ProgramStatus,
@@ -44,6 +45,20 @@ const ArrowIcon = () => (
     <path d="M5 12h14m-5-5 5 5-5 5" />
   </svg>
 );
+
+// Program launch/enrollment/end fields are stored as free-text dates. Render an
+// ISO/parseable value as a friendly date, but never mangle a value we cannot
+// parse — show it verbatim so provenance is preserved.
+function formatProgramDate(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
 
 const linkButtonStyle = {
   background: "none",
@@ -252,6 +267,16 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
               </span>
             </div>
           )}
+          {program.incentiveStructures.length > 0 && (
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">Incentives</span>
+              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
+                {program.incentiveStructures
+                  .map((is) => IncentiveStructureLabel[is as keyof typeof IncentiveStructureLabel] ?? is)
+                  .join(", ")}
+              </span>
+            </div>
+          )}
           {program.programWebsite && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Website</span>
@@ -271,6 +296,60 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
             <span className="cg-explore-kv-val">{program.otherNotes || "—"}</span>
           </div>
         </div>
+
+        {/* Capacity & enrollment targets */}
+        {(program.capacityTarget != null || program.maxEnrollments != null) && (
+          <>
+            <div className="cg-explore-related-heading">Capacity</div>
+            <div className="cg-explore-kv-table">
+              {program.capacityTarget != null && (
+                <div className="cg-explore-kv-row">
+                  <span className="cg-explore-kv-key">Capacity Target</span>
+                  <span className="cg-explore-kv-val">{program.capacityTarget.toLocaleString()} MW</span>
+                </div>
+              )}
+              {program.maxEnrollments != null && (
+                <div className="cg-explore-kv-row">
+                  <span className="cg-explore-kv-key">Max Enrollments</span>
+                  <span className="cg-explore-kv-val">{program.maxEnrollments.toLocaleString()}</span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Program dates */}
+        {(program.launchedAt || program.enrollmentOpens || program.enrollmentCloses || program.endsAt) && (
+          <>
+            <div className="cg-explore-related-heading">Dates</div>
+            <div className="cg-explore-kv-table">
+              {program.launchedAt && (
+                <div className="cg-explore-kv-row">
+                  <span className="cg-explore-kv-key">Launched</span>
+                  <span className="cg-explore-kv-val">{formatProgramDate(program.launchedAt)}</span>
+                </div>
+              )}
+              {program.enrollmentOpens && (
+                <div className="cg-explore-kv-row">
+                  <span className="cg-explore-kv-key">Enrollment Opens</span>
+                  <span className="cg-explore-kv-val">{formatProgramDate(program.enrollmentOpens)}</span>
+                </div>
+              )}
+              {program.enrollmentCloses && (
+                <div className="cg-explore-kv-row">
+                  <span className="cg-explore-kv-key">Enrollment Closes</span>
+                  <span className="cg-explore-kv-val">{formatProgramDate(program.enrollmentCloses)}</span>
+                </div>
+              )}
+              {program.endsAt && (
+                <div className="cg-explore-kv-row">
+                  <span className="cg-explore-kv-key">Ends</span>
+                  <span className="cg-explore-kv-val">{formatProgramDate(program.endsAt)}</span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         {/* Compensation */}
         {program.compensationTiers.length > 0 && (
