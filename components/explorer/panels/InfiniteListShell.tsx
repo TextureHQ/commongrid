@@ -6,6 +6,12 @@
  * scrollable region, sentinel for infinite scroll, footer load-more button
  * fallback, error and empty states. Panels supply only what's unique to them
  * (filter options, row renderer, entity label, add href).
+ *
+ * Loading contract: the header + search input are rendered UNCONDITIONALLY.
+ * Only the scroll region below them swaps to skeletons, and only on the very
+ * first load. A search-driven refetch dims the existing rows via `isFetching`.
+ * Never move the search input inside a loading branch — unmounting it mid-word
+ * is what made these inputs impossible to type in (CG-254).
  */
 
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
@@ -24,6 +30,11 @@ export interface InfiniteListShellProps {
   total: number;
   /** Whether the first page is still loading (renders skeletons). */
   isLoading: boolean;
+  /**
+   * Whether a page-1 refetch is in flight while previous rows are still shown
+   * (e.g. the user changed the search term). Dims the rows; never unmounts.
+   */
+  isFetching?: boolean;
   /** Whether a subsequent page is loading (renders a footer indicator). */
   isLoadingMore: boolean;
   /** Error message to surface in place of the list. `null` to hide. */
@@ -80,6 +91,7 @@ export function InfiniteListShell({
   entityLabel,
   total,
   isLoading,
+  isFetching = false,
   isLoadingMore,
   error,
   hasMore,
@@ -182,7 +194,7 @@ export function InfiniteListShell({
             </div>
           </div>
         ) : (
-          <>
+          <div style={{ opacity: isFetching ? 0.55 : 1, transition: "opacity 120ms ease-out" }}>
             {children}
             {hasMore && (
               <>
@@ -201,7 +213,7 @@ export function InfiniteListShell({
                 </div>
               </>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

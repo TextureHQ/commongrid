@@ -85,10 +85,11 @@ export function ProgramListPanel() {
     [state.q, state.type]
   );
 
-  const { items, total, hasMore, isLoading, isLoadingMore, error, sentinelRef, loadMore } = useInfiniteList<Program>({
-    endpoint: "/api/v1/programs",
-    params,
-  });
+  const { items, total, hasMore, isLoading, isFetching, isLoadingMore, error, sentinelRef, loadMore } =
+    useInfiniteList<Program>({
+      endpoint: "/api/v1/programs",
+      params,
+    });
 
   // Push the visible page's administrator-utility slugs to the map. When
   // there's no active filter, clear the constraint so the map shows all
@@ -145,6 +146,7 @@ export function ProgramListPanel() {
       emptyLabel="programs"
       total={total}
       isLoading={isLoading}
+      isFetching={isFetching}
       isLoadingMore={isLoadingMore}
       error={error}
       hasMore={hasMore}

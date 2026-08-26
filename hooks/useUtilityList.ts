@@ -50,7 +50,15 @@ interface UtilityListResponse {
 
 interface UseUtilityListResult {
   utilities: Utility[];
+  /** True only until the first successful response for the current key set. */
   isLoading: boolean;
+  /**
+   * True whenever a request is in flight, including background refetches that
+   * are showing previous utilities via `keepPreviousData`. Drive row-level
+   * loading affordances off this — never a full-surface swap that would
+   * unmount the search input.
+   */
+  isFetching: boolean;
   error: Error | null;
   mutate: () => void;
   pagination: UtilityListPagination | null;
@@ -104,16 +112,32 @@ export function useUtilityList(filters: UtilityListFilters = {}): UseUtilityList
     (filters.eiaIds !== undefined && filters.eiaIds.length === 0);
   const url = isEmptyBulkFilter ? null : `/api/v1/utilities${queryString ? `?${queryString}` : ""}`;
 
-  const { data, error, mutate } = useSWR<UtilityListResponse>(url, fetcher, {
+  const {
+    data,
+    error,
+    mutate,
+    isLoading: swrIsLoading,
+    isValidating,
+  } = useSWR<UtilityListResponse>(url, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
+    // Keep the last page of results rendered while a new query (e.g. a
+    // changed search term) is in flight. Without this the SWR key change
+    // makes `data` undefined, callers see an empty list, and every list
+    // surface swapped itself for a full-page loader mid-keystroke.
+    keepPreviousData: true,
     // Cache for 1 hour (utility data changes occasionally)
     dedupingInterval: 3_600_000,
   });
 
   return {
     utilities: data?.data ?? [],
-    isLoading: !data && !error && url !== null,
+    // `swrIsLoading` is false once ANY data is available for this hook,
+    // including previous-key data retained by `keepPreviousData`. That is
+    // exactly the semantics we want: a search-term change must not read as
+    // a first load.
+    isLoading: swrIsLoading && url !== null,
+    isFetching: isValidating,
     error: error ?? null,
     mutate,
     pagination: data?.pagination ?? null,

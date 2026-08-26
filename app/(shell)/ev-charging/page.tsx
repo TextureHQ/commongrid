@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 
 import { SearchInput } from "@/components/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { EVStation } from "@/types/ev-charging";
 import { getAccessLabel, getNetworkColor, getNetworkShortName, getStatusLabel } from "@/types/ev-charging";
 
@@ -68,10 +69,15 @@ export default function EVChargingPage() {
   // State
   const [stations, setStations] = useState<EVStation[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({ totalCount: 0, nextCursor: null, limit: 100 });
-  const [isLoading, setIsLoading] = useState(true);
+  /** True until the first response lands. Never re-armed by a refetch. */
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  /** True while any list query is in flight (inline affordances only). */
+  const [isFetching, setIsFetching] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  // The input stays bound to the raw value; only the fetch key is debounced,
+  // so typing is never blocked and characters are never dropped.
+  const debouncedSearch = useDebouncedValue(searchQuery);
   const [sortValue, setSortValue] = useState("name:asc");
   const [accessFilter, setAccessFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -79,8 +85,10 @@ export default function EVChargingPage() {
   const [levelFilter, setLevelFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const nextPagePrefetchedRef = useRef(false);
+  // Request serialization: stale responses are discarded when the query moves
+  // on, so a slow early request can't overwrite a newer result set.
+  const requestIdRef = useRef(0);
 
   // Unique networks for filter (derive from current results)
   const networks = useMemo(() => {
@@ -98,22 +106,9 @@ export default function EVChargingPage() {
     return Array.from(s).sort();
   }, [stations]);
 
-  // Debounced search
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchQuery]);
-
-  // Fetch data when filters change
+  // Fetch data when filters change. Previous rows stay rendered until the new
+  // page lands, and an in-flight request is aborted when the query changes
+  // again — the search input never unmounts.
   useEffect(() => {
     const params = new URLSearchParams();
     if (debouncedSearch) params.set("search", debouncedSearch);
@@ -128,24 +123,42 @@ export default function EVChargingPage() {
     params.set("order", direction);
     params.set("limit", "100");
 
+    const currentRequestId = ++requestIdRef.current;
+    const controller = new AbortController();
+    setIsFetching(true);
+
     startTransition(async () => {
-      setIsLoading(true);
-      const res = await fetch(`/api/v1/ev-stations?${params.toString()}`);
-      const data = await res.json();
-      setStations(data.data ?? []);
-      setMeta({
-        totalCount: data.pagination?.total ?? 0,
-        nextCursor: data.pagination?.cursor ?? null,
-        limit: data.pagination?.limit ?? 100,
-      });
-      setIsLoading(false);
-      nextPagePrefetchedRef.current = false;
+      try {
+        const res = await fetch(`/api/v1/ev-stations?${params.toString()}`, { signal: controller.signal });
+        const data = await res.json();
+        if (currentRequestId !== requestIdRef.current) return; // stale
+        setStations(data.data ?? []);
+        setMeta({
+          totalCount: data.pagination?.total ?? 0,
+          nextCursor: data.pagination?.cursor ?? null,
+          limit: data.pagination?.limit ?? 100,
+        });
+        nextPagePrefetchedRef.current = false;
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        if (currentRequestId !== requestIdRef.current) return;
+        console.error("Failed to load EV stations", err);
+      } finally {
+        if (currentRequestId === requestIdRef.current) {
+          setIsFetching(false);
+          setIsInitialLoad(false);
+        }
+      }
     });
+
+    return () => {
+      controller.abort();
+    };
   }, [debouncedSearch, sortValue, accessFilter, statusFilter, networkFilter, stateFilter]);
 
   // Aggressive prefetch of next page
   useEffect(() => {
-    if (meta.nextCursor && !nextPagePrefetchedRef.current && !isLoadingMore && !isLoading) {
+    if (meta.nextCursor && !nextPagePrefetchedRef.current && !isLoadingMore && !isFetching) {
       nextPagePrefetchedRef.current = true;
       const params = new URLSearchParams();
       if (debouncedSearch) params.set("search", debouncedSearch);
@@ -167,7 +180,7 @@ export default function EVChargingPage() {
   }, [
     meta.nextCursor,
     isLoadingMore,
-    isLoading,
+    isFetching,
     debouncedSearch,
     sortValue,
     accessFilter,
@@ -319,33 +332,10 @@ export default function EVChargingPage() {
     []
   );
 
-  if (isLoading) {
-    return (
-      <PageLayout
-        className="flex flex-col h-full overflow-hidden bg-background-default"
-        paddingYClass="pt-8 md:pt-12"
-        paddingXClass="px-4"
-      >
-        <div className="flex-none">
-          <div className="flex items-center justify-between">
-            <PageLayout.Header title="EV Charging Stations" sticky={true} />
-            <Button
-              variant={user ? "primary" : "secondary"}
-              size="md"
-              isDisabled={!user}
-              onPress={() => router.push("/ev-charging/new")}
-            >
-              <Icon name="Plus" size="sm" />
-              <span>Add EV Station</span>
-            </Button>
-          </div>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <Loader size={32} />
-        </div>
-      </PageLayout>
-    );
-  }
+  // NOTE: no full-page loading early return. It used to unmount the
+  // SearchInput on every query change, destroying focus and swallowing
+  // keystrokes. The first load renders the same chrome with the loader
+  // confined to the rows region below the input.
 
   return (
     <PageLayout
@@ -450,17 +440,23 @@ export default function EVChargingPage() {
         />
       </div>
       <div className="flex-1 min-h-0 flex flex-col">
-        <DataTable
-          className="border-r border-l flex-1"
-          data={rows}
-          columns={columns}
-          mobileBreakpoint="md"
-          isLoading={isPending}
-          height="100%"
-          stickyHeader={true}
-          onRowClick={handleRowClick}
-        />
-        {meta.nextCursor && (
+        {isInitialLoad ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader size={32} />
+          </div>
+        ) : (
+          <DataTable
+            className="border-r border-l flex-1"
+            data={rows}
+            columns={columns}
+            mobileBreakpoint="md"
+            isLoading={isPending || isFetching}
+            height="100%"
+            stickyHeader={true}
+            onRowClick={handleRowClick}
+          />
+        )}
+        {!isInitialLoad && meta.nextCursor && (
           <div className="flex justify-center py-4 flex-shrink-0">
             <button
               type="button"

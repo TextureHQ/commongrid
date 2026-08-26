@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchInput } from "@/components/SearchInput";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -223,16 +224,6 @@ const sortOptions = [
   { id: "maxVoltageKv:asc", label: "Voltage (Low to High)", value: "maxVoltageKv:asc" },
 ];
 
-// Debounce helper
-function useDebounced<T>(value: T, delay = 300): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const handle = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handle);
-  }, [value, delay]);
-  return debounced;
-}
-
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -242,7 +233,9 @@ export default function SubstationsPage() {
 
   // Filter/sort state
   const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounced(searchQuery, 350);
+  // The input stays bound to the raw value; only the fetch key is debounced,
+  // so typing is never blocked and characters are never dropped.
+  const debouncedSearch = useDebouncedValue(searchQuery);
   const [stateFilter, setStateFilter] = useState("all");
   const [bandFilter, setBandFilter] = useState<"all" | VoltageBand>("all");
   const [typeFilter, setTypeFilter] = useState<"all" | SubstationType>("all");
@@ -254,7 +247,10 @@ export default function SubstationsPage() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  /** True until the first response arrives. Never re-armed by a refetch. */
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  /** True while any list query is in flight (drives inline affordances only). */
+  const [isFetching, setIsFetching] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -278,14 +274,18 @@ export default function SubstationsPage() {
     [debouncedSearch, stateFilter, typeFilter, statusFilter, sortValue]
   );
 
-  // Reset + initial fetch whenever filters/sort change
+  // Reset + refetch whenever filters/sort change. The previous rows stay
+  // rendered until the new page lands, and the in-flight request is aborted
+  // when the query changes again, so a fast typist never sees a stale
+  // response win or the table blank out mid-word.
   useEffect(() => {
     const currentRequestId = ++requestIdRef.current;
-    setIsLoading(true);
+    const controller = new AbortController();
+    setIsFetching(true);
     setError(null);
 
     const qs = buildQuery();
-    fetch(`/api/v1/substations?${qs}`)
+    fetch(`/api/v1/substations?${qs}`, { signal: controller.signal })
       .then(async (res) => {
         if (!res.ok) throw new Error(`Request failed (${res.status})`);
         return (await res.json()) as SubstationsApiResponse;
@@ -296,14 +296,21 @@ export default function SubstationsPage() {
         setCursor(result.pagination.cursor);
         setTotal(result.pagination.total);
         setHasMore(result.pagination.hasMore);
-        setIsLoading(false);
+        setIsFetching(false);
+        setIsInitialLoad(false);
       })
       .catch((err: unknown) => {
+        if (err instanceof Error && err.name === "AbortError") return;
         if (currentRequestId !== requestIdRef.current) return;
         console.error("Failed to load substations", err);
         setError(err instanceof Error ? err.message : "Failed to load substations");
-        setIsLoading(false);
+        setIsFetching(false);
+        setIsInitialLoad(false);
       });
+
+    return () => {
+      controller.abort();
+    };
   }, [buildQuery]);
 
   // Client-side voltage band filter (the API filters by substationType/status
@@ -495,8 +502,9 @@ export default function SubstationsPage() {
             }}
           />
 
-          {/* Table / states */}
-          {isLoading ? (
+          {/* Table / states — the loader is scoped here, below the search
+              input, so typing is never interrupted by a remount. */}
+          {isInitialLoad ? (
             <div className="flex items-center justify-center py-24">
               <Loader size={32} />
             </div>
@@ -510,7 +518,12 @@ export default function SubstationsPage() {
             />
           ) : (
             <>
-              <DataTable<SubstationRow> columns={columns} data={tableRows} onRowClick={handleRowClick} />
+              <DataTable<SubstationRow>
+                columns={columns}
+                data={tableRows}
+                isLoading={isFetching}
+                onRowClick={handleRowClick}
+              />
               {hasMore && (
                 <div className="flex items-center justify-center py-6">
                   <button

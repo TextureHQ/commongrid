@@ -40,10 +40,11 @@ export function EVChargingListPanel() {
     [state.q, state.type]
   );
 
-  const { items, total, hasMore, isLoading, isLoadingMore, error, sentinelRef, loadMore } = useInfiniteList<EVStation>({
-    endpoint: "/api/v1/ev-stations",
-    params,
-  });
+  const { items, total, hasMore, isLoading, isFetching, isLoadingMore, error, sentinelRef, loadMore } =
+    useInfiniteList<EVStation>({
+      endpoint: "/api/v1/ev-stations",
+      params,
+    });
 
   const handleRowClick = useCallback(
     (slug: string) => {
@@ -58,6 +59,7 @@ export function EVChargingListPanel() {
       emptyLabel="EV charging stations"
       total={total}
       isLoading={isLoading}
+      isFetching={isFetching}
       isLoadingMore={isLoadingMore}
       error={error}
       hasMore={hasMore}

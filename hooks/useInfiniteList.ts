@@ -22,11 +22,19 @@
  *   - optional `pageSize` (default 50)
  *
  * Reset rule: any change to the serialized shape of `params` resets the list
- * and re-fetches page 1. Request serialization (via an incrementing ref)
- * discards stale responses when filters change quickly.
+ * and re-fetches page 1. Request serialization (via an incrementing ref) plus
+ * AbortController cancellation discards stale responses when filters change
+ * quickly, so a fast typist never sees an earlier query's results win.
+ *
+ * Loading contract (important): `isLoading` is TRUE ONLY for the first load.
+ * Search-driven refetches surface as `isFetching` while the previous rows stay
+ * rendered. Consumers must never swap out a subtree containing the search
+ * input on either flag — that unmount is what made these inputs impossible to
+ * type in (CG-254).
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SEARCH_DEBOUNCE_MS, useDebouncedValue } from "./useDebouncedValue";
 
 interface InfiniteListResponse<T> {
   data: T[];
@@ -42,7 +50,15 @@ export interface UseInfiniteListResult<T> {
   items: T[];
   total: number;
   hasMore: boolean;
+  /** True only until the first successful response. Never re-armed by a refetch. */
   isLoading: boolean;
+  /**
+   * True whenever a page-1 request is in flight, including refetches that are
+   * still displaying the previous result set. Drive row-level loading
+   * affordances off this — never a subtree swap that would unmount the search
+   * input the user is typing into.
+   */
+  isFetching: boolean;
   isLoadingMore: boolean;
   error: string | null;
   /** Attach to the sentinel element at the bottom of the visible list. */
@@ -64,12 +80,14 @@ export interface UseInfiniteListOptions {
   params?: Record<string, string | number | undefined>;
   /** Page size. Defaults to 50; APIs cap at 200. */
   pageSize?: number;
-  /** Debounce window for `search` param in ms. Defaults to 300. */
+  /**
+   * Debounce window for the `search` param, in ms. Defaults to the shared
+   * `SEARCH_DEBOUNCE_MS`. Override only with a concrete reason.
+   */
   searchDebounceMs?: number;
 }
 
 const DEFAULT_PAGE_SIZE = 50;
-const DEFAULT_DEBOUNCE_MS = 300;
 const MAX_PAGE_SIZE = 200;
 
 function buildQueryString(
@@ -92,7 +110,7 @@ function buildQueryString(
 }
 
 export function useInfiniteList<T>(options: UseInfiniteListOptions): UseInfiniteListResult<T> {
-  const { endpoint, params = {}, pageSize = DEFAULT_PAGE_SIZE, searchDebounceMs = DEFAULT_DEBOUNCE_MS } = options;
+  const { endpoint, params = {}, pageSize = DEFAULT_PAGE_SIZE, searchDebounceMs = SEARCH_DEBOUNCE_MS } = options;
 
   // ---------------------------------------------------------------------------
   // Debounce the `search` param so we don't fire a request per keystroke.
@@ -100,11 +118,7 @@ export function useInfiniteList<T>(options: UseInfiniteListOptions): UseInfinite
   // discrete-change controls — selects, dropdowns.
   // ---------------------------------------------------------------------------
   const rawSearch = typeof params.search === "string" ? params.search : "";
-  const [debouncedSearch, setDebouncedSearch] = useState(rawSearch);
-  useEffect(() => {
-    const handle = setTimeout(() => setDebouncedSearch(rawSearch), searchDebounceMs);
-    return () => clearTimeout(handle);
-  }, [rawSearch, searchDebounceMs]);
+  const debouncedSearch = useDebouncedValue(rawSearch, searchDebounceMs);
 
   // Serialize the non-search params to a stable string so the fetch effect
   // can depend on params-by-value without thrashing on object identity.
@@ -137,7 +151,13 @@ export function useInfiniteList<T>(options: UseInfiniteListOptions): UseInfinite
   const [cursor, setCursor] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  // `isLoading` is first-load-only: it must never flip back to true on a
+  // search-driven refetch, because consumers use it to decide whether to
+  // replace the list region (and previously, whole panels including the search
+  // input) with skeletons. `isFetching` is the signal for "a request is in
+  // flight, previous rows still shown".
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** Reload trigger that consumers can bump via `reload()`. */
@@ -152,7 +172,7 @@ export function useInfiniteList<T>(options: UseInfiniteListOptions): UseInfinite
   // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey is the explicit refetch trigger from reload()
   useEffect(() => {
     const currentRequestId = ++requestIdRef.current;
-    setIsLoading(true);
+    setIsFetching(true);
     setError(null);
 
     const qs = buildQueryString(effectiveParams, pageSize, null);
@@ -169,6 +189,7 @@ export function useInfiniteList<T>(options: UseInfiniteListOptions): UseInfinite
         setCursor(result.pagination.cursor);
         setTotal(result.pagination.total);
         setHasMore(result.pagination.hasMore);
+        setIsFetching(false);
         setIsLoading(false);
       })
       .catch((err: unknown) => {
@@ -176,6 +197,7 @@ export function useInfiniteList<T>(options: UseInfiniteListOptions): UseInfinite
         if (currentRequestId !== requestIdRef.current) return;
         console.error(`useInfiniteList: failed to load ${endpoint}`, err);
         setError(err instanceof Error ? err.message : "Failed to load");
+        setIsFetching(false);
         setIsLoading(false);
       });
 
@@ -254,6 +276,7 @@ export function useInfiniteList<T>(options: UseInfiniteListOptions): UseInfinite
     total,
     hasMore,
     isLoading,
+    isFetching,
     isLoadingMore,
     error,
     sentinelRef,

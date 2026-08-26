@@ -35,7 +35,15 @@ interface PricingNodeListResponse {
 
 interface UsePricingNodeListResult {
   pricingNodes: PricingNode[];
+  /** True only until the first successful response for the current key set. */
   isLoading: boolean;
+  /**
+   * True whenever a request is in flight, including background refetches that
+   * are showing previous pricing nodes via `keepPreviousData`. Drive row-level
+   * loading affordances off this — never a full-surface swap that would
+   * unmount the search input.
+   */
+  isFetching: boolean;
   error: Error | null;
   mutate: () => void;
   pagination: PricingNodeListPagination | null;
@@ -69,16 +77,32 @@ export function usePricingNodeList(filters: PricingNodeListFilters = {}): UsePri
   const queryString = buildQueryString(filters);
   const url = `/api/v1/pricing-nodes${queryString ? `?${queryString}` : ""}`;
 
-  const { data, error, mutate } = useSWR<PricingNodeListResponse>(url, fetcher, {
+  const {
+    data,
+    error,
+    mutate,
+    isLoading: swrIsLoading,
+    isValidating,
+  } = useSWR<PricingNodeListResponse>(url, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
+    // Keep the last page of results rendered while a new query (e.g. a
+    // changed search term) is in flight. Without this the SWR key change
+    // makes `data` undefined, callers see an empty list, and every list
+    // surface swapped itself for a full-page loader mid-keystroke.
+    keepPreviousData: true,
     // Cache for 24 hours (pricing node metadata doesn't change often)
     dedupingInterval: 86_400_000,
   });
 
   return {
     pricingNodes: data?.data ?? [],
-    isLoading: !data && !error,
+    // `swrIsLoading` is false once ANY data is available for this hook,
+    // including previous-key data retained by `keepPreviousData`. That is
+    // exactly the semantics we want: a search-term change must not read as
+    // a first load.
+    isLoading: swrIsLoading,
+    isFetching: isValidating,
     error: error ?? null,
     mutate,
     pagination: data?.pagination ?? null,

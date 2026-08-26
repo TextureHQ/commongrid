@@ -14,10 +14,11 @@ import {
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { usePricingNodeList } from "@/hooks/usePricingNodeList";
 import { getIsoColor, ISO_LABELS, type IsoRto, NODE_TYPE_LABELS, type PricingNodeType } from "@/types/pricing-nodes";
 
@@ -85,16 +86,12 @@ export default function PricingNodesPage() {
   const router = useRouter();
   const { user } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  // The input stays bound to the raw value; only the fetch key is
+  // debounced, so typing is never blocked and characters are never dropped.
+  const debouncedSearch = useDebouncedValue(searchQuery);
   const [sortValue, setSortValue] = useState("name:asc");
   const [isoFilter, setIsoFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   // Parse sort
   const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];
@@ -119,7 +116,7 @@ export default function PricingNodesPage() {
     return f;
   }, [debouncedSearch, isoFilter, typeFilter, sortField, sortOrder]);
 
-  const { pricingNodes, isLoading, error, pagination } = usePricingNodeList(filters);
+  const { pricingNodes, isLoading, isFetching, error, pagination } = usePricingNodeList(filters);
 
   // Map to row objects with display-friendly labels
   const rows: PricingNodeRow[] = useMemo(
@@ -195,22 +192,10 @@ export default function PricingNodesPage() {
     [router]
   );
 
-  if (isLoading && rows.length === 0) {
-    return (
-      <PageLayout
-        className="flex flex-col h-full overflow-hidden bg-background-default"
-        paddingYClass="pt-8 md:pt-12"
-        paddingXClass="px-4"
-      >
-        <div className="flex-none">
-          <PageLayout.Header title="Pricing Nodes" sticky={true} />
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <Loader size={32} />
-        </div>
-      </PageLayout>
-    );
-  }
+  // NOTE: no full-page `isLoading` early return here on purpose. Returning
+  // a bare <Loader /> unmounted the SearchInput on every query change, which
+  // destroyed focus and swallowed keystrokes. The first load renders the same
+  // chrome with the loader confined to the rows region (`showInitialLoader`).
 
   if (error) {
     return (
@@ -237,6 +222,10 @@ export default function PricingNodesPage() {
   const totalCount = pagination?.totalCount ?? rows.length;
   const showingCount = rows.length;
   const hasMore = pagination?.hasNextPage ?? false;
+  // Only the very first load (nothing cached at all) gets a big spinner in
+  // the rows region. Later search/filter fetches keep the previous rows and
+  // use the table's own inline loading state.
+  const showInitialLoader = isLoading && rows.length === 0;
 
   return (
     <PageLayout
@@ -309,7 +298,11 @@ export default function PricingNodesPage() {
         />
       </div>
       <div className="flex-1 min-h-0">
-        {rows.length === 0 ? (
+        {showInitialLoader ? (
+          <div className="flex h-full items-center justify-center">
+            <Loader size={32} />
+          </div>
+        ) : rows.length === 0 ? (
           <EmptyState
             icon="Lightning"
             title="No pricing nodes found"
@@ -325,7 +318,7 @@ export default function PricingNodesPage() {
               data={rows}
               columns={columns}
               mobileBreakpoint="md"
-              isLoading={isLoading}
+              isLoading={isFetching}
               height="100%"
               stickyHeader={true}
               onRowClick={handleRowClick}

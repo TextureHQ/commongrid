@@ -10,8 +10,9 @@ import {
 } from "@texturehq/edges";
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { utilityColor } from "@/lib/categorical-colors";
 import { getSegmentLabel } from "@/lib/formatting";
 import { type Utility, UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
@@ -212,27 +213,21 @@ export function UtilityListPanel() {
 
   const [utilities, setUtilities] = useState<Utility[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({ total: 0, nextCursor: null, hasMore: false, limit: 50 });
-  const [isLoading, setIsLoading] = useState(true);
+  /** True until the first response lands. Never re-armed by a later refetch. */
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  /** True while any list query is in flight (drives row-level skeletons only). */
+  const [isFetching, setIsFetching] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  const [debouncedSearch, setDebouncedSearch] = useState(state.q);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearch(state.q);
-    }, 300);
-    return () => {
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    };
-  }, [state.q]);
+  // `state.q` stays bound directly to the input; only the fetch key is
+  // debounced. See hooks/useDebouncedValue.ts for the shared window.
+  const debouncedSearch = useDebouncedValue(state.q);
 
   useEffect(() => {
     const controller = new AbortController();
     const params = buildApiParams(debouncedSearch, state.segment, state.jurisdictions, sortValue, 50);
 
-    setIsLoading(true);
+    setIsFetching(true);
     fetch(`/api/v1/utilities?${params.toString()}`, { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
@@ -243,11 +238,13 @@ export function UtilityListPanel() {
           hasMore: data.pagination?.hasMore ?? false,
           limit: data.pagination?.limit ?? 50,
         });
-        setIsLoading(false);
+        setIsFetching(false);
+        setIsInitialLoad(false);
       })
       .catch((err) => {
         if (err.name !== "AbortError") {
-          setIsLoading(false);
+          setIsFetching(false);
+          setIsInitialLoad(false);
         }
       });
 
@@ -313,6 +310,11 @@ export function UtilityListPanel() {
 
   const activeFilterCount = getFilterFields(filterState).length;
 
+  // NOTE: there is deliberately no `if (isLoading) return <skeletons />` early
+  // return here. It sat ABOVE the panel header, so every search-triggered
+  // refetch unmounted the search input: focus was lost and the keystroke that
+  // caused the refetch was swallowed. Skeletons now render inside the scroll
+  // region below the input (see `isInitialLoad` in the list body).
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Panel header with search and controls */}
@@ -375,7 +377,7 @@ export function UtilityListPanel() {
 
       {/* Entity list */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {isLoading ? (
+        {isInitialLoad ? (
           Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
             <PanelEntityRow key={skeletonKey} loading leadingShape="dot" title="" onSelect={() => {}} />
           ))
@@ -389,15 +391,17 @@ export function UtilityListPanel() {
             </div>
           </div>
         ) : (
-          rows.map((row) => (
-            <PanelEntityRow
-              key={row.slug}
-              leading={<span className="h-2 w-2 rounded-full" style={{ background: utilityColor(row.segment) }} />}
-              title={row.name}
-              subtitle={`${row.jurisdiction ?? "—"} · ${getSegmentLabel(row.segment)}`}
-              onSelect={() => navigateToDetail("utility", row.slug)}
-            />
-          ))
+          <div style={{ opacity: isFetching ? 0.55 : 1, transition: "opacity 120ms ease-out" }}>
+            {rows.map((row) => (
+              <PanelEntityRow
+                key={row.slug}
+                leading={<span className="h-2 w-2 rounded-full" style={{ background: utilityColor(row.segment) }} />}
+                title={row.name}
+                subtitle={`${row.jurisdiction ?? "—"} · ${getSegmentLabel(row.segment)}`}
+                onSelect={() => navigateToDetail("utility", row.slug)}
+              />
+            ))}
+          </div>
         )}
       </div>
 

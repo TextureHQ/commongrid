@@ -123,7 +123,7 @@ export function SubstationListPanel() {
     [state.q]
   );
 
-  const { items, total, hasMore, isLoading, isLoadingMore, error, sentinelRef, loadMore } =
+  const { items, total, hasMore, isLoading, isFetching, isLoadingMore, error, sentinelRef, loadMore } =
     useInfiniteList<SubstationApiRow>({
       endpoint: "/api/v1/substations",
       params,
@@ -149,6 +149,7 @@ export function SubstationListPanel() {
       entityLabel="substations"
       total={total}
       isLoading={isLoading}
+      isFetching={isFetching}
       isLoadingMore={isLoadingMore}
       error={error}
       hasMore={hasMore}

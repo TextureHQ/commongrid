@@ -62,7 +62,7 @@ export function TransmissionListPanel() {
     [state.q, state.type]
   );
 
-  const { items, total, hasMore, isLoading, isLoadingMore, error, sentinelRef, loadMore } =
+  const { items, total, hasMore, isLoading, isFetching, isLoadingMore, error, sentinelRef, loadMore } =
     useInfiniteList<TransmissionLine>({
       endpoint: "/api/v1/transmission-lines",
       params,
@@ -81,6 +81,7 @@ export function TransmissionListPanel() {
       emptyLabel="transmission lines"
       total={total}
       isLoading={isLoading}
+      isFetching={isFetching}
       isLoadingMore={isLoadingMore}
       error={error}
       hasMore={hasMore}

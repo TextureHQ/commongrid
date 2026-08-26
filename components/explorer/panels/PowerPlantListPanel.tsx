@@ -42,12 +42,11 @@ export function PowerPlantListPanel() {
     [state.q, state.type]
   );
 
-  const { items, total, hasMore, isLoading, isLoadingMore, error, sentinelRef, loadMore } = useInfiniteList<PowerPlant>(
-    {
+  const { items, total, hasMore, isLoading, isFetching, isLoadingMore, error, sentinelRef, loadMore } =
+    useInfiniteList<PowerPlant>({
       endpoint: "/api/v1/power-plants",
       params,
-    }
-  );
+    });
 
   const handleRowClick = useCallback(
     (slug: string) => {
@@ -61,6 +60,7 @@ export function PowerPlantListPanel() {
       entityLabel="power plants"
       total={total}
       isLoading={isLoading}
+      isFetching={isFetching}
       isLoadingMore={isLoadingMore}
       error={error}
       hasMore={hasMore}

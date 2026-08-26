@@ -38,7 +38,7 @@ export function PricingNodeListPanel() {
     [state.q, state.type]
   );
 
-  const { items, total, hasMore, isLoading, isLoadingMore, error, sentinelRef, loadMore } =
+  const { items, total, hasMore, isLoading, isFetching, isLoadingMore, error, sentinelRef, loadMore } =
     useInfiniteList<PricingNode>({
       endpoint: "/api/v1/pricing-nodes",
       params,
@@ -56,6 +56,7 @@ export function PricingNodeListPanel() {
       entityLabel="pricing nodes"
       total={total}
       isLoading={isLoading}
+      isFetching={isFetching}
       isLoadingMore={isLoadingMore}
       error={error}
       hasMore={hasMore}
