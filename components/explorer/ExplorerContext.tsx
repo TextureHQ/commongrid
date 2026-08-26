@@ -2,6 +2,8 @@
 
 import {
   type ExploreRouteDescriptor,
+  pushDeeperExploreRoute,
+  pushExploreRoute,
   type UrlExploreRouteStackController,
   useUrlExploreRouteStack,
 } from "@texturehq/edges-explore";
@@ -60,6 +62,19 @@ export interface ListRoutePayload {
 export interface DetailRoutePayload {
   entityKind: EntityTab;
   slug: string;
+}
+
+function deriveDetailKind(detail: Extract<ExploreRoute, { type: "detail" }>): DetailView | null {
+  switch (detail.payload.entityKind) {
+    case "utilities":
+      return "utility";
+    case "programs":
+      return "program";
+    case "power-plants":
+      return "power-plant";
+    default:
+      return null;
+  }
 }
 
 export type ExploreRoute =
@@ -167,7 +182,26 @@ function parseRoutes(params: URLSearchParams): ExploreRoute[] {
 
   const slug = params.get("slug");
   if (!slug) return [makeOverviewRoute(), list];
-  return [makeOverviewRoute(), list, makeDetailRoute(tab, slug)];
+
+  const fromParam = params.get("from");
+  const ancestorPairs =
+    fromParam
+      ?.split(",")
+      .map((pair) => {
+        const colonIndex = pair.indexOf(":");
+        if (colonIndex <= 0 || colonIndex === pair.length - 1) return null;
+        const ancestorTab = pair.slice(0, colonIndex);
+        const ancestorSlug = pair.slice(colonIndex + 1);
+        return { tab: parseTab(ancestorTab), slug: ancestorSlug };
+      })
+      .filter((p): p is { tab: EntityTab; slug: string } => p !== null) ?? [];
+
+  const routes: ExploreRoute[] = [makeOverviewRoute(), list];
+  for (const ancestor of ancestorPairs) {
+    routes.push(makeDetailRoute(ancestor.tab, ancestor.slug));
+  }
+  routes.push(makeDetailRoute(tab, slug));
+  return routes;
 }
 
 function serializeRoutes(routes: ExploreRoute[]): URLSearchParams {
@@ -175,7 +209,8 @@ function serializeRoutes(routes: ExploreRoute[]): URLSearchParams {
   // so `/explore` stays clean as the landing state.
   const params = new URLSearchParams();
   const list = routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
-  const detail = routes.find((r): r is Extract<ExploreRoute, { type: "detail" }> => r.type === "detail");
+  const details = routes.filter((r): r is Extract<ExploreRoute, { type: "detail" }> => r.type === "detail");
+  const detail = details.length > 0 ? details[details.length - 1] : null;
 
   if (list) {
     params.set("tab", list.payload.tab);
@@ -189,6 +224,10 @@ function serializeRoutes(routes: ExploreRoute[]): URLSearchParams {
   }
   if (detail) {
     params.set("slug", detail.payload.slug);
+    const ancestors = details.slice(0, -1);
+    if (ancestors.length > 0) {
+      params.set("from", ancestors.map((d) => `${d.payload.entityKind}:${d.payload.slug}`).join(","));
+    }
   }
   return params;
 }
@@ -246,6 +285,7 @@ export interface ExplorerState {
   listSource: EntityTab;
   mode: "overview" | "list" | "detail";
   viewMode: ExploreViewMode;
+  detailKind: DetailView | null;
   slug: string | null;
   q: string;
   segment: string;
@@ -364,10 +404,29 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     }
 
     // The URL changed externally. Rebuild the stack to match.
-    // Close clears the stack, then we push the new routes in order.
+    // Use the low-level route helpers directly so we can choose push vs
+    // pushDeeper: stacking multiple detail routes requires pushDeeper, because
+    // the controller's `push` evicts peers of the same route type.
     stack.close();
     let newTab: EntityTab | null = null;
-    for (const route of newRoutes) {
+    const rebuilt: ExploreRoute[] = [makeOverviewRoute()];
+    for (const route of newRoutes.slice(1)) {
+      if (route.type === "detail") {
+        const pushed = pushDeeperExploreRoute(rebuilt, route, (r) => r.id);
+        rebuilt.length = 0;
+        rebuilt.push(...pushed);
+      } else {
+        const pushed = pushExploreRoute(
+          rebuilt,
+          route,
+          (r) => r.id,
+          (r) => r.type
+        );
+        rebuilt.length = 0;
+        rebuilt.push(...pushed);
+      }
+    }
+    for (const route of rebuilt) {
       stack.push(route);
       if (route.type === "list") {
         newTab = route.payload.tab;
@@ -400,11 +459,13 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     // DEFAULT_MODE_FOR_TAB[DEFAULT_TAB] (which would render the map surface
     // as a bare utilities table on a paramless /explore).
     const viewMode = resolveViewMode(currentList?.payload.mode);
+    const detailKind = detail ? deriveDetailKind(detail) : null;
     return {
       tab,
       listSource: view.listSource,
       mode,
       viewMode,
+      detailKind,
       slug: detail?.payload.slug ?? null,
       q: filters.q,
       segment: filters.segment,
@@ -492,14 +553,11 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
         return;
       }
 
-      // Different entity type: swap the underlying list route to the target
-      // tab so the correct detail panel renders, the URL carries the right
-      // `tab`, and the back-arrow returns to the destination entity's list.
-      stack.close();
-      stack.push(makeOverviewRoute());
-      stack.push(makeListRoute(targetTab));
-      stack.push(makeDetailRoute(targetTab, slug));
-      dispatch({ type: "SET_LIST_SOURCE", listSource: targetTab });
+      // Cross entity: push the new detail on top of the existing stack. This
+      // keeps the originating list route (and its view mode) intact, preserves
+      // the originating detail for the back button, and lets the panel render
+      // the destination entity via detailKind.
+      stack.pushDeeper(makeDetailRoute(targetTab, slug));
     },
     [stack]
   );
