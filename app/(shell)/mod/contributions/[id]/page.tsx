@@ -159,10 +159,8 @@ export default function ModerationReviewPage() {
       // dashboard remounts and refetches the queue instead of restoring the
       // stale pre-approval list (an approved item lingered until a manual hard
       // refresh — CG-243).
-      setTimeout(() => {
-        router.refresh();
-        router.push("/mod");
-      }, 1500);
+      router.refresh();
+      router.push("/mod");
     } catch (err) {
       setActionError((err as Error).message);
     } finally {

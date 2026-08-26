@@ -14,7 +14,7 @@ import type { NextRequest } from "next/server";
 import { corsHeaders } from "@/lib/api/cors";
 import { ApiError } from "@/lib/api/errors";
 import { generateRequestId, withErrorHandling, withRequestId, withTiming } from "@/lib/api/middleware";
-import { jsonResponse } from "@/lib/api/response";
+import { cachedJsonResponse, jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
@@ -159,7 +159,7 @@ async function handleGet(req: Request, ctx: RouteContext) {
       : null,
   }));
 
-  return jsonResponse(
+  return cachedJsonResponse(
     {
       data,
       pagination: {
