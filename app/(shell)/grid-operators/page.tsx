@@ -18,6 +18,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import {
@@ -124,17 +126,13 @@ function GridOperatorsPageInner() {
   const { user } = useCurrentUser();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
-  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("q") ?? "");
+  const debouncedSearch = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
   const [sortValue, setSortValue] = useState("customerCount:desc");
   const [segmentFilter, setSegmentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [jurisdictionFilter, setJurisdictionFilter] = useState("all");
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+
 
   // Parse sort
   const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];
@@ -250,22 +248,7 @@ function GridOperatorsPageInner() {
     []
   );
 
-  if (isLoading && rows.length === 0) {
-    return (
-      <PageLayout
-        className="flex flex-col h-full overflow-hidden bg-background-default"
-        paddingYClass="pt-8 md:pt-12"
-        paddingXClass="px-4"
-      >
-        <div className="flex-none">
-          <PageLayout.Header title="Grid Operators" sticky={true} />
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <Loader size={32} />
-        </div>
-      </PageLayout>
-    );
-  }
+  const isInitialLoading = isLoading && rows.length === 0;
 
   if (error) {
     return (
@@ -371,7 +354,11 @@ function GridOperatorsPageInner() {
         />
       </div>
       <div className="flex-1 min-h-0">
-        {rows.length === 0 ? (
+        {isInitialLoading ? (
+          <div className="flex h-full items-center justify-center">
+            <Loader size={32} />
+          </div>
+        ) : rows.length === 0 ? (
           <EmptyState
             icon="Lightning"
             title="No utilities found"

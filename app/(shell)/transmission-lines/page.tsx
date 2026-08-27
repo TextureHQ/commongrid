@@ -13,6 +13,8 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
 import { VOLTAGE_CLASSES, type VoltageClass, VoltageClassLabel } from "@/types/transmission-lines";
 
@@ -85,16 +87,12 @@ function getVoltageClassShortLabel(vc: VoltageClass): string {
 
 export default function TransmissionLinesPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
   const [sortValue, setSortValue] = useState("voltage:desc");
   const [voltageFilter, setVoltageFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+
 
   // Parse sort
   const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];
@@ -220,22 +218,7 @@ export default function TransmissionLinesPage() {
     []
   );
 
-  if (isLoading && rows.length === 0) {
-    return (
-      <PageLayout
-        className="flex flex-col h-full overflow-hidden bg-background-default"
-        paddingYClass="pt-8 md:pt-12"
-        paddingXClass="px-4"
-      >
-        <div className="flex-none">
-          <PageLayout.Header title="Transmission Lines" sticky={true} />
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <Loader size={32} />
-        </div>
-      </PageLayout>
-    );
-  }
+  const isInitialLoading = isLoading && rows.length === 0;
 
   if (error) {
     return (
@@ -325,7 +308,11 @@ export default function TransmissionLinesPage() {
         />
       </div>
       <div className="flex-1 min-h-0">
-        {rows.length === 0 ? (
+        {isInitialLoading ? (
+          <div className="flex h-full items-center justify-center">
+            <Loader size={32} />
+          </div>
+        ) : rows.length === 0 ? (
           <EmptyState
             icon="Lightning"
             title="No transmission lines found"

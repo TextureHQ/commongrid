@@ -51,6 +51,7 @@ interface UtilityListResponse {
 interface UseUtilityListResult {
   utilities: Utility[];
   isLoading: boolean;
+  isFetching?: boolean;
   error: Error | null;
   mutate: () => void;
   pagination: UtilityListPagination | null;
@@ -104,16 +105,18 @@ export function useUtilityList(filters: UtilityListFilters = {}): UseUtilityList
     (filters.eiaIds !== undefined && filters.eiaIds.length === 0);
   const url = isEmptyBulkFilter ? null : `/api/v1/utilities${queryString ? `?${queryString}` : ""}`;
 
-  const { data, error, mutate } = useSWR<UtilityListResponse>(url, fetcher, {
+  const { data, error, mutate, isLoading, isValidating } = useSWR<UtilityListResponse>(url, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     // Cache for 1 hour (utility data changes occasionally)
     dedupingInterval: 3_600_000,
+    keepPreviousData: true,
   });
 
   return {
     utilities: data?.data ?? [],
-    isLoading: !data && !error && url !== null,
+    isLoading,
+    isFetching: isValidating,
     error: error ?? null,
     mutate,
     pagination: data?.pagination ?? null,

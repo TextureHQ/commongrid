@@ -12,6 +12,8 @@ import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { utilityColor } from "@/lib/categorical-colors";
 import { getSegmentLabel } from "@/lib/formatting";
 import { type Utility, UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
@@ -215,18 +217,7 @@ export function UtilityListPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  const [debouncedSearch, setDebouncedSearch] = useState(state.q);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearch(state.q);
-    }, 300);
-    return () => {
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    };
-  }, [state.q]);
+  const debouncedSearch = useDebouncedValue(state.q, SEARCH_DEBOUNCE_MS);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -312,6 +303,7 @@ export function UtilityListPanel() {
   }, [setFilters]);
 
   const activeFilterCount = getFilterFields(filterState).length;
+  const isInitialLoading = isLoading && rows.length === 0;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -375,7 +367,7 @@ export function UtilityListPanel() {
 
       {/* Entity list */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {isLoading ? (
+        {isInitialLoading ? (
           Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((skeletonKey) => (
             <PanelEntityRow key={skeletonKey} loading leadingShape="dot" title="" onSelect={() => {}} />
           ))
