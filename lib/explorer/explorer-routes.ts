@@ -163,7 +163,15 @@ export function parseRoutes(params: URLSearchParams): ExploreRoute[] {
   // The top detail's entity kind defaults to the list tab, but an explicit
   // `kind` param lets a cross-entity detail (e.g. a program opened from a
   // utility detail) survive a URL round-trip.
-  const topEntityKind = parseTab(params.get("kind")) ?? tab;
+  //
+  // parseTab() never returns null (it falls back to DEFAULT_TAB), so a bare
+  // `parseTab(params.get("kind")) ?? tab` silently resolved every kind-less
+  // detail to "utilities" — clicking a program from the programs list opened
+  // UtilityDetailPanel ("Utility not found") and the program territory never
+  // loaded. Only consult `kind` when it is actually present; otherwise the
+  // top detail belongs to the base list tab.
+  const kindParam = params.get("kind");
+  const topEntityKind = kindParam ? parseTab(kindParam) : tab;
 
   const routes: ExploreRoute[] = [makeOverviewRoute(), list];
   for (const ancestor of ancestorPairs) {
