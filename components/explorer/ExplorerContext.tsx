@@ -314,6 +314,15 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
   // Track the last search string we synced to the URL to avoid loops.
   const lastSyncedSearch = useRef(stack.serializedSearch);
 
+  // The stack controller is a fresh object literal on every render (the hook
+  // returns `{ ...state, push, ... }`), so it must NOT sit in an effect
+  // dependency array — doing so runs the URL→stack effect on every render and,
+  // combined with a stale `searchParams`, ping-pongs stack.close()/push()
+  // against the raw replaceState write below → "Maximum update depth exceeded"
+  // (CG-257). We read the live controller through a ref instead.
+  const stackRef = useRef(stack);
+  stackRef.current = stack;
+
   // Stack → URL sync. Use raw history.replaceState to avoid triggering
   // Next.js routing machinery (router.replace causes re-renders that can
   // create feedback loops with useSearchParams / initialSearch serialization).
@@ -333,11 +342,13 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
   // clicking a global search result while already on /explore), we need to
   // re-parse and reset the stack here.
   useEffect(() => {
+    const stack = stackRef.current;
     const currentSearch = searchParams?.toString() ?? "";
 
     // Ignore changes if the URL matches what we just wrote, or if it
     // matches the current stack (no-op).
     if (currentSearch === lastSyncedSearch.current || currentSearch === stack.serializedSearch) {
+      lastSyncedSearch.current = currentSearch;
       return;
     }
 
@@ -377,7 +388,13 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       dispatch({ type: "SET_LIST_SOURCE", listSource: newTab });
     }
     lastSyncedSearch.current = currentSearch;
-  }, [searchParams, stack]);
+    // Depends ONLY on `searchParams`: this effect reacts to *external* URL
+    // changes (e.g. a Next router.push from global search while already on
+    // /explore). In-app navigations write the URL through raw replaceState,
+    // which intentionally does not update `searchParams`, so this effect stays
+    // quiet for them. `stack` is read via `stackRef` to keep it out of the
+    // dependency array. See CG-257.
+  }, [searchParams]);
 
   // Derive the legacy ExplorerState shape from the stack + view state so
   // consuming panels continue to read `state.tab`, `state.slug`, etc.
