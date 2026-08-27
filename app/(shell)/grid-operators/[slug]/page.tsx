@@ -8,6 +8,7 @@ import {
   type Column,
   DataTable,
   Dialog,
+  Icon,
   InteractiveMap,
   Loader,
   layer,
@@ -16,7 +17,7 @@ import {
 } from "@texturehq/edges";
 import type { FeatureCollection } from "geojson";
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
@@ -50,6 +51,7 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { computeViewStateFromGeoJSON, safeHostname } from "@/lib/geo";
+import { buildNewProgramHref } from "@/lib/programs/new-program-link";
 import type { Utility } from "@/types/entities";
 import type { TransmissionLine } from "@/types/transmission-lines";
 
@@ -401,6 +403,8 @@ function TransmissionStatList({
 
 export default function UtilityDetailPage() {
   const params = useParams<{ slug: string }>();
+  const router = useRouter();
+  const { user } = useCurrentUser();
   const { utility, isLoading: utilityLoading } = useUtility(params.slug);
   const { utilities, isLoading: utilitiesLoading } = useUtilityList({ limit: 500 });
 
@@ -829,25 +833,52 @@ export default function UtilityDetailPage() {
           </EntitySection>
         )}
 
-        {!programsLoading && utilityPrograms.length > 0 && (
+        {/*
+          Shown even with zero programs, and to signed-out visitors too, so the
+          "Add a program" action is always discoverable. Anonymous users are
+          routed through the sign-in modal and returned to the prefilled form.
+        */}
+        {!programsLoading && (
           <EntitySection id="programs" title="Programs">
-            <div className="detail-list-meta">
-              {utilityPrograms.length} program{utilityPrograms.length !== 1 ? "s" : ""}
+            <div className="flex items-center justify-between gap-4">
+              <div className="detail-list-meta">
+                {utilityPrograms.length} program{utilityPrograms.length !== 1 ? "s" : ""}
+              </div>
+              {user ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => router.push(buildNewProgramHref(utility.slug))}
+                  className="gap-2"
+                >
+                  <Icon name="Plus" size="sm" />
+                  <span>Add a program</span>
+                </Button>
+              ) : (
+                <SignInButton mode="modal" forceRedirectUrl={buildNewProgramHref(utility.slug)}>
+                  <Button variant="secondary" size="sm" className="gap-2">
+                    <Icon name="Plus" size="sm" />
+                    <span>Add a program</span>
+                  </Button>
+                </SignInButton>
+              )}
             </div>
-            <EntityList
-              items={utilityPrograms.map((prog) => ({
-                // Programs have no standalone `/programs/[slug]` route — they
-                // are viewed inside Explore. `/programs/<slug>` 404'd.
-                href: `/explore?tab=programs&slug=${prog.slug}`,
-                name: prog.name,
-                badge: (
-                  <Badge size="sm" shape="pill" variant={prog.status === "ACTIVE" ? "success" : "neutral"}>
-                    {prog.status}
-                  </Badge>
-                ),
-                meta: prog.assetTypes.join(", "),
-              }))}
-            />
+            {utilityPrograms.length > 0 && (
+              <EntityList
+                items={utilityPrograms.map((prog) => ({
+                  // Programs have no standalone `/programs/[slug]` route — they
+                  // are viewed inside Explore. `/programs/<slug>` 404'd.
+                  href: `/explore?tab=programs&slug=${prog.slug}`,
+                  name: prog.name,
+                  badge: (
+                    <Badge size="sm" shape="pill" variant={prog.status === "ACTIVE" ? "success" : "neutral"}>
+                      {prog.status}
+                    </Badge>
+                  ),
+                  meta: prog.assetTypes.join(", "),
+                }))}
+              />
+            )}
           </EntitySection>
         )}
 

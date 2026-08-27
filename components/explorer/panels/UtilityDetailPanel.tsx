@@ -1,11 +1,13 @@
 "use client";
 
+import { SignInButton } from "@clerk/nextjs";
 import type { FeatureCollection } from "geojson";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { useProgramList } from "@/hooks/useProgramList";
@@ -23,6 +25,7 @@ import {
   getStatusLabel,
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
+import { buildNewProgramHref } from "@/lib/programs/new-program-link";
 import { useExplorer } from "../ExplorerContext";
 
 const ArrowIcon = () => (
@@ -44,6 +47,7 @@ const ArrowIcon = () => (
 
 export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
+  const { user } = useCurrentUser();
 
   const { utility } = useUtility(slug);
   const { utilities, isLoading: utilitiesLoading } = useUtilityList({ limit: 500 });
@@ -333,34 +337,71 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           </>
         )}
 
-        {/* Programs */}
-        {utilityPrograms.length > 0 && (
-          <>
-            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
-              Programs ({utilityPrograms.length})
-            </div>
-            {utilityPrograms.slice(0, 15).map((prog) => (
-              <button
-                key={prog.slug}
-                type="button"
-                className="cg-explore-related-row"
-                onClick={() => navigateToDetail("program", prog.slug)}
+        {/*
+          Programs. Rendered even at zero programs, and the "Add a program" entry
+          point is shown to everyone — signed-out visitors included — so the
+          contribution path is discoverable. Anonymous users are routed through
+          the sign-in modal and returned to the prefilled form; the auth gate
+          lives at the action, not the visibility of the entry point.
+        */}
+        <div className="cg-explore-programs-section">
+          <div
+            className="cg-explore-related-heading"
+            style={{ marginTop: 16, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}
+          >
+            <span>Programs ({utilityPrograms.length})</span>
+            {user ? (
+              <Link
+                href={buildNewProgramHref(utility.slug)}
+                style={{ fontSize: 11, fontWeight: 500, color: "var(--color-brand-primary)" }}
               >
-                <span className="cg-explore-related-dot" style={{ background: entityKindColor("programs") }} />
-                <div style={{ flex: 1 }}>
-                  <div className="cg-explore-related-name">{prog.name}</div>
-                  <div className="cg-explore-related-type">{prog.status}</div>
-                </div>
-                <ArrowIcon />
-              </button>
-            ))}
-            {utilityPrograms.length > 15 && (
-              <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
-                + {utilityPrograms.length - 15} more
-              </div>
+                + Add a program
+              </Link>
+            ) : (
+              <SignInButton mode="modal" forceRedirectUrl={buildNewProgramHref(utility.slug)}>
+                <button
+                  type="button"
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: "var(--color-brand-primary)",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                  }}
+                >
+                  + Add a program
+                </button>
+              </SignInButton>
             )}
-          </>
-        )}
+          </div>
+          {utilityPrograms.length === 0 && (
+            <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginBottom: 6 }}>
+              No programs on file for this utility yet.
+            </div>
+          )}
+          {utilityPrograms.slice(0, 15).map((prog) => (
+            <button
+              key={prog.slug}
+              type="button"
+              className="cg-explore-related-row"
+              onClick={() => navigateToDetail("program", prog.slug)}
+            >
+              <span className="cg-explore-related-dot" style={{ background: entityKindColor("programs") }} />
+              <div style={{ flex: 1 }}>
+                <div className="cg-explore-related-name">{prog.name}</div>
+                <div className="cg-explore-related-type">{prog.status}</div>
+              </div>
+              <ArrowIcon />
+            </button>
+          ))}
+          {utilityPrograms.length > 15 && (
+            <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
+              + {utilityPrograms.length - 15} more
+            </div>
+          )}
+        </div>
 
         {/* Full page link */}
         <div style={{ display: "flex", gap: 7, marginTop: 16 }}>

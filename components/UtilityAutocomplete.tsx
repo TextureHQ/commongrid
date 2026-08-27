@@ -15,7 +15,7 @@
  */
 
 import { Autocomplete } from "@texturehq/edges";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   mergeUtilityOptions,
   parseUtilityOptions,
@@ -35,6 +35,16 @@ interface UtilityAutocompleteProps {
   isRequired?: boolean;
   isDisabled?: boolean;
   errorMessage?: string;
+  /**
+   * Options to make selectable without a search first, used when `value` is set
+   * before the user types anything.
+   *
+   * `Autocomplete` resolves `selectedKey` to a display label by looking through
+   * its items, so a preselected slug with no matching option renders an empty
+   * input — the selection is live but invisible. Seeding the utility's
+   * `{ id: slug, name }` pair keeps the field readable from first paint.
+   */
+  seedOptions?: UtilityOption[];
 }
 
 export function UtilityAutocomplete({
@@ -46,6 +56,7 @@ export function UtilityAutocomplete({
   isRequired,
   isDisabled,
   errorMessage,
+  seedOptions,
 }: UtilityAutocompleteProps) {
   /**
    * Options resolved so far, retained so the input can display the *name* of the
@@ -61,6 +72,16 @@ export function UtilityAutocomplete({
     return options;
   }, []);
 
+  /**
+   * Seeded options are merged rather than stored so an async seed (a utility
+   * fetched after mount) still shows up, and so searching never drops the
+   * label of a preselected utility.
+   */
+  const items = useMemo(
+    () => (seedOptions?.length ? mergeUtilityOptions(resolvedOptions, seedOptions) : resolvedOptions),
+    [resolvedOptions, seedOptions]
+  );
+
   return (
     <Autocomplete
       label={label}
@@ -71,7 +92,7 @@ export function UtilityAutocomplete({
       errorMessage={errorMessage}
       selectedKey={value === "" ? null : value}
       onSelectionChange={(key) => onChange(key == null ? "" : String(key))}
-      staticItems={resolvedOptions}
+      staticItems={items}
       requestConfig={{
         requestType: "REST",
         url: UTILITY_SEARCH_URL_TEMPLATE,

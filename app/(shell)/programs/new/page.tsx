@@ -1,8 +1,9 @@
 "use client";
 
+import { SignInButton } from "@clerk/nextjs";
 import { Button, Icon, Loader, PageLayout } from "@texturehq/edges";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   type EditableField,
   EditSummaryField,
@@ -11,17 +12,40 @@ import {
 } from "@/components/contributions/EntityFormFields";
 import { UtilityAutocomplete } from "@/components/UtilityAutocomplete";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useUtility } from "@/hooks/useUtility";
+import { buildNewProgramHref, parseNewProgramUtilityParam } from "@/lib/programs/new-program-link";
+import type { UtilityOption } from "@/lib/utility-search";
 
-export default function CreateProgramPage() {
+function CreateProgramForm() {
   const router = useRouter();
   const { user, isLoading: isUserLoading } = useCurrentUser();
+  const searchParams = useSearchParams();
+
+  /**
+   * Utility to preselect as administrator, from `?utility=<slug>`. Read once on
+   * mount: entry points such as the utility detail panel pass it so contributors
+   * don't have to re-find the utility they were just looking at, but after that
+   * the picker owns the selection and must not be reset by a URL change.
+   */
+  const [initialUtilitySlug] = useState(() => parseNewProgramUtilityParam(searchParams.get("utility")));
 
   const [fields, setFields] = useState<EditableField[]>([]);
   const [isLoadingFields, setIsLoadingFields] = useState(true);
   const [fieldsError, setFieldsError] = useState<string | null>(null);
 
   // Utility association (not part of editable-fields since it's a complex type)
-  const [adminUtilitySlug, setAdminUtilitySlug] = useState("");
+  const [adminUtilitySlug, setAdminUtilitySlug] = useState(initialUtilitySlug);
+
+  /**
+   * The picker labels its selection from its own option list, so a slug arriving
+   * via the URL needs the matching name supplied or the field looks empty even
+   * though the association is set.
+   */
+  const { utility: prefilledUtility } = useUtility(initialUtilitySlug || null);
+  const utilitySeedOptions = useMemo<UtilityOption[]>(
+    () => (prefilledUtility ? [{ id: prefilledUtility.slug, name: prefilledUtility.name }] : []),
+    [prefilledUtility]
+  );
 
   // Form state
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
@@ -186,14 +210,29 @@ export default function CreateProgramPage() {
   }
 
   if (!user) {
+    // Return to this same form (with the preselected utility intact) after
+    // sign-in, so a contributor who arrived via an "Add a program" entry point
+    // lands back on the prefilled form rather than a generic page.
+    const returnHref = buildNewProgramHref(initialUtilitySlug || null);
     return (
       <PageLayout>
         <PageLayout.Header title="Add New Program" />
         <PageLayout.Content>
           <div className="max-w-2xl mx-auto py-8">
             <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
-              <p className="text-sm font-medium text-blue-800">Sign in required</p>
-              <p className="text-sm text-blue-700 mt-1">You need to be signed in to add a new program.</p>
+              <p className="text-sm font-medium text-blue-800">Sign in to contribute</p>
+              <p className="text-sm text-blue-700 mt-1">
+                Adding a program is a community contribution. Sign in to submit a new program and help keep CommonGrid
+                accurate for everyone.
+              </p>
+              <div className="mt-4">
+                <SignInButton mode="modal" forceRedirectUrl={returnHref}>
+                  <Button variant="primary" size="md">
+                    <Icon name="SignIn" size="sm" />
+                    <span>Sign in</span>
+                  </Button>
+                </SignInButton>
+              </div>
             </div>
           </div>
         </PageLayout.Content>
@@ -245,6 +284,7 @@ export default function CreateProgramPage() {
                 description="The utility that administers this demand-response or rebate program."
                 value={adminUtilitySlug}
                 onChange={setAdminUtilitySlug}
+                seedOptions={utilitySeedOptions}
               />
 
               {/* Source Citation */}
@@ -302,5 +342,25 @@ export default function CreateProgramPage() {
         </div>
       </PageLayout.Content>
     </PageLayout>
+  );
+}
+
+/**
+ * `useSearchParams` opts the subtree into client-side rendering, so the form is
+ * wrapped in Suspense to keep the rest of the route statically prerenderable.
+ */
+export default function CreateProgramPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageLayout>
+          <div className="flex items-center justify-center py-24">
+            <Loader size={32} />
+          </div>
+        </PageLayout>
+      }
+    >
+      <CreateProgramForm />
+    </Suspense>
   );
 }
