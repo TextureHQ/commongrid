@@ -65,7 +65,7 @@ function getAccessBadgeVariant(access: string): "info" | "neutral" | "warning" {
 export default function EVChargingPage() {
   const router = useRouter();
   const { user } = useCurrentUser();
-  const [isPending, startTransition] = useTransition();
+  const [_isPending, startTransition] = useTransition();
 
   // State
   const [stations, setStations] = useState<EVStation[]>([]);
@@ -81,7 +81,7 @@ export default function EVChargingPage() {
   const [levelFilter, setLevelFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const _searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const nextPagePrefetchedRef = useRef(false);
 
   // Unique networks for filter (derive from current results)

@@ -14,13 +14,13 @@ import {
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import {
   formatCapacity,
   getFuelBadgeVariant,
@@ -129,12 +129,6 @@ export default function PowerPlantsPage() {
   const [fuelFilter, setFuelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
   // Parse sort value
   const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];
 
@@ -392,21 +386,21 @@ export default function PowerPlantsPage() {
         ) : (
           <>
             {isInitialLoading ? (
-            <div className="flex-1 flex items-center justify-center py-12">
-              <Loader size={32} />
-            </div>
-          ) : (
-            <DataTable
-              className="border-r border-l"
-              data={rows}
-              columns={columns}
-              mobileBreakpoint="md"
-              isLoading={isLoading}
-              height="100%"
-              stickyHeader={true}
-              onRowClick={handleRowClick}
-            />
-          )}
+              <div className="flex-1 flex items-center justify-center py-12">
+                <Loader size={32} />
+              </div>
+            ) : (
+              <DataTable
+                className="border-r border-l"
+                data={rows}
+                columns={columns}
+                mobileBreakpoint="md"
+                isLoading={isLoading}
+                height="100%"
+                stickyHeader={true}
+                onRowClick={handleRowClick}
+              />
+            )}
             {hasMore && (
               <div className="flex justify-center py-4 border-t border-border-default">
                 <div className="text-sm text-text-secondary">

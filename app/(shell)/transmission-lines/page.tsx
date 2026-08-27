@@ -10,12 +10,12 @@ import {
   PageLayout,
   TextCell,
 } from "@texturehq/edges";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { VOLTAGE_CLASSES, type VoltageClass, VoltageClassLabel } from "@/types/transmission-lines";
 
 interface TransmissionLineRow extends Record<string, unknown> {
@@ -91,12 +91,6 @@ export default function TransmissionLinesPage() {
   const [sortValue, setSortValue] = useState("voltage:desc");
   const [voltageFilter, setVoltageFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   // Parse sort
   const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];
@@ -340,20 +334,20 @@ export default function TransmissionLinesPage() {
         ) : (
           <>
             {isInitialLoading ? (
-            <div className="flex-1 flex items-center justify-center py-12">
-              <Loader size={32} />
-            </div>
-          ) : (
-            <DataTable
-              className="border-r border-l"
-              data={rows}
-              columns={columns}
-              mobileBreakpoint="md"
-              isLoading={isLoading}
-              height="100%"
-              stickyHeader={true}
-            />
-          )}
+              <div className="flex-1 flex items-center justify-center py-12">
+                <Loader size={32} />
+              </div>
+            ) : (
+              <DataTable
+                className="border-r border-l"
+                data={rows}
+                columns={columns}
+                mobileBreakpoint="md"
+                isLoading={isLoading}
+                height="100%"
+                stickyHeader={true}
+              />
+            )}
             {hasMore && (
               <div className="flex justify-center py-4 border-t border-border-default">
                 <div className="text-sm text-text-secondary">

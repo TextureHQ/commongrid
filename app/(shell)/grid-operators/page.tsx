@@ -18,8 +18,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import {
@@ -384,21 +382,21 @@ function GridOperatorsPageInner() {
         ) : (
           <>
             {isInitialLoading ? (
-            <div className="flex-1 flex items-center justify-center py-12">
-              <Loader size={32} />
-            </div>
-          ) : (
-            <DataTable
-              className="border-r border-l"
-              data={rows}
-              columns={columns}
-              mobileBreakpoint="md"
-              isLoading={isLoading}
-              height="100%"
-              stickyHeader={true}
-              onRowClick={handleRowClick}
-            />
-          )}
+              <div className="flex-1 flex items-center justify-center py-12">
+                <Loader size={32} />
+              </div>
+            ) : (
+              <DataTable
+                className="border-r border-l"
+                data={rows}
+                columns={columns}
+                mobileBreakpoint="md"
+                isLoading={isLoading}
+                height="100%"
+                stickyHeader={true}
+                onRowClick={handleRowClick}
+              />
+            )}
             {hasMore && (
               <div className="flex justify-center py-4 border-t border-border-default">
                 <div className="text-sm text-text-secondary">
