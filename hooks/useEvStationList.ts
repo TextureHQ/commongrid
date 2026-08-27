@@ -38,6 +38,7 @@ interface EvStationListResponse {
 interface UseEvStationListResult {
   evStations: EVStation[];
   isLoading: boolean;
+  isValidating: boolean;
   error: Error | null;
   mutate: () => void;
   pagination: EvStationListPagination | null;
@@ -73,16 +74,18 @@ export function useEvStationList(filters: EvStationListFilters = {}): UseEvStati
   const queryString = buildQueryString(filters);
   const url = `/api/v1/ev-stations${queryString ? `?${queryString}` : ""}`;
 
-  const { data, error, mutate } = useSWR<EvStationListResponse>(url, fetcher, {
+  const { data, error, mutate, isLoading, isValidating } = useSWR<EvStationListResponse>(url, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     // Cache for 24 hours (EV station data doesn't change often)
     dedupingInterval: 86_400_000,
+    keepPreviousData: true,
   });
 
   return {
     evStations: data?.data ?? [],
-    isLoading: !data && !error,
+    isLoading,
+    isValidating,
     error: error ?? null,
     mutate,
     pagination: data?.pagination ?? null,

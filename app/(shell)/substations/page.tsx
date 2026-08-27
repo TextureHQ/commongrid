@@ -223,15 +223,8 @@ const sortOptions = [
   { id: "maxVoltageKv:asc", label: "Voltage (Low to High)", value: "maxVoltageKv:asc" },
 ];
 
-// Debounce helper
-function useDebounced<T>(value: T, delay = 300): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const handle = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handle);
-  }, [value, delay]);
-  return debounced;
-}
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 
 // ---------------------------------------------------------------------------
 // Page
@@ -242,7 +235,7 @@ export default function SubstationsPage() {
 
   // Filter/sort state
   const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounced(searchQuery, 350);
+  const debouncedSearch = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
   const [stateFilter, setStateFilter] = useState("all");
   const [bandFilter, setBandFilter] = useState<"all" | VoltageBand>("all");
   const [typeFilter, setTypeFilter] = useState<"all" | SubstationType>("all");
@@ -417,6 +410,8 @@ export default function SubstationsPage() {
     ? `${total.toLocaleString()} US electric substations from OpenStreetMap and EIA data — transmission, distribution, switching yards, and more.`
     : "US electric substations from OpenStreetMap and EIA data.";
 
+  const isInitialLoading = isLoading && tableRows.length === 0;
+
   return (
     <PageLayout>
       <PageLayout.Header title="Substations" description={description} />
@@ -496,7 +491,7 @@ export default function SubstationsPage() {
           />
 
           {/* Table / states */}
-          {isLoading ? (
+          {isInitialLoading ? (
             <div className="flex items-center justify-center py-24">
               <Loader size={32} />
             </div>

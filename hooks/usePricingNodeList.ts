@@ -36,6 +36,7 @@ interface PricingNodeListResponse {
 interface UsePricingNodeListResult {
   pricingNodes: PricingNode[];
   isLoading: boolean;
+  isValidating: boolean;
   error: Error | null;
   mutate: () => void;
   pagination: PricingNodeListPagination | null;
@@ -69,16 +70,18 @@ export function usePricingNodeList(filters: PricingNodeListFilters = {}): UsePri
   const queryString = buildQueryString(filters);
   const url = `/api/v1/pricing-nodes${queryString ? `?${queryString}` : ""}`;
 
-  const { data, error, mutate } = useSWR<PricingNodeListResponse>(url, fetcher, {
+  const { data, error, mutate, isLoading, isValidating } = useSWR<PricingNodeListResponse>(url, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     // Cache for 24 hours (pricing node metadata doesn't change often)
     dedupingInterval: 86_400_000,
+    keepPreviousData: true,
   });
 
   return {
     pricingNodes: data?.data ?? [],
-    isLoading: !data && !error,
+    isLoading,
+    isValidating,
     error: error ?? null,
     mutate,
     pagination: data?.pagination ?? null,

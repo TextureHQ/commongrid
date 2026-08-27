@@ -40,6 +40,7 @@ interface PowerPlantListResponse {
 interface UsePowerPlantListResult {
   powerPlants: PowerPlant[];
   isLoading: boolean;
+  isValidating: boolean;
   error: Error | null;
   mutate: () => void;
   pagination: PowerPlantListPagination | null;
@@ -77,16 +78,18 @@ export function usePowerPlantList(filters: PowerPlantListFilters = {}): UsePower
   const queryString = buildQueryString(filters);
   const url = `/api/v1/power-plants${queryString ? `?${queryString}` : ""}`;
 
-  const { data, error, mutate } = useSWR<PowerPlantListResponse>(url, fetcher, {
+  const { data, error, mutate, isLoading, isValidating } = useSWR<PowerPlantListResponse>(url, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     // Cache for 24 hours (power plant data doesn't change often)
     dedupingInterval: 86_400_000,
+    keepPreviousData: true,
   });
 
   return {
     powerPlants: data?.data ?? [],
-    isLoading: !data && !error,
+    isLoading,
+    isValidating,
     error: error ?? null,
     mutate,
     pagination: data?.pagination ?? null,

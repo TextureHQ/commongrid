@@ -54,6 +54,7 @@ interface ProgramListResponse {
 interface UseProgramListResult {
   programs: Program[];
   isLoading: boolean;
+  isValidating: boolean;
   error: Error | null;
   mutate: () => void;
   pagination: ProgramListPagination | null;
@@ -91,11 +92,12 @@ export function useProgramList(filters: ProgramListFilters = {}): UseProgramList
   const queryString = buildQueryString(queryFilters);
   const url = `/api/v1/programs${queryString ? `?${queryString}` : ""}`;
 
-  const { data, error, mutate } = useSWR<ProgramListResponse>(enabled ? url : null, fetcher, {
+  const { data, error, mutate, isLoading, isValidating } = useSWR<ProgramListResponse>(enabled ? url : null, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     // Cache for 24 hours (programs don't change often)
     dedupingInterval: 86_400_000,
+    keepPreviousData: true,
   });
 
   return {
@@ -103,7 +105,8 @@ export function useProgramList(filters: ProgramListFilters = {}): UseProgramList
     // While disabled we report loading rather than "loaded and empty", so
     // callers don't render a false "no programs" state before the filter value
     // they're waiting on arrives.
-    isLoading: !data && !error,
+    isLoading,
+    isValidating,
     error: error ?? null,
     mutate,
     pagination: data?.pagination ?? null,

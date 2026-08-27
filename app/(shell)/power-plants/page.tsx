@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import {
@@ -122,7 +124,7 @@ export default function PowerPlantsPage() {
   const router = useRouter();
   const { user } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
   const [sortValue, setSortValue] = useState("totalCapacityMw:desc");
   const [fuelFilter, setFuelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -267,6 +269,7 @@ export default function PowerPlantsPage() {
       </PageLayout>
     );
   }
+  const isInitialLoading = isLoading && rows.length === 0;
 
   if (error) {
     return (
@@ -388,6 +391,11 @@ export default function PowerPlantsPage() {
           />
         ) : (
           <>
+            {isInitialLoading ? (
+            <div className="flex-1 flex items-center justify-center py-12">
+              <Loader size={32} />
+            </div>
+          ) : (
             <DataTable
               className="border-r border-l"
               data={rows}
@@ -398,6 +406,7 @@ export default function PowerPlantsPage() {
               stickyHeader={true}
               onRowClick={handleRowClick}
             />
+          )}
             {hasMore && (
               <div className="flex justify-center py-4 border-t border-border-default">
                 <div className="text-sm text-text-secondary">

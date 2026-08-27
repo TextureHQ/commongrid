@@ -36,6 +36,7 @@ interface TransmissionLineListResponse {
 interface UseTransmissionLineListResult {
   transmissionLines: TransmissionLine[];
   isLoading: boolean;
+  isValidating: boolean;
   error: Error | null;
   mutate: () => void;
   pagination: TransmissionLineListPagination | null;
@@ -69,16 +70,18 @@ export function useTransmissionLineList(filters: TransmissionLineListFilters = {
   const queryString = buildQueryString(filters);
   const url = `/api/v1/transmission-lines${queryString ? `?${queryString}` : ""}`;
 
-  const { data, error, mutate } = useSWR<TransmissionLineListResponse>(url, fetcher, {
+  const { data, error, mutate, isLoading, isValidating } = useSWR<TransmissionLineListResponse>(url, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     // Cache for 24 hours (transmission line data doesn't change often)
     dedupingInterval: 86_400_000,
+    keepPreviousData: true,
   });
 
   return {
     transmissionLines: data?.data ?? [],
-    isLoading: !data && !error,
+    isLoading,
+    isValidating,
     error: error ?? null,
     mutate,
     pagination: data?.pagination ?? null,

@@ -34,6 +34,7 @@ interface BalancingAuthorityListResponse {
 interface UseBalancingAuthorityListResult {
   balancingAuthorities: BalancingAuthority[];
   isLoading: boolean;
+  isValidating: boolean;
   error: Error | null;
   mutate: () => void;
   pagination: BalancingAuthorityListPagination | null;
@@ -67,16 +68,18 @@ export function useBalancingAuthorityList(
   const queryString = buildQueryString(filters);
   const url = `/api/v1/balancing-authorities${queryString ? `?${queryString}` : ""}`;
 
-  const { data, error, mutate } = useSWR<BalancingAuthorityListResponse>(url, fetcher, {
+  const { data, error, mutate, isLoading, isValidating } = useSWR<BalancingAuthorityListResponse>(url, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     // Cache for 24 hours (BA data doesn't change often)
     dedupingInterval: 86_400_000,
+    keepPreviousData: true,
   });
 
   return {
     balancingAuthorities: data?.data ?? [],
-    isLoading: !data && !error,
+    isLoading,
+    isValidating,
     error: error ?? null,
     mutate,
     pagination: data?.pagination ?? null,

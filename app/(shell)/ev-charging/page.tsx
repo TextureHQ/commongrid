@@ -7,6 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 
 import { SearchInput } from "@/components/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import type { EVStation } from "@/types/ev-charging";
 import { getAccessLabel, getNetworkColor, getNetworkShortName, getStatusLabel } from "@/types/ev-charging";
 
@@ -71,7 +73,7 @@ export default function EVChargingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
   const [sortValue, setSortValue] = useState("name:asc");
   const [accessFilter, setAccessFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -98,21 +100,6 @@ export default function EVChargingPage() {
     return Array.from(s).sort();
   }, [stations]);
 
-  // Debounced search
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchQuery]);
-
   // Fetch data when filters change
   useEffect(() => {
     const params = new URLSearchParams();
@@ -128,19 +115,31 @@ export default function EVChargingPage() {
     params.set("order", direction);
     params.set("limit", "100");
 
+    const controller = new AbortController();
+
     startTransition(async () => {
       setIsLoading(true);
-      const res = await fetch(`/api/v1/ev-stations?${params.toString()}`);
-      const data = await res.json();
-      setStations(data.data ?? []);
-      setMeta({
-        totalCount: data.pagination?.total ?? 0,
-        nextCursor: data.pagination?.cursor ?? null,
-        limit: data.pagination?.limit ?? 100,
-      });
-      setIsLoading(false);
-      nextPagePrefetchedRef.current = false;
+      try {
+        const res = await fetch(`/api/v1/ev-stations?${params.toString()}`, { signal: controller.signal });
+        const data = await res.json();
+        setStations(data.data ?? []);
+        setMeta({
+          totalCount: data.pagination?.total ?? 0,
+          nextCursor: data.pagination?.cursor ?? null,
+          limit: data.pagination?.limit ?? 100,
+        });
+        setIsLoading(false);
+        nextPagePrefetchedRef.current = false;
+      } catch (err) {
+        if (err instanceof Error && err.name !== "AbortError") {
+          setIsLoading(false);
+        }
+      }
     });
+
+    return () => {
+      controller.abort();
+    };
   }, [debouncedSearch, sortValue, accessFilter, statusFilter, networkFilter, stateFilter]);
 
   // Aggressive prefetch of next page
@@ -319,33 +318,7 @@ export default function EVChargingPage() {
     []
   );
 
-  if (isLoading) {
-    return (
-      <PageLayout
-        className="flex flex-col h-full overflow-hidden bg-background-default"
-        paddingYClass="pt-8 md:pt-12"
-        paddingXClass="px-4"
-      >
-        <div className="flex-none">
-          <div className="flex items-center justify-between">
-            <PageLayout.Header title="EV Charging Stations" sticky={true} />
-            <Button
-              variant={user ? "primary" : "secondary"}
-              size="md"
-              isDisabled={!user}
-              onPress={() => router.push("/ev-charging/new")}
-            >
-              <Icon name="Plus" size="sm" />
-              <span>Add EV Station</span>
-            </Button>
-          </div>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <Loader size={32} />
-        </div>
-      </PageLayout>
-    );
-  }
+  const isInitialLoading = isLoading && stations.length === 0;
 
   return (
     <PageLayout
@@ -450,30 +423,38 @@ export default function EVChargingPage() {
         />
       </div>
       <div className="flex-1 min-h-0 flex flex-col">
-        <DataTable
-          className="border-r border-l flex-1"
-          data={rows}
-          columns={columns}
-          mobileBreakpoint="md"
-          isLoading={isPending}
-          height="100%"
-          stickyHeader={true}
-          onRowClick={handleRowClick}
-        />
-        {meta.nextCursor && (
-          <div className="flex justify-center py-4 flex-shrink-0">
-            <button
-              type="button"
-              onClick={loadMore}
-              disabled={isLoadingMore}
-              className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 flex items-center gap-2"
-            >
-              {isLoadingMore && <Loader size={16} />}
-              {isLoadingMore
-                ? "Loading..."
-                : `Load More (${(meta.totalCount - stations.length).toLocaleString()} remaining)`}
-            </button>
+        {isInitialLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader size={32} />
           </div>
+        ) : (
+          <>
+            <DataTable
+              className="border-r border-l flex-1"
+              data={rows}
+              columns={columns}
+              mobileBreakpoint="md"
+              isLoading={isLoading}
+              height="100%"
+              stickyHeader={true}
+              onRowClick={handleRowClick}
+            />
+            {meta.nextCursor && (
+              <div className="flex justify-center py-4 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isLoadingMore && <Loader size={16} />}
+                  {isLoadingMore
+                    ? "Loading..."
+                    : `Load More (${(meta.totalCount - stations.length).toLocaleString()} remaining)`}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </PageLayout>

@@ -13,6 +13,8 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
 import { VOLTAGE_CLASSES, type VoltageClass, VoltageClassLabel } from "@/types/transmission-lines";
 
@@ -85,7 +87,7 @@ function getVoltageClassShortLabel(vc: VoltageClass): string {
 
 export default function TransmissionLinesPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
   const [sortValue, setSortValue] = useState("voltage:desc");
   const [voltageFilter, setVoltageFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -236,6 +238,7 @@ export default function TransmissionLinesPage() {
       </PageLayout>
     );
   }
+  const isInitialLoading = isLoading && rows.length === 0;
 
   if (error) {
     return (
@@ -336,6 +339,11 @@ export default function TransmissionLinesPage() {
           />
         ) : (
           <>
+            {isInitialLoading ? (
+            <div className="flex-1 flex items-center justify-center py-12">
+              <Loader size={32} />
+            </div>
+          ) : (
             <DataTable
               className="border-r border-l"
               data={rows}
@@ -345,6 +353,7 @@ export default function TransmissionLinesPage() {
               height="100%"
               stickyHeader={true}
             />
+          )}
             {hasMore && (
               <div className="flex justify-center py-4 border-t border-border-default">
                 <div className="text-sm text-text-secondary">
