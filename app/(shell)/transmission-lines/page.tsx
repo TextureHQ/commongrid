@@ -10,12 +10,12 @@ import {
   PageLayout,
   TextCell,
 } from "@texturehq/edges";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
-import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { VOLTAGE_CLASSES, type VoltageClass, VoltageClassLabel } from "@/types/transmission-lines";
 
 interface TransmissionLineRow extends Record<string, unknown> {
@@ -91,8 +91,6 @@ export default function TransmissionLinesPage() {
   const [sortValue, setSortValue] = useState("voltage:desc");
   const [voltageFilter, setVoltageFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-
-
 
   // Parse sort
   const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];

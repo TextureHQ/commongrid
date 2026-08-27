@@ -10,11 +10,11 @@ import {
 } from "@texturehq/edges";
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { utilityColor } from "@/lib/categorical-colors";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { getSegmentLabel } from "@/lib/formatting";
 import { type Utility, UtilitySegment, UtilitySegmentLabel } from "@/types/entities";
 import { useExplorer } from "../ExplorerContext";

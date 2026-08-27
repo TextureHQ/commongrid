@@ -15,13 +15,13 @@ import {
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
-import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useUtilityList } from "@/hooks/useUtilityList";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import {
   formatCustomerCount,
   getSegmentBadgeVariant,
@@ -131,8 +131,6 @@ function GridOperatorsPageInner() {
   const [segmentFilter, setSegmentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [jurisdictionFilter, setJurisdictionFilter] = useState("all");
-
-
 
   // Parse sort
   const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];

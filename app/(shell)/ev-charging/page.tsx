@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
-import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import type { EVStation } from "@/types/ev-charging";
 import { getAccessLabel, getNetworkColor, getNetworkShortName, getStatusLabel } from "@/types/ev-charging";
 
@@ -81,7 +81,6 @@ export default function EVChargingPage() {
   const [levelFilter, setLevelFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const nextPagePrefetchedRef = useRef(false);
 
   // Unique networks for filter (derive from current results)

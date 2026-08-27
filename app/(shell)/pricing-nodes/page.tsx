@@ -14,13 +14,13 @@ import {
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
-import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { usePricingNodeList } from "@/hooks/usePricingNodeList";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import { getIsoColor, ISO_LABELS, type IsoRto, NODE_TYPE_LABELS, type PricingNodeType } from "@/types/pricing-nodes";
 
 interface PricingNodeRow extends Record<string, unknown> {
@@ -91,8 +91,6 @@ export default function PricingNodesPage() {
   const [sortValue, setSortValue] = useState("name:asc");
   const [isoFilter, setIsoFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-
-
 
   // Parse sort
   const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];

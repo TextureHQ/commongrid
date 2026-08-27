@@ -14,13 +14,13 @@ import {
 } from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/SearchInput";
-import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config/constants";
 import {
   formatCapacity,
   getFuelBadgeVariant,
@@ -129,7 +129,6 @@ export default function PowerPlantsPage() {
   const [fuelFilter, setFuelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
-
 
   // Parse sort value
   const [sortField, sortOrder] = sortValue.split(":") as [string, "asc" | "desc"];

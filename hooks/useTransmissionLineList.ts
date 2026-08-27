@@ -69,7 +69,7 @@ export function useTransmissionLineList(filters: TransmissionLineListFilters = {
   const queryString = buildQueryString(filters);
   const url = `/api/v1/transmission-lines${queryString ? `?${queryString}` : ""}`;
 
-  const { data, error, mutate, isLoading, isValidating } = useSWR<TransmissionLineListResponse>(url, fetcher, {
+  const { data, error, mutate, isLoading } = useSWR<TransmissionLineListResponse>(url, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     // Cache for 24 hours (transmission line data doesn't change often)
