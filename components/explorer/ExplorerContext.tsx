@@ -1,196 +1,54 @@
 "use client";
 
-import {
-  type ExploreRouteDescriptor,
-  type UrlExploreRouteStackController,
-  useUrlExploreRouteStack,
-} from "@texturehq/edges-explore";
+import { type UrlExploreRouteStackController, useUrlExploreRouteStack } from "@texturehq/edges-explore";
 import type { FeatureCollection } from "geojson";
 import { useSearchParams } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
+import { getProgramBySlug } from "@/lib/data";
 import { detailViewToTab } from "@/lib/explorer/detail-view-tab";
 import {
-  carryViewMode,
-  type ExploreViewMode,
-  parseViewMode,
-  resolveViewMode,
-  viewModeToggleAction,
-} from "@/lib/explorer/view-mode";
+  DEFAULT_MODE_FOR_TAB,
+  DEFAULT_TAB,
+  detailRoutes,
+  type EntityTab,
+  type ExploreRoute,
+  findListRoute,
+  type ListRoutePayload,
+  makeDetailRoute,
+  makeListRoute,
+  makeOverviewRoute,
+  makeProgramDetailRoutes,
+  type ProgramAdminResolver,
+  parseRoutes as parseRoutesPure,
+  serializeRoutes,
+  topDetailRoute,
+} from "@/lib/explorer/explorer-routes";
+import { carryViewMode, type ExploreViewMode, resolveViewMode, viewModeToggleAction } from "@/lib/explorer/view-mode";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type EntityTab =
-  | "utilities"
-  | "grid-operators"
-  | "power-plants"
-  | "programs"
-  | "rates"
-  | "transmission-lines"
-  | "ev-charging"
-  | "pricing-nodes"
-  | "substations";
-export type { ExploreViewMode };
+export type { EntityTab, ExploreRoute, ExploreViewMode, ListRoutePayload };
+export { DEFAULT_MODE_FOR_TAB };
 export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
 
 /**
- * Route shape for CommonGrid's explore stack.
- *
- * A `list` route owns its filter state in `payload`. Mutating a filter on
- * the active list route is a `stack.replace(routeWithUpdatedFilter)` call —
- * which both updates the in-memory stack and re-serializes to the URL.
- * Switching tabs (push of a different list peer) evicts the prior list
- * peer and its filter state — matching the existing behavior where
- * tab switches clear filters.
- *
- * A `detail` route only carries the entity slug. `entityKind` records which
- * tab context the user was in when they drilled in, so the back-arrow returns
- * them to the right list view.
+ * Resolve a program slug to its administrator utility slug (or null). Uses
+ * the client-safe bundled program data (`@/lib/data`), so a program can be
+ * nested under its administrator utility both at parse time (deep links) and
+ * at drill-in time — see lib/explorer/explorer-routes.ts (CG-252).
  */
-export interface ListRoutePayload {
-  tab: EntityTab;
-  q: string;
-  segment: string;
-  type: string;
-  jurisdictions: string[];
-  mode: ExploreViewMode;
-}
-
-export interface DetailRoutePayload {
-  entityKind: EntityTab;
-  slug: string;
-}
-
-export type ExploreRoute =
-  | (ExploreRouteDescriptor & { type: "overview"; id: "overview" })
-  | (ExploreRouteDescriptor<ListRoutePayload> & { type: "list"; id: string; payload: ListRoutePayload })
-  | (ExploreRouteDescriptor<DetailRoutePayload> & { type: "detail"; id: string; payload: DetailRoutePayload });
-
-const DEFAULT_TAB: EntityTab = "utilities";
-const DEFAULT_FILTERS: Omit<ListRoutePayload, "tab" | "mode"> = {
-  q: "",
-  segment: "all",
-  type: "all",
-  jurisdictions: [],
+const resolveProgramAdmin: ProgramAdminResolver = (programSlug) => {
+  const program = getProgramBySlug(programSlug);
+  if (!program) return null;
+  const admin = program.organizations.find((o) => o.role === "ADMINISTRATOR" && !!o.entityId);
+  return admin?.entityId ?? null;
 };
 
-export const DEFAULT_MODE_FOR_TAB: Record<EntityTab, ExploreViewMode> = {
-  utilities: "table",
-  "grid-operators": "table",
-  programs: "table",
-  rates: "table",
-  "power-plants": "map",
-  "transmission-lines": "map",
-  "ev-charging": "map",
-  "pricing-nodes": "map",
-  substations: "map",
-};
-
-function makeOverviewRoute(): ExploreRoute {
-  return { type: "overview", id: "overview" };
-}
-
-function makeListRoute(
-  tab: EntityTab,
-  mode?: ExploreViewMode,
-  filters: Partial<Omit<ListRoutePayload, "tab" | "mode">> = {}
-): ExploreRoute {
-  return {
-    type: "list",
-    id: `list:${tab}`,
-    payload: { tab, mode: mode ?? DEFAULT_MODE_FOR_TAB[tab], ...DEFAULT_FILTERS, ...filters },
-  };
-}
-
-function makeDetailRoute(entityKind: EntityTab, slug: string): ExploreRoute {
-  return {
-    type: "detail",
-    id: `detail:${slug}`,
-    payload: { entityKind, slug },
-  };
-}
-
-// ---------------------------------------------------------------------------
-// URL ↔ stack serialization
-// ---------------------------------------------------------------------------
-
-const VALID_TABS: ReadonlySet<EntityTab> = new Set([
-  "utilities",
-  "grid-operators",
-  "power-plants",
-  "programs",
-  "rates",
-  "transmission-lines",
-  "ev-charging",
-  "pricing-nodes",
-  "substations",
-]);
-
-function parseTab(value: string | null): EntityTab {
-  if (value && VALID_TABS.has(value as EntityTab)) return value as EntityTab;
-  return DEFAULT_TAB;
-}
-
-/**
- * Parse URLSearchParams into a stack of explore routes.
- *
- * Overview is always the stack root — `/explore` (no params) lands on
- * overview, and back-from-list returns to it.
- *
- * - empty URL → `[overview]`
- * - `?tab=utilities` → `[overview, list(utilities)]`
- * - `?tab=plants&slug=sunrise` → `[overview, list(plants), detail(sunrise, plants)]`
- *
- * Filter params (`q`, `segment`, `type`, `jurisdictions`) attach to the
- * current list route's payload. They survive the back-arrow popping a
- * detail route off, but are cleared when the user switches tabs (because
- * peer eviction replaces the list route with a fresh one).
- */
+/** Bind the injected program-admin resolver to the pure parser. */
 function parseRoutes(params: URLSearchParams): ExploreRoute[] {
-  // Backwards-compat for the old `view` param name.
-  const tabParam = params.get("tab") ?? params.get("view");
-  if (!tabParam) return [makeOverviewRoute()];
-
-  const tab = parseTab(tabParam);
-
-  // An explicit `?mode=` wins; otherwise the per-tab default applies. URL
-  // entry points are the only place the per-tab default grammar belongs.
-  const mode = parseViewMode(params.get("mode")) ?? DEFAULT_MODE_FOR_TAB[tab];
-
-  const list = makeListRoute(tab, mode, {
-    q: params.get("q") ?? "",
-    segment: params.get("segment") ?? "all",
-    type: params.get("type") ?? "all",
-    jurisdictions: params.get("jurisdictions")?.split(",").filter(Boolean) ?? [],
-  });
-
-  const slug = params.get("slug");
-  if (!slug) return [makeOverviewRoute(), list];
-  return [makeOverviewRoute(), list, makeDetailRoute(tab, slug)];
-}
-
-function serializeRoutes(routes: ExploreRoute[]): URLSearchParams {
-  // Overview emits no params — `[overview]` serializes to an empty URL
-  // so `/explore` stays clean as the landing state.
-  const params = new URLSearchParams();
-  const list = routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
-  const detail = routes.find((r): r is Extract<ExploreRoute, { type: "detail" }> => r.type === "detail");
-
-  if (list) {
-    params.set("tab", list.payload.tab);
-    if (list.payload.mode !== DEFAULT_MODE_FOR_TAB[list.payload.tab]) {
-      params.set("mode", list.payload.mode);
-    }
-    if (list.payload.q) params.set("q", list.payload.q);
-    if (list.payload.segment && list.payload.segment !== "all") params.set("segment", list.payload.segment);
-    if (list.payload.type && list.payload.type !== "all") params.set("type", list.payload.type);
-    if (list.payload.jurisdictions.length > 0) params.set("jurisdictions", list.payload.jurisdictions.join(","));
-  }
-  if (detail) {
-    params.set("slug", detail.payload.slug);
-  }
-  return params;
+  return parseRoutesPure(params, resolveProgramAdmin);
 }
 
 // ---------------------------------------------------------------------------
@@ -247,6 +105,12 @@ export interface ExplorerState {
   mode: "overview" | "list" | "detail";
   viewMode: ExploreViewMode;
   slug: string | null;
+  /**
+   * The entity kind of the top-most detail route (e.g. "programs" even while
+   * the underlying list tab is "utilities" for a nested program). Drives
+   * which detail panel renders. Null when not on a detail. See CG-252.
+   */
+  detailKind: EntityTab | null;
   q: string;
   segment: string;
   type: string;
@@ -412,6 +276,10 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     const detail = stack.current?.type === "detail" ? stack.current : null;
     const current = stack.current;
     const mode: ExplorerState["mode"] = detail ? "detail" : current?.type === "overview" ? "overview" : "list";
+    // The panel keys off the top detail's OWN entity kind, not the list tab,
+    // so a program nested on top of its administrator utility renders the
+    // program panel even though the underlying list is utilities (CG-252).
+    const topDetail = topDetailRoute(stack.routes);
     // The overview root has no list route, so it has no per-layer projection
     // of its own. See lib/explorer/view-mode.ts for why this is not simply
     // DEFAULT_MODE_FOR_TAB[DEFAULT_TAB] (which would render the map surface
@@ -423,6 +291,7 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       mode,
       viewMode,
       slug: detail?.payload.slug ?? null,
+      detailKind: detail ? (topDetail?.payload.entityKind ?? tab) : null,
       q: filters.q,
       segment: filters.segment,
       type: filters.type,
@@ -500,7 +369,43 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       // Programs tab kept `tab=programs` and rendered ProgramDetailPanel with
       // a utility slug → "Program not found". Map the DetailView to its tab.
       const targetTab = detailViewToTab(view);
-      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+      const currentList = findListRoute(stack.routes);
+
+      // Programs are nested under their administrator utility. Drilling into a
+      // program pushes [detail(utility), detail(program)] so the back-arrow
+      // pops program → administrator utility → list. If the user is already on
+      // that exact administrator utility's detail, push only the program on
+      // top of it so back returns to the utility they came from (CG-252).
+      if (view === "program") {
+        const nested = makeProgramDetailRoutes(slug, resolveProgramAdmin);
+        const adminUtility = nested.find(
+          (r): r is Extract<ExploreRoute, { type: "detail" }> =>
+            r.type === "detail" && r.payload.entityKind === "utilities"
+        );
+        const topDetail = topDetailRoute(stack.routes);
+
+        // Already viewing the program's administrator utility: just stack the
+        // program on top, preserving the utility (and the list beneath it) so
+        // back returns exactly where the user came from.
+        if (
+          adminUtility &&
+          topDetail?.payload.entityKind === "utilities" &&
+          topDetail.payload.slug === adminUtility.payload.slug
+        ) {
+          stack.push(makeDetailRoute("programs", slug));
+          return;
+        }
+
+        // Otherwise rebuild the canonical nested shape under the programs list
+        // so the URL, back-stack, and panel are consistent regardless of entry
+        // point (drill-in, cross-entity link, or global search).
+        stack.close();
+        stack.push(makeOverviewRoute());
+        stack.push(makeListRoute("programs"));
+        for (const route of nested) stack.push(route);
+        dispatch({ type: "SET_LIST_SOURCE", listSource: "programs" });
+        return;
+      }
 
       if (currentList?.payload.tab === targetTab) {
         // Same entity type: drill in on top of the current (filtered) list so
@@ -544,15 +449,16 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
         jurisdictions: currentList.payload.jurisdictions,
       });
 
-      // `stack.replace` swaps the TOP of the stack. With a detail open that
+      // `stack.replace` swaps the TOP of the stack. With detail(s) open that
       // silently ate the detail route instead of re-projecting the list
-      // underneath it, so rebuild the stack and put the detail back on top.
-      const detail = stack.routes.find((r): r is Extract<ExploreRoute, { type: "detail" }> => r.type === "detail");
-      if (detail) {
+      // underneath it, so rebuild the stack and put every detail back on top
+      // in order (a nested program carries both its utility and program).
+      const details = detailRoutes(stack.routes);
+      if (details.length > 0) {
         stack.close();
         stack.push(makeOverviewRoute());
         stack.push(nextList);
-        stack.push(detail);
+        for (const d of details) stack.push(d);
         return;
       }
 

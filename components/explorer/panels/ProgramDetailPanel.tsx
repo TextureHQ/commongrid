@@ -107,6 +107,13 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   }, [program]);
 
   useEffect(() => {
+    // While the program is still loading we don't yet know its territories.
+    // Leave whatever highlight is currently shown (e.g. the administrator
+    // utility we drilled in from) untouched rather than blanking the map —
+    // that null gap between the old and new highlight is exactly the "all map
+    // layers disappear, then pop back up" flash Victor reported (CG-252).
+    if (!program) return;
+
     if (territoryFileKeys.length === 0) {
       setHighlight(null);
       return;
@@ -132,6 +139,8 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
       }
 
       if (allFeatures.length > 0) {
+        // Replace atomically — the previous highlight swaps for the program's
+        // territories in a single render, no intermediate blank frame.
         setHighlight({ type: "FeatureCollection", features: allFeatures });
       } else {
         setHighlight(null);
@@ -139,11 +148,23 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
     }
 
     loadAll();
+    // Cleanup only cancels the in-flight fetch. It must NOT clear the
+    // highlight: this cleanup also runs when `territoryFileKeys` changes
+    // (program load), and clearing there reintroduced the blank-then-repaint
+    // flash. The dedicated unmount effect below clears once, on real exit.
     return () => {
       cancelled = true;
-      setHighlight(null);
     };
-  }, [territoryFileKeys, setHighlight]);
+  }, [program, territoryFileKeys, setHighlight]);
+
+  // Clear the highlight exactly once, when the program panel unmounts (the
+  // user navigated back to a list or another entity). `setHighlight` is a
+  // stable useCallback, so this effect never re-runs mid-view. Keeping the
+  // clear here — instead of in the fetch effect's cleanup — is what lets the
+  // highlight persist smoothly across the program's own load (CG-252).
+  useEffect(() => {
+    return () => setHighlight(null);
+  }, [setHighlight]);
 
   if (!program) {
     return (

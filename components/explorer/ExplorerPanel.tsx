@@ -36,9 +36,14 @@ export function ExplorerPanel({ listSource, forceTable }: ExplorerPanelProps = {
   // activeTab: use listSource (map view) or state.tab (list view)
   const activeTab = listSource ?? state.tab;
 
-  // Detail views (slug-based, activeTab tells us entity type context)
+  // Detail views are keyed off the top detail route's OWN entity kind
+  // (state.detailKind), not the underlying list tab. A program nested on top
+  // of its administrator utility has detailKind="programs" while the list tab
+  // is "utilities", so it must render the program panel, not the utility one
+  // (CG-252). Falls back to the active tab for older single-detail stacks.
   if (state.mode === "detail" && state.slug) {
-    switch (activeTab) {
+    const detailTab = state.detailKind ?? activeTab;
+    switch (detailTab) {
       case "utilities":
         return <UtilityDetailPanel slug={state.slug} />;
       case "grid-operators":
