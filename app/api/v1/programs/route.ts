@@ -29,6 +29,7 @@ const ORGANIZATION_ROLES = ["ADMINISTRATOR", "IMPLEMENTER", "FUNDER", "REGULATOR
 const querySchema = z.object({
   status: z.string().optional(),
   assetType: z.string().optional(),
+  deviceType: z.string().optional(),
   marketSegment: z.string().optional(),
   gridService: z.string().optional(),
   /**
@@ -123,6 +124,7 @@ const ALL_FIELDS = new Set<string>([
   "organizations",
   "organizationNames",
   "assetTypes",
+  "deviceTypes",
   "marketSegments",
   "participationModels",
   "incentiveStructures",
@@ -173,6 +175,7 @@ async function handler(req: Request): Promise<Response> {
   const {
     status,
     assetType,
+    deviceType,
     marketSegment,
     gridService,
     organization,
@@ -201,6 +204,7 @@ async function handler(req: Request): Promise<Response> {
   const allPrograms = await loadPrograms({
     status,
     assetType,
+    deviceType,
     marketSegment,
     gridService,
     organization,

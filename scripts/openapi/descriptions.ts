@@ -133,6 +133,7 @@ export const DESCRIPTIONS: Record<string, FieldDescriptionMap> = {
     description: "Full program description",
     organizations: "Array of {entityId, role} objects describing involved organizations",
     assetTypes: "Array of asset types (e.g. battery, thermostat, water-heater)",
+    deviceTypes: "Array of device/control types (LOAD_MANAGEMENT_SWITCH, SMART_DEVICE)",
     marketSegments: "Array of market segments (residential, C&I, etc.)",
     participationModels: "Array of participation model codes",
     incentiveStructures: "Array of incentive structure codes",

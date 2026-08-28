@@ -27,6 +27,8 @@ export const programs = pgTable(
     organizations: jsonb("organizations").notNull().default([]),
     /** AssetType[] enum values */
     assetTypes: jsonb("asset_types").notNull().default([]),
+    /** DeviceType[] enum values — control mechanism (switch vs smart device) */
+    deviceTypes: jsonb("device_types").notNull().default([]),
     /** MarketSegment[] enum values */
     marketSegments: jsonb("market_segments").notNull().default([]),
     /** ParticipationModel[] enum values */
@@ -85,6 +87,7 @@ export const programs = pgTable(
     // CREATE INDEX idx_programs_search ON programs USING GIN(search_vector);
     // CREATE INDEX idx_programs_name_trgm ON programs USING GIN(name gin_trgm_ops);
     // CREATE INDEX idx_programs_asset_types ON programs USING GIN(asset_types);
+    // CREATE INDEX idx_programs_device_types ON programs USING GIN(device_types);
     // CREATE INDEX idx_programs_grid_services ON programs USING GIN(grid_services);
     // CREATE INDEX idx_programs_organizations ON programs USING GIN(organizations);
   ]

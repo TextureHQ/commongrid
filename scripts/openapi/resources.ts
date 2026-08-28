@@ -128,6 +128,7 @@ export const RESOURCES: ResourceDef[] = [
       fieldOverrides: {
         organizations: OBJECT_ARRAY,
         assetTypes: STRING_ARRAY,
+        deviceTypes: STRING_ARRAY,
         marketSegments: STRING_ARRAY,
         participationModels: STRING_ARRAY,
         incentiveStructures: STRING_ARRAY,

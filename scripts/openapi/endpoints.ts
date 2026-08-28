@@ -840,6 +840,12 @@ export const ENDPOINTS: EndpointDef[] = [
         description: "Filter by asset type (matches any element in program's `assetTypes` array)",
         schema: STRING,
       },
+      {
+        name: "deviceType",
+        in: "query",
+        description: "Filter by device/control type (matches any element in program's `deviceTypes` array)",
+        schema: STRING,
+      },
       { name: "marketSegment", in: "query", description: "Filter by market segment", schema: STRING },
       { name: "gridService", in: "query", description: "Filter by grid service", schema: STRING },
       {

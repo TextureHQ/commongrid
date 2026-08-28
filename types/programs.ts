@@ -46,6 +46,25 @@ export const AssetTypeLabel: Record<AssetType, string> = {
   [AssetType.NON_DEVICE]: "Non-Device",
 };
 
+/**
+ * DeviceType — the control mechanism a program uses to engage an asset,
+ * orthogonal to AssetType. A single asset type (e.g. a Heating & Cooling
+ * load) may be enrolled either through a smart device (a communicating
+ * thermostat) or through a utility-installed load management switch, and
+ * programs are meaningfully different depending on which.
+ *
+ * Values mirror the "Device Type" dimension in the source Programs dataset.
+ */
+export enum DeviceType {
+  LOAD_MANAGEMENT_SWITCH = "LOAD_MANAGEMENT_SWITCH",
+  SMART_DEVICE = "SMART_DEVICE",
+}
+
+export const DeviceTypeLabel: Record<DeviceType, string> = {
+  [DeviceType.LOAD_MANAGEMENT_SWITCH]: "Load Management Switch",
+  [DeviceType.SMART_DEVICE]: "Device",
+};
+
 export enum MarketSegment {
   RESIDENTIAL = "RESIDENTIAL",
   COMMERCIAL = "COMMERCIAL",
@@ -211,6 +230,7 @@ export interface ProgramVariant {
   name: string;
   description?: string;
   assetTypes?: AssetType[];
+  deviceTypes?: DeviceType[];
   marketSegments?: MarketSegment[];
   incentiveStructures?: IncentiveStructure[];
   compensationTiers?: CompensationTier[];
@@ -226,6 +246,7 @@ export interface Program {
   organizations: ProgramOrganization[];
   organizationNames?: string[];
   assetTypes: AssetType[];
+  deviceTypes: DeviceType[];
   marketSegments: MarketSegment[];
   participationModels: ParticipationModel[];
   incentiveStructures: IncentiveStructure[];

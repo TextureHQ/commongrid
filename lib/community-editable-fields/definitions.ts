@@ -22,6 +22,7 @@
 import { UtilitySegment, UtilityStatus } from "@/types/entities";
 import {
   AssetType,
+  DeviceType,
   GridService,
   IncentiveStructure,
   MarketSegment,
@@ -710,6 +711,16 @@ export const editableFieldDefinitions: EditableFieldDefinition[] = [
     section: "attributes",
     enumSource: "asset_type",
     validationRules: { enum: Object.values(AssetType) },
+  },
+  {
+    entityType: "program",
+    fieldName: "device_types",
+    fieldType: "multi_enum",
+    isCritical: true,
+    displayName: "Device Types",
+    section: "attributes",
+    enumSource: "device_type",
+    validationRules: { enum: Object.values(DeviceType) },
   },
   {
     entityType: "program",
