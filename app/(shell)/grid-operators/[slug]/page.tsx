@@ -758,8 +758,8 @@ export default function UtilityDetailPage() {
           <EntitySection id="grid" title="Grid Relationships">
             <RelationshipCards
               items={[
-                ...(iso ? [{ label: "ISO", name: iso.shortName, href: `/explore?view=iso&slug=${iso.slug}` }] : []),
-                ...(rto ? [{ label: "RTO", name: rto.shortName, href: `/explore?view=rto&slug=${rto.slug}` }] : []),
+                ...(iso ? [{ label: "ISO", name: iso.shortName, href: `/explore/grid-operators/${iso.slug}` }] : []),
+                ...(rto ? [{ label: "RTO", name: rto.shortName, href: `/explore/grid-operators/${rto.slug}` }] : []),
                 ...(ba
                   ? [{ label: "Balancing Authority", name: ba.shortName, href: `/balancing-authorities/${ba.slug}` }]
                   : []),
@@ -868,7 +868,7 @@ export default function UtilityDetailPage() {
                 items={utilityPrograms.map((prog) => ({
                   // Programs have no standalone `/programs/[slug]` route — they
                   // are viewed inside Explore. `/programs/<slug>` 404'd.
-                  href: `/explore?tab=programs&slug=${prog.slug}`,
+                  href: `/explore/programs/${prog.slug}`,
                   name: prog.name,
                   badge: (
                     <Badge size="sm" shape="pill" variant={prog.status === "ACTIVE" ? "success" : "neutral"}>
