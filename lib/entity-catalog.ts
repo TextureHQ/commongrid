@@ -176,7 +176,7 @@ export const ENTITY_CATALOG: EntityCatalogEntry[] = [
     label: "Programs",
     noun: "programs",
     count: programsCount,
-    href: "/explore?tab=programs",
+    href: "/explore/programs",
     inBrowse: true,
     inSearch: true,
     dotColor: "bg-indigo-400",

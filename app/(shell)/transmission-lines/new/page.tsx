@@ -126,7 +126,7 @@ export default function CreateTransmissionLinePage() {
 
       // Redirect after success
       setTimeout(() => {
-        router.push("/explore?tab=transmission-lines");
+        router.push("/explore/transmission-lines");
       }, 2000);
     } catch (error) {
       console.error("Error submitting contribution:", error);

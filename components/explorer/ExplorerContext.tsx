@@ -1,52 +1,52 @@
 "use client";
 
+import type { ExploreRouteDescriptor } from "@texturehq/edges-explore";
 import {
-  type ExploreRouteDescriptor,
-  type UrlExploreRouteStackController,
-  useUrlExploreRouteStack,
-} from "@texturehq/edges-explore";
+  createExploreRouteStackState,
+  popExploreRoute,
+  pushDeeperExploreRoute,
+  pushExploreRoute,
+  replaceExploreRoute,
+} from "@texturehq/edges-explore/routes";
 import type { FeatureCollection } from "geojson";
-import { useSearchParams } from "next/navigation";
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { detailViewToTab } from "@/lib/explorer/detail-view-tab";
 import {
-  carryViewMode,
-  type ExploreViewMode,
-  parseViewMode,
-  resolveViewMode,
-  viewModeToggleAction,
-} from "@/lib/explorer/view-mode";
+  EXPLORE_BASE_PATH,
+  type ExplorePathItem,
+  type EntityTab as PathEntityTab,
+  parseExplorePath,
+  serializeExplorePath,
+} from "@/lib/explorer/explore-path";
+import { carryViewMode, type ExploreViewMode, parseViewMode, resolveViewMode } from "@/lib/explorer/view-mode";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type EntityTab =
-  | "utilities"
-  | "grid-operators"
-  | "power-plants"
-  | "programs"
-  | "rates"
-  | "transmission-lines"
-  | "ev-charging"
-  | "pricing-nodes"
-  | "substations";
+export type EntityTab = PathEntityTab;
 export type { ExploreViewMode };
 export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
 
 /**
  * Route shape for CommonGrid's explore stack.
  *
- * A `list` route owns its filter state in `payload`. Mutating a filter on
- * the active list route is a `stack.replace(routeWithUpdatedFilter)` call —
- * which both updates the in-memory stack and re-serializes to the URL.
- * Switching tabs (push of a different list peer) evicts the prior list
- * peer and its filter state — matching the existing behavior where
- * tab switches clear filters.
- *
- * A `detail` route only carries the entity slug. `entityKind` records which
- * tab context the user was in when they drilled in, so the back-arrow returns
- * them to the right list view.
+ * As of CG-252 the URL *path* is the persisted form of the navigation stack;
+ * query params carry view options only (`?mode=table`, `?q=`, and the list
+ * filters). A `list` route owns its filter/view state in `payload`; a
+ * `detail` route carries the entity slug plus the `entityKind` that records
+ * which list context it belongs to.
  */
 export interface ListRoutePayload {
   tab: EntityTab;
@@ -75,11 +75,19 @@ const DEFAULT_FILTERS: Omit<ListRoutePayload, "tab" | "mode"> = {
   jurisdictions: [],
 };
 
+/**
+ * Default projection for a freshly opened list route.
+ *
+ * CG-252 acceptance criterion 6: the default view everywhere is the map, and
+ * `?mode=table` is the only way table mode ever appears in a URL. Every tab
+ * therefore defaults to "map"; the homepage entry points that want a table
+ * request it explicitly with `?mode=table`.
+ */
 export const DEFAULT_MODE_FOR_TAB: Record<EntityTab, ExploreViewMode> = {
-  utilities: "table",
-  "grid-operators": "table",
-  programs: "table",
-  rates: "table",
+  utilities: "map",
+  "grid-operators": "map",
+  programs: "map",
+  rates: "map",
   "power-plants": "map",
   "transmission-lines": "map",
   "ev-charging": "map",
@@ -106,91 +114,156 @@ function makeListRoute(
 function makeDetailRoute(entityKind: EntityTab, slug: string): ExploreRoute {
   return {
     type: "detail",
-    id: `detail:${slug}`,
+    id: `detail:${entityKind}:${slug}`,
     payload: { entityKind, slug },
   };
 }
 
+const getRouteKey = (route: ExploreRoute): string => route.id;
+const getRouteType = (route: ExploreRoute): string => route.type;
+
 // ---------------------------------------------------------------------------
-// URL ↔ stack serialization
+// Path ↔ stack serialization
+//
+// The path grammar itself lives in lib/explorer/explore-path.ts (pure,
+// unit-tested). These helpers translate between that framework-free
+// `ExplorePathItem[]` and the app's richer `ExploreRoute[]`, and split the
+// view options out into query params.
 // ---------------------------------------------------------------------------
 
-const VALID_TABS: ReadonlySet<EntityTab> = new Set([
-  "utilities",
-  "grid-operators",
-  "power-plants",
-  "programs",
-  "rates",
-  "transmission-lines",
-  "ev-charging",
-  "pricing-nodes",
-  "substations",
-]);
+function routeToPathItem(route: ExploreRoute): ExplorePathItem {
+  if (route.type === "overview") return { kind: "overview" };
+  if (route.type === "list") return { kind: "list", tab: route.payload.tab };
+  return { kind: "detail", entityKind: route.payload.entityKind, slug: route.payload.slug };
+}
 
-function parseTab(value: string | null): EntityTab {
-  if (value && VALID_TABS.has(value as EntityTab)) return value as EntityTab;
-  return DEFAULT_TAB;
+function findList(routes: ExploreRoute[]): Extract<ExploreRoute, { type: "list" }> | undefined {
+  return routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
 }
 
 /**
- * Parse URLSearchParams into a stack of explore routes.
- *
- * Overview is always the stack root — `/explore` (no params) lands on
- * overview, and back-from-list returns to it.
- *
- * - empty URL → `[overview]`
- * - `?tab=utilities` → `[overview, list(utilities)]`
- * - `?tab=plants&slug=sunrise` → `[overview, list(plants), detail(sunrise, plants)]`
- *
- * Filter params (`q`, `segment`, `type`, `jurisdictions`) attach to the
- * current list route's payload. They survive the back-arrow popping a
- * detail route off, but are cleared when the user switches tabs (because
- * peer eviction replaces the list route with a fresh one).
+ * Split the pathname after `/explore` into path segments.
  */
-function parseRoutes(params: URLSearchParams): ExploreRoute[] {
-  // Backwards-compat for the old `view` param name.
-  const tabParam = params.get("tab") ?? params.get("view");
-  if (!tabParam) return [makeOverviewRoute()];
+function pathnameToSegments(pathname: string | null): string[] {
+  if (!pathname) return [];
+  const trimmed = pathname.replace(/^\/+|\/+$/g, "");
+  const parts = trimmed.split("/");
+  if (parts[0] !== "explore") return [];
+  return parts.slice(1);
+}
 
-  const tab = parseTab(tabParam);
+/**
+ * Parse the current pathname + query into a stack of explore routes, oldest
+ * (overview root) to newest. The path supplies the navigation structure; the
+ * query supplies the active list route's view options (mode + filters).
+ */
+function parseRoutes(pathname: string | null, params: URLSearchParams): ExploreRoute[] {
+  const items = parseExplorePath(pathnameToSegments(pathname));
 
-  // An explicit `?mode=` wins; otherwise the per-tab default applies. URL
-  // entry points are the only place the per-tab default grammar belongs.
-  const mode = parseViewMode(params.get("mode")) ?? DEFAULT_MODE_FOR_TAB[tab];
-
-  const list = makeListRoute(tab, mode, {
+  const mode = parseViewMode(params.get("mode")) ?? DEFAULT_MODE_FOR_TAB[DEFAULT_TAB];
+  const filters = {
     q: params.get("q") ?? "",
     segment: params.get("segment") ?? "all",
     type: params.get("type") ?? "all",
     jurisdictions: params.get("jurisdictions")?.split(",").filter(Boolean) ?? [],
-  });
+  };
 
-  const slug = params.get("slug");
-  if (!slug) return [makeOverviewRoute(), list];
-  return [makeOverviewRoute(), list, makeDetailRoute(tab, slug)];
+  return items.map((item) => {
+    if (item.kind === "overview") return makeOverviewRoute();
+    if (item.kind === "list") return makeListRoute(item.tab, mode, filters);
+    return makeDetailRoute(item.entityKind, item.slug);
+  });
 }
 
-function serializeRoutes(routes: ExploreRoute[]): URLSearchParams {
-  // Overview emits no params — `[overview]` serializes to an empty URL
-  // so `/explore` stays clean as the landing state.
-  const params = new URLSearchParams();
-  const list = routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
-  const detail = routes.find((r): r is Extract<ExploreRoute, { type: "detail" }> => r.type === "detail");
+/**
+ * Serialize a stack of routes into its `/explore` pathname.
+ */
+function serializePath(routes: ExploreRoute[]): string {
+  return serializeExplorePath(routes.map(routeToPathItem));
+}
 
-  if (list) {
-    params.set("tab", list.payload.tab);
-    if (list.payload.mode !== DEFAULT_MODE_FOR_TAB[list.payload.tab]) {
-      params.set("mode", list.payload.mode);
-    }
-    if (list.payload.q) params.set("q", list.payload.q);
-    if (list.payload.segment && list.payload.segment !== "all") params.set("segment", list.payload.segment);
-    if (list.payload.type && list.payload.type !== "all") params.set("type", list.payload.type);
-    if (list.payload.jurisdictions.length > 0) params.set("jurisdictions", list.payload.jurisdictions.join(","));
-  }
-  if (detail) {
-    params.set("slug", detail.payload.slug);
-  }
+/**
+ * Serialize the active list route's view options into query params. Only the
+ * view options ever live in the query — never navigation state.
+ *
+ *  - `mode` is emitted only when it is `table` (map is the default everywhere).
+ *  - `q` / `segment` / `type` / `jurisdictions` are emitted only when set.
+ */
+function serializeQuery(routes: ExploreRoute[]): URLSearchParams {
+  const params = new URLSearchParams();
+  const list = findList(routes);
+  if (!list) return params;
+
+  if (list.payload.mode === "table") params.set("mode", "table");
+  if (list.payload.q) params.set("q", list.payload.q);
+  if (list.payload.segment && list.payload.segment !== "all") params.set("segment", list.payload.segment);
+  if (list.payload.type && list.payload.type !== "all") params.set("type", list.payload.type);
+  if (list.payload.jurisdictions.length > 0) params.set("jurisdictions", list.payload.jurisdictions.join(","));
   return params;
+}
+
+/** Build the full `pathname[?query]` string a stack serializes to. */
+function serializeUrl(routes: ExploreRoute[]): string {
+  const path = serializePath(routes);
+  const query = serializeQuery(routes).toString();
+  return query ? `${path}?${query}` : path;
+}
+
+// ---------------------------------------------------------------------------
+// Path-backed route stack
+//
+// Mirrors the shape of `useUrlExploreRouteStack` from @texturehq/edges-explore
+// but persists the navigation structure in the URL *path* (via
+// history.replaceState) rather than in search params. The in-memory route
+// array is the working copy; the URL is the persisted form.
+//
+// The sync discipline is inherited from CG-257: internal navigations write the
+// URL through raw `history.replaceState` (which does NOT update Next's
+// usePathname/useSearchParams), so the external-change effect stays quiet for
+// them. Only genuine Next navigations (e.g. a global-search `router.push`) and
+// browser back/forward update those hooks and trigger a re-parse.
+// ---------------------------------------------------------------------------
+
+interface PathExploreStack {
+  routes: ExploreRoute[];
+  current: ExploreRoute | null;
+  previous: ExploreRoute | null;
+  canGoBack: boolean;
+  push: (route: ExploreRoute) => void;
+  pushDeeper: (route: ExploreRoute) => void;
+  replace: (route: ExploreRoute | null) => void;
+  back: () => void;
+  close: () => void;
+  reset: (routes: ExploreRoute[]) => void;
+  serializedUrl: string;
+}
+
+function usePathExploreRouteStack(pathname: string | null, searchParams: URLSearchParams): PathExploreStack {
+  const [routes, setRoutes] = useState<ExploreRoute[]>(() => parseRoutes(pathname, searchParams));
+
+  const push = useCallback((route: ExploreRoute) => {
+    setRoutes((current) => pushExploreRoute(current, route, getRouteKey, getRouteType));
+  }, []);
+  const pushDeeper = useCallback((route: ExploreRoute) => {
+    setRoutes((current) => pushDeeperExploreRoute(current, route, getRouteKey));
+  }, []);
+  const replace = useCallback((route: ExploreRoute | null) => {
+    setRoutes((current) => replaceExploreRoute(current, route));
+  }, []);
+  const back = useCallback(() => {
+    setRoutes((current) => popExploreRoute(current));
+  }, []);
+  const close = useCallback(() => {
+    setRoutes([makeOverviewRoute()]);
+  }, []);
+  const reset = useCallback((next: ExploreRoute[]) => {
+    setRoutes(next.length > 0 ? next : [makeOverviewRoute()]);
+  }, []);
+
+  const state = useMemo(() => createExploreRouteStackState(routes), [routes]);
+  const serializedUrl = useMemo(() => serializeUrl(routes), [routes]);
+
+  return { ...state, push, pushDeeper, replace, back, close, reset, serializedUrl };
 }
 
 // ---------------------------------------------------------------------------
@@ -236,17 +309,20 @@ function viewReducer(state: ViewState, action: ViewAction): ViewState {
 // Combined state surface (preserves the existing useExplorer() API shape)
 // ---------------------------------------------------------------------------
 
-/**
- * Derived state mirrored from the route stack onto the existing `state.*`
- * shape, so panels using `useExplorer().state.tab` / `state.slug` /
- * `state.mode` etc. keep working unchanged.
- */
 export interface ExplorerState {
   tab: EntityTab;
   listSource: EntityTab;
   mode: "overview" | "list" | "detail";
   viewMode: ExploreViewMode;
   slug: string | null;
+  /**
+   * The entity kind of the current detail route (top of the stack). This is
+   * the authoritative subject of a detail view — NOT `tab`/`listSource`, which
+   * track the underlying list. For a program nested under a utility the list
+   * tab is `utilities` while the open detail is a `programs` entity, so the
+   * panel dispatcher must key off this to render ProgramDetailPanel.
+   */
+  detailKind: EntityTab | null;
   q: string;
   segment: string;
   type: string;
@@ -258,7 +334,7 @@ export interface ExplorerState {
 
 interface ExplorerContextValue {
   state: ExplorerState;
-  stack: UrlExploreRouteStackController<ExploreRoute>;
+  stack: PathExploreStack;
   navigateToTab: (tab: EntityTab) => void;
   navigateToOverview: () => void;
   navigateToDetail: (view: DetailView, slug: string) => void;
@@ -274,10 +350,6 @@ interface ExplorerContextValue {
   goBack: () => void;
   setViewMode: (mode: ExploreViewMode) => void;
 }
-
-// ---------------------------------------------------------------------------
-// Context
-// ---------------------------------------------------------------------------
 
 const ExplorerCtx = createContext<ExplorerContextValue | null>(null);
 
@@ -295,111 +367,84 @@ interface ExplorerProviderProps {
   children: ReactNode;
 }
 
-/**
- * The active layer (`?view=`/`?tab=`) and projection (`?mode=`) are derived
- * from the URL by `parseRoutes`, so they are intentionally NOT accepted as
- * props here — a second source of truth would drift from the route stack.
- */
 export function ExplorerProvider({ children }: ExplorerProviderProps) {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [view, dispatch] = useReducer(viewReducer, INITIAL_VIEW_STATE);
 
-  const stack = useUrlExploreRouteStack<ExploreRoute>({
-    parse: parseRoutes,
-    serialize: serializeRoutes,
-    initialSearch: searchParams?.toString(),
-    getRouteKey: (route) => route.id,
-  });
+  const searchString = searchParams?.toString() ?? "";
+  const stack = usePathExploreRouteStack(
+    pathname,
+    useMemo(() => new URLSearchParams(searchString), [searchString])
+  );
 
-  // Track the last search string we synced to the URL to avoid loops.
-  const lastSyncedSearch = useRef(stack.serializedSearch);
+  // Track the last URL we synced to avoid ping-pong between the stack→URL
+  // write and the URL→stack re-parse. Seeded to the stack's initial URL.
+  const lastSyncedUrl = useRef(stack.serializedUrl);
 
-  // The stack controller is a fresh object literal on every render (the hook
-  // returns `{ ...state, push, ... }`), so it must NOT sit in an effect
-  // dependency array — doing so runs the URL→stack effect on every render and,
-  // combined with a stale `searchParams`, ping-pongs stack.close()/push()
-  // against the raw replaceState write below → "Maximum update depth exceeded"
-  // (CG-257). We read the live controller through a ref instead.
+  // Read the live stack through a ref so the URL→stack effect can depend only
+  // on the incoming pathname/search, never on the stack object (which is a
+  // fresh literal every render). See CG-257.
   const stackRef = useRef(stack);
   stackRef.current = stack;
 
-  // Stack → URL sync. Use raw history.replaceState to avoid triggering
-  // Next.js routing machinery (router.replace causes re-renders that can
-  // create feedback loops with useSearchParams / initialSearch serialization).
+  // Stack → URL. Raw history.replaceState avoids Next's routing machinery
+  // (router.replace re-renders and can feed back into useSearchParams /
+  // usePathname, which is what caused the CG-257 render loop).
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const next = stack.serializedSearch;
-    const current = window.location.search.replace(/^\?/, "");
+    const next = stack.serializedUrl;
+    const current = `${window.location.pathname}${window.location.search}`;
     if (next !== current) {
-      window.history.replaceState(null, "", next ? `${window.location.pathname}?${next}` : window.location.pathname);
-      lastSyncedSearch.current = next;
+      window.history.replaceState(null, "", next);
     }
-  }, [stack.serializedSearch]);
+    lastSyncedUrl.current = next;
+  }, [stack.serializedUrl]);
 
-  // URL → Stack sync for in-app navigations.
-  // Next's router.push updates searchParams but doesn't fire popstate, so
-  // useUrlExploreRouteStack misses it. If the URL changes externally (e.g.
-  // clicking a global search result while already on /explore), we need to
-  // re-parse and reset the stack here.
+  // URL → Stack for external navigations. Next's router.push (e.g. from the
+  // global search box) updates usePathname/useSearchParams but our internal
+  // replaceState writes do not, so this effect only reacts to genuine external
+  // URL changes and browser back/forward.
   useEffect(() => {
-    const stack = stackRef.current;
-    const currentSearch = searchParams?.toString() ?? "";
+    const activeStack = stackRef.current;
+    const incomingUrl = searchString
+      ? `${pathname ?? EXPLORE_BASE_PATH}?${searchString}`
+      : (pathname ?? EXPLORE_BASE_PATH);
 
-    // Ignore changes if the URL matches what we just wrote, or if it
-    // matches the current stack (no-op).
-    if (currentSearch === lastSyncedSearch.current || currentSearch === stack.serializedSearch) {
-      lastSyncedSearch.current = currentSearch;
+    // Ignore if this matches what we just wrote, or the current stack already.
+    if (incomingUrl === lastSyncedUrl.current || incomingUrl === activeStack.serializedUrl) {
+      lastSyncedUrl.current = incomingUrl;
       return;
     }
 
-    // Parse the new incoming URL.
-    const incomingParams = new URLSearchParams(currentSearch);
-    const newRoutes = parseRoutes(incomingParams);
+    const incomingParams = new URLSearchParams(searchString);
+    const newRoutes = parseRoutes(pathname, incomingParams);
 
-    // If the external URL didn't explicitly request a mode, preserve the user's
-    // current projection (map vs table) just like an internal tab switch does.
+    // If the external URL didn't explicitly request a mode, preserve the
+    // user's current projection (map vs table) rather than snapping to the
+    // default — matches the internal tab-switch behavior.
     if (!incomingParams.has("mode")) {
-      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
-      const newList = newRoutes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+      const currentList = findList(activeStack.routes);
+      const newList = findList(newRoutes);
       if (currentList && newList) {
         newList.payload.mode = carryViewMode(currentList.payload.mode);
       }
     }
 
-    // Check if adopting this URL would actually change our serialized state.
-    // This prevents ping-pong loops if parse+serialize isn't perfectly idempotent.
-    const newSerialized = serializeRoutes(newRoutes).toString();
-    if (newSerialized === stack.serializedSearch) {
-      lastSyncedSearch.current = currentSearch;
+    if (serializeUrl(newRoutes) === activeStack.serializedUrl) {
+      lastSyncedUrl.current = incomingUrl;
       return;
     }
 
-    // The URL changed externally. Rebuild the stack to match.
-    // Close clears the stack, then we push the new routes in order.
-    stack.close();
-    let newTab: EntityTab | null = null;
-    for (const route of newRoutes) {
-      stack.push(route);
-      if (route.type === "list") {
-        newTab = route.payload.tab;
-      }
-    }
-    if (newTab) {
-      dispatch({ type: "SET_LIST_SOURCE", listSource: newTab });
-    }
-    lastSyncedSearch.current = currentSearch;
-    // Depends ONLY on `searchParams`: this effect reacts to *external* URL
-    // changes (e.g. a Next router.push from global search while already on
-    // /explore). In-app navigations write the URL through raw replaceState,
-    // which intentionally does not update `searchParams`, so this effect stays
-    // quiet for them. `stack` is read via `stackRef` to keep it out of the
-    // dependency array. See CG-257.
-  }, [searchParams]);
+    activeStack.reset(newRoutes);
+    const newList = findList(newRoutes);
+    if (newList) dispatch({ type: "SET_LIST_SOURCE", listSource: newList.payload.tab });
+    lastSyncedUrl.current = incomingUrl;
+  }, [pathname, searchString]);
 
-  // Derive the legacy ExplorerState shape from the stack + view state so
-  // consuming panels continue to read `state.tab`, `state.slug`, etc.
+  // Derive the legacy ExplorerState shape from the stack + view state.
   const state = useMemo<ExplorerState>(() => {
-    const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+    const currentList = findList(stack.routes);
     const tab = currentList?.payload.tab ?? DEFAULT_TAB;
     const filters = currentList?.payload ?? {
       q: "",
@@ -412,10 +457,6 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     const detail = stack.current?.type === "detail" ? stack.current : null;
     const current = stack.current;
     const mode: ExplorerState["mode"] = detail ? "detail" : current?.type === "overview" ? "overview" : "list";
-    // The overview root has no list route, so it has no per-layer projection
-    // of its own. See lib/explorer/view-mode.ts for why this is not simply
-    // DEFAULT_MODE_FOR_TAB[DEFAULT_TAB] (which would render the map surface
-    // as a bare utilities table on a paramless /explore).
     const viewMode = resolveViewMode(currentList?.payload.mode);
     return {
       tab,
@@ -423,6 +464,7 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       mode,
       viewMode,
       slug: detail?.payload.slug ?? null,
+      detailKind: detail?.payload.entityKind ?? null,
       q: filters.q,
       segment: filters.segment,
       type: filters.type,
@@ -433,33 +475,33 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     };
   }, [stack.routes, stack.current, view]);
 
-  // Replace the active list route with a fresh-filter copy. The list
-  // panel only renders when no detail is open (CommonGrid's list view
-  // hides the map and detail layers), so the list route is always the
-  // current top of the stack when a filter setter fires — a plain
-  // `replace` is sufficient.
+  // Replace the active list route with a fresh-filter copy.
   const updateActiveListFilters = useCallback(
     (patch: Partial<Omit<ListRoutePayload, "tab" | "mode">>) => {
-      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+      const currentList = findList(stack.routes);
       if (!currentList) return;
-      stack.replace(
-        makeListRoute(currentList.payload.tab, currentList.payload.mode, {
-          q: currentList.payload.q,
-          segment: currentList.payload.segment,
-          type: currentList.payload.type,
-          jurisdictions: currentList.payload.jurisdictions,
-          ...patch,
-        })
-      );
+      // The list route may sit under an open detail (e.g. filtering is only
+      // reachable from the list view, but be defensive). Rebuild in place.
+      const nextList = makeListRoute(currentList.payload.tab, currentList.payload.mode, {
+        q: currentList.payload.q,
+        segment: currentList.payload.segment,
+        type: currentList.payload.type,
+        jurisdictions: currentList.payload.jurisdictions,
+        ...patch,
+      });
+      if (stack.current?.type === "list") {
+        stack.replace(nextList);
+        return;
+      }
+      stack.reset(stack.routes.map((r) => (r.type === "list" ? nextList : r)));
     },
     [stack]
   );
 
-  // Mirror the active list-route tab onto the view-state listSource so
-  // deep-linked URLs (e.g. /explore?tab=ev-charging) land on the right
-  // panel and overlay configuration without the user having to click again.
+  // Keep the panel's list-source in lock-step with the active list tab so
+  // deep-linked URLs land on the right panel/overlay config.
   useEffect(() => {
-    const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+    const currentList = findList(stack.routes);
     if (currentList && currentList.payload.tab !== view.listSource) {
       dispatch({ type: "SET_LIST_SOURCE", listSource: currentList.payload.tab });
     }
@@ -467,55 +509,45 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
 
   const navigateToTab = useCallback(
     (tab: EntityTab) => {
-      // Preserve the projection the user is currently looking at — switching
-      // layers changes the subject, not the projection. See
-      // lib/explorer/view-mode.ts.
-      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+      const currentList = findList(stack.routes);
       const carriedMode = carryViewMode(currentList?.payload.mode);
-      // Tab switch resets the stack to [overview, list(newTab)]. Plain
-      // `push` would keep an open detail (different type, peer eviction
-      // misses it) on top of the new list — landing the user on a detail
-      // from the OLD tab. Close + push the canonical 2-deep shape.
-      stack.close();
-      stack.push(makeOverviewRoute());
-      stack.push(makeListRoute(tab, carriedMode));
-      // Keep the panel's list-source in lock-step with the destination tab
-      // so the right list panel renders immediately (the MapLayout reads
-      // listSource, not state.tab, to decide which list panel to show).
+      // Tab switch resets the stack to [overview, list(newTab)].
+      stack.reset([makeOverviewRoute(), makeListRoute(tab, carriedMode)]);
       dispatch({ type: "SET_LIST_SOURCE", listSource: tab });
     },
     [stack]
   );
 
   const navigateToOverview = useCallback(() => {
-    stack.close();
-    stack.push(makeOverviewRoute());
+    stack.reset([makeOverviewRoute()]);
   }, [stack]);
 
   const navigateToDetail = useCallback(
     (view: DetailView, slug: string) => {
-      // The destination entity type — NOT the tab the user is currently on.
-      // Cross-entity links (program → utility, utility → program) previously
-      // reused `currentList.payload.tab`, so a utility link opened from the
-      // Programs tab kept `tab=programs` and rendered ProgramDetailPanel with
-      // a utility slug → "Program not found". Map the DetailView to its tab.
       const targetTab = detailViewToTab(view);
-      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
+      const currentList = findList(stack.routes);
+      const top = stack.current;
 
-      if (currentList?.payload.tab === targetTab) {
-        // Same entity type: drill in on top of the current (filtered) list so
-        // the back-arrow returns the user to their filtered list view.
+      // Nested program under the utility currently in view: pushDeeper so the
+      // stack keeps both details and the path becomes
+      // /explore/utilities/:utilitySlug/programs/:programSlug. Back then pops
+      // the program and lands on the utility (not the utilities list).
+      if (view === "program" && top?.type === "detail" && top.payload.entityKind === "utilities") {
+        stack.pushDeeper(makeDetailRoute("programs", slug));
+        return;
+      }
+
+      // Same-entity drill-in from that entity's own list: push the detail on
+      // top of the (filtered) list so back returns to the filtered list.
+      if (currentList?.payload.tab === targetTab && top?.type === "list") {
         stack.push(makeDetailRoute(targetTab, slug));
         return;
       }
 
-      // Different entity type: swap the underlying list route to the target
-      // tab so the correct detail panel renders, the URL carries the right
-      // `tab`, and the back-arrow returns to the destination entity's list.
-      stack.close();
-      stack.push(makeOverviewRoute());
-      stack.push(makeListRoute(targetTab));
-      stack.push(makeDetailRoute(targetTab, slug));
+      // Everything else (cross-entity links, map/search clicks): open the
+      // entity top-level in its own list context. A direct program opened this
+      // way lands on /explore/programs/:programSlug.
+      stack.reset([makeOverviewRoute(), makeListRoute(targetTab), makeDetailRoute(targetTab, slug)]);
       dispatch({ type: "SET_LIST_SOURCE", listSource: targetTab });
     },
     [stack]
@@ -523,19 +555,17 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
 
   const setViewMode = useCallback(
     (mode: ExploreViewMode) => {
-      const currentList = stack.routes.find((r): r is Extract<ExploreRoute, { type: "list" }> => r.type === "list");
-      const action = viewModeToggleAction(mode, currentList?.payload.mode);
+      const currentList = findList(stack.routes);
 
-      if (action === "noop") return;
-
-      // Overview has no list route to reproject, so "Table" opens the layer
-      // the map is currently showing (per the region selector sitting
-      // immediately left of the toggle) as a table. The old code early
-      // -returned here, which is what made both buttons inert on `/explore`.
-      if (action === "open-list" || !currentList) {
+      // Overview has no list route to reproject: "Table" opens the layer the
+      // map is currently showing (per the region selector) as a table.
+      if (!currentList) {
+        if (mode === "map") return;
         stack.push(makeListRoute(view.listSource, mode));
         return;
       }
+
+      if (currentList.payload.mode === mode) return;
 
       const nextList = makeListRoute(currentList.payload.tab, mode, {
         q: currentList.payload.q,
@@ -544,19 +574,8 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
         jurisdictions: currentList.payload.jurisdictions,
       });
 
-      // `stack.replace` swaps the TOP of the stack. With a detail open that
-      // silently ate the detail route instead of re-projecting the list
-      // underneath it, so rebuild the stack and put the detail back on top.
-      const detail = stack.routes.find((r): r is Extract<ExploreRoute, { type: "detail" }> => r.type === "detail");
-      if (detail) {
-        stack.close();
-        stack.push(makeOverviewRoute());
-        stack.push(nextList);
-        stack.push(detail);
-        return;
-      }
-
-      stack.replace(nextList);
+      // Reproject the list route in place, preserving any open detail on top.
+      stack.reset(stack.routes.map((r) => (r.type === "list" ? nextList : r)));
     },
     [stack, view.listSource]
   );
@@ -584,9 +603,7 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
   );
 
   const goBack = useCallback(() => {
-    if (stack.canGoBack) {
-      stack.back();
-    }
+    if (stack.canGoBack) stack.back();
   }, [stack]);
 
   const value = useMemo<ExplorerContextValue>(

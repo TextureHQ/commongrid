@@ -188,7 +188,7 @@ function CreateProgramForm() {
 
       // Redirect after success
       setTimeout(() => {
-        router.push("/explore?tab=programs");
+        router.push("/explore/programs");
       }, 2000);
     } catch (error) {
       console.error("Error submitting contribution:", error);
