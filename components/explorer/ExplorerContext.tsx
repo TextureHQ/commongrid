@@ -315,6 +315,14 @@ export interface ExplorerState {
   mode: "overview" | "list" | "detail";
   viewMode: ExploreViewMode;
   slug: string | null;
+  /**
+   * The entity kind of the current detail route (top of the stack). This is
+   * the authoritative subject of a detail view — NOT `tab`/`listSource`, which
+   * track the underlying list. For a program nested under a utility the list
+   * tab is `utilities` while the open detail is a `programs` entity, so the
+   * panel dispatcher must key off this to render ProgramDetailPanel.
+   */
+  detailKind: EntityTab | null;
   q: string;
   segment: string;
   type: string;
@@ -456,6 +464,7 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       mode,
       viewMode,
       slug: detail?.payload.slug ?? null,
+      detailKind: detail?.payload.entityKind ?? null,
       q: filters.q,
       segment: filters.segment,
       type: filters.type,
