@@ -13,6 +13,7 @@
 
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { type NextFetchEvent, type NextRequest, NextResponse } from "next/server";
+import { legacyExploreRedirect } from "@/lib/explorer/legacy-explore-url";
 
 const isProtectedRoute = createRouteMatcher(["/settings(.*)", "/mod/(.*)", "/developers/dashboard(.*)"]);
 
@@ -152,6 +153,11 @@ export default function middleware(
 ): ReturnType<typeof clerkAuthMiddleware> | NextResponse {
   if (isTelemetryTunnelPath(request.nextUrl.pathname)) {
     return NextResponse.next();
+  }
+
+  const legacyExploreTarget = legacyExploreRedirect(request.nextUrl.pathname, request.nextUrl.searchParams);
+  if (legacyExploreTarget) {
+    return NextResponse.redirect(new URL(legacyExploreTarget, request.url), 308);
   }
 
   const publicResponse = publicApiResponse(request);
