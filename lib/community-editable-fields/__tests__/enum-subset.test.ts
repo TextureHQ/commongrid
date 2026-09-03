@@ -17,6 +17,7 @@ import { editableFieldDefinitions } from "@/lib/community-editable-fields/defini
 import { UtilitySegment, UtilityStatus } from "@/types/entities";
 import {
   AssetType,
+  DeviceType,
   GridService,
   IncentiveStructure,
   MarketSegment,
@@ -32,6 +33,7 @@ const TS_ENUM_BACKED_FIELDS: ReadonlyArray<{
 }> = [
   { entityType: "program", fieldName: "status", enumValues: Object.values(ProgramStatus) },
   { entityType: "program", fieldName: "asset_types", enumValues: Object.values(AssetType) },
+  { entityType: "program", fieldName: "device_types", enumValues: Object.values(DeviceType) },
   { entityType: "program", fieldName: "market_segments", enumValues: Object.values(MarketSegment) },
   { entityType: "program", fieldName: "grid_services", enumValues: Object.values(GridService) },
   { entityType: "program", fieldName: "participation_models", enumValues: Object.values(ParticipationModel) },

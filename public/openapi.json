@@ -1915,6 +1915,13 @@
             },
             "description": "Array of asset types (e.g. battery, thermostat, water-heater)"
           },
+          "deviceTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of device/control types (LOAD_MANAGEMENT_SWITCH, SMART_DEVICE)"
+          },
           "marketSegments": {
             "type": "array",
             "items": {
@@ -2068,6 +2075,7 @@
           "name",
           "organizations",
           "assetTypes",
+          "deviceTypes",
           "marketSegments",
           "participationModels",
           "incentiveStructures",
@@ -6795,6 +6803,14 @@
             "name": "assetType",
             "in": "query",
             "description": "Filter by asset type (matches any element in program's `assetTypes` array)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deviceType",
+            "in": "query",
+            "description": "Filter by device/control type (matches any element in program's `deviceTypes` array)",
             "schema": {
               "type": "string"
             }

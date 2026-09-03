@@ -8,6 +8,7 @@ import type {
   AssetType,
   CompensationType,
   CompensationUnit,
+  DeviceType,
   GridService,
   MarketSegment,
   Program,
@@ -23,6 +24,7 @@ import type {
 export interface ProgramFilters {
   status?: string;
   assetType?: string;
+  deviceType?: string;
   marketSegment?: string;
   gridService?: string;
   /** Min 2 chars. Matches against name and slug (case-insensitive). */
@@ -111,6 +113,7 @@ export function dbRowToProgram(row: Record<string, unknown>, utilityMap?: Map<st
     organizations: orgs,
     organizationNames: orgNames,
     assetTypes: (row.assetTypes as AssetType[]) ?? [],
+    deviceTypes: (row.deviceTypes as DeviceType[]) ?? [],
     marketSegments: (row.marketSegments as MarketSegment[]) ?? [],
     participationModels: (row.participationModels as Program["participationModels"]) ?? [],
     incentiveStructures: (row.incentiveStructures as Program["incentiveStructures"]) ?? [],
@@ -159,6 +162,7 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
       description: programs.description,
       organizations: programs.organizations,
       assetTypes: programs.assetTypes,
+      deviceTypes: programs.deviceTypes,
       marketSegments: programs.marketSegments,
       participationModels: programs.participationModels,
       incentiveStructures: programs.incentiveStructures,
@@ -199,6 +203,9 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
   if (filters?.assetType) {
     result = result.filter((p) => p.assetTypes.includes(filters.assetType as AssetType));
   }
+  if (filters?.deviceType) {
+    result = result.filter((p) => p.deviceTypes.includes(filters.deviceType as DeviceType));
+  }
   if (filters?.marketSegment) {
     result = result.filter((p) => p.marketSegments.includes(filters.marketSegment as MarketSegment));
   }
@@ -235,6 +242,7 @@ async function loadBySlugFromDb(slug: string): Promise<Program | null> {
       description: programs.description,
       organizations: programs.organizations,
       assetTypes: programs.assetTypes,
+      deviceTypes: programs.deviceTypes,
       marketSegments: programs.marketSegments,
       participationModels: programs.participationModels,
       incentiveStructures: programs.incentiveStructures,

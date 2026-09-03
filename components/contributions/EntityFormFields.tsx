@@ -4,6 +4,7 @@ import { Badge } from "@texturehq/edges";
 import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import {
   AssetTypeLabel,
+  DeviceTypeLabel,
   GridServiceLabel,
   IncentiveStructureLabel,
   MarketSegmentLabel,
@@ -30,6 +31,7 @@ export interface EditableField {
 // never drift from the canonical enum members.
 const ENUM_LABEL_OVERRIDES: Record<string, string> = {
   ...AssetTypeLabel,
+  ...DeviceTypeLabel,
   ...MarketSegmentLabel,
   ...ParticipationModelLabel,
   ...GridServiceLabel,

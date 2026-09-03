@@ -148,6 +148,13 @@
       "when": 1787616000000,
       "tag": "0024_add_program_details_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1787920800000,
+      "tag": "0025_add_program_device_types",
+      "breakpoints": true
     }
   ]
 }

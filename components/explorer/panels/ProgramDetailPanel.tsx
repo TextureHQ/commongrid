@@ -21,6 +21,7 @@ import {
   AssetTypeLabel,
   CompensationTypeLabel,
   CompensationUnitLabel,
+  DeviceTypeLabel,
   GridServiceLabel,
   IncentiveStructureLabel,
   MarketSegmentLabel,
@@ -235,6 +236,14 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
             <span className="cg-explore-kv-key">Asset Types</span>
             <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
               {program.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", ")}
+            </span>
+          </div>
+          <div className="cg-explore-kv-row">
+            <span className="cg-explore-kv-key">Device Types</span>
+            <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
+              {(program.deviceTypes ?? [])
+                .map((dt) => DeviceTypeLabel[dt as keyof typeof DeviceTypeLabel] ?? dt)
+                .join(", ")}
             </span>
           </div>
           {program.marketSegments.length > 0 && (

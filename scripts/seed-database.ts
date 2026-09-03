@@ -264,6 +264,7 @@ async function seedPrograms(db: DrizzleDb): Promise<number> {
       description: (r.description as string) ?? null,
       organizations: r.organizations ?? [],
       assetTypes: r.assetTypes ?? [],
+      deviceTypes: r.deviceTypes ?? [],
       marketSegments: r.marketSegments ?? [],
       participationModels: r.participationModels ?? [],
       incentiveStructures: r.incentiveStructures ?? [],

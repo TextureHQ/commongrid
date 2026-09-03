@@ -28,7 +28,13 @@ import { useInfiniteList } from "@/hooks/useInfiniteList";
 import { useUtilityNames } from "@/hooks/useUtilityNames";
 import { entityKindColor } from "@/lib/categorical-colors";
 import { humanizeSlug } from "@/lib/slugify";
-import { AssetTypeLabel, CompensationTypeLabel, CompensationUnitLabel, type Program } from "@/types/programs";
+import {
+  AssetTypeLabel,
+  CompensationTypeLabel,
+  CompensationUnitLabel,
+  DeviceTypeLabel,
+  type Program,
+} from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
 import { InfiniteListShell } from "./InfiniteListShell";
 
@@ -174,9 +180,13 @@ export function ProgramListPanel() {
             key={row.slug}
             leading={<span className="h-2 w-2 rounded-full" style={{ background: entityKindColor("programs") }} />}
             title={row.name}
-            subtitle={`${utilityName} · ${row.assetTypes
-              .map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at)
-              .join(", ")}`}
+            subtitle={[
+              utilityName,
+              row.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", "),
+              (row.deviceTypes ?? []).map((dt) => DeviceTypeLabel[dt as keyof typeof DeviceTypeLabel] ?? dt).join(", "),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
             trailing={
               <div className="flex flex-col items-end gap-0.5">
                 <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)", color: statusColor(row.status) }}>
