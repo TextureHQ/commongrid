@@ -13,6 +13,7 @@ import {
   voltageColor,
 } from "@/lib/categorical-colors";
 import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getRegionById } from "@/lib/data";
+import type { MapRegion } from "@/lib/explorer/region-navigation";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
 import { resolveColorMapping, resolveCSSColor } from "@/lib/resolve-css-colors";
 import { useExplorer } from "./ExplorerContext";
@@ -339,8 +340,11 @@ function useProgramBoundaries(isActive: boolean, operatorPalette: string[]) {
   return data;
 }
 
-// Region = which fill/territory layer is shown on the map
-export type MapRegion = "utilities" | "grid-operators" | "programs" | "rates" | "pricing-nodes";
+// Region = which fill/territory layer is shown on the map. The canonical
+// definition lives in lib/explorer/region-navigation.ts (dependency-free so
+// the region→navigation contract can be unit-tested); re-exported here so
+// existing importers of `MapRegion` from ExplorerMap keep working.
+export type { MapRegion };
 
 // Overlay toggles for point/line layers
 export interface MapOverlays {

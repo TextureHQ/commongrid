@@ -3,6 +3,7 @@
 import "@/app/(shell)/explore/explore.css";
 import { ExploreShell } from "@texturehq/edges-explore/layout";
 import { type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { MAP_REGIONS, type MapRegion, regionToTab } from "@/lib/explorer/region-navigation";
 import {
   type EntityTab,
   type ExploreRoute,
@@ -10,7 +11,7 @@ import {
   type ExploreViewMode,
   useExplorer,
 } from "./ExplorerContext";
-import { ExplorerMap, type MapOverlays, type MapRegion } from "./ExplorerMap";
+import { ExplorerMap, type MapOverlays } from "./ExplorerMap";
 import { ExplorerPanel } from "./ExplorerPanel";
 
 // ---------------------------------------------------------------------------
@@ -249,7 +250,7 @@ function RegionDropdown({ value, onChange }: { value: MapRegion; onChange: (v: M
   );
 }
 
-const VALID_MAP_REGIONS: MapRegion[] = ["utilities", "grid-operators", "programs", "rates", "pricing-nodes"];
+const VALID_MAP_REGIONS: readonly MapRegion[] = MAP_REGIONS;
 
 // ---------------------------------------------------------------------------
 // Map layout — ExploreShell from @texturehq/edges-explore/layout owns the
@@ -346,15 +347,24 @@ interface ExplorerLayoutProps {
 }
 
 function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
-  const { state, setListSource, setViewMode } = useExplorer();
+  const { state, navigateToTab, setViewMode } = useExplorer();
 
   const [mapRegion, setMapRegion] = useState<MapRegion>("utilities");
+  // Switching the map's fill layer from the region dropdown is a real
+  // navigation: it has to push a list route onto the URL-backed stack, the
+  // same path the overview bucket tiles take via `navigateToTab`. The old
+  // implementation only mutated view-state `listSource`, which the context's
+  // stack→listSource mirror effect immediately snapped back to the current
+  // route's tab — so on a list route the pick flickered and reverted, and on
+  // the overview root (no list route) nothing navigated at all. That's the
+  // "clicking Programs just refreshes" bug (CG-259). `navigateToTab` carries
+  // the current map/table projection, so the map stays the map.
   const handleMapRegionChange = useCallback(
     (region: MapRegion) => {
       setMapRegion(region);
-      setListSource(region as EntityTab);
+      navigateToTab(regionToTab(region));
     },
-    [setListSource]
+    [navigateToTab]
   );
 
   const [mapOverlays, setMapOverlays] = useState<MapOverlays>(DEFAULT_MAP_OVERLAYS);
