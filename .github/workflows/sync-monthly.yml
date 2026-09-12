@@ -2,7 +2,7 @@ name: Sync Monthly Data
 
 on:
   schedule:
-    - cron: '0 14 * * *' # Daily at 2pm UTC — check for new EIA-860M
+    - cron: "0 14 * * *" # Daily at 2pm UTC — check for new EIA-860M
   workflow_dispatch: {} # Manual trigger
 
 permissions:
@@ -75,7 +75,12 @@ jobs:
             exit 0
           fi
           git commit -m "data: update power plants (EIA-860M monthly)"
-          git push --force-with-lease origin "$BRANCH"
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            remote_tip="$(git ls-remote origin "refs/heads/$BRANCH" | awk '{print $1}')"
+            git push --force-with-lease=refs/heads/"$BRANCH":"$remote_tip" origin "$BRANCH"
+          else
+            git push origin "$BRANCH"
+          fi
           existing_pr_url="$(gh pr list --repo "$GH_REPO" --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"
           if [ -n "$existing_pr_url" ]; then
             echo "Open PR already exists: $existing_pr_url"
