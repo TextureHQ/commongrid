@@ -4,10 +4,10 @@ import isosData from "@/data/isos.json";
 import programsData from "@/data/programs.json";
 import regionsData from "@/data/regions.json";
 import rtosData from "@/data/rtos.json";
+import { decorateProgramsMapCategory } from "@/lib/programs/program-category";
 import type { Changelog } from "@/types/changelog";
 import type { BalancingAuthority, Iso, Region, Rto } from "@/types/entities";
 import type { Program } from "@/types/programs";
-import { decorateProgramsMapCategory } from "@/lib/programs/program-category";
 
 // Utilities data is in a separate module (lib/data-utilities.ts) to avoid
 // bundling the 3.1 MB JSON into client bundles. Re-export for backward
