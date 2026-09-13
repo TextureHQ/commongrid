@@ -83,7 +83,10 @@ const VEC = "vermont-electric-cooperative";
 describe("loadPrograms organization filter", () => {
   beforeEach(() => {
     rows = [
-      row("byob", "Flexible Load - Bring Your Own Battery", [{ role: "ADMINISTRATOR", entityId: VEC }]),
+      {
+        ...row("byob", "Flexible Load - Bring Your Own Battery", [{ role: "ADMINISTRATOR", entityId: VEC }]),
+        assetTypes: ["BATTERY"],
+      },
       row("dynamic-organics", "Dynamic Organics", [{ role: "ADMINISTRATOR", entityId: VEC }]),
       row("legacy-shape", "Legacy Shape", [VEC]),
       row("implementer-only", "Implementer Only", [{ role: "IMPLEMENTER", entityId: VEC }]),
@@ -142,6 +145,6 @@ describe("loadPrograms organization filter", () => {
 
     const result = await loadPrograms({ organization: VEC });
 
-    expect(result.map(p => p.slug)).not.toContain("vec-extended");
+    expect(result.map((p) => p.slug)).not.toContain("vec-extended");
   });
 });
