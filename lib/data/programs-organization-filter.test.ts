@@ -130,11 +130,18 @@ describe("loadPrograms organization filter", () => {
     expect(result).toHaveLength(6);
   });
 
+  it("derives a map category from assetTypes when the row does not store one", async () => {
+    const result = await loadPrograms({ organization: VEC });
+
+    const target = result.find((p) => p.slug === "byob");
+    expect(target?.mapCategory).toBe("BATTERY");
+  });
+
   it("does not partial-match a longer slug that contains the filter value", async () => {
     rows.push(row("vec-extended", "VEC Extended", [{ role: "ADMINISTRATOR", entityId: `${VEC}-holdings` }]));
 
     const result = await loadPrograms({ organization: VEC });
 
-    expect(result.map((p) => p.slug)).not.toContain("vec-extended");
+    expect(result.map(p => p.slug)).not.toContain("vec-extended");
   });
 });

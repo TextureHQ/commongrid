@@ -10,22 +10,15 @@ import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
-import { useProgramList } from "@/hooks/useProgramList";
 import { useRto } from "@/hooks/useRto";
 import { useUtility } from "@/hooks/useUtility";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
-import { getRegionById } from "@/lib/data";
-import {
-  formatCapacity,
-  formatCustomerCount,
-  getFuelCategoryColor,
-  getFuelCategoryLabel,
-  getSegmentLabel,
-  getStatusLabel,
-} from "@/lib/formatting";
+import { getAllPrograms, getRegionById } from "@/lib/data";
+import { formatCapacity, formatCustomerCount, getFuelCategoryColor, getFuelCategoryLabel, getSegmentLabel, getStatusLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { buildNewProgramHref } from "@/lib/programs/new-program-link";
+import { getProgramMapCategoryLabel, summarizePrograms } from "@/lib/programs/program-category";
 import { useExplorer } from "../ExplorerContext";
 
 const ArrowIcon = () => (
@@ -64,10 +57,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     [utility, utilities]
   );
 
-  const region = useMemo(
-    () => (utility?.serviceTerritoryId ? getRegionById(utility.serviceTerritoryId) : null),
-    [utility]
-  );
+  const region = useMemo(() => (utility?.serviceTerritoryId ? getRegionById(utility.serviceTerritoryId) : null), [utility]);
 
   const territoryFileKey = useMemo(() => {
     if (!region) return null;
@@ -93,24 +83,18 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     return () => setHighlight(null);
   }, [territoryFileKey, setHighlight]);
 
-  const childUtilities = useMemo(
-    () => (utility ? utilities.filter((u) => u.parentId === utility.id) : []),
-    [utility, utilities]
-  );
+  const childUtilities = useMemo(() => (utility ? utilities.filter((u) => u.parentId === utility.id) : []), [utility, utilities]);
 
   const { powerPlants: utilityPowerPlants } = usePowerPlantList({
     utilityId: utility?.id,
     limit: 200,
   });
 
-  // Server-side filter by organization — see grid-operators/[slug]. Fetching a
-  // capped page and filtering client-side silently hid any program past the
-  // 200-row cap.
-  const { programs: utilityPrograms } = useProgramList({
-    organization: utility?.slug,
-    limit: 200,
-    enabled: Boolean(utility?.slug),
-  });
+  const utilityPrograms = useMemo(
+    () => (utility ? getAllPrograms().filter((program) => program.organizations.some((o) => o.entityId === utility.slug)) : []),
+    [utility]
+  );
+  const programTotals = useMemo(() => summarizePrograms(utilityPrograms), [utilityPrograms]);
 
   if (utilitiesLoading) {
     return <div className="cg-explore-loading">Loading…</div>;
@@ -128,7 +112,6 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Detail content */}
       <div className="cg-explore-detail">
         {utility.logo && (
           <div className="cg-explore-detail-logo">
@@ -146,7 +129,6 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           <EntityVersionHistory entityType="utility" entitySlug={slug} />
         </div>
 
-        {/* Registry data KV table */}
         <div className="cg-explore-kv-table">
           {utility.jurisdiction && (
             <div className="cg-explore-kv-row">
@@ -192,16 +174,11 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           )}
         </div>
 
-        {/* Related grid entities */}
         {hasGridRelationships && (
           <>
             <div className="cg-explore-related-heading">Related</div>
             {iso && (
-              <button
-                type="button"
-                className="cg-explore-related-row"
-                onClick={() => navigateToDetail("iso", iso.slug)}
-              >
+              <button type="button" className="cg-explore-related-row" onClick={() => navigateToDetail("iso", iso.slug)}>
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("grid-operators") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{iso.shortName}</div>
@@ -211,11 +188,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
               </button>
             )}
             {rto && (
-              <button
-                type="button"
-                className="cg-explore-related-row"
-                onClick={() => navigateToDetail("rto", rto.slug)}
-              >
+              <button type="button" className="cg-explore-related-row" onClick={() => navigateToDetail("rto", rto.slug)}>
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("grid-operators") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{rto.shortName}</div>
@@ -237,16 +210,11 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           </>
         )}
 
-        {/* Parent / Successor */}
         {(parent || successor) && (
           <>
             {!hasGridRelationships && <div className="cg-explore-related-heading">Related</div>}
             {parent && (
-              <button
-                type="button"
-                className="cg-explore-related-row"
-                onClick={() => navigateToDetail("utility", parent.slug)}
-              >
+              <button type="button" className="cg-explore-related-row" onClick={() => navigateToDetail("utility", parent.slug)}>
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{parent.name}</div>
@@ -256,11 +224,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
               </button>
             )}
             {successor && (
-              <button
-                type="button"
-                className="cg-explore-related-row"
-                onClick={() => navigateToDetail("utility", successor.slug)}
-              >
+              <button type="button" className="cg-explore-related-row" onClick={() => navigateToDetail("utility", successor.slug)}>
                 <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{successor.name}</div>
@@ -272,7 +236,6 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           </>
         )}
 
-        {/* Subsidiaries */}
         {childUtilities.length > 0 && (
           <>
             <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
@@ -303,7 +266,6 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           </>
         )}
 
-        {/* Power Plants */}
         {utilityPowerPlants.length > 0 && (
           <>
             <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
@@ -316,10 +278,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
                 className="cg-explore-related-row"
                 style={{ textDecoration: "none" }}
               >
-                <span
-                  className="cg-explore-related-dot"
-                  style={{ background: getFuelCategoryColor(plant.fuelCategory), borderRadius: "50%" }}
-                />
+                <span className="cg-explore-related-dot" style={{ background: getFuelCategoryColor(plant.fuelCategory), borderRadius: "50%" }} />
                 <div style={{ flex: 1 }}>
                   <div className="cg-explore-related-name">{plant.name}</div>
                   <div className="cg-explore-related-type">
@@ -337,24 +296,11 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           </>
         )}
 
-        {/*
-          Programs. Rendered even at zero programs, and the "Add a program" entry
-          point is shown to everyone — signed-out visitors included — so the
-          contribution path is discoverable. Anonymous users are routed through
-          the sign-in modal and returned to the prefilled form; the auth gate
-          lives at the action, not the visibility of the entry point.
-        */}
         <div className="cg-explore-programs-section">
-          <div
-            className="cg-explore-related-heading"
-            style={{ marginTop: 16, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}
-          >
-            <span>Programs ({utilityPrograms.length})</span>
+          <div className="cg-explore-related-heading" style={{ marginTop: 16, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+            <span>Programs ({programTotals.programCount})</span>
             {user ? (
-              <Link
-                href={buildNewProgramHref(utility.slug)}
-                style={{ fontSize: 11, fontWeight: 500, color: "var(--color-brand-primary)" }}
-              >
+              <Link href={buildNewProgramHref(utility.slug)} style={{ fontSize: 11, fontWeight: 500, color: "var(--color-brand-primary)" }}>
                 + Add a program
               </Link>
             ) : (
@@ -377,8 +323,31 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
             )}
           </div>
           {utilityPrograms.length === 0 && (
-            <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginBottom: 6 }}>
-              No programs on file for this utility yet.
+            <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginBottom: 6 }}>No programs on file for this utility yet.</div>
+          )}
+          {utilityPrograms.length > 0 && (
+            <div className="cg-explore-kv-table" style={{ marginTop: 8, marginBottom: 8 }}>
+              <div className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">Programs</span>
+                <span className="cg-explore-kv-val">{programTotals.programCount.toLocaleString()}</span>
+              </div>
+              <div className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">Capacity Target</span>
+                <span className="cg-explore-kv-val">{programTotals.capacityTargetMw > 0 ? formatCapacity(programTotals.capacityTargetMw) : "—"}</span>
+              </div>
+              <div className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">Max Enrollments</span>
+                <span className="cg-explore-kv-val">{programTotals.maxEnrollments > 0 ? programTotals.maxEnrollments.toLocaleString() : "—"}</span>
+              </div>
+              <div className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">Map Categories</span>
+                <span className="cg-explore-kv-val">
+                  {Object.entries(programTotals.categoryCounts)
+                    .filter(([, count]) => count > 0)
+                    .map(([category, count]) => `${getProgramMapCategoryLabel(category as Parameters<typeof getProgramMapCategoryLabel>[0])} (${count})`)
+                    .join(", ") || "—"}
+                </span>
+              </div>
             </div>
           )}
           {utilityPrograms.slice(0, 15).map((prog) => (
@@ -391,7 +360,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
               <span className="cg-explore-related-dot" style={{ background: entityKindColor("programs") }} />
               <div style={{ flex: 1 }}>
                 <div className="cg-explore-related-name">{prog.name}</div>
-                <div className="cg-explore-related-type">{prog.status}</div>
+                <div className="cg-explore-related-type">{getProgramMapCategoryLabel(prog.mapCategory ?? prog.assetTypes[0] ?? "NON_DEVICE")}</div>
               </div>
               <ArrowIcon />
             </button>
@@ -403,13 +372,8 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           )}
         </div>
 
-        {/* Full page link */}
         <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
-          <Link
-            href={`/grid-operators/${slug}`}
-            className="cg-explore-fullpage-link"
-            style={{ textDecoration: "none" }}
-          >
+          <Link href={`/grid-operators/${slug}`} className="cg-explore-fullpage-link" style={{ textDecoration: "none" }}>
             Full page →
           </Link>
         </div>

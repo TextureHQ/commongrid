@@ -4,6 +4,7 @@
  * Reads from Postgres via Drizzle.
  */
 
+import { getProgramMapCategory } from "@/lib/programs/program-category";
 import type {
   AssetType,
   CompensationType,
@@ -103,6 +104,8 @@ export function dbRowToProgram(row: Record<string, unknown>, utilityMap?: Map<st
   const orgNames = utilityMap
     ? (orgs.map((org) => utilityMap.get(org.entityId)).filter(Boolean) as string[])
     : undefined;
+  const assetTypes = (row.assetTypes as AssetType[]) ?? [];
+  const mapCategory = (row.mapCategory as AssetType | null | undefined) ?? getProgramMapCategory({ assetTypes });
 
   return {
     id: row.id as string,
@@ -112,7 +115,8 @@ export function dbRowToProgram(row: Record<string, unknown>, utilityMap?: Map<st
     description: (row.description as string | null) ?? undefined,
     organizations: orgs,
     organizationNames: orgNames,
-    assetTypes: (row.assetTypes as AssetType[]) ?? [],
+    assetTypes,
+    mapCategory,
     deviceTypes: (row.deviceTypes as DeviceType[]) ?? [],
     marketSegments: (row.marketSegments as MarketSegment[]) ?? [],
     participationModels: (row.participationModels as Program["participationModels"]) ?? [],
@@ -162,6 +166,7 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
       description: programs.description,
       organizations: programs.organizations,
       assetTypes: programs.assetTypes,
+      mapCategory: programs.mapCategory,
       deviceTypes: programs.deviceTypes,
       marketSegments: programs.marketSegments,
       participationModels: programs.participationModels,
@@ -242,6 +247,7 @@ async function loadBySlugFromDb(slug: string): Promise<Program | null> {
       description: programs.description,
       organizations: programs.organizations,
       assetTypes: programs.assetTypes,
+      mapCategory: programs.mapCategory,
       deviceTypes: programs.deviceTypes,
       marketSegments: programs.marketSegments,
       participationModels: programs.participationModels,
