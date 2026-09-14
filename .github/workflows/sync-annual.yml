@@ -5,11 +5,9 @@ on:
     - cron: '0 12 1 10 *' # Oct 1 at noon UTC (after EIA-860 typically releases in Sept)
   workflow_dispatch: {} # Manual trigger
 
-# Data syncs commit to the same branch. Without serialisation two
-# overlapping runs race on `git push` and the loser dies with
-# non-fast-forward (CIR-1271). sync-annual and sync-pricing-nodes are
-# both scheduled for Oct 1 12:00 UTC, so this is a real collision, not
-# just a manual-dispatch artefact.
+# Data syncs publish to a dedicated branch and open/update a PR instead of
+# pushing directly to protected main. The shared concurrency group keeps the
+# commit-and-publish phase serialized so scheduled runs do not race each other.
 concurrency:
   group: data-sync-commit
   cancel-in-progress: false
@@ -52,25 +50,32 @@ jobs:
           # "Check tile build prerequisites" step above (CIR-1271).
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: bash scripts/build-tiles.sh
-      - name: Commit & push if changed
+      - name: Publish via branch + PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: meridian/sync-annual-data
+          PR_TITLE: "data: update power plants (EIA-860 annual)"
+          PR_BODY: |
+            Automated annual data sync. The workflow commits generated data on a dedicated branch and opens or updates a pull request so branch protection can review and merge it safely.
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
           git add data/power-plants.json public/tiles/*.pmtiles
           if git diff --staged --quiet; then
             echo "No changes to commit."
             exit 0
           fi
           git commit -m "data: update power plants (EIA-860 annual)"
-          # Retry around concurrent pushes to the same branch: rebase onto
-          # whatever landed while this job was building tiles, then push again.
-          for attempt in 1 2 3; do
-            if git push; then
-              echo "Pushed on attempt $attempt."
-              exit 0
-            fi
-            echo "Push rejected (attempt $attempt) — rebasing on origin/$GITHUB_REF_NAME."
-            git pull --rebase --autostash origin "$GITHUB_REF_NAME"
-          done
-          echo "::error title=Sync push failed::Could not push after 3 rebase attempts."
-          exit 1
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            git fetch --depth=1 origin "$BRANCH:refs/remotes/origin/$BRANCH"
+          fi
+          git push --force-with-lease origin "$BRANCH"
+          existing_pr_url="$(gh pr list --repo "$GH_REPO" --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"
+          if [ -n "$existing_pr_url" ]; then
+            echo "Open PR already exists: $existing_pr_url"
+            exit 0
+          fi
+          gh pr create --repo "$GH_REPO" --base main --head "$BRANCH" --title "$PR_TITLE" --body "$PR_BODY"
