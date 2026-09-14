@@ -145,7 +145,7 @@ type BreakoutState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "loaded"; items: ChangelogBatchItem[]; total: number; hasMore: boolean };
+  | { status: "loaded"; items: ChangelogBatchItem[]; total: number; hasMore: boolean; moreError?: string };
 
 const BREAKOUT_PAGE_SIZE = 50;
 
@@ -180,7 +180,15 @@ function BatchEntryRow({ entry }: { entry: ChangelogEntry }) {
         };
       });
     } catch (err) {
-      setState({ status: "error", message: err instanceof Error ? err.message : "Failed to load details" });
+      const message = err instanceof Error ? err.message : "Failed to load details";
+      // Only collapse to the full error view on an initial-load failure. On a
+      // "Show more" failure keep the rows already loaded and surface the error
+      // inline by the button so the user can retry without losing them.
+      setState((prev) =>
+        prev.status === "loaded" && prev.items.length > 0
+          ? { ...prev, moreError: message }
+          : { status: "error", message }
+      );
     }
   }
 
@@ -234,9 +242,14 @@ function BatchEntryRow({ entry }: { entry: ChangelogEntry }) {
                   ))}
                 </ul>
                 {state.hasMore && (
-                  <button type="button" className="cl-batch-more" onClick={() => void loadPage(state.items.length)}>
-                    Show more ({(state.total - state.items.length).toLocaleString()} remaining)
-                  </button>
+                  <div className="cl-batch-more-row">
+                    <button type="button" className="cl-batch-more" onClick={() => void loadPage(state.items.length)}>
+                      Show more ({(state.total - state.items.length).toLocaleString()} remaining)
+                    </button>
+                    {state.moreError && (
+                      <span className="cl-batch-status cl-batch-error">Couldn’t load more: {state.moreError}</span>
+                    )}
+                  </div>
                 )}
               </>
             )}

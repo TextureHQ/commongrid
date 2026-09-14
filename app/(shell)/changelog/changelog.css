@@ -246,8 +246,15 @@
   color: var(--color-text-muted);
 }
 
-.cg-changelog .cl-batch-more {
+.cg-changelog .cl-batch-more-row {
   margin-top: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.cg-changelog .cl-batch-more {
   padding: 6px 12px;
   border-radius: 6px;
   border: 1px solid var(--color-border-default);
@@ -256,8 +263,13 @@
   font-size: 13px;
   cursor: pointer;
   font-family: var(--font-family-sans);
+  flex-shrink: 0;
 }
 
 .cg-changelog .cl-batch-more:hover {
   border-color: var(--color-text-heading);
+}
+
+.cg-changelog .cl-batch-more-row .cl-batch-status {
+  padding: 0;
 }
