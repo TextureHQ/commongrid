@@ -202,6 +202,9 @@ export async function fetchChangelogFeed(params: ChangelogQuery): Promise<Change
           detail: isBatch ? `${Number(row.item_count).toLocaleString()} records` : (row.summary ?? "Updated"),
           isoTimestamp: new Date(row.ts).toISOString(),
           ...(row.source_type ? { source: row.source_type } : {}),
+          // Batch rows carry their id + count so the changelog UI can fetch the
+          // per-item breakout on expand. Single-version rows never do.
+          ...(isBatch ? { batchId: row.key, itemCount: Number(row.item_count) } : {}),
         };
       });
 

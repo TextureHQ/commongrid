@@ -20,6 +20,10 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as XLSX from "xlsx";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { powerPlants } from "@/lib/db/schema";
+import { applySync } from "@/lib/sync/apply-sync";
+import { POWER_PLANT_ENTITY_TYPE, toSyncRecords } from "@/lib/sync/power-plants-860m";
 import { slugify } from "./lib";
 
 const EIA_860M_PAGE = "https://www.eia.gov/electricity/data/eia860m/";
@@ -672,7 +676,7 @@ function dedupeSlug(
   slugCounts.set(base, slugCount + 1);
 }
 
-function mergePowerPlants(aggregates: Map<string, PlantAggregate>): MergeStats {
+function mergePowerPlants(aggregates: Map<string, PlantAggregate>): { stats: MergeStats; merged: PowerPlantRecord[] } {
   const existing = JSON.parse(fs.readFileSync(POWER_PLANTS_PATH, "utf-8")) as PowerPlantRecord[];
   const utilityByEiaId = buildUtilityLookup();
   const baByCode = buildBalancingAuthorityLookup();
@@ -761,7 +765,7 @@ function mergePowerPlants(aggregates: Map<string, PlantAggregate>): MergeStats {
   });
 
   fs.writeFileSync(POWER_PLANTS_PATH, `${JSON.stringify(merged)}\n`);
-  return stats;
+  return { stats, merged };
 }
 
 function updateManifest(
@@ -820,6 +824,62 @@ function updateManifest(
   fs.writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
+/**
+ * Publish merged power-plant records to Postgres through the shared sync writer.
+ *
+ * Idempotent and conflict-aware: applySync diffs each record against current DB
+ * state (unchanged → no version), and policy (B) leaves any field a human most
+ * recently edited untouched, reporting it as a deferral.
+ */
+async function publishToDatabase(merged: PowerPlantRecord[], sourceFile: string): Promise<void> {
+  if (!process.env.DATABASE_URL) {
+    console.warn(
+      "\n⚠️  DATABASE_URL is not set — skipping database publication. " +
+        "JSON and tiles are still produced, but the registry and changelog will NOT be updated."
+    );
+    return;
+  }
+
+  console.log("\nPublishing generator-level updates to the registry (Postgres)...");
+
+  // Which plant ids already exist decides create vs update payload shape.
+  const db = getPooledDb();
+  const existingRows = await db.select({ id: powerPlants.id }).from(powerPlants);
+  const existingIds = new Set(existingRows.map((row) => row.id));
+
+  const records = toSyncRecords(merged, existingIds);
+  const report = await applySync(records, {
+    entityType: POWER_PLANT_ENTITY_TYPE,
+    initiatedBy: "sync:eia-860m",
+    batchTitle: "EIA-860M monthly sync",
+    batchDescription: `EIA-860M generator update from ${sourceFile}`,
+  });
+
+  console.log("  Registry publication complete:");
+  console.log(`    Batch id: ${report.batchId}`);
+  console.log(`    Created: ${report.created.toLocaleString()}`);
+  console.log(`    Updated: ${report.updated.toLocaleString()}`);
+  console.log(`    Unchanged: ${report.unchanged.toLocaleString()}`);
+  console.log(`    Fields written: ${report.fieldsWritten.toLocaleString()}`);
+
+  if (report.deferrals.length > 0) {
+    console.log(
+      `    ⚠️  Deferred ${report.deferrals.length.toLocaleString()} field(s) that a human last edited (policy B — not overwritten):`
+    );
+    // Cap the log so a large drift does not flood CI output; the full set is
+    // derivable by re-running against the same file.
+    const sample = report.deferrals.slice(0, 20);
+    for (const d of sample) {
+      console.log(
+        `      - ${d.entityId} field '${d.field}': kept ${JSON.stringify(d.keptValue)}, sync wanted ${JSON.stringify(d.skippedValue)}`
+      );
+    }
+    if (report.deferrals.length > sample.length) {
+      console.log(`      … and ${(report.deferrals.length - sample.length).toLocaleString()} more`);
+    }
+  }
+}
+
 async function main() {
   console.log("Syncing EIA-860M monthly power plant updates\n");
 
@@ -849,9 +909,17 @@ async function main() {
 
   console.log("\nMerging operating/planned generators into data/power-plants.json...");
   const aggregates = aggregateGenerators(rows);
-  const stats = mergePowerPlants(aggregates);
+  const { stats, merged } = mergePowerPlants(aggregates);
   stats.retiredGenerators = retiredCount;
   stats.canceledOrPostponedGenerators = canceledOrPostponedCount;
+
+  // Publish generator-level facts to Postgres — the source of truth. The JSON
+  // above remains the input to the tile build; this step is what makes a
+  // Planned → Operable flip show up in the changelog and in the plant's own
+  // version history. Gated on DATABASE_URL so a local/CI run without a database
+  // still produces JSON + tiles and simply skips publication with a warning
+  // (rather than failing the whole sync).
+  await publishToDatabase(merged, latest.fileName);
 
   updateManifest(latest, localPath, checksumSha256, sheetRowCounts, manifest);
   fs.writeFileSync(LAST_SYNC_MARKER_PATH, `${markerPayload}\n${new Date().toISOString()}\n`);

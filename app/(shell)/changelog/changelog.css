@@ -169,3 +169,107 @@
     font-size: 11px;
   }
 }
+
+/* ── Sync batch breakout ── */
+.cg-changelog .cl-batch-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-family-sans);
+}
+
+.cg-changelog .cl-batch-caret {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.cg-changelog .cl-batch-count {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.cg-changelog .cl-batch-breakout {
+  margin-top: 10px;
+  border-left: 2px solid var(--color-border-default);
+  padding-left: 12px;
+}
+
+.cg-changelog .cl-batch-status {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  padding: 6px 0;
+}
+
+.cg-changelog .cl-batch-error {
+  color: var(--color-text-danger, #b42318);
+}
+
+.cg-changelog .cl-batch-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cg-changelog .cl-batch-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.cg-changelog .cl-batch-item-name {
+  font-weight: 500;
+  color: var(--color-text-heading);
+  text-decoration: none;
+}
+
+.cg-changelog .cl-batch-item-name:hover {
+  text-decoration: underline;
+}
+
+.cg-changelog .cl-batch-item-detail {
+  color: var(--color-text-muted);
+}
+
+.cg-changelog .cl-batch-more-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.cg-changelog .cl-batch-more {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-background-surface);
+  color: var(--color-text-heading);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-family-sans);
+  flex-shrink: 0;
+}
+
+.cg-changelog .cl-batch-more:hover {
+  border-color: var(--color-text-heading);
+}
+
+.cg-changelog .cl-batch-more-row .cl-batch-status {
+  padding: 0;
+}

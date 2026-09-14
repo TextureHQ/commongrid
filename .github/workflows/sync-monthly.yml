@@ -5,8 +5,12 @@ on:
     - cron: '0 14 * * *' # Daily at 2pm UTC — check for new EIA-860M
   workflow_dispatch: {} # Manual trigger
 
-# Data syncs commit to the same branch. Without serialisation two
-# overlapping runs race on `git push` and the loser dies with
+permissions:
+  contents: write
+  pull-requests: write
+
+# Data syncs open/refresh the same automation branch. Without serialisation two
+# overlapping runs race on the branch push and the loser dies with
 # non-fast-forward (CIR-1271). sync-annual and sync-pricing-nodes are
 # both scheduled for Oct 1 12:00 UTC, so this is a real collision, not
 # just a manual-dispatch artefact.
@@ -24,7 +28,16 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npx tsx scripts/sync-power-plants-monthly.ts
+      # The registry (Postgres) is the source of truth: this step diffs EIA-860M
+      # against current DB state and writes versioned changes through applySync,
+      # so a Planned→Operable flip lands live and appears in the changelog. It
+      # also writes data/power-plants.json, which the tile build below consumes.
+      # DATABASE_URL is required for publication; without it the script warns and
+      # still produces JSON + tiles (CIR-1271).
+      - name: Sync EIA-860M → registry + JSON
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx tsx scripts/sync-power-plants-monthly.ts
       - name: Install tippecanoe
         run: |
           sudo apt-get update -qq
@@ -52,25 +65,42 @@ jobs:
           # "Check tile build prerequisites" step above (CIR-1271).
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: bash scripts/build-tiles.sh
-      - name: Commit & push if changed
+      # The live data has already landed in Postgres above. What remains are the
+      # regenerated tile artifacts + the JSON base state the next run reads.
+      # Those are versioned files, so they ship through a PR (branch protection
+      # forbids pushing to main directly — the original cause of CG-262). The PR
+      # is a build-artifact refresh, not the data-publication path.
+      - name: Publish tile artifacts via branch + PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: meridian/sync-monthly-artifacts
+          PR_TITLE: "chore(data): refresh power-plant tiles + JSON (EIA-860M monthly)"
+          PR_BODY: |
+            Automated monthly artifact refresh. Live generator data was published
+            to the registry (Postgres) by the sync job and is already reflected in
+            the changelog; this PR only updates the regenerated tile archives and
+            the `data/power-plants.json` base state the next run reads.
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
           git add data/power-plants.json public/tiles/*.pmtiles
           if git diff --staged --quiet; then
-            echo "No changes to commit."
+            echo "No artifact changes to publish."
             exit 0
           fi
-          git commit -m "data: update power plants (EIA-860M monthly)"
-          # Retry around concurrent pushes to the same branch: rebase onto
-          # whatever landed while this job was building tiles, then push again.
-          for attempt in 1 2 3; do
-            if git push; then
-              echo "Pushed on attempt $attempt."
-              exit 0
-            fi
-            echo "Push rejected (attempt $attempt) — rebasing on origin/$GITHUB_REF_NAME."
-            git pull --rebase --autostash origin "$GITHUB_REF_NAME"
-          done
-          echo "::error title=Sync push failed::Could not push after 3 rebase attempts."
-          exit 1
+          git commit -m "$PR_TITLE"
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            remote_tip="$(git ls-remote origin "refs/heads/$BRANCH" | awk '{print $1}')"
+            git push --force-with-lease=refs/heads/"$BRANCH":"$remote_tip" origin "$BRANCH"
+          else
+            git push origin "$BRANCH"
+          fi
+          existing_pr_url="$(gh pr list --repo "$GH_REPO" --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"
+          if [ -n "$existing_pr_url" ]; then
+            echo "Open PR already exists: $existing_pr_url"
+            exit 0
+          fi
+          gh pr create --repo "$GH_REPO" --base main --head "$BRANCH" --title "$PR_TITLE" --body "$PR_BODY"
