@@ -10,11 +10,12 @@ import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
+import { useProgramList } from "@/hooks/useProgramList";
 import { useRto } from "@/hooks/useRto";
 import { useUtility } from "@/hooks/useUtility";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
-import { getAllPrograms, getRegionById } from "@/lib/data";
+import { getRegionById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -103,13 +104,14 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     limit: 200,
   });
 
-  const utilityPrograms = useMemo(
-    () =>
-      utility
-        ? getAllPrograms().filter((program) => program.organizations.some((o) => o.entityId === utility.slug))
-        : [],
-    [utility]
-  );
+  const { programs: utilityPrograms, isLoading: utilityProgramsLoading } = useProgramList({
+    organization: utility?.slug,
+    limit: 200,
+    sort: "name",
+    order: "asc",
+    fields: "slug,name,assetTypes,mapCategory,organizations,capacityTarget,maxEnrollments",
+    enabled: !!utility?.slug,
+  });
   const programTotals = useMemo(() => summarizePrograms(utilityPrograms), [utilityPrograms]);
 
   if (utilitiesLoading) {
@@ -363,12 +365,15 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
               </SignInButton>
             )}
           </div>
-          {utilityPrograms.length === 0 && (
+          {utilityProgramsLoading && (
+            <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginBottom: 6 }}>Loading programs…</div>
+          )}
+          {!utilityProgramsLoading && utilityPrograms.length === 0 && (
             <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginBottom: 6 }}>
               No programs on file for this utility yet.
             </div>
           )}
-          {utilityPrograms.length > 0 && (
+          {!utilityProgramsLoading && utilityPrograms.length > 0 && (
             <div className="cg-explore-kv-table" style={{ marginTop: 8, marginBottom: 8 }}>
               <div className="cg-explore-kv-row">
                 <span className="cg-explore-kv-key">Programs</span>
