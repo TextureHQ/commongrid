@@ -83,7 +83,10 @@ const VEC = "vermont-electric-cooperative";
 describe("loadPrograms organization filter", () => {
   beforeEach(() => {
     rows = [
-      row("byob", "Flexible Load - Bring Your Own Battery", [{ role: "ADMINISTRATOR", entityId: VEC }]),
+      {
+        ...row("byob", "Flexible Load - Bring Your Own Battery", [{ role: "ADMINISTRATOR", entityId: VEC }]),
+        assetTypes: ["BATTERY"],
+      },
       row("dynamic-organics", "Dynamic Organics", [{ role: "ADMINISTRATOR", entityId: VEC }]),
       row("legacy-shape", "Legacy Shape", [VEC]),
       row("implementer-only", "Implementer Only", [{ role: "IMPLEMENTER", entityId: VEC }]),
@@ -128,6 +131,13 @@ describe("loadPrograms organization filter", () => {
     const result = await loadPrograms({});
 
     expect(result).toHaveLength(6);
+  });
+
+  it("derives a map category from assetTypes when the row does not store one", async () => {
+    const result = await loadPrograms({ organization: VEC });
+
+    const target = result.find((p) => p.slug === "byob");
+    expect(target?.mapCategory).toBe("BATTERY");
   });
 
   it("does not partial-match a longer slug that contains the filter value", async () => {

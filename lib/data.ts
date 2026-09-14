@@ -4,6 +4,7 @@ import isosData from "@/data/isos.json";
 import programsData from "@/data/programs.json";
 import regionsData from "@/data/regions.json";
 import rtosData from "@/data/rtos.json";
+import { decorateProgramsMapCategory } from "@/lib/programs/program-category";
 import type { Changelog } from "@/types/changelog";
 import type { BalancingAuthority, Iso, Region, Rto } from "@/types/entities";
 import type { Program } from "@/types/programs";
@@ -28,7 +29,7 @@ const isos: Iso[] = isosData as Iso[];
 const rtos: Rto[] = rtosData as Rto[];
 const balancingAuthorities: BalancingAuthority[] = basData as BalancingAuthority[];
 const regions: Region[] = regionsData as Region[];
-const programs: Program[] = programsData as unknown as Program[];
+const programs: Program[] = decorateProgramsMapCategory(programsData as unknown as Program[]);
 
 export function getAllIsos(): Iso[] {
   return isos;

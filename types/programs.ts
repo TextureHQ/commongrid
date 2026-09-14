@@ -246,6 +246,7 @@ export interface Program {
   organizations: ProgramOrganization[];
   organizationNames?: string[];
   assetTypes: AssetType[];
+  mapCategory?: AssetType;
   deviceTypes: DeviceType[];
   marketSegments: MarketSegment[];
   participationModels: ParticipationModel[];
