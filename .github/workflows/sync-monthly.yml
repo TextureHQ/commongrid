@@ -21,6 +21,13 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # Opt into the commongrid-data-sync GitHub Environment so DATABASE_URL
+    # (an environment secret, not a repo secret) resolves at runtime. The
+    # environment's deployment-branch policy restricts it to `main`, so
+    # pull_request triggers can never read the credential (public-repo
+    # exfiltration guard). Without this, the registry-publish step silently
+    # skips with "DATABASE_URL is not set" (CG-263).
+    environment: commongrid-data-sync
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
