@@ -2,7 +2,9 @@
 
 import { Skeleton } from "@texturehq/edges";
 import Link from "next/link";
+import { useChangelogCounters, useChangelogFeed } from "@/hooks/useChangelogFeed";
 import { formatCount, useEntityCounts } from "@/hooks/useEntityCounts";
+import { formatLedgerCounters, type LedgerRow } from "@/lib/changelog/ledger";
 import "./homepage-minimal.css";
 
 /**
@@ -82,81 +84,6 @@ const ENTITY_CARDS = [
   },
 ];
 
-const LEDGER_ROWS = [
-  {
-    op: "edit",
-    name: "Southern California Edison",
-    detail: "fields: service_area_km2, customers · 2 changes",
-    author: "MK",
-    authorName: "maria.kellogg",
-    type: "utility",
-    time: "2m ago",
-  },
-  {
-    op: "add",
-    name: "Cimarron Bend III Wind Project",
-    detail: "Kansas · 199 MW · commissioned 2025-11",
-    author: "JT",
-    authorName: "jtorres",
-    type: "power plant",
-    time: "14m ago",
-  },
-  {
-    op: "fix",
-    name: "CAISO SP15 load zone",
-    detail: "boundary correction · cited CAISO 2026-Q1 OASIS",
-    author: "AR",
-    authorName: "a.reyes",
-    type: "pricing node",
-    time: "38m ago",
-  },
-  {
-    op: "edit",
-    name: "ConEd residential rate · SC-1",
-    detail: "TOU windows updated per April 2026 tariff filing",
-    author: "SP",
-    authorName: "sparikh",
-    type: "tariff",
-    time: "1h ago",
-  },
-  {
-    op: "merge",
-    name: "PR #4,182 · Puerto Rico EV station backfill",
-    detail: "247 stations added · moderators: 2 approvals",
-    author: "DK",
-    authorName: "d.kowalski",
-    type: "batch · ev",
-    time: "2h ago",
-  },
-  {
-    op: "add",
-    name: "Vineyard Wind 1",
-    detail: "Massachusetts · 806 MW offshore · Avangrid / CIP",
-    author: "LN",
-    authorName: "l.nguyen",
-    type: "power plant",
-    time: "3h ago",
-  },
-  {
-    op: "edit",
-    name: "Dominion Energy VA · rider T1",
-    detail: "clarified applicability to interconnection class 3",
-    author: "RC",
-    authorName: "rchen",
-    type: "program",
-    time: "4h ago",
-  },
-  {
-    op: "fix",
-    name: "MISO · Entergy Louisiana BA mapping",
-    detail: "corrected from ERCOT classification (regression)",
-    author: "TM",
-    authorName: "t.moreno",
-    type: "operator",
-    time: "5h ago",
-  },
-];
-
 const ENDPOINT_DEFS = [
   { path: "/utilities", countKey: "utilities" as const, suffix: "records" },
   { path: "/territories/lookup", desc: "point-in-polygon" },
@@ -186,12 +113,143 @@ const ArrowIcon = () => (
   </svg>
 );
 
-const opColors = {
-  add: "bg-moss-pastel text-feedback-success-text border-moss-base/50",
-  edit: "bg-honey-pastel text-feedback-warning-text border-honey-base/50",
-  fix: "bg-ocean-pastel text-feedback-info-text border-ocean-base/50",
-  merge: "bg-rose-pastel text-feedback-error-text border-rose-base/50",
-} as const;
+/**
+ * The homepage activity ledger.
+ *
+ * Rows come from `GET /api/v1/changelog` — the same database-backed feed the
+ * /changelog page renders — because this section sits under a heading promising
+ * that every edit is attributed. It shows skeletons while loading and an honest
+ * empty state when the feed has nothing, never placeholder rows.
+ */
+function ActivityLedger() {
+  const { rows, isLoading, error } = useChangelogFeed(8);
+
+  return (
+    <>
+      {/* Desktop: table layout. Mobile: card layout */}
+      <div className="border border-border-default rounded-sm overflow-hidden bg-background-surface">
+        {/* Desktop table header - hidden on mobile */}
+        <div className="hidden md:grid grid-cols-[56px_minmax(0,1.8fr)_160px_110px_88px] items-center gap-x-4 p-2.5 px-4 border-b border-border-default font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]">
+          <span>Change</span>
+          <span>Entity</span>
+          <span>Contributor</span>
+          <span>Type</span>
+          <span>When</span>
+        </div>
+
+        {isLoading && <LedgerSkeleton />}
+
+        {!isLoading && rows.length === 0 && (
+          <div className="p-6 text-[13px] text-text-muted">
+            {error
+              ? "Recent activity is unavailable right now. The full history is always on the changelog."
+              : "No changes recorded yet. Every edit will appear here with its author, source, and timestamp."}
+          </div>
+        )}
+
+        {rows.map((row) => (
+          <LedgerRowView key={row.key} row={row} />
+        ))}
+      </div>
+
+      <div className="flex justify-between items-center gap-4 mt-4.5 text-[13px] text-text-muted">
+        <LedgerCounters />
+        <Link href="/changelog" className="text-brand-primary font-medium no-underline hover:underline shrink-0">
+          View full changelog &rarr;
+        </Link>
+      </div>
+    </>
+  );
+}
+
+function LedgerRowView({ row }: { row: LedgerRow }) {
+  return (
+    <div>
+      {/* Desktop: table row */}
+      <div className="hidden md:grid grid-cols-[56px_minmax(0,1.8fr)_160px_110px_88px] items-center gap-x-4 py-3.5 px-4 border-b border-border-default text-[13px] transition-colors duration-[120ms] last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]">
+        <span
+          className={`font-[family-name:var(--font-fira-code)] text-[11px] font-semibold inline-flex items-center py-0.5 px-2 rounded border w-max leading-tight ${row.opClass}`}
+        >
+          {row.op}
+        </span>
+        <div className="min-w-0">
+          <span className="text-text-heading font-medium block whitespace-nowrap overflow-hidden text-ellipsis">
+            {row.name}
+          </span>
+          <span className="text-text-muted text-xs">{row.detail}</span>
+        </div>
+        <div className="text-text-muted text-[13px] flex items-center gap-2 min-w-0">
+          {row.initials && (
+            <span className="w-5 h-5 rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-brand-dark grid place-items-center text-[10px] font-semibold shrink-0">
+              {row.initials}
+            </span>
+          )}
+          <span className="whitespace-nowrap overflow-hidden text-ellipsis">{row.author}</span>
+        </div>
+        <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-muted">{row.typeLabel}</span>
+        <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-caption text-right tabular-nums">
+          {row.time}
+        </span>
+      </div>
+
+      {/* Mobile: card layout */}
+      <div className="md:hidden p-4 border-b border-border-default last:border-b-0">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <span
+            className={`font-[family-name:var(--font-fira-code)] text-[11px] font-semibold inline-flex items-center py-0.5 px-2 rounded border w-max leading-tight ${row.opClass}`}
+          >
+            {row.op}
+          </span>
+          <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-caption tabular-nums">
+            {row.time}
+          </span>
+        </div>
+        <div className="mb-2">
+          <div className="text-text-heading font-medium text-sm mb-0.5">{row.name}</div>
+          <div className="text-text-muted text-xs leading-relaxed">{row.detail}</div>
+        </div>
+        <div className="flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-text-muted min-w-0">
+            {row.initials && (
+              <span className="w-5 h-5 rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-brand-dark grid place-items-center text-[10px] font-semibold shrink-0">
+                {row.initials}
+              </span>
+            )}
+            <span className="whitespace-nowrap overflow-hidden text-ellipsis">{row.author}</span>
+          </div>
+          <span className="font-[family-name:var(--font-fira-code)] text-text-caption shrink-0">{row.typeLabel}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Placeholder rows while the feed loads. Deliberately contentless. */
+function LedgerSkeleton() {
+  return (
+    <>
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="flex items-center gap-4 py-3.5 px-4 border-b border-border-default last:border-b-0">
+          <Skeleton width={44} height={18} variant="rect" animation="pulse" ariaLabel="Loading recent activity" />
+          <Skeleton width="45%" height={18} variant="rect" animation="pulse" />
+          <Skeleton width={96} height={18} variant="rect" animation="pulse" />
+        </div>
+      ))}
+    </>
+  );
+}
+
+/**
+ * 24h / 7d change counts, derived from the changelog endpoint's `total` for
+ * each window. Renders nothing until at least one window resolves, so the page
+ * never asserts a number it does not have.
+ */
+function LedgerCounters() {
+  const counters = useChangelogCounters();
+  const label = formatLedgerCounters(counters);
+  if (!label) return <span />;
+  return <span className="tabular-nums font-[family-name:var(--font-fira-code)] text-xs">{label}</span>;
+}
 
 export default function LandingPage() {
   const counts = useEntityCounts();
@@ -363,82 +421,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Desktop: table layout. Mobile: card layout */}
-          <div className="border border-border-default rounded-sm overflow-hidden bg-background-surface">
-            {/* Desktop table header - hidden on mobile */}
-            <div className="hidden md:grid grid-cols-[56px_minmax(0,1.8fr)_160px_110px_88px] items-center gap-x-4 p-2.5 px-4 border-b border-border-default font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]">
-              <span>Change</span>
-              <span>Entity</span>
-              <span>Contributor</span>
-              <span>Type</span>
-              <span>When</span>
-            </div>
-
-            {LEDGER_ROWS.map((row) => (
-              <div key={row.name}>
-                {/* Desktop: table row */}
-                <div className="hidden md:grid grid-cols-[56px_minmax(0,1.8fr)_160px_110px_88px] items-center gap-x-4 py-3.5 px-4 border-b border-border-default text-[13px] transition-colors duration-[120ms] last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-text-heading)_3%,transparent)]">
-                  <span
-                    className={`font-[family-name:var(--font-fira-code)] text-[11px] font-semibold inline-flex items-center py-0.5 px-2 rounded border w-max leading-tight ${opColors[row.op as keyof typeof opColors]}`}
-                  >
-                    {row.op}
-                  </span>
-                  <div className="min-w-0">
-                    <span className="text-text-heading font-medium block whitespace-nowrap overflow-hidden text-ellipsis">
-                      {row.name}
-                    </span>
-                    <span className="text-text-muted text-xs">{row.detail}</span>
-                  </div>
-                  <div className="text-text-muted text-[13px] flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-brand-dark grid place-items-center text-[10px] font-semibold shrink-0">
-                      {row.author}
-                    </span>
-                    <span>{row.authorName}</span>
-                  </div>
-                  <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-muted">{row.type}</span>
-                  <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-caption text-right tabular-nums">
-                    {row.time}
-                  </span>
-                </div>
-
-                {/* Mobile: card layout */}
-                <div className="md:hidden p-4 border-b border-border-default last:border-b-0">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <span
-                      className={`font-[family-name:var(--font-fira-code)] text-[11px] font-semibold inline-flex items-center py-0.5 px-2 rounded border w-max leading-tight ${opColors[row.op as keyof typeof opColors]}`}
-                    >
-                      {row.op}
-                    </span>
-                    <span className="font-[family-name:var(--font-fira-code)] text-xs text-text-caption tabular-nums">
-                      {row.time}
-                    </span>
-                  </div>
-                  <div className="mb-2">
-                    <div className="text-text-heading font-medium text-sm mb-0.5">{row.name}</div>
-                    <div className="text-text-muted text-xs leading-relaxed">{row.detail}</div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-text-muted">
-                      <span className="w-5 h-5 rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-brand-dark grid place-items-center text-[10px] font-semibold shrink-0">
-                        {row.author}
-                      </span>
-                      <span>{row.authorName}</span>
-                    </div>
-                    <span className="font-[family-name:var(--font-fira-code)] text-text-caption">{row.type}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex justify-between items-center mt-4.5 text-[13px] text-text-muted">
-            <span className="tabular-nums font-[family-name:var(--font-fira-code)] text-xs">
-              +312 changes in the last 24h · +2,104 this week
-            </span>
-            <Link href="/changelog" className="text-brand-primary font-medium no-underline hover:underline">
-              View full changelog &rarr;
-            </Link>
-          </div>
+          <ActivityLedger />
         </div>
       </section>
 
