@@ -36,16 +36,25 @@ tippecanoe \
 
 echo ""
 echo "=== Step 4: Generate power plant tiles with tippecanoe ==="
-tippecanoe \
-  --output="$OUT_DIR/power-plants.pmtiles" \
-  --force \
-  --name="CommonGrid Power Plants" \
-  --layer=power-plants \
-  --minimum-zoom=0 \
-  --maximum-zoom=12 \
-  --drop-densest-as-needed \
-  --extend-zooms-if-still-dropping \
-  "$ROOT_DIR/.tmp-power-plants.geojson"
+# Power-plant GeoJSON is now generated from Postgres (prepare-power-plants-geojson.mjs),
+# gated on DATABASE_URL. When the credential is absent the prepare step exits 0
+# without writing the file, so skip tile generation for this layer rather than
+# failing the whole build and discarding the other layers (same contract as
+# substations/transmission/EV/pricing — CIR-1271).
+if [ -f "$ROOT_DIR/.tmp-power-plants.geojson" ]; then
+  tippecanoe \
+    --output="$OUT_DIR/power-plants.pmtiles" \
+    --force \
+    --name="CommonGrid Power Plants" \
+    --layer=power-plants \
+    --minimum-zoom=0 \
+    --maximum-zoom=12 \
+    --drop-densest-as-needed \
+    --extend-zooms-if-still-dropping \
+    "$ROOT_DIR/.tmp-power-plants.geojson"
+else
+  echo "⚠️  No power plant GeoJSON found — skipping tile generation."
+fi
 
 echo ""
 echo "=== Step 5: Prepare transmission line GeoJSON ==="

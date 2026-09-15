@@ -1,31 +1,66 @@
 /**
- * Converts power-plants.json into a GeoJSON FeatureCollection for tippecanoe.
+ * Queries the `power_plants` table from Postgres and writes a
+ * FeatureCollection to `.tmp-power-plants.geojson` for tippecanoe.
+ *
+ * Requires DATABASE_URL. Mirrors prepare-substations-geojson.mjs: the DB is
+ * the source of truth for power-plant geometry, so the tile build reads the
+ * same rows the app serves rather than a committed JSON artifact (CG-266).
  */
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { neon } from "@neondatabase/serverless";
 
-const DATA_DIR = join(process.cwd(), "data");
 const OUTPUT = join(process.cwd(), ".tmp-power-plants.geojson");
 
 async function main() {
-  const raw = await readFile(join(DATA_DIR, "power-plants.json"), "utf-8");
-  const plants = JSON.parse(raw);
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    // Exit 0, not 1. This is one layer in a multi-layer tile build; a missing
+    // DB credential must not discard the other layers that were just generated
+    // successfully. build-tiles.sh already handles a missing
+    // .tmp-power-plants.geojson by skipping tile generation for this layer.
+    // (Same contract as prepare-substations-geojson.mjs — CIR-1271.)
+    console.warn("⚠️  DATABASE_URL is not set — skipping power plant GeoJSON. Power plant tiles will not be rebuilt.");
+    process.exit(0);
+  }
+
+  const sql = neon(url);
+
+  const rows = await sql`
+    SELECT
+      slug,
+      name,
+      fuel_category,
+      status,
+      total_capacity_mw,
+      proposed_capacity_mw,
+      latitude,
+      longitude
+    FROM power_plants
+    WHERE deleted_at IS NULL
+      AND latitude IS NOT NULL
+      AND longitude IS NOT NULL
+  `;
 
   const features = [];
-  for (const plant of plants) {
-    if (plant.latitude == null || plant.longitude == null) continue;
+  for (const row of rows) {
+    const totalCapacity = row.total_capacity_mw === null ? null : Number(row.total_capacity_mw);
+    const proposedCapacity = row.proposed_capacity_mw === null ? null : Number(row.proposed_capacity_mw);
     features.push({
       type: "Feature",
       properties: {
-        slug: plant.slug,
-        name: plant.name,
-        fuelCategory: plant.fuelCategory,
-        capacityMw: plant.status === "operable" ? plant.totalCapacityMw : (plant.proposedCapacityMw ?? 0),
-        status: plant.status,
+        slug: row.slug,
+        name: row.name,
+        fuelCategory: row.fuel_category,
+        // Match the previous JSON-derived semantics exactly: operable plants
+        // render on installed capacity, proposed plants on their proposed
+        // capacity (0 when unknown).
+        capacityMw: row.status === "operable" ? totalCapacity : (proposedCapacity ?? 0),
+        status: row.status,
       },
       geometry: {
         type: "Point",
-        coordinates: [plant.longitude, plant.latitude],
+        coordinates: [Number(row.longitude), Number(row.latitude)],
       },
     });
   }
@@ -35,4 +70,7 @@ async function main() {
   console.log(`✅ ${features.length} power plant features → ${OUTPUT}`);
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

@@ -149,4 +149,39 @@ describe("build-tiles.sh", () => {
   it("still fails loudly when a required tile archive is missing", () => {
     expect(text).toMatch(/territories\.pmtiles is missing or empty|Expected tile archive/);
   });
+
+  it("guards the power-plant tile step so a missing GeoJSON does not fail the build", () => {
+    // The power-plant GeoJSON is now generated from Postgres and gated on
+    // DATABASE_URL (CG-266). When the credential is absent the prepare step
+    // exits 0 without writing the file, so the tippecanoe invocation must be
+    // guarded by an existence check rather than run unconditionally — mirroring
+    // the substation/transmission/EV/pricing layers (CIR-1271).
+    const code = text
+      .split("\n")
+      .filter((line) => !line.trimStart().startsWith("#"))
+      .join("\n");
+    const guardIndex = code.indexOf('.tmp-power-plants.geojson" ]');
+    expect(guardIndex, "expected an `if [ -f ...tmp-power-plants.geojson ]` guard").toBeGreaterThan(-1);
+  });
+});
+
+describe("prepare-power-plants-geojson.mjs", () => {
+  const script = path.join(REPO_ROOT, "scripts/prepare-power-plants-geojson.mjs");
+  const text = fs.readFileSync(script, "utf-8");
+
+  it("reads power-plant geometry from Postgres, not data/power-plants.json", () => {
+    // CG-266: the DB is the source of truth for power-plant geometry. The tile
+    // build must query the power_plants table rather than the committed JSON
+    // artifact, mirroring prepare-substations-geojson.mjs.
+    expect(text).toMatch(/FROM power_plants/);
+    expect(text).toMatch(/@neondatabase\/serverless/);
+    expect(text).not.toMatch(/power-plants\.json/);
+  });
+
+  it("is DB-gated: exits 0 (not 1) when DATABASE_URL is absent", () => {
+    // A missing DB credential must skip this one layer, not discard the other
+    // tile layers by failing the whole build (CIR-1271 contract).
+    expect(text).toMatch(/process\.env\.DATABASE_URL/);
+    expect(text).toMatch(/process\.exit\(0\)/);
+  });
 });
