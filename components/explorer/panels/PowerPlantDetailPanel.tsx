@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DeleteEntityDialog } from "@/components/contributions/DeleteEntityDialog";
 import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePowerPlant } from "@/hooks/usePowerPlant";
+import { getPowerPlantHighlightGeoJSON } from "@/lib/explorer/power-plant-highlight";
 import { useExplorer } from "../ExplorerContext";
 
 const linkButtonStyle = {
@@ -22,8 +23,19 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
   const { user } = useCurrentUser();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const { navigateToDetail } = useExplorer();
+  const { navigateToDetail, setHighlight } = useExplorer();
   const { powerPlant } = usePowerPlant(slug);
+
+  useEffect(() => {
+    if (!powerPlant) {
+      setHighlight(null);
+      return;
+    }
+
+    setHighlight(getPowerPlantHighlightGeoJSON(powerPlant));
+
+    return () => setHighlight(null);
+  }, [powerPlant, setHighlight]);
 
   if (!powerPlant) {
     return (
