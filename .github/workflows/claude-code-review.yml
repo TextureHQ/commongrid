@@ -41,5 +41,10 @@ jobs:
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
-          allowed_bots: 'texture-fleet-agent[bot]'
+          # Automated data-sync PRs (monthly/annual/EV/pricing/transmission)
+          # are opened by github-actions[bot]. Without it in this list the
+          # review job aborts with "Workflow initiated by non-human actor"
+          # (CG-267). texture-fleet-agent[bot] is a retired identity and has
+          # been dropped.
+          allowed_bots: 'github-actions[bot]'
 
