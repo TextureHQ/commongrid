@@ -1,8 +1,20 @@
-import { Pool as NeonPool } from "@neondatabase/serverless";
+import { Pool as NeonPool, neonConfig } from "@neondatabase/serverless";
 import { drizzle as neonDrizzle } from "drizzle-orm/neon-serverless";
 import { drizzle as nodeDrizzle } from "drizzle-orm/node-postgres";
 import { Pool as NodePool } from "pg";
+import ws from "ws";
 import { isLocalUrl } from "./client";
+
+// Neon's serverless Pool talks to the database over a WebSocket. A `WebSocket`
+// global only exists in browsers/edge runtimes and in Node >= 22; on Node 20
+// (our CI runners for the sync workflows) it is absent, so every pooled query
+// aborts with "All attempts to open a WebSocket ... failed" before any work is
+// done (CG-268). Provide the `ws` implementation when no global exists so the
+// pooled driver works on any runtime; leave native WebSocket in place where it
+// already exists (edge/browser/Node 22+).
+if (typeof globalThis.WebSocket === "undefined") {
+  neonConfig.webSocketConstructor = ws;
+}
 
 /**
  * Pooled database client — use this anywhere a real transaction is required.
