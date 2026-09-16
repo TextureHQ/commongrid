@@ -42,16 +42,30 @@ jobs:
       # DATABASE_URL is required for publication; without it the script warns and
       # still produces JSON + tiles (CIR-1271).
       - name: Sync EIA-860M → registry + JSON
+        id: sync_monthly
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: npx tsx scripts/sync-power-plants-monthly.ts
+        run: |
+          set -euo pipefail
+          log_file="$(mktemp)"
+          npx tsx scripts/sync-power-plants-monthly.ts | tee "$log_file"
+          if grep -q "Already synced .* No update needed\." "$log_file"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Skip artifact refresh when monthly sync is a no-op
+        if: steps.sync_monthly.outputs.changed != 'true'
+        run: echo "Monthly sync made no data changes; skipping tile rebuild and artifact PR."
       - name: Install tippecanoe
+        if: steps.sync_monthly.outputs.changed == 'true'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq libsqlite3-dev zlib1g-dev
           git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
           cd /tmp/tippecanoe && make -j$(nproc) && sudo make install
       - name: Check tile build prerequisites
+        if: steps.sync_monthly.outputs.changed == 'true'
         # Surfaces optional-but-missing inputs in the log instead of letting a
         # layer vanish from the published tiles unnoticed (CIR-1271).
         run: |
@@ -63,6 +77,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: Rebuild tiles
+        if: steps.sync_monthly.outputs.changed == 'true'
         env:
           # Used by prepare-substations-geojson.mjs, which reads substation
           # geometry from Neon. It is optional: when absent the substation layer
@@ -78,6 +93,7 @@ jobs:
       # forbids pushing to main directly — the original cause of CG-262). The PR
       # is a build-artifact refresh, not the data-publication path.
       - name: Publish tile artifacts via branch + PR
+        if: steps.sync_monthly.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
