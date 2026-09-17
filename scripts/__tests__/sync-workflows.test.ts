@@ -165,6 +165,18 @@ describe("build-tiles.sh", () => {
   });
 });
 
+describe("sync-monthly.yml", () => {
+  const workflow = path.join(WORKFLOW_DIR, "sync-monthly.yml");
+  const text = fs.readFileSync(workflow, "utf-8");
+
+  it("skips tile rebuild and artifact publishing when the monthly sync is a no-op", () => {
+    expect(text).toMatch(/id:\s*sync_monthly/);
+    expect(text).toMatch(/Already synced .* No update needed\\\./);
+    expect(text).toMatch(/if:\s*steps\.sync_monthly\.outputs\.changed != 'true'/);
+    expect(text).toMatch(/if:\s*steps\.sync_monthly\.outputs\.changed == 'true'/);
+  });
+});
+
 describe("prepare-power-plants-geojson.mjs", () => {
   const script = path.join(REPO_ROOT, "scripts/prepare-power-plants-geojson.mjs");
   const text = fs.readFileSync(script, "utf-8");
