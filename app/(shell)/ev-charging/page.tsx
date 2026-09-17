@@ -405,7 +405,16 @@ export default function EVChargingPage() {
                 size="sm"
                 selectedKey={networkFilter}
                 onSelectionChange={(key) => setNetworkFilter(String(key))}
-                items={[{ id: "all", label: "All Networks", value: "all" }]}
+                items={[
+                  { id: "all", label: "All Networks", value: "all" },
+                  // Capped at 20: `networks` is derived from the loaded page of
+                  // stations and its tail is a long list of one-off operators.
+                  ...networks.slice(0, 20).map((net) => ({
+                    id: net,
+                    label: getNetworkShortName(net),
+                    value: net,
+                  })),
+                ]}
                 renderItem={(item) => item.label}
               />
               <Select
