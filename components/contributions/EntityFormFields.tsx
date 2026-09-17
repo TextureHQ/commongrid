@@ -13,6 +13,7 @@ import {
   TextField,
 } from "@texturehq/edges";
 import { useState } from "react";
+import { isMultiSelectExpanded } from "@/lib/contributions/multiselect-disclosure";
 import { fromCalendarDate, toCalendarDate } from "@/lib/forms/date-value";
 import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import {
@@ -77,15 +78,18 @@ function MultiSelectFieldInput({
 }) {
   const selected = Array.isArray(value) ? (value as string[]) : [];
   const options = field.validationRules?.enum ?? [];
-  // Open on mount when something is already selected, so an existing value is
-  // never hidden behind a collapsed summary the contributor has to think to open.
-  const [isOpen, setIsOpen] = useState(selected.length > 0);
+
+  // Null until the contributor deliberately opens or closes the group; see
+  // isMultiSelectExpanded for why this is derived rather than a useState
+  // initializer (the form's values arrive after the fields first render).
+  const [userToggled, setUserToggled] = useState<boolean | null>(null);
+  const isOpen = isMultiSelectExpanded({ userToggled, selectedCount: selected.length });
 
   if (!isOpen) {
     return (
       <div className="space-y-1">
         <span className="text-sm font-medium text-text-body">{field.displayName}</span>
-        <button type="button" onClick={() => setIsOpen(true)} className="cg-multiselect-summary">
+        <button type="button" onClick={() => setUserToggled(true)} className="cg-multiselect-summary">
           <span className="flex-1 text-left">
             {selected.length === 0 ? `Select ${options.length} options` : selected.map(humanizeOptionLabel).join(", ")}
           </span>
