@@ -645,3 +645,76 @@
   flex-shrink: 0;
   color: var(--color-text-heading);
 }
+
+/* ── Panel edit slide-over ──
+   The Explore detail panel is itself a drawer, so Suggest Edit slides in over
+   it rather than opening a second drawer on top. Both layers stay mounted: the
+   entity view keeps its scroll position, and the pane has something to slide
+   against instead of animating over an empty panel. */
+.cg-panel-edit-layer {
+  position: relative;
+  /* min-height:0 so a flex parent can actually shrink this below its content;
+     without it the layer grows to the full height of the edit form and the
+     pane scrolls the whole panel instead of its own body. */
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cg-panel-edit-base {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.cg-panel-edit-slide {
+  position: absolute;
+  inset: 0;
+  background: var(--color-background-surface);
+  transform: translateX(100%);
+  /* Not `visibility: hidden`, which would cancel the transition; the offscreen
+     pane is simply not reachable until it is open. */
+  pointer-events: none;
+  transition: transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+.cg-panel-edit-slide.is-open {
+  transform: translateX(0);
+  pointer-events: auto;
+  box-shadow: -8px 0 24px rgb(0 0 0 / 8%);
+}
+
+.cg-panel-edit-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 14px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-feedback-success-text, #17803d);
+  border-radius: 7px;
+  background: var(--color-feedback-success-bg, rgb(23 128 61 / 8%));
+  color: var(--color-feedback-success-text, #17803d);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.cg-panel-edit-banner-x {
+  display: flex;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.cg-panel-edit-banner-x:hover {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cg-panel-edit-slide {
+    transition: none;
+  }
+}
