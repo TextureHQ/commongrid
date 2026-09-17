@@ -50,8 +50,36 @@ export function PanelEditLayer({
 
   const canEdit = isEditing && entityId !== null && currentValues !== null;
 
+  // The Explore shell renders its own back arrow in a header above this layer —
+  // a sibling node we cannot reach with CSS from in here. That arrow pops the
+  // route stack, so from inside the edit flow it would leave for the list and
+  // discard the contributor's changes. Mark the panel column while editing so
+  // the stylesheet can hide it, leaving exactly one back button on screen: the
+  // pane's own, which steps back through the flow.
+  const layerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // The column is the shared parent of the shell's header and this layer's
+    // scroll container. Found by walking up rather than by class name: the
+    // shell's classes come from @texturehq/edges-explore and are not ours to
+    // depend on.
+    const column = layerRef.current?.parentElement?.parentElement;
+    if (!column) return;
+
+    // Tag the header explicitly. It is not simply the column's first child —
+    // that is an absolutely-positioned resize handle — so identify it by the
+    // back control it contains and let the stylesheet hide it from there.
+    const header = [...column.children].find(
+      (child): child is HTMLElement =>
+        child instanceof HTMLElement && child.querySelector("button[aria-label^='Back']") !== null
+    );
+    header?.setAttribute("data-cg-shell-header", "");
+
+    column.classList.toggle("cg-panel-editing", canEdit);
+    return () => column.classList.remove("cg-panel-editing");
+  }, [canEdit]);
+
   return (
-    <div className="cg-panel-edit-layer">
+    <div className="cg-panel-edit-layer" ref={layerRef}>
       <div className="cg-panel-edit-base" aria-hidden={canEdit} inert={canEdit}>
         {submitted && (
           <div className="cg-panel-edit-banner" role="status">

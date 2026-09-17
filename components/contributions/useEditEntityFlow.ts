@@ -12,6 +12,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 import {
   buildContributionPayload,
   canContinueToConfirm,
@@ -26,6 +27,16 @@ import type { ChangeSummaryItem } from "./SubmitEditConfirmDialog";
 
 /** Which step of the Suggest Edit flow is on screen. */
 export type EditStep = "fields" | "confirm";
+
+/** Stable identity so an empty schema does not retrigger the seeding effect. */
+const EMPTY_FIELDS: EditableField[] = [];
+
+async function fetchEditableFields(url: string): Promise<EditableField[]> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch editable fields: ${res.statusText}`);
+  const json = await res.json();
+  return json.data ?? [];
+}
 
 export interface UseEditEntityFlowOptions {
   entityType: string;
@@ -51,10 +62,6 @@ export function useEditEntityFlow({
 }: UseEditEntityFlowOptions) {
   const router = useRouter();
 
-  const [fields, setFields] = useState<EditableField[]>([]);
-  const [isLoadingFields, setIsLoadingFields] = useState(true);
-  const [fieldsError, setFieldsError] = useState<string | null>(null);
-
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
   const [sourceType, setSourceType] = useState("utility_website");
   const [sourceUrl, setSourceUrl] = useState("");
@@ -70,43 +77,32 @@ export function useEditEntityFlow({
     [currentValues]
   );
 
+  // The editable-field schema is configuration, not per-visit data: it changes
+  // when someone edits the database, not between two openings of this panel.
+  // Re-fetching it on every open put a spinner in front of the form each time
+  // for a response that had not changed, so it is cached for the session.
+  const {
+    data: fields = EMPTY_FIELDS,
+    error: fieldsFetchError,
+    isLoading: isLoadingFields,
+  } = useSWR<EditableField[]>(`/api/v1/editable-fields/${entityType}`, fetchEditableFields, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 3_600_000,
+  });
+
+  const fieldsError = fieldsFetchError ? (fieldsFetchError as Error).message : null;
+
+  // Seed the form once the schema arrives, looking values up by both
+  // snake_case and camelCase to absorb the API/payload mismatch.
   useEffect(() => {
-    let cancelled = false;
-
-    const fetchFields = async () => {
-      try {
-        setIsLoadingFields(true);
-        setFieldsError(null);
-        const res = await fetch(`/api/v1/editable-fields/${entityType}`);
-        if (!res.ok) throw new Error(`Failed to fetch editable fields: ${res.statusText}`);
-        const json = await res.json();
-        // The panel can be dismissed mid-flight; writing state afterwards would
-        // repopulate a form the contributor already walked away from.
-        if (cancelled) return;
-
-        setFields(json.data ?? []);
-
-        // Seed from current values, looking up both snake_case and camelCase to
-        // absorb the API/payload mismatch.
-        const initialValues: Record<string, unknown> = {};
-        for (const field of json.data ?? []) {
-          initialValues[field.fieldName] = lookupCurrentValue(field.fieldName);
-        }
-        setFormValues(initialValues);
-      } catch (error) {
-        if (cancelled) return;
-        console.error("Error fetching editable fields:", error);
-        setFieldsError(error instanceof Error ? error.message : "Failed to load editable fields");
-      } finally {
-        if (!cancelled) setIsLoadingFields(false);
-      }
-    };
-
-    fetchFields();
-    return () => {
-      cancelled = true;
-    };
-  }, [entityType, lookupCurrentValue]);
+    if (fields.length === 0) return;
+    const initialValues: Record<string, unknown> = {};
+    for (const field of fields) {
+      initialValues[field.fieldName] = lookupCurrentValue(field.fieldName);
+    }
+    setFormValues(initialValues);
+  }, [fields, lookupCurrentValue]);
 
   const changedFields = useMemo(() => computeChangedFields(formValues, currentValues), [formValues, currentValues]);
 

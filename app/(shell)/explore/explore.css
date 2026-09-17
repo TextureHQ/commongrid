@@ -718,3 +718,16 @@
     transition: none;
   }
 }
+
+/* While the edit pane is open, hide the shell's own back header.
+   That arrow pops the route stack — from inside the edit flow it would leave
+   for the list and drop the contributor's changes — so the pane supplies the
+   only back button, and it steps back through the flow instead.
+
+   The header is tagged by PanelEditLayer rather than matched by selector: the
+   column's first child is an absolutely-positioned resize handle, not the
+   header, and the header's own classes come from @texturehq/edges-explore and
+   would stop matching if that package restyled it. */
+.cg-panel-editing > [data-cg-shell-header] {
+  display: none;
+}

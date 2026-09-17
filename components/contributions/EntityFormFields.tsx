@@ -5,12 +5,14 @@ import {
   Checkbox,
   CheckboxGroup,
   DateField,
+  Icon,
   NumberField,
   Select,
   Switch,
   TextArea,
   TextField,
 } from "@texturehq/edges";
+import { useState } from "react";
 import { fromCalendarDate, toCalendarDate } from "@/lib/forms/date-value";
 import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import {
@@ -57,6 +59,12 @@ function humanizeOptionLabel(value: string): string {
  * Multi-select control for `multi_enum` fields (JSONB enum arrays such as
  * asset_types, market_segments, grid_services). Emits a string[] of the
  * selected enum members, preserving the canonical option order.
+ *
+ * Collapsed until opened. A program has six of these totalling 48 options, and
+ * every option is a react-aria Checkbox carrying its own focus, label and
+ * validation wiring — mounting them all up front was most of the delay behind
+ * the panel's loading spinner. Collapsed, the form mounts ~22 controls instead
+ * of 70, and a group costs nothing until a contributor actually opens it.
  */
 function MultiSelectFieldInput({
   field,
@@ -69,6 +77,23 @@ function MultiSelectFieldInput({
 }) {
   const selected = Array.isArray(value) ? (value as string[]) : [];
   const options = field.validationRules?.enum ?? [];
+  // Open on mount when something is already selected, so an existing value is
+  // never hidden behind a collapsed summary the contributor has to think to open.
+  const [isOpen, setIsOpen] = useState(selected.length > 0);
+
+  if (!isOpen) {
+    return (
+      <div className="space-y-1">
+        <span className="text-sm font-medium text-text-body">{field.displayName}</span>
+        <button type="button" onClick={() => setIsOpen(true)} className="cg-multiselect-summary">
+          <span className="flex-1 text-left">
+            {selected.length === 0 ? `Select ${options.length} options` : selected.map(humanizeOptionLabel).join(", ")}
+          </span>
+          <Icon name="CaretDown" size="sm" />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <CheckboxGroup

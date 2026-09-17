@@ -44,6 +44,12 @@ export function InlineEditPane({
 
   return (
     <div className="flex h-full flex-col bg-background-surface">
+      {/* One back affordance, and it belongs to this pane.
+          The Explore shell draws its own back arrow just above the panel, but
+          that one pops the route stack — from inside the edit flow it would
+          jump straight out to the list and drop the contributor's changes. So
+          the shell's arrow is hidden while editing (see .cg-panel-editing in
+          explore.css) and this one steps back through the flow instead. */}
       <div className="flex items-center gap-2 border-b border-border-default px-4 py-3">
         <Button
           variant="ghost"
