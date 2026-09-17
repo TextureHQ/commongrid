@@ -1,8 +1,10 @@
 "use client";
 
 import { Badge, Kpi, KpiGroup } from "@texturehq/edges";
+import Link from "next/link";
 import { useState } from "react";
 import { PageHeader, PageShell } from "@/components/ui/layout";
+import { resolveEntityHref } from "@/lib/entity-href";
 import type { Changelog, ChangelogBatchItem, ChangelogEntry, ChangelogOperation } from "@/types/changelog";
 import "./changelog.css";
 
@@ -119,13 +121,20 @@ function EntryRow({ entry }: { entry: ChangelogEntry }) {
 
   const sourceTag = getSourceTag(entry);
   const author = getAuthor(entry);
+  const entityUrl = resolveEntityHref(entry.entityType, entry.slug);
 
   return (
     <div className="cl-entry">
       <div className={getDotClass(entry.kind)} />
       <div className="cl-entry-body">
         <div className="cl-entry-head">
-          <span className="cl-entry-name">{entry.name}</span>
+          {entityUrl ? (
+            <Link href={entityUrl} className="cl-entry-name cl-entry-name-link">
+              {entry.name}
+            </Link>
+          ) : (
+            <span className="cl-entry-name">{entry.name}</span>
+          )}
           <Badge variant={getBadgeVariant(entry.kind)} size="sm">
             {getBadgeLabel(entry.kind)}
           </Badge>
