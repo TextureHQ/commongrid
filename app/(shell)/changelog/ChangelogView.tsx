@@ -4,6 +4,7 @@ import { Badge, Kpi, KpiGroup } from "@texturehq/edges";
 import Link from "next/link";
 import { useState } from "react";
 import { PageHeader, PageShell } from "@/components/ui/layout";
+import { resolveEntityHref } from "@/lib/entity-href";
 import type { Changelog, ChangelogBatchItem, ChangelogEntry, ChangelogOperation } from "@/types/changelog";
 import "./changelog.css";
 
@@ -111,18 +112,6 @@ function getAuthor(entry: ChangelogEntry): string | null {
   return null;
 }
 
-/** Map entity type to a detail-page URL. Returns null if no page exists. */
-function getEntityUrl(entityType: ChangelogEntry["entityType"], slug: string): string | null {
-  switch (entityType) {
-    case "utility":
-      return `/grid-operators/${slug}`;
-    case "balancing-authority":
-      return `/balancing-authorities/${slug}`;
-    default:
-      return null;
-  }
-}
-
 // ── Components ────────────────────────────────────────────────────────────────
 
 function EntryRow({ entry }: { entry: ChangelogEntry }) {
@@ -132,7 +121,7 @@ function EntryRow({ entry }: { entry: ChangelogEntry }) {
 
   const sourceTag = getSourceTag(entry);
   const author = getAuthor(entry);
-  const entityUrl = getEntityUrl(entry.entityType, entry.slug);
+  const entityUrl = resolveEntityHref(entry.entityType, entry.slug);
 
   return (
     <div className="cl-entry">

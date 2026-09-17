@@ -244,10 +244,16 @@
 .cg-changelog .cl-batch-item-name {
   font-weight: 500;
   color: var(--color-text-heading);
+}
+
+/* Only the anchor form is clickable — an item whose entity has no detail page
+   renders as a <span> and must not look like a link it isn't. */
+.cg-changelog a.cl-batch-item-name {
+  color: var(--color-brand-primary);
   text-decoration: none;
 }
 
-.cg-changelog .cl-batch-item-name:hover {
+.cg-changelog a.cl-batch-item-name:hover {
   text-decoration: underline;
 }
 

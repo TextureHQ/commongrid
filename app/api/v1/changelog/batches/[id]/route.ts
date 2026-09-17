@@ -18,24 +18,10 @@ import { ApiError, corsHeaders, jsonResponse, type RouteContext, withApiMiddlewa
 import { generateRequestId } from "@/lib/api/middleware";
 import { getDb } from "@/lib/db/client";
 import { changeBatches, entityVersions } from "@/lib/db/schema";
+import { resolveEntityHref } from "@/lib/entity-href";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
-
-/** Route segment for building an item link, keyed by entity_versions.entity_type. */
-const ENTITY_API_SEGMENT: Record<string, string> = {
-  utility: "utilities",
-  power_plant: "power-plants",
-  ev_station: "ev-stations",
-  territory: "transmission-lines", // territories are addressed by id, no public slug page
-  transmission_line: "transmission-lines",
-  pricing_node: "pricing-nodes",
-  iso: "isos",
-  rto: "rtos",
-  balancing_authority: "balancing-authorities",
-  region: "regions",
-  program: "programs",
-};
 
 interface BatchItem {
   versionId: number;
@@ -113,7 +99,7 @@ async function handleGet(req: Request, ctx: RouteContext) {
     changeType: row.changeType,
     changeSummary: row.changeSummary ?? null,
     changedAt: row.changedAt.toISOString(),
-    href: buildHref(row.entityType, row.entitySlug),
+    href: resolveEntityHref(row.entityType, row.entitySlug),
   }));
 
   const total = Number(count ?? 0);
@@ -140,15 +126,6 @@ async function handleGet(req: Request, ctx: RouteContext) {
       ...corsHeaders(),
     }
   );
-}
-
-function buildHref(entityType: string, slug: string | null): string | null {
-  if (!slug) return null;
-  const segment = ENTITY_API_SEGMENT[entityType];
-  if (!segment) return null;
-  // Territories have no slug-addressable public page; treat as non-linkable.
-  if (entityType === "territory") return null;
-  return `/${segment}/${slug}`;
 }
 
 const handler = withApiMiddleware(handleGet);
