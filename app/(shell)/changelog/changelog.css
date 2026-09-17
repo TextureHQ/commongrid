@@ -86,6 +86,15 @@
   line-height: 1.2;
 }
 
+.cg-changelog .cl-entry-name-link {
+  color: var(--color-brand-primary);
+  text-decoration: none;
+}
+
+.cg-changelog .cl-entry-name-link:hover {
+  text-decoration: underline;
+}
+
 .cg-changelog .cl-entry-detail {
   font-size: 14px;
   color: var(--color-text-muted);
