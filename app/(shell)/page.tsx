@@ -647,21 +647,33 @@ export default function LandingPage() {
                 >
                   Get an API key &rarr;
                 </Link>
-                <a
-                  href="https://github.com/TextureHQ/commongrid#api"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/api"
                   className="inline-flex items-center gap-2 h-10 px-4 rounded-md text-sm font-medium leading-none border transition-all duration-150 no-underline cursor-pointer bg-transparent text-[#a89f90] border-transparent hover:border-text-heading hover:text-text-heading hover:no-underline"
                 >
                   Read the docs
-                </a>
+                </Link>
               </div>
             </div>
 
             <div className="p-6.5 bg-background-surface border-l border-border-default md:border-l-0 md:border-t">
-              <div className="font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption mb-3.5 flex items-center gap-2">
-                Core endpoints · v1
+              <div className="font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption mb-3.5 flex items-center justify-between gap-2">
+                <span>Core endpoints · v1</span>
+                <Link href="/api" className="text-brand-primary no-underline hover:underline">
+                  Interactive API docs &rarr;
+                </Link>
               </div>
+              <p className="text-xs text-text-muted mb-4 mt-0 [text-wrap:pretty]">
+                Every endpoint below is documented in our{" "}
+                <Link href="/api" className="text-brand-primary no-underline hover:underline">
+                  interactive REST API reference
+                </Link>
+                , generated from the same OpenAPI spec. See the{" "}
+                <Link href="/developers" className="text-brand-primary no-underline hover:underline">
+                  developer overview
+                </Link>{" "}
+                for auth, rate limits, and keys.
+              </p>
               {ENDPOINT_DEFS.map((ep) => {
                 const desc = ep.desc ?? (ep.countKey ? `${dynamicCounts[ep.countKey]} ${ep.suffix}` : "");
                 return (
