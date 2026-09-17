@@ -39,6 +39,7 @@
   "dependencies": {
     "@clerk/nextjs": "^7.7.5",
     "@floating-ui/dom": "^1.7.5",
+    "@internationalized/date": "3.12.1",
     "@knocklabs/node": "^1.30.0",
     "@neondatabase/serverless": "^1.0.2",
     "@sentry/nextjs": "^10.49.0",

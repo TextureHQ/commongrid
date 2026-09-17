@@ -17,6 +17,7 @@ import {
   EmptyState,
   Loader,
   PageLayout,
+  Select,
   TextCell,
 } from "@texturehq/edges";
 import Link from "next/link";
@@ -432,54 +433,46 @@ export default function SubstationsPage() {
               resultCount={tableRows.length}
               resultLabel="substations"
             />
-            <select
-              value={stateFilter}
-              onChange={(e) => setStateFilter(e.target.value)}
-              className="h-9 rounded-lg border border-border-default bg-background-surface px-3 text-sm text-text-body"
-            >
-              <option value="all">All States</option>
-              {US_STATES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-            <select
-              value={bandFilter}
-              onChange={(e) => setBandFilter(e.target.value as "all" | VoltageBand)}
-              className="h-9 rounded-lg border border-border-default bg-background-surface px-3 text-sm text-text-body"
-            >
-              <option value="all">All Voltages</option>
-              {VOLTAGE_BANDS.map((b) => (
-                <option key={b} value={b}>
-                  {VOLTAGE_BAND_LABELS[b]}
-                </option>
-              ))}
-            </select>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as "all" | SubstationType)}
-              className="h-9 rounded-lg border border-border-default bg-background-surface px-3 text-sm text-text-body"
-            >
-              <option value="all">All Types</option>
-              {SUBSTATION_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {SUBSTATION_TYPE_LABELS[t]}
-                </option>
-              ))}
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as "all" | SubstationStatus)}
-              className="h-9 rounded-lg border border-border-default bg-background-surface px-3 text-sm text-text-body"
-            >
-              <option value="all">All Statuses</option>
-              {SUBSTATION_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {STATUS_LABELS[s]}
-                </option>
-              ))}
-            </select>
+            <Select
+              size="sm"
+              selectedKey={stateFilter}
+              onSelectionChange={(key) => setStateFilter(String(key))}
+              items={[
+                { id: "all", label: "All States", value: "all" },
+                ...US_STATES.map((entry) => ({ id: entry, label: entry, value: entry })),
+              ]}
+              renderItem={(item) => item.label}
+            />
+            <Select
+              size="sm"
+              selectedKey={bandFilter}
+              onSelectionChange={(key) => setBandFilter(String(key) as "all" | VoltageBand)}
+              items={[
+                { id: "all", label: "All Voltages", value: "all" },
+                ...VOLTAGE_BANDS.map((entry) => ({ id: entry, label: VOLTAGE_BAND_LABELS[entry], value: entry })),
+              ]}
+              renderItem={(item) => item.label}
+            />
+            <Select
+              size="sm"
+              selectedKey={typeFilter}
+              onSelectionChange={(key) => setTypeFilter(String(key) as "all" | SubstationType)}
+              items={[
+                { id: "all", label: "All Types", value: "all" },
+                ...SUBSTATION_TYPES.map((entry) => ({ id: entry, label: SUBSTATION_TYPE_LABELS[entry], value: entry })),
+              ]}
+              renderItem={(item) => item.label}
+            />
+            <Select
+              size="sm"
+              selectedKey={statusFilter}
+              onSelectionChange={(key) => setStatusFilter(String(key) as "all" | SubstationStatus)}
+              items={[
+                { id: "all", label: "All Statuses", value: "all" },
+                ...SUBSTATION_STATUSES.map((entry) => ({ id: entry, label: STATUS_LABELS[entry], value: entry })),
+              ]}
+              renderItem={(item) => item.label}
+            />
           </div>
 
           {/* Results count + sort */}
