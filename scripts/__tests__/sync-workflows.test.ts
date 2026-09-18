@@ -163,7 +163,6 @@ describe("build-tiles.sh", () => {
     const guardIndex = code.indexOf('.tmp-power-plants.geojson" ]');
     expect(guardIndex, "expected an `if [ -f ...tmp-power-plants.geojson ]` guard").toBeGreaterThan(-1);
   });
-
 });
 
 describe("sync-monthly.yml", () => {
