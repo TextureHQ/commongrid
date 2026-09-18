@@ -17,6 +17,16 @@
         "visual_blocks@": "email_1/visual_blocks.json"
       },
       "type": "channel"
+    },
+    {
+      "channel_key": "in-app",
+      "channel_type": "in_app_feed",
+      "ref": "in_app_1",
+      "template": {
+        "action_url": "{{ data.contributionUrl }}",
+        "markdown_body@": "in_app_1/markdown_body.md"
+      },
+      "type": "channel"
     }
   ],
   "trigger_frequency": "every_trigger",

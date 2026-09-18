@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useGlobalSearch } from "@/components/GlobalSearch";
+import { NotificationBell } from "@/components/NotificationBell";
 import { UserMenu } from "@/components/UserMenu";
 
 export type NavigationItem = {
@@ -162,7 +163,10 @@ export function TopBar({ navigation, navigationReady = true }: TopBarProps) {
             {!isAuthLoaded ? (
               <div style={{ width: 32, height: 32 }} />
             ) : isSignedIn ? (
-              <UserMenu />
+              <>
+                <NotificationBell />
+                <UserMenu />
+              </>
             ) : (
               <SignInButton mode="modal">
                 <button type="button" className="cg-nav-signin">
@@ -192,7 +196,10 @@ export function TopBar({ navigation, navigationReady = true }: TopBarProps) {
             {!isAuthLoaded ? (
               <div style={{ width: 32, height: 32 }} />
             ) : isSignedIn ? (
-              <UserMenu />
+              <>
+                <NotificationBell />
+                <UserMenu />
+              </>
             ) : (
               <SignInButton mode="modal">
                 <button type="button" className="cg-icon-btn" aria-label="Sign in">
