@@ -24,10 +24,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install PostgreSQL client
+      # The Neon server is Postgres 17. pg_dump refuses to dump a server newer
+      # than itself ("aborting because of server version mismatch"), and the
+      # Ubuntu runner's default postgresql-client is v16 — which is exactly what
+      # broke every snapshot run from 2026-08-16 onward (CIR-1272). Install the
+      # v17 client from the official PGDG apt repo so client >= server.
+      - name: Install PostgreSQL 17 client
         run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
+          sudo apt-get install -y -qq postgresql-client-17
+          pg_dump --version
 
       - name: Set snapshot tag
         id: tag
@@ -57,7 +68,16 @@ jobs:
           fi
           echo "DATABASE_URL is present."
 
-      - name: Export full database (SQL)
+      # SQL dump is scoped to an explicit ALLOWLIST of public reference tables.
+      # This is a PUBLIC release (ODbL) — a full `pg_dump` would leak users,
+      # api_keys (credentials!), contributions, moderation_actions,
+      # notifications, and other operational/PII tables. We enumerate exactly
+      # the datasets that belong in the open dataset and dump only those with
+      # `--table`. Anything not on this list is never exported (CIR-1273).
+      #
+      # To add a dataset to the public snapshot, add its table here explicitly.
+      # Do NOT switch this to a full-database dump.
+      - name: Export public reference tables (SQL)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         # `pipefail` is essential: without it, `pg_dump | gzip` reports the exit
@@ -65,13 +85,27 @@ jobs:
         # snapshots got published for months.
         shell: bash -euo pipefail {0}
         run: |
-          echo "Dumping database..."
+          echo "Dumping public reference tables..."
           pg_dump "$DATABASE_URL" \
             --no-owner \
             --no-privileges \
             --clean \
             --if-exists \
             --format=plain \
+            --table=public.balancing_authorities \
+            --table=public.ev_stations \
+            --table=public.isos \
+            --table=public.power_plant_interconnections \
+            --table=public.power_plants \
+            --table=public.pricing_nodes \
+            --table=public.programs \
+            --table=public.regions \
+            --table=public.rtos \
+            --table=public.substations \
+            --table=public.territories \
+            --table=public.transmission_line_endpoints \
+            --table=public.transmission_lines \
+            --table=public.utilities \
             | gzip -9 > "$SNAPSHOT_DIR/commongrid-${{ steps.tag.outputs.date }}.sql.gz"
           echo "SQL dump size: $(du -h "$SNAPSHOT_DIR/commongrid-${{ steps.tag.outputs.date }}.sql.gz" | cut -f1)"
 
