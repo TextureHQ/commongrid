@@ -13,7 +13,7 @@ vi.mock("@/lib/observability", () => ({
 
 import { reportError } from "@/lib/observability";
 import { getKnockClient, isKnockConfigured } from "../client";
-import { triggerContributionApproved, triggerWorkflow } from "../workflows";
+import { triggerContributionApproved, triggerModDatasetSuggestion, triggerWorkflow } from "../workflows";
 
 const mockTrigger = vi.fn();
 const mockReportError = vi.mocked(reportError);
@@ -190,6 +190,60 @@ describe("triggerContributionApproved", () => {
     expect(mockTrigger).toHaveBeenCalledWith(
       "contribution-approved",
       expect.objectContaining({ cancellation_key: "my-custom-key" })
+    );
+  });
+});
+
+describe("triggerModDatasetSuggestion", () => {
+  const data = {
+    submitterEmail: "jane@example.com",
+    submitterName: "Jane Rivera",
+    datasetName: "Interconnection queue positions",
+    dataDescription: "Queue positions, capacities, and statuses by ISO.",
+    usefulness: "Links pending projects to utilities already in the graph.",
+    source: "https://example.com/queue",
+    willingToModerate: true,
+  };
+
+  it("returns null and does not call Knock when the moderator list is empty", async () => {
+    vi.mocked(isKnockConfigured).mockReturnValue(true);
+
+    const result = await triggerModDatasetSuggestion([], data);
+
+    expect(result).toBeNull();
+    expect(mockTrigger).not.toHaveBeenCalled();
+  });
+
+  it("triggers mod-dataset-suggestion with the moderator ids and data", async () => {
+    vi.mocked(isKnockConfigured).mockReturnValue(true);
+    mockTrigger.mockResolvedValue({ workflow_run_id: "run-ds" });
+
+    const result = await triggerModDatasetSuggestion(["mod-1", "mod-2"], data);
+
+    expect(mockTrigger).toHaveBeenCalledWith(
+      "mod-dataset-suggestion",
+      expect.objectContaining({
+        recipients: ["mod-1", "mod-2"],
+        data: expect.objectContaining({
+          submitterEmail: "jane@example.com",
+          datasetName: "Interconnection queue positions",
+          willingToModerate: true,
+        }),
+        cancellation_key: "mod-dataset-suggestion:jane@example.com:Interconnection queue positions",
+      })
+    );
+    expect(result).toBe("run-ds");
+  });
+
+  it("uses a custom cancellation key when provided", async () => {
+    vi.mocked(isKnockConfigured).mockReturnValue(true);
+    mockTrigger.mockResolvedValue({ workflow_run_id: "run-ds-2" });
+
+    await triggerModDatasetSuggestion(["mod-1"], data, "custom-ds-key");
+
+    expect(mockTrigger).toHaveBeenCalledWith(
+      "mod-dataset-suggestion",
+      expect.objectContaining({ cancellation_key: "custom-ds-key" })
     );
   });
 });
