@@ -403,6 +403,40 @@ export default function LandingPage() {
                 </div>
               </Link>
             ))}
+
+            {/* CTA tile — the registry is editable, so the grid ends on an
+                invitation to add a new dataset rather than another one to
+                browse. Same cell geometry as the data tiles (border, min
+                height, hover) with a dashed accent + "add" affordance so it
+                reads as a distinct action. */}
+            <Link
+              href="/contribute-dataset"
+              className="group p-6 border-r border-b border-border-default flex flex-col gap-1.5 min-h-[220px] relative cursor-pointer transition-colors duration-150 text-inherit no-underline bg-[color-mix(in_srgb,var(--color-brand-primary)_4%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-brand-primary)_9%,transparent)]"
+            >
+              {/* Dashed accent frame, inset so it sits inside the shared grid
+                  borders instead of doubling them. */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-2 rounded-sm border border-dashed border-brand-primary/40 transition-colors duration-150 group-hover:border-brand-primary/70"
+              />
+              <div className="relative flex items-center gap-2.5 mt-0 mb-1">
+                <span className="grid place-items-center w-7 h-7 rounded-full border border-brand-primary/50 text-brand-primary text-lg leading-none font-medium transition-colors duration-150 group-hover:bg-brand-primary group-hover:text-background-body group-hover:border-brand-primary">
+                  +
+                </span>
+                <div className="font-[family-name:var(--font-rethink-sans)] text-[length:var(--text-heading-md-size)] font-[var(--text-heading-md-weight)] leading-[var(--text-heading-md-line-height)] tracking-[var(--text-heading-md-letter-spacing)] text-text-heading">
+                  Got another dataset?
+                </div>
+              </div>
+              <p className="relative text-[length:var(--text-body-sm-size)] font-[var(--text-body-sm-weight)] leading-[var(--text-body-sm-line-height)] tracking-[var(--text-body-sm-letter-spacing)] text-text-muted my-1 mb-auto [text-wrap:pretty]">
+                Have a great dataset that belongs in the connected graph? Let&rsquo;s get it in here.
+              </p>
+              <div className="relative flex items-center justify-between pt-3 mt-3 border-t border-dashed border-border-muted">
+                <span className="font-[family-name:var(--font-fira-code)] text-[11px] text-brand-primary py-0.5 px-1.5 border border-brand-primary/40 rounded-sm tracking-[.02em]">
+                  Suggest a dataset
+                </span>
+                <ArrowIcon />
+              </div>
+            </Link>
           </div>
         </div>
       </section>

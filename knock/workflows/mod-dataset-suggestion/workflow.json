@@ -1,0 +1,29 @@
+{
+  "categories": [
+    "moderation_queue"
+  ],
+  "description": "Sent to moderators when a visitor suggests a new dataset for CommonGrid.",
+  "name": "New Dataset Suggestion",
+  "steps": [
+    {
+      "channel_key": "postmark",
+      "channel_type": "email",
+      "ref": "email_1",
+      "template": {
+        "settings": {
+          "layout_key": "default"
+        },
+        "subject": "New dataset suggestion: {{ data.datasetName }}",
+        "visual_blocks@": "email_1/visual_blocks.json"
+      },
+      "type": "channel"
+    }
+  ],
+  "trigger_frequency": "every_trigger",
+  "__readonly": {
+    "key": "mod-dataset-suggestion",
+    "active": true,
+    "valid": true
+  },
+  "$schema": "https://schemas.knock.app/cli/workflow.json"
+}

@@ -15,6 +15,7 @@ export const PAGE_TITLES = {
   changelog: "Changelog",
   snapshots: "Data Snapshots",
   about: "About",
+  contributeDataset: "Contribute a Dataset",
   components: "Components",
   programs: "Utility Programs",
   rates: "Rates & Tariffs",
