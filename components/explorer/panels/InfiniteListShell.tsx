@@ -8,6 +8,7 @@
  * (filter options, row renderer, entity label, add href).
  */
 
+import { Select, TextField } from "@texturehq/edges";
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import type { ReactNode } from "react";
 
@@ -68,14 +69,6 @@ export interface InfiniteListShellProps {
   emptyLabel?: string;
 }
 
-const SearchIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Search">
-    <title>Search</title>
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3-3" />
-  </svg>
-);
-
 export function InfiniteListShell({
   entityLabel,
   total,
@@ -106,17 +99,13 @@ export function InfiniteListShell({
           </span>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             {filterOptions && onFilterChange && (
-              <select
-                className="cg-explore-select"
-                value={filterValue ?? ""}
-                onChange={(e) => onFilterChange(e.target.value)}
-              >
-                {filterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <Select
+                size="sm"
+                selectedKey={filterValue ?? ""}
+                onSelectionChange={(key) => onFilterChange(String(key))}
+                items={filterOptions.map((opt) => ({ id: String(opt.value), label: opt.label, value: opt.value }))}
+                renderItem={(item) => item.label}
+              />
             )}
             {addAction?.visible && (
               <button type="button" className="cg-explore-icon-btn" onClick={addAction.onClick}>
@@ -126,32 +115,16 @@ export function InfiniteListShell({
           </div>
         </div>
         <div style={{ padding: "6px 14px 7px" }}>
-          <div className="cg-explore-search">
-            <SearchIcon />
-            <input
-              type="text"
-              placeholder={searchPlaceholder}
-              value={searchValue}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-            {searchValue && (
-              <button
-                type="button"
-                onClick={() => onSearchChange("")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--color-text-muted)",
-                  fontSize: 14,
-                  padding: 0,
-                }}
-                aria-label="Clear search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+          <TextField
+            aria-label={searchPlaceholder}
+            placeholder={searchPlaceholder}
+            value={searchValue}
+            onChange={onSearchChange}
+            showSearchIcon
+            isClearable
+            onClear={() => onSearchChange("")}
+            reserveErrorSpace={false}
+          />
         </div>
       </div>
 

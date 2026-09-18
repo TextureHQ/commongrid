@@ -29,6 +29,15 @@ export function EntityActions({ entityType, entityId, entitySlug, entityName, cu
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  // Acknowledges a submitted edit once the drawer has closed. Without it the
+  // drawer just vanishes and nothing says the contribution was received.
+  const [justSubmitted, setJustSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!justSubmitted) return;
+    const timer = setTimeout(() => setJustSubmitted(false), 6000);
+    return () => clearTimeout(timer);
+  }, [justSubmitted]);
 
   // Auto-open edit panel when ?edit=true is in the URL
   const didAutoOpen = useRef(false);
@@ -69,6 +78,24 @@ export function EntityActions({ entityType, entityId, entitySlug, entityName, cu
 
   return (
     <>
+      {justSubmitted && (
+        <div
+          role="status"
+          className="mb-2 flex items-center gap-2 rounded-md border border-feedback-success bg-feedback-success/10 px-3 py-2 text-sm text-feedback-success"
+        >
+          <Icon name="CheckCircle" size="sm" />
+          <span className="flex-1">Edit submitted for review.</span>
+          <button
+            type="button"
+            onClick={() => setJustSubmitted(false)}
+            aria-label="Dismiss"
+            className="opacity-70 hover:opacity-100"
+          >
+            <Icon name="X" size={14} />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
         <EntityVersionHistory entityType={entityType} entitySlug={entitySlug} />
 
@@ -121,6 +148,7 @@ export function EntityActions({ entityType, entityId, entitySlug, entityName, cu
           onClose={() => setIsPanelOpen(false)}
           onSubmitted={() => {
             setIsPanelOpen(false);
+            setJustSubmitted(true);
             router.refresh();
           }}
         />

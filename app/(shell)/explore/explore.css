@@ -147,24 +147,6 @@
 }
 
 /* ── Custom select ── */
-.cg-explore-select {
-  height: 28px;
-  padding: 0 24px 0 8px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 6px;
-  background: var(--color-background-surface);
-  color: var(--color-text-heading);
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23857b6b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 7px center;
-  outline: none;
-}
-
 /* ── Small icon buttons (filter, sort, export) ── */
 .cg-explore-icon-btn {
   display: flex;
@@ -513,34 +495,6 @@
 }
 
 /* ── Search input ── */
-.cg-explore-search {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 7px;
-  font-size: 12px;
-  color: var(--color-text-heading);
-  background: var(--color-background-surface);
-}
-
-.cg-explore-search input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--color-text-heading);
-}
-
-.cg-explore-search input::placeholder {
-  color: var(--color-text-muted);
-}
-
 /* ── Hybrid panel header ── */
 .cg-explore-panel-header {
   flex-shrink: 0;
@@ -690,4 +644,90 @@
   justify-content: center;
   flex-shrink: 0;
   color: var(--color-text-heading);
+}
+
+/* ── Panel edit slide-over ──
+   The Explore detail panel is itself a drawer, so Suggest Edit slides in over
+   it rather than opening a second drawer on top. Both layers stay mounted: the
+   entity view keeps its scroll position, and the pane has something to slide
+   against instead of animating over an empty panel. */
+.cg-panel-edit-layer {
+  position: relative;
+  /* min-height:0 so a flex parent can actually shrink this below its content;
+     without it the layer grows to the full height of the edit form and the
+     pane scrolls the whole panel instead of its own body. */
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cg-panel-edit-base {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.cg-panel-edit-slide {
+  position: absolute;
+  inset: 0;
+  background: var(--color-background-surface);
+  transform: translateX(100%);
+  /* Not `visibility: hidden`, which would cancel the transition; the offscreen
+     pane is simply not reachable until it is open. */
+  pointer-events: none;
+  transition: transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+.cg-panel-edit-slide.is-open {
+  transform: translateX(0);
+  pointer-events: auto;
+  box-shadow: -8px 0 24px rgb(0 0 0 / 8%);
+}
+
+.cg-panel-edit-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 14px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-feedback-success-text, #17803d);
+  border-radius: 7px;
+  background: var(--color-feedback-success-bg, rgb(23 128 61 / 8%));
+  color: var(--color-feedback-success-text, #17803d);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.cg-panel-edit-banner-x {
+  display: flex;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.cg-panel-edit-banner-x:hover {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cg-panel-edit-slide {
+    transition: none;
+  }
+}
+
+/* While the edit pane is open, hide the shell's own back header.
+   That arrow pops the route stack — from inside the edit flow it would leave
+   for the list and drop the contributor's changes — so the pane supplies the
+   only back button, and it steps back through the flow instead.
+
+   The header is tagged by PanelEditLayer rather than matched by selector: the
+   column's first child is an absolutely-positioned resize handle, not the
+   header, and the header's own classes come from @texturehq/edges-explore and
+   would stop matching if that package restyled it. */
+.cg-panel-editing > [data-cg-shell-header] {
+  display: none;
 }

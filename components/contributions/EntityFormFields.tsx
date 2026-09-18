@@ -1,6 +1,20 @@
 "use client";
 
-import { Badge } from "@texturehq/edges";
+import {
+  Badge,
+  Checkbox,
+  CheckboxGroup,
+  DateField,
+  Icon,
+  NumberField,
+  Select,
+  Switch,
+  TextArea,
+  TextField,
+} from "@texturehq/edges";
+import { useState } from "react";
+import { isMultiSelectExpanded } from "@/lib/contributions/multiselect-disclosure";
+import { fromCalendarDate, toCalendarDate } from "@/lib/forms/date-value";
 import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import {
   AssetTypeLabel,
@@ -46,6 +60,12 @@ function humanizeOptionLabel(value: string): string {
  * Multi-select control for `multi_enum` fields (JSONB enum arrays such as
  * asset_types, market_segments, grid_services). Emits a string[] of the
  * selected enum members, preserving the canonical option order.
+ *
+ * Collapsed until opened. A program has six of these totalling 48 options, and
+ * every option is a react-aria Checkbox carrying its own focus, label and
+ * validation wiring — mounting them all up front was most of the delay behind
+ * the panel's loading spinner. Collapsed, the form mounts ~22 controls instead
+ * of 70, and a group costs nothing until a contributor actually opens it.
  */
 function MultiSelectFieldInput({
   field,
@@ -59,31 +79,49 @@ function MultiSelectFieldInput({
   const selected = Array.isArray(value) ? (value as string[]) : [];
   const options = field.validationRules?.enum ?? [];
 
-  return (
-    <div className="space-y-2 rounded-md border border-border-default bg-background-body p-3">
-      <div className="grid gap-2 sm:grid-cols-2">
-        {options.map((option) => {
-          const checked = selected.includes(option);
-          return (
-            <label key={option} className="flex items-start gap-2 text-sm text-text-body">
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={(e) => {
-                  // Rebuild from the canonical option order so output is stable
-                  // regardless of click order.
-                  const next = options.filter((item) => (item === option ? e.target.checked : selected.includes(item)));
-                  onChange(field.fieldName, next);
-                }}
-                className="mt-1 h-4 w-4 rounded border-border-default text-brand-primary focus:ring-2 focus:ring-brand-primary/20"
-              />
-              <span>{humanizeOptionLabel(option)}</span>
-            </label>
-          );
-        })}
+  // Null until the contributor deliberately opens or closes the group; see
+  // isMultiSelectExpanded for why this is derived rather than a useState
+  // initializer (the form's values arrive after the fields first render).
+  const [userToggled, setUserToggled] = useState<boolean | null>(null);
+  const isOpen = isMultiSelectExpanded({ userToggled, selectedCount: selected.length });
+
+  if (!isOpen) {
+    return (
+      <div className="space-y-1">
+        <span className="text-sm font-medium text-text-body">{field.displayName}</span>
+        <button type="button" onClick={() => setUserToggled(true)} className="cg-multiselect-summary">
+          <span className="flex-1 text-left">
+            {selected.length === 0 ? `Select ${options.length} options` : selected.map(humanizeOptionLabel).join(", ")}
+          </span>
+          <Icon name="CaretDown" size="sm" />
+        </button>
       </div>
-      <p className="text-xs text-text-muted">Select one or more values.</p>
-    </div>
+    );
+  }
+
+  return (
+    <CheckboxGroup
+      label={field.displayName}
+      value={selected}
+      // CheckboxGroup hands back the selected values in click order; reorder to
+      // the canonical option order so the emitted array is stable no matter how
+      // the user got there.
+      onChange={(next) =>
+        onChange(
+          field.fieldName,
+          options.filter((item) => next.includes(item))
+        )
+      }
+      description="Select one or more values."
+    >
+      <div className="grid gap-2 rounded-md border border-border-default bg-background-body p-3 sm:grid-cols-2">
+        {options.map((option) => (
+          <Checkbox key={option} value={option}>
+            {humanizeOptionLabel(option)}
+          </Checkbox>
+        ))}
+      </div>
+    </CheckboxGroup>
   );
 }
 
@@ -101,15 +139,17 @@ export function EntityFormFields({ fields, formValues, onChange, mode = "edit" }
       {mode === "create" && <h3 className="text-sm font-semibold text-text-heading">Entity Information</h3>}
       {mode === "edit" && <h3 className="text-sm font-semibold text-text-heading">Fields</h3>}
       {fields.map((field) => (
+        // The Edges field renders its own <label>, so the "Critical" badge sits
+        // beside the control rather than inside a second label element — two
+        // labels for one input is what produced the doubled focus treatment.
         <div key={field.fieldName} className="space-y-1">
-          <label htmlFor={field.fieldName} className="flex items-center gap-2 text-sm font-medium text-text-body">
-            {field.displayName}
-            {field.isCritical && (
+          {field.isCritical && (
+            <div className="flex justify-end">
               <Badge variant="warning" size="sm">
                 Critical
               </Badge>
-            )}
-          </label>
+            </div>
+          )}
           {renderFieldInput(field, formValues[field.fieldName], onChange)}
         </div>
       ))}
@@ -151,50 +191,27 @@ export function SourceCitationFields({
     <div className="space-y-4">
       <h3 className="text-sm font-semibold text-text-heading">Source Citation</h3>
 
-      <div className="space-y-1">
-        <label htmlFor="sourceType" className="text-sm font-medium text-text-body">
-          Source Type
-        </label>
-        <select
-          id="sourceType"
-          value={sourceType}
-          onChange={(e) => onSourceTypeChange(e.target.value)}
-          className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-        >
-          {SOURCE_TYPE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Select
+        label="Source Type"
+        selectedKey={sourceType}
+        onSelectionChange={(key) => onSourceTypeChange(String(key))}
+        items={SOURCE_TYPE_OPTIONS.map((opt) => ({ id: opt.value, label: opt.label, value: opt.value }))}
+        renderItem={(item) => item.label}
+      />
 
-      <div className="space-y-1">
-        <label htmlFor="sourceUrl" className="text-sm font-medium text-text-body">
-          Source URL (optional)
-        </label>
-        <input
-          id="sourceUrl"
-          type="url"
-          value={sourceUrl}
-          onChange={(e) => onSourceUrlChange(e.target.value)}
-          placeholder="https://..."
-          className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-        />
-      </div>
+      <TextField
+        label="Source URL (optional)"
+        type="url"
+        value={sourceUrl}
+        onChange={onSourceUrlChange}
+        placeholder="https://..."
+      />
 
-      <div className="space-y-1">
-        <label htmlFor="sourceDate" className="text-sm font-medium text-text-body">
-          Source Date (optional)
-        </label>
-        <input
-          id="sourceDate"
-          type="date"
-          value={sourceDate}
-          onChange={(e) => onSourceDateChange(e.target.value)}
-          className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-        />
-      </div>
+      <DateField
+        label="Source Date (optional)"
+        value={toCalendarDate(sourceDate)}
+        onChange={(date) => onSourceDateChange(fromCalendarDate(date))}
+      />
     </div>
   );
 }
@@ -222,15 +239,14 @@ export function EditSummaryField({
           {value.trim().length}/{minLength}
         </span>
       </label>
-      <textarea
+      <TextArea
         id="editSummary"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder ?? `Describe the changes you're making (minimum ${minLength} characters)`}
         rows={3}
-        className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+        description="A short description helps reviewers verify your update."
       />
-      <p className="text-xs text-text-muted">A short description helps reviewers verify your update.</p>
     </div>
   );
 }
@@ -239,75 +255,51 @@ export function EditSummaryField({
  * Render the appropriate input field based on field type
  */
 function renderFieldInput(field: EditableField, value: unknown, onChange: (fieldName: string, value: unknown) => void) {
-  const inputClassName =
-    "w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20";
-
   switch (field.fieldType) {
     case "text":
       return (
-        <input
+        <TextField
           id={field.fieldName}
-          type="text"
+          label={field.displayName}
           value={(value as string) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value)}
-          className={inputClassName}
+          onChange={(next) => onChange(field.fieldName, next)}
         />
       );
 
     case "url":
       return (
-        <input
+        <TextField
           id={field.fieldName}
+          label={field.displayName}
           type="url"
           value={(value as string) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value)}
+          onChange={(next) => onChange(field.fieldName, next)}
           placeholder="https://..."
-          className={inputClassName}
         />
       );
 
     case "integer":
-      return (
-        <input
-          id={field.fieldName}
-          type="number"
-          step="1"
-          value={(value as number) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value ? parseInt(e.target.value, 10) : null)}
-          min={field.validationRules?.min}
-          max={field.validationRules?.max}
-          className={inputClassName}
-        />
-      );
-
     case "float":
       return (
-        <input
+        <NumberField
           id={field.fieldName}
-          type="number"
-          step="any"
-          value={(value as number) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value ? parseFloat(e.target.value) : null)}
-          min={field.validationRules?.min}
-          max={field.validationRules?.max}
-          className={inputClassName}
+          label={field.displayName}
+          // NumberField emits NaN when cleared; store null so an emptied field
+          // round-trips as "no value" rather than a NaN that fails validation.
+          value={typeof value === "number" ? value : Number.NaN}
+          onChange={(next) => onChange(field.fieldName, Number.isNaN(next) ? null : next)}
+          minValue={field.validationRules?.min}
+          maxValue={field.validationRules?.max}
+          step={field.fieldType === "integer" ? 1 : undefined}
+          formatOptions={field.fieldType === "integer" ? { maximumFractionDigits: 0 } : { maximumFractionDigits: 20 }}
         />
       );
 
     case "boolean":
       return (
-        <div className="flex items-center gap-2">
-          <input
-            id={field.fieldName}
-            type="checkbox"
-            checked={(value as boolean) ?? false}
-            onChange={(e) => onChange(field.fieldName, e.target.checked)}
-            className="h-4 w-4 rounded border-border-default text-brand-primary focus:ring-2 focus:ring-brand-primary/20"
-          />
-          <label htmlFor={field.fieldName} className="text-sm text-text-body">
-            {value ? "Yes" : "No"}
-          </label>
-        </div>
+        <Switch isSelected={(value as boolean) ?? false} onChange={(next) => onChange(field.fieldName, next)}>
+          {field.displayName}
+        </Switch>
       );
 
     case "multi_enum":
@@ -315,29 +307,27 @@ function renderFieldInput(field: EditableField, value: unknown, onChange: (field
 
     case "enum":
       return (
-        <select
-          id={field.fieldName}
-          value={(value as string) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value)}
-          className={inputClassName}
-        >
-          <option value="">-- Select --</option>
-          {field.validationRules?.enum?.map((option) => (
-            <option key={option} value={option}>
-              {humanizeOptionLabel(option)}
-            </option>
-          ))}
-        </select>
+        <Select
+          label={field.displayName}
+          selectedKey={(value as string) || undefined}
+          onSelectionChange={(key) => onChange(field.fieldName, key ? String(key) : "")}
+          items={(field.validationRules?.enum ?? []).map((option) => ({
+            id: option,
+            label: humanizeOptionLabel(option),
+            value: option,
+          }))}
+          renderItem={(item) => item.label}
+          placeholder="-- Select --"
+        />
       );
 
     default:
       return (
-        <input
+        <TextField
           id={field.fieldName}
-          type="text"
+          label={field.displayName}
           value={(value as string) ?? ""}
-          onChange={(e) => onChange(field.fieldName, e.target.value)}
-          className={inputClassName}
+          onChange={(next) => onChange(field.fieldName, next)}
         />
       );
   }

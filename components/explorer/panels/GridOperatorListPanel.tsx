@@ -1,5 +1,6 @@
 "use client";
 
+import { Select, TextField } from "@texturehq/edges";
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
@@ -27,23 +28,6 @@ const typeFilterOptions = [
   { id: "RTO", label: "RTO", value: "RTO" },
   { id: "BA", label: "Balancing Authority", value: "BA" },
 ];
-
-const SearchIcon = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    aria-hidden="true"
-    focusable="false"
-    role="presentation"
-  >
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3-3" />
-  </svg>
-);
 
 export function GridOperatorListPanel() {
   const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
@@ -121,13 +105,14 @@ export function GridOperatorListPanel() {
             <strong>{filtered.length}</strong> grid operators
           </span>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
-              {typeFilterOptions.map((opt) => (
-                <option key={opt.id} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            <Select
+              aria-label="Type"
+              size="sm"
+              selectedKey={state.type}
+              onSelectionChange={(key) => setTypeFilter(String(key))}
+              items={typeFilterOptions.map((opt) => ({ id: String(opt.value), label: opt.label, value: opt.value }))}
+              renderItem={(item) => item.label}
+            />
             {user && (
               <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/grid-operators/new")}>
                 + Add
@@ -136,31 +121,16 @@ export function GridOperatorListPanel() {
           </div>
         </div>
         <div style={{ padding: "6px 14px 7px" }}>
-          <div className="cg-explore-search">
-            <SearchIcon />
-            <input
-              type="text"
-              placeholder="Search grid operators…"
-              value={state.q}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {state.q && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--color-text-muted)",
-                  fontSize: 14,
-                  padding: 0,
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
+          <TextField
+            aria-label="Search grid operators…"
+            placeholder="Search grid operators…"
+            value={state.q}
+            onChange={setSearch}
+            showSearchIcon
+            isClearable
+            onClear={() => setSearch("")}
+            reserveErrorSpace={false}
+          />
         </div>
       </div>
 

@@ -1,8 +1,21 @@
 "use client";
 
-import { Button, Dialog, Icon, Select, TextField } from "@texturehq/edges";
+import {
+  Button,
+  Checkbox,
+  CheckboxGroup,
+  DateField,
+  Dialog,
+  Icon,
+  NumberField,
+  Select,
+  Switch,
+  TextArea,
+  TextField,
+} from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { fromCalendarDate, toCalendarDate } from "@/lib/forms/date-value";
 import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import { type EditableField, SOURCE_TYPE_OPTIONS } from "./EntityFormFields";
 
@@ -232,62 +245,27 @@ export function InlineFieldEdit({
         );
 
       case "integer":
-        return (
-          <div className="space-y-2">
-            <label htmlFor={`field-${field.fieldName}`} className="text-sm font-medium text-text-body">
-              {field.displayName}
-            </label>
-            <input
-              id={`field-${field.fieldName}`}
-              type="number"
-              step="1"
-              value={value !== null && value !== undefined ? String(value) : ""}
-              onChange={(e) => setValue(e.target.value ? parseInt(e.target.value, 10) : null)}
-              min={field.validationRules?.min}
-              max={field.validationRules?.max}
-              placeholder="Enter a number"
-              className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-            />
-          </div>
-        );
-
       case "float":
         return (
-          <div className="space-y-2">
-            <label htmlFor={`field-${field.fieldName}`} className="text-sm font-medium text-text-body">
-              {field.displayName}
-            </label>
-            <input
-              id={`field-${field.fieldName}`}
-              type="number"
-              step="any"
-              value={value !== null && value !== undefined ? String(value) : ""}
-              onChange={(e) => setValue(e.target.value ? parseFloat(e.target.value) : null)}
-              min={field.validationRules?.min}
-              max={field.validationRules?.max}
-              placeholder="Enter a number"
-              className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-            />
-          </div>
+          <NumberField
+            id={`field-${field.fieldName}`}
+            label={field.displayName}
+            // NumberField emits NaN when cleared; store null so an emptied field
+            // round-trips as "no value" rather than a NaN that fails validation.
+            value={typeof value === "number" ? value : Number.NaN}
+            onChange={(next) => setValue(Number.isNaN(next) ? null : next)}
+            minValue={field.validationRules?.min}
+            maxValue={field.validationRules?.max}
+            step={field.fieldType === "integer" ? 1 : undefined}
+            formatOptions={field.fieldType === "integer" ? { maximumFractionDigits: 0 } : { maximumFractionDigits: 20 }}
+          />
         );
 
       case "boolean":
         return (
-          <div className="space-y-2">
-            <label htmlFor={`field-${field.fieldName}`} className="text-sm font-medium text-text-body">
-              {field.displayName}
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                id={`field-${field.fieldName}`}
-                type="checkbox"
-                checked={(value as boolean) ?? false}
-                onChange={(e) => setValue(e.target.checked)}
-                className="h-4 w-4 rounded border-border-default text-brand-primary focus:ring-2 focus:ring-brand-primary/20"
-              />
-              <span className="text-sm text-text-body">{value ? "Yes" : "No"}</span>
-            </div>
-          </div>
+          <Switch isSelected={(value as boolean) ?? false} onChange={setValue}>
+            {field.displayName}
+          </Switch>
         );
 
       case "multi_enum": {
@@ -296,27 +274,22 @@ export function InlineFieldEdit({
         const humanize = (option: string) => option.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
         return (
-          <div className="space-y-2">
-            <div className="text-sm font-medium text-text-body">{field.displayName}</div>
+          <CheckboxGroup
+            label={field.displayName}
+            value={selected}
+            // CheckboxGroup hands back the selected values in click order;
+            // reorder to the canonical option order so the emitted array is
+            // stable no matter how the user got there.
+            onChange={(next) => setValue(options.filter((item) => next.includes(item)))}
+          >
             <div className="grid gap-2 rounded-md border border-border-default bg-background-body p-3 sm:grid-cols-2">
               {options.map((option) => (
-                <label key={option} className="flex items-start gap-2 text-sm text-text-body">
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(option)}
-                    onChange={(e) => {
-                      const next = options.filter((item) =>
-                        item === option ? e.target.checked : selected.includes(item)
-                      );
-                      setValue(next);
-                    }}
-                    className="mt-1 h-4 w-4 rounded border-border-default text-brand-primary focus:ring-2 focus:ring-brand-primary/20"
-                  />
-                  <span>{humanize(option)}</span>
-                </label>
+                <Checkbox key={option} value={option}>
+                  {humanize(option)}
+                </Checkbox>
               ))}
             </div>
-          </div>
+          </CheckboxGroup>
         );
       }
 
@@ -400,15 +373,14 @@ export function InlineFieldEdit({
                   {summaryLongEnough && <Icon name="CheckCircle" size="sm" className="text-feedback-success" />}
                 </div>
               </div>
-              <textarea
+              <TextArea
                 id="edit-summary"
                 value={editSummary}
                 onChange={(e) => setEditSummary(e.target.value)}
                 placeholder={`Describe your change (minimum ${EDIT_SUMMARY_MIN_LENGTH} characters)`}
                 rows={2}
-                className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-disabled placeholder:opacity-60 focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                description="A short description helps reviewers verify your update."
               />
-              <p className="text-xs text-text-muted">A short description helps reviewers verify your update.</p>
             </div>
 
             {/* Source Citation (Collapsible) */}
@@ -440,18 +412,11 @@ export function InlineFieldEdit({
                     placeholder="https://example.com/source"
                   />
 
-                  <div className="space-y-1">
-                    <label htmlFor="source-date" className="text-sm font-medium text-text-body">
-                      Source Date
-                    </label>
-                    <input
-                      id="source-date"
-                      type="date"
-                      value={sourceDate}
-                      onChange={(e) => setSourceDate(e.target.value)}
-                      className="w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                    />
-                  </div>
+                  <DateField
+                    label="Source Date"
+                    value={toCalendarDate(sourceDate)}
+                    onChange={(date) => setSourceDate(fromCalendarDate(date))}
+                  />
                 </div>
               )}
             </div>

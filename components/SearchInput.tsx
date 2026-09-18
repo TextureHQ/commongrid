@@ -1,7 +1,6 @@
 "use client";
 
-import { Icon } from "@texturehq/edges";
-import { useRef } from "react";
+import { TextField } from "@texturehq/edges";
 
 interface SearchInputProps {
   value: string;
@@ -12,6 +11,15 @@ interface SearchInputProps {
   resultLabel?: string;
 }
 
+/**
+ * Search box used above the listing pages.
+ *
+ * The magnifying glass and the clear button used to be hand-placed elements
+ * absolutely positioned over a bare `<input>`, which meant this component also
+ * hand-rolled its own focus ring — a second ring on top of the one the design
+ * system draws. `TextField` provides both affordances (`showSearchIcon`,
+ * `isClearable`) and owns the focus treatment, so all of that goes away.
+ */
 export function SearchInput({
   value,
   onChange,
@@ -20,41 +28,28 @@ export function SearchInput({
   resultCount,
   resultLabel,
 }: SearchInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const showCount = resultCount !== undefined && value !== "";
 
   return (
     <div className="relative">
-      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-text-muted">
-        <Icon name="MagnifyingGlass" size={18} />
-      </div>
-      <input
-        ref={inputRef}
-        type="text"
+      <TextField
+        aria-label={placeholder}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         placeholder={placeholder}
-        className="w-full h-11 pl-10 pr-20 rounded-lg border border-border-default bg-background-surface text-text-body text-base placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary transition-colors"
+        showSearchIcon
+        isClearable
+        onClear={onClear}
+        // The field reserves room for an error message it never shows here;
+        // reclaiming it keeps the control the same height as before.
+        reserveErrorSpace={false}
       />
-      <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-3">
-        {value && (
-          <button
-            type="button"
-            onClick={() => {
-              onClear();
-              inputRef.current?.focus();
-            }}
-            className="text-text-muted hover:text-text-body transition-colors p-0.5"
-            aria-label="Clear search"
-          >
-            <Icon name="X" size={16} />
-          </button>
-        )}
-        {resultCount !== undefined && value && (
-          <span className="text-xs text-text-muted tabular-nums whitespace-nowrap">
-            {resultCount.toLocaleString()} {resultLabel ?? "results"}
-          </span>
-        )}
-      </div>
+      {showCount && (
+        // Sits left of the clear button so the two never overlap.
+        <span className="pointer-events-none absolute inset-y-0 right-10 flex items-center text-xs text-text-muted tabular-nums whitespace-nowrap">
+          {resultCount.toLocaleString()} {resultLabel ?? "results"}
+        </span>
+      )}
     </div>
   );
 }

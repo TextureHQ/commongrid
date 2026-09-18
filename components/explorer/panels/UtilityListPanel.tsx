@@ -7,6 +7,8 @@ import {
   FilterDialog,
   type FilterState,
   getFilterFields,
+  Select,
+  TextField,
 } from "@texturehq/edges";
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
@@ -171,22 +173,6 @@ function buildApiParams(
   return params;
 }
 
-const SearchIcon = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    role="img"
-    aria-label="Search"
-  >
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3-3" />
-  </svg>
-);
-
 const FilterIcon = () => (
   <svg
     width="12"
@@ -330,13 +316,14 @@ export function UtilityListPanel() {
             >
               <FilterIcon /> Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
             </button>
-            <select className="cg-explore-select" value={sortValue} onChange={(e) => setSortValue(e.target.value)}>
-              {sortOptions.map((opt) => (
-                <option key={opt.id} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            <Select
+              aria-label="Sort"
+              size="sm"
+              selectedKey={sortValue}
+              onSelectionChange={(key) => setSortValue(String(key))}
+              items={sortOptions.map((opt) => ({ id: String(opt.value), label: opt.label, value: opt.value }))}
+              renderItem={(item) => item.label}
+            />
             {user && (
               <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/grid-operators/new")}>
                 + Add
@@ -345,31 +332,16 @@ export function UtilityListPanel() {
           </div>
         </div>
         <div style={{ padding: "6px 14px 7px" }}>
-          <div className="cg-explore-search">
-            <SearchIcon />
-            <input
-              type="text"
-              placeholder="Search utilities…"
-              value={state.q}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {state.q && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--color-text-muted)",
-                  fontSize: 14,
-                  padding: 0,
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
+          <TextField
+            aria-label="Search utilities…"
+            placeholder="Search utilities…"
+            value={state.q}
+            onChange={setSearch}
+            showSearchIcon
+            isClearable
+            onClear={() => setSearch("")}
+            reserveErrorSpace={false}
+          />
         </div>
       </div>
 

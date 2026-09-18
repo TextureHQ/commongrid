@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, Icon } from "@texturehq/edges";
+import { Dialog, Icon, Select, TextArea, TextField } from "@texturehq/edges";
 import { useState } from "react";
 
 interface DeleteEntityDialogProps {
@@ -53,9 +53,6 @@ export function DeleteEntityDialog({
 
   const isDuplicateReason = reason === "duplicate";
   const isValid = justification.trim().length >= 50 && sourceUrl.trim().length > 0;
-
-  const inputClassName =
-    "w-full rounded-md border border-border-default bg-background-body px-3 py-2 text-sm text-text-body placeholder:text-text-muted focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20";
 
   const handleSubmit = async () => {
     if (!isValid || isSubmitting) return;
@@ -135,40 +132,25 @@ export function DeleteEntityDialog({
         </div>
 
         {/* Deletion reason */}
-        <div className="space-y-1">
-          <label htmlFor="deletionReason" className="text-sm font-medium text-text-body">
-            Deletion Reason <span className="text-feedback-error">*</span>
-          </label>
-          <select
-            id="deletionReason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className={inputClassName}
-          >
-            {DELETION_REASONS.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="Deletion Reason"
+          isRequired
+          selectedKey={reason}
+          onSelectionChange={(key) => setReason(String(key))}
+          items={DELETION_REASONS.map((r) => ({ id: r.value, label: r.label, value: r.value }))}
+          renderItem={(item) => item.label}
+        />
 
         {/* Duplicate entity field */}
         {isDuplicateReason && (
-          <div className="space-y-1">
-            <label htmlFor="duplicateOf" className="text-sm font-medium text-text-body">
-              Duplicate Of (Entity ID or Slug)
-            </label>
-            <input
-              id="duplicateOf"
-              type="text"
-              value={duplicateOf}
-              onChange={(e) => setDuplicateOf(e.target.value)}
-              placeholder="e.g., pacific-gas-electric"
-              className={inputClassName}
-            />
-            <p className="text-xs text-text-muted">Specify which entity this is a duplicate of</p>
-          </div>
+          <TextField
+            id="duplicateOf"
+            label="Duplicate Of (Entity ID or Slug)"
+            value={duplicateOf}
+            onChange={setDuplicateOf}
+            placeholder="e.g., pacific-gas-electric"
+            description="Specify which entity this is a duplicate of"
+          />
         )}
 
         {/* Justification */}
@@ -186,49 +168,35 @@ export function DeleteEntityDialog({
               {justification.trim().length}/50
             </span>
           </label>
-          <textarea
+          <TextArea
             id="justification"
             value={justification}
             onChange={(e) => setJustification(e.target.value)}
             placeholder="Provide detailed justification for why this entity should be deleted (minimum 50 characters)..."
             rows={4}
-            className={inputClassName}
           />
         </div>
 
         {/* Source citation */}
         <div className="space-y-3">
-          <div className="space-y-1">
-            <label htmlFor="deleteSourceType" className="text-sm font-medium text-text-body">
-              Source Type <span className="text-feedback-error">*</span>
-            </label>
-            <select
-              id="deleteSourceType"
-              value={sourceType}
-              onChange={(e) => setSourceType(e.target.value)}
-              className={inputClassName}
-            >
-              {SOURCE_TYPES.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Source Type"
+            isRequired
+            selectedKey={sourceType}
+            onSelectionChange={(key) => setSourceType(String(key))}
+            items={SOURCE_TYPES.map((entry) => ({ id: entry.value, label: entry.label, value: entry.value }))}
+            renderItem={(item) => item.label}
+          />
 
-          <div className="space-y-1">
-            <label htmlFor="deleteSourceUrl" className="text-sm font-medium text-text-body">
-              Source URL <span className="text-feedback-error">*</span>
-            </label>
-            <input
-              id="deleteSourceUrl"
-              type="url"
-              value={sourceUrl}
-              onChange={(e) => setSourceUrl(e.target.value)}
-              placeholder="https://..."
-              className={inputClassName}
-            />
-          </div>
+          <TextField
+            id="deleteSourceUrl"
+            label="Source URL"
+            isRequired
+            type="url"
+            value={sourceUrl}
+            onChange={setSourceUrl}
+            placeholder="https://..."
+          />
         </div>
 
         {/* Error message */}

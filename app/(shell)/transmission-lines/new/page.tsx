@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Icon, Loader, PageLayout } from "@texturehq/edges";
+import { Button, Icon, Loader, NumberField, PageLayout } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -25,8 +25,10 @@ export default function CreateTransmissionLinePage() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceDate, setSourceDate] = useState("");
   const [editSummary, setEditSummary] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
+  // Held as numbers (NaN when empty) so the value handed to NumberField and the
+  // value sent in the payload are the same thing.
+  const [latitude, setLatitude] = useState(Number.NaN);
+  const [longitude, setLongitude] = useState(Number.NaN);
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,12 +85,12 @@ export default function CreateTransmissionLinePage() {
       }
     }
     // Always include geographic coordinates if provided
-    if (latitude.trim()) result.latitude = { old: null, new: parseFloat(latitude) };
-    if (longitude.trim()) result.longitude = { old: null, new: parseFloat(longitude) };
+    if (!Number.isNaN(latitude)) result.latitude = { old: null, new: latitude };
+    if (!Number.isNaN(longitude)) result.longitude = { old: null, new: longitude };
     return result;
   }, [formValues, latitude, longitude]);
 
-  const hasRequiredFields = !!formValues.owner && !!latitude.trim() && !!longitude.trim();
+  const hasRequiredFields = !!formValues.owner && !Number.isNaN(latitude) && !Number.isNaN(longitude);
   const canSubmit = hasRequiredFields && editSummary.trim().length >= 25 && !isSubmitting;
 
   const handleSubmit = async () => {
@@ -200,38 +202,24 @@ export default function CreateTransmissionLinePage() {
                 (right-click → Show address).
               </p>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="latitude" className="block text-sm font-medium text-text-primary mb-1">
-                    Latitude
-                  </label>
-                  <input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    min="-90"
-                    max="90"
-                    className="w-full rounded-md border border-border-default px-3 py-2 text-sm"
-                    placeholder="e.g. 40.7128"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="longitude" className="block text-sm font-medium text-text-primary mb-1">
-                    Longitude
-                  </label>
-                  <input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    min="-180"
-                    max="180"
-                    className="w-full rounded-md border border-border-default px-3 py-2 text-sm"
-                    placeholder="e.g. -74.0060"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                  />
-                </div>
+                <NumberField
+                  id="latitude"
+                  label="Latitude"
+                  value={latitude}
+                  onChange={setLatitude}
+                  minValue={-90}
+                  maxValue={90}
+                  formatOptions={{ maximumFractionDigits: 6 }}
+                />
+                <NumberField
+                  id="longitude"
+                  label="Longitude"
+                  value={longitude}
+                  onChange={setLongitude}
+                  minValue={-180}
+                  maxValue={180}
+                  formatOptions={{ maximumFractionDigits: 6 }}
+                />
               </div>
             </div>
           )}
