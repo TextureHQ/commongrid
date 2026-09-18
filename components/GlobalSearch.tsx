@@ -449,7 +449,7 @@ export function GlobalSearchModal() {
             <button
               type="button"
               onClick={close}
-              className="sm:hidden flex-none -ml-1 w-11 h-11 self-center rounded-full flex items-center justify-center text-text-heading active:bg-[var(--color-background-subtle)] transition-colors"
+              className="sm:hidden flex-none -ml-1 w-11 h-11 self-center rounded-full flex items-center justify-center text-text-heading active:bg-[var(--color-background-hover)] transition-colors"
               aria-label="Close search"
             >
               <svg
@@ -489,7 +489,7 @@ export function GlobalSearchModal() {
             {/* biome-ignore lint/a11y/noStaticElementInteractions: kbd visually acts as a dismiss hint, onClick is non-critical */}
             <kbd
               onClick={close}
-              className="hidden sm:flex flex-none self-center items-center px-2 py-1 ml-2 rounded-md border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[11px] font-mono cursor-pointer hover:bg-border-default transition-colors select-none"
+              className="hidden sm:flex flex-none self-center items-center px-2 py-1 ml-2 rounded-md border border-border-default bg-[var(--color-background-muted)] text-text-muted text-[11px] font-mono cursor-pointer hover:bg-border-default transition-colors select-none"
             >
               esc
             </kbd>
@@ -511,7 +511,7 @@ export function GlobalSearchModal() {
                         router.push(link.href);
                         close();
                       }}
-                      className="w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)] transition-colors group"
+                      className="w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left cursor-pointer hover:bg-[var(--color-background-hover)] active:bg-[var(--color-background-selected)] transition-colors group"
                     >
                       <span
                         className={`flex-none w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-lg flex items-center justify-center ${link.tileBg}`}
@@ -537,7 +537,7 @@ export function GlobalSearchModal() {
                 {/* Tip — desktop only */}
                 <div className="hidden sm:flex mt-3 mx-5 pt-3 border-t border-border-default items-center gap-2">
                   <span className="text-xs text-text-muted">Tip:</span>
-                  <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[10px] font-mono">
+                  <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-muted)] text-text-muted text-[10px] font-mono">
                     ⌘K
                   </kbd>
                   <span className="text-xs text-text-muted">opens search from anywhere</span>
@@ -548,7 +548,7 @@ export function GlobalSearchModal() {
             {/* No results */}
             {query.trim().length >= 2 && debouncedQuery === query && results.length === 0 && !isLoading && (
               <div className="flex flex-col items-center justify-center px-6 py-16 sm:py-12 gap-3 text-text-muted">
-                <div className="w-14 h-14 rounded-2xl bg-[var(--color-background-subtle)] flex items-center justify-center mb-1">
+                <div className="w-14 h-14 rounded-2xl bg-[var(--color-background-muted)] flex items-center justify-center mb-1">
                   <Icon name="MagnifyingGlass" size={22} className="opacity-40" />
                 </div>
                 <p className="text-base sm:text-sm font-semibold text-text-heading">
@@ -574,10 +574,14 @@ export function GlobalSearchModal() {
                           <button
                             key={`${result.kind}-${result.slug}`}
                             type="button"
-                            className={`w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left transition-colors group ${
-                              isActive
-                                ? "bg-[var(--color-background-subtle)]"
-                                : "hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)]"
+                            // `hover:` stays on both branches. The row sets itself
+                            // active on mouseenter, so the active branch is the one
+                            // the pointer is actually over — dropping the hover rule
+                            // there left the highlight to a state update, and a row
+                            // reached by keyboard first showed nothing on hover until
+                            // the pointer moved again.
+                            className={`w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left cursor-pointer transition-colors group hover:bg-[var(--color-background-hover)] active:bg-[var(--color-background-selected)] ${
+                              isActive ? "bg-[var(--color-background-hover)]" : ""
                             }`}
                             onMouseEnter={() => setActiveIndex(idx)}
                             onClick={() => navigateTo(result)}
@@ -617,7 +621,7 @@ export function GlobalSearchModal() {
           </div>
 
           {/* Footer — keyboard hints (desktop only) */}
-          <div className="hidden sm:flex flex-none px-5 py-2.5 border-t border-border-default items-center justify-between bg-[var(--color-background-subtle)]">
+          <div className="hidden sm:flex flex-none px-5 py-2.5 border-t border-border-default items-center justify-between bg-[var(--color-background-muted)]">
             <div className="flex items-center gap-3 text-[11px] text-text-muted">
               <span className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">
