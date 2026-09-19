@@ -278,12 +278,12 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-[clamp(32px,5vw,64px)] md:items-start">
             <div className="min-w-0 md:pt-8">
               <h1 className="font-[family-name:var(--font-rethink-sans)] text-[length:var(--text-display-lg-size)] font-[var(--text-display-lg-weight)] leading-[var(--text-display-lg-line-height)] tracking-[var(--text-display-lg-letter-spacing)] mb-6 max-w-[17ch] text-text-heading [text-wrap:balance]">
-                The open registry of U.S. energy infrastructure that anyone can correct.
+                The open, connected registry of the U.S. power grid
               </h1>
               <p className="text-[length:var(--text-body-xl-size)] font-[var(--text-body-xl-weight)] leading-[var(--text-body-xl-line-height)] tracking-[var(--text-body-xl-letter-spacing)] text-text-muted max-w-[60ch] m-0 [text-wrap:pretty]">
-                Every U.S. electric utility, territory, ISO, market node, and major asset, in one citable database that
-                the people closest to the grid can keep accurate. Suggest an edit, a moderator reviews it, and accepted
-                changes land in an append-only log with their author and their source.
+                Built and maintained by a community of users who know every corner of the grid, CommonGrid connects
+                energy infrastructure data into a public, shareable model. Anyone can contribute what&apos;s missing and
+                sharpen what&apos;s rough, and the data is free to use under an open license.
               </p>
             </div>
 
