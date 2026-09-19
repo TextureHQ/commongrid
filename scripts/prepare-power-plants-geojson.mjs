@@ -26,6 +26,14 @@ async function main() {
 
   const sql = neon(url);
 
+  const [{ exists }] = await sql`
+    SELECT to_regclass('public.power_plants') IS NOT NULL AS exists
+  `;
+  if (!exists) {
+    console.warn("⚠️  public.power_plants is not present — skipping power plant GeoJSON.");
+    process.exit(0);
+  }
+
   const rows = await sql`
     SELECT
       slug,
@@ -36,7 +44,7 @@ async function main() {
       proposed_capacity_mw,
       latitude,
       longitude
-    FROM power_plants
+    FROM public.power_plants
     WHERE deleted_at IS NULL
       AND latitude IS NOT NULL
       AND longitude IS NOT NULL
