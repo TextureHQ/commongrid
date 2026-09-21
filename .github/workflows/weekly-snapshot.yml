@@ -29,6 +29,17 @@ jobs:
       # Ubuntu runner's default postgresql-client is v16 — which is exactly what
       # broke every snapshot run from 2026-08-16 onward (CIR-1272). Install the
       # v17 client from the official PGDG apt repo so client >= server.
+      #
+      # CRITICAL (CIR-1272 regression, 2026-09-20): installing postgresql-client-17
+      # is NOT sufficient. Ubuntu ships `postgresql-client-common`, whose
+      # `/usr/bin/pg_dump` is the Debian `pg_wrapper` shim. That shim dispatches
+      # to the HIGHEST installed major only when no explicit cluster/version is
+      # requested — but the runner already has v16 binaries, and the wrapper's
+      # resolution left `pg_dump --version` reporting 16.15, so the Sunday runs
+      # kept aborting with the same version mismatch even though v17 was present.
+      # Prepend the versioned bindir (/usr/lib/postgresql/17/bin) to PATH so the
+      # real v17 binaries win, and assert the resolved version is >= 17 before
+      # doing anything, so a future silent regression fails loudly here.
       - name: Install PostgreSQL 17 client
         run: |
           sudo install -d /usr/share/postgresql-common/pgdg
@@ -38,7 +49,21 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
+          # Put the real v17 binaries ahead of the v16 wrapper for all later steps.
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Assert pg client >= 17
+        shell: bash -euo pipefail {0}
+        run: |
+          DUMP_BIN="$(command -v pg_dump)"
+          echo "pg_dump resolved to: $DUMP_BIN"
           pg_dump --version
+          MAJOR="$(pg_dump --version | grep -oE '[0-9]+' | head -1)"
+          if [ "$MAJOR" -lt 17 ]; then
+            echo "::error::pg_dump major is ${MAJOR} (<17) — the v16 wrapper is still winning on PATH. Refusing to run against a v17 server."
+            exit 1
+          fi
+          echo "pg_dump major ${MAJOR} OK (>=17)."
 
       - name: Set snapshot tag
         id: tag
