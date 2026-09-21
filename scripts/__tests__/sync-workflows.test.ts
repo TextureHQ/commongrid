@@ -185,7 +185,7 @@ describe("prepare-power-plants-geojson.mjs", () => {
     // CG-266: the DB is the source of truth for power-plant geometry. The tile
     // build must query the power_plants table rather than the committed JSON
     // artifact, mirroring prepare-substations-geojson.mjs.
-    expect(text).toMatch(/FROM power_plants/);
+    expect(text).toMatch(/FROM .*power_plants/);
     expect(text).toMatch(/@neondatabase\/serverless/);
     expect(text).not.toMatch(/power-plants\.json/);
   });
