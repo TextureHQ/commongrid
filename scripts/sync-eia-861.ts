@@ -309,7 +309,24 @@ export function parseDemandResponseWorkbook(filePath: string): { rows: DemandRes
 // ---------------------------------------------------------------------------
 
 function loadUtilityLookups(): ReturnType<typeof buildUtilityLookups> {
-  const utils = JSON.parse(fs.readFileSync(UTILITIES_JSON_PATH, "utf-8")) as ResolverUtility[];
+  const raw = JSON.parse(fs.readFileSync(UTILITIES_JSON_PATH, "utf-8")) as Array<
+    ResolverUtility & { jurisdiction?: string | null }
+  >;
+  // data/utilities.json carries a utility's state(s) under `jurisdiction`
+  // (a comma-separated 2-letter list), NOT `state`. Map it across so the
+  // resolver's `ba_state` rung is actually populated; without this the
+  // (baCode, state) index would be empty and rung 2 could never match.
+  // Multi-state utilities are expanded into one entry per state so each
+  // (baCode, state) pair is indexed independently.
+  const utils: ResolverUtility[] = raw.flatMap((u) => {
+    if (u.state) return [u];
+    const states = (u.jurisdiction ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (states.length === 0) return [u];
+    return states.map((state) => ({ ...u, state }));
+  });
   return buildUtilityLookups(utils);
 }
 
