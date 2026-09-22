@@ -79,14 +79,18 @@ export interface MonthlyPlantRecord {
  * updates surgical (policy (B) sees a minimal change set) without violating
  * insert constraints on creates.
  */
-export function toSyncRecords(records: MonthlyPlantRecord[], existingIds: ReadonlySet<string>): SyncRecord[] {
+export function toSyncRecords(
+  records: MonthlyPlantRecord[],
+  existingIds: ReadonlySet<string>,
+  asOf: Date | null
+): SyncRecord[] {
   return records.map((r) => {
     const isNew = !existingIds.has(r.id);
-    return isNew ? toCreateRecord(r) : toUpdateRecord(r);
+    return { ...(isNew ? toCreateRecord(r) : toUpdateRecord(r)), sourceId: "eia-860m", asOf };
   });
 }
 
-function toUpdateRecord(r: MonthlyPlantRecord): SyncRecord {
+function toUpdateRecord(r: MonthlyPlantRecord): Omit<SyncRecord, "sourceId" | "asOf"> {
   const fields: Record<string, unknown> = {};
   for (const field of EIA_860M_OWNED_FIELDS) {
     fields[field] = r[field as keyof MonthlyPlantRecord];
@@ -94,7 +98,7 @@ function toUpdateRecord(r: MonthlyPlantRecord): SyncRecord {
   return { entityId: r.id, slug: r.slug, fields };
 }
 
-function toCreateRecord(r: MonthlyPlantRecord): SyncRecord {
+function toCreateRecord(r: MonthlyPlantRecord): Omit<SyncRecord, "sourceId" | "asOf"> {
   // A create must satisfy every NOT NULL column on power_plants.
   const fields: Record<string, unknown> = {
     name: r.name,

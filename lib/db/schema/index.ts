@@ -47,6 +47,7 @@ export type {
 export { contributionAppeals } from "./contribution-appeals";
 export type { ContributionInsert, ContributionSelect } from "./contributions";
 export { contributions } from "./contributions";
+export { dataSources } from "./data-sources";
 export type { DiscussionPostInsert, DiscussionPostSelect } from "./discussion-posts";
 export { discussionPosts } from "./discussion-posts";
 export type {
