@@ -803,6 +803,34 @@
             "nullable": true,
             "description": "Email / web domains associated with this utility (e.g. ['duke-energy.com']). Useful for domain-scoped joins against external datasets (email sign-ups, news mentions, complaint logs). Backfilled from website + NRECA/EIA-861 where available; editable via the community contribution flow."
           },
+          "hasDemandResponse": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "drCustomersEnrolled": {
+            "type": "integer",
+            "nullable": true
+          },
+          "drPotentialPeakSavingsMw": {
+            "type": "number",
+            "nullable": true
+          },
+          "drActualPeakSavingsMw": {
+            "type": "number",
+            "nullable": true
+          },
+          "drEnergySavingsMwh": {
+            "type": "number",
+            "nullable": true
+          },
+          "drProgramCostUsd": {
+            "type": "number",
+            "nullable": true
+          },
+          "drReportYear": {
+            "type": "integer",
+            "nullable": true
+          },
           "deprecationReason": {
             "type": "string",
             "nullable": true

@@ -169,6 +169,13 @@
 			"when": 1787920920000,
 			"tag": "0027_grant_commongrid_sync_snapshot_readonly",
 			"breakpoints": true
+		},
+		{
+			"idx": 24,
+			"version": "7",
+			"when": 1788007320000,
+			"tag": "0028_add_utility_demand_response_fields",
+			"breakpoints": true
 		}
 	]
 }

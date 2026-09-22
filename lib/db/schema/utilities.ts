@@ -71,6 +71,26 @@ export const utilities = pgTable(
     /** Domains served by this utility (e.g., ['example.com', 'company.org']). Backfilled from NRECA/EIA-861 and website-derived data. */
     domains: text("domains").array(),
 
+    // ── EIA-861 Demand Response (utility-level aggregate statistics) ──────────
+    // EIA-861 "Demand Response" is utility-level aggregate DR data, NOT a named
+    // program catalog. Its grain is (utility_id_eia, state, customer_class, BA,
+    // report_year); the sync aggregates customer classes to a per-utility total.
+    // These columns are additive/nullable and owned exclusively by sync:eia-861.
+    /** True when the utility reports any demand-response activity in EIA-861. */
+    hasDemandResponse: boolean("has_demand_response"),
+    /** Total customers enrolled in DR programs (sum across customer classes). */
+    drCustomersEnrolled: integer("dr_customers_enrolled"),
+    /** Potential peak demand savings (MW), summed across customer classes. */
+    drPotentialPeakSavingsMw: doublePrecision("dr_potential_peak_savings_mw"),
+    /** Actual peak demand savings (MW), summed across customer classes. */
+    drActualPeakSavingsMw: doublePrecision("dr_actual_peak_savings_mw"),
+    /** Yearly energy savings (MWh), summed across customer classes. */
+    drEnergySavingsMwh: doublePrecision("dr_energy_savings_mwh"),
+    /** Total DR program cost (USD) = customer incentives + all other costs. */
+    drProgramCostUsd: doublePrecision("dr_program_cost_usd"),
+    /** EIA-861 data year the DR figures above were reported for. */
+    drReportYear: integer("dr_report_year"),
+
     /**
      * Human-readable note describing why a utility was marked DEFUNCT or
      * MERGED — e.g. "Retired 2020; assets transferred to NewCo". Free-form;
