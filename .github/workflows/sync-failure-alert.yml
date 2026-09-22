@@ -22,6 +22,7 @@ on:
       - Sync Transmission Lines
       - Sync Pricing Nodes Data
       - Sync EV Charging Data
+      - Sync EIA-861 Demand Response
       - Weekly Database Snapshot
     types: [completed]
 
