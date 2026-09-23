@@ -1,0 +1,18 @@
+{
+  "source": "Curated from utility public program pages (see data/iou-dr-programs/registry.ts)",
+  "generated_by": "sync:iou-dr-programs",
+  "generated_at": "2026-09-23T00:30:08.736Z",
+  "registry_program_count": 66,
+  "resolved_program_count": 66,
+  "unresolved_program_count": 0,
+  "method_counts": {
+    "eia_id": 61,
+    "name_trgm": 5
+  },
+  "unresolved": [],
+  "notes": [
+    "IOU DR programs are modeled into the existing `programs` entity (entityType \"program\"), linked to the administering utility via organizations[] by utility slug — NOT into the Utility model.",
+    "There is no open federal catalog of named DR programs; facts are curated from each utility's public program page (registry.ts) and mapped by lib/sync/iou-dr-programs.ts.",
+    "Re-runs are idempotent (stable prog- slug id) and conflict-aware (applySync policy B leaves human-edited fields untouched)."
+  ]
+}
