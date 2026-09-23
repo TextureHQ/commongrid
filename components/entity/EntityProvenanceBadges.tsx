@@ -32,11 +32,13 @@ function prettifySourceLabel(value: string): string {
 export function EntityProvenanceBadges({ entityType, entitySlug, sourceLabel }: EntityProvenanceBadgesProps) {
   const [latestSourceType, setLatestSourceType] = useState<string | null>(null);
   const [didLoad, setDidLoad] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLatestSourceType(null);
     setDidLoad(false);
+    setLoadFailed(false);
 
     const path = versionsPath(entityType, entitySlug);
     if (!path) {
@@ -59,7 +61,7 @@ export function EntityProvenanceBadges({ entityType, entitySlug, sourceLabel }: 
         setLatestSourceType(latest?.sourceType ?? null);
       })
       .catch(() => {
-        if (!cancelled) setLatestSourceType(null);
+        if (!cancelled) setLoadFailed(true);
       })
       .finally(() => {
         if (!cancelled) setDidLoad(true);
@@ -91,12 +93,12 @@ export function EntityProvenanceBadges({ entityType, entitySlug, sourceLabel }: 
       return { label: `Sourced: ${sourceType}`, variant: "info" as const };
     }
 
-    if (didLoad) {
+    if (didLoad && !loadFailed) {
       return { label: "Needs verification / help us fill this in", variant: "warning" as const };
     }
 
     return null;
-  }, [didLoad, latestSourceType, sourceLabel]);
+  }, [didLoad, latestSourceType, loadFailed, sourceLabel]);
 
   if (!badge) return null;
 
