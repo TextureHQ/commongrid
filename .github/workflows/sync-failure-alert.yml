@@ -22,6 +22,7 @@ on:
       - Sync Transmission Lines
       - Sync Pricing Nodes Data
       - Sync EV Charging Data
+      - Sync IOU DR Programs
       - Weekly Database Snapshot
     types: [completed]
 
