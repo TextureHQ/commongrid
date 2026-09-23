@@ -209,7 +209,11 @@ export function SourceCitationFields({
 
       <DateField
         label="Source Date (optional)"
-        value={toCalendarDate(sourceDate)}
+        // Duplicate @internationalized/date copies make our CalendarDate a
+        // different nominal type than the one @texturehq/edges' DateField
+        // expects; the runtime value is a real CalendarDate either way.
+        // biome-ignore lint/suspicious/noExplicitAny: cross-package brand mismatch
+        value={toCalendarDate(sourceDate) as any}
         onChange={(date) => onSourceDateChange(fromCalendarDate(date))}
       />
     </div>

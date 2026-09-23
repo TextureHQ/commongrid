@@ -40,6 +40,12 @@ import { buildUtilityLookups, type ResolveInput, type ResolverUtility, resolveUt
 
 export const PROGRAM_ENTITY_TYPE: EntityType = "program";
 export const IOU_DR_SYNC_ACTOR = "sync:iou-dr-programs";
+/**
+ * Registered data_sources.id for this feed (seeded in migration 0030). The
+ * programs are curated from the utilities' own public program pages, so the
+ * source is an editorial/community catalog rather than a single federal file.
+ */
+export const IOU_DR_SOURCE_ID = "iou-dr-curated";
 
 /**
  * Fields this curated sync asserts. Everything else on a program (moderator
@@ -141,7 +147,8 @@ export function slugify(input: string): string {
  */
 export function toProgramSyncRecords(
   scraped: ReadonlyArray<ScrapedProgram>,
-  utilities: ReadonlyArray<ResolverUtility & { slug: string }>
+  utilities: ReadonlyArray<ResolverUtility & { slug: string }>,
+  asOf: Date | null = null
 ): MapResult {
   const lookups = buildUtilityLookups(utilities);
   const idToSlug = new Map<string, string>();
@@ -177,6 +184,8 @@ export function toProgramSyncRecords(
 
     const slug = programSlug(utilitySlug, p.name);
     records.push({
+      sourceId: IOU_DR_SOURCE_ID,
+      asOf,
       entityId: `prog-${slug}`,
       slug,
       fields: pruneUndefined({
