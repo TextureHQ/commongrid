@@ -831,7 +831,7 @@ function updateManifest(
  * state (unchanged → no version), and policy (B) leaves any field a human most
  * recently edited untouched, reporting it as a deferral.
  */
-async function publishToDatabase(merged: PowerPlantRecord[], sourceFile: string): Promise<void> {
+async function publishToDatabase(observed: PowerPlantRecord[], sourceFile: string, asOf: Date): Promise<void> {
   if (!process.env.DATABASE_URL) {
     console.warn(
       "\n⚠️  DATABASE_URL is not set — skipping database publication. " +
@@ -847,7 +847,7 @@ async function publishToDatabase(merged: PowerPlantRecord[], sourceFile: string)
   const existingRows = await db.select({ id: powerPlants.id }).from(powerPlants);
   const existingIds = new Set(existingRows.map((row) => row.id));
 
-  const records = toSyncRecords(merged, existingIds);
+  const records = toSyncRecords(observed, existingIds, asOf);
   const report = await applySync(records, {
     entityType: POWER_PLANT_ENTITY_TYPE,
     initiatedBy: "sync:eia-860m",
@@ -919,7 +919,12 @@ async function main() {
   // version history. Gated on DATABASE_URL so a local/CI run without a database
   // still produces JSON + tiles and simply skips publication with a warning
   // (rather than failing the whole sync).
-  await publishToDatabase(merged, latest.fileName);
+  // The merged tile dataset also contains historical plants absent from this
+  // workbook. Do not reassert those records as observations of the new month.
+  const observed = merged.filter((plant) => aggregates.has(plant.plantCode));
+  // EIA reports a month, not a day. Normalize that period to its first day UTC.
+  const asOf = new Date(Date.UTC(latest.year, latest.monthNumber - 1, 1));
+  await publishToDatabase(observed, latest.fileName, asOf);
 
   updateManifest(latest, localPath, checksumSha256, sheetRowCounts, manifest);
   fs.writeFileSync(LAST_SYNC_MARKER_PATH, `${markerPayload}\n${new Date().toISOString()}\n`);

@@ -55,6 +55,10 @@ import { getHumanLockedFields } from "./field-provenance";
 
 /** One upstream record a sync wants to assert into the registry. */
 export interface SyncRecord {
+  /** Registered upstream source, independent of the machine actor. */
+  sourceId: string;
+  /** Upstream observation date; explicitly null when unknown (never ingest time). */
+  asOf: Date | null;
   /**
    * Stable primary-key value for the entity row. Re-runs must produce the same
    * id for the same upstream record, or the sync will create duplicates instead
@@ -128,6 +132,16 @@ export async function applySync(records: SyncRecord[], opts: ApplySyncOptions): 
   }
   const table = getEntityTable(opts.entityType);
   if (!table) throw new Error(`No table for entity type: ${opts.entityType}`);
+
+  // Validate before opening a transaction, including calls from untyped scripts.
+  for (const record of records) {
+    if (typeof record.sourceId !== "string" || !record.sourceId.trim()) {
+      throw new Error(`Missing sourceId for ${record.entityId}`);
+    }
+    if (record.asOf !== null && (!(record.asOf instanceof Date) || !Number.isFinite(record.asOf.getTime()))) {
+      throw new Error(`Invalid or missing asOf for ${record.entityId}; use null for unknown vintage`);
+    }
+  }
 
   const now = opts.now ?? new Date();
   const db = getPooledDb();
@@ -256,6 +270,8 @@ async function applyOneRecord(
       ...rec,
       changedAt: now,
       sourceType: "sync",
+      sourceId: record.sourceId,
+      asOf: record.asOf,
       batchId,
     });
 
@@ -315,6 +331,8 @@ async function applyOneRecord(
     ...rec,
     changedAt: now,
     sourceType: "sync",
+    sourceId: record.sourceId,
+    asOf: record.asOf,
     batchId,
   });
 

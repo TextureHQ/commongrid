@@ -1,6 +1,7 @@
 import { bigserial, index, integer, jsonb, pgTable, text, timestamp, unique } from "drizzle-orm/pg-core";
 import { changeBatches } from "./change-batches";
 import { contributions } from "./contributions";
+import { dataSources } from "./data-sources";
 
 /**
  * Entity Versions (Delta-Based)
@@ -29,6 +30,11 @@ export const entityVersions = pgTable(
     snapshot: jsonb("snapshot"),
     /** Delta: { field: { old, new } } — null for v1 */
     delta: jsonb("delta"),
+
+    /** Upstream registry key; null for historical records with unknown provenance. */
+    sourceId: text("source_id").references(() => dataSources.id, { onDelete: "restrict" }),
+    /** Upstream observation date, never ingestion time; null means unknown. */
+    asOf: timestamp("as_of", { withTimezone: true }),
 
     changedBy: text("changed_by"), // who made this change
     changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),

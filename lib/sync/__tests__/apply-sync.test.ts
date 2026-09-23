@@ -102,6 +102,8 @@ function makeTx(state: FakeState) {
 function record(overrides: Partial<SyncRecord> = {}): SyncRecord {
   return {
     entityId: "u-1",
+    sourceId: "eia-861",
+    asOf: new Date("2025-01-01T00:00:00Z"),
     fields: {},
     ...overrides,
   };
@@ -115,6 +117,40 @@ const baseOpts = {
 };
 
 describe("applySync", () => {
+  it.each([
+    { sourceId: "" },
+    { sourceId: undefined },
+    { asOf: undefined },
+    { asOf: new Date("invalid") },
+    { asOf: "2025-01-01" },
+  ])("rejects malformed provenance before opening a transaction: %j", async (overrides) => {
+    vi.mocked(getPooledDb).mockClear();
+    await expect(applySync([record(overrides as Partial<SyncRecord>)], baseOpts)).rejects.toThrow();
+    expect(getPooledDb).not.toHaveBeenCalled();
+  });
+
+  it("preserves unknown vintage instead of substituting the ingest timestamp", async () => {
+    const { tx, recorded } = makeTx({ entity: null, hasVersionHistory: false });
+    vi.mocked(getPooledDb).mockReturnValue({
+      transaction: (async (fn: (tx: unknown) => Promise<unknown>) => fn(tx)) as unknown,
+    } as unknown as ReturnType<typeof getPooledDb>);
+    await applySync([record({ asOf: null, fields: { name: "Unknown vintage" } })], baseOpts);
+    expect(recorded.versionInserts[0]).toMatchObject({ sourceId: "eia-861", asOf: null, changedAt: baseOpts.now });
+  });
+
+  it("does not attribute the old baseline to the incoming source", async () => {
+    const { tx, recorded } = makeTx({ entity: { id: "u-1", version: 3, name: "Old" }, hasVersionHistory: false });
+    vi.mocked(getPooledDb).mockReturnValue({
+      transaction: (async (fn: (tx: unknown) => Promise<unknown>) => fn(tx)) as unknown,
+    } as unknown as ReturnType<typeof getPooledDb>);
+    vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set());
+    await applySync([record({ fields: { name: "New" } })], baseOpts);
+    expect(recorded.versionInserts).toHaveLength(2);
+    expect(recorded.versionInserts[0]?.sourceId).toBeUndefined();
+    expect(recorded.versionInserts[0]?.asOf).toBeUndefined();
+    expect(recorded.versionInserts[1]).toMatchObject({ sourceId: "eia-861", asOf: new Date("2025-01-01T00:00:00Z") });
+  });
+
   it("creates a new entity and writes a v1 snapshot version row", async () => {
     const { tx, recorded } = makeTx({ entity: null, hasVersionHistory: false });
     vi.mocked(getPooledDb).mockReturnValue({
@@ -159,6 +195,8 @@ describe("applySync", () => {
       delta: null,
       changeType: "create",
       sourceType: "sync",
+      sourceId: "eia-861",
+      asOf: new Date("2025-01-01T00:00:00Z"),
       batchId: "batch-1",
       changedBy: "sync:eia-861",
       changeSummary: "Added via sync:eia-861",
@@ -244,6 +282,8 @@ describe("applySync", () => {
       snapshot: null,
       changeType: "update",
       sourceType: "sync",
+      sourceId: "eia-861",
+      asOf: new Date("2025-01-01T00:00:00Z"),
       batchId: "batch-1",
       changedBy: "sync:eia-861",
     });

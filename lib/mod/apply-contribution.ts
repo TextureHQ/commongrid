@@ -354,6 +354,8 @@ export async function applyContribution(
       changedAt: now,
       contributionId: contribution.id,
       sourceType,
+      sourceId: sourceType === "admin" ? "manual" : "community",
+      asOf: null,
     });
 
     return { status: "applied", appliedVersion: 1, changeType: "create" };
@@ -429,6 +431,8 @@ export async function applyContribution(
     changedAt: now,
     contributionId: contribution.id,
     sourceType,
+    sourceId: sourceType === "admin" ? "manual" : "community",
+    asOf: null,
   });
 
   return { status: "applied", appliedVersion: newVersion, changeType };

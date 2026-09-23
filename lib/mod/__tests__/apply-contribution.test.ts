@@ -213,6 +213,15 @@ describe("applyContribution", () => {
     expect(recorded.entityUpdates).toHaveLength(0);
   });
 
+  it("labels administrator edits as manual without inventing an observation date", async () => {
+    const { tx, recorded } = makeTx({
+      entity: { id: "entity-1", version: 3, amiMeterCount: 100 },
+      hasVersionHistory: true,
+    });
+    await applyContribution(tx, contribution(), { ...opts, sourceType: "admin", changeType: "update" });
+    expect(recorded.versionInserts[0]).toMatchObject({ sourceId: "manual", asOf: null, sourceType: "admin" });
+  });
+
   it("applies an update, bumps the version and writes a delta row", async () => {
     const { tx, recorded } = makeTx({
       entity: { id: "entity-1", version: 3, amiMeterCount: 100 },
@@ -225,7 +234,13 @@ describe("applyContribution", () => {
     expect(recorded.entityUpdates[0]).toMatchObject({ amiMeterCount: 200, version: 4 });
 
     const version = recorded.versionInserts[recorded.versionInserts.length - 1];
-    expect(version).toMatchObject({ versionNumber: 4, changeType: "update", contributionId: "contrib-1" });
+    expect(version).toMatchObject({
+      versionNumber: 4,
+      changeType: "update",
+      contributionId: "contrib-1",
+      sourceId: "community",
+      asOf: null,
+    });
     expect(version?.snapshot).toBeNull();
     expect(version?.delta).toMatchObject({ amiMeterCount: { old: 100, new: 200 } });
   });
@@ -337,7 +352,12 @@ describe("applyContribution", () => {
 
     expect(outcome).toEqual({ status: "applied", appliedVersion: 1, changeType: "create" });
     expect(recorded.entityInserts[0]).toMatchObject({ id: "entity-1", slug: "acme-electric", version: 1 });
-    expect(recorded.versionInserts[0]).toMatchObject({ versionNumber: 1, changeType: "create" });
+    expect(recorded.versionInserts[0]).toMatchObject({
+      versionNumber: 1,
+      changeType: "create",
+      sourceId: "community",
+      asOf: null,
+    });
     expect(recorded.versionInserts[0]?.delta).toBeNull();
     // Nothing exists yet, so there is no row to lock.
     expect(recorded.lockedRows).toBe(0);
