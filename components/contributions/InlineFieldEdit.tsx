@@ -414,7 +414,8 @@ export function InlineFieldEdit({
 
                   <DateField
                     label="Source Date"
-                    value={toCalendarDate(sourceDate)}
+                    // biome-ignore lint/suspicious/noExplicitAny: cross-package CalendarDate brand mismatch
+                    value={toCalendarDate(sourceDate) as any}
                     onChange={(date) => setSourceDate(fromCalendarDate(date))}
                   />
                 </div>
