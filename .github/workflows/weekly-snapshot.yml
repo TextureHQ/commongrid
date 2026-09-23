@@ -321,6 +321,20 @@ jobs:
           done
           exit $FAILED
 
+      # Defense-in-depth guard: the SQL dump should only contain the public
+      # allowlist above. If a private table ever appears here, the workflow
+      # must fail before publishing the release.
+      - name: Validate SQL dump excludes private tables
+        shell: bash -euo pipefail {0}
+        run: |
+          SQL_DUMP="$SNAPSHOT_DIR/commongrid-${{ steps.tag.outputs.date }}.sql.gz"
+          BAD_TABLES='public\.(users|api_keys|notifications|user_notification_prefs|knock_delivery_log|contributions|contribution_appeals|moderation_actions|discussion_posts|api_usage_events|entity_locks|bulk_operations)'
+          if gunzip -c "$SQL_DUMP" | grep -Eiq "$BAD_TABLES"; then
+            echo "::error::SQL dump contains private tables that must not be published publicly."
+            exit 1
+          fi
+          echo "SQL dump passed private-table guard."
+
       - name: Generate manifest
         run: |
           cd "$SNAPSHOT_DIR"
@@ -359,7 +373,7 @@ jobs:
 
           | File | Description |
           |------|-------------|
-          | \`commongrid-${DATE}.sql.gz\` | Full database dump (pg_dump, gzipped) |
+          | \`commongrid-${DATE}.sql.gz\` | Public reference tables dump (allowlisted \`pg_dump\`, gzipped) |
           | \`utilities.geojson.gz\` | All utilities with service territory geometry |
           | \`ev-stations.geojson.gz\` | EV charging stations (point locations) |
           | \`power-plants.geojson.gz\` | Power plants (point locations) |
