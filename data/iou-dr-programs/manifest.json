@@ -1,7 +1,7 @@
 {
   "source": "Curated from utility public program pages (see data/iou-dr-programs/registry.ts)",
   "generated_by": "sync:iou-dr-programs",
-  "generated_at": "2026-09-23T00:30:08.736Z",
+  "generated_at": "2026-09-23T16:59:27.856Z",
   "registry_program_count": 66,
   "resolved_program_count": 66,
   "unresolved_program_count": 0,
@@ -10,6 +10,206 @@
     "name_trgm": 5
   },
   "unresolved": [],
+  "url_health": {
+    "checked": 66,
+    "ok": 28,
+    "broken": [
+      {
+        "name": "Renewable Battery Connect",
+        "url": "https://co.my.xcelenergy.com/s/business/renewable-battery-connect",
+        "status": 404
+      },
+      {
+        "name": "Emergency Load Reduction Program",
+        "url": "https://www.pge.com/en_US/residential/save-energy-money/savings-solutions-and-rebates/demand-response-programs/emergency-load-reduction/emergency-load-reduction.page",
+        "status": 404
+      },
+      {
+        "name": "Power Saver Rewards",
+        "url": "https://www.sdge.com/residential/savings-center/rebates/power-saver-rewards",
+        "status": 404
+      },
+      {
+        "name": "Bring Your Own Thermostat",
+        "url": "https://www.coned.com/en/save-money/rebates-incentives-tax-credits/rebates-for-home-appliances-electronics/smart-thermostats",
+        "status": 404
+      },
+      {
+        "name": "Smart Savings Rewards",
+        "url": "https://www.coned.com/en/save-money/energy-saving-programs/smart-usage-rewards",
+        "status": 404
+      },
+      {
+        "name": "Smart Savings Rewards",
+        "url": "https://www.nyseg.com/w/smart-savings-rewards",
+        "status": null,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "name": "Peak Perks",
+        "url": "https://www.rge.com/w/smart-savings-rewards",
+        "status": null,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "name": "Peak Perks",
+        "url": "https://www.cenhud.com/en/my-energy/energy-efficiency-and-savings/peak-perks/",
+        "status": 404
+      },
+      {
+        "name": "Bring Your Own Thermostat",
+        "url": "https://www.oru.com/en/save-money/rebates-and-incentives/smart-thermostats",
+        "status": 404
+      },
+      {
+        "name": "PowerManager",
+        "url": "https://www.duke-energy.com/home/products/power-manager",
+        "status": 403
+      },
+      {
+        "name": "EnergyWise Home",
+        "url": "https://www.duke-energy.com/home/products/energywise-home",
+        "status": 403
+      },
+      {
+        "name": "Smart Cooling Rewards",
+        "url": "https://www.dominionenergy.com/virginia/save-energy/smart-cooling-rewards",
+        "status": 404
+      },
+      {
+        "name": "Smart Neighborhood",
+        "url": "https://www.alabamapower.com/residential/products-programs/smart-neighborhood.html",
+        "status": 404
+      },
+      {
+        "name": "Energy Select",
+        "url": "https://www.tampaelectric.com/residential/saveenergyandmoney/energyselect/",
+        "status": 404
+      },
+      {
+        "name": "Beat the Peak",
+        "url": "https://www.mississippipower.com/residential/save-money-and-energy.html",
+        "status": 404
+      },
+      {
+        "name": "SmartCurrents Smart Thermostat",
+        "url": "https://www.dteenergy.com/us/en/residential/service-request/save-energy-money/smart-thermostats.html",
+        "status": 404
+      },
+      {
+        "name": "CoolCents",
+        "url": "https://www.consumersenergy.com/residential/save-money-and-energy/rebates/smart-thermostat",
+        "status": 404
+      },
+      {
+        "name": "Peak Time Rewards",
+        "url": "https://www.ameren.com/illinois/residential/electric-choice/peak-time-rewards",
+        "status": 404
+      },
+      {
+        "name": "Saver's Switch",
+        "url": "https://mn.my.xcelenergy.com/s/residential/home-rebates/savers-switch",
+        "status": 404
+      },
+      {
+        "name": "Smart Thermostat Program",
+        "url": "https://www.we-energies.com/residential/save-energy-money/smart-thermostat",
+        "status": 404
+      },
+      {
+        "name": "Connected Savings",
+        "url": "https://www.mge.com/saving-energy/for-homes/thermostats",
+        "status": 404
+      },
+      {
+        "name": "Peak Rewards Thermostat",
+        "url": "https://www.otpco.com/save-energy-money/residential/",
+        "status": 404
+      },
+      {
+        "name": "Bring Your Own Thermostat",
+        "url": "https://www.aepohio.com/save/business/programs/BYOT",
+        "status": 404
+      },
+      {
+        "name": "Bring Your Own Thermostat",
+        "url": "https://www.appalachianpower.com/save/programs/",
+        "status": 404
+      },
+      {
+        "name": "Energy Wise Rewards",
+        "url": "https://homeenergysavings.pepco.com/energy-wise-rewards",
+        "status": 404
+      },
+      {
+        "name": "Energy Wise Rewards",
+        "url": "https://homeenergysavings.delmarva.com/energy-wise-rewards",
+        "status": 404
+      },
+      {
+        "name": "Energy Wise Rewards",
+        "url": "https://homeenergysavings.atlanticcityelectric.com/energy-wise-rewards",
+        "status": 404
+      },
+      {
+        "name": "Smart Thermostat Program",
+        "url": "https://homeenergy.pseg.com/smart-thermostat",
+        "status": 404
+      },
+      {
+        "name": "Peak Rewards",
+        "url": "https://duquesnelight.com/savings-energy-tools/savings-tips-programs",
+        "status": 404
+      },
+      {
+        "name": "Cool Rewards",
+        "url": "https://www.aps.com/en/Residential/Save-Money-and-Energy/Rebates-and-Discounts/Cool-Rewards",
+        "status": 404
+      },
+      {
+        "name": "Smart Thermostat Program",
+        "url": "https://www.myavista.com/energy-savings/find-ways-to-save",
+        "status": 404
+      },
+      {
+        "name": "Flex Rewards",
+        "url": "https://www.pse.com/en/flex",
+        "status": 500
+      },
+      {
+        "name": "SmartHours Thermostat",
+        "url": "https://www.epelectric.com/save-money-energy",
+        "status": 404
+      },
+      {
+        "name": "Winter Peak Rebate",
+        "url": "https://www.montana-dakota.com/save-energy-money",
+        "status": 404
+      },
+      {
+        "name": "SmartAC",
+        "url": "https://www.centerpointenergy.com/en-us/residential/save-energy-money",
+        "status": 404
+      },
+      {
+        "name": "ConnectedSolutions",
+        "url": "https://www.cmpco.com/save-energy",
+        "status": null,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "name": "Bring Your Own Thermostat",
+        "url": "https://www.uinet.com/wps/portal/uinet/smartenergy/",
+        "status": null,
+        "error": "AbortError: This operation was aborted"
+      },
+      {
+        "name": "ConnectedSolutions",
+        "url": "https://www.rienergy.com/RI-Home/Energy-Saving-Programs/ConnectedSolutions",
+        "status": 404
+      }
+    ]
+  },
   "notes": [
     "IOU DR programs are modeled into the existing `programs` entity (entityType \"program\"), linked to the administering utility via organizations[] by utility slug — NOT into the Utility model.",
     "There is no open federal catalog of named DR programs; facts are curated from each utility's public program page (registry.ts) and mapped by lib/sync/iou-dr-programs.ts.",
