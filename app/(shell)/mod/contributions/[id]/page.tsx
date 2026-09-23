@@ -4,6 +4,7 @@ import { SignInButton } from "@clerk/nextjs";
 import { Badge, Button, Card, Icon, Loader, PageLayout, TextArea } from "@texturehq/edges";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ContributionValue } from "@/components/contributions/ContributionValue";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 // ---------------------------------------------------------------------------
@@ -76,13 +77,6 @@ function statusBadge(status: string) {
 
 function formatFieldName(field: string): string {
   return field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function formatValue(value: unknown): string {
-  if (value === null || value === undefined) return "—";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (typeof value === "object") return JSON.stringify(value, null, 2);
-  return String(value);
 }
 
 // ---------------------------------------------------------------------------
@@ -292,13 +286,13 @@ export default function ModerationReviewPage() {
                     <div>
                       <div className="text-xs font-medium text-text-muted mb-1">Old Value</div>
                       <div className="text-sm text-text-body p-2 bg-[var(--color-background-subtle)] rounded border border-border-default">
-                        <pre className="whitespace-pre-wrap font-mono text-xs">{formatValue(change.old)}</pre>
+                        <ContributionValue field={field} value={change.old} />
                       </div>
                     </div>
                     <div>
                       <div className="text-xs font-medium text-text-muted mb-1">New Value</div>
                       <div className="text-sm text-text-body p-2 bg-[var(--color-background-subtle)] rounded border border-border-brand">
-                        <pre className="whitespace-pre-wrap font-mono text-xs">{formatValue(change.new)}</pre>
+                        <ContributionValue field={field} value={change.new} />
                       </div>
                     </div>
                   </div>
