@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { ResolverUtility } from "../resolve-entity";
 import {
   IOU_DR_OWNED_FIELDS,
   programSlug,
@@ -7,11 +6,33 @@ import {
   slugify,
   toProgramSyncRecords,
 } from "../iou-dr-programs";
+import type { ResolverUtility } from "../resolve-entity";
 
 const UTILITIES: Array<ResolverUtility & { slug: string }> = [
-  { id: "uid-duke", slug: "duke-energy", name: "Duke Energy Carolinas, LLC", eiaId: "5416", baCode: "DUK", state: "NC" },
-  { id: "uid-xcel", slug: "xcel-energy", name: "Public Service Co of Colorado", eiaId: "15466", baCode: "PSCO", state: "CO" },
-  { id: "uid-ngrid", slug: "national-grid", name: "Massachusetts Electric Company", eiaId: "11804", baCode: "ISNE", state: "MA" },
+  {
+    id: "uid-duke",
+    slug: "duke-energy",
+    name: "Duke Energy Carolinas, LLC",
+    eiaId: "5416",
+    baCode: "DUK",
+    state: "NC",
+  },
+  {
+    id: "uid-xcel",
+    slug: "xcel-energy",
+    name: "Public Service Co of Colorado",
+    eiaId: "15466",
+    baCode: "PSCO",
+    state: "CO",
+  },
+  {
+    id: "uid-ngrid",
+    slug: "national-grid",
+    name: "Massachusetts Electric Company",
+    eiaId: "11804",
+    baCode: "ISNE",
+    state: "MA",
+  },
 ];
 
 function scraped(overrides: Partial<ScrapedProgram> = {}): ScrapedProgram {
@@ -57,7 +78,7 @@ describe("toProgramSyncRecords", () => {
   it("resolves the utility by name when no eiaId is present", () => {
     const { records, methodCounts } = toProgramSyncRecords(
       [scraped({ utility: { name: "Duke Energy Carolinas, LLC" }, name: "PowerManager" })],
-      UTILITIES,
+      UTILITIES
     );
     expect(records[0].fields.organizations).toEqual([{ entityId: "duke-energy", role: "ADMINISTRATOR" }]);
     expect(methodCounts.name_trgm).toBe(1);
@@ -66,7 +87,7 @@ describe("toProgramSyncRecords", () => {
   it("collects programs whose utility cannot be resolved instead of orphaning them", () => {
     const { records, unresolved, methodCounts } = toProgramSyncRecords(
       [scraped({ utility: { eiaId: "99999", name: "Nonexistent Municipal Light" }, name: "Ghost Program" })],
-      UTILITIES,
+      UTILITIES
     );
     expect(records).toEqual([]);
     expect(unresolved).toHaveLength(1);

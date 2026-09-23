@@ -36,12 +36,7 @@ import type {
   ProgramStatus,
 } from "@/types/programs";
 import type { SyncRecord } from "./apply-sync";
-import {
-  buildUtilityLookups,
-  type ResolveInput,
-  type ResolverUtility,
-  resolveUtilityId,
-} from "./resolve-entity";
+import { buildUtilityLookups, type ResolveInput, type ResolverUtility, resolveUtilityId } from "./resolve-entity";
 
 export const PROGRAM_ENTITY_TYPE: EntityType = "program";
 export const IOU_DR_SYNC_ACTOR = "sync:iou-dr-programs";
@@ -146,7 +141,7 @@ export function slugify(input: string): string {
  */
 export function toProgramSyncRecords(
   scraped: ReadonlyArray<ScrapedProgram>,
-  utilities: ReadonlyArray<ResolverUtility & { slug: string }>,
+  utilities: ReadonlyArray<ResolverUtility & { slug: string }>
 ): MapResult {
   const lookups = buildUtilityLookups(utilities);
   const idToSlug = new Map<string, string>();
