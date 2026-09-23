@@ -9,6 +9,7 @@ import {
   EntityList,
   EntityMap,
   EntityPageHeader,
+  EntityProvenanceBadges,
   EntitySection,
   type EntityStat,
   EntityStatsRow,
@@ -249,6 +250,7 @@ export function PowerPlantDetailClient() {
     <>
       <EntityPageHeader
         entityName={plant.name}
+        provenanceBadge={<EntityProvenanceBadges entityType="power_plant" entitySlug={plant.slug} />}
         subtitle={
           <>
             {plant.utilityName && <span>{plant.utilityName}</span>}
