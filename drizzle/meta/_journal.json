@@ -190,6 +190,13 @@
       "when": 1790100120000,
       "tag": "0030_register_iou_dr_source",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1790100180000,
+      "tag": "0031_grant_commongrid_sync_regions_territories",
+      "breakpoints": true
     }
   ]
 }
