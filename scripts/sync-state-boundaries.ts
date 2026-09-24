@@ -82,6 +82,11 @@ export interface RegionRecord extends Region {
   utilityType?: string | null;
 }
 
+export interface RegionEntry {
+  record: RegionRecord;
+  geometry: Geometry;
+}
+
 export interface SyncReport {
   fetchedSources: number;
   fetchedFeatures: number;
@@ -257,18 +262,19 @@ export function buildRegionRecord(
 export function buildRegionsFromFeatures(
   config: SourceConfig,
   features: Feature<Geometry, Record<string, unknown>>[]
-): RegionRecord[] {
-  const records: RegionRecord[] = [];
+): RegionEntry[] {
+  const entries: RegionEntry[] = [];
   const seenIds = new Set<string>();
   for (let i = 0; i < features.length; i++) {
-    const record = buildRegionRecord(config, features[i], i);
+    const feature = features[i];
+    const record = buildRegionRecord(config, feature, i);
     if (!record) continue;
     // Deduplicate by id within a single source; keep first occurrence.
     if (seenIds.has(record.id)) continue;
     seenIds.add(record.id);
-    records.push(record);
+    entries.push({ record, geometry: feature.geometry });
   }
-  return records;
+  return entries;
 }
 
 // ---------------------------------------------------------------------------
@@ -553,12 +559,12 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
       report.fetchedFeatures += features.length;
       console.log(`    ${features.length} features`);
 
-      const records = buildRegionsFromFeatures(config, features);
-      for (let i = 0; i < records.length; i++) {
-        incoming.push({ record: records[i], geometry: features[i].geometry });
+      const entries = buildRegionsFromFeatures(config, features);
+      for (const entry of entries) {
+        incoming.push(entry);
       }
 
-      if (config.isStateSource && records.length > 0) {
+      if (config.isStateSource && entries.length > 0) {
         const currentPriority = stateSourcePriorities.get(config.state) ?? 0;
         stateSourcePriorities.set(config.state, Math.max(currentPriority, config.sourcePriority ?? 100));
       }

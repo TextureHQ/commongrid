@@ -117,9 +117,10 @@ describe("buildRegionsFromFeatures", () => {
       makeFeature({ NAME: "ACME", TYPE: "IOU", EIA_ID: 1, SOURCE_ID: "A" }),
       makeFeature({ NAME: "BETA", TYPE: "COOP", EIA_ID: 2, SOURCE_ID: "B" }),
     ];
-    const records = buildRegionsFromFeatures(config, features);
-    expect(records).toHaveLength(2);
-    expect(records.map((r) => r.id)).toEqual(["region-st-1", "region-st-2"]);
+    const entries = buildRegionsFromFeatures(config, features);
+    expect(entries).toHaveLength(2);
+    expect(entries.map((entry) => entry.record.id)).toEqual(["region-st-1", "region-st-2"]);
+    expect(entries[0]?.geometry).toBe(mockPolygon);
   });
 });
 
