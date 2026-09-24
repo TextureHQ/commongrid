@@ -7,6 +7,7 @@ import {
   BadgeList,
   EntityMap,
   EntityPageHeader,
+  EntityProvenanceBadges,
   EntitySection,
   EntityStatsRow,
   FieldList,
@@ -89,6 +90,7 @@ export default function EVStationDetailPage() {
     <>
       <EntityPageHeader
         entityName={station.stationName}
+        provenanceBadge={<EntityProvenanceBadges entityType="ev_station" entitySlug={station.slug} />}
         subtitle={
           <>
             <span>{getNetworkShortName(station.evNetwork)}</span>

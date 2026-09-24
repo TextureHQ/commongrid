@@ -29,6 +29,8 @@ interface EntityPageHeaderProps {
   actions?: React.ReactNode;
   /** Optional data source file paths for GitHub links */
   dataSourcePaths?: string[];
+  /** Optional provenance badge shown beside the title */
+  provenanceBadge?: React.ReactNode;
 }
 
 const GITHUB_BASE = "https://github.com/TextureHQ/commongrid/blob/main";
@@ -40,6 +42,7 @@ export function EntityPageHeader({
   avatar,
   actions,
   dataSourcePaths,
+  provenanceBadge,
 }: EntityPageHeaderProps) {
   return (
     <PageShell className="py-6">
@@ -61,6 +64,8 @@ export function EntityPageHeader({
             <h1 className="mb-2 font-brand text-[clamp(28px,3.5vw,42px)] font-semibold leading-tight tracking-tight text-text-heading">
               {entityName}
             </h1>
+
+            {provenanceBadge && <div className="mb-2">{provenanceBadge}</div>}
 
             {subtitle && (
               <div className="flex flex-wrap items-center gap-2 text-sm leading-relaxed text-text-body">{subtitle}</div>
