@@ -29,7 +29,7 @@ const MAX_ENTRIES = 10; // entries per bucket
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type EntityKind = "utility" | "iso" | "rto" | "balancing-authority";
+type EntityKind = "utility" | "iso" | "rto" | "balancing-authority" | "region";
 
 interface EntityRecord {
   id: string;
@@ -101,6 +101,7 @@ function entityTypeLabel(kind: EntityKind, record: EntityRecord): string {
   if (kind === "iso") return "ISO";
   if (kind === "rto") return "RTO";
   if (kind === "balancing-authority") return "Grid Op";
+  if (kind === "region") return "Service Territory";
   return "Entity";
 }
 
@@ -184,6 +185,13 @@ function describeAdded(kind: EntityKind, record: EntityRecord): string {
   if (kind === "iso") return `ISO added · ${typeLabel}`;
   if (kind === "rto") return `RTO added · ${typeLabel}`;
   if (kind === "balancing-authority") return `Balancing authority added · ${typeLabel}`;
+  if (kind === "region") {
+    const state = (record.state as string | null) ?? states?.[0] ?? "";
+    const src = record.needsOpenSource ? " (federal fallback — needs open source)" : "";
+    return state
+      ? `${state} service territory boundary added${src} · ${typeLabel}`
+      : `Service territory boundary added${src} · ${typeLabel}`;
+  }
   return `Added · ${typeLabel}`;
 }
 
@@ -218,6 +226,7 @@ const DATASETS: Array<{ file: string; kind: EntityKind }> = [
   { file: "isos.json", kind: "iso" },
   { file: "rtos.json", kind: "rto" },
   { file: "balancing-authorities.json", kind: "balancing-authority" },
+  { file: "regions.json", kind: "region" },
 ];
 
 function main() {
