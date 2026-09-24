@@ -7,13 +7,29 @@
  * Usage:
  *   yarn sync:state-boundaries
  *
- * Outputs:
- *   - data/regions.json — merged Region records
- *   - public/data/territories/{eiaId|slug}.json — per-territory GeoJSON
+ * Publishes to Postgres:
+ *   - regions table via applySync (entityType "region")
+ *   - territories table via PostGIS upsert
+ * Bookkeeping:
+ *   - data/state-boundaries/manifest.json
  */
 
 import * as fs from "node:fs";
+import * as path from "node:path";
+import { sql } from "drizzle-orm";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { applySync, type SyncRecord } from "@/lib/sync/apply-sync";
+import { DATA_DIR, slugify } from "./lib";
+
+const SERVICE_TERRITORIES_URL =
+  "https://services3.arcgis.com/OYP7N6mAJJCyH6hd/arcgis/rest/services/Electric_Retail_Service_Territories_HIFLD/FeatureServer/0/query";
+
+const PAGE_SIZE = 2000;
+const MAX_ALLOWABLE_OFFSET = 0.005;
+const MANIFEST_DIR = path.join(DATA_DIR, "state-boundaries");
+const MANIFEST_PATH = path.join(MANIFEST_DIR, "manifest.json");
+const RUNNER_ACTOR = "sync:state-boundaries";
 
 // Inlined 2-letter state-code format check to keep this sync script free of the
 // un-vendored @texturehq/geography-config dependency (not in package.json; imported only
@@ -23,15 +39,6 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 function isValidStateCode(code: string): boolean {
   return /^[A-Za-z]{2}$/.test(code);
 }
-
-import type { Region } from "@/types/entities";
-import { DATA_DIR, readJSON, slugify, TERRITORIES_DIR, writeJSON, writeTerritory } from "./lib";
-
-const SERVICE_TERRITORIES_URL =
-  "https://services3.arcgis.com/OYP7N6mAJJCyH6hd/arcgis/rest/services/Electric_Retail_Service_Territories_HIFLD/FeatureServer/0/query";
-
-const PAGE_SIZE = 2000;
-const MAX_ALLOWABLE_OFFSET = 0.005;
 
 export type SourceKind = "arcgis" | "socrata";
 
@@ -51,6 +58,8 @@ export interface FieldMapping {
 export interface SourceConfig {
   /** Stable identifier for this source row (used in logs/skip logic). */
   sourceId: string;
+  /** Registered data_sources.id used for version provenance. */
+  dataSourceId: string;
   /** Two-letter state code. */
   state: string;
   /** Base query URL (FeatureServer/MapServer query endpoint, or Socrata URL). */
@@ -67,18 +76,27 @@ export interface SourceConfig {
   sourcePriority?: number;
   /**
    * True when this row represents a state agency boundary. Used to drop lower-
-   * precedence (e.g. HIFLD) records for the same state during merging.
+   * precedence (e.g. HIFLD) records for the same state after writing.
    */
   isStateSource?: boolean;
   /** Flag for records that need an open-source replacement. */
   needsOpenSource?: boolean;
 }
 
-export interface RegionRecord extends Region {
-  sourceUrl?: string | null;
+export interface RegionRecord {
+  id: string;
+  slug: string;
+  name: string;
+  type: "SERVICE_TERRITORY";
+  eiaId: string | null;
+  state: string | null;
+  customers: number | null;
+  source: string;
+  sourceUrl: string | null;
+  sourceDate: string;
+  dataSourceId: string;
   sourcePriority?: number;
   needsOpenSource?: boolean;
-  locked?: boolean;
   utilityType?: string | null;
 }
 
@@ -90,11 +108,41 @@ export interface RegionEntry {
 export interface SyncReport {
   fetchedSources: number;
   fetchedFeatures: number;
-  writtenRegions: number;
-  writtenTerritories: number;
-  skippedLocked: Array<{ id: string; name: string; source: string }>;
-  removedHifldIds: string[];
+  regionsCreated: number;
+  regionsUpdated: number;
+  regionsUnchanged: number;
+  fieldsWritten: number;
+  deferralsCount: number;
+  territoriesUpserted: number;
+  hifldSuperseded: number;
   errors: string[];
+}
+
+interface SourceResult {
+  sourceId: string;
+  sourceLabel: string;
+  features: number;
+  entries: number;
+  error?: string;
+}
+
+interface Manifest {
+  source: string;
+  generated_by: string;
+  generated_at: string;
+  source_results: SourceResult[];
+  region_counts: {
+    created: number;
+    updated: number;
+    unchanged: number;
+    fields_written: number;
+  };
+  territories_upserted: number;
+  hifld_superseded: number;
+  deferrals_count: number;
+  needs_open_source: string[];
+  errors: string[];
+  notes: string[];
 }
 
 export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
@@ -102,6 +150,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
   // Direct requests 403; configured to flow through the Firecrawl fallback.
   {
     sourceId: "wi-psc-municipal",
+    dataSourceId: "wi-psc",
     state: "WI",
     url: "https://maps.psc.wi.gov/server/rest/services/Electric/PSC_ElectricServiceTerritories/MapServer/0/query",
     kind: "arcgis",
@@ -113,6 +162,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
   },
   {
     sourceId: "wi-psc-investor-owned",
+    dataSourceId: "wi-psc",
     state: "WI",
     url: "https://maps.psc.wi.gov/server/rest/services/Electric/PSC_ElectricServiceTerritories/MapServer/1/query",
     kind: "arcgis",
@@ -124,6 +174,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
   },
   {
     sourceId: "wi-psc-cooperative",
+    dataSourceId: "wi-psc",
     state: "WI",
     url: "https://maps.psc.wi.gov/server/rest/services/Electric/PSC_ElectricServiceTerritories/MapServer/2/query",
     kind: "arcgis",
@@ -136,6 +187,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
   // Minnesota Geospatial Commons / MN PUC electric service territories.
   {
     sourceId: "mn-mngeo-eusa",
+    dataSourceId: "mn-gisdata",
     state: "MN",
     url: "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_mngeo/util_eusa/FeatureServer/0/query",
     kind: "arcgis",
@@ -149,6 +201,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
   // data.colorado.gov Utilities_Boundaries layer.
   {
     sourceId: "co-hifld",
+    dataSourceId: "hifld-rsts",
     state: "CO",
     url: SERVICE_TERRITORIES_URL,
     kind: "arcgis",
@@ -240,8 +293,6 @@ export function buildRegionRecord(
     ? `st-${slugify(name)}-${eiaId}`
     : `st-${config.state.toLowerCase()}-${slugify(name)}-${sourceId ?? index}`;
 
-  const sourcePriority = config.sourcePriority ?? (config.needsOpenSource ? 10 : 100);
-
   return {
     id,
     slug,
@@ -253,7 +304,8 @@ export function buildRegionRecord(
     source: config.sourceLabel,
     sourceUrl: config.url,
     sourceDate: config.sourceDate,
-    sourcePriority,
+    dataSourceId: config.dataSourceId,
+    sourcePriority: config.sourcePriority ?? (config.needsOpenSource ? 10 : 100),
     needsOpenSource: config.needsOpenSource ?? false,
     utilityType,
   };
@@ -275,6 +327,40 @@ export function buildRegionsFromFeatures(
     entries.push({ record, geometry: feature.geometry });
   }
   return entries;
+}
+
+/**
+ * Map fetched region entries to applySync records. Fields are limited to real
+ * regions table content columns; bookkeeping/internal flags are excluded.
+ */
+export function buildRegionSyncRecords(entries: RegionEntry[]): SyncRecord[] {
+  return entries.map(({ record }) => {
+    const asOf = record.sourceDate ? new Date(record.sourceDate) : null;
+    return {
+      sourceId: record.dataSourceId,
+      asOf: asOf && !Number.isNaN(asOf.getTime()) ? asOf : null,
+      entityId: record.id,
+      slug: record.slug,
+      fields: pruneUndefined({
+        name: record.name,
+        type: record.type,
+        eiaId: record.eiaId,
+        state: record.state,
+        customers: record.customers,
+        source: record.source,
+        sourceUrl: record.sourceUrl,
+        sourceDate: record.sourceDate,
+      }),
+    };
+  });
+}
+
+function pruneUndefined<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) out[key] = value;
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -419,135 +505,232 @@ export async function fetchSource(
 }
 
 // ---------------------------------------------------------------------------
-// Merge / precedence / geometry-lock
+// Database publication
 // ---------------------------------------------------------------------------
 
-export interface MergeResult {
-  regions: RegionRecord[];
-  changedIds: Set<string>;
-  skippedLocked: Array<{ id: string; name: string; source: string }>;
-  removedHifldIds: string[];
+interface PublishResult {
+  created: number;
+  updated: number;
+  unchanged: number;
+  fieldsWritten: number;
+  deferrals: Array<{ entityId: string; field: string; keptValue: unknown; skippedValue: unknown }>;
+  territoriesUpserted: number;
+  hifldSuperseded: number;
 }
 
-/**
- * Merge fetched region records into the existing regions.json array.
- *
- * Rules:
- *   - Locked records are never overwritten.
- *   - Higher sourcePriority wins over lower sourcePriority.
- *   - State sources additionally outrank HIFLD for the same state, so lower-
- *     precedence in-state records are removed even when IDs do not match
- *     (e.g. Wisconsin, which has no EIA ID in the PSC layer).
- */
-export function mergeRegionRecords(
-  existing: RegionRecord[],
-  incoming: RegionRecord[],
-  stateSources: Map<string, number>
-): MergeResult {
-  const existingById = new Map(existing.map((r) => [r.id, r]));
-  const changedIds = new Set<string>();
-  const skippedLocked: Array<{ id: string; name: string; source: string }> = [];
+async function publishToDatabase(
+  entries: RegionEntry[],
+  successfulStateSourceStates: Set<string>
+): Promise<PublishResult> {
+  const empty: PublishResult = {
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    fieldsWritten: 0,
+    deferrals: [],
+    territoriesUpserted: 0,
+    hifldSuperseded: 0,
+  };
 
-  for (const region of incoming) {
-    const current = existingById.get(region.id);
-    if (current?.locked) {
-      skippedLocked.push({ id: current.id, name: current.name, source: current.source ?? "unknown" });
-      continue;
-    }
-
-    const currentPriority = current?.sourcePriority ?? 0;
-    if (current && currentPriority >= (region.sourcePriority ?? 0)) {
-      // Existing record has equal or higher precedence — keep it.
-      continue;
-    }
-
-    existingById.set(region.id, region);
-    changedIds.add(region.id);
+  if (!process.env.DATABASE_URL) {
+    console.warn(
+      "\n⚠️  DATABASE_URL is not set — skipping database publication. " +
+        "The manifest is still written; regions and territories are NOT updated."
+    );
+    return empty;
   }
 
-  // Remove lower-precedence in-state HIFLD records when a state source is
-  // present. This is intentionally conservative: we only drop records that are
-  // not locked and that are clearly from HIFLD.
-  const removedHifldIds: string[] = [];
-  for (const [state, statePriority] of stateSources.entries()) {
-    for (const [id, region] of existingById.entries()) {
-      if (region.state !== state) continue;
-      if (region.locked) continue;
-      if (changedIds.has(id)) continue; // already replaced by state source
-      const regionPriority = region.sourcePriority ?? 0;
-      if (regionPriority < statePriority && isHifldLabel(region.source ?? "")) {
-        existingById.delete(id);
-        removedHifldIds.push(id);
-      }
+  const regionRecords = buildRegionSyncRecords(entries);
+
+  console.log("\nPublishing state service-territory boundaries to Postgres...");
+  const report = await applySync(regionRecords, {
+    entityType: "region",
+    initiatedBy: RUNNER_ACTOR,
+    batchTitle: "State service-territory boundary sync",
+    batchDescription: `WI + MN state sources + CO via HIFLD — ${regionRecords.length} territories`,
+  });
+
+  const db = getPooledDb();
+  let territoriesUpserted = 0;
+
+  for (const { record, geometry } of entries) {
+    if (!geometry) continue;
+
+    const geojsonStr = JSON.stringify(geometry);
+    const territoryId = record.eiaId ? `territory-${record.eiaId}` : record.id.replace(/^region-/, "territory-");
+    const source = isHifldLabel(record.source) ? "HIFLD ArcGIS" : record.source;
+    const sourceUrl = record.sourceUrl;
+
+    const res = await db.execute(sql`
+      INSERT INTO territories (id, region_id, geography, source, source_url)
+      VALUES (
+        ${territoryId},
+        ${record.id},
+        ST_Multi(ST_CollectionExtract(ST_MakeValid(ST_GeomFromGeoJSON(${geojsonStr})), 3))::geography,
+        ${source},
+        ${sourceUrl}
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        geography = EXCLUDED.geography,
+        source = EXCLUDED.source,
+        source_url = EXCLUDED.source_url
+      RETURNING id
+    `);
+
+    if ((res.rows as unknown[]).length > 0) {
+      territoriesUpserted++;
     }
   }
 
-  // Preserve insertion order (existing records first, in their original order,
-  // with in-place replacements; any purely-new incoming records appended).
-  // Downstream consumers sort for display; the sync output stays stable/diff-friendly.
-  const regions = Array.from(existingById.values());
+  // After writing state-source regions for a state where every configured
+  // state source succeeded, soft-delete any in-state HIFLD rows that were not
+  // part of this sync. Locked rows are never retired.
+  let hifldSuperseded = 0;
+  const idsByState = new Map<string, string[]>();
+  for (const { record } of entries) {
+    if (!record.state) continue;
+    if (!successfulStateSourceStates.has(record.state)) continue;
+    const list = idsByState.get(record.state) ?? [];
+    list.push(record.id);
+    idsByState.set(record.state, list);
+  }
 
-  return { regions, changedIds, skippedLocked, removedHifldIds };
+  for (const state of successfulStateSourceStates) {
+    const ids = idsByState.get(state) ?? [];
+    if (ids.length === 0) continue;
+
+    const idArray = sql`ARRAY[${sql.join(
+      ids.map((id) => sql`${id}`),
+      sql`, `
+    )}]`;
+
+    const res = await db.execute(sql`
+      UPDATE regions
+      SET deleted_at = now()
+      WHERE state = ${state}
+        AND deleted_at IS NULL
+        AND source ILIKE ${"%HIFLD%"}
+        AND locked_status IS NULL
+        AND id <> ALL (${idArray})
+      RETURNING id
+    `);
+
+    hifldSuperseded += (res.rows as unknown[]).length;
+  }
+
+  console.log("  Publication complete:");
+  console.log(`    Batch id: ${report.batchId}`);
+  console.log(`    Created: ${report.created.toLocaleString()}`);
+  console.log(`    Updated: ${report.updated.toLocaleString()}`);
+  console.log(`    Unchanged: ${report.unchanged.toLocaleString()}`);
+  console.log(`    Fields written: ${report.fieldsWritten.toLocaleString()}`);
+  console.log(`    Territories upserted: ${territoriesUpserted.toLocaleString()}`);
+  console.log(`    HIFLD superseded: ${hifldSuperseded.toLocaleString()}`);
+
+  if (report.deferrals.length > 0) {
+    console.log(
+      `    ⚠️  Deferred ${report.deferrals.length.toLocaleString()} field(s) a human last edited (policy B — not overwritten):`
+    );
+    for (const d of report.deferrals.slice(0, 20)) {
+      console.log(
+        `      - ${d.entityId} field '${d.field}': kept ${JSON.stringify(d.keptValue)}, sync wanted ${JSON.stringify(d.skippedValue)}`
+      );
+    }
+    if (report.deferrals.length > 20) {
+      console.log(`      … and ${(report.deferrals.length - 20).toLocaleString()} more`);
+    }
+  }
+
+  return {
+    created: report.created,
+    updated: report.updated,
+    unchanged: report.unchanged,
+    fieldsWritten: report.fieldsWritten,
+    deferrals: report.deferrals,
+    territoriesUpserted,
+    hifldSuperseded,
+  };
 }
 
 // ---------------------------------------------------------------------------
 // I/O
 // ---------------------------------------------------------------------------
 
-export function territoryFileKey(record: RegionRecord): string {
-  return record.eiaId ? `${record.eiaId}.json` : `${record.slug}.json`;
-}
+function writeManifest(report: SyncReport, sourceResults: SourceResult[]): void {
+  const needsOpenSource: string[] = [];
+  for (const result of sourceResults) {
+    if (result.error) continue;
+    const config = STATE_BOUNDARY_SOURCES.find((c) => c.sourceId === result.sourceId);
+    if (config?.needsOpenSource) {
+      needsOpenSource.push(`${config.sourceLabel} (${result.entries} entries)`);
+    }
+  }
 
-export function writeTerritoryGeoJSON(record: RegionRecord, geometry: Geometry): void {
-  const geoJson: FeatureCollection = {
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        properties: {
-          id: record.id,
-          name: record.name,
-          eiaId: record.eiaId,
-          state: record.state,
-          source: record.source,
-          sourceDate: record.sourceDate,
-        },
-        geometry,
-      },
+  const manifest: Manifest = {
+    source: "State service-territory boundary sync",
+    generated_by: RUNNER_ACTOR,
+    generated_at: new Date().toISOString(),
+    source_results: sourceResults,
+    region_counts: {
+      created: report.regionsCreated,
+      updated: report.regionsUpdated,
+      unchanged: report.regionsUnchanged,
+      fields_written: report.fieldsWritten,
+    },
+    territories_upserted: report.territoriesUpserted,
+    hifld_superseded: report.hifldSuperseded,
+    deferrals_count: report.deferralsCount,
+    needs_open_source: needsOpenSource,
+    errors: report.errors,
+    notes: [
+      "Regions are published via applySync (entityType 'region') to the Postgres registry.",
+      "Territory geometries are upserted separately via PostGIS (ST_MakeValid / ST_Multi).",
+      "HIFLD in-state rows are soft-deleted only after a higher-precedence state source is written, and only when the row is not human-locked.",
+      "Re-runs are idempotent (stable region/territory ids) and conflict-aware (applySync policy B leaves human-edited fields untouched).",
     ],
   };
 
-  fs.mkdirSync(TERRITORIES_DIR, { recursive: true });
-  writeTerritory(territoryFileKey(record), geoJson);
+  fs.mkdirSync(MANIFEST_DIR, { recursive: true });
+  fs.writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
+  console.log(`\n  Wrote ${path.relative(DATA_DIR, MANIFEST_PATH)}`);
 }
 
 export interface RunOptions {
   fetchImpl?: Fetcher;
-  existingRegions?: RegionRecord[];
-  writeFiles?: boolean;
   skipStates?: string[];
+  publish?: boolean;
+  writeManifest?: boolean;
 }
 
 export async function syncStateBoundaries(options: RunOptions = {}): Promise<SyncReport> {
   const fetchImpl = options.fetchImpl ?? fetch;
-  const existing: RegionRecord[] = options.existingRegions ?? readJSON<RegionRecord[]>("regions.json");
   const skipStates = new Set((options.skipStates ?? []).map((s) => s.toUpperCase()));
 
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.mkdirSync(TERRITORIES_DIR, { recursive: true });
+  fs.mkdirSync(MANIFEST_DIR, { recursive: true });
 
   const report: SyncReport = {
     fetchedSources: 0,
     fetchedFeatures: 0,
-    writtenRegions: 0,
-    writtenTerritories: 0,
-    skippedLocked: [],
-    removedHifldIds: [],
+    regionsCreated: 0,
+    regionsUpdated: 0,
+    regionsUnchanged: 0,
+    fieldsWritten: 0,
+    deferralsCount: 0,
+    territoriesUpserted: 0,
+    hifldSuperseded: 0,
     errors: [],
   };
 
-  const incoming: Array<{ record: RegionRecord; geometry: Geometry }> = [];
-  const stateSourcePriorities = new Map<string, number>();
+  const entries: RegionEntry[] = [];
+  const sourceResults: SourceResult[] = [];
+
+  const stateSourceConfigsByState = new Map<string, number>();
+  const stateSourceSuccessByState = new Map<string, number>();
+  for (const config of STATE_BOUNDARY_SOURCES) {
+    if (!config.isStateSource) continue;
+    stateSourceConfigsByState.set(config.state, (stateSourceConfigsByState.get(config.state) ?? 0) + 1);
+  }
 
   for (const config of STATE_BOUNDARY_SOURCES) {
     if (skipStates.has(config.state)) continue;
@@ -555,50 +738,71 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
     console.log(`  Fetching ${config.sourceLabel}...`);
     try {
       const features = await fetchSource(config, fetchImpl);
-      report.fetchedSources++;
-      report.fetchedFeatures += features.length;
-      console.log(`    ${features.length} features`);
-
-      const entries = buildRegionsFromFeatures(config, features);
-      for (const entry of entries) {
-        incoming.push(entry);
+      const sourceEntries = buildRegionsFromFeatures(config, features);
+      entries.push(...sourceEntries);
+      sourceResults.push({
+        sourceId: config.sourceId,
+        sourceLabel: config.sourceLabel,
+        features: features.length,
+        entries: sourceEntries.length,
+      });
+      if (config.isStateSource) {
+        stateSourceSuccessByState.set(config.state, (stateSourceSuccessByState.get(config.state) ?? 0) + 1);
       }
-
-      if (config.isStateSource && entries.length > 0) {
-        const currentPriority = stateSourcePriorities.get(config.state) ?? 0;
-        stateSourcePriorities.set(config.state, Math.max(currentPriority, config.sourcePriority ?? 100));
-      }
+      console.log(`    ${features.length} features → ${sourceEntries.length} entries`);
     } catch (err) {
       const message = `Failed to fetch ${config.sourceLabel}: ${err instanceof Error ? err.message : String(err)}`;
       console.error(`    ⚠️ ${message}`);
       report.errors.push(message);
+      sourceResults.push({
+        sourceId: config.sourceId,
+        sourceLabel: config.sourceLabel,
+        features: 0,
+        entries: 0,
+        error: message,
+      });
+      if (config.isStateSource) {
+        // Failed state sources do not count toward success; the supersede
+        // step will skip this state entirely.
+        stateSourceSuccessByState.set(config.state, stateSourceSuccessByState.get(config.state) ?? 0);
+      }
     }
   }
 
-  const merge = mergeRegionRecords(
-    existing,
-    incoming.map((i) => i.record),
-    stateSourcePriorities
-  );
-  report.skippedLocked.push(...merge.skippedLocked);
-  report.removedHifldIds.push(...merge.removedHifldIds);
+  report.fetchedSources = sourceResults.filter((s) => !s.error).length;
+  report.fetchedFeatures = sourceResults.reduce((sum, s) => sum + s.features, 0);
 
-  // Write territory GeoJSON for every changed/added record.
-  const changedById = new Set(merge.changedIds);
-  for (const { record, geometry } of incoming) {
-    if (!changedById.has(record.id)) continue;
-    if (record.type !== "SERVICE_TERRITORY") continue;
-    if (!geometry) continue;
-
-    if (options.writeFiles !== false) {
-      writeTerritoryGeoJSON(record, geometry);
+  const successfulStateSourceStates = new Set<string>();
+  for (const [state, total] of stateSourceConfigsByState.entries()) {
+    if (stateSourceSuccessByState.get(state) === total) {
+      successfulStateSourceStates.add(state);
     }
-    report.writtenTerritories++;
   }
 
-  if (options.writeFiles !== false) {
-    writeJSON("regions.json", merge.regions);
-    report.writtenRegions = merge.regions.length;
+  let publishResult: PublishResult = {
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    fieldsWritten: 0,
+    deferrals: [],
+    territoriesUpserted: 0,
+    hifldSuperseded: 0,
+  };
+
+  if (options.publish !== false) {
+    publishResult = await publishToDatabase(entries, successfulStateSourceStates);
+  }
+
+  report.regionsCreated = publishResult.created;
+  report.regionsUpdated = publishResult.updated;
+  report.regionsUnchanged = publishResult.unchanged;
+  report.fieldsWritten = publishResult.fieldsWritten;
+  report.deferralsCount = publishResult.deferrals.length;
+  report.territoriesUpserted = publishResult.territoriesUpserted;
+  report.hifldSuperseded = publishResult.hifldSuperseded;
+
+  if (options.writeManifest !== false) {
+    writeManifest(report, sourceResults);
   }
 
   return report;
@@ -624,17 +828,13 @@ async function main() {
   console.log("\nSync complete:");
   console.log(`  Sources fetched: ${report.fetchedSources}`);
   console.log(`  Features fetched: ${report.fetchedFeatures}`);
-  console.log(`  Regions written: ${report.writtenRegions}`);
-  console.log(`  Territories written: ${report.writtenTerritories}`);
-  console.log(`  Locked records skipped: ${report.skippedLocked.length}`);
-  console.log(`  HIFLD records removed by state precedence: ${report.removedHifldIds.length}`);
-
-  if (report.skippedLocked.length > 0) {
-    console.log("\n  Skipped locked records:");
-    for (const r of report.skippedLocked.slice(0, 10)) {
-      console.log(`    - ${r.name} (${r.id})`);
-    }
-  }
+  console.log(`  Regions created: ${report.regionsCreated}`);
+  console.log(`  Regions updated: ${report.regionsUpdated}`);
+  console.log(`  Regions unchanged: ${report.regionsUnchanged}`);
+  console.log(`  Fields written: ${report.fieldsWritten}`);
+  console.log(`  Deferrals: ${report.deferralsCount}`);
+  console.log(`  Territories upserted: ${report.territoriesUpserted}`);
+  console.log(`  HIFLD records superseded: ${report.hifldSuperseded}`);
 
   if (report.errors.length > 0) {
     console.log("\n  Errors:");
