@@ -30,19 +30,11 @@ jobs:
       - run: npm ci
       - name: Sync state service-territory boundaries
         env:
-          # Optional. Used by the adapter's fetch layer as a fallback when a
-          # state source (e.g. the WI PSC server maps.psc.wi.gov) 403s bare
-          # requests. When absent, the fallback is skipped and any bot-blocked
-          # source surfaces its direct error in the run report rather than
-          # silently dropping.
+          # Used by applySync to publish regions to the registry and by the
+          # fetch layer's Firecrawl fallback when a state source 403s.
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         run: npx tsx scripts/sync-state-boundaries.ts
-      - name: Generate changelog from data diffs
-        # Diffs data/regions.json against the committed snapshot and appends
-        # structured changelog entries (added / updated service territories)
-        # instead of silently overwriting. Change-detection lives here so a
-        # no-op sync produces an empty diff and no PR.
-        run: npx tsx scripts/generate-changelog.ts
       - name: Publish via branch + PR
         env:
           GH_TOKEN: ${{ github.token }}
@@ -50,19 +42,13 @@ jobs:
           BRANCH: talos/sync-state-boundaries-data
           PR_TITLE: "data: update state service-territory boundaries"
           PR_BODY: |
-            Automated state service-territory boundary sync (WI + MN direct, CO via HIFLD).
-
-            The workflow runs the registry-driven adapter, regenerates the changelog
-            from a diff against the committed snapshot, commits the changed data on a
-            dedicated branch, and opens or updates a pull request so branch protection
-            can review and merge it safely. If nothing changed since the last run, no
-            commit is made and no PR is opened.
+            Automated state service-territory boundary sync. The workflow commits generated bookkeeping (the run manifest) on a dedicated branch and opens or updates a pull request so branch protection can review and merge it safely.
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
-          git add data/regions.json data/changelog.json
+          git add data/state-boundaries/manifest.json
           if git diff --staged --quiet; then
             echo "No changes to commit."
             exit 0

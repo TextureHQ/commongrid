@@ -2,12 +2,11 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildRegionRecord,
+  buildRegionSyncRecords,
   buildRegionsFromFeatures,
   type Fetcher,
   fetchJsonWithFallback,
-  mergeRegionRecords,
   normalizeUtilityName,
-  type RegionRecord,
   type SourceConfig,
   STATE_BOUNDARY_SOURCES,
   syncStateBoundaries,
@@ -124,6 +123,46 @@ describe("buildRegionsFromFeatures", () => {
   });
 });
 
+describe("buildRegionSyncRecords", () => {
+  it("maps a RegionEntry to a SyncRecord with only real regions columns", () => {
+    const config = makeArcGISConfig();
+    const feature = makeFeature({ NAME: "ACME Electric", TYPE: "Investor-Owned", EIA_ID: 12345, SOURCE_ID: "A1" });
+    const entry = buildRegionsFromFeatures(config, [feature])[0];
+    expect(entry).toBeDefined();
+
+    const [sync] = buildRegionSyncRecords([entry]);
+    expect(sync.entityId).toBe("region-st-12345");
+    expect(sync.slug).toBe("st-acme-electric-12345");
+    expect(sync.sourceId).toBe(config.sourceLabel);
+    expect(sync.asOf).toEqual(new Date(config.sourceDate));
+
+    expect(sync.fields).toHaveProperty("name", "ACME Electric");
+    expect(sync.fields).toHaveProperty("type", "SERVICE_TERRITORY");
+    expect(sync.fields).toHaveProperty("eiaId", "12345");
+    expect(sync.fields).toHaveProperty("state", "TS");
+    expect(sync.fields).toHaveProperty("source");
+    expect(sync.fields).toHaveProperty("sourceUrl");
+    expect(sync.fields).toHaveProperty("sourceDate");
+
+    expect(sync.fields).not.toHaveProperty("sourcePriority");
+    expect(sync.fields).not.toHaveProperty("needsOpenSource");
+    expect(sync.fields).not.toHaveProperty("utilityType");
+    expect(sync.fields).not.toHaveProperty("id");
+    expect(sync.fields).not.toHaveProperty("slug");
+  });
+
+  it("falls back to a deterministic entityId when no EIA id is present", () => {
+    const config = makeArcGISConfig({ fieldMapping: { name: "NAME", utilityType: "TYPE", sourceId: "PSC_ID" } });
+    const feature = makeFeature({ NAME: "ACME Electric", TYPE: "Municipal", PSC_ID: 42 });
+    const entry = buildRegionsFromFeatures(config, [feature])[0];
+    expect(entry).toBeDefined();
+
+    const [sync] = buildRegionSyncRecords([entry]);
+    expect(sync.entityId).toBe("region-st-ts-acme-electric-42");
+    expect(sync.fields).toHaveProperty("eiaId", null);
+  });
+});
+
 describe("fetchJsonWithFallback", () => {
   beforeEach(() => {
     delete process.env.FIRECRAWL_API_KEY;
@@ -187,192 +226,6 @@ describe("fetchJsonWithFallback", () => {
   });
 });
 
-describe("mergeRegionRecords", () => {
-  it("replaces lower-priority records with higher-priority incoming records", () => {
-    const existing: RegionRecord[] = [
-      {
-        id: "region-st-1",
-        name: "Old",
-        type: "SERVICE_TERRITORY",
-        eiaId: "1",
-        state: "TS",
-        customers: null,
-        source: "HIFLD",
-        sourceDate: "2025-01-01",
-        sourcePriority: 10,
-      },
-    ];
-    const incoming: RegionRecord[] = [
-      {
-        id: "region-st-1",
-        name: "New",
-        type: "SERVICE_TERRITORY",
-        eiaId: "1",
-        state: "TS",
-        customers: null,
-        source: "State Source",
-        sourceDate: "2026-01-01",
-        sourcePriority: 100,
-      },
-    ];
-    const result = mergeRegionRecords(existing, incoming, new Map());
-    expect(result.regions[0]?.name).toBe("New");
-    expect(result.changedIds.has("region-st-1")).toBe(true);
-  });
-
-  it("does not overwrite locked records", () => {
-    const existing: RegionRecord[] = [
-      {
-        id: "region-st-1",
-        name: "Locked",
-        type: "SERVICE_TERRITORY",
-        eiaId: "1",
-        state: "TS",
-        customers: null,
-        source: "HIFLD",
-        sourceDate: "2025-01-01",
-        sourcePriority: 10,
-        locked: true,
-      },
-    ];
-    const incoming: RegionRecord[] = [
-      {
-        id: "region-st-1",
-        name: "New",
-        type: "SERVICE_TERRITORY",
-        eiaId: "1",
-        state: "TS",
-        customers: null,
-        source: "State Source",
-        sourceDate: "2026-01-01",
-        sourcePriority: 100,
-      },
-    ];
-    const result = mergeRegionRecords(existing, incoming, new Map());
-    expect(result.regions[0]?.name).toBe("Locked");
-    expect(result.skippedLocked).toHaveLength(1);
-    expect(result.skippedLocked[0]?.id).toBe("region-st-1");
-  });
-
-  it("drops in-state HIFLD records when a state source is present", () => {
-    const existing: RegionRecord[] = [
-      {
-        id: "region-st-1",
-        name: "HIFLD A",
-        type: "SERVICE_TERRITORY",
-        eiaId: "1",
-        state: "TS",
-        customers: null,
-        source: "ArcGIS HIFLD Electric Retail Service Territories",
-        sourceDate: "2025-01-01",
-        sourcePriority: 10,
-      },
-      {
-        id: "region-st-99",
-        name: "Other",
-        type: "SERVICE_TERRITORY",
-        eiaId: "99",
-        state: "OT",
-        customers: null,
-        source: "ArcGIS HIFLD Electric Retail Service Territories",
-        sourceDate: "2025-01-01",
-        sourcePriority: 10,
-      },
-    ];
-    const incoming: RegionRecord[] = [
-      {
-        id: "region-st-1",
-        name: "State A",
-        type: "SERVICE_TERRITORY",
-        eiaId: "1",
-        state: "TS",
-        customers: null,
-        source: "State Source",
-        sourceDate: "2026-01-01",
-        sourcePriority: 100,
-      },
-    ];
-    const result = mergeRegionRecords(existing, incoming, new Map([["TS", 100]]));
-    expect(result.regions.map((r) => r.id)).toEqual(["region-st-1", "region-st-99"]);
-    expect(result.removedHifldIds).toEqual([]); // incoming already replaced the matching HIFLD record
-  });
-
-  it("drops unmatched in-state HIFLD records when a state source is present", () => {
-    const existing: RegionRecord[] = [
-      {
-        id: "region-st-1",
-        name: "HIFLD A",
-        type: "SERVICE_TERRITORY",
-        eiaId: "1",
-        state: "TS",
-        customers: null,
-        source: "ArcGIS HIFLD Electric Retail Service Territories",
-        sourceDate: "2025-01-01",
-        sourcePriority: 10,
-      },
-      {
-        id: "region-st-ts-no-match",
-        name: "HIFLD B",
-        type: "SERVICE_TERRITORY",
-        eiaId: null,
-        state: "TS",
-        customers: null,
-        source: "ArcGIS HIFLD Electric Retail Service Territories",
-        sourceDate: "2025-01-01",
-        sourcePriority: 10,
-      },
-    ];
-    const incoming: RegionRecord[] = [
-      {
-        id: "region-st-1",
-        name: "State A",
-        type: "SERVICE_TERRITORY",
-        eiaId: "1",
-        state: "TS",
-        customers: null,
-        source: "State Source",
-        sourceDate: "2026-01-01",
-        sourcePriority: 100,
-      },
-    ];
-    const result = mergeRegionRecords(existing, incoming, new Map([["TS", 100]]));
-    expect(result.regions.map((r) => r.id)).toEqual(["region-st-1"]);
-    expect(result.removedHifldIds).toEqual(["region-st-ts-no-match"]);
-  });
-
-  it("keeps records when state source has lower priority", () => {
-    const existing: RegionRecord[] = [
-      {
-        id: "region-st-1",
-        name: "State A",
-        type: "SERVICE_TERRITORY",
-        eiaId: "1",
-        state: "TS",
-        customers: null,
-        source: "State Source",
-        sourceDate: "2026-01-01",
-        sourcePriority: 100,
-      },
-    ];
-    const incoming: RegionRecord[] = [
-      {
-        id: "region-st-1",
-        name: "Low Prio",
-        type: "SERVICE_TERRITORY",
-        eiaId: "1",
-        state: "TS",
-        customers: null,
-        source: "Low",
-        sourceDate: "2026-01-01",
-        sourcePriority: 10,
-      },
-    ];
-    const result = mergeRegionRecords(existing, incoming, new Map());
-    expect(result.regions[0]?.name).toBe("State A");
-    expect(result.changedIds.size).toBe(0);
-  });
-});
-
 describe("CO config", () => {
   it("uses the HIFLD source with the needsOpenSource flag", () => {
     const co = STATE_BOUNDARY_SOURCES.find((s) => s.state === "CO");
@@ -386,7 +239,7 @@ describe("CO config", () => {
 });
 
 describe("syncStateBoundaries", () => {
-  it("runs end-to-end with mocked ArcGIS responses", async () => {
+  it("runs end-to-end with mocked ArcGIS responses and no DB/manifest side effects", async () => {
     const mockFetch = vi.fn<Fetcher>();
 
     const arcResponse: FeatureCollection<Geometry, Record<string, unknown>> = {
@@ -402,18 +255,18 @@ describe("syncStateBoundaries", () => {
       return Promise.resolve(makeResponse(arcResponse));
     });
 
-    const existing: RegionRecord[] = [];
     const report = await syncStateBoundaries({
       fetchImpl: mockFetch,
-      existingRegions: existing,
-      writeFiles: false,
+      publish: false,
+      writeManifest: false,
       skipStates: ["WI", "MN", "CO"],
     });
 
-    // With all real states skipped, only the test would run; but the registry
-    // has no test states. So verify the runner shape.
+    // With all real states skipped, the registry has nothing left to run.
     expect(report.fetchedSources).toBe(0);
     expect(report.fetchedFeatures).toBe(0);
-    expect(report.writtenTerritories).toBe(0);
+    expect(report.regionsCreated).toBe(0);
+    expect(report.territoriesUpserted).toBe(0);
+    expect(report.errors).toEqual([]);
   });
 });
