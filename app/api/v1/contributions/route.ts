@@ -432,7 +432,8 @@ async function handleGet(req: Request, ctx: RouteContext) {
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") ?? "20", 10) || 20));
   const offset = (page - 1) * limit;
 
-  // Build conditions
+  // Summary counts use the same scope, but never the status filter or pagination.
+  const scopeConditions = [];
   const conditions = [];
 
   if (status) {
@@ -450,17 +451,18 @@ async function handleGet(req: Request, ctx: RouteContext) {
         field: "entity_type",
       });
     }
-    conditions.push(eq(contributions.entityType, entityType));
+    scopeConditions.push(eq(contributions.entityType, entityType));
   }
 
   if (entityId) {
-    conditions.push(eq(contributions.entityId, entityId));
+    scopeConditions.push(eq(contributions.entityId, entityId));
   }
 
   if (userId) {
-    conditions.push(eq(contributions.userId, userId));
+    scopeConditions.push(eq(contributions.userId, userId));
   }
 
+  conditions.push(...scopeConditions);
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   // Count query
@@ -480,10 +482,31 @@ async function handleGet(req: Request, ctx: RouteContext) {
   const rows = await dataQuery;
   const hasMore = offset + limit < Number(count);
 
-  return jsonResponse(paginatedResponse(rows, Number(count), hasMore ? String(page + 1) : null, limit), 200, {
-    ...corsHeaders(),
-    "X-Request-Id": ctx.requestId,
-  });
+  // Opt-in keeps existing list consumers unchanged. COUNT operates over the
+  // full matching history, including rows outside this page.
+  let summary: { total: number; pending: number; approved: number } | undefined;
+  if (url.searchParams.get("include_summary") === "true") {
+    const [counts] = await db
+      .select({
+        total: sql<number>`count(*)`.mapWith(Number),
+        pending: sql<number>`count(*) filter (where ${contributions.status} = 'pending')`.mapWith(Number),
+        approved: sql<number>`count(*) filter (where ${contributions.status} in ('approved', 'auto_approved'))`.mapWith(
+          Number
+        ),
+      })
+      .from(contributions)
+      .where(and(...scopeConditions));
+    summary = counts;
+  }
+
+  return jsonResponse(
+    {
+      ...paginatedResponse(rows, Number(count), hasMore ? String(page + 1) : null, limit),
+      ...(summary && { summary }),
+    },
+    200,
+    { ...corsHeaders(), "X-Request-Id": ctx.requestId }
+  );
 }
 
 // ---------------------------------------------------------------------------

@@ -133,6 +133,7 @@ export default function ContributionsDashboard() {
   const { user: appUser, isLoading: appUserLoading } = useCurrentUser();
   const userLoaded = clerkLoaded && !appUserLoading;
   const [contributions, setContributions] = useState<Contribution[]>([]);
+  const [summary, setSummary] = useState<{ total: number; pending: number; approved: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -146,7 +147,7 @@ export default function ContributionsDashboard() {
     setIsLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ limit: "50" });
+      const params = new URLSearchParams({ limit: "50", include_summary: "true" });
       if (statusFilter !== "all") {
         params.set("status", statusFilter);
       }
@@ -156,6 +157,7 @@ export default function ContributionsDashboard() {
       if (!res.ok) throw new Error(`Failed to load contributions (${res.status})`);
       const json = await res.json();
       setContributions(json.data ?? []);
+      setSummary(json.summary);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load contributions");
     } finally {
@@ -192,11 +194,8 @@ export default function ContributionsDashboard() {
     }
   }, [withdrawTarget, fetchContributions]);
 
-  // Stats
-  const totalCount = contributions.length;
-  const approvedCount = contributions.filter((c) => c.status === "approved" || c.status === "auto_approved").length;
-  const pendingCount = contributions.filter((c) => c.status === "pending").length;
-  const approvalRate = totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0;
+  // The list is status-filtered and paginated; cards describe the full history.
+  const approvalRate = summary ? (summary.total > 0 ? Math.round((summary.approved / summary.total) * 100) : 0) : null;
 
   if (!userLoaded) {
     return (
@@ -252,10 +251,14 @@ export default function ContributionsDashboard() {
         <div className="px-4 sm:px-6 pb-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: "Total", value: totalCount, icon: "Article" as const },
-              { label: "Pending", value: pendingCount, icon: "Clock" as const },
-              { label: "Approved", value: approvedCount, icon: "CheckCircle" as const },
-              { label: "Approval Rate", value: `${approvalRate}%`, icon: "ChartBar" as const },
+              { label: "Total", value: summary?.total ?? "—", icon: "Article" as const },
+              { label: "Pending", value: summary?.pending ?? "—", icon: "Clock" as const },
+              { label: "Approved", value: summary?.approved ?? "—", icon: "CheckCircle" as const },
+              {
+                label: "Approval Rate",
+                value: approvalRate === null ? "—" : `${approvalRate}%`,
+                icon: "ChartBar" as const,
+              },
             ].map((stat) => (
               <Card key={stat.label} variant="outlined">
                 <Card.Content className="p-4">

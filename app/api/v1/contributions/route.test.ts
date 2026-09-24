@@ -137,3 +137,70 @@ describe("POST /api/v1/contributions — entity resolution", () => {
     expect(json.error?.message).toContain("25 characters");
   });
 });
+
+// Full-history summary must retain the caller's scope but ignore status/page.
+describe("GET /api/v1/contributions — summary", () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it.each([
+    "pending",
+    "approved",
+    "returned",
+    "withdrawn",
+    null,
+  ])("keeps summary unfiltered when status=%s and page=2", async (status) => {
+    const { PgDialect } = await import("drizzle-orm/pg-core");
+    const dialect = new PgDialect();
+    const countWhere = vi.fn().mockResolvedValue([{ count: 3 }]);
+    const dataWhere = vi.fn().mockResolvedValue([{ id: "matching-row", status }]);
+    const summaryWhere = vi.fn().mockResolvedValue([{ total: 120, pending: 30, approved: 75 }]);
+    const limit = vi.fn(() => ({ offset: () => ({ where: dataWhere }) }));
+    mockSelect
+      .mockReturnValueOnce({ from: () => ({ where: countWhere }) })
+      .mockReturnValueOnce({ from: () => ({ orderBy: () => ({ limit }) }) })
+      .mockReturnValueOnce({ from: () => ({ where: summaryWhere }) });
+
+    const { GET } = await import("./route");
+    const { NextRequest } = await import("next/server");
+    const params = new URLSearchParams({
+      user_id: "user-1",
+      entity_type: "utility",
+      entity_id: "utility-1",
+      include_summary: "true",
+      limit: "1",
+      page: "2",
+    });
+    if (status) params.set("status", status);
+    const response = await GET(new NextRequest(`http://localhost/api/v1/contributions?${params}`));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.summary).toEqual({ total: 120, pending: 30, approved: 75 });
+    expect(body.data).toHaveLength(1);
+    expect(body.pagination.total).toBe(3);
+    expect(limit).toHaveBeenCalledWith(1);
+    const scope = dialect.sqlToQuery(summaryWhere.mock.calls[0][0]);
+    expect(scope.params).toEqual(["utility", "utility-1", "user-1"]);
+    expect(scope.sql).not.toContain('"status"');
+    const listScope = dialect.sqlToQuery(countWhere.mock.calls[0][0]);
+    expect(listScope.params).toEqual([...(status ? [status] : []), "utility", "utility-1", "user-1"]);
+    expect(dialect.sqlToQuery(dataWhere.mock.calls[0][0])).toEqual(listScope);
+    const selection = mockSelect.mock.calls[2][0];
+    expect(dialect.sqlToQuery(selection.total).sql).toBe("count(*)");
+    expect(dialect.sqlToQuery(selection.pending).sql).toContain("= 'pending'");
+    expect(dialect.sqlToQuery(selection.approved).sql).toContain("in ('approved', 'auto_approved')");
+    // PostgreSQL count values may arrive as strings.
+    expect(selection.total.decoder.mapFromDriverValue("120")).toBe(120);
+  });
+
+  it("does not add a summary or extra query unless requested", async () => {
+    mockSelect.mockReturnValueOnce({ from: () => Promise.resolve([{ count: 0 }]) }).mockReturnValueOnce({
+      from: () => ({ orderBy: () => ({ limit: () => ({ offset: () => Promise.resolve([]) }) }) }),
+    });
+    const { GET } = await import("./route");
+    const { NextRequest } = await import("next/server");
+    const response = await GET(new NextRequest("http://localhost/api/v1/contributions"));
+    expect(response.status).toBe(200);
+    expect(await response.json()).not.toHaveProperty("summary");
+    expect(mockSelect).toHaveBeenCalledTimes(2);
+  });
+});

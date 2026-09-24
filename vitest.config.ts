@@ -7,9 +7,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "."),
     },
   },
-  esbuild: {
-    include: [/\.tsx?$/],
-    jsx: "automatic",
+  oxc: {
+    jsx: { runtime: "automatic" },
   },
   test: {
     pool: "threads",
