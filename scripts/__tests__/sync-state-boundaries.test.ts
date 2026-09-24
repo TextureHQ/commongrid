@@ -39,6 +39,7 @@ function makeResponse(body: unknown, status = 200, contentType = "application/js
 function makeArcGISConfig(overrides: Partial<SourceConfig> = {}): SourceConfig {
   return {
     sourceId: "test-state",
+    dataSourceId: "test-source",
     state: "TS",
     url: "https://example.com/arcgis/rest/services/Test/FeatureServer/0/query",
     kind: "arcgis",
@@ -133,7 +134,7 @@ describe("buildRegionSyncRecords", () => {
     const [sync] = buildRegionSyncRecords([entry]);
     expect(sync.entityId).toBe("region-st-12345");
     expect(sync.slug).toBe("st-acme-electric-12345");
-    expect(sync.sourceId).toBe(config.sourceLabel);
+    expect(sync.sourceId).toBe(config.dataSourceId);
     expect(sync.asOf).toEqual(new Date(config.sourceDate));
 
     expect(sync.fields).toHaveProperty("name", "ACME Electric");
@@ -160,6 +161,7 @@ describe("buildRegionSyncRecords", () => {
     const [sync] = buildRegionSyncRecords([entry]);
     expect(sync.entityId).toBe("region-st-ts-acme-electric-42");
     expect(sync.fields).toHaveProperty("eiaId", null);
+    expect(sync.sourceId).toBe(config.dataSourceId);
   });
 });
 

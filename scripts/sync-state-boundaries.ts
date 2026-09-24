@@ -58,6 +58,8 @@ export interface FieldMapping {
 export interface SourceConfig {
   /** Stable identifier for this source row (used in logs/skip logic). */
   sourceId: string;
+  /** Registered data_sources.id used for version provenance. */
+  dataSourceId: string;
   /** Two-letter state code. */
   state: string;
   /** Base query URL (FeatureServer/MapServer query endpoint, or Socrata URL). */
@@ -92,6 +94,7 @@ export interface RegionRecord {
   source: string;
   sourceUrl: string | null;
   sourceDate: string;
+  dataSourceId: string;
   sourcePriority?: number;
   needsOpenSource?: boolean;
   utilityType?: string | null;
@@ -147,6 +150,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
   // Direct requests 403; configured to flow through the Firecrawl fallback.
   {
     sourceId: "wi-psc-municipal",
+    dataSourceId: "wi-psc",
     state: "WI",
     url: "https://maps.psc.wi.gov/server/rest/services/Electric/PSC_ElectricServiceTerritories/MapServer/0/query",
     kind: "arcgis",
@@ -158,6 +162,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
   },
   {
     sourceId: "wi-psc-investor-owned",
+    dataSourceId: "wi-psc",
     state: "WI",
     url: "https://maps.psc.wi.gov/server/rest/services/Electric/PSC_ElectricServiceTerritories/MapServer/1/query",
     kind: "arcgis",
@@ -169,6 +174,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
   },
   {
     sourceId: "wi-psc-cooperative",
+    dataSourceId: "wi-psc",
     state: "WI",
     url: "https://maps.psc.wi.gov/server/rest/services/Electric/PSC_ElectricServiceTerritories/MapServer/2/query",
     kind: "arcgis",
@@ -181,6 +187,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
   // Minnesota Geospatial Commons / MN PUC electric service territories.
   {
     sourceId: "mn-mngeo-eusa",
+    dataSourceId: "mn-gisdata",
     state: "MN",
     url: "https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_mngeo/util_eusa/FeatureServer/0/query",
     kind: "arcgis",
@@ -194,6 +201,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
   // data.colorado.gov Utilities_Boundaries layer.
   {
     sourceId: "co-hifld",
+    dataSourceId: "hifld-rsts",
     state: "CO",
     url: SERVICE_TERRITORIES_URL,
     kind: "arcgis",
@@ -296,6 +304,7 @@ export function buildRegionRecord(
     source: config.sourceLabel,
     sourceUrl: config.url,
     sourceDate: config.sourceDate,
+    dataSourceId: config.dataSourceId,
     sourcePriority: config.sourcePriority ?? (config.needsOpenSource ? 10 : 100),
     needsOpenSource: config.needsOpenSource ?? false,
     utilityType,
@@ -328,7 +337,7 @@ export function buildRegionSyncRecords(entries: RegionEntry[]): SyncRecord[] {
   return entries.map(({ record }) => {
     const asOf = record.sourceDate ? new Date(record.sourceDate) : null;
     return {
-      sourceId: record.source,
+      sourceId: record.dataSourceId,
       asOf: asOf && !Number.isNaN(asOf.getTime()) ? asOf : null,
       entityId: record.id,
       slug: record.slug,
@@ -509,7 +518,10 @@ interface PublishResult {
   hifldSuperseded: number;
 }
 
-async function publishToDatabase(entries: RegionEntry[]): Promise<PublishResult> {
+async function publishToDatabase(
+  entries: RegionEntry[],
+  successfulStateSourceStates: Set<string>
+): Promise<PublishResult> {
   const empty: PublishResult = {
     created: 0,
     updated: 0,
@@ -570,20 +582,20 @@ async function publishToDatabase(entries: RegionEntry[]): Promise<PublishResult>
     }
   }
 
-  // After writing state-source regions for a state, soft-delete any in-state
-  // HIFLD rows that were not part of this sync. Locked rows are never retired.
+  // After writing state-source regions for a state where every configured
+  // state source succeeded, soft-delete any in-state HIFLD rows that were not
+  // part of this sync. Locked rows are never retired.
   let hifldSuperseded = 0;
-  const stateSourceStates = new Set(STATE_BOUNDARY_SOURCES.filter((c) => c.isStateSource).map((c) => c.state));
   const idsByState = new Map<string, string[]>();
   for (const { record } of entries) {
     if (!record.state) continue;
-    if (!stateSourceStates.has(record.state)) continue;
+    if (!successfulStateSourceStates.has(record.state)) continue;
     const list = idsByState.get(record.state) ?? [];
     list.push(record.id);
     idsByState.set(record.state, list);
   }
 
-  for (const state of stateSourceStates) {
+  for (const state of successfulStateSourceStates) {
     const ids = idsByState.get(state) ?? [];
     if (ids.length === 0) continue;
 
@@ -713,6 +725,13 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
   const entries: RegionEntry[] = [];
   const sourceResults: SourceResult[] = [];
 
+  const stateSourceConfigsByState = new Map<string, number>();
+  const stateSourceSuccessByState = new Map<string, number>();
+  for (const config of STATE_BOUNDARY_SOURCES) {
+    if (!config.isStateSource) continue;
+    stateSourceConfigsByState.set(config.state, (stateSourceConfigsByState.get(config.state) ?? 0) + 1);
+  }
+
   for (const config of STATE_BOUNDARY_SOURCES) {
     if (skipStates.has(config.state)) continue;
 
@@ -727,6 +746,9 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
         features: features.length,
         entries: sourceEntries.length,
       });
+      if (config.isStateSource) {
+        stateSourceSuccessByState.set(config.state, (stateSourceSuccessByState.get(config.state) ?? 0) + 1);
+      }
       console.log(`    ${features.length} features → ${sourceEntries.length} entries`);
     } catch (err) {
       const message = `Failed to fetch ${config.sourceLabel}: ${err instanceof Error ? err.message : String(err)}`;
@@ -739,11 +761,23 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
         entries: 0,
         error: message,
       });
+      if (config.isStateSource) {
+        // Failed state sources do not count toward success; the supersede
+        // step will skip this state entirely.
+        stateSourceSuccessByState.set(config.state, stateSourceSuccessByState.get(config.state) ?? 0);
+      }
     }
   }
 
   report.fetchedSources = sourceResults.filter((s) => !s.error).length;
   report.fetchedFeatures = sourceResults.reduce((sum, s) => sum + s.features, 0);
+
+  const successfulStateSourceStates = new Set<string>();
+  for (const [state, total] of stateSourceConfigsByState.entries()) {
+    if (stateSourceSuccessByState.get(state) === total) {
+      successfulStateSourceStates.add(state);
+    }
+  }
 
   let publishResult: PublishResult = {
     created: 0,
@@ -756,7 +790,7 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
   };
 
   if (options.publish !== false) {
-    publishResult = await publishToDatabase(entries);
+    publishResult = await publishToDatabase(entries, successfulStateSourceStates);
   }
 
   report.regionsCreated = publishResult.created;
