@@ -20,6 +20,7 @@ import {
 } from "@texturehq/edges";
 import { useEffect, useState } from "react";
 import { ContentPage } from "@/components/ContentPage";
+import { conversionFetch } from "@/lib/analytics";
 import { DEVELOPER_TIERS, DEVELOPER_TIERS_BY_ID, resolveCurrentTier } from "@/lib/api/developer-tiers";
 
 type ApiKey = {
@@ -140,7 +141,7 @@ export default function DevelopersPage() {
     setCreateError(null);
 
     try {
-      const res = await fetch("/api/v1/developer/keys", {
+      const res = await conversionFetch("/api/v1/developer/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

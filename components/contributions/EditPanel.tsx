@@ -3,6 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import { Button, Icon, Select, TextArea, TextField } from "@texturehq/edges";
 import { useCallback, useMemo, useState } from "react";
+import { conversionFetch } from "@/lib/analytics";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -136,7 +137,7 @@ export function EditPanel({
         ...(sourceDate ? { source_date: sourceDate } : {}),
       };
 
-      const res = await fetch("/api/v1/contributions", {
+      const res = await conversionFetch("/api/v1/contributions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
