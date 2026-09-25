@@ -3,7 +3,8 @@ import programsData from "@/data/programs.json";
 import regionsData from "@/data/regions.json";
 import { decorateProgramsMapCategory } from "@/lib/programs/program-category";
 import type { Changelog } from "@/types/changelog";
-import type { Program, Region } from "@/types/entities";
+import type { Region } from "@/types/entities";
+import type { Program } from "@/types/programs";
 
 // Utilities data is in a separate module (lib/data-utilities.ts) to avoid
 // bundling the 3.1 MB JSON into client bundles. Re-export for backward
