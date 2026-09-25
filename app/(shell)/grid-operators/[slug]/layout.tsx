@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getUtilityBySlug } from "@/lib/data";
+import { getUtilityBySlug } from "@/lib/data/utilities";
 import { buildMetadata, PAGE_TITLES } from "@/lib/metadata";
 
 interface Props {

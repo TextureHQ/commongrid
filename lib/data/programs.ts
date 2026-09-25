@@ -146,7 +146,7 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
   const { getDb } = await import("@/lib/db/client");
   const { programs } = await import("@/lib/db/schema");
   const { eq, ilike, and, isNull } = await import("drizzle-orm");
-  const { getAllUtilities } = await import("@/lib/data-utilities");
+  const { getUtilityNameMap } = await import("@/lib/data/utilities");
   type DrizzleSQL = ReturnType<typeof eq>;
 
   const db = getDb();
@@ -194,12 +194,7 @@ async function loadFromDb(filters?: ProgramFilters): Promise<Program[]> {
     .from(programs)
     .where(and(...conditions));
 
-  const allUtils = getAllUtilities();
-  const utilityMap = new Map<string, string>();
-  for (const u of allUtils) {
-    utilityMap.set(u.slug, u.name);
-    utilityMap.set(u.id, u.name);
-  }
+  const utilityMap = await getUtilityNameMap();
 
   let result = rows.map((r) => dbRowToProgram(r, utilityMap));
 
@@ -276,13 +271,8 @@ async function loadBySlugFromDb(slug: string): Promise<Program | null> {
     .limit(1);
 
   if (rows.length === 0) return null;
-  const { getAllUtilities } = await import("@/lib/data-utilities");
-  const allUtils = getAllUtilities();
-  const utilityMap = new Map<string, string>();
-  for (const u of allUtils) {
-    utilityMap.set(u.slug, u.name);
-    utilityMap.set(u.id, u.name);
-  }
+  const { getUtilityNameMap } = await import("@/lib/data/utilities");
+  const utilityMap = await getUtilityNameMap();
 
   return dbRowToProgram(rows[0] as Record<string, unknown>, utilityMap);
 }

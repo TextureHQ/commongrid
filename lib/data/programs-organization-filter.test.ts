@@ -44,6 +44,12 @@ vi.mock("drizzle-orm", () => ({
   isNull: (a: unknown) => ({ op: "isNull", a }),
 }));
 
+// loadPrograms enriches org display names via a separate utilities DB read.
+// This test is about the organization filter, not name enrichment, so stub it.
+vi.mock("@/lib/data/utilities", () => ({
+  getUtilityNameMap: async () => new Map<string, string>(),
+}));
+
 import { loadPrograms } from "@/lib/data/programs";
 
 function row(slug: string, name: string, organizations: unknown): DbRow {
