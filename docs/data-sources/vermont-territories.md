@@ -33,3 +33,13 @@ Unit tests cover publisher behavior and SQL construction. The `state-boundaries-
 ## Broader source inventory
 
 The state-by-state CSV expansion remains separate. Existing sources are Wisconsin (three PSC layers), Minnesota (PUC Socrata), Colorado (HIFLD fallback), and now Vermont. Michigan is not in the current registry.
+
+## Geometry-history constraint repair
+
+The first enabled import failed with PostgreSQL `42P10`: the live database lacked a usable unique key on `entity_geometry_versions (entity_type, entity_id, version_number)`, despite migration 0001 declaring it. The publication transaction rolled back. The original disposable fixture supplied the constraint and therefore hid this historical-schema mismatch.
+
+Migration `0037_reconcile_geometry_history_uniqueness` restores missing uniqueness without modifying history. It accepts equivalent immediate unique indexes (including reordered keys), rejects matching deferrable keys, and refuses duplicate version keys rather than guessing which geometry to retain. It locks out concurrent history writers while checking and adding the constraint, with a five-second lock-acquisition timeout. A timeout or conflicting history fails deployment; diagnose read-only and use a separately reviewed repair rather than deleting history or repeatedly dispatching ingestion.
+
+The PostGIS fixture now starts without the spatial-history key. Regression coverage reproduces the publisher's `42P10` failure on a pre-history polygon, confirms transaction rollback, applies the actual migration, then verifies preserved originals, successful replacement, and repeat-run idempotence. Additional cases cover equivalent/partial/nonunique indexes, repeat migration, duplicate refusal, and deferrable keys. The existing path-gated job runs these tests; unrelated PRs still do not start PostGIS.
+
+Rollout: human review and merge, verify successful production deployment of migration 0037, then dispatch the existing sync and perform the 17-utility readback above. This migration is additive and backward-compatible; reverting application code need not remove the restored constraint. It contains no boundary-data mutation, and no manual production DDL is part of rollout.

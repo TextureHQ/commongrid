@@ -1,5 +1,5 @@
 -- Disposable integration fixture: only columns exercised by the publisher,
--- mirroring production constraints, generated spatial columns and role grants.
+-- modeling the missing spatial-history constraint seen in older databases.
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE ROLE commongrid_sync NOLOGIN;
 CREATE TABLE data_sources (id text PRIMARY KEY, display_name text NOT NULL, authority_tier text NOT NULL, cadence text NOT NULL, homepage_url text, license text, is_active boolean NOT NULL DEFAULT true);
@@ -40,10 +40,10 @@ CREATE TABLE entity_geometry_versions (
  geography_snapshot geography, geometry_snapshot geometry, geometry_type text, area_sq_km double precision,
  centroid_lat double precision, centroid_lng double precision, entity_version_id bigint REFERENCES entity_versions(id),
  contribution_id text, source_id text REFERENCES data_sources(id), as_of timestamptz,
- changed_at timestamptz NOT NULL DEFAULT now(), UNIQUE(entity_type,entity_id,version_number)
+ changed_at timestamptz NOT NULL DEFAULT now()
 );
 GRANT USAGE ON SCHEMA public TO commongrid_sync;
 GRANT SELECT ON data_sources, utilities TO commongrid_sync;
 GRANT SELECT, INSERT, UPDATE ON regions, territories, entity_versions, change_batches TO commongrid_sync;
 GRANT USAGE, SELECT ON SEQUENCE entity_versions_id_seq TO commongrid_sync;
--- Spatial grants intentionally omitted: migration 0035 must supply them.
+-- Spatial grants intentionally omitted: migration 0036 must supply them.

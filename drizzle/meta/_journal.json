@@ -232,6 +232,13 @@
       "when": 1790358156353,
       "tag": "0036_register_vermont_boundary_source",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790362505232,
+      "tag": "0037_reconcile_geometry_history_uniqueness",
+      "breakpoints": true
     }
   ]
 }
