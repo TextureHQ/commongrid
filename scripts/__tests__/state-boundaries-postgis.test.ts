@@ -122,11 +122,32 @@ suite("state boundary publication (real PostGIS)", () => {
         .count
     ).toBe("17");
     expect((await pool.query("SELECT count(*) FROM regions WHERE state = 'VT'")).rows[0].count).toBe("17");
-    const batches = (await pool.query("SELECT count(*) FROM change_batches")).rows[0].count;
+    const publicationSnapshot = async () =>
+      Promise.all(
+        ["regions", "territories", "entity_versions", "entity_geometry_versions"].map(
+          async (table) => (await pool.query(`SELECT * FROM ${table} ORDER BY id`)).rows
+        )
+      );
+    const before = await publicationSnapshot();
+    const batches = (await pool.query("SELECT id FROM change_batches")).rows.map((row) => row.id);
     const second = await syncStateBoundaries(options);
     expect(second.territoriesUpserted).toBe(0);
     expect(second.fieldsWritten).toBe(0);
-    expect((await pool.query("SELECT count(*) FROM change_batches")).rows[0].count).toBe(batches);
+    expect(second.errors).toEqual([]);
+    expect(second.regionsCreated).toBe(0);
+    expect(second.regionsUpdated).toBe(0);
+    expect(second.regionsUnchanged).toBe(17);
+    expect(await publicationSnapshot()).toEqual(before);
+    // applySync deliberately records every run, including no-ops. Empty audit
+    // batches are expected; new entity or geometry versions are not.
+    const newBatches = (await pool.query("SELECT id, version_count, completed_at FROM change_batches")).rows.filter(
+      (row) => !batches.includes(row.id)
+    );
+    expect(newBatches).toHaveLength(2);
+    for (const batch of newBatches) {
+      expect(batch.version_count).toBe(0);
+      expect(batch.completed_at).not.toBeNull();
+    }
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
