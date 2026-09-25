@@ -4,6 +4,7 @@ import { EntityVersionHistory } from "@/components/contributions/EntityVersionHi
 import { useRate } from "@/hooks/useRate";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 
 const linkButtonStyle = {
   background: "none",
@@ -69,7 +70,11 @@ function formatFixedCharge(rate: NonNullable<ReturnType<typeof useRate>["rate"]>
 
 export function RateDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail } = useExplorer();
-  const { rate } = useRate(slug);
+  const { rate, isLoading } = useRate(slug);
+
+  if (isLoading) {
+    return <DetailPanelLoading key={`rate:${slug}`} entity="rate" />;
+  }
 
   if (!rate) {
     return (

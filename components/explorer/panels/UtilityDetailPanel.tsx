@@ -29,6 +29,7 @@ import { safeHostname } from "@/lib/geo";
 import { buildNewProgramHref } from "@/lib/programs/new-program-link";
 import { getProgramMapCategoryLabel, summarizePrograms } from "@/lib/programs/program-category";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 
 const ArrowIcon = () => (
   <svg
@@ -51,8 +52,8 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
   const { user } = useCurrentUser();
 
-  const { utility } = useUtility(slug);
-  const { utilities, isLoading: utilitiesLoading } = useUtilityList({ limit: 500 });
+  const { utility, isLoading } = useUtility(slug);
+  const { utilities } = useUtilityList({ limit: 500 });
 
   const { iso } = useIso(utility?.isoId ?? null);
   const { rto } = useRto(utility?.rtoId ?? null);
@@ -121,8 +122,8 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   });
   const programTotals = useMemo(() => summarizePrograms(utilityPrograms), [utilityPrograms]);
 
-  if (utilitiesLoading) {
-    return <div className="cg-explore-loading">Loading…</div>;
+  if (isLoading) {
+    return <DetailPanelLoading key={`utility:${slug}`} entity="utility" />;
   }
 
   if (!utility) {

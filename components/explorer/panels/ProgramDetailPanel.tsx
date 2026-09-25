@@ -28,6 +28,7 @@ import {
   ProgramStatus,
 } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 import { PanelEditLayer } from "./PanelEditLayer";
 
 const ArrowIcon = () => (
@@ -77,7 +78,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const { program } = useProgram(slug);
+  const { program, isLoading } = useProgram(slug);
 
   // Resolve the program's organization slugs directly instead of scanning the
   // first N utilities alphabetically. The old `useUtilityList({ limit: 200 })`
@@ -145,6 +146,10 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
       setHighlight(null);
     };
   }, [territoryFileKeys, setHighlight]);
+
+  if (isLoading) {
+    return <DetailPanelLoading key={`program:${slug}`} entity="program" />;
+  }
 
   if (!program) {
     return (

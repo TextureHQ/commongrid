@@ -7,6 +7,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePowerPlant } from "@/hooks/usePowerPlant";
 import { getPowerPlantHighlightGeoJSON } from "@/lib/explorer/power-plant-highlight";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 import { PanelEditLayer } from "./PanelEditLayer";
 
 const linkButtonStyle = {
@@ -24,7 +25,7 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const { navigateToDetail, setHighlight } = useExplorer();
-  const { powerPlant } = usePowerPlant(slug);
+  const { powerPlant, isLoading } = usePowerPlant(slug);
 
   useEffect(() => {
     if (!powerPlant) {
@@ -36,6 +37,10 @@ export function PowerPlantDetailPanel({ slug }: { slug: string }) {
 
     return () => setHighlight(null);
   }, [powerPlant, setHighlight]);
+
+  if (isLoading) {
+    return <DetailPanelLoading key={`power-plant:${slug}`} entity="power-plant" />;
+  }
 
   if (!powerPlant) {
     return (

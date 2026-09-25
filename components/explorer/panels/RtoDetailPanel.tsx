@@ -10,6 +10,7 @@ import { entityKindColor } from "@/lib/categorical-colors";
 import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 
 const ArrowIcon = () => (
   <svg
@@ -31,7 +32,7 @@ const ArrowIcon = () => (
 export function RtoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
 
-  const { rto } = useRto(slug);
+  const { rto, isLoading } = useRto(slug);
 
   useEffect(() => {
     if (!rto?.shortName) {
@@ -47,6 +48,10 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
   }, [rto?.shortName, setHighlight]);
 
   const { utilities } = useUtilityList({ rto: rto?.slug, limit: 200 });
+
+  if (isLoading) {
+    return <DetailPanelLoading key={`rto:${slug}`} entity="rto" />;
+  }
 
   if (!rto) {
     return (

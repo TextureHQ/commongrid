@@ -11,6 +11,7 @@ import { entityKindColor } from "@/lib/categorical-colors";
 import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 
 const ArrowIcon = () => (
   <svg
@@ -32,7 +33,7 @@ const ArrowIcon = () => (
 export function IsoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
 
-  const { iso } = useIso(slug);
+  const { iso, isLoading } = useIso(slug);
 
   useEffect(() => {
     if (!iso?.shortName) {
@@ -49,6 +50,10 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
 
   const { utilities } = useUtilityList({ iso: iso?.slug, limit: 200 });
   const { balancingAuthorities } = useBalancingAuthorityList({ isoId: iso?.id });
+
+  if (isLoading) {
+    return <DetailPanelLoading key={`iso:${slug}`} entity="iso" />;
+  }
 
   if (!iso) {
     return (
