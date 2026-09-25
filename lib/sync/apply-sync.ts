@@ -38,6 +38,7 @@
 
 import { isDeepStrictEqual } from "node:util";
 import { eq, sql } from "drizzle-orm";
+import type { MultiPolygon, Polygon } from "geojson";
 import { getPooledDb } from "@/lib/db/client-pooled";
 import { changeBatches, entityVersions } from "@/lib/db/schema";
 import { buildVersionRecord, computeDelta, generateChangeSummary } from "@/lib/db/versioning";
@@ -49,6 +50,7 @@ import {
   toVersionableSnapshot,
 } from "@/lib/mod/apply-contribution";
 import { getHumanLockedFields } from "./field-provenance";
+import { prepareTerritoryGeography, snapshotTerritoryGeography } from "./territory-geography";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -73,6 +75,8 @@ export interface SyncRecord {
    * bookkeeping columns (id/version/createdAt/updatedAt) are managed here.
    */
   fields: Record<string, unknown>;
+  /** Territory-only polygon; participates in history and human-edit protection. */
+  geography?: Polygon | MultiPolygon;
 }
 
 export interface ApplySyncOptions {
@@ -91,6 +95,8 @@ export interface ApplySyncOptions {
    */
   deleteAbsent?: boolean;
   now?: Date;
+  /** Compose several entity batches in one atomic publication. */
+  tx?: DbTransaction;
 }
 
 /** A field a sync wanted to change but skipped because a human owns it. */
@@ -136,6 +142,8 @@ export async function applySync(records: SyncRecord[], opts: ApplySyncOptions): 
 
   // Validate before opening a transaction, including calls from untyped scripts.
   for (const record of records) {
+    if (record.geography && opts.entityType !== "territory") throw new Error("Only territories support geography sync");
+    if ("geography" in record.fields) throw new Error("Use the typed geography property, not fields.geography");
     if (typeof record.sourceId !== "string" || !record.sourceId.trim()) {
       throw new Error(`Missing sourceId for ${record.entityId}`);
     }
@@ -145,7 +153,6 @@ export async function applySync(records: SyncRecord[], opts: ApplySyncOptions): 
   }
 
   const now = opts.now ?? new Date();
-  const db = getPooledDb();
 
   const report: ApplySyncReport = {
     batchId: null,
@@ -157,7 +164,7 @@ export async function applySync(records: SyncRecord[], opts: ApplySyncOptions): 
     fieldsWritten: 0,
   };
 
-  await db.transaction(async (tx) => {
+  const run = async (tx: DbTransaction) => {
     // Open the batch first so every version can reference it. We keep the row
     // even if nothing changes — an empty batch is a truthful record that the
     // sync ran and found no updates, and the changelog feed already excludes
@@ -202,7 +209,9 @@ export async function applySync(records: SyncRecord[], opts: ApplySyncOptions): 
 
     // Maintained by writers so the feed never counts versions to size a batch.
     await tx.update(changeBatches).set({ versionCount, completedAt: new Date() }).where(eq(changeBatches.id, batch.id));
-  });
+  };
+  if (opts.tx) await run(opts.tx);
+  else await getPooledDb().transaction(run);
 
   return report;
 }
@@ -241,6 +250,8 @@ async function applyOneRecord(
 
   const [existing] = await tx.select().from(table).where(eq(table.id, record.entityId)).limit(1);
 
+  const geometry = record.geography ? await prepareTerritoryGeography(tx, record.entityId, record.geography) : null;
+
   // --- create ---------------------------------------------------------------
   if (!existing) {
     const insertValues: Record<string, unknown> = {
@@ -254,9 +265,11 @@ async function applyOneRecord(
       if (columnExists(table, field)) insertValues[field] = value;
     }
 
+    if (geometry) insertValues.geography = geometry.value;
     await tx.insert(table).values(insertValues);
 
     const versioned = toVersionableSnapshot(insertValues, table);
+    if (geometry) versioned.geography = geometry.nextHash;
     const rec = buildVersionRecord(
       entityType,
       record.entityId,
@@ -276,15 +289,33 @@ async function applyOneRecord(
       batchId,
     });
 
+    if (geometry) await snapshotTerritoryGeography(tx, record.entityId, 1, record.sourceId, record.asOf);
+
     return { kind: "created", fieldsWritten: Object.keys(versioned).length, deferrals: [] };
   }
 
   // --- update ---------------------------------------------------------------
   const before = toVersionableSnapshot(existing as Record<string, unknown>, table);
+  if (geometry) before.geography = geometry.previousHash;
+
+  if (geometry && existing.deletedAt) throw new Error(`Retired territory requires review: ${record.entityId}`);
 
   // Policy (B): never overwrite a field a human most-recently authored.
   const locked = await getHumanLockedFields(tx, entityType, record.entityId);
 
+  // Spatial versions authored by humans may predate attribute geometry markers.
+  if (geometry) {
+    const humanGeometry = await tx.execute(sql`
+      SELECT g.contribution_id IS NOT NULL OR
+        v.source_type IN ('community', 'admin', 'community_override') AS human_owned
+      FROM entity_geometry_versions g
+      LEFT JOIN entity_versions v ON v.id = g.entity_version_id
+      WHERE g.entity_type = 'territory' AND g.entity_id = ${record.entityId}
+      ORDER BY g.version_number DESC
+      LIMIT 1
+    `);
+    if (humanGeometry.rows[0]?.human_owned) locked.add("geography");
+  }
   const deferrals: FieldDeferral[] = [];
   const applied: Record<string, unknown> = {};
 
@@ -302,6 +333,23 @@ async function applyOneRecord(
     applied[field] = desired;
   }
 
+  const geometryChanged = geometry && geometry.previousHash !== geometry.nextHash;
+  const writeGeometry = geometryChanged && !locked.has("geography") && !existing.lockedStatus;
+  if (geometryChanged && !writeGeometry) {
+    deferrals.push({
+      entityId: record.entityId,
+      field: "geography",
+      keptValue: geometry.previousHash,
+      skippedValue: geometry.nextHash,
+    });
+    // Keep polygon source metadata consistent with the retained human boundary.
+    return { kind: "unchanged", deferrals };
+  }
+  if (writeGeometry) {
+    before.geography = geometry.previousHash;
+    applied.geography = geometry.nextHash;
+  }
+
   // Nothing to write (everything matched or was deferred): no version row.
   if (Object.keys(applied).length === 0) {
     return { kind: "unchanged", deferrals };
@@ -311,7 +359,10 @@ async function applyOneRecord(
   const baselineVersion = await ensureBaseline(tx, entityType, record.entityId, before, table, currentVersion);
   const newVersion = Math.max(currentVersion, baselineVersion) + 1;
 
+  // Capture the old polygon before overwriting it, even for pre-history rows.
+  if (writeGeometry) await snapshotTerritoryGeography(tx, record.entityId, baselineVersion, null, null);
   const entityUpdates: Record<string, unknown> = { ...applied, updatedAt: now };
+  if (writeGeometry) entityUpdates.geography = geometry.value;
   if (columnExists(table, "version")) entityUpdates.version = newVersion;
 
   await tx.update(table).set(entityUpdates).where(eq(table.id, record.entityId));
@@ -337,6 +388,7 @@ async function applyOneRecord(
     batchId,
   });
 
+  if (writeGeometry) await snapshotTerritoryGeography(tx, record.entityId, newVersion, record.sourceId, record.asOf);
   return { kind: "updated", fieldsWritten: Object.keys(applied).length, deferrals };
 }
 
@@ -369,6 +421,8 @@ async function ensureBaseline(
 
   const baselineNumber = Math.max(currentVersion, 1);
   const snapshot = toVersionableSnapshot(currentState, table);
+  if (entityType === "territory" && typeof currentState.geography === "string")
+    snapshot.geography = currentState.geography;
   await tx
     .insert(entityVersions)
     .values({

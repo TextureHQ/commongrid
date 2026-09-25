@@ -1,11 +1,15 @@
+import { sql } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { getPooledDb } from "@/lib/db/client-pooled";
 import { changeBatches, entityVersions } from "@/lib/db/schema";
 import type { SyncRecord } from "../apply-sync";
 import { applySync } from "../apply-sync";
 import * as fieldProvenance from "../field-provenance";
+import * as geography from "../territory-geography";
 
 vi.mock("@/lib/db/client-pooled", () => ({ getPooledDb: vi.fn() }));
+
+vi.mock("../territory-geography", () => ({ prepareTerritoryGeography: vi.fn(), snapshotTerritoryGeography: vi.fn() }));
 
 vi.mock("../field-provenance", async () => {
   const actual = await vi.importActual<typeof import("../field-provenance")>("../field-provenance");
@@ -470,5 +474,87 @@ describe("rate structure JSONB stability", () => {
     expect(report.unchanged).toBe(changed ? 0 : 1);
     expect(recorded.versionInserts).toHaveLength(changed ? 1 : 0);
     expect(recorded.entityUpdates).toHaveLength(changed ? 1 : 0);
+  });
+});
+
+describe("territory geometry history", () => {
+  const polygon = {
+    type: "Polygon" as const,
+    coordinates: [
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 0],
+      ],
+    ],
+  };
+  const opts = { ...baseOpts, entityType: "territory" as const };
+  const input = record({ entityId: "territory-1", sourceId: "vt-psd", asOf: null, geography: polygon });
+
+  it.each([false, true])(
+    "versions polygon-only changes and preserves the previous snapshot (history=%s)",
+    async (hasVersionHistory) => {
+      vi.mocked(geography.snapshotTerritoryGeography).mockClear();
+      vi.mocked(geography.prepareTerritoryGeography).mockResolvedValue({
+        value: sql`incoming`,
+        previousHash: "old",
+        nextHash: "new",
+      });
+      vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set());
+      const { tx, recorded } = makeTx({ entity: { id: input.entityId, version: 1 }, hasVersionHistory });
+      const result = await applySync([input], { ...opts, tx });
+      expect(result.updated).toBe(1);
+      expect(recorded.entityUpdates[0].version).toBe(2);
+      expect(recorded.versionInserts[recorded.versionInserts.length - 1]).toMatchObject({
+        sourceId: "vt-psd",
+        asOf: null,
+        delta: { geography: { old: "old", new: "new" } },
+      });
+      expect(geography.snapshotTerritoryGeography).toHaveBeenNthCalledWith(1, tx, input.entityId, 1, null, null);
+      expect(geography.snapshotTerritoryGeography).toHaveBeenNthCalledWith(2, tx, input.entityId, 2, "vt-psd", null);
+    }
+  );
+
+  it("does not write history for identical geometry", async () => {
+    vi.mocked(geography.snapshotTerritoryGeography).mockClear();
+    vi.mocked(geography.prepareTerritoryGeography).mockResolvedValue({
+      value: sql`incoming`,
+      previousHash: "same",
+      nextHash: "same",
+    });
+    vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set());
+    const { tx, recorded } = makeTx({ entity: { id: input.entityId, version: 2 }, hasVersionHistory: true });
+    expect((await applySync([input], { ...opts, tx })).unchanged).toBe(1);
+    expect(recorded.versionInserts).toHaveLength(0);
+    expect(geography.snapshotTerritoryGeography).not.toHaveBeenCalled();
+  });
+
+  it("defers human geometry and its incoming attribution together", async () => {
+    vi.mocked(geography.snapshotTerritoryGeography).mockClear();
+    vi.mocked(geography.prepareTerritoryGeography).mockResolvedValue({
+      value: sql`incoming`,
+      previousHash: "human",
+      nextHash: "new",
+    });
+    vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set(["geography"]));
+    const { tx, recorded } = makeTx({
+      entity: { id: input.entityId, version: 2, source: "Human" },
+      hasVersionHistory: true,
+    });
+    const result = await applySync([{ ...input, fields: { source: "State" } }], { ...opts, tx });
+    expect(result.deferrals).toEqual([
+      { entityId: input.entityId, field: "geography", keptValue: "human", skippedValue: "new" },
+    ]);
+    expect(recorded.entityUpdates).toHaveLength(0);
+    expect(geography.snapshotTerritoryGeography).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed polygons before modifying an entity", async () => {
+    vi.mocked(geography.prepareTerritoryGeography).mockRejectedValue(new Error("Invalid polygon"));
+    const { tx, recorded } = makeTx({ entity: null, hasVersionHistory: false });
+    await expect(applySync([input], { ...opts, tx })).rejects.toThrow("Invalid polygon");
+    expect(recorded.entityInserts).toHaveLength(0);
+    expect(recorded.versionInserts).toHaveLength(0);
   });
 });
