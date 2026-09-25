@@ -77,6 +77,8 @@ export interface SyncReport {
   updated: number;
   unchanged: number;
   fieldsWritten: number;
+  sourceUrlOk: number;
+  sourceUrlDead: number;
   deferralsCount: number;
   errors: string[];
 }
@@ -99,6 +101,11 @@ interface Manifest {
     updated: number;
     unchanged: number;
     fields_written: number;
+  };
+  source_url_status: {
+    checked: number;
+    ok: number;
+    dead: number;
   };
   deferrals_count: number;
   errors: string[];
@@ -318,6 +325,8 @@ export function mapUrdbRateToSyncRecord(rate: UrdbRate, resolver: EntityResolver
       sourceUrl: rate.source,
       sourceParentUrl: rate.sourceparent,
       sourceDate: null,
+      sourceUrlStatus: null,
+      sourceUrlCheckedAt: null,
     }),
   };
 }
@@ -426,6 +435,96 @@ export async function fetchUrdbRatesForSector(
   }
 
   return { rates };
+}
+
+// ---------------------------------------------------------------------------
+// Source URL health checks
+// ---------------------------------------------------------------------------
+
+export type SourceUrlStatus = "ok" | "dead";
+
+export interface SourceUrlCheckResult {
+  status: SourceUrlStatus;
+  checkedAt: Date;
+}
+
+const SOURCE_URL_TIMEOUT_MS = 5_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, onTimeout: () => void): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      onTimeout();
+      reject(new Error("timed out"));
+    }, ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
+async function checkSourceUrl(
+  url: string,
+  fetchImpl: Fetcher,
+  timeoutMs = SOURCE_URL_TIMEOUT_MS
+): Promise<SourceUrlCheckResult> {
+  const checkedAt = new Date();
+
+  const fetchWithTimeout = async (method: "HEAD" | "GET") => {
+    const controller = new AbortController();
+    return withTimeout(fetchImpl(url, { method, signal: controller.signal, redirect: "follow" }), timeoutMs, () =>
+      controller.abort()
+    );
+  };
+
+  try {
+    const head = await fetchWithTimeout("HEAD");
+    if (head.ok || (head.status >= 300 && head.status < 400)) {
+      return { status: "ok", checkedAt };
+    }
+    // Some hosts do not support HEAD; fall back to GET before marking dead.
+    if (head.status === 405 || head.status === 501) {
+      const get = await fetchWithTimeout("GET");
+      if (get.ok || (get.status >= 300 && get.status < 400)) {
+        return { status: "ok", checkedAt };
+      }
+    }
+    return { status: "dead", checkedAt };
+  } catch {
+    return { status: "dead", checkedAt };
+  }
+}
+
+/**
+ * Check the health of each distinct sourceUrl, bounded by `concurrency`.
+ * Duplicate URLs are checked once and the same result is reused.
+ */
+export async function checkSourceUrls(
+  urls: string[],
+  fetchImpl: Fetcher,
+  opts: { concurrency?: number; timeoutMs?: number } = {}
+): Promise<Map<string, SourceUrlCheckResult>> {
+  const concurrency = Math.max(1, opts.concurrency ?? 8);
+  const timeoutMs = opts.timeoutMs ?? SOURCE_URL_TIMEOUT_MS;
+  const uniqueUrls = [...new Set(urls)].filter((url) => typeof url === "string" && url.length > 0);
+  const results = new Map<string, SourceUrlCheckResult>();
+
+  for (let i = 0; i < uniqueUrls.length; i += concurrency) {
+    const batch = uniqueUrls.slice(i, i + concurrency);
+    await Promise.all(
+      batch.map(async (url) => {
+        results.set(url, await checkSourceUrl(url, fetchImpl, timeoutMs));
+      })
+    );
+  }
+
+  return results;
 }
 
 // ---------------------------------------------------------------------------
@@ -568,6 +667,11 @@ function writeManifest(report: SyncReport): void {
       unchanged: report.unchanged,
       fields_written: report.fieldsWritten,
     },
+    source_url_status: {
+      checked: report.sourceUrlOk + report.sourceUrlDead,
+      ok: report.sourceUrlOk,
+      dead: report.sourceUrlDead,
+    },
     deferrals_count: report.deferralsCount,
     errors: report.errors,
     notes: [
@@ -594,6 +698,8 @@ export interface RunOptions {
   apiKey?: string;
   dryRun?: boolean;
   writeManifest?: boolean;
+  /** When true, verify rate sourceUrl link health before publishing. */
+  checkSourceUrls?: boolean;
 }
 
 export async function syncUrdbRates(options: RunOptions = {}): Promise<SyncReport> {
@@ -616,6 +722,8 @@ export async function syncUrdbRates(options: RunOptions = {}): Promise<SyncRepor
     updated: 0,
     unchanged: 0,
     fieldsWritten: 0,
+    sourceUrlOk: 0,
+    sourceUrlDead: 0,
     deferralsCount: 0,
     errors: [],
   };
@@ -647,6 +755,34 @@ export async function syncUrdbRates(options: RunOptions = {}): Promise<SyncRepor
   report.skippedExpired = expired;
   report.skippedLicense = license;
   report.skippedUnknownUtility = unknownUtility;
+
+  // Optional source-url health check. Disabled by default so unit tests and
+  // local runs do not hammer live document hosts; the weekly GitHub Actions
+  // sync enables it via URDB_CHECK_SOURCE_URLS.
+  const shouldCheckSourceUrls = options.checkSourceUrls ?? process.env.URDB_CHECK_SOURCE_URLS === "true";
+  if (shouldCheckSourceUrls) {
+    const sourceUrls = result.map((r) => r.fields.sourceUrl as string | undefined | null);
+    const checkResults = await checkSourceUrls(sourceUrls, fetchImpl);
+
+    for (const record of result) {
+      const url = record.fields.sourceUrl;
+      if (typeof url !== "string" || !url) continue;
+      const check = checkResults.get(url);
+      if (!check) continue;
+      record.fields.sourceUrlStatus = check.status;
+      record.fields.sourceUrlCheckedAt = check.checkedAt;
+      if (check.status === "ok") {
+        report.sourceUrlOk++;
+      } else {
+        report.sourceUrlDead++;
+      }
+    }
+
+    console.log("\n  Source URL health check:");
+    console.log(`    Checked: ${(report.sourceUrlOk + report.sourceUrlDead).toLocaleString()}`);
+    console.log(`    OK: ${report.sourceUrlOk.toLocaleString()}`);
+    console.log(`    Dead: ${report.sourceUrlDead.toLocaleString()}`);
+  }
 
   console.log("\n  Mapping result:");
   console.log(`    Kept (will be published): ${result.length.toLocaleString()}`);
@@ -686,7 +822,10 @@ async function main() {
   console.log("Syncing URDB rate structures\n");
   const dryRun = process.argv.includes("--dry-run");
 
-  const report = await syncUrdbRates({ dryRun });
+  const report = await syncUrdbRates({
+    dryRun,
+    checkSourceUrls: process.env.URDB_CHECK_SOURCE_URLS === "true",
+  });
 
   console.log("\nSync complete:");
   console.log(`  Sectors: ${report.sectors.join(", ")}`);
@@ -701,6 +840,11 @@ async function main() {
   console.log(`  Unchanged: ${report.unchanged.toLocaleString()}`);
   console.log(`  Fields written: ${report.fieldsWritten.toLocaleString()}`);
   console.log(`  Deferrals: ${report.deferralsCount.toLocaleString()}`);
+  if (report.sourceUrlOk + report.sourceUrlDead > 0) {
+    console.log(
+      `  Source URLs checked: ${(report.sourceUrlOk + report.sourceUrlDead).toLocaleString()} (ok=${report.sourceUrlOk}, dead=${report.sourceUrlDead})`
+    );
+  }
 
   if (report.errors.length > 0) {
     console.log("\n  Errors:");

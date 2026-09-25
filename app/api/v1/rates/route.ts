@@ -128,6 +128,8 @@ const ALL_FIELDS = new Set<string>([
   "sourceUrl",
   "sourceParentUrl",
   "sourceDate",
+  "sourceUrlStatus",
+  "sourceUrlCheckedAt",
   "createdAt",
   "updatedAt",
   "version",

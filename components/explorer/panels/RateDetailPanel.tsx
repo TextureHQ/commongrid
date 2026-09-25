@@ -161,7 +161,7 @@ export function RateDetailPanel({ slug }: { slug: string }) {
               <span className="cg-explore-kv-val">{rate.source}</span>
             </div>
           )}
-          {rate.sourceUrl && (
+          {rate.sourceUrl && rate.sourceUrlStatus !== "dead" && (
             <div className="cg-explore-kv-row">
               <span className="cg-explore-kv-key">Tariff Document</span>
               <span className="cg-explore-kv-val">

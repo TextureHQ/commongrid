@@ -34,6 +34,9 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           # NREL / data.gov API key for the OpenEI URDB feed.
           NREL_API_KEY: ${{ secrets.NREL_API_KEY }}
+          # Verify rate sourceUrl link health during ingest; disabled by default
+          # so local/test runs do not make live network calls.
+          URDB_CHECK_SOURCE_URLS: "true"
         run: npx tsx scripts/sync-urdb-rates.ts
       - name: Publish via branch + PR
         env:

@@ -3,6 +3,7 @@ import type { UrdbApiResponse, UrdbRate } from "../sync-urdb-rates";
 import {
   buildEntityResolver,
   buildSlug,
+  checkSourceUrls,
   deepSortKeys,
   deriveHasDemandCharge,
   deriveHasNetMetering,
@@ -215,6 +216,8 @@ describe("mapUrdbRateToSyncRecord", () => {
     expect(record?.fields.hasTou).toBe(false);
     expect(record?.fields.isEvRate).toBe(false);
     expect(record?.fields.fixedCharge).toBe("10");
+    expect(record?.fields.sourceUrlStatus).toBeNull();
+    expect(record?.fields.sourceUrlCheckedAt).toBeNull();
   });
 
   it("sorts JSONB object keys for stable comparison", () => {
@@ -346,6 +349,48 @@ describe("syncUrdbRates", () => {
     expect(report.keptRates).toBe(0); // unknown utility because no DB
     expect(report.skippedUnknownUtility).toBe(1);
     expect(report.errors).toEqual([]);
+  });
+});
+
+describe("checkSourceUrls", () => {
+  it("marks a 200 HEAD response as ok", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(null, { status: 200 }));
+    const results = await checkSourceUrls(["https://example.com/tariff.pdf"], fetchImpl);
+    expect(results.get("https://example.com/tariff.pdf")?.status).toBe("ok");
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to GET when HEAD is not allowed and treats 2xx as ok", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 405 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    const results = await checkSourceUrls(["https://example.com/tariff.pdf"], fetchImpl);
+    expect(results.get("https://example.com/tariff.pdf")?.status).toBe("ok");
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it("marks 4xx/5xx responses as dead", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(null, { status: 404 }));
+    const results = await checkSourceUrls(["https://example.com/missing.pdf"], fetchImpl);
+    expect(results.get("https://example.com/missing.pdf")?.status).toBe("dead");
+  });
+
+  it("marks timeouts and network errors as dead", async () => {
+    const fetchImpl = vi.fn().mockImplementation(() => new Promise(() => {}));
+    const results = await checkSourceUrls(["https://example.com/slow.pdf"], fetchImpl, { timeoutMs: 10 });
+    expect(results.get("https://example.com/slow.pdf")?.status).toBe("dead");
+  });
+
+  it("checks each distinct URL once", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(null, { status: 200 }));
+    const results = await checkSourceUrls(
+      ["https://example.com/tariff.pdf", "https://example.com/tariff.pdf", "https://example.com/other.pdf"],
+      fetchImpl,
+      { concurrency: 2 }
+    );
+    expect(results.size).toBe(2);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 });
 
