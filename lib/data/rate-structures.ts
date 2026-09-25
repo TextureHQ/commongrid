@@ -18,6 +18,10 @@ export interface RateStructureFilters {
   hasDemandCharge?: boolean;
   hasNetMetering?: boolean;
   isEvRate?: boolean;
+  /** Exact match on the resolved utility id (FK to utilities.id). */
+  utilityId?: string;
+  /** Exact match on the EIA utility id. */
+  eiaId?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -115,6 +119,9 @@ async function loadFromDb(filters?: RateStructureFilters): Promise<RateStructure
     conditions.push(eq(rateStructures.isEvRate, filters.isEvRate));
   }
 
+  if (filters?.utilityId) conditions.push(eq(rateStructures.utilityId, filters.utilityId));
+  if (filters?.eiaId !== undefined) conditions.push(eq(rateStructures.eiaId, filters.eiaId));
+
   const rows = await db
     .select({
       id: rateStructures.id,
@@ -161,6 +168,60 @@ async function loadFromDb(filters?: RateStructureFilters): Promise<RateStructure
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
+
+/**
+ * Load a single rate structure by slug. Returns null when the slug is not
+ * found or the row has been soft-deleted.
+ */
+export async function loadRateBySlug(slug: string): Promise<RateStructure | null> {
+  const { getDb } = await import("@/lib/db/client");
+  const { rateStructures } = await import("@/lib/db/schema");
+  const { eq, and, isNull } = await import("drizzle-orm");
+
+  const db = getDb();
+  const [row] = await db
+    .select({
+      id: rateStructures.id,
+      slug: rateStructures.slug,
+      name: rateStructures.name,
+      eiaId: rateStructures.eiaId,
+      utilityId: rateStructures.utilityId,
+      regionId: rateStructures.regionId,
+      utilityName: rateStructures.utilityName,
+      sector: rateStructures.sector,
+      serviceType: rateStructures.serviceType,
+      description: rateStructures.description,
+      fixedCharge: rateStructures.fixedCharge,
+      fixedChargeUnits: rateStructures.fixedChargeUnits,
+      energyRateStructure: rateStructures.energyRateStructure,
+      energyWeekdaySchedule: rateStructures.energyWeekdaySchedule,
+      energyWeekendSchedule: rateStructures.energyWeekendSchedule,
+      demandRateStructure: rateStructures.demandRateStructure,
+      flatDemandStructure: rateStructures.flatDemandStructure,
+      demandRateUnit: rateStructures.demandRateUnit,
+      netMeteringRules: rateStructures.netMeteringRules,
+      hasTou: rateStructures.hasTou,
+      hasDemandCharge: rateStructures.hasDemandCharge,
+      hasNetMetering: rateStructures.hasNetMetering,
+      isEvRate: rateStructures.isEvRate,
+      startDate: rateStructures.startDate,
+      endDate: rateStructures.endDate,
+      approved: rateStructures.approved,
+      isDefault: rateStructures.isDefault,
+      source: rateStructures.source,
+      sourceUrl: rateStructures.sourceUrl,
+      sourceParentUrl: rateStructures.sourceParentUrl,
+      sourceDate: rateStructures.sourceDate,
+      createdAt: rateStructures.createdAt,
+      updatedAt: rateStructures.updatedAt,
+      version: rateStructures.version,
+    })
+    .from(rateStructures)
+    .where(and(eq(rateStructures.slug, slug), isNull(rateStructures.deletedAt)));
+
+  if (!row) return null;
+  return dbRowToRateStructure(row as Record<string, unknown>);
+}
 
 /**
  * Load rate structures, optionally filtered.

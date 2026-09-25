@@ -36,6 +36,8 @@ const querySchema = z.object({
   hasDemandCharge: booleanParam,
   hasNetMetering: booleanParam,
   isEvRate: booleanParam,
+  utilityId: z.string().optional(),
+  eiaId: z.coerce.number().int().optional(),
   fields: z.string().optional(),
   sort: z.enum(["name"]).default("name"),
   order: z.enum(["asc", "desc"]).default("asc"),
@@ -155,6 +157,8 @@ async function handler(req: Request): Promise<Response> {
     hasDemandCharge,
     hasNetMetering,
     isEvRate,
+    utilityId,
+    eiaId,
     fields,
     sort,
     order,
@@ -174,6 +178,8 @@ async function handler(req: Request): Promise<Response> {
     hasDemandCharge,
     hasNetMetering,
     isEvRate,
+    utilityId,
+    eiaId,
   });
 
   const sorted = sortRateStructures(allRateStructures, sort, order);

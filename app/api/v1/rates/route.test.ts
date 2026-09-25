@@ -82,6 +82,12 @@ function fakeLoadRateStructures(rates: RateStructure[]) {
     if (typeof filters?.isEvRate === "boolean") {
       result = result.filter((r) => r.isEvRate === filters.isEvRate);
     }
+    if (filters?.utilityId) {
+      result = result.filter((r) => r.utilityId === filters.utilityId);
+    }
+    if (filters?.eiaId !== undefined) {
+      result = result.filter((r) => r.eiaId === filters.eiaId);
+    }
     return result;
   });
 }
@@ -210,5 +216,29 @@ describe("GET /api/v1/rates", () => {
 
     const res = await GET(makeRequest({ sort: "invalid" }) as never);
     expect(res.status).toBe(400);
+  });
+
+  it("filters by utilityId", async () => {
+    fakeLoadRateStructures([
+      makeRate({ name: "Rate A", slug: "rate-a", utilityId: "utility-1" }),
+      makeRate({ name: "Rate B", slug: "rate-b", utilityId: "utility-2" }),
+    ]);
+
+    const res = await GET(makeRequest({ utilityId: "utility-1" }) as never);
+    const json = (await res.json()) as { data?: { name: string }[]; pagination?: { total: number } };
+    expect(json.pagination?.total).toBe(1);
+    expect(json.data?.[0]?.name).toBe("Rate A");
+  });
+
+  it("filters by eiaId", async () => {
+    fakeLoadRateStructures([
+      makeRate({ name: "Rate A", slug: "rate-a", eiaId: 12345 }),
+      makeRate({ name: "Rate B", slug: "rate-b", eiaId: 67890 }),
+    ]);
+
+    const res = await GET(makeRequest({ eiaId: 12345 }) as never);
+    const json = (await res.json()) as { data?: { name: string }[]; pagination?: { total: number } };
+    expect(json.pagination?.total).toBe(1);
+    expect(json.data?.[0]?.name).toBe("Rate A");
   });
 });

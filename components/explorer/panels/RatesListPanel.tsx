@@ -4,11 +4,7 @@
  * RatesListPanel — Explorer panel for utility rate structures.
  *
  * Uses the same `useInfiniteList` + `InfiniteListShell` pattern as the
- * other entity panels (Programs, EV charging, power plants, etc.).
- *
- * There is not yet a detail view for rate structures, so rows are not
- * navigable. If a `sourceUrl` is present on a row, the entire row is
- * wrapped in a link that opens the source in a new tab.
+ * other entity panels. Rows navigate to the rate detail view.
  */
 
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
@@ -51,7 +47,7 @@ function CapabilityBadge({ label }: { label: string }) {
 }
 
 export function RatesListPanel() {
-  const { state, setSearch, setTypeFilter } = useExplorer();
+  const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
 
   const params = useMemo(
     () => ({
@@ -91,13 +87,13 @@ export function RatesListPanel() {
     >
       {items.map((row) => {
         const fixedCharge = formatFixedCharge(row);
-        const rowContent = (
+        return (
           <PanelEntityRow
             key={row.slug}
             leading={<span className="h-2 w-2 rounded-full" style={{ background: entityKindColor("rates") }} />}
             title={row.name}
             subtitle={[row.utilityName, row.sector, row.serviceType].filter(Boolean).join(" · ")}
-            onSelect={() => {}}
+            onSelect={() => navigateToDetail("rate", row.slug)}
             trailing={
               <div className="flex flex-col items-end gap-0.5">
                 <div className="flex flex-wrap justify-end gap-1">
@@ -122,22 +118,6 @@ export function RatesListPanel() {
             trailingShape="metric+badge"
           />
         );
-
-        if (row.sourceUrl) {
-          return (
-            <a
-              key={row.slug}
-              href={row.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block no-underline"
-            >
-              {rowContent}
-            </a>
-          );
-        }
-
-        return rowContent;
       })}
     </InfiniteListShell>
   );

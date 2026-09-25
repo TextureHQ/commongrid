@@ -11,6 +11,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { useProgramList } from "@/hooks/useProgramList";
+import { useRateList } from "@/hooks/useRateList";
 import { useRto } from "@/hooks/useRto";
 import { useUtility } from "@/hooks/useUtility";
 import { useUtilityList } from "@/hooks/useUtilityList";
@@ -102,6 +103,12 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { powerPlants: utilityPowerPlants } = usePowerPlantList({
     utilityId: utility?.id,
     limit: 200,
+  });
+
+  const { rates: utilityRates } = useRateList({
+    utilityId: utility?.id,
+    limit: 200,
+    enabled: !!utility?.id,
   });
 
   const { programs: utilityPrograms, isLoading: utilityProgramsLoading } = useProgramList({
@@ -331,6 +338,41 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
               </div>
             )}
           </>
+        )}
+
+        {utilityRates.length > 0 && (
+          <>
+            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+              Rates ({utilityRates.length})
+            </div>
+            {utilityRates.slice(0, 15).map((rate) => (
+              <button
+                key={rate.id}
+                type="button"
+                className="cg-explore-related-row"
+                onClick={() => navigateToDetail("rate", rate.slug)}
+              >
+                <span className="cg-explore-related-dot" style={{ background: entityKindColor("rates") }} />
+                <div style={{ flex: 1 }}>
+                  <div className="cg-explore-related-name">{rate.name}</div>
+                  <div className="cg-explore-related-type">
+                    {[rate.sector, rate.serviceType].filter(Boolean).join(" · ")}
+                  </div>
+                </div>
+                <ArrowIcon />
+              </button>
+            ))}
+            {utilityRates.length > 15 && (
+              <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
+                + {utilityRates.length - 15} more
+              </div>
+            )}
+          </>
+        )}
+        {utilityRates.length === 0 && (
+          <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: 16, marginBottom: 6 }}>
+            No rates on file for this utility yet.
+          </div>
         )}
 
         <div className="cg-explore-programs-section">
