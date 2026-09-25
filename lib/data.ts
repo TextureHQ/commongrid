@@ -6,20 +6,14 @@ import type { Changelog } from "@/types/changelog";
 import type { Region } from "@/types/entities";
 import type { Program } from "@/types/programs";
 
-// Utilities data is in a separate module (lib/data-utilities.ts) to avoid
-// bundling the 3.1 MB JSON into client bundles. Re-export for backward
-// compatibility with server components.
-export {
-  getAllUtilities,
-  getUtilitiesByBalancingAuthority,
-  getUtilitiesByGenerationProvider,
-  getUtilitiesByIso,
-  getUtilitiesByParent,
-  getUtilitiesByRto,
-  getUtilitiesByTransmissionProvider,
-  getUtilityById,
-  getUtilityBySlug,
-} from "./data-utilities";
+// Utilities are read from the DB via lib/data/utilities.ts. That module is
+// deliberately NOT re-exported here: lib/data.ts is imported by client
+// components (for regions/programs helpers), and re-exporting the DB-backed
+// loaders would pull the Postgres client (fs/dns/net/tls) into the client
+// bundle. Server code imports { getUtilityBySlug, getUtilityById,
+// getUtilityNameMap } directly from "@/lib/data/utilities" instead. The
+// ~3.1 MB data/utilities.json static import is gone — utilities come from
+// Postgres; client components use the useUtility* SWR hooks.
 
 const changelog: Changelog = changelogData as Changelog;
 const regions: Region[] = regionsData as Region[];
