@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_DESCRIPTION, SOCIAL_IMAGE } from "@/lib/seo";
 
 export const PAGE_TITLES = {
   explore: "Explore the Grid",
@@ -53,10 +54,13 @@ export function buildMetadata(options: {
   const title = buildTitle(options.title, options.section);
   return {
     title,
-    description: options.description,
+    description: options.description ?? SITE_DESCRIPTION,
     openGraph: {
+      type: "website",
+      siteName: "CommonGrid",
+      images: [SOCIAL_IMAGE],
       title,
-      description: options.description,
+      description: options.description ?? SITE_DESCRIPTION,
     },
   };
 }

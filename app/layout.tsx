@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import { SITE_DESCRIPTION, SITE_URL, SOCIAL_IMAGE } from "@/lib/seo";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -12,11 +13,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     template: "%s - CommonGrid",
     default: "CommonGrid",
   },
-  description: "Community-maintained energy knowledge base",
+  description: SITE_DESCRIPTION,
+  openGraph: { type: "website", siteName: "CommonGrid", images: [SOCIAL_IMAGE] },
+  twitter: { card: "summary_large_image", images: [SOCIAL_IMAGE] },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -14,6 +14,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { type NextFetchEvent, type NextRequest, NextResponse } from "next/server";
 import { legacyExploreRedirect } from "@/lib/explorer/legacy-explore-url";
+import { shouldNoIndex } from "@/lib/seo";
 
 const isProtectedRoute = createRouteMatcher(["/settings(.*)", "/mod/(.*)", "/developers/dashboard(.*)"]);
 
@@ -80,7 +81,10 @@ function appendVary(value: string | null, token: string): string {
   return parts.includes(token.toLowerCase()) ? value : `${value}, ${token}`;
 }
 
-function applySecurityHeaders(response: NextResponse, pathname: string): void {
+function applyResponseHeaders(response: NextResponse, pathname: string): void {
+  // Let crawlers fetch these pages so they can see the noindex directive.
+  // robots.txt is not access control; Clerk still protects private routes.
+  if (shouldNoIndex(pathname)) response.headers.set("X-Robots-Tag", "noindex, nofollow");
   if (!pathname.startsWith("/api/")) return;
 
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -104,7 +108,7 @@ export function publicApiResponse(request: NextRequest): NextResponse | null {
   }
 
   const response = NextResponse.next();
-  applySecurityHeaders(response, pathname);
+  applyResponseHeaders(response, pathname);
   applyPublicApiCorsHeaders(response);
   return response;
 }
@@ -116,7 +120,7 @@ const clerkAuthMiddleware = clerkMiddleware(async (auth, request) => {
   }
 
   const response = NextResponse.next();
-  applySecurityHeaders(response, request.nextUrl.pathname);
+  applyResponseHeaders(response, request.nextUrl.pathname);
 
   return response;
 });
@@ -143,7 +147,7 @@ function clerkIsConfigured(): boolean {
 
 function unauthenticatedMiddleware(request: NextRequest): NextResponse {
   const response = NextResponse.next();
-  applySecurityHeaders(response, request.nextUrl.pathname);
+  applyResponseHeaders(response, request.nextUrl.pathname);
   return response;
 }
 
