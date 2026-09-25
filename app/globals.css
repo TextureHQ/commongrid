@@ -204,6 +204,29 @@ html.theme-dark {
   border-color: var(--color-border-paper);
 }
 
+.cg-nav-github {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-paper);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--color-background-surface);
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+  text-decoration: none;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.cg-nav-github:hover {
+  border-color: var(--color-text-heading);
+  color: var(--color-text-heading);
+}
+
 .cg-nav-signin {
   display: inline-flex;
   align-items: center;

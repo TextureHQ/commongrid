@@ -2,9 +2,11 @@
 
 import { Skeleton } from "@texturehq/edges";
 import Link from "next/link";
+import { GitHubIcon } from "@/components/icons/GitHubIcon";
 import { useChangelogCounters, useChangelogFeed } from "@/hooks/useChangelogFeed";
 import { formatCount, useEntityCounts } from "@/hooks/useEntityCounts";
 import { formatLedgerCounters, type LedgerRow } from "@/lib/changelog/ledger";
+import { GITHUB_URL } from "@/lib/config/links";
 import "./homepage-minimal.css";
 
 /**
@@ -285,6 +287,20 @@ export default function LandingPage() {
                 energy infrastructure data into a public, shareable model. Anyone can contribute what&apos;s missing and
                 sharpen what&apos;s rough, and the data is free to use under an open license.
               </p>
+              {/* Secondary CTA — the primary "Explore the registry" action
+                 lives on the map preview; this surfaces the open-source repo
+                 for first-time visitors without competing with it. */}
+              <div className="mt-7">
+                <a
+                  href={GITHUB_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 h-11 px-5 rounded-md text-sm font-medium leading-none border border-border-default bg-background-surface text-text-heading transition-all duration-150 no-underline cursor-pointer hover:border-text-heading hover:text-text-heading hover:no-underline"
+                >
+                  <GitHubIcon />
+                  View source on GitHub
+                </a>
+              </div>
             </div>
 
             <Link
@@ -805,7 +821,7 @@ export default function LandingPage() {
                 { href: "/developers", label: "Vector tiles" },
                 { href: "/snapshots", label: "Weekly snapshots" },
                 { href: "/developers", label: "API keys" },
-                { href: "https://github.com/TextureHQ/commongrid", label: "GitHub", external: true },
+                { href: GITHUB_URL, label: "GitHub", external: true },
               ].map((link) => (
                 <a
                   key={link.href}
@@ -826,7 +842,7 @@ export default function LandingPage() {
                 { href: "/about", label: "Governance" },
                 { href: "/contributions", label: "Contributors" },
                 { href: "/contributions", label: "Moderation" },
-                { href: "https://github.com/TextureHQ/commongrid", label: "Code of conduct", external: true },
+                { href: GITHUB_URL, label: "Code of conduct", external: true },
               ].map((link) => (
                 <a
                   key={`${link.href}-${link.label}`}
