@@ -520,7 +520,7 @@ export default function LandingPage() {
             </div>
             <p className="text-[length:var(--text-body-md-size)] font-[var(--text-body-md-weight)] leading-[var(--text-body-md-line-height)] tracking-[var(--text-body-md-letter-spacing)] text-text-muted max-w-[50ch] m-0 [text-wrap:pretty]">
               Low-friction for small fixes, structured for big changes. Anyone can propose; trusted contributors are
-              auto-merged on uncontroversial fields; all changes are reversible.
+              auto-approved on non-critical fields; approved edits are recorded in the changelog.
             </p>
           </div>
 
@@ -536,33 +536,29 @@ export default function LandingPage() {
                       <span className="font-[family-name:var(--font-fira-code)] text-xs bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-brand-dark py-px px-1.5 rounded-sm">
                         Suggest edit
                       </span>{" "}
-                      on any page. Cite a source. Describe what changed and why. Takes ~60 seconds for a field fix.
+                      on an entity page. Cite a source. Describe what changed and why.
                     </>
                   ),
-                  meta: "median: 43 s",
                 },
                 {
                   num: "02",
                   title: "Review",
                   desc: "Moderators check citations and weigh conflicts. Trusted contributors skip review for non-critical fields. Contested changes trigger a discussion thread on the entity.",
-                  meta: "median: 2.4 h",
                 },
                 {
                   num: "03",
-                  title: "Merge & ripple",
-                  desc: "Merged edits land in the next hourly snapshot, fan out to the API, and show up in the changelog with a permanent diff. Anything can be reverted in one click.",
-                  meta: "median: 1 h until live",
+                  title: "Approve & publish",
+                  desc: "Approved edits update the database immediately, making them available on the site and through the API. Each change also appears in the changelog.",
                 },
                 {
                   num: "04",
                   title: "Attribute",
                   desc: "Every record carries its full edit history and citation trail. Researchers can cite a specific revision; auditors can see exactly who touched what.",
-                  meta: "permanent",
                 },
               ].map((step) => (
                 <div
                   key={step.num}
-                  className="grid grid-cols-[56px_1fr_auto] gap-4.5 py-5.5 border-b border-border-default items-start"
+                  className="grid grid-cols-[56px_1fr] gap-4.5 py-5.5 border-b border-border-default items-start"
                 >
                   <div className="font-[family-name:var(--font-fira-code)] font-medium text-2xl text-rose-base leading-none tracking-normal tabular-nums">
                     {step.num}
@@ -573,9 +569,6 @@ export default function LandingPage() {
                     </h4>
                     <p className="m-0 text-text-muted text-[15px] leading-relaxed max-w-[50ch]">{step.desc}</p>
                   </div>
-                  <span className="font-[family-name:var(--font-fira-code)] text-[11px] text-text-caption whitespace-nowrap">
-                    {step.meta}
-                  </span>
                 </div>
               ))}
             </div>
