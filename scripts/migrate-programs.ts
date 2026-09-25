@@ -246,7 +246,7 @@ async function fetchAllPrograms(): Promise<unknown[]> {
 
 function getTitle(props: Record<string, unknown>, key: string): string {
   const p = props[key] as { type: string; title: Array<{ plain_text: string }> } | undefined;
-  if (!p || p.type !== "title") return "";
+  if (p?.type !== "title") return "";
   return p.title
     .map((t) => t.plain_text)
     .join("")
@@ -255,31 +255,31 @@ function getTitle(props: Record<string, unknown>, key: string): string {
 
 function getSelect(props: Record<string, unknown>, key: string): string | null {
   const p = props[key] as { type: string; select: { name: string } | null } | undefined;
-  if (!p || p.type !== "select") return null;
+  if (p?.type !== "select") return null;
   return p.select?.name ?? null;
 }
 
 function getMultiSelect(props: Record<string, unknown>, key: string): string[] {
   const p = props[key] as { type: string; multi_select: Array<{ name: string }> } | undefined;
-  if (!p || p.type !== "multi_select") return [];
+  if (p?.type !== "multi_select") return [];
   return p.multi_select.map((s) => s.name);
 }
 
 function getNumber(props: Record<string, unknown>, key: string): number | null {
   const p = props[key] as { type: string; number: number | null } | undefined;
-  if (!p || p.type !== "number") return null;
+  if (p?.type !== "number") return null;
   return p.number;
 }
 
 function getUrl(props: Record<string, unknown>, key: string): string | null {
   const p = props[key] as { type: string; url: string | null } | undefined;
-  if (!p || p.type !== "url") return null;
+  if (p?.type !== "url") return null;
   return p.url;
 }
 
 function getRichText(props: Record<string, unknown>, key: string): string | null {
   const p = props[key] as { type: string; rich_text: Array<{ plain_text: string }> } | undefined;
-  if (!p || p.type !== "rich_text") return null;
+  if (p?.type !== "rich_text") return null;
   const text = p.rich_text
     .map((t) => t.plain_text)
     .join("")
@@ -289,7 +289,7 @@ function getRichText(props: Record<string, unknown>, key: string): string | null
 
 function getRelationId(props: Record<string, unknown>, key: string): string | null {
   const p = props[key] as { type: string; relation: Array<{ id: string }> } | undefined;
-  if (!p || p.type !== "relation") return null;
+  if (p?.type !== "relation") return null;
   return p.relation[0]?.id ?? null;
 }
 

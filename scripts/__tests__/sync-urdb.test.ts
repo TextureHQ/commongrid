@@ -42,18 +42,17 @@ describe("URDB CLI", () => {
     }
   });
 
-  it.each([
-    ["--apply"],
-    ["--file"],
-    ["--unknown"],
-  ])("fails on missing credentials/arguments instead of silently succeeding", (...args) => {
-    const dir = mkdtempSync(path.join(tmpdir(), "urdb-test-"));
-    try {
-      expect(run(args, dir).status).toBe(1);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
+  it.each([["--apply"], ["--file"], ["--unknown"]])(
+    "fails on missing credentials/arguments instead of silently succeeding",
+    (...args) => {
+      const dir = mkdtempSync(path.join(tmpdir(), "urdb-test-"));
+      try {
+        expect(run(args, dir).status).toBe(1);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     }
-  });
+  );
 });
 
 describe("URDB deployment contract", () => {

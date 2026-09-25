@@ -19,7 +19,7 @@ import { editableFieldDefinitions } from "@/lib/community-editable-fields/defini
 function inlineOptionsFor(entityType: string, fieldName: string): string[] | null {
   const field = editableFieldDefinitions.find((f) => f.entityType === entityType && f.fieldName === fieldName);
 
-  if (!field || field.fieldType !== "enum") return null;
+  if (field?.fieldType !== "enum") return null;
 
   const options = (field.validationRules as { enum?: unknown } | undefined)?.enum;
   return Array.isArray(options) ? (options as string[]) : null;

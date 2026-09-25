@@ -70,14 +70,10 @@ describe("URDB catalog mapping", () => {
     expect(parseUrdb(text)[0]).toEqual(raw);
   });
 
-  it.each([
-    "[]",
-    "{}",
-    "<html>error</html>",
-    "[null]",
-    '{"items":[]}',
-    `${JSON.stringify(raw)}\nbroken`,
-  ])("fails closed on empty/malformed downloads", (text) => {
-    expect(() => parseUrdb(text)).toThrow();
-  });
+  it.each(["[]", "{}", "<html>error</html>", "[null]", '{"items":[]}', `${JSON.stringify(raw)}\nbroken`])(
+    "fails closed on empty/malformed downloads",
+    (text) => {
+      expect(() => parseUrdb(text)).toThrow();
+    }
+  );
 });
