@@ -5,7 +5,7 @@ export const SITE_URL = "https://commongrid.info";
 export const SITE_DESCRIPTION =
   "Explore the open, connected registry of the U.S. power grid: utilities, power plants, transmission lines, EV charging, and more.";
 export const SOCIAL_IMAGE = {
-  url: `${SITE_URL}/social-image`,
+  url: `${SITE_URL}/social-card.png`,
   width: 1200,
   height: 630,
   alt: "CommonGrid — The open, connected registry of the U.S. power grid",
