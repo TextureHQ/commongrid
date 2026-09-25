@@ -107,8 +107,8 @@ export default function AboutPage() {
                 Texture
               </a>
               , an energy software company, created CommonGrid. While building our platform, we spent years normalizing
-              data from EIA, FERC, HIFLD, NOAA, state PUC filings, and hundreds of other sources. The result: a
-              structured, relational model of the U.S. energy landscape.
+              data from EIA, FERC, HIFLD, NOAA, and state PUC filings. The result: a structured, relational model of the
+              U.S. energy landscape.
             </p>
             <p>
               We decided to open it. Not because we had to (the underlying sources are public), but because the
