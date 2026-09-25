@@ -199,7 +199,13 @@ export default async function SnapshotsPage() {
           <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-3">About these snapshots</h3>
           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
             <li>
-              <strong>SQL backups:</strong> Full database dumps in PostgreSQL custom format (.sql.gz)
+              <strong>SQL backups:</strong> Full dump of all public tables &mdash; utilities, territories, programs,
+              power plants, substations, transmission lines, pricing nodes, ISOs/RTOs, balancing authorities, and more
+              (.sql.gz)
+            </li>
+            <li>
+              <strong>Programs:</strong> The hand-curated demand-response &amp; grid-services program dataset as a
+              standalone JSON file (programs.json.gz)
             </li>
             <li>
               <strong>GeoJSON layers:</strong> Spatial data for utilities, charging stations, power plants, and pricing
