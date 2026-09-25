@@ -143,9 +143,13 @@ export async function getUtilityById(id: string): Promise<Utility | undefined> {
 export async function getUtilityNameMap(): Promise<Map<string, string>> {
   const { getDb } = await import("@/lib/db/client");
   const { utilities } = await import("@/lib/db/schema");
+  const { isNull } = await import("drizzle-orm");
 
   const db = getDb();
-  const rows = await db.select({ id: utilities.id, slug: utilities.slug, name: utilities.name }).from(utilities);
+  const rows = await db
+    .select({ id: utilities.id, slug: utilities.slug, name: utilities.name })
+    .from(utilities)
+    .where(isNull(utilities.deletedAt));
   const map = new Map<string, string>();
   for (const r of rows) {
     map.set(r.slug, r.name);
