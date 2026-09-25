@@ -61,7 +61,7 @@ export type EntityType =
   | "balancing_authority"
   | "region"
   | "program"
-  | "rate_structure";
+  | "rate_structure"
   | "tariff";
 
 export const EDIT_SUMMARY_MIN_LENGTH = 25;

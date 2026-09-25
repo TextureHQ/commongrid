@@ -405,11 +405,8 @@ const ENTITY_TABLE_NAMES: Record<EntityType, string> = {
   balancing_authority: "balancing_authorities",
   region: "regions",
   program: "programs",
-<<<<<<< HEAD
   rate_structure: "rate_structures",
-=======
   tariff: "tariffs",
->>>>>>> 57849bd (feat(data): add attributed, versioned URDB tariff sync (CG-307))
 };
 
 function tableName(entityType: EntityType): string {
