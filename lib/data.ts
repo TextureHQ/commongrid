@@ -1,31 +1,17 @@
 import changelogData from "@/data/changelog.json";
-import programsData from "@/data/programs.json";
-import regionsData from "@/data/regions.json";
-import { decorateProgramsMapCategory } from "@/lib/programs/program-category";
 import type { Changelog } from "@/types/changelog";
-import type { Region } from "@/types/entities";
-import type { Program } from "@/types/programs";
 
-// Utilities are read from the DB via lib/data/utilities.ts. That module is
-// deliberately NOT re-exported here: lib/data.ts is imported by client
-// components (for regions/programs helpers), and re-exporting the DB-backed
-// loaders would pull the Postgres client (fs/dns/net/tls) into the client
-// bundle. Server code imports { getUtilityBySlug, getUtilityById,
-// getUtilityNameMap } directly from "@/lib/data/utilities" instead. The
-// ~3.1 MB data/utilities.json static import is gone — utilities come from
-// Postgres; client components use the useUtility* SWR hooks.
+// Entities are read from the DB, not static JSON:
+//   - utilities: lib/data/utilities.ts (server) + useUtility* hooks (client)
+//   - isos/rtos/balancing-authorities: useIsoList/useRtoList/useBalancingAuthorityList
+//   - regions: useRegionList hook (regionById/regionByEiaId lookup maps)
+//   - programs: lib/data/programs.ts (server) + useProgramList/useAllPrograms (client)
+// These loaders are NOT re-exported here: lib/data.ts is imported by client
+// components, and re-exporting DB-backed loaders would pull the Postgres
+// client (fs/dns/net/tls) into the client bundle. The ~950 KB regions.json
+// and ~500 KB programs.json static imports are gone.
 
 const changelog: Changelog = changelogData as Changelog;
-const regions: Region[] = regionsData as Region[];
-const programs: Program[] = decorateProgramsMapCategory(programsData as unknown as Program[]);
-
-export function getRegionById(id: string): Region | undefined {
-  return regions.find((r) => r.id === id);
-}
-
-export function getRegionByEiaId(eiaId: string): Region | undefined {
-  return regions.find((r) => r.eiaId === eiaId);
-}
 
 export function searchEntities<T extends { name: string; slug: string }>(entities: T[], query: string): T[] {
   const lower = query.toLowerCase();
@@ -37,14 +23,6 @@ export function sortByName<T extends { name: string }>(entities: T[], direction:
     const cmp = a.name.localeCompare(b.name);
     return direction === "asc" ? cmp : -cmp;
   });
-}
-
-export function getAllPrograms(): Program[] {
-  return programs;
-}
-
-export function getProgramBySlug(slug: string): Program | undefined {
-  return programs.find((p) => p.slug === slug);
 }
 
 export function getChangelog(): Changelog {
