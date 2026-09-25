@@ -57,6 +57,7 @@ function entityTypeLabel(entityType: string): string {
     transmission_line: "Transmission",
     pricing_node: "Pricing Node",
     program: "Program",
+    tariff: "Tariff",
   };
   return labels[entityType] ?? entityType;
 }

@@ -35,6 +35,7 @@ import {
   rateStructures,
   regions,
   rtos,
+  tariffs,
   territories,
   transmissionLines,
   utilities,
@@ -61,6 +62,7 @@ export type EntityType =
   | "region"
   | "program"
   | "rate_structure";
+  | "tariff";
 
 export const EDIT_SUMMARY_MIN_LENGTH = 25;
 
@@ -108,6 +110,7 @@ const ENTITY_TABLES: Record<EntityType, AnyTable> = {
   region: regions,
   program: programs,
   rate_structure: rateStructures,
+  tariff: tariffs,
 };
 
 export function getEntityTable(entityType: string): AnyTable | null {
@@ -132,6 +135,7 @@ const ENTITY_TABLE_NAMES: Record<EntityType, string> = {
   region: "regions",
   program: "programs",
   rate_structure: "rate_structures",
+  tariff: "tariffs",
 };
 
 // ---------------------------------------------------------------------------

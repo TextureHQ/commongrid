@@ -58,3 +58,9 @@ No production backfill or manual database mutation is required.
 Authority precedence, authority scopes, inactive-source enforcement, and stale
 human-override handling are **not** implemented by this registry change; they
 belong to CG-287. Policy B continues to preserve human-authored fields.
+
+## Utility Rate Database
+
+The [URDB tariff importer](./urdb-tariffs.md) registers `openei-urdb`, preserves
+CC BY 4.0 attribution on every tariff, and links all sync versions to that source.
+Effective dates and retrieval timestamps must not be reported as verification dates.

@@ -25,6 +25,7 @@ on:
       - Sync IOU DR Programs
       - Sync State Boundaries
       - Sync URDB Rate Structures
+      - Sync URDB Tariffs
       - Weekly Database Snapshot
     types: [completed]
 

@@ -47,3 +47,6 @@ data/.eia860m-last-sync
 # TypeScript incremental build cache — regenerated on every typecheck.
 # Tracking it churns diffs and blocks stash/rebase operations.
 *.tsbuildinfo
+
+# Ephemeral URDB sync report (uploaded as a workflow artifact)
+urdb-sync-report.json

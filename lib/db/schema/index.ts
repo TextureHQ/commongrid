@@ -111,6 +111,8 @@ export type { SourceCitationInsert, SourceCitationSelect } from "./source-citati
 export { sourceCitations } from "./source-citations";
 export type { SubstationInsert, SubstationSelect } from "./substations";
 export { substations } from "./substations";
+export type { TariffSelect } from "./tariffs";
+export { tariffs } from "./tariffs";
 export type { TerritoryInsert, TerritorySelect } from "./territories";
 // Spatial Table
 export { territories } from "./territories";

@@ -36,6 +36,7 @@
  * an upstream key (EIA plant code, AFDC station id, …) to that id.
  */
 
+import { isDeepStrictEqual } from "node:util";
 import { eq, sql } from "drizzle-orm";
 import { getPooledDb } from "@/lib/db/client-pooled";
 import { changeBatches, entityVersions } from "@/lib/db/schema";
@@ -404,7 +405,11 @@ const ENTITY_TABLE_NAMES: Record<EntityType, string> = {
   balancing_authority: "balancing_authorities",
   region: "regions",
   program: "programs",
+<<<<<<< HEAD
   rate_structure: "rate_structures",
+=======
+  tariff: "tariffs",
+>>>>>>> 57849bd (feat(data): add attributed, versioned URDB tariff sync (CG-307))
 };
 
 function tableName(entityType: EntityType): string {
@@ -424,5 +429,6 @@ function labelFrom(row: Record<string, unknown>): { entityName: string | null; e
 }
 
 function jsonEqual(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+  // PostgreSQL JSONB reorders object keys. Key order is not a data change.
+  return isDeepStrictEqual(a, b);
 }

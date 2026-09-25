@@ -1,0 +1,55 @@
+name: Sync URDB Tariffs
+
+on:
+  schedule:
+    - cron: '0 9 * * 2' # Tuesdays at 09:00 UTC; weekly import, not a freshness guarantee
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Write tariffs and version history (false performs read-only validation)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-urdb
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    environment: commongrid-data-sync
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Validate and sync published URDB catalog
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          APPLY: ${{ github.event_name == 'schedule' || inputs.apply }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL is missing; refusing a successful no-op sync."
+            exit 1
+          fi
+          if [ "$APPLY" = "true" ]; then
+            npx tsx scripts/sync-urdb.ts --apply
+          else
+            npx tsx scripts/sync-urdb.ts
+          fi
+      # Database-native sync: no generated data or direct commits to main.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: urdb-sync-report
+          path: urdb-sync-report.json
+          if-no-files-found: warn
+          retention-days: 30

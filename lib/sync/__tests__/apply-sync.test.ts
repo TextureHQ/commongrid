@@ -441,3 +441,28 @@ describe("applySync", () => {
     expect(recorded.entityUpdates[0]).not.toHaveProperty("notAColumnInRealTable");
   });
 });
+
+describe("tariff sync JSONB stability", () => {
+  it("does not write a new version when PostgreSQL reorders nested JSON keys", async () => {
+    const { tx, recorded } = makeTx({
+      entity: { id: "tariff-1", version: 1, rawRecord: { name: "Rate", structure: [{ rate: 1, unit: "kWh" }] } },
+      hasVersionHistory: true,
+    });
+    vi.mocked(getPooledDb).mockReturnValue({
+      transaction: (fn: (tx: unknown) => Promise<unknown>) => fn(tx),
+    } as unknown as ReturnType<typeof getPooledDb>);
+    vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set());
+    const report = await applySync(
+      [
+        record({
+          entityId: "tariff-1",
+          fields: { rawRecord: { structure: [{ unit: "kWh", rate: 1 }], name: "Rate" } },
+        }),
+      ],
+      { ...baseOpts, entityType: "tariff" }
+    );
+    expect(report.unchanged).toBe(1);
+    expect(recorded.versionInserts).toHaveLength(0);
+    expect(recorded.entityUpdates).toHaveLength(0);
+  });
+});
