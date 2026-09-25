@@ -4,7 +4,6 @@ import type { Feature } from "geojson";
 import { useEffect, useMemo, useState } from "react";
 import { DeleteEntityDialog } from "@/components/contributions/DeleteEntityDialog";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
-import { DelayedEntityDetailSkeleton } from "@/components/skeletons";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useProgram } from "@/hooks/useProgram";
 import { useRegionList } from "@/hooks/useRegionList";
@@ -30,6 +29,7 @@ import {
   ProgramStatus,
 } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 import { PanelEditLayer } from "./PanelEditLayer";
 
 const ArrowIcon = () => (
@@ -79,7 +79,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const { program, isLoading: programLoading } = useProgram(slug);
+  const { program, isLoading } = useProgram(slug);
 
   // Resolve the program's organization slugs directly instead of scanning the
   // first N utilities alphabetically. The old `useUtilityList({ limit: 200 })`
@@ -139,8 +139,8 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
     };
   }, [territorySlugs, setHighlight]);
 
-  if (programLoading) {
-    return <DelayedEntityDetailSkeleton />;
+  if (isLoading) {
+    return <DetailPanelLoading key={`program:${slug}`} entity="program" />;
   }
 
   if (!program) {

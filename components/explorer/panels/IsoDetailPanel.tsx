@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
-import { DelayedEntityDetailSkeleton } from "@/components/skeletons";
 import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
 import { useIso } from "@/hooks/useIso";
 import { useUtilityList } from "@/hooks/useUtilityList";
@@ -12,6 +11,7 @@ import { fetchIsoGeometry } from "@/lib/explorer/geometry";
 import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 
 const ArrowIcon = () => (
   <svg
@@ -33,7 +33,7 @@ const ArrowIcon = () => (
 export function IsoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
 
-  const { iso, isLoading: isoLoading } = useIso(slug);
+  const { iso, isLoading } = useIso(slug);
 
   useEffect(() => {
     if (!iso?.slug) {
@@ -49,8 +49,8 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
   const { utilities } = useUtilityList({ iso: iso?.slug, limit: 200 });
   const { balancingAuthorities } = useBalancingAuthorityList({ isoId: iso?.id });
 
-  if (isoLoading) {
-    return <DelayedEntityDetailSkeleton />;
+  if (isLoading) {
+    return <DetailPanelLoading key={`iso:${slug}`} entity="iso" />;
   }
 
   if (!iso) {
