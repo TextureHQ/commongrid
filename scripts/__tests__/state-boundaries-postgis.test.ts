@@ -11,6 +11,7 @@ vi.mock("@/lib/db/client-pooled", () => ({ getPooledDb: vi.fn() }));
 // Only ever runs against the disposable CI database, never DATABASE_URL.
 const url = process.env.STATE_BOUNDARIES_TEST_DATABASE_URL;
 const suite = url ? describe : describe.skip;
+const repair = readFileSync("drizzle/0037_reconcile_geometry_history_uniqueness.sql", "utf8");
 
 suite("state boundary publication (real PostGIS)", () => {
   const pool = new Pool({ connectionString: url });
@@ -70,9 +71,109 @@ suite("state boundary publication (real PostGIS)", () => {
     await pool.query(
       "TRUNCATE entity_geometry_versions, entity_versions, change_batches, territories, regions, utilities RESTART IDENTITY CASCADE"
     );
+    await pool.query(`
+      ALTER TABLE entity_geometry_versions DROP CONSTRAINT IF EXISTS entity_geometry_versions_version_key;
+      ALTER TABLE entity_geometry_versions DROP CONSTRAINT IF EXISTS test_deferred_key;
+      DROP INDEX IF EXISTS test_equivalent_key;
+      DROP INDEX IF EXISTS test_partial_key;
+      DROP INDEX IF EXISTS test_nonunique_key;
+    `);
+    await pool.query(repair);
     await pool.query(
       "INSERT INTO utilities (eia_id, jurisdiction, service_territory_id) VALUES ('27316', 'VT', 'region-st-27316')"
     );
+  });
+
+  it("reproduces 42P10 on historical geometry, then repairs and retries atomically", async () => {
+    await pool.query("ALTER TABLE entity_geometry_versions DROP CONSTRAINT entity_geometry_versions_version_key");
+    await pool.query(
+      "INSERT INTO regions (id, slug, name, type, state, source) VALUES ('region-st-27316','stowe','Stowe','SERVICE_TERRITORY','VT','HIFLD')"
+    );
+    await pool.query(
+      "INSERT INTO territories (id, region_id, geography, source) VALUES ('territory-27316','region-st-27316', ST_Multi(ST_GeomFromGeoJSON($1))::geography, 'HIFLD')",
+      [JSON.stringify(polygon)]
+    );
+    await expect(publishToDatabase(entries(replacement))).rejects.toMatchObject({ cause: { code: "42P10" } });
+    expect((await pool.query("SELECT source FROM regions")).rows[0].source).toBe("HIFLD");
+    expect((await pool.query("SELECT version FROM territories")).rows[0].version).toBe(1);
+    expect((await pool.query("SELECT count(*) FROM change_batches")).rows[0].count).toBe("0");
+    await pool.query(repair);
+    expect((await publishToDatabase(entries(replacement))).territoriesUpserted).toBe(1);
+    expect((await publishToDatabase(entries(replacement))).territoriesUpserted).toBe(0);
+    const history = await pool.query(
+      "SELECT version_number, ST_AsGeoJSON(geography_snapshot)::json AS shape FROM entity_geometry_versions ORDER BY version_number"
+    );
+    expect(history.rows.map((row) => row.version_number)).toEqual([1, 2]);
+    expect(history.rows[0].shape.coordinates).toEqual([polygon.coordinates]);
+    expect(history.rows[1].shape.coordinates).toEqual([replacement.coordinates]);
+  });
+
+  it("reapplies without changing history or adding another index", async () => {
+    await publishToDatabase(entries());
+    const before = await pool.query("SELECT * FROM entity_geometry_versions ORDER BY id");
+    const indexes = await pool.query(
+      "SELECT indexname FROM pg_indexes WHERE tablename = 'entity_geometry_versions' ORDER BY indexname"
+    );
+    await pool.query(repair);
+    await pool.query(repair);
+    expect((await pool.query("SELECT * FROM entity_geometry_versions ORDER BY id")).rows).toEqual(before.rows);
+    expect(
+      (
+        await pool.query(
+          "SELECT indexname FROM pg_indexes WHERE tablename = 'entity_geometry_versions' ORDER BY indexname"
+        )
+      ).rows
+    ).toEqual(indexes.rows);
+  });
+
+  it("accepts a differently named and ordered unique index including extra payload", async () => {
+    await pool.query("ALTER TABLE entity_geometry_versions DROP CONSTRAINT entity_geometry_versions_version_key");
+    await pool.query(
+      "CREATE UNIQUE INDEX test_equivalent_key ON entity_geometry_versions (version_number, entity_id, entity_type) INCLUDE (source_id)"
+    );
+    await pool.query(repair);
+    expect(
+      (await pool.query("SELECT 1 FROM pg_indexes WHERE indexname = 'entity_geometry_versions_version_key'")).rows
+    ).toHaveLength(0);
+    await publishToDatabase(entries());
+    expect((await publishToDatabase(entries(replacement))).territoriesUpserted).toBe(1);
+  });
+
+  it("does not mistake partial or nonunique indexes for a usable key", async () => {
+    await pool.query("ALTER TABLE entity_geometry_versions DROP CONSTRAINT entity_geometry_versions_version_key");
+    await pool.query(
+      "CREATE UNIQUE INDEX test_partial_key ON entity_geometry_versions (entity_type, entity_id, version_number) WHERE entity_type = 'territory'"
+    );
+    await pool.query(
+      "CREATE INDEX test_nonunique_key ON entity_geometry_versions (entity_type, entity_id, version_number)"
+    );
+    await pool.query(repair);
+    expect(
+      (await pool.query("SELECT 1 FROM pg_indexes WHERE indexname = 'entity_geometry_versions_version_key'")).rows
+    ).toHaveLength(1);
+    await publishToDatabase(entries());
+    expect((await publishToDatabase(entries(replacement))).territoriesUpserted).toBe(1);
+  });
+
+  it("refuses duplicate keys without deleting or renumbering any history", async () => {
+    await pool.query("ALTER TABLE entity_geometry_versions DROP CONSTRAINT entity_geometry_versions_version_key");
+    await pool.query(
+      "INSERT INTO entity_geometry_versions (entity_type, entity_id, version_number) VALUES ('territory', 'duplicate', 1), ('territory', 'duplicate', 1)"
+    );
+    const before = await pool.query("SELECT * FROM entity_geometry_versions ORDER BY id");
+    await expect(pool.query(repair)).rejects.toThrow(/Duplicate geometry history version keys/);
+    expect((await pool.query("SELECT * FROM entity_geometry_versions ORDER BY id")).rows).toEqual(before.rows);
+    expect(
+      (await pool.query("SELECT 1 FROM pg_indexes WHERE indexname = 'entity_geometry_versions_version_key'")).rows
+    ).toHaveLength(0);
+  });
+
+  it("fails clearly on a matching deferrable constraint rather than claiming repair", async () => {
+    await pool.query("ALTER TABLE entity_geometry_versions DROP CONSTRAINT entity_geometry_versions_version_key");
+    await pool.query(
+      "ALTER TABLE entity_geometry_versions ADD CONSTRAINT test_deferred_key UNIQUE (entity_type, entity_id, version_number) DEFERRABLE"
+    );
+    await expect(pool.query(repair)).rejects.toThrow(/deferrable version key/);
   });
 
   it("creates, records geometry-only changes, preserves originals, and no-ops on repeat", async () => {
