@@ -404,6 +404,7 @@ const ENTITY_TABLE_NAMES: Record<EntityType, string> = {
   balancing_authority: "balancing_authorities",
   region: "regions",
   program: "programs",
+  rate_structure: "rate_structures",
 };
 
 function tableName(entityType: EntityType): string {

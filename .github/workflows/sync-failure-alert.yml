@@ -24,6 +24,7 @@ on:
       - Sync EV Charging Data
       - Sync IOU DR Programs
       - Sync State Boundaries
+      - Sync URDB Rate Structures
       - Weekly Database Snapshot
     types: [completed]
 
