@@ -273,6 +273,34 @@ jobs:
           " | gzip -9 > "$SNAPSHOT_DIR/pricing-nodes.geojson.gz"
           echo "Pricing nodes GeoJSON size: $(du -h "$SNAPSHOT_DIR/pricing-nodes.geojson.gz" | cut -f1)"
 
+      # Programs is one of the most valuable datasets in CommonGrid — most of it
+      # was gathered by hand. It has no geometry (programs reference regions by
+      # id), so it ships as a standalone JSON array rather than GeoJSON, in
+      # addition to being in the SQL dump above. This makes the crown-jewel
+      # dataset downloadable without restoring the whole Postgres dump.
+      - name: Export JSON — Programs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        shell: bash -euo pipefail {0}
+        run: |
+          psql "$DATABASE_URL" -t -A -c "
+            SELECT COALESCE(json_agg(row_to_json(p) ORDER BY p.name), '[]'::json)
+            FROM (
+              SELECT
+                id, slug, name, description,
+                organizations, asset_types, market_segments,
+                participation_models, incentive_structures, grid_services,
+                regions, compensation_tiers, capacity_target, max_enrollments,
+                program_season, launched_at, enrollment_opens, enrollment_closes,
+                ends_at, status, program_website, faq_url, terms_url, contact_url,
+                variants, derms_vendor, device_types, other_notes,
+                source, source_url
+              FROM programs
+              WHERE deleted_at IS NULL
+            ) p
+          " | gzip -9 > "$SNAPSHOT_DIR/programs.json.gz"
+          echo "Programs JSON size: $(du -h "$SNAPSHOT_DIR/programs.json.gz" | cut -f1)"
+
       # Guard against publishing empty/garbage data to the public. An empty gzip
       # stream is 20 bytes, and every asset in every release from W17–W32 was
       # exactly that. Validate decompressed content, not just file presence.
@@ -352,17 +380,26 @@ jobs:
 
           | File | Description |
           |------|-------------|
-          | \`commongrid-${DATE}.sql.gz\` | Public reference tables dump (allowlisted \`pg_dump\`, gzipped) |
-          | \`utilities.geojson.gz\` | All utilities with service territory geometry |
+          | \`commongrid-${DATE}.sql.gz\` | Full SQL dump of all public tables below (allowlisted \`pg_dump\`, gzipped) |
+          | \`programs.json.gz\` | Demand-response & grid-services programs — hand-curated (JSON array) |
+          | \`utilities.geojson.gz\` | Utilities with service-territory geometry |
           | \`ev-stations.geojson.gz\` | EV charging stations (point locations) |
           | \`power-plants.geojson.gz\` | Power plants (point locations) |
           | \`pricing-nodes.geojson.gz\` | ISO/RTO pricing nodes (point locations) |
 
+          ### Public tables in the SQL dump
+
+          The \`.sql.gz\` dump contains these public tables (no user/PII/operational data):
+          \`balancing_authorities\`, \`ev_stations\`, \`isos\`, \`power_plant_interconnections\`, \`power_plants\`, \`pricing_nodes\`, \`programs\`, \`regions\`, \`rtos\`, \`substations\`, \`territories\`, \`transmission_line_endpoints\`, \`transmission_lines\`, \`utilities\`.
+
           ### Usage
 
           \`\`\`bash
-          # Restore the SQL dump
+          # Restore the full SQL dump
           gunzip -c commongrid-${DATE}.sql.gz | psql your_database
+
+          # Programs dataset as JSON (no restore needed)
+          gunzip -c programs.json.gz | jq '.[0]'
 
           # Load GeoJSON into ogr2ogr / QGIS / tippecanoe
           gunzip utilities.geojson.gz
@@ -376,6 +413,7 @@ jobs:
             --title "Weekly Snapshot — ${DATE}" \
             --notes "$NOTES" \
             "$SNAPSHOT_DIR"/commongrid-*.sql.gz \
+            "$SNAPSHOT_DIR"/programs.json.gz \
             "$SNAPSHOT_DIR"/utilities.geojson.gz \
             "$SNAPSHOT_DIR"/ev-stations.geojson.gz \
             "$SNAPSHOT_DIR"/power-plants.geojson.gz \
