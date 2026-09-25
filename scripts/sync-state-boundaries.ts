@@ -9,7 +9,7 @@
  *
  * Publishes to Postgres:
  *   - regions table via applySync (entityType "region")
- *   - territories table via PostGIS upsert
+ *   - territories and spatial history via applySync, in the same transaction
  * Bookkeeping:
  *   - data/state-boundaries/manifest.json
  */
@@ -27,7 +27,6 @@ const SERVICE_TERRITORIES_URL =
   "https://services3.arcgis.com/OYP7N6mAJJCyH6hd/arcgis/rest/services/Electric_Retail_Service_Territories_HIFLD/FeatureServer/0/query";
 
 const PAGE_SIZE = 2000;
-const MAX_ALLOWABLE_OFFSET = 0.005;
 const MANIFEST_DIR = path.join(DATA_DIR, "state-boundaries");
 const MANIFEST_PATH = path.join(MANIFEST_DIR, "manifest.json");
 const RUNNER_ACTOR = "sync:state-boundaries";
@@ -80,8 +79,8 @@ export interface SourceConfig {
   /** Higher number = higher precedence. State agencies outrank HIFLD. */
   sourcePriority?: number;
   /**
-   * True when this row represents a state agency boundary. Used to drop lower-
-   * precedence (e.g. HIFLD) records for the same state after writing.
+   * True when this row represents a state agency boundary. Unmatched lower-
+   * precedence records are retained; absence is never inferred retirement.
    */
   isStateSource?: boolean;
   /** Flag for records that need an open-source replacement. */
@@ -157,7 +156,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
     state: "VT",
     url: "https://maps.vcgi.vermont.gov/arcgis/rest/services/PSD_services/PSD_Published_Layers/MapServer/0/query",
     kind: "arcgis",
-    enabled: false, // Release gates: docs/data-sources/vermont-territories.md
+    enabled: true, // Source visually validated by maintainer; see source documentation.
     fieldMapping: { name: "COMPANYNAM", sourceId: "OBJECTID" },
     eiaIdByName: VERMONT_UTILITY_EIA_IDS,
     sourceLabel: "Vermont PSD Electric Utility Service Territories (2015 compilation)",
@@ -275,10 +274,6 @@ function toInteger(value: unknown): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-function isHifldLabel(label: string): boolean {
-  return /\bHIFLD\b/i.test(label);
-}
-
 export function buildRegionRecord(
   config: SourceConfig,
   feature: Feature<Geometry, Record<string, unknown>>,
@@ -347,9 +342,19 @@ export function buildRegionsFromFeatures(
     const record = buildRegionRecord(config, feature, i);
     if (!record) continue;
     // Deduplicate by id within a single source; keep first occurrence.
-    if (seenIds.has(record.id)) continue;
+    if (seenIds.has(record.id)) {
+      if (config.eiaIdByName) throw new Error(`Duplicate utility polygon: ${record.id}`);
+      continue;
+    }
     seenIds.add(record.id);
     entries.push({ record, geometry: feature.geometry });
+  }
+  if (config.eiaIdByName) {
+    const expected = new Set(Object.values(config.eiaIdByName));
+    const actual = new Set(entries.map(({ record }) => record.eiaId));
+    if (expected.size !== actual.size || [...expected].some((id) => !actual.has(id))) {
+      throw new Error(`Incomplete utility coverage for ${config.sourceId}`);
+    }
   }
   return entries;
 }
@@ -473,18 +478,23 @@ export async function fetchPaginatedArcGIS<P>(
       where: config.where ?? "1=1",
       outFields,
       f: "geojson",
+      outSR: "4326",
       resultOffset: String(resultOffset),
       resultRecordCount: String(PAGE_SIZE),
-      maxAllowableOffset: String(MAX_ALLOWABLE_OFFSET),
     });
 
     const pageUrl = `${config.url}?${params}`;
     const page = (await fetchJsonWithFallback(pageUrl, undefined, fetchImpl)) as FeatureCollection<Geometry, P>;
-    const features = page.features ?? [];
+    if (page.type !== "FeatureCollection" || !Array.isArray(page.features)) {
+      throw new Error(`Invalid GeoJSON response for ${config.sourceId}`);
+    }
+    const features = page.features;
     allFeatures.push(...features);
 
-    if (features.length < PAGE_SIZE) break;
-    resultOffset += PAGE_SIZE;
+    const more = (page as FeatureCollection & { exceededTransferLimit?: boolean }).exceededTransferLimit;
+    if (more && features.length === 0) throw new Error(`Empty truncated page for ${config.sourceId}`);
+    if (!more && features.length < PAGE_SIZE) break;
+    resultOffset += features.length;
   }
 
   return allFeatures;
@@ -509,7 +519,10 @@ export async function fetchPaginatedSocrata<P>(
 
     const pageUrl = `${config.url}?${params}`;
     const page = (await fetchJsonWithFallback(pageUrl, undefined, fetchImpl)) as FeatureCollection<Geometry, P>;
-    const features = page.features ?? [];
+    if (page.type !== "FeatureCollection" || !Array.isArray(page.features)) {
+      throw new Error(`Invalid GeoJSON response for ${config.sourceId}`);
+    }
+    const features = page.features;
     allFeatures.push(...features);
 
     if (features.length < PAGE_SIZE) break;
@@ -543,138 +556,73 @@ interface PublishResult {
   hifldSuperseded: number;
 }
 
-async function publishToDatabase(
-  entries: RegionEntry[],
-  successfulStateSourceStates: Set<string>
-): Promise<PublishResult> {
-  const empty: PublishResult = {
-    created: 0,
-    updated: 0,
-    unchanged: 0,
-    fieldsWritten: 0,
-    deferrals: [],
-    territoriesUpserted: 0,
-    hifldSuperseded: 0,
-  };
-
-  if (!process.env.DATABASE_URL) {
-    console.warn(
-      "\n⚠️  DATABASE_URL is not set — skipping database publication. " +
-        "The manifest is still written; regions and territories are NOT updated."
-    );
-    return empty;
-  }
-
-  const regionRecords = buildRegionSyncRecords(entries);
-
-  console.log("\nPublishing state service-territory boundaries to Postgres...");
-  const report = await applySync(regionRecords, {
-    entityType: "region",
-    initiatedBy: RUNNER_ACTOR,
-    batchTitle: "State service-territory boundary sync",
-    batchDescription: `WI + MN state sources + CO via HIFLD — ${regionRecords.length} territories`,
+export function buildTerritorySyncRecords(entries: RegionEntry[]): SyncRecord[] {
+  return entries.map(({ record, geometry }) => {
+    if (geometry.type !== "Polygon" && geometry.type !== "MultiPolygon") {
+      throw new Error(`Non-polygon territory: ${record.id}`);
+    }
+    return {
+      entityId: record.eiaId ? `territory-${record.eiaId}` : record.id.replace(/^region-/, "territory-"),
+      sourceId: record.dataSourceId,
+      asOf: record.sourceDate ? new Date(record.sourceDate) : null,
+      fields: { regionId: record.id, source: record.source, sourceUrl: record.sourceUrl },
+      geography: geometry,
+    };
   });
+}
 
+export async function publishToDatabase(entries: RegionEntry[]): Promise<PublishResult> {
   const db = getPooledDb();
-  let territoriesUpserted = 0;
-
-  for (const { record, geometry } of entries) {
-    if (!geometry) continue;
-
-    const geojsonStr = JSON.stringify(geometry);
-    const territoryId = record.eiaId ? `territory-${record.eiaId}` : record.id.replace(/^region-/, "territory-");
-    const source = isHifldLabel(record.source) ? "HIFLD ArcGIS" : record.source;
-    const sourceUrl = record.sourceUrl;
-
-    const res = await db.execute(sql`
-      INSERT INTO territories (id, region_id, geography, source, source_url)
-      VALUES (
-        ${territoryId},
-        ${record.id},
-        ST_Multi(ST_CollectionExtract(ST_MakeValid(ST_GeomFromGeoJSON(${geojsonStr})), 3))::geography,
-        ${source},
-        ${sourceUrl}
-      )
-      ON CONFLICT (id) DO UPDATE SET
-        geography = EXCLUDED.geography,
-        source = EXCLUDED.source,
-        source_url = EXCLUDED.source_url
-      RETURNING id
-    `);
-
-    if ((res.rows as unknown[]).length > 0) {
-      territoriesUpserted++;
+  return db.transaction(async (tx) => {
+    // Serialize publishers, including concurrent creates where FOR UPDATE has no row.
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('sync:state-boundaries'))`);
+    const vtIds = [
+      ...new Set(entries.filter(({ record }) => record.dataSourceId === "vt-psd").map(({ record }) => record.eiaId)),
+    ];
+    if (vtIds.length) {
+      const result = await tx.execute(sql`SELECT eia_id FROM utilities
+        WHERE deleted_at IS NULL AND jurisdiction = 'VT' AND service_territory_id = 'region-st-' || eia_id AND eia_id IN (${sql.join(
+          vtIds.map((id) => sql`${id}`),
+          sql`, `
+        )})`);
+      const found = new Set(result.rows.map((r) => r.eia_id));
+      if (vtIds.some((id) => !id || !found.has(id)))
+        throw new Error("Vermont crosswalk references missing utility records");
     }
-  }
-
-  // After writing state-source regions for a state where every configured
-  // state source succeeded, soft-delete any in-state HIFLD rows that were not
-  // part of this sync. Locked rows are never retired.
-  let hifldSuperseded = 0;
-  const idsByState = new Map<string, string[]>();
-  for (const { record } of entries) {
-    if (!record.state) continue;
-    if (!successfulStateSourceStates.has(record.state)) continue;
-    const list = idsByState.get(record.state) ?? [];
-    list.push(record.id);
-    idsByState.set(record.state, list);
-  }
-
-  for (const state of successfulStateSourceStates) {
-    const ids = idsByState.get(state) ?? [];
-    if (ids.length === 0) continue;
-
-    const idArray = sql`ARRAY[${sql.join(
-      ids.map((id) => sql`${id}`),
-      sql`, `
-    )}]`;
-
-    const res = await db.execute(sql`
-      UPDATE regions
-      SET deleted_at = now()
-      WHERE state = ${state}
-        AND deleted_at IS NULL
-        AND source ILIKE ${"%HIFLD%"}
-        AND locked_status IS NULL
-        AND id <> ALL (${idArray})
-      RETURNING id
-    `);
-
-    hifldSuperseded += (res.rows as unknown[]).length;
-  }
-
-  console.log("  Publication complete:");
-  console.log(`    Batch id: ${report.batchId}`);
-  console.log(`    Created: ${report.created.toLocaleString()}`);
-  console.log(`    Updated: ${report.updated.toLocaleString()}`);
-  console.log(`    Unchanged: ${report.unchanged.toLocaleString()}`);
-  console.log(`    Fields written: ${report.fieldsWritten.toLocaleString()}`);
-  console.log(`    Territories upserted: ${territoriesUpserted.toLocaleString()}`);
-  console.log(`    HIFLD superseded: ${hifldSuperseded.toLocaleString()}`);
-
-  if (report.deferrals.length > 0) {
-    console.log(
-      `    ⚠️  Deferred ${report.deferrals.length.toLocaleString()} field(s) a human last edited (policy B — not overwritten):`
-    );
-    for (const d of report.deferrals.slice(0, 20)) {
-      console.log(
-        `      - ${d.entityId} field '${d.field}': kept ${JSON.stringify(d.keptValue)}, sync wanted ${JSON.stringify(d.skippedValue)}`
-      );
+    const regionIds = entries.map(({ record }) => sql`${record.id}`);
+    if (regionIds.length) {
+      const protectedRows = await tx.execute(sql`SELECT id, locked_status, deleted_at FROM regions
+        WHERE id IN (${sql.join(regionIds, sql`, `)}) ORDER BY id FOR UPDATE`);
+      if (protectedRows.rows.some((row) => row.locked_status || row.deleted_at))
+        throw new Error("Locked or retired region requires manual review");
     }
-    if (report.deferrals.length > 20) {
-      console.log(`      … and ${(report.deferrals.length - 20).toLocaleString()} more`);
+    const report = await applySync(buildRegionSyncRecords(entries), {
+      entityType: "region",
+      initiatedBy: RUNNER_ACTOR,
+      batchTitle: "State service territory metadata sync",
+      tx,
+    });
+    const spatial = await applySync(buildTerritorySyncRecords(entries), {
+      entityType: "territory",
+      initiatedBy: RUNNER_ACTOR,
+      batchTitle: "State service territory boundary sync",
+      tx,
+    });
+    // Never commit region attribution independently of a deferred boundary.
+    if (spatial.deferrals.length || report.deferrals.length) {
+      throw new Error("Human-edited boundary or metadata deferred; publication rolled back for review");
     }
-  }
-
-  return {
-    created: report.created,
-    updated: report.updated,
-    unchanged: report.unchanged,
-    fieldsWritten: report.fieldsWritten,
-    deferrals: report.deferrals,
-    territoriesUpserted,
-    hifldSuperseded,
-  };
+    return {
+      created: report.created,
+      updated: report.updated,
+      unchanged: report.unchanged,
+      fieldsWritten: report.fieldsWritten + spatial.fieldsWritten,
+      deferrals: [],
+      territoriesUpserted: spatial.created + spatial.updated,
+      // Absence is not evidence of replacement. Preserve unmatched HIFLD coverage.
+      hifldSuperseded: 0,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -750,13 +698,6 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
   const entries: RegionEntry[] = [];
   const sourceResults: SourceResult[] = [];
 
-  const stateSourceConfigsByState = new Map<string, number>();
-  const stateSourceSuccessByState = new Map<string, number>();
-  for (const config of STATE_BOUNDARY_SOURCES) {
-    if (config.enabled === false || skipStates.has(config.state) || !config.isStateSource) continue;
-    stateSourceConfigsByState.set(config.state, (stateSourceConfigsByState.get(config.state) ?? 0) + 1);
-  }
-
   for (const config of STATE_BOUNDARY_SOURCES) {
     if (config.enabled === false || skipStates.has(config.state)) continue;
 
@@ -771,9 +712,6 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
         features: features.length,
         entries: sourceEntries.length,
       });
-      if (config.isStateSource) {
-        stateSourceSuccessByState.set(config.state, (stateSourceSuccessByState.get(config.state) ?? 0) + 1);
-      }
       console.log(`    ${features.length} features → ${sourceEntries.length} entries`);
     } catch (err) {
       const message = `Failed to fetch ${config.sourceLabel}: ${err instanceof Error ? err.message : String(err)}`;
@@ -786,23 +724,11 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
         entries: 0,
         error: message,
       });
-      if (config.isStateSource) {
-        // Failed state sources do not count toward success; the supersede
-        // step will skip this state entirely.
-        stateSourceSuccessByState.set(config.state, stateSourceSuccessByState.get(config.state) ?? 0);
-      }
     }
   }
 
   report.fetchedSources = sourceResults.filter((s) => !s.error).length;
   report.fetchedFeatures = sourceResults.reduce((sum, s) => sum + s.features, 0);
-
-  const successfulStateSourceStates = new Set<string>();
-  for (const [state, total] of stateSourceConfigsByState.entries()) {
-    if (stateSourceSuccessByState.get(state) === total) {
-      successfulStateSourceStates.add(state);
-    }
-  }
 
   let publishResult: PublishResult = {
     created: 0,
@@ -814,8 +740,8 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
     hifldSuperseded: 0,
   };
 
-  if (options.publish !== false) {
-    publishResult = await publishToDatabase(entries, successfulStateSourceStates);
+  if (options.publish !== false && report.errors.length === 0) {
+    publishResult = await publishToDatabase(entries);
   }
 
   report.regionsCreated = publishResult.created;

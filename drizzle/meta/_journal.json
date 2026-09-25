@@ -225,6 +225,13 @@
       "when": 1790100300002,
       "tag": "0035_rate_structures_name_index",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790358156353,
+      "tag": "0036_register_vermont_boundary_source",
+      "breakpoints": true
     }
   ]
 }

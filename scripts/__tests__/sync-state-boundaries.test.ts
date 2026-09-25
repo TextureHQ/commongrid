@@ -6,6 +6,7 @@ import {
   buildRegionRecord,
   buildRegionSyncRecords,
   buildRegionsFromFeatures,
+  buildTerritorySyncRecords,
   type Fetcher,
   fetchJsonWithFallback,
   normalizeUtilityName,
@@ -263,7 +264,7 @@ describe("syncStateBoundaries", () => {
       fetchImpl: mockFetch,
       publish: false,
       writeManifest: false,
-      skipStates: ["WI", "MN", "CO"],
+      skipStates: ["WI", "MN", "CO", "VT"],
     });
 
     // With all real states skipped, the registry has nothing left to run.
@@ -275,20 +276,34 @@ describe("syncStateBoundaries", () => {
   });
 });
 
-describe("Vermont PSD (staged)", () => {
+describe("Vermont PSD", () => {
   const config = STATE_BOUNDARY_SOURCES.find((source) => source.state === "VT") as SourceConfig;
 
-  it("keeps the source disabled until release gates are satisfied", async () => {
-    expect(config.enabled).toBe(false);
-    const fetchImpl = vi.fn<Fetcher>();
+  it("fetches complete Vermont polygons without upstream simplification", async () => {
+    expect(config.enabled).toBe(true);
+    const fetchImpl = vi.fn<Fetcher>().mockResolvedValue(
+      makeResponse({
+        type: "FeatureCollection",
+        features: Object.keys(VERMONT_UTILITY_EIA_IDS).map((COMPANYNAM) => makeFeature({ COMPANYNAM })),
+      })
+    );
     const report = await syncStateBoundaries({
       fetchImpl,
       publish: false,
       writeManifest: false,
       skipStates: ["WI", "MN", "CO"],
     });
-    expect(fetchImpl).not.toHaveBeenCalled();
-    expect(report.fetchedSources).toBe(0);
+    expect(report.errors).toEqual([]);
+    expect(report.fetchedFeatures).toBe(17);
+    const url = new URL(fetchImpl.mock.calls[0][0] as string);
+    expect(url.searchParams.has("maxAllowableOffset")).toBe(false);
+    expect(url.searchParams.get("outSR")).toBe("4326");
+  });
+
+  it("rejects incomplete Vermont coverage", () => {
+    expect(() =>
+      buildRegionsFromFeatures(config, [makeFeature({ COMPANYNAM: "Village of Stowe Electric Dept." })])
+    ).toThrow(/Incomplete utility coverage/);
   });
 
   it("maps all 17 names to existing EIA-linked Vermont utility regions", () => {
@@ -310,14 +325,35 @@ describe("Vermont PSD (staged)", () => {
   });
 
   it("does not invent a boundary date or import stale customer counts", () => {
-    const entries = buildRegionsFromFeatures(config, [
-      makeFeature({ COMPANYNAM: "Village of Stowe Electric Dept.", OBJECTID: 16, Customer_Num: 3386 }),
-    ]);
-    const [record] = buildRegionSyncRecords(entries);
+    const entries = buildRegionsFromFeatures(
+      config,
+      Object.keys(VERMONT_UTILITY_EIA_IDS).map((COMPANYNAM) =>
+        makeFeature({ COMPANYNAM, OBJECTID: 16, Customer_Num: 3386 })
+      )
+    );
+    const record = buildRegionSyncRecords(entries).find((r) => r.entityId === "region-st-27316")!;
     expect(record.entityId).toBe("region-st-27316");
     expect(record.sourceId).toBe("vt-psd");
     expect(record.asOf).toBeNull();
     expect(record.fields.sourceDate).toBeNull();
     expect(record.fields.customers).toBeNull();
+  });
+});
+
+describe("territory sync records", () => {
+  it("carries full polygon and provenance through the versioned publisher", () => {
+    const config = STATE_BOUNDARY_SOURCES.find((s) => s.state === "VT")!;
+    const record = buildRegionRecord(config, makeFeature({ COMPANYNAM: "Village of Stowe Electric Dept." }), 0)!;
+    const [territory] = buildTerritorySyncRecords([{ record, geometry: mockPolygon }]);
+    expect(territory).toMatchObject({
+      entityId: "territory-27316",
+      sourceId: "vt-psd",
+      asOf: null,
+      fields: { regionId: "region-st-27316" },
+      geography: mockPolygon,
+    });
+    expect(() => buildTerritorySyncRecords([{ record, geometry: { type: "Point", coordinates: [0, 0] } }])).toThrow(
+      /Non-polygon/
+    );
   });
 });
