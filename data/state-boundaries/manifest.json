@@ -1,0 +1,56 @@
+{
+  "source": "State service-territory boundary sync",
+  "generated_by": "sync:state-boundaries",
+  "generated_at": "2026-09-25T00:13:02.412Z",
+  "source_results": [
+    {
+      "sourceId": "wi-psc-municipal",
+      "sourceLabel": "WI PSC Electric Service Territories — Municipal",
+      "features": 81,
+      "entries": 81
+    },
+    {
+      "sourceId": "wi-psc-investor-owned",
+      "sourceLabel": "WI PSC Electric Service Territories — Investor-Owned",
+      "features": 12,
+      "entries": 12
+    },
+    {
+      "sourceId": "wi-psc-cooperative",
+      "sourceLabel": "WI PSC Electric Service Territories — Cooperative",
+      "features": 24,
+      "entries": 24
+    },
+    {
+      "sourceId": "mn-mngeo-eusa",
+      "sourceLabel": "MN Geospatial Commons Electric Utility Service Areas",
+      "features": 181,
+      "entries": 179
+    },
+    {
+      "sourceId": "co-hifld",
+      "sourceLabel": "HIFLD Electric Retail Service Territories — Colorado",
+      "features": 52,
+      "entries": 52
+    }
+  ],
+  "region_counts": {
+    "created": 135,
+    "updated": 213,
+    "unchanged": 0,
+    "fields_written": 2773
+  },
+  "territories_upserted": 348,
+  "hifld_superseded": 129,
+  "deferrals_count": 0,
+  "needs_open_source": [
+    "HIFLD Electric Retail Service Territories — Colorado (52 entries)"
+  ],
+  "errors": [],
+  "notes": [
+    "Regions are published via applySync (entityType 'region') to the Postgres registry.",
+    "Territory geometries are upserted separately via PostGIS (ST_MakeValid / ST_Multi).",
+    "HIFLD in-state rows are soft-deleted only after a higher-precedence state source is written, and only when the row is not human-locked.",
+    "Re-runs are idempotent (stable region/territory ids) and conflict-aware (applySync policy B leaves human-edited fields untouched)."
+  ]
+}
