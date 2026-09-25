@@ -150,17 +150,17 @@ jobs:
                     'name', u.name,
                     'slug', u.slug,
                     'eia_id', u.eia_id,
-                    'ownership_type', u.ownership_type,
+                    'segment', u.segment,
                     'state', r.state,
                     'customers', r.customers
                   ),
-                  'geometry', ST_AsGeoJSON(t.geom)::json
+                  'geometry', ST_AsGeoJSON(t.geography::geometry)::json
                 )
               ), '[]'::json)
             )
             FROM utilities u
             JOIN regions r ON u.service_territory_id = r.id
-            LEFT JOIN territories t ON t.region_id = r.id AND t.deleted_at IS NULL
+            JOIN territories t ON t.region_id = r.id AND t.deleted_at IS NULL
             WHERE u.deleted_at IS NULL
           " | gzip -9 > "$SNAPSHOT_DIR/utilities.geojson.gz"
           echo "Utilities GeoJSON size: $(du -h "$SNAPSHOT_DIR/utilities.geojson.gz" | cut -f1)"
@@ -213,12 +213,12 @@ jobs:
                   'type', 'Feature',
                   'properties', json_build_object(
                     'id', id,
-                    'name', plant_name,
+                    'name', name,
                     'slug', slug,
                     'utility_id', utility_id,
                     'state', state,
                     'primary_fuel', primary_fuel,
-                    'nameplate_capacity_mw', nameplate_capacity_mw,
+                    'total_capacity_mw', total_capacity_mw,
                     'status', status
                   ),
                   'geometry', json_build_object(
@@ -233,34 +233,13 @@ jobs:
           " | gzip -9 > "$SNAPSHOT_DIR/power-plants.geojson.gz"
           echo "Power plants GeoJSON size: $(du -h "$SNAPSHOT_DIR/power-plants.geojson.gz" | cut -f1)"
 
-      - name: Export GeoJSON — Transmission Lines
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        shell: bash -euo pipefail {0}
-        run: |
-          psql "$DATABASE_URL" -t -A -c "
-            SELECT json_build_object(
-              'type', 'FeatureCollection',
-              'features', COALESCE(json_agg(
-                json_build_object(
-                  'type', 'Feature',
-                  'properties', json_build_object(
-                    'id', id,
-                    'name', name,
-                    'slug', slug,
-                    'owner', owner,
-                    'voltage_kv', voltage_kv,
-                    'type', type,
-                    'status', status
-                  ),
-                  'geometry', ST_AsGeoJSON(geom)::json
-                )
-              ), '[]'::json)
-            )
-            FROM transmission_lines
-            WHERE deleted_at IS NULL
-          " | gzip -9 > "$SNAPSHOT_DIR/transmission-lines.geojson.gz"
-          echo "Transmission lines GeoJSON size: $(du -h "$SNAPSHOT_DIR/transmission-lines.geojson.gz" | cut -f1)"
+      # NOTE: There is intentionally NO transmission-lines GeoJSON export.
+      # `transmission_lines` stores only line METADATA (owner, voltage, class,
+      # endpoints) — the actual LineString geometry is not in Postgres; it lives
+      # in PMTiles for map rendering (see lib/db/schema/transmission-lines.ts).
+      # The metadata still ships in the allowlisted SQL dump above. A GeoJSON
+      # export here is impossible and previously referenced a nonexistent `geom`
+      # column, which is one of the errors that broke every run since W33.
 
       - name: Export GeoJSON — Pricing Nodes
         env:
@@ -277,10 +256,10 @@ jobs:
                     'id', id,
                     'name', name,
                     'slug', slug,
-                    'iso_id', iso_id,
+                    'iso', iso,
                     'node_type', node_type,
                     'zone', zone,
-                    'status', status
+                    'state', state
                   ),
                   'geometry', json_build_object(
                     'type', 'Point',
@@ -377,7 +356,6 @@ jobs:
           | \`utilities.geojson.gz\` | All utilities with service territory geometry |
           | \`ev-stations.geojson.gz\` | EV charging stations (point locations) |
           | \`power-plants.geojson.gz\` | Power plants (point locations) |
-          | \`transmission-lines.geojson.gz\` | Transmission lines (line geometry) |
           | \`pricing-nodes.geojson.gz\` | ISO/RTO pricing nodes (point locations) |
 
           ### Usage
@@ -401,5 +379,4 @@ jobs:
             "$SNAPSHOT_DIR"/utilities.geojson.gz \
             "$SNAPSHOT_DIR"/ev-stations.geojson.gz \
             "$SNAPSHOT_DIR"/power-plants.geojson.gz \
-            "$SNAPSHOT_DIR"/transmission-lines.geojson.gz \
             "$SNAPSHOT_DIR"/pricing-nodes.geojson.gz

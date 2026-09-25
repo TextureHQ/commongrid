@@ -202,8 +202,8 @@ export default async function SnapshotsPage() {
               <strong>SQL backups:</strong> Full database dumps in PostgreSQL custom format (.sql.gz)
             </li>
             <li>
-              <strong>GeoJSON layers:</strong> Spatial data for utilities, charging stations, power plants, transmission
-              lines, and pricing nodes
+              <strong>GeoJSON layers:</strong> Spatial data for utilities, charging stations, power plants, and pricing
+              nodes
             </li>
             <li>
               <strong>Frequency:</strong> New snapshots every Sunday at 4:00 AM UTC
