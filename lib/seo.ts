@@ -51,6 +51,35 @@ export const SITEMAP_PATHS = [
   "/explore/substations",
 ] as const;
 
+// Crawl hints for the sitemap. We deliberately do NOT emit lastModified — there
+// is no build-time source of truth for per-page modification dates and inventing
+// one would be misleading — so we express freshness via changeFrequency/priority.
+export type SitemapChangeFrequency = "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
+
+export type SitemapCrawlHint = {
+  changeFrequency: SitemapChangeFrequency;
+  priority: number;
+};
+
+/**
+ * Map a curated sitemap path to crawl hints. Data-backed explore surfaces update
+ * frequently and rank highest after the homepage; static content pages change
+ * rarely and rank lower. Every SITEMAP_PATHS entry resolves here; the trailing
+ * default keeps this total for any future path.
+ */
+export function sitemapCrawlHint(path: string): SitemapCrawlHint {
+  if (path === "/") return { changeFrequency: "daily", priority: 1.0 };
+  if (path === "/explore" || path.startsWith("/explore/")) {
+    return { changeFrequency: "daily", priority: 0.8 };
+  }
+  if (path === "/api") return { changeFrequency: "weekly", priority: 0.7 };
+  if (path === "/changelog" || path === "/snapshots") {
+    return { changeFrequency: "weekly", priority: 0.6 };
+  }
+  if (path === "/about") return { changeFrequency: "monthly", priority: 0.5 };
+  return { changeFrequency: "weekly", priority: 0.5 };
+}
+
 const NON_INDEXABLE_PREFIXES = [
   "/sign-in",
   "/sign-up",
