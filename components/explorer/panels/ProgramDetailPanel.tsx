@@ -6,9 +6,9 @@ import { DeleteEntityDialog } from "@/components/contributions/DeleteEntityDialo
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useProgram } from "@/hooks/useProgram";
+import { useRegionList } from "@/hooks/useRegionList";
 import { useUtilityNames } from "@/hooks/useUtilityNames";
 import { entityKindColor } from "@/lib/categorical-colors";
-import { getRegionById } from "@/lib/data";
 import { safeHostname } from "@/lib/geo";
 import {
   administratorOrganizations,
@@ -88,13 +88,15 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
 
   const { utilitiesBySlug } = useUtilityNames(organizationSlugs);
 
+  const { regionById } = useRegionList();
+
   // Resolve territory file keys for all program regions
   const territoryFileKeys = useMemo(() => {
     if (!program) return [];
     const keys: string[] = [];
     const seen = new Set<string>();
     for (const regionId of program.regions) {
-      const region = getRegionById(regionId);
+      const region = regionById.get(regionId);
       if (!region) continue;
       const key =
         region.type === "CCA_TERRITORY" || region.type === "ISO" || region.type === "CUSTOM"
@@ -105,7 +107,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
       keys.push(key);
     }
     return keys;
-  }, [program]);
+  }, [program, regionById]);
 
   useEffect(() => {
     if (territoryFileKeys.length === 0) {
