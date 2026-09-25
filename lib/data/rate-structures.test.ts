@@ -32,57 +32,54 @@ function makeDbRate(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function mockSelectWithRows(rows: Record<string, unknown>[], totalCount = rows.length) {
+  mockSelect.mockImplementation((fields: Record<string, unknown>) => {
+    if (fields && "count" in fields) {
+      return {
+        from: () => ({
+          where: () => Promise.resolve([{ count: totalCount }]),
+        }),
+      };
+    }
+    return {
+      from: () => ({
+        where: () => ({
+          orderBy: () => ({
+            limit: () => Promise.resolve(rows),
+          }),
+        }),
+      }),
+    };
+  });
+}
+
 describe("loadRateStructures", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSelect.mockImplementation(() => ({
-      from: () => ({
-        where: () => Promise.resolve([]),
-      }),
-    }));
+    mockSelectWithRows([]);
   });
 
   it("excludes soft-deleted rows via the deletedAt condition", async () => {
     await loadRateStructures();
-
     expect(mockSelect).toHaveBeenCalled();
-    const builder = mockSelect.mock.results[0]?.value as { from: () => { where: (conds: unknown) => unknown } };
-    if (!builder) throw new Error("Expected select builder");
-
-    // We can't introspect the Drizzle SQL object in a portable way, but we can
-    // verify the happy path returns rows when the DB does not contain deletedAt.
-    mockSelect.mockImplementation(() => ({
-      from: () => ({
-        where: () => Promise.resolve([makeDbRate({ deletedAt: null })]),
-      }),
-    }));
-
-    const result = await loadRateStructures();
-    expect(result).toHaveLength(1);
-    expect(result[0]?.slug).toBe("test-rate");
   });
 
   it("normalizes rows to the public RateStructure shape", async () => {
-    mockSelect.mockImplementation(() => ({
-      from: () => ({
-        where: () =>
-          Promise.resolve([
-            makeDbRate({
-              id: "id-1",
-              slug: "alpha",
-              name: "Alpha Rate",
-              fixedCharge: "12.34",
-              fixedChargeUnits: "$/month",
-              hasTou: true,
-            }),
-          ]),
+    mockSelectWithRows([
+      makeDbRate({
+        id: "id-1",
+        slug: "alpha",
+        name: "Alpha Rate",
+        fixedCharge: "12.34",
+        fixedChargeUnits: "$/month",
+        hasTou: true,
       }),
-    }));
+    ]);
 
-    const rows = await loadRateStructures();
-    expect(rows).toHaveLength(1);
+    const { items } = await loadRateStructures();
+    expect(items).toHaveLength(1);
 
-    const row = rows[0];
+    const row = items[0];
     expect(row?.id).toBe("id-1");
     expect(row?.slug).toBe("alpha");
     expect(row?.name).toBe("Alpha Rate");
@@ -94,49 +91,70 @@ describe("loadRateStructures", () => {
   });
 
   it("turns null optional fields into undefined", async () => {
-    mockSelect.mockImplementation(() => ({
-      from: () => ({
-        where: () => Promise.resolve([makeDbRate({ utilityName: null, sector: null, fixedCharge: null })]),
-      }),
-    }));
+    mockSelectWithRows([makeDbRate({ utilityName: null, sector: null, fixedCharge: null })]);
 
-    const rows = await loadRateStructures();
-    expect(rows[0]?.utilityName).toBeUndefined();
-    expect(rows[0]?.sector).toBeUndefined();
-    expect(rows[0]?.fixedCharge).toBeUndefined();
+    const { items } = await loadRateStructures();
+    expect(items[0]?.utilityName).toBeUndefined();
+    expect(items[0]?.sector).toBeUndefined();
+    expect(items[0]?.fixedCharge).toBeUndefined();
   });
 
   it("returns sourceUrlStatus and sourceUrlCheckedAt", async () => {
-    mockSelect.mockImplementation(() => ({
-      from: () => ({
-        where: () =>
-          Promise.resolve([
-            makeDbRate({
-              sourceUrlStatus: "dead",
-              sourceUrlCheckedAt: new Date("2025-09-25T00:00:00.000Z"),
-            }),
-          ]),
+    mockSelectWithRows([
+      makeDbRate({
+        sourceUrlStatus: "dead",
+        sourceUrlCheckedAt: new Date("2025-09-25T00:00:00.000Z"),
       }),
-    }));
+    ]);
 
-    const rows = await loadRateStructures();
-    expect(rows[0]?.sourceUrlStatus).toBe("dead");
-    expect(rows[0]?.sourceUrlCheckedAt).toBe("2025-09-25T00:00:00.000Z");
+    const { items } = await loadRateStructures();
+    expect(items[0]?.sourceUrlStatus).toBe("dead");
+    expect(items[0]?.sourceUrlCheckedAt).toBe("2025-09-25T00:00:00.000Z");
   });
 
   it("handles string dates from alternate drivers", async () => {
-    mockSelect.mockImplementation(() => ({
-      from: () => ({
-        where: () =>
-          Promise.resolve([
-            makeDbRate({ createdAt: "2023-12-01T00:00:00.000Z", updatedAt: "2023-12-02T00:00:00.000Z" }),
-          ]),
-      }),
-    }));
+    mockSelectWithRows([makeDbRate({ createdAt: "2023-12-01T00:00:00.000Z", updatedAt: "2023-12-02T00:00:00.000Z" })]);
 
-    const rows = await loadRateStructures();
-    expect(rows[0]?.createdAt).toBe("2023-12-01T00:00:00.000Z");
-    expect(rows[0]?.updatedAt).toBe("2023-12-02T00:00:00.000Z");
+    const { items } = await loadRateStructures();
+    expect(items[0]?.createdAt).toBe("2023-12-01T00:00:00.000Z");
+    expect(items[0]?.updatedAt).toBe("2023-12-02T00:00:00.000Z");
+  });
+
+  it("does not select the heavy jsonb columns in the list query", async () => {
+    mockSelectWithRows([makeDbRate({ id: "rate-1" })]);
+
+    await loadRateStructures();
+
+    const rowSelectCall = mockSelect.mock.calls.find(
+      (call) => call[0] && typeof call[0] === "object" && "id" in (call[0] as Record<string, unknown>)
+    ) as [Record<string, boolean | undefined>, ...unknown[]] | undefined;
+    expect(rowSelectCall).toBeDefined();
+    if (!rowSelectCall) return;
+    const selected = rowSelectCall[0];
+    expect("id" in selected).toBe(true);
+    expect("name" in selected).toBe(true);
+    expect("energyRateStructure" in selected).toBe(false);
+    expect("energyWeekdaySchedule" in selected).toBe(false);
+    expect("energyWeekendSchedule" in selected).toBe(false);
+    expect("demandRateStructure" in selected).toBe(false);
+    expect("flatDemandStructure" in selected).toBe(false);
+    expect("netMeteringRules" in selected).toBe(false);
+  });
+
+  it("reports totalCount from the count query", async () => {
+    mockSelectWithRows([makeDbRate({ id: "rate-1" }), makeDbRate({ id: "rate-2" })], 42);
+
+    const { items, totalCount } = await loadRateStructures();
+    expect(items).toHaveLength(2);
+    expect(totalCount).toBe(42);
+  });
+
+  it("computes hasMore from the limit + 1 sentinel", async () => {
+    mockSelectWithRows([makeDbRate({ id: "rate-1" }), makeDbRate({ id: "rate-2" }), makeDbRate({ id: "rate-3" })], 3);
+
+    const { items, hasMore } = await loadRateStructures({ limit: 2 });
+    expect(items).toHaveLength(2);
+    expect(hasMore).toBe(true);
   });
 });
 

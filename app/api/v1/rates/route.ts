@@ -45,55 +45,12 @@ const querySchema = z.object({
   cursor: z.string().optional(),
 });
 
-type SortField = "name";
-
-function sortRateStructures(
-  rateStructures: RateStructure[],
-  sortField: SortField,
-  order: "asc" | "desc"
-): RateStructure[] {
-  return [...rateStructures].sort((a, b) => {
-    const aa = a[sortField] ?? "";
-    const bb = b[sortField] ?? "";
-    let cmp = (aa as string).localeCompare(bb as string);
-
-    if (cmp === 0) {
-      cmp = a.id.localeCompare(b.id);
-    }
-
-    return order === "desc" ? -cmp : cmp;
-  });
-}
-
 function tryEncodeCursor(data: CursorV1): string | null {
   try {
     return encodeCursor(data);
   } catch {
     return null;
   }
-}
-
-function applyCursor(
-  sorted: RateStructure[],
-  cursor: CursorV1,
-  sortField: SortField,
-  order: "asc" | "desc"
-): RateStructure[] {
-  const cursorSortValue = cursor.s[sortField] as string | undefined;
-  const cursorId = cursor.id;
-
-  const startIdx = sorted.findIndex((item) => {
-    const itemValue = item[sortField] ?? "";
-    const cmpVal = cursorSortValue ?? "";
-    const cmp = (itemValue as string).localeCompare(cmpVal);
-
-    if (order === "asc") {
-      return cmp > 0 || (cmp === 0 && item.id > cursorId);
-    }
-    return cmp < 0 || (cmp === 0 && item.id > cursorId);
-  });
-
-  return startIdx === -1 ? [] : sorted.slice(startIdx);
 }
 
 const ALL_FIELDS = new Set<string>([
@@ -173,7 +130,7 @@ async function handler(req: Request): Promise<Response> {
     cursor = decodeCursor(rawCursor);
   }
 
-  const allRateStructures = await loadRateStructures({
+  const { items, totalCount, hasMore } = await loadRateStructures({
     search,
     sector,
     hasTou,
@@ -182,14 +139,11 @@ async function handler(req: Request): Promise<Response> {
     isEvRate,
     utilityId,
     eiaId,
+    sort,
+    order,
+    limit,
+    cursor,
   });
-
-  const sorted = sortRateStructures(allRateStructures, sort, order);
-  const totalCount = sorted.length;
-  const afterCursor = cursor ? applyCursor(sorted, cursor, sort, order) : sorted;
-  const page = afterCursor.slice(0, limit + 1);
-  const hasMore = page.length > limit;
-  const items = hasMore ? page.slice(0, limit) : page;
 
   let nextCursor: string | null = null;
   if (hasMore && items.length > 0) {

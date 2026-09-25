@@ -218,6 +218,13 @@
       "when": 1790100300001,
       "tag": "0034_rate_structure_source_url_status",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790100300002,
+      "tag": "0035_rate_structures_name_index",
+      "breakpoints": true
     }
   ]
 }

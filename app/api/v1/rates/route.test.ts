@@ -56,10 +56,10 @@ function makeRate(overrides: Partial<RateStructure> & Record<string, unknown> = 
 }
 
 function fakeLoadRateStructures(rates: RateStructure[]) {
-  vi.mocked(loadRateStructures).mockImplementation(async (filters) => {
+  vi.mocked(loadRateStructures).mockImplementation(async (options = {}) => {
     let result = rates.map((r) => ({ ...r }));
-    if (filters?.search) {
-      const q = filters.search.toLowerCase();
+    if (options.search) {
+      const q = options.search.toLowerCase();
       result = result.filter(
         (r) =>
           r.name.toLowerCase().includes(q) ||
@@ -67,28 +67,62 @@ function fakeLoadRateStructures(rates: RateStructure[]) {
           r.slug.toLowerCase().includes(q)
       );
     }
-    if (filters?.sector) {
-      result = result.filter((r) => r.sector === filters.sector);
+    if (options.sector) {
+      result = result.filter((r) => r.sector === options.sector);
     }
-    if (typeof filters?.hasTou === "boolean") {
-      result = result.filter((r) => r.hasTou === filters.hasTou);
+    if (typeof options.hasTou === "boolean") {
+      result = result.filter((r) => r.hasTou === options.hasTou);
     }
-    if (typeof filters?.hasDemandCharge === "boolean") {
-      result = result.filter((r) => r.hasDemandCharge === filters.hasDemandCharge);
+    if (typeof options.hasDemandCharge === "boolean") {
+      result = result.filter((r) => r.hasDemandCharge === options.hasDemandCharge);
     }
-    if (typeof filters?.hasNetMetering === "boolean") {
-      result = result.filter((r) => r.hasNetMetering === filters.hasNetMetering);
+    if (typeof options.hasNetMetering === "boolean") {
+      result = result.filter((r) => r.hasNetMetering === options.hasNetMetering);
     }
-    if (typeof filters?.isEvRate === "boolean") {
-      result = result.filter((r) => r.isEvRate === filters.isEvRate);
+    if (typeof options.isEvRate === "boolean") {
+      result = result.filter((r) => r.isEvRate === options.isEvRate);
     }
-    if (filters?.utilityId) {
-      result = result.filter((r) => r.utilityId === filters.utilityId);
+    if (options.utilityId) {
+      result = result.filter((r) => r.utilityId === options.utilityId);
     }
-    if (filters?.eiaId !== undefined) {
-      result = result.filter((r) => r.eiaId === filters.eiaId);
+    if (options.eiaId !== undefined) {
+      result = result.filter((r) => r.eiaId === options.eiaId);
     }
-    return result;
+
+    const sort = options.sort ?? "name";
+    const order = options.order ?? "asc";
+    const limit = options.limit ?? 50;
+    const cursor = options.cursor;
+
+    result.sort((a, b) => {
+      const aa = a[sort] ?? "";
+      const bb = b[sort] ?? "";
+      let cmp = (aa as string).localeCompare(bb as string);
+      if (cmp === 0) {
+        cmp = a.id.localeCompare(b.id);
+      }
+      return order === "desc" ? -cmp : cmp;
+    });
+
+    let startIdx = 0;
+    if (cursor) {
+      const cursorValue = cursor.s[sort] as string | undefined;
+      startIdx = result.findIndex((item) => {
+        const itemValue = item[sort] ?? "";
+        const cmp = (itemValue as string).localeCompare(cursorValue ?? "");
+        if (order === "asc") {
+          return cmp > 0 || (cmp === 0 && item.id > cursor.id);
+        }
+        return cmp < 0 || (cmp === 0 && item.id > cursor.id);
+      });
+      if (startIdx === -1) startIdx = result.length;
+    }
+
+    const page = result.slice(startIdx, startIdx + limit + 1);
+    const hasMore = page.length > limit;
+    const items = hasMore ? page.slice(0, limit) : page;
+
+    return { items, totalCount: result.length, hasMore };
   });
 }
 
@@ -240,5 +274,30 @@ describe("GET /api/v1/rates", () => {
     const json = (await res.json()) as { data?: { name: string }[]; pagination?: { total: number } };
     expect(json.pagination?.total).toBe(1);
     expect(json.data?.[0]?.name).toBe("Rate A");
+  });
+
+  it("passes pagination options to the loader", async () => {
+    fakeLoadRateStructures([
+      makeRate({ name: "Alpha Rate", slug: "alpha" }),
+      makeRate({ name: "Beta Rate", slug: "beta" }),
+    ]);
+
+    const res = await GET(makeRequest({ limit: 1, order: "desc" }) as never);
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as {
+      data?: { name: string }[];
+      pagination?: { total: number; hasMore: boolean; cursor: string | null };
+    };
+    expect(json.pagination?.total).toBe(2);
+    expect(json.data?.[0]?.name).toBe("Beta Rate");
+    expect(json.pagination?.hasMore).toBe(true);
+
+    expect(loadRateStructures).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        sort: "name",
+        order: "desc",
+        limit: 1,
+      })
+    );
   });
 });
