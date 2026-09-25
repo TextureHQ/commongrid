@@ -106,6 +106,24 @@ describe("loadRateStructures", () => {
     expect(rows[0]?.fixedCharge).toBeUndefined();
   });
 
+  it("returns sourceUrlStatus and sourceUrlCheckedAt", async () => {
+    mockSelect.mockImplementation(() => ({
+      from: () => ({
+        where: () =>
+          Promise.resolve([
+            makeDbRate({
+              sourceUrlStatus: "dead",
+              sourceUrlCheckedAt: new Date("2025-09-25T00:00:00.000Z"),
+            }),
+          ]),
+      }),
+    }));
+
+    const rows = await loadRateStructures();
+    expect(rows[0]?.sourceUrlStatus).toBe("dead");
+    expect(rows[0]?.sourceUrlCheckedAt).toBe("2025-09-25T00:00:00.000Z");
+  });
+
   it("handles string dates from alternate drivers", async () => {
     mockSelect.mockImplementation(() => ({
       from: () => ({

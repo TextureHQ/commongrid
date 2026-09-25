@@ -43,6 +43,9 @@ export interface RateStructure {
   sourceUrl?: string;
   sourceParentUrl?: string;
   sourceDate?: string;
+  /** Link health from the weekly URDB sync: undefined=unchecked, 'ok', 'dead'. */
+  sourceUrlStatus?: "ok" | "dead";
+  sourceUrlCheckedAt?: string;
 
   createdAt: string;
   updatedAt: string;

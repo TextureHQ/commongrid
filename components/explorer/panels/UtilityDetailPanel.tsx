@@ -4,7 +4,7 @@ import { SignInButton } from "@clerk/nextjs";
 import type { FeatureCollection } from "geojson";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -110,6 +110,9 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     limit: 200,
     enabled: !!utility?.id,
   });
+
+  const [ratesExpanded, setRatesExpanded] = useState(false);
+  const ratesToShow = ratesExpanded ? utilityRates : utilityRates.slice(0, 15);
 
   const { programs: utilityPrograms, isLoading: utilityProgramsLoading } = useProgramList({
     organization: utility?.slug,
@@ -345,7 +348,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
             <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
               Rates ({utilityRates.length})
             </div>
-            {utilityRates.slice(0, 15).map((rate) => (
+            {ratesToShow.map((rate) => (
               <button
                 key={rate.id}
                 type="button"
@@ -363,9 +366,23 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
               </button>
             ))}
             {utilityRates.length > 15 && (
-              <div style={{ fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", marginTop: 4 }}>
-                + {utilityRates.length - 15} more
-              </div>
+              <button
+                type="button"
+                onClick={() => setRatesExpanded((prev) => !prev)}
+                style={{
+                  fontSize: 11,
+                  color: "var(--color-text-muted)",
+                  textAlign: "center",
+                  marginTop: 4,
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                  width: "100%",
+                }}
+              >
+                {ratesExpanded ? "Show fewer" : `+ ${utilityRates.length - 15} more`}
+              </button>
             )}
           </>
         )}

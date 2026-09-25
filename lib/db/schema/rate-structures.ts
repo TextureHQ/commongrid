@@ -61,6 +61,10 @@ export const rateStructures = pgTable(
     sourceParentUrl: text("source_parent_url"),
     sourceDate: timestamp("source_date", { withTimezone: true }),
 
+    /** Link health from the weekly URDB sync: null=unchecked, 'ok', 'dead'. */
+    sourceUrlStatus: text("source_url_status"),
+    sourceUrlCheckedAt: timestamp("source_url_checked_at", { withTimezone: true }),
+
     /** NULL | 'semi_locked' | 'fully_locked' — denormalized cache from entity_locks table */
     lockedStatus: text("locked_status"),
 

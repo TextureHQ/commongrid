@@ -76,6 +76,18 @@ describe("GET /api/v1/rates/:slug", () => {
     expect(json.data?.sourceUrl).toBe("https://example.com/tariff.pdf");
   });
 
+  it("returns sourceUrlStatus for dead links", async () => {
+    vi.mocked(loadRateBySlug).mockResolvedValue(
+      makeRate({ name: "Alpha Rate", slug: "alpha-rate", sourceUrlStatus: "dead" })
+    );
+
+    const res = await GET(makeRequest("alpha-rate") as never, { params: Promise.resolve({ slug: "alpha-rate" }) });
+    expect(res.status).toBe(200);
+
+    const json = (await res.json()) as { data?: { sourceUrlStatus: string } };
+    expect(json.data?.sourceUrlStatus).toBe("dead");
+  });
+
   it("returns 404 when the slug does not exist", async () => {
     vi.mocked(loadRateBySlug).mockResolvedValue(null);
 

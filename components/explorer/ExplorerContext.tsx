@@ -537,6 +537,14 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
         return;
       }
 
+      // Nested rate under the utility currently in view: pushDeeper so the
+      // path becomes /explore/utilities/:utilitySlug/rates/:rateSlug and back
+      // returns to the utility detail.
+      if (view === "rate" && top?.type === "detail" && top.payload.entityKind === "utilities") {
+        stack.pushDeeper(makeDetailRoute("rates", slug));
+        return;
+      }
+
       // Same-entity drill-in from that entity's own list: push the detail on
       // top of the (filtered) list so back returns to the filtered list.
       if (currentList?.payload.tab === targetTab && top?.type === "list") {
