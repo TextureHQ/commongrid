@@ -19,7 +19,7 @@ describe("crawler indexing headers", () => {
     }
   );
 
-  it.each(["/", "/about", "/explore/utilities", "/social-image", "/sitemap.xml", "/robots.txt"])(
+  it.each(["/", "/about", "/explore/utilities", "/sitemap.xml", "/robots.txt"])(
     "does not noindex public surface %s",
     async (path) => {
       const response = await middleware(new NextRequest(`https://commongrid.info${path}`), {} as NextFetchEvent);

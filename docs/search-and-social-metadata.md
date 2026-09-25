@@ -10,13 +10,12 @@ metadata from its server page; the existing interactive UI lives unchanged in
 `HomePageClient.tsx`. The canonical is deliberately not in a shared layout:
 entity pages must not claim that the homepage is their canonical URL.
 
-`/social-image` is a statically built 1200×630 PNG using Next.js ImageResponse,
-the existing CommonGrid logo, and existing homepage map artwork. It requires no
-API, database, external font, or Mapbox request. Colors match the Edges light
-paper/heading/border tokens; Edges client components cannot render in Satori.
-The shared metadata builder retains entity-specific titles and descriptions
-while adding the common image. Existing entity routes are not canonicalized or
-otherwise restructured by this change.
+`/social-card.png` is a designed, polished 1200×630 static asset shipped in
+`public/`. It requires no API, database, external font, or Mapbox request, and
+is served directly as a static file (no runtime image generation). The shared
+metadata builder retains entity-specific titles and descriptions while adding
+the common image. Existing entity routes are not canonicalized or otherwise
+restructured by this change.
 
 ## Indexing policy
 
@@ -44,7 +43,7 @@ headers. Before launch, inspect server-rendered HTML with a crawler user agent:
 
 ```sh
 curl -A 'Twitterbot/1.0' https://commongrid.info/
-curl -I https://commongrid.info/social-image
+curl -I https://commongrid.info/social-card.png
 curl https://commongrid.info/robots.txt
 curl https://commongrid.info/sitemap.xml
 curl -I https://commongrid.info/developers
@@ -55,5 +54,5 @@ Use LinkedIn Post Inspector and an actual Slack/X share after deployment; local
 HTTP checks cannot establish third-party rendering or refresh their caches.
 Production-absolute image URLs intentionally do not point at a preview deploy,
 so a platform preview of an unmerged change cannot validate the new image until
-that image exists on production. The image endpoint itself can be inspected on
+that image exists on production. The static asset itself can be inspected on
 the PR's preview deployment.

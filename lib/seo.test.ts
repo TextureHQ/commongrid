@@ -12,7 +12,7 @@ describe("launch metadata", () => {
     expect(homepageMetadata.alternates?.canonical).toBe(SITE_URL);
     expect(homepageMetadata.openGraph).toMatchObject({ url: SITE_URL, images: [SOCIAL_IMAGE] });
     expect(homepageMetadata.twitter).toMatchObject({ card: "summary_large_image", images: [SOCIAL_IMAGE] });
-    expect(SOCIAL_IMAGE.url).toBe(`${SITE_URL}/social-image`);
+    expect(SOCIAL_IMAGE.url).toBe(`${SITE_URL}/social-card.png`);
     expect(SOCIAL_IMAGE).toMatchObject({ width: 1200, height: 630 });
   });
 
