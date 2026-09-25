@@ -36,6 +36,7 @@ export type Fetcher = (input: string | URL | Request, init?: RequestInit) => Pro
 
 /** Raw URDB rate record as returned by the OpenEI API. */
 export interface UrdbRate {
+  [key: string]: unknown;
   label: string;
   approved: boolean;
   eiaid: number | string;
@@ -215,6 +216,20 @@ export function deriveHasNetMetering(rate: UrdbRate): boolean {
   return keys.some((k) => k.includes("net") || k.includes("metering") || k.includes("dgrule"));
 }
 
+export const URDB_ATTRIBUTION = {
+  source: "OpenEI Utility Rate Database (URDB)",
+  publisher: "OpenEI / U.S. Department of Energy",
+  sourceUrl: "https://openei.org/wiki/Utility_Rate_Database",
+  apiDocumentationUrl: "https://apps.openei.org/services/doc/rest/util_rates/?version=8",
+  license: "CC0-1.0",
+  licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+  licenseNotice: "Content is available under Creative Commons Zero unless otherwise noted.",
+  changes:
+    "CommonGrid projects API fields, derives explorer flags, and links unique EIA utility IDs. The complete API record is retained as JSONB.",
+  disclaimer:
+    "Published schedules, not verified household eligibility or prices. No endorsement implied. Linked utility documents retain their own terms.",
+} as const;
+
 const EV_HEURISTIC = /\b(EV|electric vehicle|PEV)\b/i;
 
 /**
@@ -258,7 +273,8 @@ export function mapUrdbRateToSyncRecord(rate: UrdbRate, resolver: EntityResolver
 
   const entityId = `rate-${rate.label}`;
   const slug = buildSlug(rate.utility ?? "unknown", rate.name, rate.label);
-  const asOf = rate.startdate ? urdbTimestampToDate(rate.startdate) : null;
+  // Effective dates are not upstream observation or verification dates.
+  const asOf = null;
 
   return {
     sourceId: "urdb",
@@ -266,6 +282,9 @@ export function mapUrdbRateToSyncRecord(rate: UrdbRate, resolver: EntityResolver
     entityId,
     slug,
     fields: pruneUndefined({
+      rawRecord: deepSortKeys(rate),
+      upstreamRecordUrl: `https://apps.openei.org/USURDB/rate/view/${encodeURIComponent(rate.label)}`,
+      attribution: URDB_ATTRIBUTION,
       name: rate.name,
       eiaId: Number(rate.eiaid),
       utilityId,
@@ -275,8 +294,7 @@ export function mapUrdbRateToSyncRecord(rate: UrdbRate, resolver: EntityResolver
       serviceType: null,
       description: rate.description,
       // `fixed_charge` is a Postgres `numeric` column, which Drizzle reads
-      // back as a JS string. applySync compares desired-vs-current with
-      // JSON.stringify, so a number here ("10" !== 10) would look changed on
+      // back as a JS string. applySync compares desired-vs-current structurally, so a number here ("10" !== 10) would look changed on
       // every re-run and rewrite the row + a version each week. Store it as a
       // string so the diff is stable and re-runs stay idempotent.
       fixedCharge: rate.fixedchargefirstmeter == null ? rate.fixedchargefirstmeter : String(rate.fixedchargefirstmeter),
@@ -414,6 +432,30 @@ export async function fetchUrdbRatesForSector(
 // Database resolver
 // ---------------------------------------------------------------------------
 
+/** Duplicate EIA IDs never resolve to an arbitrary last database row. */
+export function buildEntityResolver(
+  utilityRows: Array<{ id: string; eiaId: string | number | null }>,
+  regionRows: Array<{ id: string; eiaId: string | number | null }>
+): EntityResolver {
+  const uniqueIndex = (rows: Array<{ id: string; eiaId: string | number | null }>) => {
+    const matches = new Map<string, Set<string>>();
+    for (const row of rows) {
+      const key = normalizeEiaId(row.eiaId);
+      if (!key) continue;
+      const ids = matches.get(key) ?? new Set<string>();
+      ids.add(row.id);
+      matches.set(key, ids);
+    }
+    const result = new Map<string, string>();
+    for (const [key, ids] of matches) {
+      const [id] = ids;
+      if (ids.size === 1 && id !== undefined) result.set(key, id);
+    }
+    return result;
+  };
+  return { utilityIdByEiaId: uniqueIndex(utilityRows), regionIdByEiaId: uniqueIndex(regionRows) };
+}
+
 async function loadResolver(): Promise<EntityResolver> {
   const utilityIdByEiaId = new Map<string, string>();
   const regionIdByEiaId = new Map<string, string>();
@@ -428,21 +470,12 @@ async function loadResolver(): Promise<EntityResolver> {
     .select({ id: utilities.id, eiaId: utilities.eiaId })
     .from(utilities)
     .where(isNotNull(utilities.eiaId));
-  for (const row of utilityRows) {
-    const eiaId = normalizeEiaId(row.eiaId);
-    if (eiaId) utilityIdByEiaId.set(eiaId, row.id);
-  }
 
   const regionRows = await db
     .select({ id: regions.id, eiaId: regions.eiaId })
     .from(regions)
     .where(isNotNull(regions.eiaId));
-  for (const row of regionRows) {
-    const eiaId = normalizeEiaId(row.eiaId);
-    if (eiaId) regionIdByEiaId.set(eiaId, row.id);
-  }
-
-  return { utilityIdByEiaId, regionIdByEiaId };
+  return buildEntityResolver(utilityRows, regionRows);
 }
 
 // ---------------------------------------------------------------------------
@@ -520,6 +553,7 @@ function writeManifest(report: SyncReport): void {
     generated_by: RUNNER_ACTOR,
     generated_at: new Date().toISOString(),
     sectors: report.sectors,
+    attribution: URDB_ATTRIBUTION,
     fetched_rates: report.fetchedRates,
     kept_rates: report.keptRates,
     skipped: {
@@ -539,7 +573,8 @@ function writeManifest(report: SyncReport): void {
     notes: [
       'Rate structures are published via applySync (entityType "rate_structure") to the Postgres registry.',
       "V1 scope: approved, currently-effective Residential + Commercial rates for utilities already in the CommonGrid registry.",
-      "URDB is CC0 'unless otherwise noted'; records with an explicit non-CC0 source-side note are skipped and logged.",
+      "URDB API documentation carries a CC0-unless-otherwise-noted notice; heuristic restriction checks are not a license audit. Full records, source links and attribution are retained.",
+      "Utility matches must be unique; unknown/ambiguous utilities are skipped and ambiguous regions remain unlinked. Effective dates are not verification dates.",
       "Re-runs are idempotent (stable rate-<label> ids) and conflict-aware (applySync policy B leaves human-edited fields untouched).",
     ],
   };

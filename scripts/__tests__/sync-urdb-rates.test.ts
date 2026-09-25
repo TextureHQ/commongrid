@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UrdbApiResponse, UrdbRate } from "../sync-urdb-rates";
 import {
+  buildEntityResolver,
   buildSlug,
   deepSortKeys,
   deriveHasDemandCharge,
@@ -15,6 +16,7 @@ import {
   mapUrdbRateToSyncRecord,
   normalizeEiaId,
   syncUrdbRates,
+  URDB_ATTRIBUTION,
   urdbTimestampToDate,
 } from "../sync-urdb-rates";
 
@@ -344,5 +346,45 @@ describe("syncUrdbRates", () => {
     expect(report.keptRates).toBe(0); // unknown utility because no DB
     expect(report.skippedUnknownUtility).toBe(1);
     expect(report.errors).toEqual([]);
+  });
+});
+
+describe("URDB provenance", () => {
+  it("preserves unprojected schedules, eligibility, notices and attribution", () => {
+    const rate = makeRate({
+      demandweekdayschedule: [[1, 0]],
+      flatdemandmonths: [0, 1],
+      eligibility: "Separate EV meter",
+      futureField: { b: 2, a: 1 },
+    });
+    const record = mapUrdbRateToSyncRecord(rate, makeResolver());
+    if (!record) throw new Error("Expected known utility rate");
+    expect(record.fields.rawRecord).toEqual(rate);
+    expect(record.fields.upstreamRecordUrl).toBe("https://apps.openei.org/USURDB/rate/view/test-label-1");
+    expect(record.fields.attribution).toEqual(URDB_ATTRIBUTION);
+    expect(record.sourceId).toBe("urdb");
+    expect(record.asOf).toBeNull();
+    expect(record.fields.startDate).toEqual(new Date("2021-01-01T00:00:00Z"));
+  });
+
+  it("never chooses an arbitrary duplicate EIA utility or region", () => {
+    const rows = [
+      { id: "u1", eiaId: 12345 },
+      { id: "u2", eiaId: "12345" },
+    ];
+    for (const input of [rows, [...rows].reverse()]) {
+      const resolver = buildEntityResolver(input, []);
+      expect(resolver.utilityIdByEiaId.has("12345")).toBe(false);
+      expect(filterRates([makeRate()], resolver, 1_700_000_000).unknownUtility).toBe(1);
+    }
+    const resolver = buildEntityResolver(
+      [{ id: "u1", eiaId: 12345 }],
+      [
+        { id: "r1", eiaId: 12345 },
+        { id: "r2", eiaId: 12345 },
+      ]
+    );
+    expect(mapUrdbRateToSyncRecord(makeRate(), resolver)?.fields.regionId).toBeNull();
+    expect(resolver.utilityIdByEiaId.get("12345")).toBe("u1");
   });
 });
