@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
 import { buildMetadata } from "@/lib/metadata";
-import { homepageMetadata, SITE_URL, SITEMAP_PATHS, SOCIAL_IMAGE, shouldNoIndex } from "@/lib/seo";
+import { homepageMetadata, SITE_URL, SITEMAP_PATHS, SOCIAL_IMAGE, shouldNoIndex, sitemapCrawlHint } from "@/lib/seo";
+
+const VALID_CHANGE_FREQUENCIES = new Set(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]);
 
 // Protect route boundaries: root metadata must not canonicalize every entity
 // page to the homepage, and a shared OG image must not erase entity titles.
@@ -38,6 +40,39 @@ describe("launch metadata", () => {
       expect(url.search).toBe("");
       expect(shouldNoIndex(url.pathname)).toBe(false);
       expect(entry.lastModified).toBeUndefined();
+    }
+  });
+
+  it("emits valid crawl hints (priority in [0,1] and a known changeFrequency) for every entry", () => {
+    const entries = sitemap();
+    for (const entry of entries) {
+      expect(typeof entry.priority).toBe("number");
+      expect(entry.priority).toBeGreaterThanOrEqual(0);
+      expect(entry.priority).toBeLessThanOrEqual(1);
+      expect(VALID_CHANGE_FREQUENCIES.has(entry.changeFrequency as string)).toBe(true);
+    }
+  });
+
+  it("ranks the homepage highest and explore surfaces above static content", () => {
+    const byPath = new Map(sitemap().map((entry) => [new URL(entry.url).pathname, entry]));
+    expect(byPath.get("/")?.priority).toBe(1.0);
+    expect(byPath.get("/")?.changeFrequency).toBe("daily");
+    expect(byPath.get("/explore")?.priority).toBe(0.8);
+    expect(byPath.get("/explore/utilities")?.priority).toBe(0.8);
+    expect(byPath.get("/explore/utilities")?.changeFrequency).toBe("daily");
+    expect(byPath.get("/api")?.priority).toBe(0.7);
+    expect(byPath.get("/about")?.priority).toBe(0.5);
+    expect(byPath.get("/about")?.changeFrequency).toBe("monthly");
+    // Explore data surfaces should outrank static content pages.
+    expect(byPath.get("/explore/utilities")?.priority ?? 0).toBeGreaterThan(byPath.get("/about")?.priority ?? 1);
+  });
+
+  it("resolves crawl hints for every curated sitemap path", () => {
+    for (const path of SITEMAP_PATHS) {
+      const hint = sitemapCrawlHint(path);
+      expect(hint.priority).toBeGreaterThanOrEqual(0);
+      expect(hint.priority).toBeLessThanOrEqual(1);
+      expect(VALID_CHANGE_FREQUENCIES.has(hint.changeFrequency)).toBe(true);
     }
   });
 
