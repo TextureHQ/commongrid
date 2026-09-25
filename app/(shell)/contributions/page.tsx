@@ -213,21 +213,19 @@ export default function ContributionsDashboard() {
       <ContentPage>
         <ContentPage.Header title="My Contributions" breadcrumbs={[{ label: "Contributions" }]} />
         <ContentPage.Body>
-          <div className="px-4 sm:px-6 py-12">
-            <Card variant="outlined">
-              <Card.Content className="py-16 text-center">
-                <Icon name="UserCircle" size={48} className="text-text-muted mx-auto mb-4" />
-                <div className="text-lg font-semibold text-text-heading mb-2">Sign in to view your contributions</div>
-                <p className="text-text-muted mb-6 max-w-md mx-auto">
-                  Track your suggested edits and help improve CommonGrid data quality.
-                </p>
-                <SignInButton mode="modal">
-                  <Button variant="brand" size="lg">
-                    Sign In
-                  </Button>
-                </SignInButton>
-              </Card.Content>
-            </Card>
+          <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-background-muted">
+              <Icon name="UserCircle" size={32} className="text-text-muted" />
+            </div>
+            <h2 className="mb-2 text-lg font-semibold text-text-heading">Sign in to view your contributions</h2>
+            <p className="mb-6 max-w-md text-text-muted">
+              Track your suggested edits and help improve CommonGrid data quality.
+            </p>
+            <SignInButton mode="modal">
+              <Button variant="brand" size="lg">
+                Sign In
+              </Button>
+            </SignInButton>
           </div>
         </ContentPage.Body>
       </ContentPage>
@@ -301,18 +299,18 @@ export default function ContributionsDashboard() {
           )}
 
           {!isLoading && !error && contributions.length === 0 && (
-            <Card variant="outlined">
-              <Card.Content className="py-16 text-center">
-                <Icon name="Article" size={48} className="text-text-muted mx-auto mb-4" />
-                <div className="text-lg font-semibold text-text-heading mb-2">No contributions yet</div>
-                <p className="text-text-muted mb-6 max-w-md mx-auto">
-                  Suggest edits on any entity page to help improve CommonGrid data.
-                </p>
-                <Button variant="brand" size="lg" href="/explore">
-                  Explore Entities
-                </Button>
-              </Card.Content>
-            </Card>
+            <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-background-muted">
+                <Icon name="Article" size={32} className="text-text-muted" />
+              </div>
+              <h2 className="mb-2 text-lg font-semibold text-text-heading">No contributions yet</h2>
+              <p className="mb-6 max-w-md text-text-muted">
+                Suggest edits on any entity page to help improve CommonGrid data.
+              </p>
+              <Button variant="brand" size="lg" href="/explore">
+                Explore Entities
+              </Button>
+            </div>
           )}
 
           {!isLoading && !error && contributions.length > 0 && (
