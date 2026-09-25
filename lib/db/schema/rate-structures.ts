@@ -83,6 +83,7 @@ export const rateStructures = pgTable(
     index("idx_rate_structures_utility_id").on(table.utilityId),
     index("idx_rate_structures_region_id").on(table.regionId),
     index("idx_rate_structures_sector").on(table.sector),
+    index("idx_rate_structures_name_id").on(table.name, table.id),
     index("idx_rate_structures_has_tou").on(table.hasTou),
     index("idx_rate_structures_is_ev_rate").on(table.isEvRate),
   ]
