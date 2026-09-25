@@ -88,16 +88,63 @@ export const PARAMETERS: Record<string, JsonSchema> = {
  * envelopes, error shapes, and generic GeoJSON.
  */
 export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
-  PaginatedMeta: {
+  DeprecatedUtility: {
     type: "object",
     properties: {
-      total: { type: "integer", description: "Total number of matching records" },
-      limit: { type: "integer", description: "Page size used for this response" },
-      nextCursor: {
-        type: "string",
-        nullable: true,
-        description: "Cursor for the next page, or null if no more pages",
+      ...Object.fromEntries(
+        ["eia_id", "utility_slug", "name", "raw_status", "source"].map((key) => [key, { type: "string" }])
+      ),
+      status: { type: "string", enum: ["active", "retired", "merged", "renamed"] },
+      ...Object.fromEntries(
+        ["effective_from", "effective_to", "successor_eia_id", "successor_slug", "deprecation_reason", "notes"].map(
+          (key) => [key, { type: "string", nullable: true }]
+        )
+      ),
+    },
+  },
+  ChangelogBatch: {
+    type: "object",
+    properties: {
+      batch: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          sourceType: { type: "string" },
+          title: { type: "string" },
+          description: { type: "string", nullable: true },
+          initiatedBy: { type: "string", nullable: true },
+          startedAt: { type: "string", format: "date-time" },
+          completedAt: { type: "string", format: "date-time", nullable: true },
+        },
       },
+      items: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            versionId: { type: "integer" },
+            entityType: { type: "string" },
+            entityId: { type: "string" },
+            entityName: { type: "string", nullable: true },
+            entitySlug: { type: "string", nullable: true },
+            changeType: { type: "string" },
+            changeSummary: { type: "string", nullable: true },
+            changedAt: { type: "string", format: "date-time" },
+            href: { type: "string", nullable: true },
+          },
+        },
+      },
+      total: { type: "integer" },
+      hasMore: { type: "boolean" },
+    },
+  },
+  Pagination: {
+    type: "object",
+    properties: {
+      total: { type: "integer", description: "Total matching records" },
+      limit: { type: "integer", description: "Page size" },
+      cursor: { type: "string", nullable: true, description: "Cursor for the next page, or null" },
+      hasMore: { type: "boolean" },
     },
   },
   ErrorResponse: {
@@ -428,6 +475,7 @@ export const STATIC_SCHEMAS: Record<string, JsonSchema> = {
 };
 
 export const TAGS = [
+  { name: "Rates & Tariffs", description: "Utility rate structures and tariff schedules (OpenEI URDB)" },
   { name: "Utilities", description: "Electric, gas, and water utilities" },
   { name: "Grid Operators", description: "ISOs, RTOs, and Balancing Authorities" },
   { name: "Regions", description: "Geographic regions (states, counties, territories)" },
