@@ -217,7 +217,7 @@ export default function AboutPage() {
             <Link href="/explore">
               <Button variant="primary">Browse the registry</Button>
             </Link>
-            <Link href="/auth/signup">
+            <Link href="/sign-up">
               <Button variant="secondary">Create account</Button>
             </Link>
           </div>
