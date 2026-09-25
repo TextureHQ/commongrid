@@ -32,6 +32,7 @@ import {
   powerPlants,
   pricingNodes,
   programs,
+  rateStructures,
   regions,
   rtos,
   territories,
@@ -58,7 +59,8 @@ export type EntityType =
   | "rto"
   | "balancing_authority"
   | "region"
-  | "program";
+  | "program"
+  | "rate_structure";
 
 export const EDIT_SUMMARY_MIN_LENGTH = 25;
 
@@ -105,6 +107,7 @@ const ENTITY_TABLES: Record<EntityType, AnyTable> = {
   balancing_authority: balancingAuthorities,
   region: regions,
   program: programs,
+  rate_structure: rateStructures,
 };
 
 export function getEntityTable(entityType: string): AnyTable | null {
@@ -128,6 +131,7 @@ const ENTITY_TABLE_NAMES: Record<EntityType, string> = {
   balancing_authority: "balancing_authorities",
   region: "regions",
   program: "programs",
+  rate_structure: "rate_structures",
 };
 
 // ---------------------------------------------------------------------------

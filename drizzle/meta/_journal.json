@@ -197,6 +197,13 @@
       "when": 1790100180000,
       "tag": "0031_grant_commongrid_sync_regions_territories",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790100240000,
+      "tag": "0032_create_rate_structures",
+      "breakpoints": true
     }
   ]
 }

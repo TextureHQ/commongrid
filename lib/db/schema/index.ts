@@ -101,6 +101,8 @@ export type { PricingNodeInsert, PricingNodeSelect } from "./pricing-nodes";
 export { pricingNodes } from "./pricing-nodes";
 export type { ProgramInsert, ProgramSelect } from "./programs";
 export { programs } from "./programs";
+export type { RateStructureInsert, RateStructureSelect } from "./rate-structures";
+export { rateStructures } from "./rate-structures";
 export type { RegionInsert, RegionSelect } from "./regions";
 export { regions } from "./regions";
 export type { RtoInsert, RtoSelect } from "./rtos";
