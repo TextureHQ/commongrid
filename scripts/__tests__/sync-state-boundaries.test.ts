@@ -1,5 +1,7 @@
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import utilities from "../../data/utilities.json";
+import { VERMONT_UTILITY_EIA_IDS } from "../lib/vermont-utility-crosswalk";
 import {
   buildRegionRecord,
   buildRegionSyncRecords,
@@ -135,7 +137,7 @@ describe("buildRegionSyncRecords", () => {
     expect(sync.entityId).toBe("region-st-12345");
     expect(sync.slug).toBe("st-acme-electric-12345");
     expect(sync.sourceId).toBe(config.dataSourceId);
-    expect(sync.asOf).toEqual(new Date(config.sourceDate));
+    expect(sync.asOf).toEqual(new Date(config.sourceDate as string));
 
     expect(sync.fields).toHaveProperty("name", "ACME Electric");
     expect(sync.fields).toHaveProperty("type", "SERVICE_TERRITORY");
@@ -270,5 +272,52 @@ describe("syncStateBoundaries", () => {
     expect(report.regionsCreated).toBe(0);
     expect(report.territoriesUpserted).toBe(0);
     expect(report.errors).toEqual([]);
+  });
+});
+
+describe("Vermont PSD (staged)", () => {
+  const config = STATE_BOUNDARY_SOURCES.find((source) => source.state === "VT") as SourceConfig;
+
+  it("keeps the source disabled until release gates are satisfied", async () => {
+    expect(config.enabled).toBe(false);
+    const fetchImpl = vi.fn<Fetcher>();
+    const report = await syncStateBoundaries({
+      fetchImpl,
+      publish: false,
+      writeManifest: false,
+      skipStates: ["WI", "MN", "CO"],
+    });
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(report.fetchedSources).toBe(0);
+  });
+
+  it("maps all 17 names to existing EIA-linked Vermont utility regions", () => {
+    expect(Object.keys(VERMONT_UTILITY_EIA_IDS)).toHaveLength(17);
+    expect(new Set(Object.values(VERMONT_UTILITY_EIA_IDS)).size).toBe(17);
+    for (const [name, eiaId] of Object.entries(VERMONT_UTILITY_EIA_IDS)) {
+      const utility = utilities.find((row) => row.eiaId === eiaId && row.jurisdiction === "VT");
+      expect(utility).toBeDefined();
+      const record = buildRegionRecord(config, makeFeature({ COMPANYNAM: name, OBJECTID: 99 }), 0);
+      expect(record?.id).toBe(utility?.serviceTerritoryId);
+      expect(record?.eiaId).toBe(eiaId);
+    }
+  });
+
+  it("rejects unknown names rather than using source IDs or fuzzy matches", () => {
+    expect(() => buildRegionRecord(config, makeFeature({ COMPANYNAM: "Unknown Utility", OBJECTID: 27316 }), 0)).toThrow(
+      /unmapped utility name/
+    );
+  });
+
+  it("does not invent a boundary date or import stale customer counts", () => {
+    const entries = buildRegionsFromFeatures(config, [
+      makeFeature({ COMPANYNAM: "Village of Stowe Electric Dept.", OBJECTID: 16, Customer_Num: 3386 }),
+    ]);
+    const [record] = buildRegionSyncRecords(entries);
+    expect(record.entityId).toBe("region-st-27316");
+    expect(record.sourceId).toBe("vt-psd");
+    expect(record.asOf).toBeNull();
+    expect(record.fields.sourceDate).toBeNull();
+    expect(record.fields.customers).toBeNull();
   });
 });
