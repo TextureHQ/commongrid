@@ -16,10 +16,10 @@ import {
   FieldList,
   RelationshipCards,
 } from "@/components/entity";
+import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
 import { usePowerPlant } from "@/hooks/usePowerPlant";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { useUtilityList } from "@/hooks/useUtilityList";
-import { getBalancingAuthorityById } from "@/lib/data";
 import {
   formatCapacity,
   formatStateName,
@@ -42,6 +42,7 @@ export function PowerPlantDetailClient() {
   const params = useParams<{ slug: string }>();
   const { powerPlant: plant, isLoading } = usePowerPlant(params.slug);
   const { utilities } = useUtilityList({ limit: 200 });
+  const { balancingAuthorities } = useBalancingAuthorityList({ limit: 200 });
   const { powerPlants: allPlants, isLoading: plantsLoading } = usePowerPlantList({ limit: 500, state: plant?.state });
 
   const nearbyPlants = useMemo(() => {
@@ -72,7 +73,9 @@ export function PowerPlantDetailClient() {
   }
 
   const utility = plant.utilityId ? (utilities.find((u) => u.id === plant.utilityId) ?? null) : null;
-  const ba = plant.balancingAuthorityId ? getBalancingAuthorityById(plant.balancingAuthorityId) : null;
+  const ba = plant.balancingAuthorityId
+    ? (balancingAuthorities.find((b) => b.id === plant.balancingAuthorityId) ?? null)
+    : null;
 
   const pointGeoJSON = {
     type: "FeatureCollection" as const,

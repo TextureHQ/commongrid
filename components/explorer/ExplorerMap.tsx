@@ -4,6 +4,8 @@ import { InteractiveMap, type LayerFeature, type LayerSpec, layer } from "@textu
 import type { Feature, FeatureCollection } from "geojson";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
+import { useIsoList } from "@/hooks/useIsoList";
 import {
   evNetworkColor,
   fuelColor,
@@ -12,7 +14,7 @@ import {
   utilityColor,
   voltageColor,
 } from "@/lib/categorical-colors";
-import { getAllBalancingAuthorities, getAllIsos, getAllPrograms, getRegionById } from "@/lib/data";
+import { getAllPrograms, getRegionById } from "@/lib/data";
 import type { MapRegion } from "@/lib/explorer/region-navigation";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
 import { resolveColorMapping, resolveCSSColor } from "@/lib/resolve-css-colors";
@@ -144,6 +146,8 @@ interface GridBoundaryData {
 
 function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[]) {
   const [data, setData] = useState<GridBoundaryData | null>(null);
+  const { isos } = useIsoList({ limit: 200 });
+  const { balancingAuthorities } = useBalancingAuthorityList({ limit: 200 });
 
   useEffect(() => {
     if (!isActive) {
@@ -154,9 +158,6 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
     let cancelled = false;
 
     async function load() {
-      const isos = getAllIsos();
-      const bas = getAllBalancingAuthorities();
-
       let colorIdx = 0;
       const colorMapping: Record<string, { hex: string }> = {};
 
@@ -169,7 +170,7 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
           return { key: `iso-${iso.shortName.toLowerCase()}`, name: iso.shortName, type: "ISO", colorKey };
         });
 
-      const baFiles = bas
+      const baFiles = balancingAuthorities
         .filter((ba) => ba.regionId)
         .map((ba) => {
           const colorKey = `ba-${ba.slug}`;
@@ -218,7 +219,7 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
     return () => {
       cancelled = true;
     };
-  }, [isActive, operatorPalette]);
+  }, [isActive, operatorPalette, isos, balancingAuthorities]);
 
   return data;
 }
