@@ -8,6 +8,7 @@ import { homepageMetadata, SITE_URL, SITEMAP_PATHS, SOCIAL_IMAGE, shouldNoIndex 
 // page to the homepage, and a shared OG image must not erase entity titles.
 describe("launch metadata", () => {
   it("uses absolute production URLs and a large social card on the homepage", () => {
+    expect(homepageMetadata.title).toEqual({ absolute: "CommonGrid" });
     expect(homepageMetadata.alternates?.canonical).toBe(SITE_URL);
     expect(homepageMetadata.openGraph).toMatchObject({ url: SITE_URL, images: [SOCIAL_IMAGE] });
     expect(homepageMetadata.twitter).toMatchObject({ card: "summary_large_image", images: [SOCIAL_IMAGE] });

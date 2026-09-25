@@ -12,7 +12,8 @@ export const SOCIAL_IMAGE = {
 };
 
 export const homepageMetadata: Metadata = {
-  title: "CommonGrid",
+  // Do not apply the root layout's "%s - CommonGrid" template twice.
+  title: { absolute: "CommonGrid" },
   description: SITE_DESCRIPTION,
   alternates: { canonical: SITE_URL },
   openGraph: {
