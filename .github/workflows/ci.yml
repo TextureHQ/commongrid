@@ -6,6 +6,40 @@ on:
     branches: [main]
 
 jobs:
+  boundary-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      postgis: ${{ steps.changes.outputs.postgis }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@15192bc058cc28a13dbf6cde61f19e18988b7af6 # v3
+        id: changes
+        with:
+          # PRs: the full PR diff (including forks). Pushes to main: only
+          # this push, not all changes since the feature branch diverged.
+          base: ${{ github.ref }}
+          filters: |
+            postgis:
+              - 'scripts/sync-state-boundaries.ts'
+              - 'scripts/lib.ts'
+              - 'scripts/lib/**'
+              - 'scripts/__tests__/state-boundaries-postgis.test.ts'
+              - 'scripts/__tests__/sync-state-boundaries.test.ts'
+              - 'scripts/__tests__/fixtures/**'
+              - 'lib/sync/**'
+              - 'lib/db/**'
+              - 'lib/mod/**'
+              - 'drizzle/**'
+              - 'drizzle.config.*'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.json'
+              - 'vitest.config.*'
+              - '.github/workflows/**'
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -29,6 +63,10 @@ jobs:
       - run: npm test
 
   state-boundaries-postgis:
+    needs: boundary-changes
+    # Job-level gating avoids allocating a runner or starting PostGIS when
+    # unrelated UI/docs change. Normal CI jobs remain unconditional.
+    if: needs.boundary-changes.outputs.postgis == 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
