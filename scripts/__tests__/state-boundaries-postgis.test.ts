@@ -4,7 +4,13 @@ import type { Polygon } from "geojson";
 import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { getPooledDb } from "@/lib/db/client-pooled";
-import { buildRegionRecord, publishToDatabase, STATE_BOUNDARY_SOURCES } from "../sync-state-boundaries";
+import { VERMONT_UTILITY_EIA_IDS } from "../lib/vermont-utility-crosswalk";
+import {
+  buildRegionRecord,
+  publishToDatabase,
+  STATE_BOUNDARY_SOURCES,
+  syncStateBoundaries,
+} from "../sync-state-boundaries";
 
 vi.mock("@/lib/db/client-pooled", () => ({ getPooledDb: vi.fn() }));
 
@@ -82,6 +88,46 @@ suite("state boundary publication (real PostGIS)", () => {
     await pool.query(
       "INSERT INTO utilities (eia_id, jurisdiction, service_territory_id) VALUES ('27316', 'VT', 'region-st-27316')"
     );
+  });
+
+  it("publishes only Vermont's 17 utilities and reruns idempotently without fetching other states", async () => {
+    for (const eiaId of Object.values(VERMONT_UTILITY_EIA_IDS)) {
+      if (eiaId === "27316") continue;
+      await pool.query("INSERT INTO utilities (eia_id, jurisdiction, service_territory_id) VALUES ($1, 'VT', $2)", [
+        eiaId,
+        `region-st-${eiaId}`,
+      ]);
+    }
+    const fetchImpl = vi.fn(async (input: string | URL | Request) => {
+      if (!String(input).startsWith(config.url)) throw new Error("Unselected source fetched");
+      return new Response(
+        JSON.stringify({
+          type: "FeatureCollection",
+          features: Object.keys(VERMONT_UTILITY_EIA_IDS).map((COMPANYNAM) => ({
+            type: "Feature",
+            properties: { COMPANYNAM },
+            geometry: polygon,
+          })),
+        })
+      );
+    });
+    const options = { states: ["VT"], fetchImpl, writeManifest: false };
+    const first = await syncStateBoundaries(options);
+    expect(first.errors).toEqual([]);
+    expect(first.fetchedSources).toBe(1);
+    expect(first.territoriesUpserted).toBe(17);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(
+      (await pool.query("SELECT count(*) FROM territories WHERE source LIKE 'Vermont PSD%' AND version = 1")).rows[0]
+        .count
+    ).toBe("17");
+    expect((await pool.query("SELECT count(*) FROM regions WHERE state = 'VT'")).rows[0].count).toBe("17");
+    const batches = (await pool.query("SELECT count(*) FROM change_batches")).rows[0].count;
+    const second = await syncStateBoundaries(options);
+    expect(second.territoriesUpserted).toBe(0);
+    expect(second.fieldsWritten).toBe(0);
+    expect((await pool.query("SELECT count(*) FROM change_batches")).rows[0].count).toBe(batches);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
   it("reproduces 42P10 on historical geometry, then repairs and retries atomically", async () => {

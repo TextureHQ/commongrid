@@ -3,7 +3,17 @@ name: Sync State Boundaries
 on:
   schedule:
     - cron: '0 12 5 * *' # 5th of each month at noon UTC
-  workflow_dispatch: {} # Manual trigger
+  workflow_dispatch:
+    inputs:
+      states:
+        description: 'Comma-separated enabled states (e.g. VT); blank runs all enabled states'
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
 
 # Data syncs publish to a dedicated branch and open/update a PR instead of
 # pushing directly to protected main. The shared concurrency group keeps the
@@ -34,12 +44,20 @@ jobs:
           # fetch layer's Firecrawl fallback when a state source 403s.
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
-        run: npx tsx scripts/sync-state-boundaries.ts
+          # Pass input as data, never interpolate it into shell commands.
+          SELECTED_STATES: ${{ inputs.states || '' }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [ -n "$SELECTED_STATES" ]; then
+            args+=("--states=$SELECTED_STATES")
+          fi
+          npx tsx scripts/sync-state-boundaries.ts "${args[@]}"
       - name: Publish via branch + PR
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          BRANCH: talos/sync-state-boundaries-data
+          BRANCH: meridian/sync-state-boundaries-data
           PR_TITLE: "data: update state service-territory boundaries"
           PR_BODY: |
             Automated state service-territory boundary sync. The workflow commits generated bookkeeping (the run manifest) on a dedicated branch and opens or updates a pull request so branch protection can review and merge it safely.

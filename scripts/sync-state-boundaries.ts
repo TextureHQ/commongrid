@@ -16,6 +16,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { parseArgs } from "node:util";
 import { sql } from "drizzle-orm";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { getPooledDb } from "@/lib/db/client-pooled";
@@ -134,6 +135,7 @@ interface Manifest {
   source: string;
   generated_by: string;
   generated_at: string;
+  selected_states: string[];
   source_results: SourceResult[];
   region_counts: {
     created: number;
@@ -630,7 +632,7 @@ export async function publishToDatabase(entries: RegionEntry[]): Promise<Publish
 // I/O
 // ---------------------------------------------------------------------------
 
-function writeManifest(report: SyncReport, sourceResults: SourceResult[]): void {
+function writeManifest(report: SyncReport, sourceResults: SourceResult[], sources: SourceConfig[]): void {
   const needsOpenSource: string[] = [];
   for (const result of sourceResults) {
     if (result.error) continue;
@@ -644,6 +646,7 @@ function writeManifest(report: SyncReport, sourceResults: SourceResult[]): void 
     source: "State service-territory boundary sync",
     generated_by: RUNNER_ACTOR,
     generated_at: new Date().toISOString(),
+    selected_states: [...new Set(sources.map((source) => source.state))],
     source_results: sourceResults,
     region_counts: {
       created: report.regionsCreated,
@@ -658,8 +661,8 @@ function writeManifest(report: SyncReport, sourceResults: SourceResult[]): void 
     errors: report.errors,
     notes: [
       "Regions are published via applySync (entityType 'region') to the Postgres registry.",
-      "Territory geometries are upserted separately via PostGIS (ST_MakeValid / ST_Multi).",
-      "HIFLD in-state rows are soft-deleted only after a higher-precedence state source is written, and only when the row is not human-locked.",
+      "Region metadata, territory geometries, history, and changelog are committed atomically for selected states.",
+      "Invalid geometry and protected edits abort publication; unmatched HIFLD coverage is retained.",
       "Re-runs are idempotent (stable region/territory ids) and conflict-aware (applySync policy B leaves human-edited fields untouched).",
     ],
   };
@@ -671,14 +674,48 @@ function writeManifest(report: SyncReport, sourceResults: SourceResult[]): void 
 
 export interface RunOptions {
   fetchImpl?: Fetcher;
+  /** Omit to run every enabled state; an explicit list must be nonempty and supported. */
+  states?: string[];
   skipStates?: string[];
   publish?: boolean;
   writeManifest?: boolean;
 }
 
+export function selectBoundarySources(
+  options: Pick<RunOptions, "states" | "skipStates">,
+  registry: SourceConfig[] = STATE_BOUNDARY_SOURCES
+): SourceConfig[] {
+  const enabled = registry.filter((source) => source.enabled !== false);
+  const supported = new Set(enabled.map((source) => source.state));
+  function validate(states: string[]): Set<string> {
+    const normalized = states.map((state) => state.trim().toUpperCase());
+    if (normalized.some((state) => !supported.has(state))) {
+      throw new Error(`Unsupported state selection. Enabled states: ${[...supported].join(", ")}`);
+    }
+    return new Set(normalized);
+  }
+  const states = options.states === undefined ? undefined : validate(options.states);
+  const skipped = validate(options.skipStates ?? []);
+  if (states && (states.size === 0 || [...states].some((state) => skipped.has(state)))) {
+    throw new Error("State selection must be nonempty and must not overlap --skip-states");
+  }
+  return enabled.filter((source) => (!states || states.has(source.state)) && !skipped.has(source.state));
+}
+
+export function parseStateBoundaryArgs(args: string[]): Pick<RunOptions, "states" | "skipStates"> {
+  const { values } = parseArgs({
+    args,
+    options: { states: { type: "string" }, "skip-states": { type: "string" } },
+    strict: true,
+    allowPositionals: false,
+  });
+  return { states: values.states?.split(","), skipStates: values["skip-states"]?.split(",") };
+}
+
 export async function syncStateBoundaries(options: RunOptions = {}): Promise<SyncReport> {
+  // Validate before any source request or database access; never widen a typo to all states.
+  const sources = selectBoundarySources(options);
   const fetchImpl = options.fetchImpl ?? fetch;
-  const skipStates = new Set((options.skipStates ?? []).map((s) => s.toUpperCase()));
 
   fs.mkdirSync(DATA_DIR, { recursive: true });
   fs.mkdirSync(MANIFEST_DIR, { recursive: true });
@@ -699,9 +736,8 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
   const entries: RegionEntry[] = [];
   const sourceResults: SourceResult[] = [];
 
-  for (const config of STATE_BOUNDARY_SOURCES) {
-    if (config.enabled === false || skipStates.has(config.state)) continue;
-
+  console.log(`  Selected states: ${[...new Set(sources.map((source) => source.state))].join(", ")}`);
+  for (const config of sources) {
     console.log(`  Fetching ${config.sourceLabel}...`);
     try {
       const features = await fetchSource(config, fetchImpl);
@@ -754,7 +790,7 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
   report.hifldSuperseded = publishResult.hifldSuperseded;
 
   if (options.writeManifest !== false) {
-    writeManifest(report, sourceResults);
+    writeManifest(report, sourceResults, sources);
   }
 
   return report;
@@ -772,10 +808,7 @@ function isDirectInvocation(): boolean {
 async function main() {
   console.log("Syncing state service territory boundaries\n");
 
-  const skipStatesFlag = process.argv.find((arg) => arg.startsWith("--skip-states="));
-  const skipStates = skipStatesFlag ? skipStatesFlag.split("=")[1]?.split(",") : undefined;
-
-  const report = await syncStateBoundaries({ skipStates });
+  const report = await syncStateBoundaries(parseStateBoundaryArgs(process.argv.slice(2)));
 
   console.log("\nSync complete:");
   console.log(`  Sources fetched: ${report.fetchedSources}`);
