@@ -43,3 +43,18 @@ Migration `0037_reconcile_geometry_history_uniqueness` restores missing uniquene
 The PostGIS fixture now starts without the spatial-history key. Regression coverage reproduces the publisher's `42P10` failure on a pre-history polygon, confirms transaction rollback, applies the actual migration, then verifies preserved originals, successful replacement, and repeat-run idempotence. Additional cases cover equivalent/partial/nonunique indexes, repeat migration, duplicate refusal, and deferrable keys. The existing path-gated job runs these tests; unrelated PRs still do not start PostGIS.
 
 Rollout: human review and merge, verify successful production deployment of migration 0037, then dispatch the existing sync and perform the 17-utility readback above. This migration is additive and backward-compatible; reverting application code need not remove the restored constraint. It contains no boundary-data mutation, and no manual production DDL is part of rollout.
+
+
+## Scoped recovery runs
+
+Manual dispatch accepts `states`, a comma-separated list of enabled state codes. Use `VT` to fetch and publish only Vermont's 17 utilities; no Wisconsin, Minnesota, or Colorado sources are fetched or published. Blank/omitted dispatch input and the monthly schedule still run all enabled sources. The CLI equivalent is `npm run sync:state-boundaries -- --states=VT`. Unknown, disabled, empty CLI selections, and overlapping include/skip lists fail before network or database access. Lowercase codes and surrounding whitespace are normalized.
+
+After human review/merge and deployment verification, dispatch the reviewed workflow on main:
+
+```sh
+gh workflow run sync-state-boundaries.yml --ref main -f states=VT
+```
+
+The run logs and manifest explicitly record selected states. All selected sources must succeed; metadata, geometry, history, and changelog still publish in one transaction. There is no automatic skipping or geometry repair. This isolates Vermont from the separate invalid/empty Manitowoc Public Utilities polygon that rolled back the all-state run. It does not resolve Wisconsin or change the monthly schedule: the all-state run remains blocked until that source defect is addressed. Manifest publication uses the `meridian/sync-state-boundaries-data` automation branch and a bookkeeping PR, with explicit workflow write permissions.
+
+Verify all 17 canonical utility/territory links and PSD attribution after the Vermont run, then repeat it to check idempotence. A scoped run is not evidence that unselected sources succeeded.

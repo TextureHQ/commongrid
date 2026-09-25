@@ -10,8 +10,10 @@ import {
   type Fetcher,
   fetchJsonWithFallback,
   normalizeUtilityName,
+  parseStateBoundaryArgs,
   type SourceConfig,
   STATE_BOUNDARY_SOURCES,
+  selectBoundarySources,
   syncStateBoundaries,
 } from "../sync-state-boundaries";
 
@@ -298,10 +300,13 @@ describe("Vermont PSD", () => {
       fetchImpl,
       publish: false,
       writeManifest: false,
-      skipStates: ["WI", "MN", "CO"],
+      states: ["VT"],
     });
     expect(report.errors).toEqual([]);
     expect(report.fetchedFeatures).toBe(17);
+    expect(report.fetchedSources).toBe(1);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(fetchImpl.mock.calls[0][0]).toContain("maps.vcgi.vermont.gov");
     const url = new URL(fetchImpl.mock.calls[0][0] as string);
     expect(url.searchParams.has("maxAllowableOffset")).toBe(false);
     expect(url.searchParams.get("outSR")).toBe("4326");
@@ -362,5 +367,47 @@ describe("territory sync records", () => {
     expect(() => buildTerritorySyncRecords([{ record, geometry: { type: "Point", coordinates: [0, 0] } }])).toThrow(
       /Non-polygon/
     );
+  });
+});
+
+describe("state selection", () => {
+  it("keeps the monthly/default run on all enabled sources", () => {
+    expect(selectBoundarySources(parseStateBoundaryArgs([]))).toEqual(
+      STATE_BOUNDARY_SOURCES.filter((source) => source.enabled !== false)
+    );
+  });
+
+  it("normalizes, deduplicates, and selects all layers for requested states", () => {
+    const sources = selectBoundarySources(parseStateBoundaryArgs(["--states= vt, WI,vt "]));
+    expect(sources.map((source) => source.state)).toEqual(["VT", "WI", "WI", "WI"]);
+  });
+
+  it("preserves the legacy skip flag", () => {
+    expect(selectBoundarySources(parseStateBoundaryArgs(["--skip-states=WI,MN,CO"])).map((s) => s.state)).toEqual([
+      "VT",
+    ]);
+  });
+
+  it.each(["", " ", "ZZ", "VT,ZZ", "VT,", "VT; echo injected", "ALL"])(
+    "rejects invalid selection %j before fetch or publication",
+    async (selection) => {
+      const fetchImpl = vi.fn<Fetcher>();
+      await expect(
+        syncStateBoundaries({ ...parseStateBoundaryArgs([`--states=${selection}`]), fetchImpl })
+      ).rejects.toThrow(/Unsupported state/);
+      expect(fetchImpl).not.toHaveBeenCalled();
+    }
+  );
+
+  it("rejects empty lists, disabled states, and overlapping selections", () => {
+    expect(() => selectBoundarySources({ states: [] })).toThrow(/nonempty/);
+    expect(() => selectBoundarySources({ states: ["VT"], skipStates: ["VT"] })).toThrow(/overlap/);
+    expect(() =>
+      selectBoundarySources({ states: ["VT"] }, [makeArcGISConfig({ state: "VT", enabled: false })])
+    ).toThrow(/Unsupported state/);
+  });
+
+  it.each([["--state=VT"], ["--states"], ["VT"]])("rejects malformed CLI arguments %j", (...args) => {
+    expect(() => parseStateBoundaryArgs(args)).toThrow();
   });
 });

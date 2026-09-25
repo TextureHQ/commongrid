@@ -4,7 +4,13 @@ import type { Polygon } from "geojson";
 import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { getPooledDb } from "@/lib/db/client-pooled";
-import { buildRegionRecord, publishToDatabase, STATE_BOUNDARY_SOURCES } from "../sync-state-boundaries";
+import { VERMONT_UTILITY_EIA_IDS } from "../lib/vermont-utility-crosswalk";
+import {
+  buildRegionRecord,
+  publishToDatabase,
+  STATE_BOUNDARY_SOURCES,
+  syncStateBoundaries,
+} from "../sync-state-boundaries";
 
 vi.mock("@/lib/db/client-pooled", () => ({ getPooledDb: vi.fn() }));
 
@@ -82,6 +88,67 @@ suite("state boundary publication (real PostGIS)", () => {
     await pool.query(
       "INSERT INTO utilities (eia_id, jurisdiction, service_territory_id) VALUES ('27316', 'VT', 'region-st-27316')"
     );
+  });
+
+  it("publishes only Vermont's 17 utilities and reruns idempotently without fetching other states", async () => {
+    for (const eiaId of Object.values(VERMONT_UTILITY_EIA_IDS)) {
+      if (eiaId === "27316") continue;
+      await pool.query("INSERT INTO utilities (eia_id, jurisdiction, service_territory_id) VALUES ($1, 'VT', $2)", [
+        eiaId,
+        `region-st-${eiaId}`,
+      ]);
+    }
+    const fetchImpl = vi.fn(async (input: string | URL | Request) => {
+      if (!String(input).startsWith(config.url)) throw new Error("Unselected source fetched");
+      return new Response(
+        JSON.stringify({
+          type: "FeatureCollection",
+          features: Object.keys(VERMONT_UTILITY_EIA_IDS).map((COMPANYNAM) => ({
+            type: "Feature",
+            properties: { COMPANYNAM },
+            geometry: polygon,
+          })),
+        })
+      );
+    });
+    const options = { states: ["VT"], fetchImpl, writeManifest: false };
+    const first = await syncStateBoundaries(options);
+    expect(first.errors).toEqual([]);
+    expect(first.fetchedSources).toBe(1);
+    expect(first.territoriesUpserted).toBe(17);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(
+      (await pool.query("SELECT count(*) FROM territories WHERE source LIKE 'Vermont PSD%' AND version = 1")).rows[0]
+        .count
+    ).toBe("17");
+    expect((await pool.query("SELECT count(*) FROM regions WHERE state = 'VT'")).rows[0].count).toBe("17");
+    const publicationSnapshot = async () =>
+      Promise.all(
+        ["regions", "territories", "entity_versions", "entity_geometry_versions"].map(
+          async (table) => (await pool.query(`SELECT * FROM ${table} ORDER BY id`)).rows
+        )
+      );
+    const before = await publicationSnapshot();
+    const batches = (await pool.query("SELECT id FROM change_batches")).rows.map((row) => row.id);
+    const second = await syncStateBoundaries(options);
+    expect(second.territoriesUpserted).toBe(0);
+    expect(second.fieldsWritten).toBe(0);
+    expect(second.errors).toEqual([]);
+    expect(second.regionsCreated).toBe(0);
+    expect(second.regionsUpdated).toBe(0);
+    expect(second.regionsUnchanged).toBe(17);
+    expect(await publicationSnapshot()).toEqual(before);
+    // applySync deliberately records every run, including no-ops. Empty audit
+    // batches are expected; new entity or geometry versions are not.
+    const newBatches = (await pool.query("SELECT id, version_count, completed_at FROM change_batches")).rows.filter(
+      (row) => !batches.includes(row.id)
+    );
+    expect(newBatches).toHaveLength(2);
+    for (const batch of newBatches) {
+      expect(batch.version_count).toBe(0);
+      expect(batch.completed_at).not.toBeNull();
+    }
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
   it("reproduces 42P10 on historical geometry, then repairs and retries atomically", async () => {
