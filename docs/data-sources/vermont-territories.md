@@ -25,7 +25,7 @@ The previous and replacement geometries are retained in `entity_geometry_version
 
 1. Merge only after human review and passing checks on the current PR head.
 2. Confirm the Vercel deployment and migration `0036_register_vermont_boundary_source` succeeded before dispatching the Action.
-3. After the Action, read back all 17 canonical links, `vt-psd` attribution, spatial versions, and change batches. Confirm Stowe (`27316`) and Morrisville (`12911`) on the map and inspect shared municipal boundaries.
+3. After the Action, read back all 17 canonical links, `vt-psd` attribution, spatial versions, and change batches. Confirm Stowe (`27316`) and Morrisville (`12989`) on the map and inspect shared municipal boundaries.
 4. A repeat run should create no new polygon versions unless upstream content changed. An invalid polygon or protected edit must leave metadata and geometry unchanged together.
 
 Unit tests cover publisher behavior and SQL construction. The `state-boundaries-postgis` CI job uses a disposable PostGIS database and a least-privilege publisher role to verify create/update history, repeat-run idempotence, preservation of old polygons and unmatched coverage, and atomic rollback on invalid or human-owned geometry. The fixture covers publisher tables, not the complete migration chain. Production readback remains required verification. The development workspace could not reach the Vermont GIS host or install a local PostGIS server. No production run has been performed as part of this change.

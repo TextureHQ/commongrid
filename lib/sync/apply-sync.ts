@@ -306,13 +306,15 @@ async function applyOneRecord(
   // Spatial versions authored by humans may predate attribute geometry markers.
   if (geometry) {
     const humanGeometry = await tx.execute(sql`
-      SELECT 1 FROM entity_geometry_versions g
+      SELECT g.contribution_id IS NOT NULL OR
+        v.source_type IN ('community', 'admin', 'community_override') AS human_owned
+      FROM entity_geometry_versions g
       LEFT JOIN entity_versions v ON v.id = g.entity_version_id
       WHERE g.entity_type = 'territory' AND g.entity_id = ${record.entityId}
-        AND (g.contribution_id IS NOT NULL OR v.source_type IN ('community', 'admin', 'community_override'))
+      ORDER BY g.version_number DESC
       LIMIT 1
     `);
-    if (humanGeometry.rows.length) locked.add("geography");
+    if (humanGeometry.rows[0]?.human_owned) locked.add("geography");
   }
   const deferrals: FieldDeferral[] = [];
   const applied: Record<string, unknown> = {};

@@ -149,6 +149,28 @@ suite("state boundary publication (real PostGIS)", () => {
     expect((await pool.query("SELECT version FROM territories")).rows[0].version).toBe(1);
   });
 
+  it("preserves existing customer counts when the boundary source has none", async () => {
+    await publishToDatabase(entries());
+    await pool.query("UPDATE regions SET customers = 4321");
+    await publishToDatabase(entries(replacement));
+    expect((await pool.query("SELECT customers FROM regions")).rows[0].customers).toBe(4321);
+  });
+
+  it("uses the latest spatial author, not an older human contribution", async () => {
+    await publishToDatabase(entries());
+    await publishToDatabase(entries(replacement));
+    await pool.query("UPDATE entity_geometry_versions SET contribution_id = 'old-human-edit' WHERE version_number = 1");
+    expect((await publishToDatabase(entries())).territoriesUpserted).toBe(1);
+    expect((await pool.query("SELECT version FROM territories")).rows[0].version).toBe(3);
+  });
+
+  it("protects the latest human spatial version without attribute markers", async () => {
+    await publishToDatabase(entries());
+    await pool.query("UPDATE entity_geometry_versions SET contribution_id = 'current-human-edit'");
+    await expect(publishToDatabase(entries(replacement))).rejects.toThrow(/rolled back for review/);
+    expect((await pool.query("SELECT version FROM territories")).rows[0].version).toBe(1);
+  });
+
   it("rejects missing canonical utility links before any writes", async () => {
     await pool.query("UPDATE utilities SET service_territory_id = NULL");
     await expect(publishToDatabase(entries())).rejects.toThrow(/missing utility records/);

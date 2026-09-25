@@ -155,6 +155,13 @@ describe("buildRegionSyncRecords", () => {
     expect(sync.fields).not.toHaveProperty("slug");
   });
 
+  it.each([0, 1234])("preserves authoritative customer counts, including %s", (customers) => {
+    const config = makeArcGISConfig();
+    const entry = buildRegionsFromFeatures(config, [makeFeature({ NAME: "ACME Electric", EIA_ID: 12345 })])[0];
+    const [sync] = buildRegionSyncRecords([{ ...entry, record: { ...entry.record, customers } }]);
+    expect(sync.fields.customers).toBe(customers);
+  });
+
   it("falls back to a deterministic entityId when no EIA id is present", () => {
     const config = makeArcGISConfig({ fieldMapping: { name: "NAME", utilityType: "TYPE", sourceId: "PSC_ID" } });
     const feature = makeFeature({ NAME: "ACME Electric", TYPE: "Municipal", PSC_ID: 42 });
@@ -336,7 +343,7 @@ describe("Vermont PSD", () => {
     expect(record.sourceId).toBe("vt-psd");
     expect(record.asOf).toBeNull();
     expect(record.fields.sourceDate).toBeNull();
-    expect(record.fields.customers).toBeNull();
+    expect(record.fields).not.toHaveProperty("customers");
   });
 });
 

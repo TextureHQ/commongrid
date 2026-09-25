@@ -376,7 +376,8 @@ export function buildRegionSyncRecords(entries: RegionEntry[]): SyncRecord[] {
         type: record.type,
         eiaId: record.eiaId,
         state: record.state,
-        customers: record.customers,
+        // Missing source data is not an instruction to erase another source's count.
+        customers: record.customers ?? undefined,
         source: record.source,
         sourceUrl: record.sourceUrl,
         sourceDate: record.sourceDate,
