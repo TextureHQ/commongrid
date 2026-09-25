@@ -624,12 +624,6 @@ export default function LandingPage() {
                 >
                   Full license text
                 </a>
-                <Link
-                  href="/about"
-                  className="inline-flex items-center gap-2 h-10 px-4 rounded-md text-sm font-medium leading-none border border-text-heading bg-text-heading text-background-body transition-all duration-150 no-underline cursor-pointer hover:bg-text-body hover:border-text-body hover:text-background-body hover:no-underline"
-                >
-                  Governance charter &rarr;
-                </Link>
               </div>
             </aside>
           </div>
@@ -785,10 +779,13 @@ export default function LandingPage() {
                 A public registry of U.S. energy infrastructure, maintained by its users. Released into the commons
                 under ODbL 1.0.
               </p>
-              <div className="inline-flex items-center gap-2 text-xs text-text-caption mt-3.5">
+              <a
+                href="https://www.texturehq.com"
+                className="inline-flex items-center gap-2 text-xs text-text-caption mt-3.5 hover:underline"
+              >
                 <span>Incubated & backed by</span>
                 <span className="text-text-heading font-medium">Texture</span>
-              </div>
+              </a>
             </div>
             <div>
               <h5 className="font-[family-name:var(--font-fira-code)] text-xs text-text-muted m-0 mb-4 font-medium">
@@ -837,13 +834,7 @@ export default function LandingPage() {
               <h5 className="font-[family-name:var(--font-fira-code)] text-xs text-text-muted m-0 mb-4 font-medium">
                 The project
               </h5>
-              {[
-                { href: "/about", label: "About" },
-                { href: "/about", label: "Governance" },
-                { href: "/contributions", label: "Contributors" },
-                { href: "/contributions", label: "Moderation" },
-                { href: GITHUB_URL, label: "Code of conduct", external: true },
-              ].map((link) => (
+              {[{ href: "/about", label: "About", external: false }].map((link) => (
                 <a
                   key={`${link.href}-${link.label}`}
                   href={link.href}
@@ -867,10 +858,7 @@ export default function LandingPage() {
               >
                 Open Database License 1.0
               </a>{" "}
-              · No trackers, no ads
-            </span>
-            <span className="font-[family-name:var(--font-fira-code)] tabular-nums">
-              rev 7a2f19 · deployed 14:32 UTC
+              · No ads
             </span>
           </div>
         </div>
