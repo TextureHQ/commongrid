@@ -51,6 +51,11 @@ export const rateStructures = pgTable(
     approved: boolean("approved").notNull().default(false),
     isDefault: boolean("is_default").notNull().default(false),
 
+    /** Complete API record: schedules, eligibility, notices and unprojected fields. */
+    rawRecord: jsonb("raw_record").$type<Record<string, unknown>>(),
+    upstreamRecordUrl: text("upstream_record_url"),
+    attribution: jsonb("attribution").$type<Record<string, unknown>>(),
+
     source: text("source"),
     sourceUrl: text("source_url"),
     sourceParentUrl: text("source_parent_url"),

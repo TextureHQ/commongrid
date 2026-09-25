@@ -441,3 +441,34 @@ describe("applySync", () => {
     expect(recorded.entityUpdates[0]).not.toHaveProperty("notAColumnInRealTable");
   });
 });
+
+describe("rate structure JSONB stability", () => {
+  it.each([false, true])("ignores object key order but detects changed arrays (%s)", async (changed) => {
+    const { tx, recorded } = makeTx({
+      entity: {
+        id: "rate-1",
+        version: 1,
+        rawRecord: { name: "Rate", schedule: [0, 1], structure: [{ rate: 1, unit: "kWh" }] },
+      },
+      hasVersionHistory: true,
+    });
+    vi.mocked(getPooledDb).mockReturnValue({
+      transaction: (fn: (tx: unknown) => Promise<unknown>) => fn(tx),
+    } as unknown as ReturnType<typeof getPooledDb>);
+    vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set());
+    const report = await applySync(
+      [
+        record({
+          entityId: "rate-1",
+          fields: {
+            rawRecord: { structure: [{ unit: "kWh", rate: 1 }], schedule: changed ? [1, 0] : [0, 1], name: "Rate" },
+          },
+        }),
+      ],
+      { ...baseOpts, entityType: "rate_structure" }
+    );
+    expect(report.unchanged).toBe(changed ? 0 : 1);
+    expect(recorded.versionInserts).toHaveLength(changed ? 1 : 0);
+    expect(recorded.entityUpdates).toHaveLength(changed ? 1 : 0);
+  });
+});

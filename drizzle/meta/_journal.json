@@ -204,6 +204,13 @@
       "when": 1790100240000,
       "tag": "0032_create_rate_structures",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790100300000,
+      "tag": "0033_rate_structure_provenance",
+      "breakpoints": true
     }
   ]
 }
