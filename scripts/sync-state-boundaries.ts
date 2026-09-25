@@ -21,6 +21,7 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { getPooledDb } from "@/lib/db/client-pooled";
 import { applySync, type SyncRecord } from "@/lib/sync/apply-sync";
 import { DATA_DIR, slugify } from "./lib";
+import { VERMONT_UTILITY_EIA_IDS } from "./lib/vermont-utility-crosswalk";
 
 const SERVICE_TERRITORIES_URL =
   "https://services3.arcgis.com/OYP7N6mAJJCyH6hd/arcgis/rest/services/Electric_Retail_Service_Territories_HIFLD/FeatureServer/0/query";
@@ -65,11 +66,15 @@ export interface SourceConfig {
   /** Base query URL (FeatureServer/MapServer query endpoint, or Socrata URL). */
   url: string;
   kind: SourceKind;
+  /** False until source licensing, vintage, and mapping validation are complete. */
+  enabled?: boolean;
+  /** Exact source-name crosswalk; missing names fail rather than fuzzy-match. */
+  eiaIdByName?: Readonly<Record<string, string>>;
   fieldMapping: FieldMapping;
   /** Human-readable source label written to Region.source. */
   sourceLabel: string;
   /** Publication/as-of date for the source dataset (ISO-8601). */
-  sourceDate: string;
+  sourceDate: string | null;
   /** Optional ArcGIS/Socrata WHERE clause. Defaults to "1=1". */
   where?: string;
   /** Higher number = higher precedence. State agencies outrank HIFLD. */
@@ -93,7 +98,7 @@ export interface RegionRecord {
   customers: number | null;
   source: string;
   sourceUrl: string | null;
-  sourceDate: string;
+  sourceDate: string | null;
   dataSourceId: string;
   sourcePriority?: number;
   needsOpenSource?: boolean;
@@ -146,6 +151,20 @@ interface Manifest {
 }
 
 export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
+  {
+    sourceId: "vt-psd-electric",
+    dataSourceId: "vt-psd",
+    state: "VT",
+    url: "https://maps.vcgi.vermont.gov/arcgis/rest/services/PSD_services/PSD_Published_Layers/MapServer/0/query",
+    kind: "arcgis",
+    enabled: false, // Release gates: docs/data-sources/vermont-territories.md
+    fieldMapping: { name: "COMPANYNAM", sourceId: "OBJECTID" },
+    eiaIdByName: VERMONT_UTILITY_EIA_IDS,
+    sourceLabel: "Vermont PSD Electric Utility Service Territories (2015 compilation)",
+    sourceDate: null, // Metadata gives only the compilation year, not an as-of date.
+    sourcePriority: 100,
+    isStateSource: true,
+  },
   // Wisconsin PSC — three separate MapServer layers (muni, IOU, co-op).
   // Direct requests 403; configured to flow through the Firecrawl fallback.
   {
@@ -273,7 +292,13 @@ export function buildRegionRecord(
   if (!name || name === "Unknown") return null;
 
   const rawEiaId = config.fieldMapping.eiaId ? getProperty(props, config.fieldMapping.eiaId) : null;
-  const eiaId = rawEiaId != null ? String(rawEiaId) : null;
+  const sourceName = String(rawName ?? "").trim();
+  const mappedEiaId =
+    config.eiaIdByName && Object.hasOwn(config.eiaIdByName, sourceName) ? config.eiaIdByName[sourceName] : undefined;
+  if (config.eiaIdByName && !mappedEiaId) {
+    throw new Error(`${config.sourceId}: unmapped utility name "${sourceName}"`);
+  }
+  const eiaId = mappedEiaId ?? (rawEiaId != null ? String(rawEiaId) : null);
 
   const rawSourceId = config.fieldMapping.sourceId ? getProperty(props, config.fieldMapping.sourceId) : null;
   const sourceId = rawSourceId != null ? String(rawSourceId) : null;
@@ -728,12 +753,12 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
   const stateSourceConfigsByState = new Map<string, number>();
   const stateSourceSuccessByState = new Map<string, number>();
   for (const config of STATE_BOUNDARY_SOURCES) {
-    if (!config.isStateSource) continue;
+    if (config.enabled === false || skipStates.has(config.state) || !config.isStateSource) continue;
     stateSourceConfigsByState.set(config.state, (stateSourceConfigsByState.get(config.state) ?? 0) + 1);
   }
 
   for (const config of STATE_BOUNDARY_SOURCES) {
-    if (skipStates.has(config.state)) continue;
+    if (config.enabled === false || skipStates.has(config.state)) continue;
 
     console.log(`  Fetching ${config.sourceLabel}...`);
     try {
