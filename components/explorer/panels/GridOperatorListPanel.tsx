@@ -4,9 +4,12 @@ import { Select, TextField } from "@texturehq/edges";
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useIsoList } from "@/hooks/useIsoList";
+import { useRtoList } from "@/hooks/useRtoList";
 import { entityKindColor, isoColor } from "@/lib/categorical-colors";
-import { getAllBalancingAuthorities, getAllIsos, getAllRtos, searchEntities, sortByName } from "@/lib/data";
+import { searchEntities, sortByName } from "@/lib/data";
 import { type DetailView, useExplorer } from "../ExplorerContext";
 
 type GridOperatorType = "ISO" | "RTO" | "BA";
@@ -34,10 +37,16 @@ export function GridOperatorListPanel() {
   const router = useRouter();
   const { user } = useCurrentUser();
 
+  const { isos: isoList, isLoading: isLoadingIsos } = useIsoList({ limit: 200 });
+  const { rtos: rtoList, isLoading: isLoadingRtos } = useRtoList({ limit: 200 });
+  const { balancingAuthorities: baList, isLoading: isLoadingBAs } = useBalancingAuthorityList({ limit: 200 });
+
+  const isLoading = isLoadingIsos || isLoadingRtos || isLoadingBAs;
+
   const allOperators = useMemo(() => {
     const seen = new Set<string>();
 
-    const isos: GridOperatorRow[] = getAllIsos().map((iso) => {
+    const isos: GridOperatorRow[] = isoList.map((iso) => {
       seen.add(iso.slug);
       return {
         slug: iso.slug,
@@ -51,7 +60,7 @@ export function GridOperatorListPanel() {
       };
     });
 
-    const rtos: GridOperatorRow[] = getAllRtos()
+    const rtos: GridOperatorRow[] = rtoList
       .filter((rto) => !seen.has(rto.slug))
       .map((rto) => ({
         slug: rto.slug,
@@ -64,7 +73,7 @@ export function GridOperatorListPanel() {
         detailView: "rto" as const,
       }));
 
-    const bas: GridOperatorRow[] = getAllBalancingAuthorities().map((ba) => ({
+    const bas: GridOperatorRow[] = baList.map((ba) => ({
       slug: ba.slug,
       name: ba.name,
       shortName: ba.shortName,
@@ -76,7 +85,7 @@ export function GridOperatorListPanel() {
     }));
 
     return [...isos, ...rtos, ...bas];
-  }, []);
+  }, [isoList, rtoList, baList]);
 
   const filtered = useMemo(() => {
     let result = allOperators;
@@ -135,7 +144,11 @@ export function GridOperatorListPanel() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="cg-explore-empty">
+            <div className="cg-explore-empty-title">Loading grid operators…</div>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="cg-explore-empty">
             <div className="cg-explore-empty-title">No grid operators found</div>
             <div>{state.q ? "Try adjusting your search criteria." : "No grid operators in the dataset."}</div>

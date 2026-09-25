@@ -13,13 +13,15 @@ import {
   useRef,
   useState,
 } from "react";
+import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
 import { useEvStationList } from "@/hooks/useEvStationList";
+import { useIsoList } from "@/hooks/useIsoList";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { usePricingNodeList } from "@/hooks/usePricingNodeList";
 import { useProgramList } from "@/hooks/useProgramList";
+import { useRtoList } from "@/hooks/useRtoList";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { captureEvent } from "@/lib/analytics";
-import { getAllBalancingAuthorities, getAllIsos, getAllRtos } from "@/lib/data";
 import { BROWSE_ENTRIES, ENTITY_BY_KIND, type EntityKind } from "@/lib/entity-catalog";
 import type { BalancingAuthority, Iso, PowerPlant, Rto, Utility } from "@/types/entities";
 import type { EVStation } from "@/types/ev-charging";
@@ -222,10 +224,10 @@ export function GlobalSearchModal() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Static data (small datasets - ISOs, RTOs, BAs)
-  const isos = useMemo(() => getAllIsos(), []);
-  const rtos = useMemo(() => getAllRtos(), []);
-  const bas = useMemo(() => getAllBalancingAuthorities(), []);
+  // DB-backed lists for small static datasets (ISOs, RTOs, BAs)
+  const { isos, isLoading: isLoadingIsos } = useIsoList({ limit: 200 });
+  const { rtos, isLoading: isLoadingRtos } = useRtoList({ limit: 200 });
+  const { balancingAuthorities, isLoading: isLoadingBAs } = useBalancingAuthorityList({ limit: 200 });
 
   // API-based search for large datasets
   const shouldSearch = debouncedQuery.trim().length >= 2;
@@ -274,8 +276,8 @@ export function GlobalSearchModal() {
     const rtoResults = searchStatic(rtos, debouncedQuery);
     out.push(...rtoResults.slice(0, MAX_PER_KIND).map(rtoToResult));
 
-    // Balancing Authorities (static - small dataset)
-    const baResults = searchStatic(bas, debouncedQuery);
+    // Balancing Authorities (DB)
+    const baResults = searchStatic(balancingAuthorities, debouncedQuery);
     out.push(...baResults.slice(0, MAX_PER_KIND).map(baToResult));
 
     // Power Plants (API)
@@ -291,7 +293,18 @@ export function GlobalSearchModal() {
     out.push(...programs.slice(0, MAX_PER_KIND).map(programToResult));
 
     return out;
-  }, [shouldSearch, debouncedQuery, utilities, isos, rtos, bas, powerPlants, evStations, pricingNodes, programs]);
+  }, [
+    shouldSearch,
+    debouncedQuery,
+    utilities,
+    isos,
+    rtos,
+    balancingAuthorities,
+    powerPlants,
+    evStations,
+    pricingNodes,
+    programs,
+  ]);
 
   // Group results by kind (maintain KIND_ORDER order)
   const grouped = useMemo<Array<{ kind: EntityKind; label: string; items: SearchResult[] }>>(() => {
@@ -354,7 +367,8 @@ export function GlobalSearchModal() {
     tileBg: entry.tileBg,
   }));
 
-  const isLoading = query.trim().length >= 2 && debouncedQuery !== query;
+  const isLoading =
+    (query.trim().length >= 2 && debouncedQuery !== query) || isLoadingIsos || isLoadingRtos || isLoadingBAs;
 
   return (
     <>

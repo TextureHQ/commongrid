@@ -1,5 +1,8 @@
 "use client";
 
+import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
+import { useIsoList } from "@/hooks/useIsoList";
+import { useRtoList } from "@/hooks/useRtoList";
 import { type EntityTab, useExplorer } from "./ExplorerContext";
 import { BADetailPanel } from "./panels/BADetailPanel";
 import { EVChargingListPanel } from "./panels/EVChargingListPanel";
@@ -88,16 +91,23 @@ export function ExplorerPanel({ listSource, forceTable }: ExplorerPanelProps = {
 // Grid operator detail router: detects ISO vs RTO vs BA from slug
 // ---------------------------------------------------------------------------
 
-import { getAllBalancingAuthorities, getAllIsos, getAllRtos } from "@/lib/data";
-
 function GridOperatorDetailRouter({ slug }: { slug: string }) {
-  const isos = getAllIsos();
-  const rtos = getAllRtos();
-  const bas = getAllBalancingAuthorities();
+  const { isos, isLoading: isLoadingIsos } = useIsoList({ limit: 200 });
+  const { rtos, isLoading: isLoadingRtos } = useRtoList({ limit: 200 });
+  const { balancingAuthorities, isLoading: isLoadingBAs } = useBalancingAuthorityList({ limit: 200 });
+
+  const isLoading = isLoadingIsos || isLoadingRtos || isLoadingBAs;
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="cg-explore-empty">Loading…</div>
+      </div>
+    );
+  }
 
   if (isos.find((x) => x.slug === slug)) return <IsoDetailPanel slug={slug} />;
   if (rtos.find((x) => x.slug === slug)) return <RtoDetailPanel slug={slug} />;
-  if (bas.find((x) => x.slug === slug)) return <BADetailPanel slug={slug} />;
+  if (balancingAuthorities.find((x) => x.slug === slug)) return <BADetailPanel slug={slug} />;
 
   // Fallback — shouldn't happen
   return <GridOperatorListPanel />;
