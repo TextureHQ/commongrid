@@ -1,6 +1,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Providers } from "@/components/Providers";
 
 export const viewport: Viewport = {
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ClerkProvider>
           <Providers>{children}</Providers>
         </ClerkProvider>
+        <GoogleAnalytics />
       </body>
     </html>
   );
