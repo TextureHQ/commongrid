@@ -37,7 +37,7 @@ import { carryViewMode, type ExploreViewMode, parseViewMode, resolveViewMode } f
 
 export type EntityTab = PathEntityTab;
 export type { ExploreViewMode };
-export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
+export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant" | "rate";
 
 /**
  * Route shape for CommonGrid's explore stack.

@@ -11,6 +11,7 @@ import { PowerPlantListPanel } from "./panels/PowerPlantListPanel";
 import { PricingNodeListPanel } from "./panels/PricingNodeListPanel";
 import { ProgramDetailPanel } from "./panels/ProgramDetailPanel";
 import { ProgramListPanel } from "./panels/ProgramListPanel";
+import { RateDetailPanel } from "./panels/RateDetailPanel";
 import { RatesListPanel } from "./panels/RatesListPanel";
 import { RtoDetailPanel } from "./panels/RtoDetailPanel";
 import { SubstationListPanel } from "./panels/SubstationListPanel";
@@ -53,6 +54,8 @@ export function ExplorerPanel({ listSource, forceTable }: ExplorerPanelProps = {
         return <ProgramDetailPanel slug={state.slug} />;
       case "power-plants":
         return <PowerPlantDetailPanel slug={state.slug} />;
+      case "rates":
+        return <RateDetailPanel slug={state.slug} />;
     }
   }
 

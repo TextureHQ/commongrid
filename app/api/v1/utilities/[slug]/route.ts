@@ -55,6 +55,24 @@ interface RedirectMeta {
   reason: string | null;
 }
 
+async function loadUtilityRowBySlugOrId(
+  db: ReturnType<typeof getDb>,
+  slug: string
+): Promise<{ row: UtilityRow; resolvedById: boolean } | null> {
+  const [bySlug] = (await db.select().from(utilities).where(eq(utilities.slug, slug)).limit(1)) as unknown as [
+    UtilityRow | undefined,
+  ];
+  if (bySlug) return { row: bySlug, resolvedById: false };
+
+  // Foreign-key-style consumers (e.g. power plants and rate structures) store
+  // utilities.id rather than the slug. Accept an id as a fallback so cross-
+  // entity links resolve without callers needing a slug lookup.
+  const [byId] = (await db.select().from(utilities).where(eq(utilities.id, slug)).limit(1)) as unknown as [
+    UtilityRow | undefined,
+  ];
+  return byId ? { row: byId, resolvedById: true } : null;
+}
+
 async function handleGet(req: Request, ctx: RouteContext) {
   const slug = ctx.params?.slug;
   if (!slug) {
@@ -71,12 +89,17 @@ async function handleGet(req: Request, ctx: RouteContext) {
   const followSuccessor = !at && url.searchParams.get("follow_successor") !== "false";
 
   const db = getDb();
-  const [initial] = (await db.select().from(utilities).where(eq(utilities.slug, slug)).limit(1)) as unknown as [
-    UtilityRow | undefined,
-  ];
+  const match = await loadUtilityRowBySlugOrId(db, slug);
 
-  if (!initial) {
+  if (!match) {
     throw new ApiError("NOT_FOUND", `Utility '${slug}' not found`);
+  }
+
+  const { row: initial, resolvedById } = match;
+  const extraHeaders: Record<string, string> = { "Cache-Control": CACHE_CONTROL };
+
+  if (resolvedById) {
+    extraHeaders.Link = `</api/v1/utilities/${initial.slug}>; rel="canonical"`;
   }
 
   if (at) {
@@ -85,7 +108,7 @@ async function handleGet(req: Request, ctx: RouteContext) {
       entityId: initial.id,
       at,
       label: "Utility",
-      slug,
+      slug: initial.slug,
       headers: { "Cache-Control": CACHE_CONTROL, "Cache-Tag": `utility:${slug}` },
       fields,
     });
@@ -93,7 +116,6 @@ async function handleGet(req: Request, ctx: RouteContext) {
 
   let utility: UtilityRow = initial;
   let redirected: RedirectMeta | null = null;
-  const extraHeaders: Record<string, string> = { "Cache-Control": CACHE_CONTROL };
 
   // Follow successor chain. We bound depth at MAX_HOPS to avoid pathological
   // cycles even though the data model doesn't permit them today.
