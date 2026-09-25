@@ -15,6 +15,7 @@ import {
 } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { conversionFetch } from "@/lib/analytics";
 import { fromCalendarDate, toCalendarDate } from "@/lib/forms/date-value";
 import { EDIT_SUMMARY_MIN_LENGTH } from "@/lib/mod/apply-contribution";
 import { type EditableField, SOURCE_TYPE_OPTIONS } from "./EntityFormFields";
@@ -192,7 +193,7 @@ export function InlineFieldEdit({
         };
       }
 
-      const res = await fetch(url, {
+      const res = await conversionFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

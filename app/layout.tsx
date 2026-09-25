@@ -1,7 +1,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
-import { GoogleAnalytics } from "@next/third-parties/google";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { SITE_DESCRIPTION, SITE_URL, SOCIAL_IMAGE } from "@/lib/seo";
@@ -54,7 +54,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ClerkProvider>
           <Providers>{children}</Providers>
         </ClerkProvider>
-        {gaId && <GoogleAnalytics gaId={gaId} />}
+        {gaId && (
+          <Script
+            id="commongrid-ga"
+            src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`}
+            strategy="afterInteractive"
+          />
+        )}
         <Analytics />
       </body>
     </html>

@@ -1,5 +1,7 @@
 "use client";
 
+import { conversionFetch } from "@/lib/analytics";
+
 /**
  * The Suggest Edit flow, as state.
  *
@@ -152,7 +154,7 @@ export function useEditEntityFlow({
         citation: { sourceType, sourceUrl, sourceDate },
       });
 
-      const res = await fetch("/api/v1/contributions", {
+      const res = await conversionFetch("/api/v1/contributions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

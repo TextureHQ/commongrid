@@ -2,6 +2,7 @@
 
 import { Dialog, Icon, Select, TextArea, TextField } from "@texturehq/edges";
 import { useState } from "react";
+import { conversionFetch } from "@/lib/analytics";
 
 interface DeleteEntityDialogProps {
   entityType: string;
@@ -81,7 +82,7 @@ export function DeleteEntityDialog({
         changes: { _deletion: deletionData },
       };
 
-      const response = await fetch("/api/v1/contributions", {
+      const response = await conversionFetch("/api/v1/contributions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
