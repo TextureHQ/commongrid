@@ -20,6 +20,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         posthog.init(apiKey, {
           api_host: apiHost,
           autocapture: false,
+          capture_exceptions: true,
           capture_pageview: false,
           capture_pageleave: false,
           disable_session_recording: true,
