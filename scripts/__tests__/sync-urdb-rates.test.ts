@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UrdbApiResponse, UrdbRate } from "../sync-urdb-rates";
 import {
   buildSlug,
+  deepSortKeys,
   deriveHasDemandCharge,
   deriveHasNetMetering,
   deriveHasTou,
@@ -169,6 +170,30 @@ describe("deriveIsEvRate", () => {
   });
 });
 
+describe("deepSortKeys", () => {
+  it("sorts object keys recursively", () => {
+    expect(deepSortKeys({ z: 1, a: { y: 2, x: 3 } })).toEqual({ a: { x: 3, y: 2 }, z: 1 });
+  });
+
+  it("maps arrays but does not sort them", () => {
+    expect(
+      deepSortKeys([
+        { b: 1, a: 2 },
+        { d: 3, c: 4 },
+      ])
+    ).toEqual([
+      { a: 2, b: 1 },
+      { c: 4, d: 3 },
+    ]);
+  });
+
+  it("passes primitives through", () => {
+    expect(deepSortKeys(null)).toBeNull();
+    expect(deepSortKeys(42)).toBe(42);
+    expect(deepSortKeys("hello")).toBe("hello");
+  });
+});
+
 describe("buildSlug", () => {
   it("is stable and includes the label suffix", () => {
     expect(buildSlug("Test Utility Co", "Residential Rate", "abc123")).toBe("test-utility-co-residential-rate-abc123");
@@ -187,6 +212,19 @@ describe("mapUrdbRateToSyncRecord", () => {
     expect(record?.fields.regionId).toBe("region-12345");
     expect(record?.fields.hasTou).toBe(false);
     expect(record?.fields.isEvRate).toBe(false);
+    expect(record?.fields.fixedCharge).toBe("10");
+  });
+
+  it("sorts JSONB object keys for stable comparison", () => {
+    const record = mapUrdbRateToSyncRecord(
+      makeRate({
+        energyratestructure: [[{ unit: "kWh", rate: 0.12, adj: 0 }]],
+        dgrules: { netMetering: true, buybackRate: 0.05 },
+      }),
+      makeResolver()
+    );
+    expect(record?.fields.energyRateStructure).toEqual([[{ adj: 0, rate: 0.12, unit: "kWh" }]]);
+    expect(record?.fields.netMeteringRules).toEqual({ buybackRate: 0.05, netMetering: true });
   });
 
   it("returns null when eiaid is missing", () => {

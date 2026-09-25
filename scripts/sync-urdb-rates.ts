@@ -217,6 +217,24 @@ export function deriveHasNetMetering(rate: UrdbRate): boolean {
 
 const EV_HEURISTIC = /\b(EV|electric vehicle|PEV)\b/i;
 
+/**
+ * Recursively sort object keys so JSONB values compare stably after a
+ * round-trip through Postgres (JSONB does not preserve insertion order).
+ * Arrays are mapped; primitives are returned as-is.
+ */
+export function deepSortKeys(value: unknown): unknown {
+  if (value == null) return value;
+  if (Array.isArray(value)) return value.map(deepSortKeys);
+  if (typeof value === "object") {
+    const sorted: Record<string, unknown> = {};
+    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+      sorted[key] = deepSortKeys((value as Record<string, unknown>)[key]);
+    }
+    return sorted;
+  }
+  return value;
+}
+
 export function deriveIsEvRate(rate: UrdbRate): boolean {
   const text = `${rate.name ?? ""} ${rate.description ?? ""}`;
   return EV_HEURISTIC.test(text);
@@ -256,15 +274,20 @@ export function mapUrdbRateToSyncRecord(rate: UrdbRate, resolver: EntityResolver
       sector: rate.sector,
       serviceType: null,
       description: rate.description,
-      fixedCharge: rate.fixedchargefirstmeter,
+      // `fixed_charge` is a Postgres `numeric` column, which Drizzle reads
+      // back as a JS string. applySync compares desired-vs-current with
+      // JSON.stringify, so a number here ("10" !== 10) would look changed on
+      // every re-run and rewrite the row + a version each week. Store it as a
+      // string so the diff is stable and re-runs stay idempotent.
+      fixedCharge: rate.fixedchargefirstmeter == null ? rate.fixedchargefirstmeter : String(rate.fixedchargefirstmeter),
       fixedChargeUnits: rate.fixedchargeunits,
-      energyRateStructure: rate.energyratestructure,
-      energyWeekdaySchedule: rate.energyweekdayschedule,
-      energyWeekendSchedule: rate.energyweekendschedule,
-      demandRateStructure: rate.demandratestructure,
-      flatDemandStructure: rate.flatdemandstructure,
+      energyRateStructure: deepSortKeys(rate.energyratestructure),
+      energyWeekdaySchedule: deepSortKeys(rate.energyweekdayschedule),
+      energyWeekendSchedule: deepSortKeys(rate.energyweekendschedule),
+      demandRateStructure: deepSortKeys(rate.demandratestructure),
+      flatDemandStructure: deepSortKeys(rate.flatdemandstructure),
       demandRateUnit: rate.demandrateunit,
-      netMeteringRules: rate.dgrules,
+      netMeteringRules: deepSortKeys(rate.dgrules),
       hasTou: deriveHasTou(rate),
       hasDemandCharge: deriveHasDemandCharge(rate),
       hasNetMetering: deriveHasNetMetering(rate),
