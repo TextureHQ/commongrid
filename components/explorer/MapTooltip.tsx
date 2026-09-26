@@ -177,15 +177,26 @@ export function TerritoryTooltip({ name, segment, state, customerCount, baCode }
 /* ── Grid operator tooltip ─────────────────────────────────────────────────── */
 
 interface GridOperatorProps {
-  operatorName: string;
+  /** Full name, e.g. "Electric Reliability Council of Texas". */
+  name: string;
+  /** Abbreviation, e.g. "ERCOT". */
+  shortName: string;
   operatorType: string;
+  /** Pre-formatted with formatGridOperatorStates(), e.g. "NM, TX". */
+  states: string;
 }
 
-export function GridOperatorTooltip({ operatorName, operatorType }: GridOperatorProps) {
+/** Mirrors the grid operator list card: name, short name, type, states. */
+export function GridOperatorTooltip({ name, shortName, operatorType, states }: GridOperatorProps) {
   return (
     <div style={styles.container}>
-      <div style={styles.kicker}>{operatorType}</div>
-      <div style={{ ...styles.name, marginBottom: 0 }}>{operatorName}</div>
+      <div style={styles.kicker}>{operatorType === "BA" ? "Balancing Authority" : operatorType}</div>
+      <div style={styles.name}>{name || shortName}</div>
+      <div style={styles.divider} />
+      <div style={styles.statGrid}>
+        <Stat value={shortName || "—"} label="Short name" />
+        <Stat value={states || "—"} label="States" />
+      </div>
     </div>
   );
 }
