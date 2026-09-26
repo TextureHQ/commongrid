@@ -193,6 +193,49 @@
   background: var(--color-background-hover);
 }
 
+/* ── Map hover tooltips ──
+   Edges renders hover tooltips as a Mapbox popup anchored just above the
+   point where the cursor entered a feature. Moving the cursor upward runs
+   into it, and while the popup is under the pointer the map canvas gets no
+   mouse events — hover freezes (tooltip + hover highlight stop updating).
+   The tooltips are display-only, so let the pointer pass through to the map.
+   !important because Edges sets `pointer-events: auto` inline on the
+   content box. */
+.map-tooltip .mapboxgl-popup-content {
+  pointer-events: none !important;
+}
+
+/* The tooltip components (MapTooltip.tsx) draw their own themed card. The
+   app doesn't load Edges' map-tooltip styles, so without this the Mapbox
+   default white popup box shows around them — and in dark mode the light
+   theme text sits on white and is unreadable. Make the box invisible and
+   color the pointer tip to match the card. */
+.map-tooltip .mapboxgl-popup-content {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.map-tooltip.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,
+.map-tooltip.mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
+.map-tooltip.mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip {
+  border-top-color: var(--color-border-paper);
+}
+
+.map-tooltip.mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
+.map-tooltip.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
+.map-tooltip.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip {
+  border-bottom-color: var(--color-border-paper);
+}
+
+.map-tooltip.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: var(--color-border-paper);
+}
+
+.map-tooltip.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: var(--color-border-paper);
+}
+
 /* ── Count label ── */
 .cg-explore-count {
   font-family: var(--font-family-mono);
