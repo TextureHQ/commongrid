@@ -10,7 +10,8 @@ import { useIsoList } from "@/hooks/useIsoList";
 import { useRtoList } from "@/hooks/useRtoList";
 import { entityKindColor, isoColor } from "@/lib/categorical-colors";
 import { searchEntities, sortByName } from "@/lib/data";
-import { type DetailView, useExplorer } from "../ExplorerContext";
+import { formatGridOperatorStates, gridOperatorKey } from "@/lib/explorer/grid-operators";
+import { useExplorer } from "../ExplorerContext";
 
 type GridOperatorType = "ISO" | "RTO" | "BA";
 
@@ -22,7 +23,9 @@ interface GridOperatorRow {
   type: GridOperatorType;
   states: string[];
   website: string | null;
-  detailView: DetailView;
+  detailView: "iso" | "rto" | "ba";
+  /** `gridOperatorKey(detailView, slug)` — unique across ISO/BA rows that share a slug. */
+  key: string;
 }
 
 const typeFilterOptions = [
@@ -57,6 +60,7 @@ export function GridOperatorListPanel() {
         states: iso.states,
         website: iso.website,
         detailView: "iso" as const,
+        key: gridOperatorKey("iso", iso.slug),
       };
     });
 
@@ -71,6 +75,7 @@ export function GridOperatorListPanel() {
         states: rto.states,
         website: rto.website,
         detailView: "rto" as const,
+        key: gridOperatorKey("rto", rto.slug),
       }));
 
     const bas: GridOperatorRow[] = baList.map((ba) => ({
@@ -82,6 +87,7 @@ export function GridOperatorListPanel() {
       states: ba.states,
       website: ba.website,
       detailView: "ba" as const,
+      key: gridOperatorKey("ba", ba.slug),
     }));
 
     return [...isos, ...rtos, ...bas];
@@ -156,7 +162,7 @@ export function GridOperatorListPanel() {
         ) : (
           filtered.map((row) => (
             <PanelEntityRow
-              key={row.slug}
+              key={row.key}
               leading={
                 <span
                   className="h-2 w-2 rounded-full"
@@ -167,9 +173,7 @@ export function GridOperatorListPanel() {
                 />
               }
               title={row.name}
-              subtitle={`${row.shortName} · ${row.type} · ${row.states.slice(0, 3).join(", ")}${
-                row.states.length > 3 ? ` +${row.states.length - 3}` : ""
-              }`}
+              subtitle={`${row.shortName} · ${row.type} · ${formatGridOperatorStates(row.states)}`}
               onSelect={() => handleRowClick(row)}
             />
           ))
