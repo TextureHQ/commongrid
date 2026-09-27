@@ -908,6 +908,112 @@ export const ENDPOINTS: EndpointDef[] = [
     },
   },
 
+  // Rates & tariffs: list is deliberately a light projection; detail includes schedules.
+  {
+    path: "/rates",
+    method: "get",
+    operationId: "listRates",
+    summary: "List rates and tariffs",
+    description:
+      "Queries rate_structures in Postgres. Returns a light projection without description, energy/demand structures, schedules or net-metering rules. Use the detail endpoint for those fields; fields cannot expand the list projection.",
+    tag: "Rates & Tariffs",
+    parameters: [
+      LIMIT_REF,
+      CURSOR_REF,
+      FIELDS_REF,
+      { name: "search", in: "query", schema: { type: "string", minLength: 2, maxLength: 200 } },
+      { name: "sector", in: "query", schema: STRING },
+      { name: "utilityId", in: "query", schema: STRING },
+      { name: "eiaId", in: "query", schema: INTEGER },
+      ...["hasTou", "hasDemandCharge", "hasNetMetering", "isEvRate"].map((name) => ({
+        name,
+        in: "query" as const,
+        schema: BOOLEAN_STR,
+      })),
+      { name: "sort", in: "query", schema: { type: "string", enum: ["name"], default: "name" } },
+      { name: "order", in: "query", schema: SORT_ORDER },
+    ] as (ParamDef | { $ref: string })[] as ParamDef[],
+    response: { kind: "list", itemSchemaRef: "RateSummary" },
+    has400: true,
+  },
+  {
+    path: "/rates/{slug}",
+    method: "get",
+    operationId: "getRate",
+    parameters: [SLUG_REF],
+    summary: "Get a rate or tariff",
+    description:
+      "Returns the public rate structure, including energy/demand structures and schedules, from Postgres. Soft-deleted rates return 404. Does not support fields or point-in-time lookup.",
+    tag: "Rates & Tariffs",
+    response: { kind: "singleInData", schemaRef: "Rate" },
+  },
+  {
+    path: "/utilities/by-eia-id/{eiaId}",
+    method: "get",
+    operationId: "getUtilityByEiaId",
+    summary: "Get a utility by EIA ID",
+    tag: "Utilities",
+    parameters: [
+      { name: "eiaId", in: "path", required: true, schema: STRING },
+      FIELDS_REF,
+      { name: "include", in: "query", schema: STRING, description: "Comma-separated: iso, rto, ba" },
+    ] as (ParamDef | { $ref: string })[] as ParamDef[],
+    response: { kind: "singleInData", schemaRef: "Utility" },
+    has404: true,
+  },
+  {
+    path: "/utilities/deprecated",
+    method: "get",
+    operationId: "listDeprecatedUtilities",
+    summary: "List utility lifecycle and successor records",
+    description:
+      "Reads the v_deprecated_utilities SQL view. Field names use snake_case, unlike the main utility endpoints.",
+    tag: "Utilities",
+    parameters: [
+      { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 500, default: 100 } },
+      CURSOR_REF,
+      { name: "status", in: "query", schema: { type: "string", enum: ["active", "retired", "merged", "renamed"] } },
+      { name: "successor", in: "query", schema: STRING, description: "Successor EIA utility ID" },
+      { name: "q", in: "query", schema: STRING },
+    ] as (ParamDef | { $ref: string })[] as ParamDef[],
+    response: {
+      kind: "raw",
+      schema: {
+        type: "object",
+        properties: {
+          data: { type: "array", items: { $ref: "#/components/schemas/DeprecatedUtility" } },
+          pagination: {
+            type: "object",
+            properties: {
+              cursor: { type: "string", nullable: true },
+              limit: { type: "integer" },
+              total: { type: "integer" },
+              hasMore: { type: "boolean" },
+            },
+          },
+        },
+      },
+    },
+    has400: true,
+  },
+  {
+    path: "/changelog/batches/{id}",
+    method: "get",
+    operationId: "getChangelogBatch",
+    summary: "Get a change batch and its entity changes",
+    description:
+      "Reads change_batches and entity_versions in Postgres, excluding baseline versions. Uses offset pagination, not cursor pagination.",
+    tag: "Changelog",
+    parameters: [
+      { name: "id", in: "path", required: true, schema: STRING },
+      LIMIT_REF,
+      { name: "offset", in: "query", schema: { type: "integer", minimum: 0, default: 0 } },
+      { name: "entity_type", in: "query", schema: STRING },
+    ] as (ParamDef | { $ref: string })[] as ParamDef[],
+    response: { kind: "raw", schema: { $ref: "#/components/schemas/ChangelogBatch" } },
+    has404: true,
+  },
+
   // -----------------------
   // Search
   // -----------------------
@@ -1015,7 +1121,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getIsoVersions",
     summary: "Get iso version history",
     description: "Returns every version of the iso from the `entity_versions` audit table.",
-    tag: "ISOs",
+    tag: "Grid Operators",
     parameters: [SLUG_REF],
     response: {
       kind: "raw",
@@ -1036,7 +1142,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getRtoVersions",
     summary: "Get rto version history",
     description: "Returns every version of the rto from the `entity_versions` audit table.",
-    tag: "RTOs",
+    tag: "Grid Operators",
     parameters: [SLUG_REF],
     response: {
       kind: "raw",
@@ -1057,7 +1163,7 @@ export const ENDPOINTS: EndpointDef[] = [
     operationId: "getBalancingAuthorityVersions",
     summary: "Get balancing authority version history",
     description: "Returns every version of the balancing authority from the `entity_versions` audit table.",
-    tag: "Balancing Authorities",
+    tag: "Grid Operators",
     parameters: [SLUG_REF],
     response: {
       kind: "raw",

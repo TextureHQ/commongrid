@@ -10,6 +10,7 @@ import {
   Icon,
   Loader,
   PageLayout,
+  Select,
   TextCell,
 } from "@texturehq/edges";
 import Link from "next/link";
@@ -281,28 +282,24 @@ export default function PricingNodesPage() {
           }}
           customControls={
             <div className="flex flex-wrap gap-2">
-              <select
-                value={isoFilter}
-                onChange={(e) => setIsoFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                {isoFilterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                {nodeTypeFilterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <Select
+                size="sm"
+                selectedKey={isoFilter}
+                onSelectionChange={(key) => setIsoFilter(String(key))}
+                items={isoFilterOptions.map((opt) => ({ id: String(opt.value), label: opt.label, value: opt.value }))}
+                renderItem={(item) => item.label}
+              />
+              <Select
+                size="sm"
+                selectedKey={typeFilter}
+                onSelectionChange={(key) => setTypeFilter(String(key))}
+                items={nodeTypeFilterOptions.map((opt) => ({
+                  id: String(opt.value),
+                  label: opt.label,
+                  value: opt.value,
+                }))}
+                renderItem={(item) => item.label}
+              />
             </div>
           }
           sticky={true}

@@ -10,6 +10,7 @@
  *
  * PRD-aligned tiers:
  *   anonymous     60 req/hr   (no per-minute burst)
+ *   browser     5000 req/hr   (burst: 120 req/min, separate per-IP budget)
  *   registered  5000 req/hr   (burst: 100 req/min)
  *   bulk       50000 req/hr   (burst: 500 req/min)
  *   write        100 req/min  — any mutating request
@@ -29,7 +30,7 @@ import { Redis } from "@upstash/redis";
 // Types
 // ---------------------------------------------------------------------------
 
-export type RateLimitTier = "anonymous" | "registered" | "bulk" | "write";
+export type RateLimitTier = "anonymous" | "browser" | "registered" | "bulk" | "write";
 
 export type RateLimitResult = {
   success: boolean;
@@ -53,27 +54,31 @@ const MINUTE_MS = 60 * 1000;
 /** Documented hourly (or per-minute for write) budgets. */
 export const TIER_LIMITS = {
   anonymous: { limit: 60, windowMs: HOUR_MS },
+  browser: { limit: 5000, windowMs: HOUR_MS },
   registered: { limit: 5000, windowMs: HOUR_MS },
   bulk: { limit: 50000, windowMs: HOUR_MS },
   write: { limit: 100, windowMs: MINUTE_MS },
 } as const;
 
-/** Burst limiters — per-minute stampede guard for keyed tiers only (min 100/min). */
-export type BurstTier = "registered" | "bulk";
+/** Burst limiters — per-minute stampede guard for browser and keyed tiers (min 100/min). */
+export type BurstTier = "browser" | "registered" | "bulk";
 
 export const BURST_LIMITS: Record<BurstTier, { limit: number; windowMs: number }> = {
+  browser: { limit: 120, windowMs: MINUTE_MS },
   registered: { limit: 100, windowMs: MINUTE_MS },
   bulk: { limit: 500, windowMs: MINUTE_MS },
 } as const;
 
 const TIER_CONFIG: Record<RateLimitTier, WindowConfig> = {
   anonymous: { ...TIER_LIMITS.anonymous, prefix: "cg:rl:anon" },
+  browser: { ...TIER_LIMITS.browser, prefix: "cg:rl:browser" },
   registered: { ...TIER_LIMITS.registered, prefix: "cg:rl:reg" },
   bulk: { ...TIER_LIMITS.bulk, prefix: "cg:rl:bulk" },
   write: { ...TIER_LIMITS.write, prefix: "cg:rl:write" },
 };
 
 const BURST_CONFIG: Record<BurstTier, WindowConfig> = {
+  browser: { ...BURST_LIMITS.browser, prefix: "cg:rl:browser:burst" },
   registered: { ...BURST_LIMITS.registered, prefix: "cg:rl:reg:burst" },
   bulk: { ...BURST_LIMITS.bulk, prefix: "cg:rl:bulk:burst" },
 };
@@ -158,7 +163,7 @@ export function createRateLimiter(): UpstashLimiters | null {
   const hourly = {} as Record<Exclude<RateLimitTier, "write">, Ratelimit>;
   const burst = {} as Record<BurstTier, Ratelimit>;
 
-  for (const tier of ["anonymous", "registered", "bulk"] as const) {
+  for (const tier of ["anonymous", "browser", "registered", "bulk"] as const) {
     const hc = TIER_CONFIG[tier];
     hourly[tier] = new Ratelimit({
       redis,
@@ -167,7 +172,7 @@ export function createRateLimiter(): UpstashLimiters | null {
     });
   }
 
-  for (const tier of ["registered", "bulk"] as const) {
+  for (const tier of ["browser", "registered", "bulk"] as const) {
     const bc = BURST_CONFIG[tier];
     burst[tier] = new Ratelimit({
       redis,
@@ -230,6 +235,8 @@ export interface RateLimitContext {
   isBulk: boolean;
   /** The key's tier from the api_keys table (if authenticated). */
   keyTier?: string;
+  /** Traffic classification only, never authentication. Ignored for writes/keys/bulk. */
+  isBrowser?: boolean;
 }
 
 /**
@@ -244,6 +251,7 @@ export function resolveTier(ctx: RateLimitContext): RateLimitTier {
   if (ctx.isAuthenticated) {
     return ctx.keyTier === "bulk" ? "bulk" : "registered";
   }
+  if (ctx.isBrowser && !ctx.isBulk) return "browser";
   return "anonymous";
 }
 
@@ -289,7 +297,7 @@ async function checkWithUpstash(
   }
 
   // Anonymous: hourly only — no per-minute burst.
-  if (tier === "registered" || tier === "bulk") {
+  if (tier === "browser" || tier === "registered" || tier === "bulk") {
     const burstResult = await limiters.burst[tier].limit(identifier);
     if (!burstResult.success) {
       return fromUpstash(burstResult, tier);
@@ -307,7 +315,7 @@ function checkWithMemory(limiters: MemoryLimiters, identifier: string, tier: Rat
     return { ...result, tier };
   }
 
-  if (tier === "registered" || tier === "bulk") {
+  if (tier === "browser" || tier === "registered" || tier === "bulk") {
     const burstCfg = BURST_CONFIG[tier];
     const burstResult = memoryLimit(
       limiters.burst,
@@ -342,9 +350,10 @@ export async function checkRateLimit(
   isAuthenticated: boolean,
   isWrite: boolean,
   isBulk: boolean,
-  keyTier?: string
+  keyTier?: string,
+  isBrowser = false
 ): Promise<RateLimitResult> {
-  const tier = resolveTier({ isAuthenticated, isWrite, isBulk, keyTier });
+  const tier = resolveTier({ isAuthenticated, isWrite, isBulk, keyTier, isBrowser });
   const upstash = getUpstash();
 
   if (upstash) {

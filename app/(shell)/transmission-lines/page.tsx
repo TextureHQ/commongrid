@@ -8,6 +8,7 @@ import {
   EmptyState,
   Loader,
   PageLayout,
+  Select,
   TextCell,
 } from "@texturehq/edges";
 import { useEffect, useMemo, useState } from "react";
@@ -297,28 +298,28 @@ export default function TransmissionLinesPage() {
           }}
           customControls={
             <div className="flex flex-wrap gap-2">
-              <select
-                value={voltageFilter}
-                onChange={(e) => setVoltageFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                {voltageClassFilterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                {statusFilterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <Select
+                size="sm"
+                selectedKey={voltageFilter}
+                onSelectionChange={(key) => setVoltageFilter(String(key))}
+                items={voltageClassFilterOptions.map((opt) => ({
+                  id: String(opt.value),
+                  label: opt.label,
+                  value: opt.value,
+                }))}
+                renderItem={(item) => item.label}
+              />
+              <Select
+                size="sm"
+                selectedKey={statusFilter}
+                onSelectionChange={(key) => setStatusFilter(String(key))}
+                items={statusFilterOptions.map((opt) => ({
+                  id: String(opt.value),
+                  label: opt.label,
+                  value: opt.value,
+                }))}
+                renderItem={(item) => item.label}
+              />
             </div>
           }
           sticky={true}

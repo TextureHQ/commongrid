@@ -41,9 +41,15 @@ const ROUTE_IDENTIFIERS: Record<string, "slug" | "id" | "none"> = {
   "balancing-authorities": "slug",
   substations: "slug",
   "ev-charging": "slug",
-  utilities: "slug",
   "transmission-lines": "id",
+  // Routes that have never existed. `/utilities/:slug` in particular looked
+  // plausible enough that the changelog batch API shipped links to it.
+  utilities: "none",
   programs: "none",
+  isos: "none",
+  rtos: "none",
+  regions: "none",
+  "ev-stations": "none",
 };
 
 interface LinkRef {

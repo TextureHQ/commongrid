@@ -94,6 +94,17 @@ export function parseExplorePath(segments: readonly string[]): ExplorePathItem[]
     ];
   }
 
+  // /explore/utilities/:utilitySlug/rates/:rateSlug — a rate reached via its
+  // parent utility. Same nested-detail behavior as programs above.
+  if (tab === "utilities" && third === "rates" && fourth) {
+    return [
+      { kind: "overview" },
+      { kind: "list", tab: "utilities" },
+      { kind: "detail", entityKind: "utilities", slug: second },
+      { kind: "detail", entityKind: "rates", slug: fourth },
+    ];
+  }
+
   // /explore/:tab/:slug — a single entity of that tab.
   return [{ kind: "overview" }, { kind: "list", tab }, { kind: "detail", entityKind: tab, slug: second }];
 }
@@ -118,6 +129,12 @@ export function serializeExplorePath(items: readonly ExplorePathItem[]): string 
   const programDetail = details.find((d) => d.entityKind === "programs");
   if (list.tab === "utilities" && utilityDetail && programDetail) {
     return `${EXPLORE_BASE_PATH}/utilities/${encode(utilityDetail.slug)}/programs/${encode(programDetail.slug)}`;
+  }
+
+  // Nested rate-under-utility: /explore/utilities/:util/rates/:rate
+  const rateDetail = details.find((d) => d.entityKind === "rates");
+  if (list.tab === "utilities" && utilityDetail && rateDetail) {
+    return `${EXPLORE_BASE_PATH}/utilities/${encode(utilityDetail.slug)}/rates/${encode(rateDetail.slug)}`;
   }
 
   // Single detail: /explore/:tab/:slug

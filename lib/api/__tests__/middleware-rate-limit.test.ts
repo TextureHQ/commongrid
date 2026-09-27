@@ -253,6 +253,76 @@ describe("withApiMiddleware rate limiting", () => {
     expectRateLimitHeaders(response, { limit: "60", remaining: "0", tier: "anonymous" });
   });
 
+  function browserRequest(authorization?: string, method = "GET") {
+    return new Request("https://commongrid.info/api/v1/utilities", {
+      method,
+      headers: {
+        "sec-fetch-site": "same-origin",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-dest": "empty",
+        referer: "https://commongrid.info/explore/utilities",
+        "x-forwarded-for": "203.0.113.10",
+        ...(authorization ? { Authorization: authorization } : {}),
+      },
+    });
+  }
+
+  it("routes browser reads to a bounded, separate per-IP tier", async () => {
+    checkRateLimit.mockResolvedValue({
+      success: true,
+      remaining: 4999,
+      reset: 1714000000,
+      limit: 5000,
+      tier: "browser",
+    });
+    const handler = withApiMiddleware(async () => Response.json({ ok: true }), { trackUsage: false });
+    const response = await handler(browserRequest(), { requestId: "browser" });
+    expect(checkRateLimit).toHaveBeenCalledWith("ip:203.0.113.10", false, false, false, undefined, true);
+    expectRateLimitHeaders(response, { limit: "5000", remaining: "4999", tier: "browser" });
+  });
+
+  it("does not bypass 429 for requests with spoofed browser headers", async () => {
+    checkRateLimit.mockResolvedValue({
+      success: false,
+      remaining: 0,
+      reset: Math.floor(Date.now() / 1000) + 60,
+      limit: 120,
+      tier: "browser",
+    });
+    const inner = vi.fn(async () => Response.json({ ok: true }));
+    const response = await withApiMiddleware(inner, { trackUsage: false })(browserRequest(), { requestId: "spoof" });
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBeTruthy();
+    expect(inner).not.toHaveBeenCalled();
+  });
+
+  it("keeps writes on the write limiter despite browser headers", async () => {
+    await withApiMiddleware(async () => Response.json({ ok: true }), { trackUsage: false })(
+      browserRequest(undefined, "POST"),
+      { requestId: "write" }
+    );
+    expect(checkRateLimit).toHaveBeenCalledWith("ip:203.0.113.10", false, true, false, undefined);
+  });
+
+  it("keeps validated browser API keys on their existing tier", async () => {
+    validateApiKey.mockResolvedValue({ valid: true, apiKeyId: "key_browser", tier: "registered" });
+    await withApiMiddleware(async () => Response.json({ ok: true }), { trackUsage: false })(
+      browserRequest("Bearer cg_valid"),
+      { requestId: "key" }
+    );
+    expect(checkRateLimit).toHaveBeenCalledWith("auth:key_browser", true, false, false, "registered");
+  });
+
+  it("rejects fabricated credentials before considering browser hints", async () => {
+    validateApiKey.mockResolvedValue({ valid: false, error: "Invalid API key" });
+    const response = await withApiMiddleware(async () => Response.json({ ok: true }), { trackUsage: false })(
+      browserRequest("Bearer cg_fake"),
+      { requestId: "fake-browser" }
+    );
+    expect(response.status).toBe(401);
+    expect(checkRateLimit).not.toHaveBeenCalled();
+  });
+
   it("fabricated Bearer → 401 before rate limit (no registered bypass)", async () => {
     validateApiKey.mockResolvedValue({ valid: false, error: "Invalid API key" });
 

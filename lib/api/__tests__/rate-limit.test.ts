@@ -173,6 +173,46 @@ describe("checkRateLimit enforcement (in-process fallback)", () => {
     resetRateLimitersForTests();
   });
 
+  it("keeps browser and anonymous budgets separate on the same IP", async () => {
+    for (let i = 0; i < 60; i++) await checkRateLimit("ip:shared-browser", false, false, false);
+    expect((await checkRateLimit("ip:shared-browser", false, false, false)).success).toBe(false);
+    const browser = await checkRateLimit("ip:shared-browser", false, false, false, undefined, true);
+    expect(browser).toMatchObject({ success: true, tier: "browser", limit: 5000, remaining: 4999 });
+    expect((await checkRateLimit("ip:shared-browser", false, false, false)).success).toBe(false);
+  });
+
+  it("bounds even forged browser hints by the per-IP burst limit", async () => {
+    vi.useFakeTimers();
+    for (let i = 0; i < BURST_LIMITS.browser.limit; i++) {
+      expect((await checkRateLimit("ip:browser-burst", false, false, false, undefined, true)).success).toBe(true);
+    }
+    const blocked = await checkRateLimit("ip:browser-burst", false, false, false, undefined, true);
+    expect(blocked).toMatchObject({ success: false, tier: "browser", limit: 120 });
+    expect(rateLimitResponse(blocked, "browser-test").status).toBe(429);
+    vi.advanceTimersByTime(60_001);
+    expect((await checkRateLimit("ip:browser-burst", false, false, false, undefined, true)).success).toBe(true);
+  });
+
+  it("also enforces the browser hourly ceiling below the burst rate", async () => {
+    vi.useFakeTimers();
+    for (let i = 0; i < TIER_LIMITS.browser.limit; i++) {
+      expect((await checkRateLimit("ip:browser-hour", false, false, false, undefined, true)).success).toBe(true);
+      vi.advanceTimersByTime(600);
+    }
+    expect(await checkRateLimit("ip:browser-hour", false, false, false, undefined, true)).toMatchObject({
+      success: false,
+      tier: "browser",
+      limit: 5000,
+    });
+  });
+
+  it("browser hints never override write, keyed or bulk-request tiers", async () => {
+    expect((await checkRateLimit("ip:b", false, true, false, undefined, true)).tier).toBe("write");
+    expect((await checkRateLimit("auth:b", true, false, false, "registered", true)).tier).toBe("registered");
+    expect((await checkRateLimit("auth:c", true, false, true, "bulk", true)).tier).toBe("bulk");
+    expect((await checkRateLimit("ip:b", false, false, true, undefined, true)).tier).toBe("anonymous");
+  });
+
   it("never returns placeholder 999 limits", async () => {
     const result = await checkRateLimit("ip:10.0.0.1", false, false, false);
     expect(result.limit).toBe(TIER_LIMITS.anonymous.limit);

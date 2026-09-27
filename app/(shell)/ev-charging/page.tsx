@@ -1,6 +1,16 @@
 "use client";
 
-import { Badge, Button, type Column, DataControls, DataTable, Icon, Loader, PageLayout } from "@texturehq/edges";
+import {
+  Badge,
+  Button,
+  type Column,
+  DataControls,
+  DataTable,
+  Icon,
+  Loader,
+  PageLayout,
+  Select,
+} from "@texturehq/edges";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
@@ -391,59 +401,67 @@ export default function EVChargingPage() {
           }}
           customControls={
             <div className="flex flex-wrap gap-2">
-              <select
-                value={networkFilter}
-                onChange={(e) => setNetworkFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                <option value="all">All Networks</option>
-                {networks.slice(0, 20).map((net) => (
-                  <option key={net} value={net}>
-                    {getNetworkShortName(net)}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={levelFilter}
-                onChange={(e) => setLevelFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                <option value="all">All Charging Levels</option>
-                <option value="dcfast">DC Fast Only</option>
-                <option value="level2">Level 2</option>
-              </select>
-              <select
-                value={accessFilter}
-                onChange={(e) => setAccessFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                <option value="all">All Access Types</option>
-                <option value="public">Public</option>
-                <option value="private">Private</option>
-                <option value="restricted">Restricted</option>
-              </select>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                <option value="all">All Statuses</option>
-                <option value="E">Open</option>
-                <option value="P">Planned</option>
-                <option value="T">Temporarily Unavailable</option>
-              </select>
-              <select
-                value={stateFilter}
-                onChange={(e) => setStateFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                <option value="all">All States</option>
-                {states.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+              <Select
+                size="sm"
+                selectedKey={networkFilter}
+                onSelectionChange={(key) => setNetworkFilter(String(key))}
+                items={[
+                  { id: "all", label: "All Networks", value: "all" },
+                  // Capped at 20: `networks` is derived from the loaded page of
+                  // stations and its tail is a long list of one-off operators.
+                  ...networks.slice(0, 20).map((net) => ({
+                    id: net,
+                    label: getNetworkShortName(net),
+                    value: net,
+                  })),
+                ]}
+                renderItem={(item) => item.label}
+              />
+              <Select
+                size="sm"
+                selectedKey={levelFilter}
+                onSelectionChange={(key) => setLevelFilter(String(key))}
+                items={[
+                  { id: "all", label: "All Charging Levels", value: "all" },
+                  { id: "dcfast", label: "DC Fast Only", value: "dcfast" },
+                  { id: "level2", label: "Level 2", value: "level2" },
+                ]}
+                renderItem={(item) => item.label}
+              />
+              <Select
+                size="sm"
+                selectedKey={accessFilter}
+                onSelectionChange={(key) => setAccessFilter(String(key))}
+                items={[
+                  { id: "all", label: "All Access Types", value: "all" },
+                  { id: "public", label: "Public", value: "public" },
+                  { id: "private", label: "Private", value: "private" },
+                  { id: "restricted", label: "Restricted", value: "restricted" },
+                ]}
+                renderItem={(item) => item.label}
+              />
+              <Select
+                size="sm"
+                selectedKey={statusFilter}
+                onSelectionChange={(key) => setStatusFilter(String(key))}
+                items={[
+                  { id: "all", label: "All Statuses", value: "all" },
+                  { id: "E", label: "Open", value: "E" },
+                  { id: "P", label: "Planned", value: "P" },
+                  { id: "T", label: "Temporarily Unavailable", value: "T" },
+                ]}
+                renderItem={(item) => item.label}
+              />
+              <Select
+                size="sm"
+                selectedKey={stateFilter}
+                onSelectionChange={(key) => setStateFilter(String(key))}
+                items={[
+                  { id: "all", label: "All States", value: "all" },
+                  ...states.map((entry) => ({ id: entry, label: entry, value: entry })),
+                ]}
+                renderItem={(item) => item.label}
+              />
             </div>
           }
           sticky={true}

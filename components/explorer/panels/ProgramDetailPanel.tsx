@@ -3,7 +3,6 @@
 import type { Feature, FeatureCollection } from "geojson";
 import { useEffect, useMemo, useState } from "react";
 import { DeleteEntityDialog } from "@/components/contributions/DeleteEntityDialog";
-import { EditEntityPanel } from "@/components/contributions/EditEntityPanel";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useProgram } from "@/hooks/useProgram";
@@ -29,6 +28,7 @@ import {
   ProgramStatus,
 } from "@/types/programs";
 import { useExplorer } from "../ExplorerContext";
+import { PanelEditLayer } from "./PanelEditLayer";
 
 const ArrowIcon = () => (
   <svg
@@ -179,309 +179,311 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
         : "var(--color-text-muted)";
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="cg-explore-detail">
-        <div className="cg-explore-detail-type">Program</div>
-        <div className="cg-explore-detail-name">{program.name}</div>
-        <div className="cg-explore-detail-sub">
-          <span style={{ color: statusColor(program.status), fontWeight: 500 }}>{statusLabel(program.status)}</span>
-          {program.description &&
-            ` · ${program.description.slice(0, 100)}${program.description.length > 100 ? "…" : ""}`}
-        </div>
-
-        <div className="mt-3">
-          <EntityVersionHistory entityType="program" entitySlug={slug} />
-        </div>
-
-        {/* Overview KV table */}
-        <div className="cg-explore-kv-table">
-          {adminOrganizations.length > 0 && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Utility</span>
-              <span className="cg-explore-kv-val">
-                {adminOrganizations.map((o, i) => (
-                  <span key={o.entityId}>
-                    {i > 0 && ", "}
-                    {o.resolved ? (
-                      <button
-                        type="button"
-                        onClick={() => navigateToDetail("utility", o.entityId)}
-                        style={linkButtonStyle}
-                      >
-                        {o.name}
-                      </button>
-                    ) : (
-                      o.name
-                    )}
-                  </span>
-                ))}
-              </span>
-            </div>
-          )}
-          {otherOrganizations.map((o) => (
-            <div key={`${o.role}-${o.entityId}`} className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">{o.roleLabel}</span>
-              <span className="cg-explore-kv-val">
-                {o.resolved ? (
-                  <button type="button" onClick={() => navigateToDetail("utility", o.entityId)} style={linkButtonStyle}>
-                    {o.name}
-                  </button>
-                ) : (
-                  o.name
-                )}
-              </span>
-            </div>
-          ))}
-          <div className="cg-explore-kv-row">
-            <span className="cg-explore-kv-key">Asset Types</span>
-            <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-              {program.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", ")}
-            </span>
+    <PanelEditLayer
+      entityType="program"
+      entityId={program.id}
+      entityName={program.name}
+      currentValues={program as unknown as Record<string, unknown>}
+      isEditing={isEditOpen}
+      onCloseEdit={() => setIsEditOpen(false)}
+    >
+      <div className="flex flex-col h-full">
+        <div className="cg-explore-detail">
+          <div className="cg-explore-detail-type">Program</div>
+          <div className="cg-explore-detail-name">{program.name}</div>
+          <div className="cg-explore-detail-sub">
+            <span style={{ color: statusColor(program.status), fontWeight: 500 }}>{statusLabel(program.status)}</span>
+            {program.description &&
+              ` · ${program.description.slice(0, 100)}${program.description.length > 100 ? "…" : ""}`}
           </div>
-          <div className="cg-explore-kv-row">
-            <span className="cg-explore-kv-key">Device Types</span>
-            <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-              {(program.deviceTypes ?? [])
-                .map((dt) => DeviceTypeLabel[dt as keyof typeof DeviceTypeLabel] ?? dt)
-                .join(", ")}
-            </span>
+
+          <div className="mt-3">
+            <EntityVersionHistory entityType="program" entitySlug={slug} />
           </div>
-          {program.marketSegments.length > 0 && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Market Segments</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-                {program.marketSegments
-                  .map((ms) => MarketSegmentLabel[ms as keyof typeof MarketSegmentLabel] ?? ms)
-                  .join(", ")}
-              </span>
-            </div>
-          )}
-          {program.gridServices.length > 0 && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Grid Services</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-                {program.gridServices
-                  .map((gs) => GridServiceLabel[gs as keyof typeof GridServiceLabel] ?? gs)
-                  .join(", ")}
-              </span>
-            </div>
-          )}
-          {program.participationModels.length > 0 && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Participation</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-                {program.participationModels
-                  .map((pm) => ParticipationModelLabel[pm as keyof typeof ParticipationModelLabel] ?? pm)
-                  .join(", ")}
-              </span>
-            </div>
-          )}
-          {program.incentiveStructures.length > 0 && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Incentives</span>
-              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
-                {program.incentiveStructures
-                  .map((is) => IncentiveStructureLabel[is as keyof typeof IncentiveStructureLabel] ?? is)
-                  .join(", ")}
-              </span>
-            </div>
-          )}
-          {program.programWebsite && (
-            <div className="cg-explore-kv-row">
-              <span className="cg-explore-kv-key">Website</span>
-              <span className="cg-explore-kv-val">
-                <a href={program.programWebsite} target="_blank" rel="noopener noreferrer">
-                  {safeHostname(program.programWebsite)}
-                </a>
-              </span>
-            </div>
-          )}
-          <div className="cg-explore-kv-row">
-            <span className="cg-explore-kv-key">DERMS Vendor</span>
-            <span className="cg-explore-kv-val">{program.dermsVendor || "—"}</span>
-          </div>
-          <div className="cg-explore-kv-row">
-            <span className="cg-explore-kv-key">Other Notes</span>
-            <span className="cg-explore-kv-val">{program.otherNotes || "—"}</span>
-          </div>
-        </div>
 
-        {/* Capacity & enrollment targets */}
-        {(program.capacityTarget != null || program.maxEnrollments != null) && (
-          <>
-            <div className="cg-explore-related-heading">Capacity</div>
-            <div className="cg-explore-kv-table">
-              {program.capacityTarget != null && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Capacity Target</span>
-                  <span className="cg-explore-kv-val">{program.capacityTarget.toLocaleString()} MW</span>
-                </div>
-              )}
-              {program.maxEnrollments != null && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Max Enrollments</span>
-                  <span className="cg-explore-kv-val">{program.maxEnrollments.toLocaleString()}</span>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Program dates */}
-        {(program.launchedAt || program.enrollmentOpens || program.enrollmentCloses || program.endsAt) && (
-          <>
-            <div className="cg-explore-related-heading">Dates</div>
-            <div className="cg-explore-kv-table">
-              {program.launchedAt && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Launched</span>
-                  <span className="cg-explore-kv-val">{formatProgramDate(program.launchedAt)}</span>
-                </div>
-              )}
-              {program.enrollmentOpens && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Enrollment Opens</span>
-                  <span className="cg-explore-kv-val">{formatProgramDate(program.enrollmentOpens)}</span>
-                </div>
-              )}
-              {program.enrollmentCloses && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Enrollment Closes</span>
-                  <span className="cg-explore-kv-val">{formatProgramDate(program.enrollmentCloses)}</span>
-                </div>
-              )}
-              {program.endsAt && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Ends</span>
-                  <span className="cg-explore-kv-val">{formatProgramDate(program.endsAt)}</span>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Compensation */}
-        {program.compensationTiers.length > 0 && (
-          <>
-            <div className="cg-explore-related-heading">Compensation</div>
-            <div className="cg-explore-kv-table">
-              {program.compensationTiers.map((tier) => (
-                <div key={tier.tier} className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">
-                    {CompensationTypeLabel[tier.type as keyof typeof CompensationTypeLabel] ?? tier.type}
-                  </span>
-                  <span className="cg-explore-kv-val">
-                    ${tier.amount} {CompensationUnitLabel[tier.unit as keyof typeof CompensationUnitLabel] ?? tier.unit}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Related: organizations behind the program */}
-        {organizations.length > 0 && (
-          <>
-            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
-              Related
-            </div>
-            {organizations.map((o) => (
-              <button
-                key={`${o.role}-${o.entityId}`}
-                className="cg-explore-related-row"
-                type="button"
-                onClick={o.resolved ? () => navigateToDetail("utility", o.entityId) : undefined}
-                disabled={!o.resolved}
-                style={o.resolved ? undefined : { cursor: "default" }}
-              >
-                <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
-                <div style={{ flex: 1 }}>
-                  <div className="cg-explore-related-name">{o.name}</div>
-                  <div className="cg-explore-related-type">{o.roleLabel}</div>
-                </div>
-                {o.resolved && <ArrowIcon />}
-              </button>
+          {/* Overview KV table */}
+          <div className="cg-explore-kv-table">
+            {adminOrganizations.length > 0 && (
+              <div className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">Utility</span>
+                <span className="cg-explore-kv-val">
+                  {adminOrganizations.map((o, i) => (
+                    <span key={o.entityId}>
+                      {i > 0 && ", "}
+                      {o.resolved ? (
+                        <button
+                          type="button"
+                          onClick={() => navigateToDetail("utility", o.entityId)}
+                          style={linkButtonStyle}
+                        >
+                          {o.name}
+                        </button>
+                      ) : (
+                        o.name
+                      )}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            )}
+            {otherOrganizations.map((o) => (
+              <div key={`${o.role}-${o.entityId}`} className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">{o.roleLabel}</span>
+                <span className="cg-explore-kv-val">
+                  {o.resolved ? (
+                    <button
+                      type="button"
+                      onClick={() => navigateToDetail("utility", o.entityId)}
+                      style={linkButtonStyle}
+                    >
+                      {o.name}
+                    </button>
+                  ) : (
+                    o.name
+                  )}
+                </span>
+              </div>
             ))}
-          </>
-        )}
-
-        {/* Links */}
-        {(program.faqUrl || program.termsUrl || program.contactUrl) && (
-          <>
-            <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
-              Links
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">Asset Types</span>
+              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
+                {program.assetTypes.map((at) => AssetTypeLabel[at as keyof typeof AssetTypeLabel] ?? at).join(", ")}
+              </span>
             </div>
-            <div className="cg-explore-kv-table">
-              {program.faqUrl && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">FAQ</span>
-                  <span className="cg-explore-kv-val">
-                    <a href={program.faqUrl} target="_blank" rel="noopener noreferrer">
-                      {safeHostname(program.faqUrl)}
-                    </a>
-                  </span>
-                </div>
-              )}
-              {program.termsUrl && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Terms</span>
-                  <span className="cg-explore-kv-val">
-                    <a href={program.termsUrl} target="_blank" rel="noopener noreferrer">
-                      {safeHostname(program.termsUrl)}
-                    </a>
-                  </span>
-                </div>
-              )}
-              {program.contactUrl && (
-                <div className="cg-explore-kv-row">
-                  <span className="cg-explore-kv-key">Contact</span>
-                  <span className="cg-explore-kv-val">
-                    <a href={program.contactUrl} target="_blank" rel="noopener noreferrer">
-                      {safeHostname(program.contactUrl)}
-                    </a>
-                  </span>
-                </div>
-              )}
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">Device Types</span>
+              <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
+                {(program.deviceTypes ?? [])
+                  .map((dt) => DeviceTypeLabel[dt as keyof typeof DeviceTypeLabel] ?? dt)
+                  .join(", ")}
+              </span>
             </div>
-          </>
-        )}
-
-        {/* Suggest Edit */}
-        {user && (
-          <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
-            <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsEditOpen(true)}>
-              Suggest Edit
-            </button>
-            <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsDeleteOpen(true)}>
-              Request Deletion
-            </button>
+            {program.marketSegments.length > 0 && (
+              <div className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">Market Segments</span>
+                <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
+                  {program.marketSegments
+                    .map((ms) => MarketSegmentLabel[ms as keyof typeof MarketSegmentLabel] ?? ms)
+                    .join(", ")}
+                </span>
+              </div>
+            )}
+            {program.gridServices.length > 0 && (
+              <div className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">Grid Services</span>
+                <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
+                  {program.gridServices
+                    .map((gs) => GridServiceLabel[gs as keyof typeof GridServiceLabel] ?? gs)
+                    .join(", ")}
+                </span>
+              </div>
+            )}
+            {program.participationModels.length > 0 && (
+              <div className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">Participation</span>
+                <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
+                  {program.participationModels
+                    .map((pm) => ParticipationModelLabel[pm as keyof typeof ParticipationModelLabel] ?? pm)
+                    .join(", ")}
+                </span>
+              </div>
+            )}
+            {program.incentiveStructures.length > 0 && (
+              <div className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">Incentives</span>
+                <span className="cg-explore-kv-val" style={{ fontFamily: "var(--font-family-sans)", fontSize: 12 }}>
+                  {program.incentiveStructures
+                    .map((is) => IncentiveStructureLabel[is as keyof typeof IncentiveStructureLabel] ?? is)
+                    .join(", ")}
+                </span>
+              </div>
+            )}
+            {program.programWebsite && (
+              <div className="cg-explore-kv-row">
+                <span className="cg-explore-kv-key">Website</span>
+                <span className="cg-explore-kv-val">
+                  <a href={program.programWebsite} target="_blank" rel="noopener noreferrer">
+                    {safeHostname(program.programWebsite)}
+                  </a>
+                </span>
+              </div>
+            )}
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">DERMS Vendor</span>
+              <span className="cg-explore-kv-val">{program.dermsVendor || "—"}</span>
+            </div>
+            <div className="cg-explore-kv-row">
+              <span className="cg-explore-kv-key">Other Notes</span>
+              <span className="cg-explore-kv-val">{program.otherNotes || "—"}</span>
+            </div>
           </div>
+
+          {/* Capacity & enrollment targets */}
+          {(program.capacityTarget != null || program.maxEnrollments != null) && (
+            <>
+              <div className="cg-explore-related-heading">Capacity</div>
+              <div className="cg-explore-kv-table">
+                {program.capacityTarget != null && (
+                  <div className="cg-explore-kv-row">
+                    <span className="cg-explore-kv-key">Capacity Target</span>
+                    <span className="cg-explore-kv-val">{program.capacityTarget.toLocaleString()} MW</span>
+                  </div>
+                )}
+                {program.maxEnrollments != null && (
+                  <div className="cg-explore-kv-row">
+                    <span className="cg-explore-kv-key">Max Enrollments</span>
+                    <span className="cg-explore-kv-val">{program.maxEnrollments.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Program dates */}
+          {(program.launchedAt || program.enrollmentOpens || program.enrollmentCloses || program.endsAt) && (
+            <>
+              <div className="cg-explore-related-heading">Dates</div>
+              <div className="cg-explore-kv-table">
+                {program.launchedAt && (
+                  <div className="cg-explore-kv-row">
+                    <span className="cg-explore-kv-key">Launched</span>
+                    <span className="cg-explore-kv-val">{formatProgramDate(program.launchedAt)}</span>
+                  </div>
+                )}
+                {program.enrollmentOpens && (
+                  <div className="cg-explore-kv-row">
+                    <span className="cg-explore-kv-key">Enrollment Opens</span>
+                    <span className="cg-explore-kv-val">{formatProgramDate(program.enrollmentOpens)}</span>
+                  </div>
+                )}
+                {program.enrollmentCloses && (
+                  <div className="cg-explore-kv-row">
+                    <span className="cg-explore-kv-key">Enrollment Closes</span>
+                    <span className="cg-explore-kv-val">{formatProgramDate(program.enrollmentCloses)}</span>
+                  </div>
+                )}
+                {program.endsAt && (
+                  <div className="cg-explore-kv-row">
+                    <span className="cg-explore-kv-key">Ends</span>
+                    <span className="cg-explore-kv-val">{formatProgramDate(program.endsAt)}</span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Compensation */}
+          {program.compensationTiers.length > 0 && (
+            <>
+              <div className="cg-explore-related-heading">Compensation</div>
+              <div className="cg-explore-kv-table">
+                {program.compensationTiers.map((tier) => (
+                  <div key={tier.tier} className="cg-explore-kv-row">
+                    <span className="cg-explore-kv-key">
+                      {CompensationTypeLabel[tier.type as keyof typeof CompensationTypeLabel] ?? tier.type}
+                    </span>
+                    <span className="cg-explore-kv-val">
+                      ${tier.amount}{" "}
+                      {CompensationUnitLabel[tier.unit as keyof typeof CompensationUnitLabel] ?? tier.unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Related: organizations behind the program */}
+          {organizations.length > 0 && (
+            <>
+              <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+                Related
+              </div>
+              {organizations.map((o) => (
+                <button
+                  key={`${o.role}-${o.entityId}`}
+                  className="cg-explore-related-row"
+                  type="button"
+                  onClick={o.resolved ? () => navigateToDetail("utility", o.entityId) : undefined}
+                  disabled={!o.resolved}
+                  style={o.resolved ? undefined : { cursor: "default" }}
+                >
+                  <span className="cg-explore-related-dot" style={{ background: entityKindColor("utilities") }} />
+                  <div style={{ flex: 1 }}>
+                    <div className="cg-explore-related-name">{o.name}</div>
+                    <div className="cg-explore-related-type">{o.roleLabel}</div>
+                  </div>
+                  {o.resolved && <ArrowIcon />}
+                </button>
+              ))}
+            </>
+          )}
+
+          {/* Links */}
+          {(program.faqUrl || program.termsUrl || program.contactUrl) && (
+            <>
+              <div className="cg-explore-related-heading" style={{ marginTop: 16 }}>
+                Links
+              </div>
+              <div className="cg-explore-kv-table">
+                {program.faqUrl && (
+                  <div className="cg-explore-kv-row">
+                    <span className="cg-explore-kv-key">FAQ</span>
+                    <span className="cg-explore-kv-val">
+                      <a href={program.faqUrl} target="_blank" rel="noopener noreferrer">
+                        {safeHostname(program.faqUrl)}
+                      </a>
+                    </span>
+                  </div>
+                )}
+                {program.termsUrl && (
+                  <div className="cg-explore-kv-row">
+                    <span className="cg-explore-kv-key">Terms</span>
+                    <span className="cg-explore-kv-val">
+                      <a href={program.termsUrl} target="_blank" rel="noopener noreferrer">
+                        {safeHostname(program.termsUrl)}
+                      </a>
+                    </span>
+                  </div>
+                )}
+                {program.contactUrl && (
+                  <div className="cg-explore-kv-row">
+                    <span className="cg-explore-kv-key">Contact</span>
+                    <span className="cg-explore-kv-val">
+                      <a href={program.contactUrl} target="_blank" rel="noopener noreferrer">
+                        {safeHostname(program.contactUrl)}
+                      </a>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Suggest Edit */}
+          {user && (
+            <div style={{ display: "flex", gap: 7, marginTop: 16 }}>
+              <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsEditOpen(true)}>
+                Suggest Edit
+              </button>
+              <button type="button" className="cg-explore-fullpage-link" onClick={() => setIsDeleteOpen(true)}>
+                Request Deletion
+              </button>
+            </div>
+          )}
+        </div>
+
+        {isDeleteOpen && program && (
+          <DeleteEntityDialog
+            entityType="program"
+            entityId={program.id}
+            entityName={program.name}
+            entityVersion={program.version ?? 1}
+            isOpen={isDeleteOpen}
+            onClose={() => setIsDeleteOpen(false)}
+            onSuccess={() => setIsDeleteOpen(false)}
+          />
         )}
       </div>
-
-      {isEditOpen && program && (
-        <EditEntityPanel
-          entityType="program"
-          entityId={program.id}
-          entitySlug={program.slug}
-          entityName={program.name}
-          currentValues={program as unknown as Record<string, unknown>}
-          onClose={() => setIsEditOpen(false)}
-          onSubmitted={() => setIsEditOpen(false)}
-        />
-      )}
-
-      {isDeleteOpen && program && (
-        <DeleteEntityDialog
-          entityType="program"
-          entityId={program.id}
-          entityName={program.name}
-          entityVersion={program.version ?? 1}
-          isOpen={isDeleteOpen}
-          onClose={() => setIsDeleteOpen(false)}
-          onSuccess={() => setIsDeleteOpen(false)}
-        />
-      )}
-    </div>
+    </PanelEditLayer>
   );
 }

@@ -14,13 +14,56 @@ env:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
+    # Opt into the commongrid-data-sync GitHub Environment so DATABASE_URL
+    # (an environment secret, not a repo secret) resolves at runtime. The
+    # environment's deployment-branch policy restricts it to `main`, so
+    # pull_request triggers can never read the credential (public-repo
+    # exfiltration guard). Without this, the snapshot job aborts with
+    # "DATABASE_URL secret is not set" (CG-263).
+    environment: commongrid-data-sync
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install PostgreSQL client
+      # The Neon server is Postgres 17. pg_dump refuses to dump a server newer
+      # than itself ("aborting because of server version mismatch"), and the
+      # Ubuntu runner's default postgresql-client is v16 — which is exactly what
+      # broke every snapshot run from 2026-08-16 onward (CIR-1272). Install the
+      # v17 client from the official PGDG apt repo so client >= server.
+      #
+      # CRITICAL (CIR-1272 regression, 2026-09-20): installing postgresql-client-17
+      # is NOT sufficient. Ubuntu ships `postgresql-client-common`, whose
+      # `/usr/bin/pg_dump` is the Debian `pg_wrapper` shim. That shim dispatches
+      # to the HIGHEST installed major only when no explicit cluster/version is
+      # requested — but the runner already has v16 binaries, and the wrapper's
+      # resolution left `pg_dump --version` reporting 16.15, so the Sunday runs
+      # kept aborting with the same version mismatch even though v17 was present.
+      # Prepend the versioned bindir (/usr/lib/postgresql/17/bin) to PATH so the
+      # real v17 binaries win, and assert the resolved version is >= 17 before
+      # doing anything, so a future silent regression fails loudly here.
+      - name: Install PostgreSQL 17 client
         run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
+          sudo apt-get install -y -qq postgresql-client-17
+          # Put the real v17 binaries ahead of the v16 wrapper for all later steps.
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Assert pg client >= 17
+        shell: bash -euo pipefail {0}
+        run: |
+          DUMP_BIN="$(command -v pg_dump)"
+          echo "pg_dump resolved to: $DUMP_BIN"
+          pg_dump --version
+          MAJOR="$(pg_dump --version | grep -oE '[0-9]+' | head -1)"
+          if [ "$MAJOR" -lt 17 ]; then
+            echo "::error::pg_dump major is ${MAJOR} (<17) — the v16 wrapper is still winning on PATH. Refusing to run against a v17 server."
+            exit 1
+          fi
+          echo "pg_dump major ${MAJOR} OK (>=17)."
 
       - name: Set snapshot tag
         id: tag
@@ -50,7 +93,16 @@ jobs:
           fi
           echo "DATABASE_URL is present."
 
-      - name: Export full database (SQL)
+      # SQL dump is scoped to an explicit ALLOWLIST of public reference tables.
+      # This is a PUBLIC release (ODbL) — a full `pg_dump` would leak users,
+      # api_keys (credentials!), contributions, moderation_actions,
+      # notifications, and other operational/PII tables. We enumerate exactly
+      # the datasets that belong in the open dataset and dump only those with
+      # `--table`. Anything not on this list is never exported (CIR-1273).
+      #
+      # To add a dataset to the public snapshot, add its table here explicitly.
+      # Do NOT switch this to a full-database dump.
+      - name: Export public reference tables (SQL)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         # `pipefail` is essential: without it, `pg_dump | gzip` reports the exit
@@ -58,13 +110,27 @@ jobs:
         # snapshots got published for months.
         shell: bash -euo pipefail {0}
         run: |
-          echo "Dumping database..."
+          echo "Dumping public reference tables..."
           pg_dump "$DATABASE_URL" \
             --no-owner \
             --no-privileges \
             --clean \
             --if-exists \
             --format=plain \
+            --table=public.balancing_authorities \
+            --table=public.ev_stations \
+            --table=public.isos \
+            --table=public.power_plant_interconnections \
+            --table=public.power_plants \
+            --table=public.pricing_nodes \
+            --table=public.programs \
+            --table=public.regions \
+            --table=public.rtos \
+            --table=public.substations \
+            --table=public.territories \
+            --table=public.transmission_line_endpoints \
+            --table=public.transmission_lines \
+            --table=public.utilities \
             | gzip -9 > "$SNAPSHOT_DIR/commongrid-${{ steps.tag.outputs.date }}.sql.gz"
           echo "SQL dump size: $(du -h "$SNAPSHOT_DIR/commongrid-${{ steps.tag.outputs.date }}.sql.gz" | cut -f1)"
 
@@ -84,17 +150,17 @@ jobs:
                     'name', u.name,
                     'slug', u.slug,
                     'eia_id', u.eia_id,
-                    'ownership_type', u.ownership_type,
+                    'segment', u.segment,
                     'state', r.state,
                     'customers', r.customers
                   ),
-                  'geometry', ST_AsGeoJSON(t.geom)::json
+                  'geometry', ST_AsGeoJSON(t.geography::geometry)::json
                 )
               ), '[]'::json)
             )
             FROM utilities u
             JOIN regions r ON u.service_territory_id = r.id
-            LEFT JOIN territories t ON t.region_id = r.id AND t.deleted_at IS NULL
+            JOIN territories t ON t.region_id = r.id AND t.deleted_at IS NULL
             WHERE u.deleted_at IS NULL
           " | gzip -9 > "$SNAPSHOT_DIR/utilities.geojson.gz"
           echo "Utilities GeoJSON size: $(du -h "$SNAPSHOT_DIR/utilities.geojson.gz" | cut -f1)"
@@ -147,12 +213,12 @@ jobs:
                   'type', 'Feature',
                   'properties', json_build_object(
                     'id', id,
-                    'name', plant_name,
+                    'name', name,
                     'slug', slug,
                     'utility_id', utility_id,
                     'state', state,
                     'primary_fuel', primary_fuel,
-                    'nameplate_capacity_mw', nameplate_capacity_mw,
+                    'total_capacity_mw', total_capacity_mw,
                     'status', status
                   ),
                   'geometry', json_build_object(
@@ -167,34 +233,13 @@ jobs:
           " | gzip -9 > "$SNAPSHOT_DIR/power-plants.geojson.gz"
           echo "Power plants GeoJSON size: $(du -h "$SNAPSHOT_DIR/power-plants.geojson.gz" | cut -f1)"
 
-      - name: Export GeoJSON — Transmission Lines
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        shell: bash -euo pipefail {0}
-        run: |
-          psql "$DATABASE_URL" -t -A -c "
-            SELECT json_build_object(
-              'type', 'FeatureCollection',
-              'features', COALESCE(json_agg(
-                json_build_object(
-                  'type', 'Feature',
-                  'properties', json_build_object(
-                    'id', id,
-                    'name', name,
-                    'slug', slug,
-                    'owner', owner,
-                    'voltage_kv', voltage_kv,
-                    'type', type,
-                    'status', status
-                  ),
-                  'geometry', ST_AsGeoJSON(geom)::json
-                )
-              ), '[]'::json)
-            )
-            FROM transmission_lines
-            WHERE deleted_at IS NULL
-          " | gzip -9 > "$SNAPSHOT_DIR/transmission-lines.geojson.gz"
-          echo "Transmission lines GeoJSON size: $(du -h "$SNAPSHOT_DIR/transmission-lines.geojson.gz" | cut -f1)"
+      # NOTE: There is intentionally NO transmission-lines GeoJSON export.
+      # `transmission_lines` stores only line METADATA (owner, voltage, class,
+      # endpoints) — the actual LineString geometry is not in Postgres; it lives
+      # in PMTiles for map rendering (see lib/db/schema/transmission-lines.ts).
+      # The metadata still ships in the allowlisted SQL dump above. A GeoJSON
+      # export here is impossible and previously referenced a nonexistent `geom`
+      # column, which is one of the errors that broke every run since W33.
 
       - name: Export GeoJSON — Pricing Nodes
         env:
@@ -211,10 +256,10 @@ jobs:
                     'id', id,
                     'name', name,
                     'slug', slug,
-                    'iso_id', iso_id,
+                    'iso', iso,
                     'node_type', node_type,
                     'zone', zone,
-                    'status', status
+                    'state', state
                   ),
                   'geometry', json_build_object(
                     'type', 'Point',
@@ -227,6 +272,34 @@ jobs:
             WHERE deleted_at IS NULL
           " | gzip -9 > "$SNAPSHOT_DIR/pricing-nodes.geojson.gz"
           echo "Pricing nodes GeoJSON size: $(du -h "$SNAPSHOT_DIR/pricing-nodes.geojson.gz" | cut -f1)"
+
+      # Programs is one of the most valuable datasets in CommonGrid — most of it
+      # was gathered by hand. It has no geometry (programs reference regions by
+      # id), so it ships as a standalone JSON array rather than GeoJSON, in
+      # addition to being in the SQL dump above. This makes the crown-jewel
+      # dataset downloadable without restoring the whole Postgres dump.
+      - name: Export JSON — Programs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        shell: bash -euo pipefail {0}
+        run: |
+          psql "$DATABASE_URL" -t -A -c "
+            SELECT COALESCE(json_agg(row_to_json(p) ORDER BY p.name), '[]'::json)
+            FROM (
+              SELECT
+                id, slug, name, description,
+                organizations, asset_types, market_segments,
+                participation_models, incentive_structures, grid_services,
+                regions, compensation_tiers, capacity_target, max_enrollments,
+                program_season, launched_at, enrollment_opens, enrollment_closes,
+                ends_at, status, program_website, faq_url, terms_url, contact_url,
+                variants, derms_vendor, device_types, other_notes,
+                source, source_url
+              FROM programs
+              WHERE deleted_at IS NULL
+            ) p
+          " | gzip -9 > "$SNAPSHOT_DIR/programs.json.gz"
+          echo "Programs JSON size: $(du -h "$SNAPSHOT_DIR/programs.json.gz" | cut -f1)"
 
       # Guard against publishing empty/garbage data to the public. An empty gzip
       # stream is 20 bytes, and every asset in every release from W17–W32 was
@@ -254,6 +327,20 @@ jobs:
             fi
           done
           exit $FAILED
+
+      # Defense-in-depth guard: the SQL dump should only contain the public
+      # allowlist above. If a private table ever appears here, the workflow
+      # must fail before publishing the release.
+      - name: Validate SQL dump excludes private tables
+        shell: bash -euo pipefail {0}
+        run: |
+          SQL_DUMP="$SNAPSHOT_DIR/commongrid-${{ steps.tag.outputs.date }}.sql.gz"
+          BAD_TABLES='public\.(users|api_keys|notifications|user_notification_prefs|knock_delivery_log|contributions|contribution_appeals|moderation_actions|discussion_posts|api_usage_events|entity_locks|bulk_operations)'
+          if gunzip -c "$SQL_DUMP" | grep -Eiq "$BAD_TABLES"; then
+            echo "::error::SQL dump contains private tables that must not be published publicly."
+            exit 1
+          fi
+          echo "SQL dump passed private-table guard."
 
       - name: Generate manifest
         run: |
@@ -293,18 +380,26 @@ jobs:
 
           | File | Description |
           |------|-------------|
-          | \`commongrid-${DATE}.sql.gz\` | Full database dump (pg_dump, gzipped) |
-          | \`utilities.geojson.gz\` | All utilities with service territory geometry |
+          | \`commongrid-${DATE}.sql.gz\` | Full SQL dump of all public tables below (allowlisted \`pg_dump\`, gzipped) |
+          | \`programs.json.gz\` | Demand-response & grid-services programs — hand-curated (JSON array) |
+          | \`utilities.geojson.gz\` | Utilities with service-territory geometry |
           | \`ev-stations.geojson.gz\` | EV charging stations (point locations) |
           | \`power-plants.geojson.gz\` | Power plants (point locations) |
-          | \`transmission-lines.geojson.gz\` | Transmission lines (line geometry) |
           | \`pricing-nodes.geojson.gz\` | ISO/RTO pricing nodes (point locations) |
+
+          ### Public tables in the SQL dump
+
+          The \`.sql.gz\` dump contains these public tables (no user/PII/operational data):
+          \`balancing_authorities\`, \`ev_stations\`, \`isos\`, \`power_plant_interconnections\`, \`power_plants\`, \`pricing_nodes\`, \`programs\`, \`regions\`, \`rtos\`, \`substations\`, \`territories\`, \`transmission_line_endpoints\`, \`transmission_lines\`, \`utilities\`.
 
           ### Usage
 
           \`\`\`bash
-          # Restore the SQL dump
+          # Restore the full SQL dump
           gunzip -c commongrid-${DATE}.sql.gz | psql your_database
+
+          # Programs dataset as JSON (no restore needed)
+          gunzip -c programs.json.gz | jq '.[0]'
 
           # Load GeoJSON into ogr2ogr / QGIS / tippecanoe
           gunzip utilities.geojson.gz
@@ -318,8 +413,8 @@ jobs:
             --title "Weekly Snapshot — ${DATE}" \
             --notes "$NOTES" \
             "$SNAPSHOT_DIR"/commongrid-*.sql.gz \
+            "$SNAPSHOT_DIR"/programs.json.gz \
             "$SNAPSHOT_DIR"/utilities.geojson.gz \
             "$SNAPSHOT_DIR"/ev-stations.geojson.gz \
             "$SNAPSHOT_DIR"/power-plants.geojson.gz \
-            "$SNAPSHOT_DIR"/transmission-lines.geojson.gz \
             "$SNAPSHOT_DIR"/pricing-nodes.geojson.gz

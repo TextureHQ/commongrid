@@ -10,6 +10,7 @@ import {
   SourceCitationFields,
 } from "@/components/contributions/EntityFormFields";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { conversionFetch } from "@/lib/analytics";
 
 export default function CreateEVStationPage() {
   const router = useRouter();
@@ -142,7 +143,7 @@ export default function CreateEVStationPage() {
         source_date: sourceDate || null,
       };
 
-      const res = await fetch("/api/v1/contributions", {
+      const res = await conversionFetch("/api/v1/contributions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

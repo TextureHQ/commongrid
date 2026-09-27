@@ -1,7 +1,19 @@
 "use client";
 
 import { SignInButton } from "@clerk/nextjs";
-import { Avatar, Badge, Button, Card, type Column, DataTable, Icon, Loader, PageLayout } from "@texturehq/edges";
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  type Column,
+  DataTable,
+  Icon,
+  Loader,
+  PageLayout,
+  Select,
+  TextField,
+} from "@texturehq/edges";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -41,6 +53,14 @@ function formatDate(iso: string | null): string {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
+
+/** Role choices offered by the moderator table's per-row Select. */
+const USER_ROLE_OPTIONS = [
+  { id: "contributor", label: "Contributor", value: "contributor" },
+  { id: "trusted_contributor", label: "Trusted Contributor", value: "trusted_contributor" },
+  { id: "moderator", label: "Moderator", value: "moderator" },
+  { id: "admin", label: "Admin", value: "admin" },
+];
 
 export default function UserManagementPage() {
   const { user: currentUser, isLoading: userLoading } = useCurrentUser();
@@ -144,17 +164,15 @@ export default function UserManagementPage() {
         label: "Role",
         accessor: "role",
         render: (_value: unknown, row: User) => (
-          <select
-            value={row.role}
-            onChange={(e) => handleRoleChange(row.id, e.target.value)}
-            disabled={updatingUserId === row.id}
-            className="text-sm rounded-md border border-border-default bg-background-body px-2 py-1 text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-          >
-            <option value="contributor">Contributor</option>
-            <option value="trusted_contributor">Trusted Contributor</option>
-            <option value="moderator">Moderator</option>
-            <option value="admin">Admin</option>
-          </select>
+          <Select
+            aria-label="Role"
+            size="sm"
+            selectedKey={row.role}
+            onSelectionChange={(key) => handleRoleChange(row.id, String(key))}
+            isDisabled={updatingUserId === row.id}
+            items={USER_ROLE_OPTIONS}
+            renderItem={(item) => item.label}
+          />
         ),
         mobile: { priority: 2, format: "badge" },
       },
@@ -263,12 +281,13 @@ export default function UserManagementPage() {
           <div className="p-4">
             <div className="flex items-center gap-2">
               <Icon name="MagnifyingGlass" size="sm" className="text-text-muted" />
-              <input
-                type="text"
+              <TextField
+                aria-label="Search users"
                 placeholder="Search by name, email, or affiliation..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 border-none bg-transparent text-sm text-text-body placeholder:text-text-muted focus:outline-none"
+                onChange={setSearchQuery}
+                transparent
+                className="flex-1"
               />
               {searchQuery && (
                 <button

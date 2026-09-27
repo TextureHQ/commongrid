@@ -133,6 +133,7 @@ export default function ContributionsDashboard() {
   const { user: appUser, isLoading: appUserLoading } = useCurrentUser();
   const userLoaded = clerkLoaded && !appUserLoading;
   const [contributions, setContributions] = useState<Contribution[]>([]);
+  const [summary, setSummary] = useState<{ total: number; pending: number; approved: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -146,7 +147,7 @@ export default function ContributionsDashboard() {
     setIsLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ limit: "50" });
+      const params = new URLSearchParams({ limit: "50", include_summary: "true" });
       if (statusFilter !== "all") {
         params.set("status", statusFilter);
       }
@@ -156,6 +157,7 @@ export default function ContributionsDashboard() {
       if (!res.ok) throw new Error(`Failed to load contributions (${res.status})`);
       const json = await res.json();
       setContributions(json.data ?? []);
+      setSummary(json.summary);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load contributions");
     } finally {
@@ -192,11 +194,8 @@ export default function ContributionsDashboard() {
     }
   }, [withdrawTarget, fetchContributions]);
 
-  // Stats
-  const totalCount = contributions.length;
-  const approvedCount = contributions.filter((c) => c.status === "approved" || c.status === "auto_approved").length;
-  const pendingCount = contributions.filter((c) => c.status === "pending").length;
-  const approvalRate = totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0;
+  // The list is status-filtered and paginated; cards describe the full history.
+  const approvalRate = summary ? (summary.total > 0 ? Math.round((summary.approved / summary.total) * 100) : 0) : null;
 
   if (!userLoaded) {
     return (
@@ -214,21 +213,19 @@ export default function ContributionsDashboard() {
       <ContentPage>
         <ContentPage.Header title="My Contributions" breadcrumbs={[{ label: "Contributions" }]} />
         <ContentPage.Body>
-          <div className="px-4 sm:px-6 py-12">
-            <Card variant="outlined">
-              <Card.Content className="py-16 text-center">
-                <Icon name="UserCircle" size={48} className="text-text-muted mx-auto mb-4" />
-                <div className="text-lg font-semibold text-text-heading mb-2">Sign in to view your contributions</div>
-                <p className="text-text-muted mb-6 max-w-md mx-auto">
-                  Track your suggested edits and help improve CommonGrid data quality.
-                </p>
-                <SignInButton mode="modal">
-                  <Button variant="brand" size="lg">
-                    Sign In
-                  </Button>
-                </SignInButton>
-              </Card.Content>
-            </Card>
+          <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-background-muted">
+              <Icon name="UserCircle" size={32} className="text-text-muted" />
+            </div>
+            <h2 className="mb-2 text-lg font-semibold text-text-heading">Sign in to view your contributions</h2>
+            <p className="mb-6 max-w-md text-text-muted">
+              Track your suggested edits and help improve CommonGrid data quality.
+            </p>
+            <SignInButton mode="modal">
+              <Button variant="brand" size="lg">
+                Sign In
+              </Button>
+            </SignInButton>
           </div>
         </ContentPage.Body>
       </ContentPage>
@@ -252,10 +249,14 @@ export default function ContributionsDashboard() {
         <div className="px-4 sm:px-6 pb-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: "Total", value: totalCount, icon: "Article" as const },
-              { label: "Pending", value: pendingCount, icon: "Clock" as const },
-              { label: "Approved", value: approvedCount, icon: "CheckCircle" as const },
-              { label: "Approval Rate", value: `${approvalRate}%`, icon: "ChartBar" as const },
+              { label: "Total", value: summary?.total ?? "—", icon: "Article" as const },
+              { label: "Pending", value: summary?.pending ?? "—", icon: "Clock" as const },
+              { label: "Approved", value: summary?.approved ?? "—", icon: "CheckCircle" as const },
+              {
+                label: "Approval Rate",
+                value: approvalRate === null ? "—" : `${approvalRate}%`,
+                icon: "ChartBar" as const,
+              },
             ].map((stat) => (
               <Card key={stat.label} variant="outlined">
                 <Card.Content className="p-4">
@@ -298,18 +299,18 @@ export default function ContributionsDashboard() {
           )}
 
           {!isLoading && !error && contributions.length === 0 && (
-            <Card variant="outlined">
-              <Card.Content className="py-16 text-center">
-                <Icon name="Article" size={48} className="text-text-muted mx-auto mb-4" />
-                <div className="text-lg font-semibold text-text-heading mb-2">No contributions yet</div>
-                <p className="text-text-muted mb-6 max-w-md mx-auto">
-                  Suggest edits on any entity page to help improve CommonGrid data.
-                </p>
-                <Button variant="brand" size="lg" href="/explore">
-                  Explore Entities
-                </Button>
-              </Card.Content>
-            </Card>
+            <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-background-muted">
+                <Icon name="Article" size={32} className="text-text-muted" />
+              </div>
+              <h2 className="mb-2 text-lg font-semibold text-text-heading">No contributions yet</h2>
+              <p className="mb-6 max-w-md text-text-muted">
+                Suggest edits on any entity page to help improve CommonGrid data.
+              </p>
+              <Button variant="brand" size="lg" href="/explore">
+                Explore Entities
+              </Button>
+            </div>
           )}
 
           {!isLoading && !error && contributions.length > 0 && (

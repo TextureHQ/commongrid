@@ -37,7 +37,7 @@ import { carryViewMode, type ExploreViewMode, parseViewMode, resolveViewMode } f
 
 export type EntityTab = PathEntityTab;
 export type { ExploreViewMode };
-export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant";
+export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant" | "rate";
 
 /**
  * Route shape for CommonGrid's explore stack.
@@ -534,6 +534,14 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       // the program and lands on the utility (not the utilities list).
       if (view === "program" && top?.type === "detail" && top.payload.entityKind === "utilities") {
         stack.pushDeeper(makeDetailRoute("programs", slug));
+        return;
+      }
+
+      // Nested rate under the utility currently in view: pushDeeper so the
+      // path becomes /explore/utilities/:utilitySlug/rates/:rateSlug and back
+      // returns to the utility detail.
+      if (view === "rate" && top?.type === "detail" && top.payload.entityKind === "utilities") {
+        stack.pushDeeper(makeDetailRoute("rates", slug));
         return;
       }
 

@@ -25,6 +25,7 @@ import {
   EntityList,
   EntityMap,
   EntityPageHeader,
+  EntityProvenanceBadges,
   EntitySection,
   EntityStatsRow,
   RelationshipCards,
@@ -619,6 +620,7 @@ export default function UtilityDetailPage() {
     <>
       <EntityPageHeader
         entityName={utility.name}
+        provenanceBadge={<EntityProvenanceBadges entityType="utility" entitySlug={utility.slug} />}
         subtitle={
           <>
             {utility.shortName && <span>{utility.shortName}</span>}

@@ -32,6 +32,7 @@ export type KnockWorkflowKey =
   // Moderator queue alerts
   | "mod-new-contribution"
   | "mod-flagged-contribution"
+  | "mod-dataset-suggestion"
   // Admin notifications
   | "admin-new-user"
   | "admin-user-moderation";
@@ -114,6 +115,20 @@ export interface ModNewContributionData {
   contributionUrl: string;
   changeType: "create" | "update" | "delete";
   fieldSummary?: string | null;
+}
+
+export interface ModDatasetSuggestionData {
+  submitterEmail: string;
+  submitterName?: string | null;
+  datasetName: string;
+  /** What kind of data the dataset represents / describes. */
+  dataDescription: string;
+  /** Why the submitter thinks it is useful to CommonGrid. */
+  usefulness: string;
+  /** Optional link or description of where the data comes from. */
+  source?: string | null;
+  /** Whether the submitter offered to help moderate the dataset. */
+  willingToModerate: boolean;
 }
 
 export interface AdminNewUserData {

@@ -11,6 +11,7 @@ import {
   unique,
 } from "drizzle-orm/pg-core";
 import { contributions } from "./contributions";
+import { dataSources } from "./data-sources";
 import { entityVersions } from "./entity-versions";
 
 /**
@@ -77,6 +78,11 @@ export const entityGeometryVersions = pgTable(
     contributionId: text("contribution_id").references(() => contributions.id, {
       onDelete: "set null",
     }),
+
+    /** Upstream registry key; null for historical records with unknown provenance. */
+    sourceId: text("source_id").references(() => dataSources.id, { onDelete: "restrict" }),
+    /** Upstream observation date, never ingestion time; null means unknown. */
+    asOf: timestamp("as_of", { withTimezone: true }),
 
     changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
   },

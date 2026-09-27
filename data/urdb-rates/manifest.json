@@ -1,0 +1,31 @@
+{
+  "source": "OpenEI Utility Rate Database (URDB)",
+  "generated_by": "sync:urdb-rates",
+  "generated_at": "2026-09-25T01:57:37.874Z",
+  "sectors": [
+    "Residential",
+    "Commercial"
+  ],
+  "fetched_rates": 50710,
+  "kept_rates": 19372,
+  "skipped": {
+    "unapproved": 3710,
+    "expired": 27163,
+    "license": 5,
+    "unknown_utility": 460
+  },
+  "registry_counts": {
+    "created": 19372,
+    "updated": 0,
+    "unchanged": 0,
+    "fields_written": 585007
+  },
+  "deferrals_count": 0,
+  "errors": [],
+  "notes": [
+    "Rate structures are published via applySync (entityType \"rate_structure\") to the Postgres registry.",
+    "V1 scope: approved, currently-effective Residential + Commercial rates for utilities already in the CommonGrid registry.",
+    "URDB is CC0 'unless otherwise noted'; records with an explicit non-CC0 source-side note are skipped and logged.",
+    "Re-runs are idempotent (stable rate-<label> ids) and conflict-aware (applySync policy B leaves human-edited fields untouched)."
+  ]
+}

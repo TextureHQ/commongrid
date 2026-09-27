@@ -20,6 +20,7 @@ export type {
   KnockWebhookEventType,
   KnockWebhookPayload,
   KnockWorkflowKey,
+  ModDatasetSuggestionData,
   ModNewContributionData,
 } from "./types";
 export { processKnockWebhookEvent, verifyKnockWebhook } from "./webhooks";
@@ -34,6 +35,7 @@ export {
   triggerContributionSubmitted,
   triggerDiscussionActivity,
   triggerEntityUpdated,
+  triggerModDatasetSuggestion,
   triggerModFlaggedContribution,
   triggerModNewContribution,
   triggerTrustedStatusEarned,

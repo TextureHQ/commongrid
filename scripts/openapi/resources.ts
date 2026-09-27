@@ -12,6 +12,7 @@ import { isos } from "../../lib/db/schema/isos";
 import { powerPlants } from "../../lib/db/schema/power-plants";
 import { pricingNodes } from "../../lib/db/schema/pricing-nodes";
 import { programs } from "../../lib/db/schema/programs";
+import { rateStructures } from "../../lib/db/schema/rate-structures";
 import { regions } from "../../lib/db/schema/regions";
 import { rtos } from "../../lib/db/schema/rtos";
 import { substations } from "../../lib/db/schema/substations";
@@ -44,7 +45,32 @@ const OBJECT_ARRAY: JsonSchema = { type: "array", items: { type: "object" } };
  * Single source of truth for every public resource.
  * Order here drives the ordering of components.schemas in the output.
  */
+// Curated rate mapper omits these storage fields even on detail responses.
+const RATE_STORAGE_FIELDS = ["deletedAt", "rawRecord", "upstreamRecordUrl", "attribution"];
+const RATE_DETAIL_FIELDS = [
+  "description",
+  "energyRateStructure",
+  "energyWeekdaySchedule",
+  "energyWeekendSchedule",
+  "demandRateStructure",
+  "flatDemandStructure",
+  "netMeteringRules",
+];
+
 export const RESOURCES: ResourceDef[] = [
+  {
+    schemaName: "Rate",
+    table: rateStructures,
+    options: { stripAdditional: RATE_STORAGE_FIELDS, fieldOverrides: { fixedCharge: { type: "string" } } },
+  },
+  {
+    schemaName: "RateSummary",
+    table: rateStructures,
+    options: {
+      stripAdditional: [...RATE_STORAGE_FIELDS, ...RATE_DETAIL_FIELDS],
+      fieldOverrides: { fixedCharge: { type: "string" } },
+    },
+  },
   {
     schemaName: "Utility",
     table: utilities,
