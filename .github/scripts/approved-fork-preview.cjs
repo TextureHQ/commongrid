@@ -3,10 +3,11 @@ const VERCEL_DEPLOYMENT_ORIGIN = "https://vercel.com";
 const VERCEL_TEAM = "texture";
 const VERCEL_PROJECT = "commongrid";
 const MIRROR_BRANCH_PREFIX = "vercel-preview-pr-";
-const APPROVED_STATES = new Set(["pending", "failure", "error"]);
+const MIRROR_COMMIT_PREFIX = "ci: preview approved fork PR";
+const VERCEL_STATES = new Set(["pending", "success", "failure", "error"]);
 
 function isVercelDeploymentStatus(payload) {
-  if (payload.context !== VERCEL_CONTEXT || !APPROVED_STATES.has(payload.state)) {
+  if (payload.context !== VERCEL_CONTEXT || !VERCEL_STATES.has(payload.state)) {
     return false;
   }
 
@@ -59,8 +60,87 @@ function mirrorBranchName(pullNumber) {
   return `${MIRROR_BRANCH_PREFIX}${pullNumber}`;
 }
 
+function mirrorCommitMessage(pullNumber, sourceSha) {
+  return `${MIRROR_COMMIT_PREFIX} #${pullNumber} at ${sourceSha}`;
+}
+
+function parseMirrorCommit(commit) {
+  const match = commit.message?.match(/^ci: preview approved fork PR #(\d+) at ([0-9a-f]{40})$/);
+  if (!match || commit.parents?.length !== 1 || commit.parents[0]?.sha !== match[2]) {
+    return null;
+  }
+
+  return { pullNumber: Number(match[1]), sourceSha: match[2] };
+}
+
 function isNotFound(error) {
   return error?.status === 404;
+}
+
+function statusDescription(state) {
+  switch (state) {
+    case "success":
+      return "Trusted fork preview is ready";
+    case "pending":
+      return "Trusted fork preview is building";
+    case "failure":
+      return "Trusted fork preview failed";
+    default:
+      return "Trusted fork preview encountered an error";
+  }
+}
+
+async function propagateMirrorStatus({ github, context, core, commit, payload }) {
+  const mirror = parseMirrorCommit(commit);
+  if (!mirror) {
+    return false;
+  }
+
+  const { owner, repo } = context.repo;
+  const branch = mirrorBranchName(mirror.pullNumber);
+  let branchRef;
+
+  try {
+    const response = await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
+    branchRef = response.data;
+  } catch (error) {
+    if (isNotFound(error)) {
+      core.info(`${branch} no longer exists; ignoring its stale Vercel status`);
+      return true;
+    }
+    throw error;
+  }
+
+  if (branchRef.object.sha !== payload.sha) {
+    core.info(`${payload.sha} is no longer the tip of ${branch}; ignoring its stale Vercel status`);
+    return true;
+  }
+
+  const [{ data: pull }, { data: sourceCommit }] = await Promise.all([
+    github.rest.pulls.get({ owner, repo, pull_number: mirror.pullNumber }),
+    github.rest.git.getCommit({ owner, repo, commit_sha: mirror.sourceSha }),
+  ]);
+  const repository = `${owner}/${repo}`;
+  if (!selectExternalPullRequest([pull], repository, mirror.sourceSha)) {
+    core.info(`PR #${mirror.pullNumber} is no longer open at ${mirror.sourceSha}; ignoring the status`);
+    return true;
+  }
+
+  if (commit.tree?.sha !== sourceCommit.tree?.sha) {
+    throw new Error(`Mirror commit ${payload.sha} does not match the reviewed tree at ${mirror.sourceSha}`);
+  }
+
+  await github.rest.repos.createCommitStatus({
+    owner,
+    repo,
+    sha: mirror.sourceSha,
+    state: payload.state,
+    context: VERCEL_CONTEXT,
+    target_url: payload.target_url,
+    description: statusDescription(payload.state),
+  });
+  core.info(`Propagated ${payload.state} from ${branch} to external PR #${mirror.pullNumber}`);
+  return true;
 }
 
 async function mirrorApprovedFork({ github, context, core }) {
@@ -77,6 +157,11 @@ async function mirrorApprovedFork({ github, context, core }) {
 
   const { owner, repo } = context.repo;
   const repository = `${owner}/${repo}`;
+  const { data: statusCommit } = await github.rest.git.getCommit({ owner, repo, commit_sha: sha });
+  if (await propagateMirrorStatus({ github, context, core, commit: statusCommit, payload })) {
+    return;
+  }
+
   const { data: pulls } = await github.rest.repos.listPullRequestsAssociatedWithCommit({ owner, repo, commit_sha: sha });
   const pull = selectExternalPullRequest(pulls, repository, sha);
 
@@ -88,24 +173,46 @@ async function mirrorApprovedFork({ github, context, core }) {
   const branch = mirrorBranchName(pull.number);
   const ref = `heads/${branch}`;
   let existingRef;
+  let existingCommit;
 
   try {
     const response = await github.rest.git.getRef({ owner, repo, ref });
     existingRef = response.data;
+    const commitResponse = await github.rest.git.getCommit({ owner, repo, commit_sha: existingRef.object.sha });
+    existingCommit = commitResponse.data;
   } catch (error) {
     if (!isNotFound(error)) {
       throw error;
     }
   }
 
-  if (!existingRef) {
-    await github.rest.git.createRef({ owner, repo, ref: `refs/${ref}`, sha });
-    core.info(`Created ${branch} at ${sha} for external PR #${pull.number}`);
-  } else if (existingRef.object.sha !== sha) {
-    await github.rest.git.updateRef({ owner, repo, ref, sha, force: true });
-    core.info(`Updated ${branch} to ${sha} for external PR #${pull.number}`);
+  const message = mirrorCommitMessage(pull.number, sha);
+  const currentMirror =
+    existingCommit?.message === message &&
+    existingCommit.parents?.length === 1 &&
+    existingCommit.parents[0]?.sha === sha &&
+    existingCommit.tree?.sha === statusCommit.tree?.sha;
+  let mirrorSha = existingRef?.object.sha;
+
+  if (!currentMirror) {
+    const { data: mirrorCommit } = await github.rest.git.createCommit({
+      owner,
+      repo,
+      message,
+      tree: statusCommit.tree.sha,
+      parents: [sha],
+    });
+    mirrorSha = mirrorCommit.sha;
+
+    if (!existingRef) {
+      await github.rest.git.createRef({ owner, repo, ref: `refs/${ref}`, sha: mirrorSha });
+      core.info(`Created ${branch} at trusted mirror ${mirrorSha} for external PR #${pull.number}`);
+    } else {
+      await github.rest.git.updateRef({ owner, repo, ref, sha: mirrorSha, force: true });
+      core.info(`Updated ${branch} to trusted mirror ${mirrorSha} for external PR #${pull.number}`);
+    }
   } else {
-    core.info(`${branch} already points to ${sha}; nothing to update`);
+    core.info(`${branch} already mirrors reviewed SHA ${sha}; nothing to update`);
   }
 
   await core.summary
@@ -114,7 +221,7 @@ async function mirrorApprovedFork({ github, context, core }) {
     .addTable([
       ["Source", pull.head.repo.full_name],
       ["Reviewed SHA", `\`${sha}\``],
-      ["Trusted mirror", `\`${repository}:${branch}\``],
+      ["Trusted mirror", `\`${repository}:${branch}@${mirrorSha}\``],
     ])
     .addRaw("\nVercel will deploy the trusted mirror; the Neon integration will inject an isolated preview database.")
     .write();
@@ -155,5 +262,8 @@ module.exports = {
   isVercelDeploymentStatus,
   mirrorApprovedFork,
   mirrorBranchName,
+  mirrorCommitMessage,
+  parseMirrorCommit,
+  propagateMirrorStatus,
   selectExternalPullRequest,
 };
