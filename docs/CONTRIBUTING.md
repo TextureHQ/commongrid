@@ -155,6 +155,18 @@ See `components/ui/README.md` for a detailed component inventory and migration s
 5. Describe what changed and why in your PR description
 6. Link to relevant issues if applicable
 
+### Preview deployments from forks
+
+Vercel requires a Texture team member to authorize deployments from external forks. After that approval, the `Approved Fork Preview` workflow mirrors the PR's exact reviewed commit to a temporary `vercel-preview-pr-<number>` branch in this repository. The normal Vercel and Neon integration then:
+
+1. creates an isolated Neon branch for the trusted mirror;
+2. injects its branch-scoped `DATABASE_URL` and `DATABASE_URL_UNPOOLED` values;
+3. runs migrations and deploys the preview against that isolated database.
+
+The workflow never checks out or executes fork-controlled code with its write-capable GitHub token. It only copies the approved Git object by exact SHA. The temporary mirror branch is deleted when the external PR closes so Vercel and Neon can clean up their preview resources.
+
+Do not work around a missing preview database by pointing a fork deployment at the production database, adding a shared preview fallback, or skipping migrations.
+
 ## Questions?
 
 Open a [GitHub Discussion](https://github.com/TextureHQ/commongrid/discussions) or reach out to the Texture team.
