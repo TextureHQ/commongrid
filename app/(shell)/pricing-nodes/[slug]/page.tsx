@@ -8,6 +8,7 @@ import {
   EntityList,
   EntityMap,
   EntityPageHeader,
+  EntityProvenanceBadges,
   EntitySection,
   type EntityStat,
   EntityStatsRow,
@@ -128,6 +129,9 @@ export default function PricingNodeDetailPage() {
     <>
       <EntityPageHeader
         entityName={node.name}
+        provenanceBadge={
+          <EntityProvenanceBadges entityType="pricing_node" entitySlug={node.slug} sourceLabel={node.source} />
+        }
         subtitle={
           <>
             <span>{ISO_LABELS[node.iso]}</span>

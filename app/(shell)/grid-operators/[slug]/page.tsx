@@ -25,6 +25,7 @@ import {
   EntityList,
   EntityMap,
   EntityPageHeader,
+  EntityProvenanceBadges,
   EntitySection,
   EntityStatsRow,
   RelationshipCards,
@@ -34,11 +35,12 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { useProgramList } from "@/hooks/useProgramList";
+import { useRegionList } from "@/hooks/useRegionList";
 import { useRto } from "@/hooks/useRto";
 import { useTransmissionLineList } from "@/hooks/useTransmissionLineList";
 import { useUtility } from "@/hooks/useUtility";
 import { useUtilityList } from "@/hooks/useUtilityList";
-import { getRegionById } from "@/lib/data";
+
 import {
   formatCapacity,
   formatCustomerCount,
@@ -432,9 +434,10 @@ export default function UtilityDetailPage() {
     () => (utility?.successorId ? (utilities.find((u) => u.id === utility.successorId) ?? null) : null),
     [utility, utilities]
   );
+  const { regionById } = useRegionList();
   const region = useMemo(
-    () => (utility?.serviceTerritoryId ? getRegionById(utility.serviceTerritoryId) : null),
-    [utility]
+    () => (utility?.serviceTerritoryId ? (regionById.get(utility.serviceTerritoryId) ?? null) : null),
+    [utility, regionById]
   );
 
   useEffect(() => {
@@ -619,6 +622,7 @@ export default function UtilityDetailPage() {
     <>
       <EntityPageHeader
         entityName={utility.name}
+        provenanceBadge={<EntityProvenanceBadges entityType="utility" entitySlug={utility.slug} />}
         subtitle={
           <>
             {utility.shortName && <span>{utility.shortName}</span>}

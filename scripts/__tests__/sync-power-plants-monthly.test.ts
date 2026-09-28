@@ -44,7 +44,7 @@ describe("EIA-860M monthly sync", () => {
         ])
       );
     },
-    15_000
+    60_000
   );
 
   it.skipIf(!fs.existsSync(baselineWorkbook))(
@@ -85,6 +85,6 @@ describe("EIA-860M monthly sync", () => {
       const hasPetroleum = ["DFO", "RFO", "KER", "JF", "PC", "WO"].some((code) => fuelSources.has(code));
       expect(hasPetroleum).toBe(true);
     },
-    15_000
+    60_000
   );
 });

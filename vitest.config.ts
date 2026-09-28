@@ -7,13 +7,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "."),
     },
   },
-  esbuild: {
-    include: [/\.tsx?$/],
-    jsx: "automatic",
+  oxc: {
+    jsx: { runtime: "automatic" },
   },
   test: {
     pool: "threads",
-    include: ["lib/**/*.test.ts", "scripts/**/*.test.ts", "app/**/*.test.ts", "app/**/*.test.tsx"],
+    include: ["lib/**/*.test.ts", "lib/**/*.test.tsx", "scripts/**/*.test.ts", "app/**/*.test.ts", "app/**/*.test.tsx"],
     exclude: ["node_modules", ".next"],
     coverage: {
       provider: "v8",

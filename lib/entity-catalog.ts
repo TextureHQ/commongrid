@@ -15,16 +15,10 @@
  * DB count — close enough for a discoverability surface.
  */
 
-import basData from "@/data/balancing-authorities.json";
-import isosData from "@/data/isos.json";
-import programsData from "@/data/programs.json";
-import rtosData from "@/data/rtos.json";
-
-// Hardcoded counts for the big datasets — these JSON files live in
-// /public/data and are only loaded on demand by the search modal.
-// For the catalog, we only need approximate sizes for the Browse
-// labels. The values here track data/<dataset>.json on disk; if a
-// number drifts, sync scripts will catch it on the next run.
+// Hardcoded counts for the registry discoverability surface. These track
+// the live DB registry counts for ISOs/RTOs/BAs/programs and the approximate
+// sizes of the large datasets. Values are intentionally static so the catalog
+// can be imported synchronously without bundling JSON at build time.
 const STATIC_COUNTS = {
   utilities: 3_133,
   powerPlants: 15_927,
@@ -32,12 +26,16 @@ const STATIC_COUNTS = {
   pricingNodes: 4_065,
   transmissionLines: 52_244,
   substations: 73_799,
+  isos: 7,
+  rtos: 7,
+  balancingAuthorities: 45,
+  programs: 607,
 } as const;
 
-const programsCount = (programsData as unknown[]).length;
-const isosCount = (isosData as unknown[]).length;
-const rtosCount = (rtosData as unknown[]).length;
-const basCount = (basData as unknown[]).length;
+const programsCount = STATIC_COUNTS.programs;
+const isosCount = STATIC_COUNTS.isos;
+const rtosCount = STATIC_COUNTS.rtos;
+const basCount = STATIC_COUNTS.balancingAuthorities;
 
 export type EntityKind =
   | "utility"

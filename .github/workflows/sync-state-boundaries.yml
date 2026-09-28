@@ -1,0 +1,84 @@
+name: Sync State Boundaries
+
+on:
+  schedule:
+    - cron: '0 12 5 * *' # 5th of each month at noon UTC
+  workflow_dispatch:
+    inputs:
+      states:
+        description: 'Comma-separated enabled states (e.g. VT); blank runs all enabled states'
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# Data syncs publish to a dedicated branch and open/update a PR instead of
+# pushing directly to protected main. The shared concurrency group keeps the
+# commit-and-publish phase serialized so scheduled runs do not race each other.
+concurrency:
+  group: data-sync-commit
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    # Opt into the commongrid-data-sync GitHub Environment so DATABASE_URL
+    # (an environment secret, not a repo secret) and FIRECRAWL_API_KEY resolve
+    # at runtime. The environment's deployment-branch policy restricts it to
+    # `main`, so pull_request triggers can never read the credentials
+    # (public-repo exfiltration guard).
+    environment: commongrid-data-sync
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Sync state service-territory boundaries
+        env:
+          # Used by applySync to publish regions to the registry and by the
+          # fetch layer's Firecrawl fallback when a state source 403s.
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          # Pass input as data, never interpolate it into shell commands.
+          SELECTED_STATES: ${{ inputs.states || '' }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [ -n "$SELECTED_STATES" ]; then
+            args+=("--states=$SELECTED_STATES")
+          fi
+          npx tsx scripts/sync-state-boundaries.ts "${args[@]}"
+      - name: Publish via branch + PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: meridian/sync-state-boundaries-data
+          PR_TITLE: "data: update state service-territory boundaries"
+          PR_BODY: |
+            Automated state service-territory boundary sync. The workflow commits generated bookkeeping (the run manifest) on a dedicated branch and opens or updates a pull request so branch protection can review and merge it safely.
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add data/state-boundaries/manifest.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "data: update state service-territory boundaries"
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            git fetch --depth=1 origin "$BRANCH:refs/remotes/origin/$BRANCH"
+          fi
+          git push --force-with-lease origin "$BRANCH"
+          existing_pr_url="$(gh pr list --repo "$GH_REPO" --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"
+          if [ -n "$existing_pr_url" ]; then
+            echo "Open PR already exists: $existing_pr_url"
+            exit 0
+          fi
+          gh pr create --repo "$GH_REPO" --base main --head "$BRANCH" --title "$PR_TITLE" --body "$PR_BODY"

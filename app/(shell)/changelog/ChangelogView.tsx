@@ -1,9 +1,11 @@
 "use client";
 
 import { Badge, Kpi, KpiGroup } from "@texturehq/edges";
+import Link from "next/link";
 import { useState } from "react";
 import { PageHeader, PageShell } from "@/components/ui/layout";
-import type { Changelog, ChangelogEntry, ChangelogOperation } from "@/types/changelog";
+import { resolveEntityHref } from "@/lib/entity-href";
+import type { Changelog, ChangelogBatchItem, ChangelogEntry, ChangelogOperation } from "@/types/changelog";
 import "./changelog.css";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -113,15 +115,26 @@ function getAuthor(entry: ChangelogEntry): string | null {
 // ── Components ────────────────────────────────────────────────────────────────
 
 function EntryRow({ entry }: { entry: ChangelogEntry }) {
+  // A collapsed sync batch expands to its per-item breakout; everything else is
+  // a single change and renders as one static row.
+  if (entry.batchId) return <BatchEntryRow entry={entry} />;
+
   const sourceTag = getSourceTag(entry);
   const author = getAuthor(entry);
+  const entityUrl = resolveEntityHref(entry.entityType, entry.slug);
 
   return (
     <div className="cl-entry">
       <div className={getDotClass(entry.kind)} />
       <div className="cl-entry-body">
         <div className="cl-entry-head">
-          <span className="cl-entry-name">{entry.name}</span>
+          {entityUrl ? (
+            <Link href={entityUrl} className="cl-entry-name cl-entry-name-link">
+              {entry.name}
+            </Link>
+          ) : (
+            <span className="cl-entry-name">{entry.name}</span>
+          )}
           <Badge variant={getBadgeVariant(entry.kind)} size="sm">
             {getBadgeLabel(entry.kind)}
           </Badge>
@@ -131,6 +144,126 @@ function EntryRow({ entry }: { entry: ChangelogEntry }) {
           {sourceTag && <span className="cl-source-tag">{sourceTag}</span>}
           {author && <span className="cl-author">by {author}</span>}
         </div>
+      </div>
+      <div className="cl-entry-time">{formatRelativeTime(entry.isoTimestamp)}</div>
+    </div>
+  );
+}
+
+type BreakoutState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "loaded"; items: ChangelogBatchItem[]; total: number; hasMore: boolean; moreError?: string };
+
+const BREAKOUT_PAGE_SIZE = 50;
+
+/**
+ * A collapsed sync batch: one row summarising "N records", expandable to the
+ * per-item breakout. The breakout is lazy-fetched on first expand so a feed
+ * full of large batches stays cheap to render.
+ */
+function BatchEntryRow({ entry }: { entry: ChangelogEntry }) {
+  const [expanded, setExpanded] = useState(false);
+  const [state, setState] = useState<BreakoutState>({ status: "idle" });
+
+  const sourceTag = getSourceTag(entry);
+  const author = getAuthor(entry);
+  const count = entry.itemCount ?? 0;
+
+  async function loadPage(offset: number) {
+    setState((prev) => (prev.status === "loaded" ? prev : { status: "loading" }));
+    try {
+      const res = await fetch(
+        `/api/v1/changelog/batches/${entry.batchId}?limit=${BREAKOUT_PAGE_SIZE}&offset=${offset}`
+      );
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      const json = (await res.json()) as { items: ChangelogBatchItem[]; total: number; hasMore: boolean };
+      setState((prev) => {
+        const existing = prev.status === "loaded" ? prev.items : [];
+        return {
+          status: "loaded",
+          items: offset === 0 ? json.items : [...existing, ...json.items],
+          total: json.total,
+          hasMore: json.hasMore,
+        };
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load details";
+      // Only collapse to the full error view on an initial-load failure. On a
+      // "Show more" failure keep the rows already loaded and surface the error
+      // inline by the button so the user can retry without losing them.
+      setState((prev) =>
+        prev.status === "loaded" && prev.items.length > 0
+          ? { ...prev, moreError: message }
+          : { status: "error", message }
+      );
+    }
+  }
+
+  function toggle() {
+    const next = !expanded;
+    setExpanded(next);
+    if (next && state.status === "idle") void loadPage(0);
+  }
+
+  return (
+    <div className="cl-entry cl-entry-batch">
+      <div className={getDotClass(entry.kind)} />
+      <div className="cl-entry-body">
+        <button type="button" className="cl-batch-toggle" onClick={toggle} aria-expanded={expanded}>
+          <span className="cl-batch-caret" aria-hidden="true">
+            {expanded ? "▾" : "▸"}
+          </span>
+          <span className="cl-entry-name">{entry.name}</span>
+          <Badge variant={getBadgeVariant(entry.kind)} size="sm">
+            {getBadgeLabel(entry.kind)}
+          </Badge>
+          <span className="cl-batch-count">
+            {count.toLocaleString()} record{count !== 1 ? "s" : ""}
+          </span>
+        </button>
+        <div className="cl-entry-meta">
+          {sourceTag && <span className="cl-source-tag">{sourceTag}</span>}
+          {author && <span className="cl-author">by {author}</span>}
+        </div>
+
+        {expanded && (
+          <div className="cl-batch-breakout">
+            {state.status === "loading" && <div className="cl-batch-status">Loading changes…</div>}
+            {state.status === "error" && (
+              <div className="cl-batch-status cl-batch-error">Couldn’t load details: {state.message}</div>
+            )}
+            {state.status === "loaded" && (
+              <>
+                <ul className="cl-batch-list">
+                  {state.items.map((item) => (
+                    <li key={item.versionId} className="cl-batch-item">
+                      {item.href ? (
+                        <a href={item.href} className="cl-batch-item-name">
+                          {item.entityName ?? item.entityId}
+                        </a>
+                      ) : (
+                        <span className="cl-batch-item-name">{item.entityName ?? item.entityId}</span>
+                      )}
+                      <span className="cl-batch-item-detail">{item.changeSummary ?? item.changeType}</span>
+                    </li>
+                  ))}
+                </ul>
+                {state.hasMore && (
+                  <div className="cl-batch-more-row">
+                    <button type="button" className="cl-batch-more" onClick={() => void loadPage(state.items.length)}>
+                      Show more ({(state.total - state.items.length).toLocaleString()} remaining)
+                    </button>
+                    {state.moreError && (
+                      <span className="cl-batch-status cl-batch-error">Couldn’t load more: {state.moreError}</span>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
       <div className="cl-entry-time">{formatRelativeTime(entry.isoTimestamp)}</div>
     </div>
@@ -147,7 +280,7 @@ function DateGroup({ date, entries }: { date: string; entries: ChangelogEntry[] 
         </span>
       </div>
       {entries.map((entry) => (
-        <EntryRow key={`${entry.kind}:${entry.slug}:${entry.isoTimestamp}`} entry={entry} />
+        <EntryRow key={`${entry.kind}:${entry.batchId ?? entry.slug}:${entry.isoTimestamp}`} entry={entry} />
       ))}
     </div>
   );

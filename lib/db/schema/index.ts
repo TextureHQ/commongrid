@@ -47,6 +47,7 @@ export type {
 export { contributionAppeals } from "./contribution-appeals";
 export type { ContributionInsert, ContributionSelect } from "./contributions";
 export { contributions } from "./contributions";
+export { dataSources } from "./data-sources";
 export type { DiscussionPostInsert, DiscussionPostSelect } from "./discussion-posts";
 export { discussionPosts } from "./discussion-posts";
 export type {
@@ -100,6 +101,8 @@ export type { PricingNodeInsert, PricingNodeSelect } from "./pricing-nodes";
 export { pricingNodes } from "./pricing-nodes";
 export type { ProgramInsert, ProgramSelect } from "./programs";
 export { programs } from "./programs";
+export type { RateStructureInsert, RateStructureSelect } from "./rate-structures";
+export { rateStructures } from "./rate-structures";
 export type { RegionInsert, RegionSelect } from "./regions";
 export { regions } from "./regions";
 export type { RtoInsert, RtoSelect } from "./rtos";

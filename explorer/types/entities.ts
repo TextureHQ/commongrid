@@ -104,6 +104,11 @@ export interface Region {
   customers: number | null;
   source: string | null;
   sourceDate: string | null;
+  sourceUrl?: string | null;
+  sourcePriority?: number;
+  needsOpenSource?: boolean;
+  locked?: boolean;
+  utilityType?: string | null;
 }
 
 export interface Iso {

@@ -1,9 +1,10 @@
 "use client";
 
 import { SignInButton } from "@clerk/nextjs";
-import { Badge, Button, Card, Icon, Loader, PageLayout } from "@texturehq/edges";
+import { Badge, Button, Card, Icon, Loader, PageLayout, TextArea } from "@texturehq/edges";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ContributionValue } from "@/components/contributions/ContributionValue";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 // ---------------------------------------------------------------------------
@@ -76,13 +77,6 @@ function statusBadge(status: string) {
 
 function formatFieldName(field: string): string {
   return field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function formatValue(value: unknown): string {
-  if (value === null || value === undefined) return "—";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (typeof value === "object") return JSON.stringify(value, null, 2);
-  return String(value);
 }
 
 // ---------------------------------------------------------------------------
@@ -292,13 +286,13 @@ export default function ModerationReviewPage() {
                     <div>
                       <div className="text-xs font-medium text-text-muted mb-1">Old Value</div>
                       <div className="text-sm text-text-body p-2 bg-[var(--color-background-subtle)] rounded border border-border-default">
-                        <pre className="whitespace-pre-wrap font-mono text-xs">{formatValue(change.old)}</pre>
+                        <ContributionValue field={field} value={change.old} />
                       </div>
                     </div>
                     <div>
                       <div className="text-xs font-medium text-text-muted mb-1">New Value</div>
                       <div className="text-sm text-text-body p-2 bg-[var(--color-background-subtle)] rounded border border-border-brand">
-                        <pre className="whitespace-pre-wrap font-mono text-xs">{formatValue(change.new)}</pre>
+                        <ContributionValue field={field} value={change.new} />
                       </div>
                     </div>
                   </div>
@@ -314,19 +308,14 @@ export default function ModerationReviewPage() {
             <div className="p-6 space-y-4">
               <h2 className="text-xl font-semibold text-text-heading">Moderator Review</h2>
 
-              <div>
-                <label htmlFor="comment" className="text-sm font-medium text-text-body mb-2 block">
-                  Comment {contribution.status === "changes_requested" && "(required for return/reject)"}
-                </label>
-                <textarea
-                  id="comment"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Add a comment explaining your decision..."
-                  rows={4}
-                  className="w-full px-3 py-2 border border-border-default rounded-md bg-[var(--color-background-default)] text-text-body placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)] focus:border-transparent"
-                />
-              </div>
+              <TextArea
+                id="comment"
+                label={`Comment ${contribution.status === "changes_requested" ? "(required for return/reject)" : ""}`.trim()}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Add a comment explaining your decision..."
+                rows={4}
+              />
 
               {actionError && (
                 <div className="p-3 rounded-md bg-[var(--color-background-error)] border border-[var(--color-border-error)] text-[var(--color-text-error)] text-sm">

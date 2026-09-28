@@ -2,7 +2,6 @@
 
 import { Icon, TextField } from "@texturehq/edges";
 import { useRouter } from "next/navigation";
-import { usePostHog } from "posthog-js/react";
 import {
   createContext,
   type KeyboardEvent,
@@ -14,13 +13,15 @@ import {
   useRef,
   useState,
 } from "react";
-
+import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
 import { useEvStationList } from "@/hooks/useEvStationList";
+import { useIsoList } from "@/hooks/useIsoList";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { usePricingNodeList } from "@/hooks/usePricingNodeList";
 import { useProgramList } from "@/hooks/useProgramList";
+import { useRtoList } from "@/hooks/useRtoList";
 import { useUtilityList } from "@/hooks/useUtilityList";
-import { getAllBalancingAuthorities, getAllIsos, getAllRtos } from "@/lib/data";
+import { captureEvent } from "@/lib/analytics";
 import { BROWSE_ENTRIES, ENTITY_BY_KIND, type EntityKind } from "@/lib/entity-catalog";
 import type { BalancingAuthority, Iso, PowerPlant, Rto, Utility } from "@/types/entities";
 import type { EVStation } from "@/types/ev-charging";
@@ -207,7 +208,6 @@ function searchStatic<T extends { name: string; shortName?: string }>(items: T[]
 
 export function GlobalSearchModal() {
   const { isOpen, close } = useGlobalSearch();
-  const posthog = usePostHog();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -224,10 +224,10 @@ export function GlobalSearchModal() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Static data (small datasets - ISOs, RTOs, BAs)
-  const isos = useMemo(() => getAllIsos(), []);
-  const rtos = useMemo(() => getAllRtos(), []);
-  const bas = useMemo(() => getAllBalancingAuthorities(), []);
+  // DB-backed lists for small static datasets (ISOs, RTOs, BAs)
+  const { isos, isLoading: isLoadingIsos } = useIsoList({ limit: 200 });
+  const { rtos, isLoading: isLoadingRtos } = useRtoList({ limit: 200 });
+  const { balancingAuthorities, isLoading: isLoadingBAs } = useBalancingAuthorityList({ limit: 200 });
 
   // API-based search for large datasets
   const shouldSearch = debouncedQuery.trim().length >= 2;
@@ -276,8 +276,8 @@ export function GlobalSearchModal() {
     const rtoResults = searchStatic(rtos, debouncedQuery);
     out.push(...rtoResults.slice(0, MAX_PER_KIND).map(rtoToResult));
 
-    // Balancing Authorities (static - small dataset)
-    const baResults = searchStatic(bas, debouncedQuery);
+    // Balancing Authorities (DB)
+    const baResults = searchStatic(balancingAuthorities, debouncedQuery);
     out.push(...baResults.slice(0, MAX_PER_KIND).map(baToResult));
 
     // Power Plants (API)
@@ -293,7 +293,18 @@ export function GlobalSearchModal() {
     out.push(...programs.slice(0, MAX_PER_KIND).map(programToResult));
 
     return out;
-  }, [shouldSearch, debouncedQuery, utilities, isos, rtos, bas, powerPlants, evStations, pricingNodes, programs]);
+  }, [
+    shouldSearch,
+    debouncedQuery,
+    utilities,
+    isos,
+    rtos,
+    balancingAuthorities,
+    powerPlants,
+    evStations,
+    pricingNodes,
+    programs,
+  ]);
 
   // Group results by kind (maintain KIND_ORDER order)
   const grouped = useMemo<Array<{ kind: EntityKind; label: string; items: SearchResult[] }>>(() => {
@@ -318,11 +329,11 @@ export function GlobalSearchModal() {
   const navigateTo = useCallback(
     (result: SearchResult) => {
       // Capture the selected record type, never a free-text query or entity name.
-      posthog.capture("registry_search_result_selected", { entity_type: result.kind });
+      captureEvent("registry_search_result_selected", { entity_type: result.kind });
       router.push(result.href);
       close();
     },
-    [router, close, posthog]
+    [router, close]
   );
 
   const handleKeyDown = useCallback(
@@ -356,7 +367,8 @@ export function GlobalSearchModal() {
     tileBg: entry.tileBg,
   }));
 
-  const isLoading = query.trim().length >= 2 && debouncedQuery !== query;
+  const isLoading =
+    (query.trim().length >= 2 && debouncedQuery !== query) || isLoadingIsos || isLoadingRtos || isLoadingBAs;
 
   return (
     <>
@@ -449,7 +461,7 @@ export function GlobalSearchModal() {
             <button
               type="button"
               onClick={close}
-              className="sm:hidden flex-none -ml-1 w-11 h-11 self-center rounded-full flex items-center justify-center text-text-heading active:bg-[var(--color-background-subtle)] transition-colors"
+              className="sm:hidden flex-none -ml-1 w-11 h-11 self-center rounded-full flex items-center justify-center text-text-heading active:bg-[var(--color-background-hover)] transition-colors"
               aria-label="Close search"
             >
               <svg
@@ -489,7 +501,7 @@ export function GlobalSearchModal() {
             {/* biome-ignore lint/a11y/noStaticElementInteractions: kbd visually acts as a dismiss hint, onClick is non-critical */}
             <kbd
               onClick={close}
-              className="hidden sm:flex flex-none self-center items-center px-2 py-1 ml-2 rounded-md border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[11px] font-mono cursor-pointer hover:bg-border-default transition-colors select-none"
+              className="hidden sm:flex flex-none self-center items-center px-2 py-1 ml-2 rounded-md border border-border-default bg-[var(--color-background-muted)] text-text-muted text-[11px] font-mono cursor-pointer hover:bg-border-default transition-colors select-none"
             >
               esc
             </kbd>
@@ -507,11 +519,11 @@ export function GlobalSearchModal() {
                       key={link.href}
                       type="button"
                       onClick={() => {
-                        posthog.capture("registry_browse_category_selected", { entity_type: link.kind });
+                        captureEvent("registry_browse_category_selected", { entity_type: link.kind });
                         router.push(link.href);
                         close();
                       }}
-                      className="w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)] transition-colors group"
+                      className="w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left cursor-pointer hover:bg-[var(--color-background-hover)] active:bg-[var(--color-background-selected)] transition-colors group"
                     >
                       <span
                         className={`flex-none w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-lg flex items-center justify-center ${link.tileBg}`}
@@ -537,7 +549,7 @@ export function GlobalSearchModal() {
                 {/* Tip — desktop only */}
                 <div className="hidden sm:flex mt-3 mx-5 pt-3 border-t border-border-default items-center gap-2">
                   <span className="text-xs text-text-muted">Tip:</span>
-                  <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-subtle)] text-text-muted text-[10px] font-mono">
+                  <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-[var(--color-background-muted)] text-text-muted text-[10px] font-mono">
                     ⌘K
                   </kbd>
                   <span className="text-xs text-text-muted">opens search from anywhere</span>
@@ -548,7 +560,7 @@ export function GlobalSearchModal() {
             {/* No results */}
             {query.trim().length >= 2 && debouncedQuery === query && results.length === 0 && !isLoading && (
               <div className="flex flex-col items-center justify-center px-6 py-16 sm:py-12 gap-3 text-text-muted">
-                <div className="w-14 h-14 rounded-2xl bg-[var(--color-background-subtle)] flex items-center justify-center mb-1">
+                <div className="w-14 h-14 rounded-2xl bg-[var(--color-background-muted)] flex items-center justify-center mb-1">
                   <Icon name="MagnifyingGlass" size={22} className="opacity-40" />
                 </div>
                 <p className="text-base sm:text-sm font-semibold text-text-heading">
@@ -574,10 +586,14 @@ export function GlobalSearchModal() {
                           <button
                             key={`${result.kind}-${result.slug}`}
                             type="button"
-                            className={`w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left transition-colors group ${
-                              isActive
-                                ? "bg-[var(--color-background-subtle)]"
-                                : "hover:bg-[var(--color-background-subtle)] active:bg-[var(--color-background-subtle)]"
+                            // `hover:` stays on both branches. The row sets itself
+                            // active on mouseenter, so the active branch is the one
+                            // the pointer is actually over — dropping the hover rule
+                            // there left the highlight to a state update, and a row
+                            // reached by keyboard first showed nothing on hover until
+                            // the pointer moved again.
+                            className={`w-full flex items-center gap-4 sm:gap-3 px-3 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-left cursor-pointer transition-colors group hover:bg-[var(--color-background-hover)] active:bg-[var(--color-background-selected)] ${
+                              isActive ? "bg-[var(--color-background-hover)]" : ""
                             }`}
                             onMouseEnter={() => setActiveIndex(idx)}
                             onClick={() => navigateTo(result)}
@@ -617,7 +633,7 @@ export function GlobalSearchModal() {
           </div>
 
           {/* Footer — keyboard hints (desktop only) */}
-          <div className="hidden sm:flex flex-none px-5 py-2.5 border-t border-border-default items-center justify-between bg-[var(--color-background-subtle)]">
+          <div className="hidden sm:flex flex-none px-5 py-2.5 border-t border-border-default items-center justify-between bg-[var(--color-background-muted)]">
             <div className="flex items-center gap-3 text-[11px] text-text-muted">
               <span className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 rounded border border-border-default bg-background-surface font-mono text-[10px] shadow-sm">

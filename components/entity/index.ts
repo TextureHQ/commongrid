@@ -4,6 +4,7 @@ export type { EntityListItem } from "./EntityList";
 export { EntityList } from "./EntityList";
 export { EntityMap } from "./EntityMap";
 export { EntityPageHeader } from "./EntityPageHeader";
+export { EntityProvenanceBadges } from "./EntityProvenanceBadges";
 export { EntitySection } from "./EntitySection";
 export type { EntityStat } from "./EntityStatsRow";
 export { EntityStatsRow } from "./EntityStatsRow";

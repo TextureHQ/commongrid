@@ -19,6 +19,7 @@ import type {
   DiscussionNotificationData,
   EntityUpdateNotificationData,
   KnockWorkflowKey,
+  ModDatasetSuggestionData,
   ModNewContributionData,
 } from "./types";
 
@@ -254,6 +255,20 @@ export async function triggerModNewContribution(
     recipients: moderatorIds,
     data: data as unknown as Record<string, unknown>,
     cancellationKey: cancellationKey ?? `mod-new-contribution:${data.contributionId}`,
+  });
+}
+
+export async function triggerModDatasetSuggestion(
+  moderatorIds: string[],
+  data: ModDatasetSuggestionData,
+  cancellationKey?: string
+): Promise<string | null> {
+  if (moderatorIds.length === 0) return null;
+  return triggerWorkflow({
+    workflow: "mod-dataset-suggestion",
+    recipients: moderatorIds,
+    data: data as unknown as Record<string, unknown>,
+    cancellationKey: cancellationKey ?? `mod-dataset-suggestion:${data.submitterEmail}:${data.datasetName}`,
   });
 }
 

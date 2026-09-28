@@ -11,6 +11,7 @@ import {
   Icon,
   Loader,
   PageLayout,
+  Select,
   TextCell,
 } from "@texturehq/edges";
 import Link from "next/link";
@@ -331,40 +332,38 @@ function GridOperatorsPageInner() {
           }}
           customControls={
             <div className="flex flex-wrap gap-2">
-              <select
-                value={segmentFilter}
-                onChange={(e) => setSegmentFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                {segmentFilterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                {statusFilterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={jurisdictionFilter}
-                onChange={(e) => setJurisdictionFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                <option value="all">All Jurisdictions</option>
-                {JURISDICTIONS.map((j) => (
-                  <option key={j} value={j}>
-                    {j}
-                  </option>
-                ))}
-              </select>
+              <Select
+                size="sm"
+                selectedKey={segmentFilter}
+                onSelectionChange={(key) => setSegmentFilter(String(key))}
+                items={segmentFilterOptions.map((opt) => ({
+                  id: String(opt.value),
+                  label: opt.label,
+                  value: opt.value,
+                }))}
+                renderItem={(item) => item.label}
+              />
+              <Select
+                size="sm"
+                selectedKey={statusFilter}
+                onSelectionChange={(key) => setStatusFilter(String(key))}
+                items={statusFilterOptions.map((opt) => ({
+                  id: String(opt.value),
+                  label: opt.label,
+                  value: opt.value,
+                }))}
+                renderItem={(item) => item.label}
+              />
+              <Select
+                size="sm"
+                selectedKey={jurisdictionFilter}
+                onSelectionChange={(key) => setJurisdictionFilter(String(key))}
+                items={[
+                  { id: "all", label: "All Jurisdictions", value: "all" },
+                  ...JURISDICTIONS.map((entry) => ({ id: entry, label: entry, value: entry })),
+                ]}
+                renderItem={(item) => item.label}
+              />
             </div>
           }
           sticky={true}

@@ -91,21 +91,159 @@
       }
     },
     "schemas": {
-      "PaginatedMeta": {
+      "DeprecatedUtility": {
+        "type": "object",
+        "properties": {
+          "eia_id": {
+            "type": "string"
+          },
+          "utility_slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "raw_status": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired",
+              "merged",
+              "renamed"
+            ]
+          },
+          "effective_from": {
+            "type": "string",
+            "nullable": true
+          },
+          "effective_to": {
+            "type": "string",
+            "nullable": true
+          },
+          "successor_eia_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "successor_slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "deprecation_reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ChangelogBatch": {
+        "type": "object",
+        "properties": {
+          "batch": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "sourceType": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true
+              },
+              "initiatedBy": {
+                "type": "string",
+                "nullable": true
+              },
+              "startedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "completedAt": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "versionId": {
+                  "type": "integer"
+                },
+                "entityType": {
+                  "type": "string"
+                },
+                "entityId": {
+                  "type": "string"
+                },
+                "entityName": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "entitySlug": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "changeType": {
+                  "type": "string"
+                },
+                "changeSummary": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "changedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "href": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Pagination": {
         "type": "object",
         "properties": {
           "total": {
             "type": "integer",
-            "description": "Total number of matching records"
+            "description": "Total matching records"
           },
           "limit": {
             "type": "integer",
-            "description": "Page size used for this response"
+            "description": "Page size"
           },
-          "nextCursor": {
+          "cursor": {
             "type": "string",
             "nullable": true,
-            "description": "Cursor for the next page, or null if no more pages"
+            "description": "Cursor for the next page, or null"
+          },
+          "hasMore": {
+            "type": "boolean"
           }
         }
       },
@@ -623,6 +761,286 @@
             }
           }
         }
+      },
+      "Rate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "eiaId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "utilityId": {
+            "type": "string",
+            "nullable": true
+          },
+          "regionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "utilityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "sector": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceType": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "fixedCharge": {
+            "type": "string",
+            "nullable": true
+          },
+          "fixedChargeUnits": {
+            "type": "string",
+            "nullable": true
+          },
+          "energyRateStructure": {
+            "nullable": true
+          },
+          "energyWeekdaySchedule": {
+            "nullable": true
+          },
+          "energyWeekendSchedule": {
+            "nullable": true
+          },
+          "demandRateStructure": {
+            "nullable": true
+          },
+          "flatDemandStructure": {
+            "nullable": true
+          },
+          "demandRateUnit": {
+            "type": "string",
+            "nullable": true
+          },
+          "netMeteringRules": {
+            "nullable": true
+          },
+          "hasTou": {
+            "type": "boolean"
+          },
+          "hasDemandCharge": {
+            "type": "boolean"
+          },
+          "hasNetMetering": {
+            "type": "boolean"
+          },
+          "isEvRate": {
+            "type": "boolean"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "approved": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceParentUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sourceUrlStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceUrlCheckedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "hasTou",
+          "hasDemandCharge",
+          "hasNetMetering",
+          "isEvRate",
+          "approved",
+          "isDefault",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
+      },
+      "RateSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "eiaId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "utilityId": {
+            "type": "string",
+            "nullable": true
+          },
+          "regionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "utilityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "sector": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceType": {
+            "type": "string",
+            "nullable": true
+          },
+          "fixedCharge": {
+            "type": "string",
+            "nullable": true
+          },
+          "fixedChargeUnits": {
+            "type": "string",
+            "nullable": true
+          },
+          "demandRateUnit": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasTou": {
+            "type": "boolean"
+          },
+          "hasDemandCharge": {
+            "type": "boolean"
+          },
+          "hasNetMetering": {
+            "type": "boolean"
+          },
+          "isEvRate": {
+            "type": "boolean"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "approved": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceParentUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sourceUrlStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceUrlCheckedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "hasTou",
+          "hasDemandCharge",
+          "hasNetMetering",
+          "isEvRate",
+          "approved",
+          "isDefault",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ]
       },
       "Utility": {
         "type": "object",
@@ -2336,8 +2754,8 @@
                         "$ref": "#/components/schemas/Utility"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -2853,8 +3271,8 @@
                         "$ref": "#/components/schemas/Iso"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -3221,8 +3639,8 @@
                         "$ref": "#/components/schemas/Rto"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -3589,8 +4007,8 @@
                         "$ref": "#/components/schemas/BalancingAuthority"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -3957,8 +4375,8 @@
                         "$ref": "#/components/schemas/Region"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -4263,8 +4681,8 @@
                         "$ref": "#/components/schemas/Territory"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -4865,8 +5283,8 @@
                         "$ref": "#/components/schemas/PowerPlant"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -5366,8 +5784,8 @@
                         "$ref": "#/components/schemas/Substation"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -5830,8 +6248,8 @@
                         "$ref": "#/components/schemas/TransmissionLine"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -6157,8 +6575,8 @@
                         "$ref": "#/components/schemas/EvStation"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -6465,8 +6883,8 @@
                         "$ref": "#/components/schemas/PricingNode"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -6936,8 +7354,8 @@
                         "$ref": "#/components/schemas/Program"
                       }
                     },
-                    "meta": {
-                      "$ref": "#/components/schemas/PaginatedMeta"
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   }
                 }
@@ -7179,6 +7597,818 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rates": {
+      "get": {
+        "operationId": "listRates",
+        "summary": "List rates and tariffs",
+        "description": "Queries rate_structures in Postgres. Returns a light projection without description, energy/demand structures, schedules or net-metering rules. Use the detail endpoint for those fields; fields cannot expand the list projection.",
+        "tags": [
+          "Rates & Tariffs"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/fields"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "sector",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "utilityId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eiaId",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "hasTou",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "hasDemandCharge",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "hasNetMetering",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "isEvRate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name"
+              ],
+              "default": "name"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RateSummary"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rates/{slug}": {
+      "get": {
+        "operationId": "getRate",
+        "summary": "Get a rate or tariff",
+        "description": "Returns the public rate structure, including energy/demand structures and schedules, from Postgres. Soft-deleted rates return 404. Does not support fields or point-in-time lookup.",
+        "tags": [
+          "Rates & Tariffs"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Rate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/utilities/by-eia-id/{eiaId}": {
+      "get": {
+        "operationId": "getUtilityByEiaId",
+        "summary": "Get a utility by EIA ID",
+        "tags": [
+          "Utilities"
+        ],
+        "parameters": [
+          {
+            "name": "eiaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/fields"
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "description": "Comma-separated: iso, rto, ba",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Utility"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/utilities/deprecated": {
+      "get": {
+        "operationId": "listDeprecatedUtilities",
+        "summary": "List utility lifecycle and successor records",
+        "description": "Reads the v_deprecated_utilities SQL view. Field names use snake_case, unlike the main utility endpoints.",
+        "tags": [
+          "Utilities"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "retired",
+                "merged",
+                "renamed"
+              ]
+            }
+          },
+          {
+            "name": "successor",
+            "in": "query",
+            "description": "Successor EIA utility ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DeprecatedUtility"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "cursor": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "hasMore": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/changelog/batches/{id}": {
+      "get": {
+        "operationId": "getChangelogBatch",
+        "summary": "Get a change batch and its entity changes",
+        "description": "Reads change_batches and entity_versions in Postgres, excluding baseline versions. Uses offset pagination, not cursor pagination.",
+        "tags": [
+          "Changelog"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangelogBatch"
                 }
               }
             }
@@ -7761,7 +8991,7 @@
         "summary": "Get iso version history",
         "description": "Returns every version of the iso from the `entity_versions` audit table.",
         "tags": [
-          "ISOs"
+          "Grid Operators"
         ],
         "parameters": [
           {
@@ -7886,7 +9116,7 @@
         "summary": "Get rto version history",
         "description": "Returns every version of the rto from the `entity_versions` audit table.",
         "tags": [
-          "RTOs"
+          "Grid Operators"
         ],
         "parameters": [
           {
@@ -8011,7 +9241,7 @@
         "summary": "Get balancing authority version history",
         "description": "Returns every version of the balancing authority from the `entity_versions` audit table.",
         "tags": [
-          "Balancing Authorities"
+          "Grid Operators"
         ],
         "parameters": [
           {
@@ -8413,6 +9643,10 @@
     }
   },
   "tags": [
+    {
+      "name": "Rates & Tariffs",
+      "description": "Utility rate structures and tariff schedules (OpenEI URDB)"
+    },
     {
       "name": "Utilities",
       "description": "Electric, gas, and water utilities"

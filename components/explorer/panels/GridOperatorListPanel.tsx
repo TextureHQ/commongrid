@@ -1,11 +1,15 @@
 "use client";
 
+import { Select, TextField } from "@texturehq/edges";
 import { PanelEntityRow } from "@texturehq/edges-explore/panel-atoms";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useIsoList } from "@/hooks/useIsoList";
+import { useRtoList } from "@/hooks/useRtoList";
 import { entityKindColor, isoColor } from "@/lib/categorical-colors";
-import { getAllBalancingAuthorities, getAllIsos, getAllRtos, searchEntities, sortByName } from "@/lib/data";
+import { searchEntities, sortByName } from "@/lib/data";
 import { formatGridOperatorStates, gridOperatorKey } from "@/lib/explorer/grid-operators";
 import { useExplorer } from "../ExplorerContext";
 
@@ -31,32 +35,21 @@ const typeFilterOptions = [
   { id: "BA", label: "Balancing Authority", value: "BA" },
 ];
 
-const SearchIcon = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    aria-hidden="true"
-    focusable="false"
-    role="presentation"
-  >
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3-3" />
-  </svg>
-);
-
 export function GridOperatorListPanel() {
   const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
 
+  const { isos: isoList, isLoading: isLoadingIsos } = useIsoList({ limit: 200 });
+  const { rtos: rtoList, isLoading: isLoadingRtos } = useRtoList({ limit: 200 });
+  const { balancingAuthorities: baList, isLoading: isLoadingBAs } = useBalancingAuthorityList({ limit: 200 });
+
+  const isLoading = isLoadingIsos || isLoadingRtos || isLoadingBAs;
+
   const allOperators = useMemo(() => {
     const seen = new Set<string>();
 
-    const isos: GridOperatorRow[] = getAllIsos().map((iso) => {
+    const isos: GridOperatorRow[] = isoList.map((iso) => {
       seen.add(iso.slug);
       return {
         slug: iso.slug,
@@ -71,7 +64,7 @@ export function GridOperatorListPanel() {
       };
     });
 
-    const rtos: GridOperatorRow[] = getAllRtos()
+    const rtos: GridOperatorRow[] = rtoList
       .filter((rto) => !seen.has(rto.slug))
       .map((rto) => ({
         slug: rto.slug,
@@ -85,7 +78,7 @@ export function GridOperatorListPanel() {
         key: gridOperatorKey("rto", rto.slug),
       }));
 
-    const bas: GridOperatorRow[] = getAllBalancingAuthorities().map((ba) => ({
+    const bas: GridOperatorRow[] = baList.map((ba) => ({
       slug: ba.slug,
       name: ba.name,
       shortName: ba.shortName,
@@ -98,7 +91,7 @@ export function GridOperatorListPanel() {
     }));
 
     return [...isos, ...rtos, ...bas];
-  }, []);
+  }, [isoList, rtoList, baList]);
 
   const filtered = useMemo(() => {
     let result = allOperators;
@@ -127,13 +120,14 @@ export function GridOperatorListPanel() {
             <strong>{filtered.length}</strong> grid operators
           </span>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <select className="cg-explore-select" value={state.type} onChange={(e) => setTypeFilter(e.target.value)}>
-              {typeFilterOptions.map((opt) => (
-                <option key={opt.id} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            <Select
+              aria-label="Type"
+              size="sm"
+              selectedKey={state.type}
+              onSelectionChange={(key) => setTypeFilter(String(key))}
+              items={typeFilterOptions.map((opt) => ({ id: String(opt.value), label: opt.label, value: opt.value }))}
+              renderItem={(item) => item.label}
+            />
             {user && (
               <button type="button" className="cg-explore-icon-btn" onClick={() => router.push("/grid-operators/new")}>
                 + Add
@@ -142,36 +136,25 @@ export function GridOperatorListPanel() {
           </div>
         </div>
         <div style={{ padding: "6px 14px 7px" }}>
-          <div className="cg-explore-search">
-            <SearchIcon />
-            <input
-              type="text"
-              placeholder="Search grid operators…"
-              value={state.q}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {state.q && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--color-text-muted)",
-                  fontSize: 14,
-                  padding: 0,
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
+          <TextField
+            aria-label="Search grid operators…"
+            placeholder="Search grid operators…"
+            value={state.q}
+            onChange={setSearch}
+            showSearchIcon
+            isClearable
+            onClear={() => setSearch("")}
+            reserveErrorSpace={false}
+          />
         </div>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="cg-explore-empty">
+            <div className="cg-explore-empty-title">Loading grid operators…</div>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="cg-explore-empty">
             <div className="cg-explore-empty-title">No grid operators found</div>
             <div>{state.q ? "Try adjusting your search criteria." : "No grid operators in the dataset."}</div>

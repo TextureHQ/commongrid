@@ -32,19 +32,12 @@ const querySchema = z.object({
   deviceType: z.string().optional(),
   marketSegment: z.string().optional(),
   gridService: z.string().optional(),
-  /**
-   * Slug of an associated organization (usually a utility), e.g.
-   * `vermont-electric-cooperative`. Filters server-side against
-   * `organizations[].entityId` so callers never have to page the whole
-   * collection and filter client-side.
-   */
   organization: z
     .string()
     .min(1)
     .max(200)
     .regex(/^[a-z0-9-]+$/, "organization must be a lowercase entity slug")
     .optional(),
-  /** Optionally narrow `organization` to one role. */
   organizationRole: z.enum(ORGANIZATION_ROLES).optional(),
   search: z.string().min(2).max(200).optional(),
   fields: z.string().optional(),
@@ -56,20 +49,14 @@ const querySchema = z.object({
 
 type SortField = "name" | "status";
 
-// ---------------------------------------------------------------------------
-// Sorting
-// ---------------------------------------------------------------------------
-
 function sortPrograms(programs: Program[], sortField: SortField, order: "asc" | "desc"): Program[] {
   return [...programs].sort((a, b) => {
     let cmp = (a[sortField] as string).localeCompare(b[sortField] as string);
 
-    // Secondary: name (when not the primary sort key)
     if (cmp === 0 && sortField !== "name") {
       cmp = a.name.localeCompare(b.name);
     }
 
-    // Tertiary: id (tiebreaker)
     if (cmp === 0) {
       cmp = a.id.localeCompare(b.id);
     }
@@ -78,11 +65,6 @@ function sortPrograms(programs: Program[], sortField: SortField, order: "asc" | 
   });
 }
 
-// ---------------------------------------------------------------------------
-// Cursor helpers
-// ---------------------------------------------------------------------------
-
-/** Encode cursor, returning null if CURSOR_SECRET is not set (dev degraded mode). */
 function tryEncodeCursor(data: CursorV1): string | null {
   try {
     return encodeCursor(data);
@@ -91,7 +73,6 @@ function tryEncodeCursor(data: CursorV1): string | null {
   }
 }
 
-/** Apply cursor offset to a sorted program list. */
 function applyCursor(sorted: Program[], cursor: CursorV1, sortField: SortField, order: "asc" | "desc"): Program[] {
   const cursorSortValue = cursor.s[sortField] as string | undefined;
   const cursorId = cursor.id;
@@ -103,17 +84,12 @@ function applyCursor(sorted: Program[], cursor: CursorV1, sortField: SortField, 
 
     if (order === "asc") {
       return cmp > 0 || (cmp === 0 && item.id > cursorId);
-    } else {
-      return cmp < 0 || (cmp === 0 && item.id > cursorId);
     }
+    return cmp < 0 || (cmp === 0 && item.id > cursorId);
   });
 
   return startIdx === -1 ? [] : sorted.slice(startIdx);
 }
-
-// ---------------------------------------------------------------------------
-// Field projection
-// ---------------------------------------------------------------------------
 
 const ALL_FIELDS = new Set<string>([
   "id",
@@ -124,6 +100,7 @@ const ALL_FIELDS = new Set<string>([
   "organizations",
   "organizationNames",
   "assetTypes",
+  "mapCategory",
   "deviceTypes",
   "marketSegments",
   "participationModels",
@@ -158,18 +135,11 @@ function projectFields(program: Program, fields: string[]): Partial<Program> {
   return result;
 }
 
-// ---------------------------------------------------------------------------
-// Route handler
-// ---------------------------------------------------------------------------
-
 async function handler(req: Request): Promise<Response> {
   const { searchParams } = new URL(req.url);
-
   const parsed = querySchema.safeParse(Object.fromEntries(searchParams));
   if (!parsed.success) {
-    throw new ApiError("VALIDATION_ERROR", "Invalid query parameters", {
-      issues: parsed.error.issues,
-    });
+    throw new ApiError("VALIDATION_ERROR", "Invalid query parameters", { issues: parsed.error.issues });
   }
 
   const {
@@ -188,19 +158,15 @@ async function handler(req: Request): Promise<Response> {
     cursor: rawCursor,
   } = parsed.data;
 
-  // `organizationRole` alone is ambiguous — it would silently widen to "all
-  // programs" rather than an error. Fail loudly instead.
   if (organizationRole && !organization) {
     throw new ApiError("VALIDATION_ERROR", "organizationRole requires organization");
   }
 
-  // Decode cursor if provided
   let cursor: CursorV1 | null = null;
   if (rawCursor) {
     cursor = decodeCursor(rawCursor);
   }
 
-  // Load filtered data
   const allPrograms = await loadPrograms({
     status,
     assetType,
@@ -212,30 +178,19 @@ async function handler(req: Request): Promise<Response> {
     search,
   });
 
-  // Sort
   const sorted = sortPrograms(allPrograms, sort, order);
   const totalCount = sorted.length;
-
-  // Apply cursor offset for next-page traversal
   const afterCursor = cursor ? applyCursor(sorted, cursor, sort, order) : sorted;
-
-  // Slice page (fetch one extra to detect hasMore)
   const page = afterCursor.slice(0, limit + 1);
   const hasMore = page.length > limit;
   const items = hasMore ? page.slice(0, limit) : page;
 
-  // Encode next cursor from last item on this page
   let nextCursor: string | null = null;
   if (hasMore && items.length > 0) {
     const last = items[items.length - 1];
-    nextCursor = tryEncodeCursor({
-      v: 1,
-      s: { [sort]: last[sort] },
-      id: last.id,
-    });
+    nextCursor = tryEncodeCursor({ v: 1, s: { [sort]: last[sort] }, id: last.id });
   }
 
-  // Field projection
   const requestedFields = fields
     ? fields
         .split(",")
@@ -244,7 +199,6 @@ async function handler(req: Request): Promise<Response> {
     : null;
 
   const data = requestedFields ? items.map((p) => projectFields(p, requestedFields)) : items;
-
   const envelope = paginatedResponse(stripInternal(data), totalCount, nextCursor, limit);
 
   return jsonResponse(envelope, 200, {

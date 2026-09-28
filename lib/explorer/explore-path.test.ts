@@ -45,6 +45,17 @@ describe("parseExplorePath", () => {
     ]);
   });
 
+  it("/utilities/:util/rates/:rate → nested rate under utility", () => {
+    expect(parseExplorePath(["utilities", "vermont-electric-cooperative", "rates", "residential-service-123"])).toEqual(
+      [
+        { kind: "overview" },
+        { kind: "list", tab: "utilities" },
+        { kind: "detail", entityKind: "utilities", slug: "vermont-electric-cooperative" },
+        { kind: "detail", entityKind: "rates", slug: "residential-service-123" },
+      ]
+    );
+  });
+
   it("decodes percent-encoded slugs", () => {
     expect(parseExplorePath(["utilities", "pg%26e"])).toEqual([
       { kind: "overview" },
@@ -96,6 +107,17 @@ describe("serializeExplorePath", () => {
     ).toBe("/explore/utilities/vermont-electric-cooperative/programs/beat-the-peak-37");
   });
 
+  it("nested rate under utility → deep path", () => {
+    expect(
+      serializeExplorePath([
+        overview,
+        { kind: "list", tab: "utilities" },
+        { kind: "detail", entityKind: "utilities", slug: "vermont-electric-cooperative" },
+        { kind: "detail", entityKind: "rates", slug: "residential-service-123" },
+      ])
+    ).toBe("/explore/utilities/vermont-electric-cooperative/rates/residential-service-123");
+  });
+
   it("encodes slugs with reserved characters", () => {
     expect(
       serializeExplorePath([
@@ -115,6 +137,7 @@ describe("round-trip parse ∘ serialize", () => {
     ["utilities", "vermont-electric-cooperative"],
     ["programs", "beat-the-peak-37"],
     ["utilities", "vermont-electric-cooperative", "programs", "beat-the-peak-37"],
+    ["utilities", "vermont-electric-cooperative", "rates", "residential-service-123"],
     ["grid-operators", "iso-ne"],
     ["power-plants", "sunrise"],
   ];

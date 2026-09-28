@@ -155,6 +155,90 @@
       "when": 1787920800000,
       "tag": "0025_add_program_device_types",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1787920860000,
+      "tag": "0026_grant_commongrid_sync_schema_usage",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1787920920000,
+      "tag": "0027_grant_commongrid_sync_snapshot_readonly",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790100000000,
+      "tag": "0028_data_sources_version_provenance",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790100060000,
+      "tag": "0029_grant_commongrid_sync_programs",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790100120000,
+      "tag": "0030_register_iou_dr_source",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1790100180000,
+      "tag": "0031_grant_commongrid_sync_regions_territories",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790100240000,
+      "tag": "0032_create_rate_structures",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790100300000,
+      "tag": "0033_rate_structure_provenance",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790100300001,
+      "tag": "0034_rate_structure_source_url_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790100300002,
+      "tag": "0035_rate_structures_name_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790358156353,
+      "tag": "0036_register_vermont_boundary_source",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790362505232,
+      "tag": "0037_reconcile_geometry_history_uniqueness",
+      "breakpoints": true
     }
   ]
 }

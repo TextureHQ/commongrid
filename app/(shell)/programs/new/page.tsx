@@ -13,6 +13,7 @@ import {
 import { UtilityAutocomplete } from "@/components/UtilityAutocomplete";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useUtility } from "@/hooks/useUtility";
+import { conversionFetch } from "@/lib/analytics";
 import { buildNewProgramHref, parseNewProgramUtilityParam } from "@/lib/programs/new-program-link";
 import type { UtilityOption } from "@/lib/utility-search";
 
@@ -172,7 +173,7 @@ function CreateProgramForm() {
         source_date: sourceDate || null,
       };
 
-      const res = await fetch("/api/v1/contributions", {
+      const res = await conversionFetch("/api/v1/contributions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

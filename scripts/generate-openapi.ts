@@ -66,7 +66,7 @@ function buildResponses(ep: EndpointDef): JsonSchema {
               type: "array",
               items: { $ref: `#/components/schemas/${ep.response.itemSchemaRef}` },
             },
-            meta: { $ref: "#/components/schemas/PaginatedMeta" },
+            pagination: { $ref: "#/components/schemas/Pagination" },
           },
         };
       case "single":

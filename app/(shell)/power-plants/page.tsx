@@ -10,6 +10,7 @@ import {
   Icon,
   Loader,
   PageLayout,
+  Select,
   TextCell,
 } from "@texturehq/edges";
 import Link from "next/link";
@@ -337,40 +338,34 @@ export default function PowerPlantsPage() {
           }}
           customControls={
             <div className="flex flex-wrap gap-2">
-              <select
-                value={fuelFilter}
-                onChange={(e) => setFuelFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                {fuelFilterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                {statusFilterOptions.map((opt) => (
-                  <option key={opt.id} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={stateFilter}
-                onChange={(e) => setStateFilter(e.target.value)}
-                className="h-10 sm:h-8 rounded-md border border-border-default bg-background-surface px-2 text-base sm:text-sm text-text-body"
-              >
-                <option value="all">All States</option>
-                {US_STATES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+              <Select
+                size="sm"
+                selectedKey={fuelFilter}
+                onSelectionChange={(key) => setFuelFilter(String(key))}
+                items={fuelFilterOptions.map((opt) => ({ id: String(opt.value), label: opt.label, value: opt.value }))}
+                renderItem={(item) => item.label}
+              />
+              <Select
+                size="sm"
+                selectedKey={statusFilter}
+                onSelectionChange={(key) => setStatusFilter(String(key))}
+                items={statusFilterOptions.map((opt) => ({
+                  id: String(opt.value),
+                  label: opt.label,
+                  value: opt.value,
+                }))}
+                renderItem={(item) => item.label}
+              />
+              <Select
+                size="sm"
+                selectedKey={stateFilter}
+                onSelectionChange={(key) => setStateFilter(String(key))}
+                items={[
+                  { id: "all", label: "All States", value: "all" },
+                  ...US_STATES.map((entry) => ({ id: entry, label: entry, value: entry })),
+                ]}
+                renderItem={(item) => item.label}
+              />
             </div>
           }
           sticky={true}

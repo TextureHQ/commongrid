@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Card } from "@texturehq/edges";
+import posthog from "posthog-js";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 interface Props {
@@ -26,6 +27,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Error Boundary caught an error:", error, errorInfo);
+    // posthog-js safely no-ops when uninitialized, so a direct call is fine here
+    // even though this class component renders outside the PostHogProvider guard.
+    posthog.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
   }
 
   private handleRetry = () => {

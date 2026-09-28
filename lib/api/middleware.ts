@@ -15,6 +15,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { validateApiKey } from "./auth";
+import { isBrowserRead } from "./browser-traffic";
 import { withCors } from "./cors";
 import { ApiError, formatError } from "./errors";
 import { enforceAtQueryPolicy } from "./point-in-time";
@@ -274,7 +275,12 @@ export function withApiMiddleware(handler: RouteHandler, options: ApiMiddlewareO
         // Fabricated keys never land here (401 from withApiKeyAuth).
         const identifier = rateLimitIdentifier({ isAuthenticated, apiKeyId, ip });
 
-        rlResult = await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk, keyTier);
+        // Browser hints grant no privileges: even spoofed hints receive a bounded
+        // per-IP hourly + burst budget. Keys, writes and bulk keep their tiers.
+        const browser = !isAuthenticated && isBrowserRead(req);
+        rlResult = browser
+          ? await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk, keyTier, true)
+          : await checkRateLimit(identifier, isAuthenticated, isWrite, isBulk, keyTier);
 
         if (!rlResult.success) {
           if (enableTracking) {

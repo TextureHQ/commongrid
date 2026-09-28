@@ -1,3 +1,4 @@
+export { ContributionValue, humanizeEnum } from "./ContributionValue";
 export type { EditableField, EditPanelProps } from "./EditPanel";
 export { EditPanel } from "./EditPanel";
 export { EntityActions } from "./EntityActions";
