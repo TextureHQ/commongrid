@@ -4,8 +4,10 @@ import { InteractiveMap, type LayerFeature, type LayerSpec, layer } from "@textu
 import type { Feature, FeatureCollection } from "geojson";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAllPrograms } from "@/hooks/useAllPrograms";
 import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
 import { useIsoList } from "@/hooks/useIsoList";
+import { useRegionList } from "@/hooks/useRegionList";
 import {
   evNetworkColor,
   fuelColor,
@@ -14,10 +16,11 @@ import {
   utilityColor,
   voltageColor,
 } from "@/lib/categorical-colors";
-import { getAllPrograms, getRegionById } from "@/lib/data";
 import type { MapRegion } from "@/lib/explorer/region-navigation";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
 import { resolveColorMapping, resolveCSSColor } from "@/lib/resolve-css-colors";
+import type { Region } from "@/types/entities";
+import type { Program } from "@/types/programs";
 import { useExplorer } from "./ExplorerContext";
 import {
   EVChargingTooltip,
@@ -229,7 +232,12 @@ interface ProgramBoundaryData {
   colorMapping: Record<string, { hex: string }>;
 }
 
-function useProgramBoundaries(isActive: boolean, operatorPalette: string[]) {
+function useProgramBoundaries(
+  isActive: boolean,
+  operatorPalette: string[],
+  programs: Program[],
+  regionById: Map<string, Region>
+) {
   const [data, setData] = useState<ProgramBoundaryData | null>(null);
 
   useEffect(() => {
@@ -241,8 +249,6 @@ function useProgramBoundaries(isActive: boolean, operatorPalette: string[]) {
     let cancelled = false;
 
     async function load() {
-      const programs = getAllPrograms();
-
       let colorIdx = 0;
       const colorMapping: Record<string, { hex: string }> = {};
 
@@ -263,7 +269,7 @@ function useProgramBoundaries(isActive: boolean, operatorPalette: string[]) {
 
         const fileKeys: string[] = [];
         for (const regionId of prog.regions) {
-          const region = getRegionById(regionId);
+          const region = regionById.get(regionId);
           if (!region) continue;
 
           const fileKey =
@@ -336,7 +342,7 @@ function useProgramBoundaries(isActive: boolean, operatorPalette: string[]) {
     return () => {
       cancelled = true;
     };
-  }, [isActive, operatorPalette]);
+  }, [isActive, operatorPalette, programs, regionById]);
 
   return data;
 }
@@ -439,8 +445,18 @@ export function ExplorerMap({
   const pricingNodesFilter =
     state.listSource === "pricing-nodes" && typeFilter ? ["==", ["get", "iso"], typeFilter] : undefined;
 
+  // Full program set + region lookup for the boundary layers (replaces the old
+  // static getAllPrograms()/getRegionById() from lib/data.ts). The map needs
+  // ALL 600+ programs, so useAllPrograms pages past the API's 200-row cap;
+  // only the fields the boundary logic reads are projected.
+  const { programs: allPrograms } = useAllPrograms({
+    fields: "slug,name,status,regions,assetTypes",
+    enabled: isProgramView,
+  });
+  const { regionById } = useRegionList();
+
   const gridBoundaryData = useGridOperatorBoundaries(isGridOperatorView, resolvedOperatorPalette);
-  const programBoundaryData = useProgramBoundaries(isProgramView, resolvedOperatorPalette);
+  const programBoundaryData = useProgramBoundaries(isProgramView, resolvedOperatorPalette, allPrograms, regionById);
 
   const handleClick = useCallback(
     (feature: LayerFeature) => {
@@ -535,7 +551,6 @@ export function ExplorerMap({
     if (!hasTypeFilter && !hasSearch) return programBoundaryData;
 
     // Build a set of matching program slugs by running the same filter logic as ProgramListPanel
-    const allPrograms = getAllPrograms();
     const matchingSlugs = new Set<string>();
 
     for (const prog of allPrograms) {
@@ -558,7 +573,7 @@ export function ExplorerMap({
       geojson: { type: "FeatureCollection" as const, features: filteredFeatures },
       colorMapping: programBoundaryData.colorMapping,
     };
-  }, [programBoundaryData, state.type, state.q]);
+  }, [programBoundaryData, state.type, state.q, allPrograms]);
 
   // FlyTo when highlight GeoJSON changes (entity selected), reset on back
   useEffect(() => {
