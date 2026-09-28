@@ -38,6 +38,9 @@ const styles = {
     WebkitFontSmoothing: "antialiased" as const,
     minWidth: 220,
     maxWidth: 280,
+    // Own background so text colors (theme tokens) always sit on a matching
+    // surface — the Mapbox popup box around it is made transparent in explore.css.
+    background: COLORS.card,
     border: `1px solid ${COLORS.rule}`,
     borderRadius: 8,
     boxShadow: "var(--shadow-md)",

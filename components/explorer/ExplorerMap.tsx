@@ -205,6 +205,9 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
               operatorName: name,
               operatorType: type,
               colorKey,
+              // Unique per operator: the tooltip only re-renders when the
+              // feature id changes, and the territory files' own ids repeat.
+              id: colorKey,
             },
           });
         }
@@ -324,6 +327,9 @@ function useProgramBoundaries(
                 programStatus: entry.programStatus,
                 utilityName: (feature.properties?.name as string | undefined) || "Unknown Utility",
                 colorKey: entry.colorKey,
+                // The territory file's own id is shared by every program on that
+                // territory, so key the tooltip by program instead.
+                id: entry.programSlug,
               },
             });
           }
@@ -746,6 +752,10 @@ export function ExplorerMap({
           id: "territories",
           tileset: getTileUrl(),
           sourceLayer: "territories",
+          // Tile features carry no ids, and the Edges hover tooltip only re-renders
+          // when the feature id changes — without this it sticks on the first
+          // feature hovered.
+          promoteId: "slug",
           renderAs: "fill",
           minZoom: 0,
           style: {
@@ -829,6 +839,10 @@ export function ExplorerMap({
         id: "transmission-lines",
         tileset: getTransmissionTileUrl(),
         sourceLayer: "transmission-lines",
+        // Tile features carry no ids, and the Edges hover tooltip only re-renders
+        // when the feature id changes — without this it sticks on the first
+        // feature hovered.
+        promoteId: "id",
         ...(transmissionLinesFilter ? { filter: transmissionLinesFilter as unknown } : {}),
         renderAs: "line",
         minZoom: 3,
@@ -874,6 +888,10 @@ export function ExplorerMap({
         id: "substations",
         tileset: getSubstationsTileUrl(),
         sourceLayer: "substations",
+        // Tile features carry no ids, and the Edges hover tooltip only re-renders
+        // when the feature id changes — without this it sticks on the first
+        // feature hovered.
+        promoteId: "slug",
         ...(substationsFilter ? { filter: substationsFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 5,
@@ -923,6 +941,10 @@ export function ExplorerMap({
         id: "ev-charging",
         tileset: getEvChargingTileUrl(),
         sourceLayer: "ev-charging",
+        // Tile features carry no ids, and the Edges hover tooltip only re-renders
+        // when the feature id changes — without this it sticks on the first
+        // feature hovered.
+        promoteId: "slug",
         ...(evChargingFilter ? { filter: evChargingFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 5,
@@ -971,6 +993,10 @@ export function ExplorerMap({
         id: "pricing-nodes",
         tileset: getPricingNodesTileUrl(),
         sourceLayer: "pricing-nodes",
+        // Tile features carry no ids, and the Edges hover tooltip only re-renders
+        // when the feature id changes — without this it sticks on the first
+        // feature hovered.
+        promoteId: "slug",
         ...(pricingNodesFilter ? { filter: pricingNodesFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 3,
@@ -1018,6 +1044,10 @@ export function ExplorerMap({
         id: "power-plants",
         tileset: getPowerPlantTileUrl(),
         sourceLayer: "power-plants",
+        // Tile features carry no ids, and the Edges hover tooltip only re-renders
+        // when the feature id changes — without this it sticks on the first
+        // feature hovered.
+        promoteId: "slug",
         ...(powerPlantsFilter ? { filter: powerPlantsFilter as unknown } : {}),
         renderAs: "circle",
         minZoom: 5,
