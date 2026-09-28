@@ -2,6 +2,7 @@
 
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useRate } from "@/hooks/useRate";
+import { useUtilityTerritoryHighlight } from "@/hooks/useUtilityTerritoryHighlight";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
 
@@ -68,8 +69,9 @@ function formatFixedCharge(rate: NonNullable<ReturnType<typeof useRate>["rate"]>
 }
 
 export function RateDetailPanel({ slug }: { slug: string }) {
-  const { navigateToDetail } = useExplorer();
+  const { navigateToDetail, setHighlight } = useExplorer();
   const { rate } = useRate(slug);
+  useUtilityTerritoryHighlight(rate?.utilityId, setHighlight);
 
   if (!rate) {
     return (
