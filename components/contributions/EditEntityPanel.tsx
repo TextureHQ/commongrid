@@ -2,9 +2,9 @@
 
 import { Button, Drawer, Icon } from "@texturehq/edges";
 import { EditFieldsStep } from "./EditEntitySteps";
+import { EDIT_ENTITY_DRAWER_CLASSNAME } from "./editEntityPanelLayout";
 import { SubmitEditConfirmDialog } from "./SubmitEditConfirmDialog";
 import { useEditEntityFlow } from "./useEditEntityFlow";
-import { EDIT_ENTITY_DRAWER_CLASSNAME } from "./editEntityPanelLayout";
 
 interface EditEntityPanelProps {
   entityType: string;
