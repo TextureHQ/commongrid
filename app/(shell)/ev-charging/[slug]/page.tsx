@@ -118,7 +118,6 @@ export default function EVStationDetailPage() {
             currentValues={station as unknown as Record<string, unknown>}
           />
         }
-        dataSourcePaths={["data/ev-charging.json"]}
       />
 
       <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">

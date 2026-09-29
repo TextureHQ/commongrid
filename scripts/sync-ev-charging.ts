@@ -6,10 +6,11 @@
  *
  * Usage:
  *   cd commongrid
- *   npx tsx scripts/sync-ev-charging.ts
+ *   DATABASE_URL=postgres://... npx tsx scripts/sync-ev-charging.ts
  *
  * Output:
- *   data/ev-charging.json
+ *   Upserts directly into the ev_stations Postgres table. The committed JSON
+ *   artifact is no longer produced (CG-326).
  *
  * API docs: https://developer.nlr.gov/docs/transportation/alt-fuel-stations-v1/
  *
@@ -20,8 +21,6 @@
  * if the host moves again, so a future rename does not require a code change.
  */
 
-import * as fs from "node:fs";
-import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 import { Pool } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
@@ -102,7 +101,7 @@ export const MIN_EXPECTED_STATIONS = 10_000;
 /**
  * Guards against replacing a healthy dataset with a degraded API response.
  * Throws when the incoming count is implausibly small, or when it collapses to
- * under half of what is already on disk.
+ * under half of what is already in the ev_stations table.
  */
 export function assertPlausibleStationCount(
   incoming: number,
@@ -112,31 +111,37 @@ export function assertPlausibleStationCount(
   if (incoming < MIN_EXPECTED_STATIONS) {
     throw new Error(
       `AFDC returned only ${incoming} usable stations, below the ${MIN_EXPECTED_STATIONS} minimum. ` +
-        "Refusing to overwrite data/ev-charging.json with a likely-degraded response."
+        "Refusing to overwrite the ev_stations table with a likely-degraded response."
     );
   }
 
   const existing = readExisting(existingPath);
   if (existing !== null && existing > 0 && incoming < existing / 2) {
     throw new Error(
-      `AFDC returned ${incoming} stations but ${existing} are already on disk — a >50% drop. ` +
+      `AFDC returned ${incoming} stations but ${existing} are already in the ev_stations table — a >50% drop. ` +
         "Refusing to overwrite; re-run or investigate upstream before committing."
     );
   }
 }
 
-function defaultExistingCount(p: string): number | null {
-  try {
-    const parsed = JSON.parse(fs.readFileSync(p, "utf-8"));
-    return Array.isArray(parsed) ? parsed.length : null;
-  } catch {
-    return null;
-  }
+function defaultExistingCount(_p: string): number | null {
+  // Production callers are expected to pass an explicit reader that queries
+  // the live ev_stations count. This synchronous default cannot perform an
+  // async Postgres query, so it treats the existing count as unknown and
+  // relies on the absolute MIN_EXPECTED_STATIONS floor.
+  return null;
 }
 
 async function main() {
   console.log(`Syncing EV charging stations from AFDC API (key: ${API_KEY === "DEMO_KEY" ? "DEMO_KEY" : "****"})`);
   console.log(`Endpoint: ${BASE_URL}\n`);
+
+  // ── 0. Require DATABASE_URL up front ────────────────────────────────────
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required — the EV sync writes directly to Postgres");
+  }
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const db = drizzle(pool);
 
   // ── 1. Fetch all stations in a single request ───────────────────────────
   // The AFDC API supports limit=all to return every station at once.
@@ -191,95 +196,89 @@ async function main() {
   // ── 3. Sort by name ────────────────────────────────────────────────────
   stations.sort((a, b) => a.stationName.localeCompare(b.stationName));
 
-  // ── 4. Write JSON output ───────────────────────────────────────────────
-  console.log("\n3. Writing JSON output...");
-  const outPath = path.join(process.cwd(), "data", "ev-charging.json");
+  // ── 4. Plausibility guard against degraded API responses ───────────────
+  console.log("\n3. Checking plausibility against existing DB count...");
+  const existingCountResult = await db.execute(sql`SELECT COUNT(*) AS count FROM ev_stations WHERE deleted_at IS NULL`);
+  const existingCount = Number(existingCountResult.rows[0].count);
+  console.log(`   Existing ev_stations count: ${existingCount.toLocaleString()}`);
 
-  // Refuse to clobber a good dataset with a degraded response. A 200 carrying an
-  // empty or truncated station list would otherwise silently replace ~90k
-  // stations and get committed as a "successful" sync (CIR-1271).
-  assertPlausibleStationCount(stations.length, outPath);
-
-  fs.writeFileSync(outPath, `${JSON.stringify(stations)}\n`);
-  const sizeMb = (fs.statSync(outPath).size / 1024 / 1024).toFixed(1);
-  console.log(`   Wrote ${outPath} (${sizeMb} MB)`);
+  // Refuse to clobber a good dataset with a degraded response. A 200 carrying
+  // an empty or truncated station list would otherwise silently replace ~90k
+  // stations in Postgres (CIR-1271).
+  assertPlausibleStationCount(stations.length, "", () => existingCount);
 
   // ── 5. Sync to Postgres ───────────────────────────────────────────────
-  if (process.env.DATABASE_URL) {
-    console.log("\n4. Syncing to Postgres...");
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    const db = drizzle(pool);
+  console.log("\n4. Syncing to Postgres...");
 
-    let upserted = 0;
-    const batches = [];
-    for (let i = 0; i < stations.length; i += BATCH_SIZE) {
-      batches.push(stations.slice(i, i + BATCH_SIZE));
-    }
-
-    for (let i = 0; i < batches.length; i++) {
-      const batch = batches[i];
-      const rows = batch.map((s) => ({
-        id: s.id,
-        slug: s.slug,
-        stationName: s.stationName,
-        streetAddress: s.streetAddress,
-        city: s.city,
-        state: s.state,
-        zip: s.zip,
-        latitude: s.latitude,
-        longitude: s.longitude,
-        evNetwork: s.evNetwork,
-        evLevel1EvseNum: s.evLevel1EvseNum,
-        evLevel2EvseNum: s.evLevel2EvseNum,
-        evDcFastNum: s.evDcFastNum,
-        evConnectorTypes: s.evConnectorTypes,
-        accessCode: s.accessCode,
-        statusCode: s.statusCode,
-        openDate: s.openDate,
-        facilityType: s.facilityType,
-        ownerTypeCode: s.ownerTypeCode,
-        evPricing: s.evPricing,
-      }));
-
-      await db
-        .insert(evStations)
-        .values(rows)
-        .onConflictDoUpdate({
-          target: evStations.id,
-          set: {
-            slug: sql`EXCLUDED.slug`,
-            stationName: sql`EXCLUDED.station_name`,
-            streetAddress: sql`EXCLUDED.street_address`,
-            city: sql`EXCLUDED.city`,
-            state: sql`EXCLUDED.state`,
-            zip: sql`EXCLUDED.zip`,
-            latitude: sql`EXCLUDED.latitude`,
-            longitude: sql`EXCLUDED.longitude`,
-            evNetwork: sql`EXCLUDED.ev_network`,
-            evLevel1EvseNum: sql`EXCLUDED.ev_level1_evse_num`,
-            evLevel2EvseNum: sql`EXCLUDED.ev_level2_evse_num`,
-            evDcFastNum: sql`EXCLUDED.ev_dc_fast_num`,
-            evConnectorTypes: sql`EXCLUDED.ev_connector_types`,
-            accessCode: sql`EXCLUDED.access_code`,
-            statusCode: sql`EXCLUDED.status_code`,
-            openDate: sql`EXCLUDED.open_date`,
-            facilityType: sql`EXCLUDED.facility_type`,
-            ownerTypeCode: sql`EXCLUDED.owner_type_code`,
-            evPricing: sql`EXCLUDED.ev_pricing`,
-            updatedAt: sql`NOW()`,
-          },
-        });
-
-      upserted += batch.length;
-      if ((i + 1) % 10 === 0 || i === batches.length - 1) {
-        console.log(`   Processed ${upserted.toLocaleString()} / ${stations.length.toLocaleString()} stations...`);
-      }
-    }
-
-    console.log(`   ✓ Upserted ${upserted.toLocaleString()} stations to Postgres`);
-  } else {
-    console.log("\n4. Skipping Postgres sync (DATABASE_URL not set)");
+  let upserted = 0;
+  const batches = [];
+  for (let i = 0; i < stations.length; i += BATCH_SIZE) {
+    batches.push(stations.slice(i, i + BATCH_SIZE));
   }
+
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    const rows = batch.map((s) => ({
+      id: s.id,
+      slug: s.slug,
+      stationName: s.stationName,
+      streetAddress: s.streetAddress,
+      city: s.city,
+      state: s.state,
+      zip: s.zip,
+      latitude: s.latitude,
+      longitude: s.longitude,
+      evNetwork: s.evNetwork,
+      evLevel1EvseNum: s.evLevel1EvseNum,
+      evLevel2EvseNum: s.evLevel2EvseNum,
+      evDcFastNum: s.evDcFastNum,
+      evConnectorTypes: s.evConnectorTypes,
+      accessCode: s.accessCode,
+      statusCode: s.statusCode,
+      openDate: s.openDate,
+      facilityType: s.facilityType,
+      ownerTypeCode: s.ownerTypeCode,
+      evPricing: s.evPricing,
+    }));
+
+    await db
+      .insert(evStations)
+      .values(rows)
+      .onConflictDoUpdate({
+        target: evStations.id,
+        set: {
+          slug: sql`EXCLUDED.slug`,
+          stationName: sql`EXCLUDED.station_name`,
+          streetAddress: sql`EXCLUDED.street_address`,
+          city: sql`EXCLUDED.city`,
+          state: sql`EXCLUDED.state`,
+          zip: sql`EXCLUDED.zip`,
+          latitude: sql`EXCLUDED.latitude`,
+          longitude: sql`EXCLUDED.longitude`,
+          evNetwork: sql`EXCLUDED.ev_network`,
+          evLevel1EvseNum: sql`EXCLUDED.ev_level1_evse_num`,
+          evLevel2EvseNum: sql`EXCLUDED.ev_level2_evse_num`,
+          evDcFastNum: sql`EXCLUDED.ev_dc_fast_num`,
+          evConnectorTypes: sql`EXCLUDED.ev_connector_types`,
+          accessCode: sql`EXCLUDED.access_code`,
+          statusCode: sql`EXCLUDED.status_code`,
+          openDate: sql`EXCLUDED.open_date`,
+          facilityType: sql`EXCLUDED.facility_type`,
+          ownerTypeCode: sql`EXCLUDED.owner_type_code`,
+          evPricing: sql`EXCLUDED.ev_pricing`,
+          updatedAt: sql`NOW()`,
+        },
+      });
+
+    upserted += batch.length;
+    if ((i + 1) % 10 === 0 || i === batches.length - 1) {
+      console.log(`   Processed ${upserted.toLocaleString()} / ${stations.length.toLocaleString()} stations...`);
+    }
+  }
+
+  console.log(`   ✓ Upserted ${upserted.toLocaleString()} stations to Postgres`);
+
+  await pool.end();
 
   // ── Summary ────────────────────────────────────────────────────────────
   const networkCounts = new Map<string, number>();

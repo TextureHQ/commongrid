@@ -24,7 +24,6 @@ import { drizzle } from "drizzle-orm/neon-serverless";
 import {
   balancingAuthorities,
   entityVersions,
-  evStations,
   isos,
   powerPlants,
   pricingNodes,
@@ -333,39 +332,14 @@ async function seedPowerPlants(db: DrizzleDb): Promise<number> {
   return inserted;
 }
 
-async function seedEvStations(db: DrizzleDb): Promise<number> {
-  const data = loadJson<Array<Record<string, unknown>>>("ev-charging.json");
-  let inserted = 0;
-
-  for (const batch of chunk(data, BATCH_SIZE)) {
-    const rows = batch.map((r) => ({
-      id: r.id as string,
-      slug: r.slug as string,
-      stationName: r.stationName as string,
-      streetAddress: r.streetAddress as string,
-      city: r.city as string,
-      state: r.state as string,
-      zip: r.zip as string,
-      latitude: r.latitude as number,
-      longitude: r.longitude as number,
-      evNetwork: (r.evNetwork as string) ?? null,
-      evLevel1EvseNum: (r.evLevel1EvseNum as number) ?? 0,
-      evLevel2EvseNum: (r.evLevel2EvseNum as number) ?? 0,
-      evDcFastNum: (r.evDcFastNum as number) ?? 0,
-      evConnectorTypes: r.evConnectorTypes ?? [],
-      accessCode: r.accessCode as string,
-      statusCode: r.statusCode as string,
-      openDate: (r.openDate as string) ?? null,
-      facilityType: (r.facilityType as string) ?? null,
-      ownerTypeCode: (r.ownerTypeCode as string) ?? null,
-      evPricing: (r.evPricing as string) ?? null,
-    }));
-
-    await db.insert(evStations).values(rows).onConflictDoNothing();
-    inserted += batch.length;
-  }
-
-  return inserted;
+async function seedEvStations(_db: DrizzleDb): Promise<number> {
+  // ev_stations is no longer seeded from a committed JSON file. It is owned
+  // by the `sync:ev-charging` job, which upserts directly from the DOE AFDC
+  // API into Postgres (CG-326). Keeping this function as a no-op preserves
+  // the seed-script structure and validation expectations while avoiding a
+  // ~90k-record live API call during every seed run.
+  console.log("  ℹ️  ev_stations are populated by the sync:ev-charging job; skipping JSON seed");
+  return 0;
 }
 
 async function seedTransmissionLines(db: DrizzleDb): Promise<number> {
@@ -915,7 +889,6 @@ async function main(): Promise<void> {
       { type: "utility", file: "utilities.json" },
       { type: "program", file: "programs.json" },
       { type: "power_plant", file: "power-plants.json" },
-      { type: "ev_station", file: "ev-charging.json" },
       { type: "transmission_line", file: "transmission-lines.json" },
       { type: "pricing_node", file: "pricing-nodes.json" },
     ];
