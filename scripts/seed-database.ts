@@ -341,32 +341,14 @@ async function seedEvStations(_db: DrizzleDb): Promise<number> {
   return 0;
 }
 
-async function seedTransmissionLines(db: DrizzleDb): Promise<number> {
-  const data = loadJson<Array<Record<string, unknown>>>("transmission-lines.json");
-  let inserted = 0;
-
-  for (const batch of chunk(data, BATCH_SIZE)) {
-    const rows = batch.map((r) => ({
-      id: r.id as string,
-      objectId: r.objectId as number,
-      type: r.type as string,
-      status: r.status as string,
-      owner: r.owner as string,
-      voltage: (r.voltage as number) ?? null,
-      voltClass: r.voltClass as string,
-      voltageClass: r.voltageClass as string,
-      sub1: r.sub1 as string,
-      sub2: r.sub2 as string,
-      lengthMiles: r.lengthMiles as number,
-      naicsCode: r.naicsCode as string,
-      source: (r.source as string) ?? "HIFLD",
-    }));
-
-    await db.insert(transmissionLines).values(rows).onConflictDoNothing();
-    inserted += batch.length;
-  }
-
-  return inserted;
+async function seedTransmissionLines(_db: DrizzleDb): Promise<number> {
+  // transmission_lines is no longer seeded from a committed JSON file. It is
+  // owned by the `sync:transmission-lines` job, which upserts metadata AND
+  // PostGIS geometry directly from HIFLD into Postgres (CG-328). Geometry is
+  // the single source of truth for tile generation, so there is no committed
+  // data/transmission-lines.json or .geojson to seed from.
+  console.log("  ℹ️  transmission_lines are populated by the sync:transmission-lines job; skipping JSON seed");
+  return 0;
 }
 
 async function seedPricingNodes(db: DrizzleDb): Promise<number> {
@@ -801,7 +783,9 @@ async function main(): Promise<void> {
       { type: "utility", file: "utilities.json" },
       { type: "program", file: "programs.json" },
       { type: "power_plant", file: "power-plants.json" },
-      { type: "transmission_line", file: "transmission-lines.json" },
+      // transmission_line is sync-owned (CG-328) and no longer JSON-seeded, so
+      // it is excluded here just like ev_station and substation. Version history
+      // for sync-owned entities is the applySync follow-up tracked in CG-279.
       { type: "pricing_node", file: "pricing-nodes.json" },
     ];
 

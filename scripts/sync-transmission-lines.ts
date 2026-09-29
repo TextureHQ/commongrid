@@ -2,21 +2,25 @@
  * Sync script: Download HIFLD Electric Power Transmission Lines.
  *
  * Fetches all US transmission line features (69kV–765kV) from the
- * HIFLD ArcGIS Feature Service and saves:
- *   - data/transmission-lines.json    — lightweight metadata array for list/search
- *   - data/transmission-lines.geojson — full GeoJSON FeatureCollection for tippecanoe
+ * HIFLD ArcGIS Feature Service and upserts them directly into the
+ * `transmission_lines` Postgres table (CG-327/CG-328). The committed
+ * data/transmission-lines.json and data/transmission-lines.geojson artifacts
+ * are no longer produced — the app, tile build (prepare-transmission-lines-
+ * geojson.mjs) and seed all read from Postgres.
  *
  * Usage:
- *   cd commongrid
- *   npx tsx scripts/sync-transmission-lines.ts
+ *   DATABASE_URL=postgres://... npx tsx scripts/sync-transmission-lines.ts
  *
  * Output:
- *   data/transmission-lines.json
- *   data/transmission-lines.geojson
+ *   Upserts into the `transmission_lines` Postgres table.
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { Pool } from "@neondatabase/serverless";
+import { sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { transmissionLines } from "../lib/db/schema";
 import type { TransmissionLine, VoltageClass } from "../types/transmission-lines";
 
 const BASE_URL =
@@ -24,6 +28,35 @@ const BASE_URL =
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const BATCH_SIZE = 1000;
+/** DB upsert batch size (rows per INSERT ... ON CONFLICT statement). */
+const DB_BATCH_SIZE = 500;
+
+/**
+ * Guards against replacing a healthy dataset with a degraded API response.
+ * HIFLD returns ~90k US transmission-line segments; a plausible sync should be
+ * well above this floor.
+ */
+const MIN_EXPECTED_LINES = 20_000;
+
+/**
+ * Guards against replacing a healthy dataset with a degraded API response.
+ * Throws when the incoming count is implausibly small, or when it collapses to
+ * under half of what is already in the transmission_lines table.
+ */
+export function assertPlausibleLineCount(incoming: number, existing: number | null): void {
+  if (incoming < MIN_EXPECTED_LINES) {
+    throw new Error(
+      `Upstream returned only ${incoming} usable transmission lines, below the ${MIN_EXPECTED_LINES} minimum. ` +
+        "Refusing to overwrite the transmission_lines table with a likely-degraded response."
+    );
+  }
+  if (existing !== null && existing > 0 && incoming < existing / 2) {
+    throw new Error(
+      `Upstream returned ${incoming} transmission lines but ${existing} are already in the table — a >50% drop. ` +
+        "Refusing to overwrite; re-run or investigate upstream before committing."
+    );
+  }
+}
 
 // ── Voltage classification ──────────────────────────────────────────────────
 
@@ -106,8 +139,16 @@ function shapelenToMiles(shapeLen: number | undefined): number {
 async function main() {
   console.log("🔌 Syncing HIFLD transmission lines…");
 
+  // 0. Require DATABASE_URL up front
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required — the transmission-lines sync writes directly to Postgres");
+  }
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const db = drizzle(pool);
+
   const allMetadata: TransmissionLine[] = [];
-  const allFeatures: object[] = [];
+  /** Parallel array of GeoJSON geometry (LineString/MultiLineString) per metadata row, by index. */
+  const allGeometries: (object | null)[] = [];
   let offset = 0;
   let batch = 0;
 
@@ -145,22 +186,7 @@ async function main() {
         source: p.SOURCE ?? "",
       };
       allMetadata.push(meta);
-
-      // GeoJSON feature for tippecanoe
-      allFeatures.push({
-        type: "Feature",
-        geometry: f.geometry,
-        properties: {
-          objectId,
-          id: meta.id,
-          voltage,
-          voltageClass,
-          owner: meta.owner,
-          status: meta.status,
-          type: meta.type,
-          lengthMiles,
-        },
-      });
+      allGeometries.push(f.geometry ?? null);
     }
 
     if (!exceeded || features.length < BATCH_SIZE) {
@@ -176,21 +202,71 @@ async function main() {
 
   console.log(`\n📊 Total features: ${allMetadata.length}`);
 
-  // Write metadata JSON
-  const metaPath = path.join(DATA_DIR, "transmission-lines.json");
-  fs.writeFileSync(metaPath, JSON.stringify(allMetadata, null, 2));
-  const metaSize = (fs.statSync(metaPath).size / 1024 / 1024).toFixed(2);
-  console.log(`✅ Wrote ${metaPath} (${metaSize} MB)`);
+  // Plausibility guard against a degraded upstream response
+  const existingCountResult = await db.execute(
+    sql`SELECT COUNT(*) AS count FROM transmission_lines WHERE deleted_at IS NULL`
+  );
+  const existingCount = Number(existingCountResult.rows[0].count);
+  console.log(`   Existing transmission_lines count: ${existingCount.toLocaleString()}`);
+  assertPlausibleLineCount(allMetadata.length, existingCount);
 
-  // Write GeoJSON FeatureCollection
-  const geojson = {
-    type: "FeatureCollection",
-    features: allFeatures,
-  };
-  const geojsonPath = path.join(DATA_DIR, "transmission-lines.geojson");
-  fs.writeFileSync(geojsonPath, JSON.stringify(geojson));
-  const geojsonSize = (fs.statSync(geojsonPath).size / 1024 / 1024).toFixed(2);
-  console.log(`✅ Wrote ${geojsonPath} (${geojsonSize} MB)`);
+  // Upsert to Postgres, including PostGIS geometry (the single source of truth
+  // for tile generation — CG-328). Geometry must go through ST_GeomFromGeoJSON,
+  // so we build a parameterized multi-row INSERT rather than drizzle .values().
+  console.log("\n🔄 Syncing to Postgres…");
+  let upserted = 0;
+  let skippedGeom = 0;
+  for (let i = 0; i < allMetadata.length; i += DB_BATCH_SIZE) {
+    const sliceMeta = allMetadata.slice(i, i + DB_BATCH_SIZE);
+    const sliceGeom = allGeometries.slice(i, i + DB_BATCH_SIZE);
+
+    // Build VALUES tuples. Each row's geometry is normalized to MultiLineString
+    // via ST_Multi(ST_CollectionExtract(ST_MakeValid(...), 2)) — 2 keeps only
+    // (multi)linestring components so the cast succeeds even if MakeValid emits
+    // a GeometryCollection. NULL geometry rows are inserted with NULL geometry.
+    const valueTuples = sliceMeta.map((m, j) => {
+      const g = sliceGeom[j];
+      const geomExpr =
+        g == null
+          ? sql`NULL`
+          : sql`ST_Multi(ST_CollectionExtract(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(
+              g
+            )}), 4326)), 2))`;
+      if (g == null) skippedGeom++;
+      return sql`(${m.id}, ${m.objectId}, ${m.type}, ${m.status}, ${m.owner}, ${m.voltage}, ${m.voltClass}, ${m.voltageClass}, ${m.sub1}, ${m.sub2}, ${m.lengthMiles}, ${m.naicsCode}, ${m.source || "HIFLD"}, ${geomExpr})`;
+    });
+
+    await db.execute(sql`
+      INSERT INTO transmission_lines
+        (id, object_id, type, status, owner, voltage, volt_class, voltage_class, sub1, sub2, length_miles, naics_code, source, geometry)
+      VALUES ${sql.join(valueTuples, sql`, `)}
+      ON CONFLICT (id) DO UPDATE SET
+        object_id = EXCLUDED.object_id,
+        type = EXCLUDED.type,
+        status = EXCLUDED.status,
+        owner = EXCLUDED.owner,
+        voltage = EXCLUDED.voltage,
+        volt_class = EXCLUDED.volt_class,
+        voltage_class = EXCLUDED.voltage_class,
+        sub1 = EXCLUDED.sub1,
+        sub2 = EXCLUDED.sub2,
+        length_miles = EXCLUDED.length_miles,
+        naics_code = EXCLUDED.naics_code,
+        source = EXCLUDED.source,
+        geometry = EXCLUDED.geometry,
+        updated_at = NOW()
+    `);
+
+    upserted += sliceMeta.length;
+    if (upserted % (DB_BATCH_SIZE * 10) === 0 || upserted === allMetadata.length) {
+      console.log(`   Processed ${upserted.toLocaleString()} / ${allMetadata.length.toLocaleString()} lines…`);
+    }
+  }
+  console.log(`   ✓ Upserted ${upserted.toLocaleString()} transmission lines to Postgres`);
+  if (skippedGeom > 0) {
+    console.warn(`   ⚠️  ${skippedGeom.toLocaleString()} rows had no geometry (inserted with NULL geometry).`);
+  }
+  await pool.end();
 
   // Voltage breakdown summary
   const byClass: Record<string, number> = {};
