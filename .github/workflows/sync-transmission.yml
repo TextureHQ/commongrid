@@ -30,6 +30,11 @@ jobs:
       - run: npm ci
       - name: Sync transmission lines from HIFLD
         run: npx tsx scripts/sync-transmission-lines.ts
+        env:
+          # Required: the sync now writes metadata AND PostGIS geometry directly
+          # to Postgres and no longer produces committed JSON/GeoJSON artifacts
+          # (CG-328).
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: Install tippecanoe
         run: |
           sudo apt-get update -qq
@@ -64,13 +69,15 @@ jobs:
           BRANCH: meridian/sync-transmission-lines-data
           PR_TITLE: "data: update transmission lines (HIFLD)"
           PR_BODY: |
-            Automated transmission lines sync. The workflow commits generated data on a dedicated branch and opens or updates a pull request so branch protection can review and merge it safely.
+            Automated transmission lines sync. The sync writes line metadata and PostGIS geometry directly to Postgres, and this workflow only commits the refreshed map tiles. The generated tiles land on a dedicated branch and open or update a pull request so branch protection can review and merge it safely.
+
+            Part of CG-324: eliminate committed static data, Postgres as single source of truth.
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
-          git add data/transmission-lines.json public/tiles/transmission-lines.pmtiles
+          git add public/tiles/transmission-lines.pmtiles
           if git diff --staged --quiet; then
             echo "No changes to commit."
             exit 0
