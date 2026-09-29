@@ -246,6 +246,13 @@
       "when": 1790362505233,
       "tag": "0038_add_transmission_lines_geometry",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1790362505234,
+      "tag": "0039_register_ba_cca_sync_sources",
+      "breakpoints": true
     }
   ]
 }
