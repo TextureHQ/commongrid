@@ -34,6 +34,9 @@ jobs:
           # Add NREL_API_KEY as a GitHub secret for production use.
           # Falls back to DEMO_KEY if not set (rate-limited but functional).
           NREL_API_KEY: ${{ secrets.NREL_API_KEY }}
+          # Required: the sync now writes directly to Postgres and no longer
+          # produces a committed JSON artifact (CG-326).
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: Install tippecanoe
         run: |
           sudo apt-get update -qq
@@ -68,13 +71,15 @@ jobs:
           BRANCH: meridian/sync-ev-charging-data
           PR_TITLE: "data: update EV charging stations (AFDC weekly)"
           PR_BODY: |
-            Automated EV charging data sync. The workflow commits generated data on a dedicated branch and opens or updates a pull request so branch protection can review and merge it safely.
+            Automated EV charging data sync. The sync now writes station data directly to Postgres, and this workflow only commits the refreshed map tiles. The generated data lands on a dedicated branch and opens or updates a pull request so branch protection can review and merge it safely.
+            
+            Part of CG-324: eliminate committed static data, Postgres as single source of truth.
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
-          git add data/ev-charging.json public/tiles/ev-charging.pmtiles
+          git add public/tiles/ev-charging.pmtiles
           if git diff --staged --quiet; then
             echo "No changes to commit."
             exit 0

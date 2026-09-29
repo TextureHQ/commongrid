@@ -80,11 +80,7 @@ fi
 
 echo ""
 echo "=== Step 7: Prepare EV charging GeoJSON ==="
-if [ -f "$ROOT_DIR/data/ev-charging.json" ]; then
-  node "$SCRIPT_DIR/prepare-ev-charging-geojson.mjs"
-else
-  echo "⚠️  No ev-charging.json found — skipping EV charging tile generation."
-fi
+node "$SCRIPT_DIR/prepare-ev-charging-geojson.mjs"
 
 echo ""
 echo "=== Step 8: Generate EV charging tiles with tippecanoe ==="
