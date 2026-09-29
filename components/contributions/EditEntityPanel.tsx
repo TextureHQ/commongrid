@@ -4,6 +4,7 @@ import { Button, Drawer, Icon } from "@texturehq/edges";
 import { EditFieldsStep } from "./EditEntitySteps";
 import { SubmitEditConfirmDialog } from "./SubmitEditConfirmDialog";
 import { useEditEntityFlow } from "./useEditEntityFlow";
+import { EDIT_ENTITY_DRAWER_CLASSNAME } from "./editEntityPanelLayout";
 
 interface EditEntityPanelProps {
   entityType: string;
@@ -68,7 +69,7 @@ export function EditEntityPanel({
   }
 
   return (
-    <Drawer isOpen onClose={onClose}>
+    <Drawer isOpen onClose={onClose} className={EDIT_ENTITY_DRAWER_CLASSNAME}>
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between border-b border-border-default p-4">
           <div className="min-w-0 flex-1">

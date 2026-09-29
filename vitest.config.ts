@@ -12,7 +12,15 @@ export default defineConfig({
   },
   test: {
     pool: "threads",
-    include: ["lib/**/*.test.ts", "lib/**/*.test.tsx", "scripts/**/*.test.ts", "app/**/*.test.ts", "app/**/*.test.tsx"],
+    include: [
+      "lib/**/*.test.ts",
+      "lib/**/*.test.tsx",
+      "scripts/**/*.test.ts",
+      "app/**/*.test.ts",
+      "app/**/*.test.tsx",
+      "components/**/*.test.ts",
+      "components/**/*.test.tsx",
+    ],
     exclude: ["node_modules", ".next"],
     coverage: {
       provider: "v8",
