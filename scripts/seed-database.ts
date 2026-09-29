@@ -25,12 +25,10 @@ import {
   balancingAuthorities,
   entityVersions,
   isos,
-  powerPlants,
   pricingNodes,
   programs,
   regions,
   rtos,
-  transmissionLines,
   utilities,
 } from "../lib/db/schema";
 
@@ -291,44 +289,14 @@ async function seedPrograms(db: DrizzleDb): Promise<number> {
   return inserted;
 }
 
-async function seedPowerPlants(db: DrizzleDb): Promise<number> {
-  const data = loadJson<Array<Record<string, unknown>>>("power-plants.json");
-  let inserted = 0;
-
-  for (const batch of chunk(data, BATCH_SIZE)) {
-    const rows = batch.map((r) => ({
-      id: r.id as string,
-      slug: r.slug as string,
-      name: r.name as string,
-      plantCode: r.plantCode as string,
-      utilityId: (r.utilityId as string) ?? null,
-      utilityName: r.utilityName as string,
-      balancingAuthorityId: (r.balancingAuthorityId as string) ?? null,
-      baCode: (r.baCode as string) ?? null,
-      state: r.state as string,
-      county: (r.county as string) ?? null,
-      latitude: r.latitude as number,
-      longitude: r.longitude as number,
-      nercRegion: (r.nercRegion as string) ?? null,
-      sector: r.sector as string,
-      primaryFuel: (r.primaryFuel as string) ?? null,
-      fuelCategory: r.fuelCategory as string,
-      technologies: r.technologies ?? [],
-      energySources: r.energySources ?? [],
-      totalCapacityMw: r.totalCapacityMw as number,
-      generatorCount: r.generatorCount as number,
-      operatingYear: (r.operatingYear as number) ?? null,
-      gridVoltageKv: (r.gridVoltageKv as number) ?? null,
-      status: r.status as string,
-      proposedCapacityMw: (r.proposedCapacityMw as number) ?? null,
-      proposedOnlineYear: (r.proposedOnlineYear as number) ?? null,
-    }));
-
-    await db.insert(powerPlants).values(rows).onConflictDoNothing();
-    inserted += batch.length;
-  }
-
-  return inserted;
+async function seedPowerPlants(_db: DrizzleDb): Promise<number> {
+  // power_plants is no longer seeded from a committed JSON file. It is owned
+  // by the `sync:eia-860-annual` job, which publishes EIA-860 data to Postgres
+  // via applySync (CG-329). Keeping this function as a no-op preserves the
+  // seed-script structure and validation expectations while avoiding a
+  // ~15k-record static import.
+  console.log("  ℹ️  power_plants are populated by the sync:eia-860 job; skipping JSON seed");
+  return 0;
 }
 
 async function seedEvStations(_db: DrizzleDb): Promise<number> {
@@ -782,10 +750,9 @@ async function main(): Promise<void> {
       { type: "balancing_authority", file: "balancing-authorities.json" },
       { type: "utility", file: "utilities.json" },
       { type: "program", file: "programs.json" },
-      { type: "power_plant", file: "power-plants.json" },
-      // transmission_line is sync-owned (CG-328) and no longer JSON-seeded, so
-      // it is excluded here just like ev_station and substation. Version history
-      // for sync-owned entities is the applySync follow-up tracked in CG-279.
+      // power_plant is sync-owned (CG-329) and no longer JSON-seeded, so it is
+      // excluded here. Version history for sync-owned entities is the applySync
+      // follow-up tracked in CG-279.
       { type: "pricing_node", file: "pricing-nodes.json" },
     ];
 
