@@ -2,6 +2,7 @@
 
 import "@/app/(shell)/explore/explore.css";
 import { ExploreShell } from "@texturehq/edges-explore/layout";
+import { ExploreToolbar, ExploreToolbarActions, ExploreToolbarPrimary } from "@texturehq/edges-explore/toolbar";
 import { type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { MAP_REGIONS, type MapRegion, regionToTab } from "@/lib/explorer/region-navigation";
 import {
@@ -318,20 +319,24 @@ function MapFilterBar({
   setViewMode?: (m: ExploreViewMode) => void;
 }) {
   return (
-    <div className="cg-explore-filter-row w-full flex items-center">
-      <RegionDropdown value={mapRegion} onChange={setMapRegion} />
-      <div className="cg-explore-divider" />
-      <OverlayDropdown overlays={mapOverlays} onToggle={toggleOverlay} />
-      {onOpenFilter && (
-        <>
-          <div className="cg-explore-divider" />
-          <button type="button" className="cg-explore-icon-btn" onClick={onOpenFilter}>
-            <FilterIcon /> Filter
-          </button>
-        </>
-      )}
-      {viewMode && setViewMode && <MapTableToggle mode={viewMode} setMode={setViewMode} />}
-    </div>
+    <ExploreToolbar className="shrink-0 !bg-background-surface !px-[14px] !py-[5px]">
+      <ExploreToolbarPrimary className="!overflow-visible">
+        <RegionDropdown value={mapRegion} onChange={setMapRegion} />
+        <div className="cg-explore-divider" />
+        <OverlayDropdown overlays={mapOverlays} onToggle={toggleOverlay} />
+      </ExploreToolbarPrimary>
+      <ExploreToolbarActions>
+        {onOpenFilter && (
+          <>
+            <div className="cg-explore-divider" />
+            <button type="button" className="cg-explore-icon-btn" onClick={onOpenFilter}>
+              <FilterIcon /> Filter
+            </button>
+          </>
+        )}
+        {viewMode && setViewMode && <MapTableToggle mode={viewMode} setMode={setViewMode} />}
+      </ExploreToolbarActions>
+    </ExploreToolbar>
   );
 }
 
@@ -401,16 +406,14 @@ function ExplorerLayout({ mapboxAccessToken }: ExplorerLayoutProps) {
   }, [state.listSource]);
 
   const topBar = (
-    <div className="cg-explore-filter-bar flex w-full">
-      <MapFilterBar
-        mapRegion={mapRegion}
-        setMapRegion={handleMapRegionChange}
-        mapOverlays={mapOverlays}
-        toggleOverlay={toggleOverlay}
-        viewMode={state.viewMode}
-        setViewMode={setViewMode}
-      />
-    </div>
+    <MapFilterBar
+      mapRegion={mapRegion}
+      setMapRegion={handleMapRegionChange}
+      mapOverlays={mapOverlays}
+      toggleOverlay={toggleOverlay}
+      viewMode={state.viewMode}
+      setViewMode={setViewMode}
+    />
   );
 
   return (

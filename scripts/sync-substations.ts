@@ -496,19 +496,24 @@ interface TLRow {
   id?: string;
 }
 
+/** Drizzle client backed by the Neon serverless Pool used in this script. */
+type DrizzleClient = ReturnType<typeof drizzle>;
+
 /**
- * Collect distinct non-placeholder substation names from transmission-lines.json,
- * attempt a simple uppercase-trimmed match, stamp `hifldLegacyId` on hits, and
- * return the list of unmatched names (for the audit CSV).
+ * Collect distinct non-placeholder substation names from the transmission_lines
+ * table (sub1/sub2 endpoints), attempt a simple uppercase-trimmed match, stamp
+ * `hifldLegacyId` on hits, and return the list of unmatched names (for the audit
+ * CSV). Reads from Postgres (CG-328) — the committed transmission-lines.json is
+ * gone.
  */
-function reconcileHifldLegacy(records: SubstationRecord[]): { unmatched: string[] } {
-  const tlPath = path.join(DATA_DIR, "transmission-lines.json");
-  if (!fs.existsSync(tlPath)) {
-    console.log("   transmission-lines.json not found — skipping HIFLD reconciliation.");
+async function reconcileHifldLegacy(db: DrizzleClient, records: SubstationRecord[]): Promise<{ unmatched: string[] }> {
+  const tlResult = await db.execute(sql`SELECT sub1, sub2 FROM transmission_lines WHERE deleted_at IS NULL`);
+  const tl = tlResult.rows as unknown as TLRow[];
+  if (tl.length === 0) {
+    console.log("   transmission_lines table is empty — skipping HIFLD reconciliation.");
     return { unmatched: [] };
   }
 
-  const tl: TLRow[] = JSON.parse(fs.readFileSync(tlPath, "utf8"));
   const PLACEHOLDER = new Set(["", "NOT AVAILABLE", "UNKNOWN", "N/A", "NA", "NONE"]);
   const legacyNames = new Set<string>();
   for (const row of tl) {
@@ -668,7 +673,7 @@ async function main() {
 
   // 5. HIFLD legacy-name reconciliation --------------------------------------
   console.log("\n4. HIFLD legacy-name reconciliation");
-  const { unmatched } = reconcileHifldLegacy(merged);
+  const { unmatched } = await reconcileHifldLegacy(db, merged);
 
   // 6. Sort + plausibility guard + upsert to Postgres ------------------------
   merged.sort((a, b) => a.state.localeCompare(b.state) || a.name.localeCompare(b.name));

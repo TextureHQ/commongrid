@@ -13,7 +13,7 @@
  *   npx tsx scripts/sync-power-plants.ts
  *
  * Output:
- *   data/power-plants.json
+ *   Publishes power plants to Postgres via applySync (source of truth).
  */
 
 import * as fs from "node:fs";
@@ -21,6 +21,10 @@ import * as os from "node:os";
 import * as path from "node:path";
 import AdmZip from "adm-zip";
 import * as XLSX from "xlsx";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { powerPlants } from "@/lib/db/schema";
+import { applySync } from "@/lib/sync/apply-sync";
+import { type MonthlyPlantRecord, POWER_PLANT_ENTITY_TYPE, toSyncRecords } from "@/lib/sync/power-plants-860m";
 import { readJSON, slugify } from "./lib";
 
 const EIA_860_URL = "https://www.eia.gov/electricity/data/eia860/xls/eia8602024.zip";
@@ -573,7 +577,7 @@ async function main() {
 
   // ── 8. Build power plant records ──────────────────────────────────
   console.log("\n8. Building power plant records...");
-  const powerPlants: PowerPlantRecord[] = [];
+  const plantRecords: PowerPlantRecord[] = [];
   const slugsSeen = new Map<string, number>();
 
   // Track unique plants that will get both operable and proposed entries,
@@ -612,7 +616,7 @@ async function main() {
     // Check if this plant also has proposed capacity
     const propAgg = propGenByPlant.get(plantCode);
 
-    powerPlants.push({
+    plantRecords.push({
       id: `plant-${plantCode}`,
       slug,
       name: plantData.name,
@@ -663,7 +667,7 @@ async function main() {
     }
     slugsSeen.set(slug.replace(/-\d+$/, ""), slugCount + 1);
 
-    powerPlants.push({
+    plantRecords.push({
       id: `plant-${plantCode}`,
       slug,
       name: plantData.name,
@@ -693,34 +697,69 @@ async function main() {
   }
 
   // Sort by capacity descending for a sensible default order
-  powerPlants.sort((a, b) => {
+  plantRecords.sort((a, b) => {
     const capA = a.status === "operable" ? a.totalCapacityMw : (a.proposedCapacityMw ?? 0);
     const capB = b.status === "operable" ? b.totalCapacityMw : (b.proposedCapacityMw ?? 0);
     return capB - capA;
   });
 
-  // ── 9. Write output ───────────────────────────────────────────────
-  console.log("\n9. Writing output...");
-  // Write compact JSON (no indentation) since this file is 8+ MB
-  const outPath = path.join(process.cwd(), "data", "power-plants.json");
-  fs.writeFileSync(outPath, `${JSON.stringify(powerPlants)}\n`);
-  console.log(`  Wrote ${outPath} (${(fs.statSync(outPath).size / 1024 / 1024).toFixed(1)} MB)`);
+  // ── 9. Publish to Postgres ────────────────────────────────────────
+  console.log("\n9. Publishing to Postgres...");
+
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required — the power-plants sync publishes directly to Postgres");
+  }
+
+  const db = getPooledDb();
+  const existingRows = await db.select({ id: powerPlants.id }).from(powerPlants);
+  const existingIds = new Set(existingRows.map((row) => row.id));
+
+  const asOf = new Date();
+  const records = toSyncRecords(plantRecords as MonthlyPlantRecord[], existingIds, asOf);
+  const report = await applySync(records, {
+    entityType: POWER_PLANT_ENTITY_TYPE,
+    initiatedBy: "sync:eia-860-annual",
+    batchTitle: "EIA-860 annual sync",
+    batchDescription: "EIA-860 annual electric generator report",
+  });
+
+  console.log("  Registry publication complete:");
+  console.log(`    Batch id: ${report.batchId}`);
+  console.log(`    Created: ${report.created.toLocaleString()}`);
+  console.log(`    Updated: ${report.updated.toLocaleString()}`);
+  console.log(`    Unchanged: ${report.unchanged.toLocaleString()}`);
+  console.log(`    Fields written: ${report.fieldsWritten.toLocaleString()}`);
+
+  if (report.deferrals.length > 0) {
+    console.log(
+      `    ⚠️  Deferred ${report.deferrals.length.toLocaleString()} field(s) that a human last edited (policy B — not overwritten):`
+    );
+    const sample = report.deferrals.slice(0, 20);
+    for (const d of sample) {
+      console.log(
+        `      - ${d.entityId} field '${d.field}': kept ${JSON.stringify(d.keptValue)}, sync wanted ${JSON.stringify(d.skippedValue)}`
+      );
+    }
+    if (report.deferrals.length > sample.length) {
+      console.log(`      … and ${(report.deferrals.length - sample.length).toLocaleString()} more`);
+    }
+  }
 
   // ── Summary ────────────────────────────────────────────────────────
-  const operable = powerPlants.filter((p) => p.status === "operable");
-  const proposed = powerPlants.filter((p) => p.status === "proposed");
-  const withUtility = powerPlants.filter((p) => p.utilityId !== null);
-  const withBA = powerPlants.filter((p) => p.balancingAuthorityId !== null);
+  const operable = plantRecords.filter((p) => p.status === "operable");
+  const proposed = plantRecords.filter((p) => p.status === "proposed");
+  const withUtility = plantRecords.filter((p) => p.utilityId !== null);
+  const withBA = plantRecords.filter((p) => p.balancingAuthorityId !== null);
 
   const fuelCounts = new Map<string, number>();
-  for (const p of powerPlants) {
+  for (const p of plantRecords) {
     fuelCounts.set(p.fuelCategory, (fuelCounts.get(p.fuelCategory) ?? 0) + 1);
   }
 
   const totalCapacity = operable.reduce((sum, p) => sum + p.totalCapacityMw, 0);
 
   console.log("\nSync complete:");
-  console.log(`  Total plants: ${powerPlants.length}`);
+  console.log(`  Total plants: ${plantRecords.length}`);
   console.log(`  Operable: ${operable.length}`);
   console.log(`  Proposed only: ${proposed.length}`);
   console.log(`  Total operable capacity: ${(totalCapacity / 1000).toFixed(0)} GW`);

@@ -3,22 +3,25 @@
  *
  * This script:
  * 1. Fetches CAISO pricing node names from OASIS ATL_PNODE
- * 2. Cross-references with EIA-860 power plant data for coordinates
+ * 2. Cross-references with EIA-860 power plant data from Postgres for coordinates
  * 3. Defines well-known trading hubs, load zones, and SUBLAPs for all 7 ISOs
  * 4. Outputs data/pricing-nodes.json
  *
  * Usage:
  *   cd commongrid
- *   npx tsx scripts/sync-pricing-nodes.ts
+ *   DATABASE_URL=postgres://... npx tsx scripts/sync-pricing-nodes.ts
  *
  * Data sources:
  *   - CAISO OASIS API (free, no key)
- *   - EIA-860 power plant data (already in data/power-plants.json)
+ *   - EIA-860 power plant data in Postgres (synchronized by scripts/sync-power-plants.ts)
  *   - Manually curated hub/zone/SUBLAP coordinates
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { isNull } from "drizzle-orm";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { powerPlants } from "@/lib/db/schema";
 
 // ───── Types ────────────────────────────────────────────────────────────────
 
@@ -57,6 +60,29 @@ function slugify(str: string): string {
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+async function loadPowerPlants(): Promise<PowerPlant[]> {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required — pricing nodes read power-plant coordinates from Postgres");
+  }
+  const db = getPooledDb();
+  const rows = await db
+    .select({
+      id: powerPlants.id,
+      slug: powerPlants.slug,
+      name: powerPlants.name,
+      plantCode: powerPlants.plantCode,
+      state: powerPlants.state,
+      latitude: powerPlants.latitude,
+      longitude: powerPlants.longitude,
+      primaryFuel: powerPlants.primaryFuel,
+      totalCapacityMw: powerPlants.totalCapacityMw,
+      baCode: powerPlants.baCode,
+    })
+    .from(powerPlants)
+    .where(isNull(powerPlants.deletedAt));
+  return rows as PowerPlant[];
 }
 
 function buildSlug(name: string, iso: string, nodeType: string): string {
@@ -1372,9 +1398,7 @@ async function main() {
 
   // ── 1. Load power plant data ────────────────────────────────────────────
   console.log("1. Loading power plant data...");
-  const plantsPath = path.join(process.cwd(), "data", "power-plants.json");
-  const plantsRaw = fs.readFileSync(plantsPath, "utf-8");
-  const plants: PowerPlant[] = JSON.parse(plantsRaw);
+  const plants = await loadPowerPlants();
   console.log(`   Loaded ${plants.length} power plants`);
 
   // ── 2. Collect all curated nodes ────────────────────────────────────────
