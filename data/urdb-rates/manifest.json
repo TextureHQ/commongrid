@@ -1,31 +1,48 @@
 {
   "source": "OpenEI Utility Rate Database (URDB)",
   "generated_by": "sync:urdb-rates",
-  "generated_at": "2026-09-25T01:57:37.874Z",
+  "generated_at": "2026-09-27T07:25:20.237Z",
   "sectors": [
     "Residential",
     "Commercial"
   ],
+  "attribution": {
+    "source": "OpenEI Utility Rate Database (URDB)",
+    "publisher": "OpenEI / U.S. Department of Energy",
+    "sourceUrl": "https://openei.org/wiki/Utility_Rate_Database",
+    "apiDocumentationUrl": "https://apps.openei.org/services/doc/rest/util_rates/?version=8",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "licenseNotice": "Content is available under Creative Commons Zero unless otherwise noted.",
+    "changes": "CommonGrid projects API fields, derives explorer flags, and links unique EIA utility IDs. The complete API record is retained as JSONB.",
+    "disclaimer": "Published schedules, not verified household eligibility or prices. No endorsement implied. Linked utility documents retain their own terms."
+  },
   "fetched_rates": 50710,
-  "kept_rates": 19372,
+  "kept_rates": 19322,
   "skipped": {
     "unapproved": 3710,
     "expired": 27163,
     "license": 5,
-    "unknown_utility": 460
+    "unknown_utility": 510
   },
   "registry_counts": {
-    "created": 19372,
-    "updated": 0,
+    "created": 0,
+    "updated": 19322,
     "unchanged": 0,
-    "fields_written": 585007
+    "fields_written": 96613
+  },
+  "source_url_status": {
+    "checked": 19061,
+    "ok": 3770,
+    "dead": 15291
   },
   "deferrals_count": 0,
   "errors": [],
   "notes": [
     "Rate structures are published via applySync (entityType \"rate_structure\") to the Postgres registry.",
     "V1 scope: approved, currently-effective Residential + Commercial rates for utilities already in the CommonGrid registry.",
-    "URDB is CC0 'unless otherwise noted'; records with an explicit non-CC0 source-side note are skipped and logged.",
+    "URDB API documentation carries a CC0-unless-otherwise-noted notice; heuristic restriction checks are not a license audit. Full records, source links and attribution are retained.",
+    "Utility matches must be unique; unknown/ambiguous utilities are skipped and ambiguous regions remain unlinked. Effective dates are not verification dates.",
     "Re-runs are idempotent (stable rate-<label> ids) and conflict-aware (applySync policy B leaves human-edited fields untouched)."
   ]
 }

@@ -32,6 +32,7 @@ const BUCKETS: BucketSpec[] = [
   { tab: "grid-operators", label: "Grid Operators" },
   { tab: "power-plants", label: "Power Plants" },
   { tab: "programs", label: "Programs" },
+  { tab: "rates", label: "Rates" },
   { tab: "transmission-lines", label: "Transmission Lines" },
   { tab: "ev-charging", label: "EV Charging" },
   { tab: "pricing-nodes", label: "Pricing Nodes" },
@@ -66,7 +67,7 @@ function bucketCount(counts: ReturnType<typeof useEntityCounts>, tab: EntityTab)
     case "substations":
       return counts.substations;
     case "rates":
-      return null;
+      return counts.rates;
   }
 }
 

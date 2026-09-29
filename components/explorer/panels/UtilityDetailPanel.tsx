@@ -12,11 +12,11 @@ import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { useProgramList } from "@/hooks/useProgramList";
 import { useRateList } from "@/hooks/useRateList";
+import { useRegionList } from "@/hooks/useRegionList";
 import { useRto } from "@/hooks/useRto";
 import { useUtility } from "@/hooks/useUtility";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
-import { getRegionById } from "@/lib/data";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -66,9 +66,10 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     [utility, utilities]
   );
 
+  const { regionById } = useRegionList();
   const region = useMemo(
-    () => (utility?.serviceTerritoryId ? getRegionById(utility.serviceTerritoryId) : null),
-    [utility]
+    () => (utility?.serviceTerritoryId ? (regionById.get(utility.serviceTerritoryId) ?? null) : null),
+    [utility, regionById]
   );
 
   const territoryFileKey = useMemo(() => {

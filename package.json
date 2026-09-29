@@ -24,7 +24,6 @@
     "backfill:utility-domains": "tsx scripts/backfill-utility-domains.ts",
     "backfill:utility-domains:db": "tsx scripts/backfill-utility-domains.ts --db",
     "backfill:utility-domains:dry": "tsx scripts/backfill-utility-domains.ts --dry-run",
-    "generate:changelog": "npx tsx scripts/generate-changelog.ts",
     "openapi": "tsx scripts/generate-openapi.ts",
     "openapi:check": "tsx scripts/generate-openapi.ts --check",
     "db:check-journal": "tsx scripts/check-migration-journal.ts",

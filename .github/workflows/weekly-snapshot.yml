@@ -409,12 +409,27 @@ jobs:
           ---
           Generated automatically by CommonGrid. Browse the data at https://commongrid.info"
 
-          gh release create "$TAG" \
-            --title "Weekly Snapshot — ${DATE}" \
-            --notes "$NOTES" \
-            "$SNAPSHOT_DIR"/commongrid-*.sql.gz \
-            "$SNAPSHOT_DIR"/programs.json.gz \
-            "$SNAPSHOT_DIR"/utilities.geojson.gz \
-            "$SNAPSHOT_DIR"/ev-stations.geojson.gz \
-            "$SNAPSHOT_DIR"/power-plants.geojson.gz \
-            "$SNAPSHOT_DIR"/pricing-nodes.geojson.gz
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --title "Weekly Snapshot — ${DATE}" \
+              --notes "$NOTES"
+
+            gh release upload "$TAG" \
+              "$SNAPSHOT_DIR"/commongrid-*.sql.gz \
+              "$SNAPSHOT_DIR"/programs.json.gz \
+              "$SNAPSHOT_DIR"/utilities.geojson.gz \
+              "$SNAPSHOT_DIR"/ev-stations.geojson.gz \
+              "$SNAPSHOT_DIR"/power-plants.geojson.gz \
+              "$SNAPSHOT_DIR"/pricing-nodes.geojson.gz \
+              --clobber
+          else
+            gh release create "$TAG" \
+              --title "Weekly Snapshot — ${DATE}" \
+              --notes "$NOTES" \
+              "$SNAPSHOT_DIR"/commongrid-*.sql.gz \
+              "$SNAPSHOT_DIR"/programs.json.gz \
+              "$SNAPSHOT_DIR"/utilities.geojson.gz \
+              "$SNAPSHOT_DIR"/ev-stations.geojson.gz \
+              "$SNAPSHOT_DIR"/power-plants.geojson.gz \
+              "$SNAPSHOT_DIR"/pricing-nodes.geojson.gz
+          fi
