@@ -15,14 +15,14 @@
  *   • Emit HIFLD legacy-name mismatches to an audit CSV — non-blocking.
  *
  * Usage:
- *   cd commongrid
- *   npx tsx scripts/sync-substations.ts            # full US sync
- *   STATES=VT,NH npx tsx scripts/sync-substations.ts   # subset (debug / smoke test)
+ *   DATABASE_URL=postgres://... npx tsx scripts/sync-substations.ts        # full US sync
+ *   DATABASE_URL=postgres://... STATES=VT,NH npx tsx scripts/sync-substations.ts   # subset
  *
  * Output:
- *   data/substations.json                       — metadata list (list/search)
- *   data/substations.geojson                    — FeatureCollection for tippecanoe
- *   data/substations-hifld-mismatches.csv       — audit of unmatched legacy names
+ *   Upserts directly into the `substations` Postgres table. The committed
+ *   data/substations.json and data/substations.geojson artifacts are no longer
+ *   produced (CG-327).
+ *   data/substations-hifld-mismatches.csv  — audit of unmatched legacy names
  *
  * References:
  *   • EIA dataset: https://atlas.eia.gov/datasets/eia::u-s-electric-substations
@@ -33,6 +33,10 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { Pool } from "@neondatabase/serverless";
+import { sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { substations } from "../lib/db/schema";
 import type {
   SubstationRecord,
   SubstationSource,
@@ -44,16 +48,18 @@ import type {
 // ── Constants / flags ───────────────────────────────────────────────────────
 
 const DATA_DIR = path.join(process.cwd(), "data");
-const OUT_JSON = path.join(DATA_DIR, "substations.json");
-const OUT_GEOJSON = path.join(DATA_DIR, "substations.geojson");
 const OUT_MISMATCH_CSV = path.join(DATA_DIR, "substations-hifld-mismatches.csv");
 
 const OVERPASS_URL = process.env.OVERPASS_URL ?? "https://overpass-api.de/api/interpreter";
 const EIA_SUBSTATIONS_URL = process.env.EIA_SUBSTATIONS_URL ?? null;
 const EIA_BATCH_SIZE = 1000;
+const BATCH_SIZE = 500;
 
 /** Minimum max voltage (kV) to include. Sub-69 kV is distribution-only by convention. */
 const MIN_VOLTAGE_KV = Number(process.env.MIN_VOLTAGE_KV ?? 69);
+
+/** Guards against replacing a healthy dataset with a degraded API response. */
+const MIN_EXPECTED_SUBSTATIONS = 10_000;
 
 /** Optional state filter (comma-separated 2-letter codes). */
 const STATE_FILTER = (process.env.STATES ?? "")
@@ -555,10 +561,46 @@ function writeMismatchCsv(unmatched: string[]): void {
   console.log(`   ✅ ${OUT_MISMATCH_CSV} (${sizeKb} KB, ${unmatched.length.toLocaleString()} rows)`);
 }
 
+// ── Plausibility guard ──────────────────────────────────────────────────────
+
+/**
+ * Guards against replacing a healthy dataset with a degraded API response.
+ * Throws when the incoming count is implausibly small, or when it collapses to
+ * under half of what is already in the substations table.
+ */
+export function assertPlausibleSubstationCount(
+  incoming: number,
+  existingPath: string,
+  readExisting: (p: string) => number | null = () => null
+): void {
+  if (incoming < MIN_EXPECTED_SUBSTATIONS) {
+    throw new Error(
+      `Upstream returned only ${incoming} usable substations, below the ${MIN_EXPECTED_SUBSTATIONS} minimum. ` +
+        "Refusing to overwrite the substations table with a likely-degraded response."
+    );
+  }
+
+  const existing = readExisting(existingPath);
+  if (existing !== null && existing > 0 && incoming < existing / 2) {
+    throw new Error(
+      `Upstream returned ${incoming} substations but ${existing} are already in the substations table — a >50% drop. ` +
+        "Refusing to overwrite; re-run or investigate upstream before committing."
+    );
+  }
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
   console.log("🔌 Syncing US electric substations…");
+
+  // 0. Require DATABASE_URL up front
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required — the substations sync writes directly to Postgres");
+  }
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const db = drizzle(pool);
+
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
   const states = STATE_FILTER.length ? STATE_FILTER : US_STATES;
@@ -628,34 +670,81 @@ async function main() {
   console.log("\n4. HIFLD legacy-name reconciliation");
   const { unmatched } = reconcileHifldLegacy(merged);
 
-  // 6. Sort + write ----------------------------------------------------------
+  // 6. Sort + plausibility guard + upsert to Postgres ------------------------
   merged.sort((a, b) => a.state.localeCompare(b.state) || a.name.localeCompare(b.name));
 
-  console.log("\n5. Writing output…");
-  fs.writeFileSync(OUT_JSON, `${JSON.stringify(merged)}\n`);
-  const jsonSize = (fs.statSync(OUT_JSON).size / 1024 / 1024).toFixed(2);
-  console.log(`   ✅ ${OUT_JSON} (${jsonSize} MB, ${merged.length.toLocaleString()} rows)`);
+  console.log("\n5. Checking plausibility against existing DB count…");
+  const existingCountResult = await db.execute(sql`SELECT COUNT(*) AS count FROM substations WHERE deleted_at IS NULL`);
+  const existingCount = Number(existingCountResult.rows[0].count);
+  console.log(`   Existing substations count: ${existingCount.toLocaleString()}`);
 
-  const features = merged.map((r) => ({
-    type: "Feature" as const,
-    geometry: { type: "Point" as const, coordinates: [r.longitude, r.latitude] },
-    properties: {
+  // Refuse to clobber a good dataset with a degraded response.
+  assertPlausibleSubstationCount(merged.length, "", () => existingCount);
+
+  console.log("\n6. Syncing to Postgres…");
+  let upserted = 0;
+  const batches = [];
+  for (let i = 0; i < merged.length; i += BATCH_SIZE) {
+    batches.push(merged.slice(i, i + BATCH_SIZE));
+  }
+
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    const rows = batch.map((r) => ({
       id: r.id,
       slug: r.slug,
       name: r.name,
-      state: r.state,
       ownerName: r.ownerName,
+      state: r.state,
+      county: r.county,
+      latitude: r.latitude,
+      longitude: r.longitude,
       minVoltageKv: r.minVoltageKv,
       maxVoltageKv: r.maxVoltageKv,
-      voltageBand: r.voltageBand,
       substationType: r.substationType,
       status: r.status,
       source: r.source,
-    },
-  }));
-  fs.writeFileSync(OUT_GEOJSON, JSON.stringify({ type: "FeatureCollection", features }));
-  const geoSize = (fs.statSync(OUT_GEOJSON).size / 1024 / 1024).toFixed(2);
-  console.log(`   ✅ ${OUT_GEOJSON} (${geoSize} MB)`);
+      sourceUrl: r.sourceUrl,
+      eiaId: r.eiaId,
+      osmId: r.osmId,
+      hifldLegacyId: r.hifldLegacyId,
+    }));
+
+    await db
+      .insert(substations)
+      .values(rows)
+      .onConflictDoUpdate({
+        target: substations.id,
+        set: {
+          slug: sql`EXCLUDED.slug`,
+          name: sql`EXCLUDED.name`,
+          ownerName: sql`EXCLUDED.owner_name`,
+          state: sql`EXCLUDED.state`,
+          county: sql`EXCLUDED.county`,
+          latitude: sql`EXCLUDED.latitude`,
+          longitude: sql`EXCLUDED.longitude`,
+          minVoltageKv: sql`EXCLUDED.min_voltage_kv`,
+          maxVoltageKv: sql`EXCLUDED.max_voltage_kv`,
+          substationType: sql`EXCLUDED.substation_type`,
+          status: sql`EXCLUDED.status`,
+          source: sql`EXCLUDED.source`,
+          sourceUrl: sql`EXCLUDED.source_url`,
+          eiaId: sql`EXCLUDED.eia_id`,
+          osmId: sql`EXCLUDED.osm_id`,
+          hifldLegacyId: sql`EXCLUDED.hifld_legacy_id`,
+          updatedAt: sql`NOW()`,
+        },
+      });
+
+    upserted += batch.length;
+    if ((i + 1) % 10 === 0 || i === batches.length - 1) {
+      console.log(`   Processed ${upserted.toLocaleString()} / ${merged.length.toLocaleString()} substations…`);
+    }
+  }
+
+  console.log(`   ✓ Upserted ${upserted.toLocaleString()} substations to Postgres`);
+
+  await pool.end();
 
   writeMismatchCsv(unmatched);
 
@@ -678,8 +767,9 @@ async function main() {
     console.log(`    ${k}: ${v.toLocaleString()}`);
   }
   console.log("\n📈 Top 10 states:");
-  for (const [st, c] of [...byState.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)) {
-    console.log(`    ${st}: ${c.toLocaleString()}`);
+  const topStates = [...byState.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+  for (const [stateCode, count] of topStates) {
+    console.log(`    ${stateCode}: ${count.toLocaleString()}`);
   }
 
   console.log("\n✅ Sync complete.");
