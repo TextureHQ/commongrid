@@ -210,15 +210,43 @@ async function main() {
   console.log(`   Existing transmission_lines count: ${existingCount.toLocaleString()}`);
   assertPlausibleLineCount(allMetadata.length, existingCount);
 
+  // Deduplicate by primary key before upserting. HIFLD occasionally emits
+  // duplicate or blank `ID` values; a single INSERT ... ON CONFLICT (id) DO
+  // UPDATE statement aborts with "ON CONFLICT DO UPDATE command cannot affect
+  // row a second time" if the same conflict target appears twice in one
+  // statement. Keep the last occurrence per id and drop rows with a blank id
+  // (which cannot be a stable primary key). We pair metadata with its geometry
+  // by index first so both stay aligned through the de-dupe.
+  const dedupedById = new Map<string, { meta: TransmissionLine; geom: object | null }>();
+  let blankIdDropped = 0;
+  let duplicateIdDropped = 0;
+  for (let k = 0; k < allMetadata.length; k++) {
+    const meta = allMetadata[k];
+    const id = (meta.id ?? "").trim();
+    if (!id) {
+      blankIdDropped++;
+      continue;
+    }
+    if (dedupedById.has(id)) duplicateIdDropped++;
+    dedupedById.set(id, { meta: { ...meta, id }, geom: allGeometries[k] ?? null });
+  }
+  if (blankIdDropped > 0 || duplicateIdDropped > 0) {
+    console.log(
+      `   De-duped upstream rows: dropped ${blankIdDropped.toLocaleString()} blank-id and ${duplicateIdDropped.toLocaleString()} duplicate-id rows`
+    );
+  }
+  const dedupedRows = Array.from(dedupedById.values());
+
   // Upsert to Postgres, including PostGIS geometry (the single source of truth
   // for tile generation — CG-328). Geometry must go through ST_GeomFromGeoJSON,
   // so we build a parameterized multi-row INSERT rather than drizzle .values().
   console.log("\n🔄 Syncing to Postgres…");
   let upserted = 0;
   let skippedGeom = 0;
-  for (let i = 0; i < allMetadata.length; i += DB_BATCH_SIZE) {
-    const sliceMeta = allMetadata.slice(i, i + DB_BATCH_SIZE);
-    const sliceGeom = allGeometries.slice(i, i + DB_BATCH_SIZE);
+  for (let i = 0; i < dedupedRows.length; i += DB_BATCH_SIZE) {
+    const sliceRows = dedupedRows.slice(i, i + DB_BATCH_SIZE);
+    const sliceMeta = sliceRows.map((r) => r.meta);
+    const sliceGeom = sliceRows.map((r) => r.geom);
 
     // Build VALUES tuples. Each row's geometry is normalized to MultiLineString
     // via ST_Multi(ST_CollectionExtract(ST_MakeValid(...), 2)) — 2 keeps only
@@ -258,8 +286,8 @@ async function main() {
     `);
 
     upserted += sliceMeta.length;
-    if (upserted % (DB_BATCH_SIZE * 10) === 0 || upserted === allMetadata.length) {
-      console.log(`   Processed ${upserted.toLocaleString()} / ${allMetadata.length.toLocaleString()} lines…`);
+    if (upserted % (DB_BATCH_SIZE * 10) === 0 || upserted === dedupedRows.length) {
+      console.log(`   Processed ${upserted.toLocaleString()} / ${dedupedRows.length.toLocaleString()} lines…`);
     }
   }
   console.log(`   ✓ Upserted ${upserted.toLocaleString()} transmission lines to Postgres`);
