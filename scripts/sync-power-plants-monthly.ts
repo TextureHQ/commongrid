@@ -12,13 +12,14 @@
  *   data/eia-860m/<month>_generator<year>.xlsx
  *   data/eia-860m/manifest.json
  *   data/.eia860m-last-sync
- *   data/power-plants.json
+ *   Publishes generator-level updates to Postgres via applySync.
  */
 
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isNull } from "drizzle-orm";
 import * as XLSX from "xlsx";
 import { getPooledDb } from "@/lib/db/client-pooled";
 import { powerPlants } from "@/lib/db/schema";
@@ -33,7 +34,6 @@ const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 const DATA_DIR = path.join(REPO_ROOT, "data");
 const EIA_860M_DIR = path.join(DATA_DIR, "eia-860m");
 const MANIFEST_PATH = path.join(EIA_860M_DIR, "manifest.json");
-const POWER_PLANTS_PATH = path.join(DATA_DIR, "power-plants.json");
 const LAST_SYNC_MARKER_PATH = path.join(DATA_DIR, ".eia860m-last-sync");
 
 export const EIA_860M_FILENAME_REGEX = /(?:archive\/)?(?:xls\/)?([a-z]+_generator\d{4}\.xlsx)/gi;
@@ -676,8 +676,48 @@ function dedupeSlug(
   slugCounts.set(base, slugCount + 1);
 }
 
-function mergePowerPlants(aggregates: Map<string, PlantAggregate>): { stats: MergeStats; merged: PowerPlantRecord[] } {
-  const existing = JSON.parse(fs.readFileSync(POWER_PLANTS_PATH, "utf-8")) as PowerPlantRecord[];
+async function loadExistingPowerPlants(): Promise<PowerPlantRecord[]> {
+  if (!process.env.DATABASE_URL) {
+    throw new Error(
+      "DATABASE_URL is required — the monthly sync reads the existing power-plant base state from Postgres"
+    );
+  }
+  console.log("  Loading existing power plants from Postgres...");
+  const db = getPooledDb();
+  const rows = await db.select().from(powerPlants).where(isNull(powerPlants.deletedAt));
+  return rows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    name: r.name,
+    plantCode: r.plantCode,
+    utilityId: r.utilityId,
+    utilityName: r.utilityName,
+    balancingAuthorityId: r.balancingAuthorityId,
+    baCode: r.baCode,
+    state: r.state,
+    county: r.county,
+    latitude: r.latitude as number,
+    longitude: r.longitude as number,
+    nercRegion: r.nercRegion,
+    sector: r.sector,
+    primaryFuel: r.primaryFuel,
+    fuelCategory: r.fuelCategory,
+    technologies: (r.technologies ?? []) as string[],
+    energySources: (r.energySources ?? []) as string[],
+    totalCapacityMw: r.totalCapacityMw,
+    generatorCount: r.generatorCount,
+    operatingYear: r.operatingYear,
+    gridVoltageKv: r.gridVoltageKv,
+    status: r.status as "operable" | "proposed",
+    proposedCapacityMw: r.proposedCapacityMw,
+    proposedOnlineYear: r.proposedOnlineYear,
+  }));
+}
+
+async function mergePowerPlants(
+  aggregates: Map<string, PlantAggregate>
+): Promise<{ stats: MergeStats; merged: PowerPlantRecord[] }> {
+  const existing = await loadExistingPowerPlants();
   const utilityByEiaId = buildUtilityLookup();
   const baByCode = buildBalancingAuthorityLookup();
   const existingByPlantCode = new Map(existing.map((plant) => [plant.plantCode, plant]));
@@ -764,7 +804,6 @@ function mergePowerPlants(aggregates: Map<string, PlantAggregate>): { stats: Mer
     return capB - capA;
   });
 
-  fs.writeFileSync(POWER_PLANTS_PATH, `${JSON.stringify(merged)}\n`);
   return { stats, merged };
 }
 
@@ -832,14 +871,6 @@ function updateManifest(
  * recently edited untouched, reporting it as a deferral.
  */
 async function publishToDatabase(observed: PowerPlantRecord[], sourceFile: string, asOf: Date): Promise<void> {
-  if (!process.env.DATABASE_URL) {
-    console.warn(
-      "\n⚠️  DATABASE_URL is not set — skipping database publication. " +
-        "JSON and tiles are still produced, but the registry and changelog will NOT be updated."
-    );
-    return;
-  }
-
   console.log("\nPublishing generator-level updates to the registry (Postgres)...");
 
   // Which plant ids already exist decides create vs update payload shape.
@@ -907,20 +938,15 @@ async function main() {
   const retiredCount = rows.filter((row) => row.kind === "retired").length;
   const canceledOrPostponedCount = rows.filter((row) => row.kind === "canceled_or_postponed").length;
 
-  console.log("\nMerging operating/planned generators into data/power-plants.json...");
+  console.log("\nMerging operating/planned generators into the Postgres power-plant base state...");
   const aggregates = aggregateGenerators(rows);
-  const { stats, merged } = mergePowerPlants(aggregates);
+  const { stats, merged } = await mergePowerPlants(aggregates);
   stats.retiredGenerators = retiredCount;
   stats.canceledOrPostponedGenerators = canceledOrPostponedCount;
 
-  // Publish generator-level facts to Postgres — the source of truth. The JSON
-  // above remains the input to the tile build; this step is what makes a
-  // Planned → Operable flip show up in the changelog and in the plant's own
-  // version history. Gated on DATABASE_URL so a local/CI run without a database
-  // still produces JSON + tiles and simply skips publication with a warning
-  // (rather than failing the whole sync).
-  // The merged tile dataset also contains historical plants absent from this
-  // workbook. Do not reassert those records as observations of the new month.
+  // Publish generator-level facts to Postgres — the source of truth. The merged
+  // tile dataset also contains historical plants absent from this workbook. Do
+  // not reassert those records as observations of the new month.
   const observed = merged.filter((plant) => aggregates.has(plant.plantCode));
   // EIA reports a month, not a day. Normalize that period to its first day UTC.
   const asOf = new Date(Date.UTC(latest.year, latest.monthNumber - 1, 1));

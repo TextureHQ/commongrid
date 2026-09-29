@@ -28,7 +28,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npx tsx scripts/sync-power-plants.ts
+      - name: Sync EIA-860 → Postgres
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx tsx scripts/sync-power-plants.ts
       - name: Install tippecanoe
         run: |
           sudo apt-get update -qq
@@ -64,12 +67,14 @@ jobs:
           PR_TITLE: "data: update power plants (EIA-860 annual)"
           PR_BODY: |
             Automated annual data sync. The workflow commits generated data on a dedicated branch and opens or updates a pull request so branch protection can review and merge it safely.
+          PR_BODY: |
+            Automated annual data sync. The workflow publishes EIA-860 power-plant data to Postgres via applySync and rebuilds tile archives. Generated artifacts land on a dedicated branch and open or update a pull request so branch protection can review and merge them safely.
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
-          git add data/power-plants.json public/tiles/*.pmtiles
+          git add public/tiles/*.pmtiles
           if git diff --staged --quiet; then
             echo "No changes to commit."
             exit 0
