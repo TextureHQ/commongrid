@@ -12,8 +12,9 @@
  */
 
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import * as path from "node:path";
+import { Pool } from "@neondatabase/serverless";
+import { sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/neon-serverless";
 import { flushTelemetry, reportError, withCronMonitor } from "@/lib/observability";
 
 interface SyncResult {
@@ -21,8 +22,10 @@ interface SyncResult {
   timestamp: string;
   output?: string;
   error?: string;
-  statsJson?: Record<string, unknown>;
-  statsGeojson?: Record<string, unknown>;
+  stats?: {
+    count: number;
+    lastUpdated: string;
+  };
 }
 
 // Vercel Pro plan caps serverless function maxDuration at 800s.
@@ -59,46 +62,21 @@ async function runSyncSubstations(request: Request): Promise<Response> {
       return Response.json({ status: "error", error: "Unauthorized" }, { status: 401 });
     }
 
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL is not configured");
+    }
+
     // Run the sync script via tsx
     const syncOutput = await runSyncScript();
     result.output = syncOutput;
 
-    // Load the resulting stats (if available)
-    const dataDir = path.join(process.cwd(), "data");
-    const statsJsonPath = path.join(dataDir, "substations.json");
-    const statsGeojsonPath = path.join(dataDir, "substations.geojson");
-
-    if (existsSync(statsJsonPath)) {
-      try {
-        const jsonData = JSON.parse(readFileSync(statsJsonPath, "utf-8"));
-        result.statsJson = {
-          count: Array.isArray(jsonData) ? jsonData.length : Object.keys(jsonData).length,
-          lastUpdated: timestamp,
-        };
-      } catch (err) {
-        reportError(err, {
-          scope: "cron.sync-substations",
-          level: "warning",
-          extra: { phase: "parse-substations-json", path: statsJsonPath, timestamp },
-        });
-      }
-    }
-
-    if (existsSync(statsGeojsonPath)) {
-      try {
-        const geojsonData = JSON.parse(readFileSync(statsGeojsonPath, "utf-8"));
-        result.statsGeojson = {
-          features: geojsonData.features?.length || 0,
-          lastUpdated: timestamp,
-        };
-      } catch (err) {
-        reportError(err, {
-          scope: "cron.sync-substations",
-          level: "warning",
-          extra: { phase: "parse-substations-geojson", path: statsGeojsonPath, timestamp },
-        });
-      }
-    }
+    // Load the resulting stats from the DB (the committed JSON artifacts were
+    // removed in CG-327).
+    const dbStats = await loadDbStats();
+    result.stats = {
+      count: dbStats.count,
+      lastUpdated: timestamp,
+    };
 
     console.log(`[${timestamp}] Substations sync completed successfully`);
     return Response.json(result);
@@ -109,6 +87,17 @@ async function runSyncSubstations(request: Request): Promise<Response> {
     reportError(err, { scope: "cron.sync-substations", extra: { phase: "run-sync", timestamp } });
     await flushTelemetry();
     return Response.json(result, { status: 503 });
+  }
+}
+
+async function loadDbStats(): Promise<{ count: number }> {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const db = drizzle(pool);
+  try {
+    const result = await db.execute(sql`SELECT COUNT(*) AS count FROM substations WHERE deleted_at IS NULL`);
+    return { count: Number(result.rows[0].count) };
+  } finally {
+    await pool.end();
   }
 }
 
@@ -127,6 +116,12 @@ function runSyncScript(): Promise<string> {
       cwd: process.cwd(),
       stdio: ["ignore", "pipe", "pipe"],
       timeout: maxTime,
+      env: {
+        ...process.env,
+        // Required: the sync now writes directly to Postgres and no longer
+        // produces committed JSON artifacts (CG-327).
+        DATABASE_URL: process.env.DATABASE_URL ?? "",
+      },
     });
 
     let stdout = "";
