@@ -1,12 +1,12 @@
 "use client";
 
-import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { useRto } from "@/hooks/useRto";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
+import { fetchRtoGeometry } from "@/lib/explorer/geometry";
 import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
@@ -34,17 +34,15 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
   const { rto } = useRto(slug);
 
   useEffect(() => {
-    if (!rto?.shortName) {
+    if (!rto?.slug) {
       setHighlight(null);
       return;
     }
-    const fileKey = `iso-${rto.shortName.toLowerCase()}`;
-    fetch(`/data/territories/${fileKey}.json`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setHighlight(data as FeatureCollection | null))
+    fetchRtoGeometry(rto.slug)
+      .then((data) => setHighlight(data))
       .catch(() => setHighlight(null));
     return () => setHighlight(null);
-  }, [rto?.shortName, setHighlight]);
+  }, [rto?.slug, setHighlight]);
 
   const { utilities } = useUtilityList({ rto: rto?.slug, limit: 200 });
 

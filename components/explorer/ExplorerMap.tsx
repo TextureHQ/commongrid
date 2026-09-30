@@ -16,6 +16,7 @@ import {
   utilityColor,
   voltageColor,
 } from "@/lib/categorical-colors";
+import { fetchBalancingAuthorityGeometry, fetchIsoGeometry, fetchTerritoryGeometry } from "@/lib/explorer/geometry";
 import type { MapRegion } from "@/lib/explorer/region-navigation";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
 import { resolveColorMapping, resolveCSSColor } from "@/lib/resolve-css-colors";
@@ -170,7 +171,13 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
           const colorKey = `iso-${iso.shortName.toLowerCase()}`;
           colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
           colorIdx++;
-          return { key: `iso-${iso.shortName.toLowerCase()}`, name: iso.shortName, type: "ISO", colorKey };
+          return {
+            key: colorKey,
+            slug: iso.slug,
+            name: iso.shortName,
+            type: "ISO" as const,
+            colorKey,
+          };
         });
 
       const baFiles = balancingAuthorities
@@ -179,7 +186,13 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
           const colorKey = `ba-${ba.slug}`;
           colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
           colorIdx++;
-          return { key: `ba-${ba.slug}`, name: ba.shortName, type: "BA", colorKey };
+          return {
+            key: colorKey,
+            slug: ba.slug,
+            name: ba.shortName,
+            type: "BA" as const,
+            colorKey,
+          };
         });
 
       const allFiles = [...isoFiles, ...baFiles];
@@ -187,9 +200,11 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
 
       const results = await Promise.allSettled(
         allFiles.map(async (entry) => {
-          const res = await fetch(`/data/territories/${entry.key}.json`);
-          if (!res.ok) return null;
-          const geojson = (await res.json()) as FeatureCollection;
+          const geojson =
+            entry.type === "ISO"
+              ? await fetchIsoGeometry(entry.slug)
+              : await fetchBalancingAuthorityGeometry(entry.slug);
+          if (!geojson) return null;
           return { geojson, ...entry };
         })
       );
@@ -255,67 +270,60 @@ function useProgramBoundaries(
       let colorIdx = 0;
       const colorMapping: Record<string, { hex: string }> = {};
 
-      // Map each program to its color and territory file keys
+      // Map each program to its color and territory slugs
       const programEntries: {
         programSlug: string;
         programName: string;
         programStatus: string;
         colorKey: string;
-        fileKeys: string[];
+        territorySlugs: string[];
       }[] = [];
-      const uniqueFileKeys = new Set<string>();
+      const uniqueTerritorySlugs = new Set<string>();
 
       for (const prog of programs) {
         const colorKey = `prog-${prog.slug}`;
         colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
         colorIdx++;
 
-        const fileKeys: string[] = [];
+        const territorySlugs: string[] = [];
         for (const regionId of prog.regions) {
           const region = regionById.get(regionId);
-          if (!region) continue;
-
-          const fileKey =
-            region.type === "CCA_TERRITORY" || region.type === "ISO" || region.type === "CUSTOM"
-              ? region.slug
-              : region.eiaId;
-          if (!fileKey) continue;
-          fileKeys.push(fileKey);
-          uniqueFileKeys.add(fileKey);
+          if (!region?.slug) continue;
+          if (uniqueTerritorySlugs.has(region.slug)) continue;
+          territorySlugs.push(region.slug);
+          uniqueTerritorySlugs.add(region.slug);
         }
 
-        if (fileKeys.length > 0) {
+        if (territorySlugs.length > 0) {
           programEntries.push({
             programSlug: prog.slug,
             programName: prog.name,
             programStatus: prog.status,
             colorKey,
-            fileKeys,
+            territorySlugs,
           });
         }
       }
 
-      // Fetch each unique territory file once
+      // Fetch each unique territory once
       const territoryCache = new Map<string, FeatureCollection>();
       const results = await Promise.allSettled(
-        [...uniqueFileKeys].map(async (key) => {
-          const res = await fetch(`/data/territories/${key}.json`);
-          if (!res.ok) return null;
-          const geojson = (await res.json()) as FeatureCollection;
-          return { key, geojson };
+        [...uniqueTerritorySlugs].map(async (slug) => {
+          const geojson = await fetchTerritoryGeometry(slug);
+          return { slug, geojson };
         })
       );
 
       for (const result of results) {
-        if (result.status !== "fulfilled" || !result.value) continue;
-        territoryCache.set(result.value.key, result.value.geojson);
+        if (result.status !== "fulfilled" || !result.value?.geojson) continue;
+        territoryCache.set(result.value.slug, result.value.geojson);
       }
 
       // Stamp features for every program (same territory can appear under multiple programs)
       const allFeatures: Feature[] = [];
       for (const entry of programEntries) {
-        for (const fileKey of entry.fileKeys) {
-          const geojson = territoryCache.get(fileKey);
+        for (const territorySlug of entry.territorySlugs) {
+          const geojson = territoryCache.get(territorySlug);
           if (!geojson) continue;
           for (const feature of geojson.features) {
             allFeatures.push({
