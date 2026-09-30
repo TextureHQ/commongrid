@@ -1,7 +1,6 @@
 "use client";
 
 import { SignInButton } from "@clerk/nextjs";
-import type { FeatureCollection } from "geojson";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -17,6 +16,7 @@ import { useRto } from "@/hooks/useRto";
 import { useUtility } from "@/hooks/useUtility";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
+import { fetchTerritoryGeometry } from "@/lib/explorer/geometry";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -72,13 +72,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
     [utility, regionById]
   );
 
-  const territoryFileKey = useMemo(() => {
-    if (!region) return null;
-    if (region.type === "CCA_TERRITORY" || region.type === "ISO" || region.type === "CUSTOM") {
-      return region.slug;
-    }
-    return region.eiaId;
-  }, [region]);
+  const territoryFileKey = useMemo(() => region?.slug ?? null, [region]);
 
   // Load territory GeoJSON and send to map for highlighting
   useEffect(() => {
@@ -86,11 +80,8 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
       setHighlight(null);
       return;
     }
-    fetch(`/data/territories/${territoryFileKey}.json`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        setHighlight(data as FeatureCollection | null);
-      })
+    fetchTerritoryGeometry(territoryFileKey)
+      .then((data) => setHighlight(data))
       .catch(() => setHighlight(null));
 
     return () => setHighlight(null);
