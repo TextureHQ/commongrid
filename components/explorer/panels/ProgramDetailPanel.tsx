@@ -1,6 +1,6 @@
 "use client";
 
-import type { Feature, FeatureCollection } from "geojson";
+import type { Feature } from "geojson";
 import { useEffect, useMemo, useState } from "react";
 import { DeleteEntityDialog } from "@/components/contributions/DeleteEntityDialog";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
@@ -9,6 +9,7 @@ import { useProgram } from "@/hooks/useProgram";
 import { useRegionList } from "@/hooks/useRegionList";
 import { useUtilityNames } from "@/hooks/useUtilityNames";
 import { entityKindColor } from "@/lib/categorical-colors";
+import { fetchTerritoryGeometry } from "@/lib/explorer/geometry";
 import { safeHostname } from "@/lib/geo";
 import {
   administratorOrganizations,
@@ -90,27 +91,22 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
 
   const { regionById } = useRegionList();
 
-  // Resolve territory file keys for all program regions
-  const territoryFileKeys = useMemo(() => {
+  // Resolve territory slugs for all program regions
+  const territorySlugs = useMemo(() => {
     if (!program) return [];
-    const keys: string[] = [];
+    const slugs: string[] = [];
     const seen = new Set<string>();
     for (const regionId of program.regions) {
       const region = regionById.get(regionId);
-      if (!region) continue;
-      const key =
-        region.type === "CCA_TERRITORY" || region.type === "ISO" || region.type === "CUSTOM"
-          ? region.slug
-          : region.eiaId;
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      keys.push(key);
+      if (!region?.slug || seen.has(region.slug)) continue;
+      seen.add(region.slug);
+      slugs.push(region.slug);
     }
-    return keys;
+    return slugs;
   }, [program, regionById]);
 
   useEffect(() => {
-    if (territoryFileKeys.length === 0) {
+    if (territorySlugs.length === 0) {
       setHighlight(null);
       return;
     }
@@ -118,13 +114,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
     let cancelled = false;
 
     async function loadAll() {
-      const results = await Promise.allSettled(
-        territoryFileKeys.map(async (key) => {
-          const res = await fetch(`/data/territories/${key}.json`);
-          if (!res.ok) return null;
-          return (await res.json()) as FeatureCollection;
-        })
-      );
+      const results = await Promise.allSettled(territorySlugs.map((slug) => fetchTerritoryGeometry(slug)));
 
       if (cancelled) return;
 
@@ -146,7 +136,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
       cancelled = true;
       setHighlight(null);
     };
-  }, [territoryFileKeys, setHighlight]);
+  }, [territorySlugs, setHighlight]);
 
   if (!program) {
     return (
