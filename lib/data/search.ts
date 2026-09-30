@@ -29,10 +29,9 @@
  */
 
 import { sql } from "drizzle-orm";
-
-import { getDb } from "@/lib/db/client";
 import { loadRateStructures } from "@/lib/data/rate-structures";
 import { loadSubstations } from "@/lib/data/substations-api";
+import { getDb } from "@/lib/db/client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -241,7 +240,8 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     matchField: "name",
   },
   territory: {
-    table: "(SELECT territories.id, territories.deleted_at, regions.slug AS slug, regions.name AS name, regions.state AS state FROM territories INNER JOIN regions ON territories.region_id = regions.id) AS territory_search",
+    table:
+      "(SELECT territories.id, territories.deleted_at, regions.slug AS slug, regions.name AS name, regions.state AS state FROM territories INNER JOIN regions ON territories.region_id = regions.id) AS territory_search",
     slugColumn: "slug",
     nameColumn: "name",
     searchColumns: ["name", "slug", "state"],
