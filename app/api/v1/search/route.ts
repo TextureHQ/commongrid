@@ -10,9 +10,9 @@
  *   types   Comma-separated entity type filter
  *           (e.g. "utilities,power-plants"). Defaults to all types.
  *
- * Data is sourced from static JSON files with in-memory search.
- * JSON mode targets <500 ms (data loaded lazily, cached in-process).
- * DB mode stubs return empty results until pg_trgm/tsvector is implemented.
+ * Data is sourced from the data layer and grouped by public entity type.
+ * Some types are direct Postgres queries while others reuse the dedicated
+ * list loaders so the search surface matches the public list endpoints.
  */
 
 import { z } from "zod";
@@ -46,6 +46,10 @@ const ENTITY_TYPE_TO_KEY: Record<EntityType, string> = {
   iso: "isos",
   rto: "rtos",
   "balancing-authority": "balancingAuthorities",
+  rate: "rates",
+  substation: "substations",
+  region: "regions",
+  territory: "territories",
 };
 
 // ---------------------------------------------------------------------------
