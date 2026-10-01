@@ -5,7 +5,7 @@
  * 1. Fetches CAISO pricing node names from OASIS ATL_PNODE
  * 2. Cross-references with EIA-860 power plant data from Postgres for coordinates
  * 3. Defines well-known trading hubs, load zones, and SUBLAPs for all 7 ISOs
- * 4. Outputs data/pricing-nodes.json
+ * 4. Publishes pricing nodes to Postgres via applySync (source of truth).
  *
  * Usage:
  *   cd commongrid
@@ -21,7 +21,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { isNull } from "drizzle-orm";
 import { getPooledDb } from "@/lib/db/client-pooled";
-import { powerPlants } from "@/lib/db/schema";
+import { powerPlants, pricingNodes } from "@/lib/db/schema";
+import { applySync } from "@/lib/sync/apply-sync";
+import { PRICING_NODE_ENTITY_TYPE, toSyncRecords } from "@/lib/sync/pricing-nodes";
 
 // ───── Types ────────────────────────────────────────────────────────────────
 
@@ -1502,13 +1504,50 @@ async function main() {
     console.log(`     ${type}: ${count}`);
   }
 
-  // ── 6. Write output ───────────────────────────────────────────────────
-  const outPath = path.join(process.cwd(), "data", "pricing-nodes.json");
-  fs.writeFileSync(outPath, JSON.stringify(finalNodes, null, 2));
-  console.log(`\n✅ Wrote ${finalNodes.length} pricing nodes → ${outPath}`);
+  // ── 6. Publish to Postgres ───────────────────────────────────────────
+  console.log("\n6. Publishing to Postgres...");
+
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required — pricing nodes publish directly to Postgres");
+  }
+
+  const db = getPooledDb();
+  const existingRows = await db.select({ id: pricingNodes.id }).from(pricingNodes);
+  const existingIds = new Set(existingRows.map((row) => row.id));
+
+  const asOf = new Date();
+  const records = toSyncRecords(finalNodes, existingIds, asOf);
+  const report = await applySync(records, {
+    entityType: PRICING_NODE_ENTITY_TYPE,
+    initiatedBy: "sync:pricing-nodes",
+    batchTitle: "Pricing nodes sync",
+    batchDescription: "Wholesale electricity pricing nodes across all 7 ISOs/RTOs",
+  });
+
+  console.log("  Registry publication complete:");
+  console.log(`    Batch id: ${report.batchId}`);
+  console.log(`    Created: ${report.created.toLocaleString()}`);
+  console.log(`    Updated: ${report.updated.toLocaleString()}`);
+  console.log(`    Unchanged: ${report.unchanged.toLocaleString()}`);
+  console.log(`    Fields written: ${report.fieldsWritten.toLocaleString()}`);
+
+  if (report.deferrals.length > 0) {
+    console.log(
+      `    ⚠️  Deferred ${report.deferrals.length.toLocaleString()} field(s) that a human last edited (policy B — not overwritten):`
+    );
+    const sample = report.deferrals.slice(0, 20);
+    for (const d of sample) {
+      console.log(
+        `      - ${d.entityId} field '${d.field}': kept ${JSON.stringify(d.keptValue)}, sync wanted ${JSON.stringify(d.skippedValue)}`
+      );
+    }
+    if (report.deferrals.length > sample.length) {
+      console.log(`      … and ${(report.deferrals.length - sample.length).toLocaleString()} more`);
+    }
+  }
 
   // ── 7. Update homepage count ──────────────────────────────────────────
-  // The homepage uses a hardcoded count to avoid importing large JSON
+  // The homepage uses a hardcoded count to avoid importing the full dataset.
   const homepagePath = path.join(process.cwd(), "app", "(shell)", "page.tsx");
   if (fs.existsSync(homepagePath)) {
     let homepage = fs.readFileSync(homepagePath, "utf-8");
@@ -1518,9 +1557,11 @@ async function main() {
     if (pattern.test(homepage)) {
       homepage = homepage.replace(pattern, replacement);
       fs.writeFileSync(homepagePath, homepage);
-      console.log(`   Updated homepage count → ${finalNodes.length}`);
+      console.log(`\n   Updated homepage count → ${finalNodes.length}`);
     }
   }
+
+  console.log(`\n✅ Published ${finalNodes.length} pricing nodes via applySync`);
 }
 
 main().catch((err) => {
