@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -97,5 +98,47 @@ describe("repository logo inventory", () => {
     const root = await fixture();
     await writeFile(path.join(root, "data/utilities.json"), '[{"id":"a","slug":"a","logo":42}]');
     await expect(inventoryLogos(root)).rejects.toThrow();
+  });
+  it("includes nested files and remains deterministic when dataset order changes", async () => {
+    const root = await fixture();
+    await mkdir(path.join(root, "public/logos/nested"));
+    await writeFile(path.join(root, "public/logos/nested/a.png"), "nested");
+    await records(root, "utilities", ["/logos/nested/a.png", null]);
+    const first = await inventoryLogos(root);
+    const filename = path.join(root, "data/utilities.json");
+    const rows = JSON.parse(await readFile(filename, "utf8"));
+    await writeFile(filename, JSON.stringify(rows.reverse()));
+    const second = await inventoryLogos(root);
+    expect(second.references).toEqual(first.references);
+    expect(second.assets).toEqual(first.assets);
+    expect(second.inputs).not.toEqual(first.inputs); // Exact input bytes are tracked.
+    expect(second.summary.localReferences).toBe(1);
+  });
+
+  it("rejects duplicate IDs and symlinked dataset files", async () => {
+    const root = await fixture();
+    const filename = path.join(root, "data/utilities.json");
+    const row = { id: "duplicate", slug: "utility", logo: null };
+    await writeFile(filename, JSON.stringify([row, row]));
+    await expect(inventoryLogos(root)).rejects.toThrow("Duplicate ID");
+    await rm(filename);
+    await symlink(path.join(root, "data/isos.json"), filename);
+    await expect(inventoryLogos(root)).rejects.toThrow("Expected a regular file");
+  });
+
+  it("rejects symlinked input directories", async () => {
+    const root = await fixture();
+    await rm(path.join(root, "public/logos"), { recursive: true });
+    await symlink(path.join(root, "data"), path.join(root, "public/logos"));
+    await expect(inventoryLogos(root)).rejects.toThrow("Expected a directory");
+  });
+  it("rejects CLI action flags without emitting a manifest", () => {
+    const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/inventory-logos.ts", "--apply"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("read-only; JSON to stdout; no flags");
   });
 });
