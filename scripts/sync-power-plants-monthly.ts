@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { isNull } from "drizzle-orm";
 import * as XLSX from "xlsx";
 import { getPooledDb } from "@/lib/db/client-pooled";
-import { powerPlants } from "@/lib/db/schema";
+import { balancingAuthorities, powerPlants, utilities } from "@/lib/db/schema";
 import { applySync } from "@/lib/sync/apply-sync";
 import { POWER_PLANT_ENTITY_TYPE, toSyncRecords } from "@/lib/sync/power-plants-860m";
 import { slugify } from "./lib";
@@ -247,16 +247,6 @@ interface PowerPlantRecord {
   status: "operable" | "proposed";
   proposedCapacityMw: number | null;
   proposedOnlineYear: number | null;
-}
-
-interface UtilityRecord {
-  id: string;
-  eiaId: string | number | null;
-}
-
-interface BalancingAuthorityRecord {
-  id: string;
-  eiaCode: string | null;
 }
 
 interface MergeStats {
@@ -596,21 +586,40 @@ export function aggregateGenerators(rows: GeneratorRow[]): Map<string, PlantAggr
   return aggregates;
 }
 
-function buildUtilityLookup(): Map<string, string> {
-  const utilities = JSON.parse(fs.readFileSync(path.join(DATA_DIR, "utilities.json"), "utf-8")) as UtilityRecord[];
+/**
+ * Build an EIA-utility-id → utility-id lookup from Postgres.
+ *
+ * Previously read the committed data/utilities.json. Postgres is now the
+ * source of truth for utilities (CG-329), so the monthly sync reads the same
+ * rows the app serves rather than a static artifact (CG-332).
+ */
+async function buildUtilityLookup(): Promise<Map<string, string>> {
+  const db = getPooledDb();
+  const rows = await db
+    .select({ id: utilities.id, eiaId: utilities.eiaId })
+    .from(utilities)
+    .where(isNull(utilities.deletedAt));
   const byEiaId = new Map<string, string>();
-  for (const utility of utilities) {
+  for (const utility of rows) {
     if (utility.eiaId !== null && utility.eiaId !== undefined) byEiaId.set(String(utility.eiaId), utility.id);
   }
   return byEiaId;
 }
 
-function buildBalancingAuthorityLookup(): Map<string, string> {
-  const bas = JSON.parse(
-    fs.readFileSync(path.join(DATA_DIR, "balancing-authorities.json"), "utf-8")
-  ) as BalancingAuthorityRecord[];
+/**
+ * Build an EIA-BA-code → balancing-authority-id lookup from Postgres.
+ *
+ * Previously read the committed data/balancing-authorities.json. Postgres is
+ * now the source of truth, so this reads the live rows (CG-332).
+ */
+async function buildBalancingAuthorityLookup(): Promise<Map<string, string>> {
+  const db = getPooledDb();
+  const rows = await db
+    .select({ id: balancingAuthorities.id, eiaCode: balancingAuthorities.eiaCode })
+    .from(balancingAuthorities)
+    .where(isNull(balancingAuthorities.deletedAt));
   const byCode = new Map<string, string>();
-  for (const ba of bas) {
+  for (const ba of rows) {
     if (ba.eiaCode) byCode.set(ba.eiaCode, ba.id);
   }
   return byCode;
@@ -718,8 +727,8 @@ async function mergePowerPlants(
   aggregates: Map<string, PlantAggregate>
 ): Promise<{ stats: MergeStats; merged: PowerPlantRecord[] }> {
   const existing = await loadExistingPowerPlants();
-  const utilityByEiaId = buildUtilityLookup();
-  const baByCode = buildBalancingAuthorityLookup();
+  const utilityByEiaId = await buildUtilityLookup();
+  const baByCode = await buildBalancingAuthorityLookup();
   const existingByPlantCode = new Map(existing.map((plant) => [plant.plantCode, plant]));
   const existingSlugByPlantCode = new Map(existing.map((plant) => [plant.plantCode, plant.slug]));
   const mergedByPlantCode = new Map(existing.map((plant) => [plant.plantCode, plant]));
