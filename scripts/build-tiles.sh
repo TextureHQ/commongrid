@@ -101,11 +101,12 @@ fi
 
 echo ""
 echo "=== Step 9: Prepare pricing nodes GeoJSON ==="
-if [ -f "$ROOT_DIR/data/pricing-nodes.json" ]; then
-  node "$SCRIPT_DIR/prepare-pricing-nodes-geojson.mjs"
-else
-  echo "⚠️  No pricing-nodes.json found — skipping pricing node tile generation."
-fi
+# Pricing-node GeoJSON is now generated from Postgres (prepare-pricing-nodes-geojson.mjs),
+# gated on DATABASE_URL. When the credential is absent the prepare step exits 0
+# without writing the file, so skip tile generation for this layer rather than
+# failing the whole build and discarding the other layers (same contract as
+# power-plants/transmission/EV/substations — CIR-1271).
+node "$SCRIPT_DIR/prepare-pricing-nodes-geojson.mjs"
 
 echo ""
 echo "=== Step 10: Generate pricing node tiles with tippecanoe ==="
