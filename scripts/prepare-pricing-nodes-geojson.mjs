@@ -41,7 +41,9 @@ async function main() {
       iso,
       node_type,
       latitude,
-      longitude
+      longitude,
+      zone,
+      state
     FROM public.pricing_nodes
     WHERE deleted_at IS NULL
       AND latitude IS NOT NULL
@@ -57,6 +59,8 @@ async function main() {
         name: row.name,
         iso: row.iso,
         nodeType: row.node_type,
+        zone: row.zone ?? "",
+        state: row.state ?? "",
       },
       geometry: {
         type: "Point",
