@@ -40,11 +40,11 @@ for (const width of [1440, 390]) {
     await page.getByText(station.stationName, { exact: true }).click();
     await expect(page).toHaveURL(/\/explore\/ev-charging\/x-gizmo-hayward-ca/);
     await expect(page.locator(".cg-explore-detail-name")).toHaveText(station.stationName);
-    await expect(page.locator(".cg-explore-map")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Explore map" })).toBeVisible();
     await expect(page.getByText("1 Test Street, Hayward, CA 94541", { exact: true })).toBeVisible();
 
     await page.goto(`/explore/ev-charging/${station.slug}`);
     await expect(page.locator(".cg-explore-detail-name")).toHaveText(station.stationName);
-    await expect(page.locator(".cg-explore-map")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Explore map" })).toBeVisible();
   });
 }

@@ -1145,17 +1145,20 @@ export function ExplorerMap({
 
   if (!hasMapboxToken) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-background-surface">
+      <section
+        aria-label="Explore map"
+        className="h-full w-full flex items-center justify-center bg-background-surface"
+      >
         <div className="text-center px-6">
           <div className="text-lg font-semibold text-text-heading mb-2">Map Unavailable</div>
           <p className="text-sm text-text-muted">Set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to enable the map.</p>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="h-full w-full relative">
+    <section aria-label="Explore map" className="h-full w-full relative">
       <InteractiveMap
         // biome-ignore lint/suspicious/noExplicitAny: InteractiveMap ref type is opaque from @texturehq/edges
         ref={mapRef as React.Ref<any>}
@@ -1180,6 +1183,6 @@ export function ExplorerMap({
         ]}
         layers={layers}
       />
-    </div>
+    </section>
   );
 }
