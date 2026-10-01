@@ -5,6 +5,7 @@ import { useIsoList } from "@/hooks/useIsoList";
 import { useRtoList } from "@/hooks/useRtoList";
 import { type EntityTab, useExplorer } from "./ExplorerContext";
 import { BADetailPanel } from "./panels/BADetailPanel";
+import { EVChargingDetailPanel } from "./panels/EVChargingDetailPanel";
 import { EVChargingListPanel } from "./panels/EVChargingListPanel";
 import { GridOperatorListPanel } from "./panels/GridOperatorListPanel";
 import { IsoDetailPanel } from "./panels/IsoDetailPanel";
@@ -55,6 +56,8 @@ export function ExplorerPanel({ listSource, forceTable }: ExplorerPanelProps = {
         return <GridOperatorDetailRouter slug={state.slug} />;
       case "programs":
         return <ProgramDetailPanel slug={state.slug} />;
+      case "ev-charging":
+        return <EVChargingDetailPanel slug={state.slug} />;
       case "power-plants":
         return <PowerPlantDetailPanel slug={state.slug} />;
       case "rates":

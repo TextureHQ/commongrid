@@ -589,8 +589,8 @@ export function ExplorerMap({
     };
   }, [programBoundaryData, state.type, state.q, allPrograms]);
 
-  // FlyTo when highlight GeoJSON changes (entity selected), reset on back
-  useEffect(() => {
+  // Reuse on load: a cached station may resolve before the map is ready.
+  const focusSelection = useCallback(() => {
     const map = mapRef.current?.getMap?.();
     if (!map) return;
 
@@ -599,7 +599,7 @@ export function ExplorerMap({
       if (viewState) {
         map.flyTo({
           center: [viewState.longitude, viewState.latitude],
-          zoom: viewState.zoom,
+          zoom: state.detailKind === "ev-charging" ? 16 : viewState.zoom,
           duration: 1200,
         });
       }
@@ -611,7 +611,9 @@ export function ExplorerMap({
         duration: 1200,
       });
     }
-  }, [state.highlightGeoJSON, state.segment, state.q]);
+  }, [state.highlightGeoJSON, state.detailKind, state.segment, state.q]);
+
+  useEffect(focusSelection, [focusSelection]);
 
   // Fit map bounds when filters change (utility territories)
   const hasActiveFilter =
@@ -988,7 +990,7 @@ export function ExplorerMap({
         events: {
           onClick: (feature: LayerFeature) => {
             const slug = feature.properties.slug;
-            if (slug) router.push(`/ev-charging/${slug}`);
+            if (slug) navigateToDetail("ev-station", slug);
           },
         },
       })
@@ -1101,8 +1103,9 @@ export function ExplorerMap({
         layer.geojson({
           id: "highlight",
           data: state.highlightGeoJSON,
-          renderAs: "fill",
+          renderAs: state.detailKind === "ev-charging" ? "circle" : "fill",
           style: {
+            radius: 10,
             color: { hex: resolvedHighlightColor },
             fillOpacity: 0.35,
             borderWidth: 2.5,
@@ -1118,6 +1121,7 @@ export function ExplorerMap({
     navigateToDetail,
     router,
     state.highlightGeoJSON,
+    state.detailKind,
     isGridOperatorView,
     isProgramView,
     filteredGridBoundaryData,
@@ -1158,6 +1162,7 @@ export function ExplorerMap({
         // biome-ignore lint/style/noNonNullAssertion: effectiveToken is guaranteed non-null when map renders (checked in parent)
         mapboxAccessToken={effectiveToken!}
         initialViewState={US_CENTER}
+        onLoad={focusSelection}
         mapType={mapType}
         controls={[
           { type: "navigation", position: "bottom-right", showResetZoom: true },

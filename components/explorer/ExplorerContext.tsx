@@ -5,7 +5,7 @@ import { useExploreRouteStack } from "@texturehq/edges-explore/routes";
 import type { FeatureCollection } from "geojson";
 import { usePathname, useSearchParams } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
-import { detailViewToTab } from "@/lib/explorer/detail-view-tab";
+import { type DetailView, detailViewToTab } from "@/lib/explorer/detail-view-tab";
 import {
   EXPLORE_BASE_PATH,
   type ExplorePathItem,
@@ -20,8 +20,8 @@ import { carryViewMode, type ExploreViewMode, parseViewMode, resolveViewMode } f
 // ---------------------------------------------------------------------------
 
 export type EntityTab = PathEntityTab;
+export type { DetailView } from "@/lib/explorer/detail-view-tab";
 export type { ExploreViewMode };
-export type DetailView = "utility" | "iso" | "rto" | "ba" | "program" | "power-plant" | "rate";
 
 /**
  * Route shape for CommonGrid's explore stack.
@@ -427,7 +427,8 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     const detail = stack.current?.type === "detail" ? stack.current : null;
     const current = stack.current;
     const mode: ExplorerState["mode"] = detail ? "detail" : current?.type === "overview" ? "overview" : "list";
-    const viewMode = resolveViewMode(currentList?.payload.mode);
+    // Station details always show their location; Back restores the list projection.
+    const viewMode = detail?.payload.entityKind === "ev-charging" ? "map" : resolveViewMode(currentList?.payload.mode);
     return {
       tab,
       listSource: view.listSource,
