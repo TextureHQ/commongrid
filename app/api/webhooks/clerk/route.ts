@@ -19,6 +19,7 @@ import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { getDb } from "@/lib/db/client";
 import { userNotificationPrefs } from "@/lib/db/schema/user-notification-prefs";
+import type { UserSelect } from "@/lib/db/schema/users";
 import { users } from "@/lib/db/schema/users";
 import { deleteKnockUser, identifyKnockUser } from "@/lib/knock/sync";
 import { triggerWelcome } from "@/lib/knock/workflows";
@@ -55,6 +56,22 @@ function getPrimaryEmail(data: ClerkUserEventData): string | null {
   if (!data.primary_email_address_id || !data.email_addresses) return null;
   const primary = data.email_addresses.find((e) => e.id === data.primary_email_address_id);
   return primary?.email_address ?? data.email_addresses[0]?.email_address ?? null;
+}
+
+type DbClient = ReturnType<typeof getDb>;
+
+async function getUserByClerkId(db: DbClient, clerkUserId: string): Promise<UserSelect | null> {
+  const [existingUser] = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId)).limit(1);
+  return existingUser ?? null;
+}
+
+async function ensureNotificationPrefs(db: DbClient, userId: string): Promise<void> {
+  await db
+    .insert(userNotificationPrefs)
+    .values({
+      userId,
+    })
+    .onConflictDoNothing({ target: userNotificationPrefs.userId });
 }
 
 export async function POST(req: Request) {
@@ -107,7 +124,7 @@ export async function POST(req: Request) {
         // Drizzle with neon-http doesn't support multi-statement transactions,
         // so we do sequential inserts. The notification prefs row references the
         // user row, so order matters.
-        const [newUser] = await db
+        const [createdUser] = await db
           .insert(users)
           .values({
             clerkUserId: data.id,
@@ -115,21 +132,28 @@ export async function POST(req: Request) {
             email,
             avatarUrl: data.image_url,
           })
+          .onConflictDoNothing({ target: users.clerkUserId })
           .returning();
 
-        if (newUser) {
-          await db.insert(userNotificationPrefs).values({
-            userId: newUser.id,
-          });
+        const user = createdUser ?? (await getUserByClerkId(db, data.id));
 
-          // Sync user to Knock (fire-and-forget)
-          void identifyKnockUser(newUser);
-
-          // Send welcome email (fire-and-forget)
-          void triggerWelcome(newUser.id);
+        if (!user) {
+          throw new Error(`Clerk user.created insert skipped but no existing user was found for ${data.id}`);
         }
 
-        console.log(`User created: ${data.id} → ${newUser?.id}`);
+        await ensureNotificationPrefs(db, user.id);
+
+        if (createdUser) {
+          // Sync user to Knock (fire-and-forget)
+          void identifyKnockUser(createdUser);
+
+          // Send welcome email (fire-and-forget)
+          void triggerWelcome(createdUser.id);
+        } else {
+          console.log(`Duplicate user.created webhook ignored for existing user: ${data.id} → ${user.id}`);
+        }
+
+        console.log(`User provisioned: ${data.id} → ${user.id}`);
         break;
       }
 
