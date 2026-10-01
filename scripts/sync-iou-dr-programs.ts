@@ -209,7 +209,7 @@ async function loadUtilities(): Promise<UtilityRecord[]> {
       name: utilities.name,
       eiaId: utilities.eiaId,
       baCode: utilities.baCode,
-      state: utilities.state,
+      state: utilities.jurisdiction,
     })
     .from(utilities)
     .where(isNull(utilities.deletedAt));
