@@ -8,7 +8,6 @@
  */
 
 import { sql } from "drizzle-orm";
-import changelogJson from "@/data/changelog.json";
 import { getDb } from "@/lib/db/client";
 import type { ChangelogEntry, ChangelogOperation } from "@/types/changelog";
 
@@ -62,41 +61,21 @@ function entityTypeLabel(entityType: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Static fallback — serves data/changelog.json when entity_versions is empty
+// Empty fallback — no committed static data file.
 // ---------------------------------------------------------------------------
+//
+// Postgres is the single source of truth for the changelog (entity_versions +
+// change_batches). We do NOT ship a committed data/changelog.json snapshot: it
+// went stale the moment it was written and was a static-data dependency we are
+// eliminating (CG-324). The changelog page is `force-dynamic`, so it is never
+// prerendered during `next build` — the DB path below always runs at request
+// time in every environment that has DATABASE_URL. The only time this fallback
+// fires is when the database is genuinely unset or unreachable, and an empty
+// feed is the correct, honest answer there (a 10-row snapshot from months ago
+// is worse than "no recent changes").
 
-function buildStaticResponse(params: {
-  limit: number;
-  offset: number;
-  entityType: string | null;
-  since: string | null;
-  kind: string | null;
-}) {
-  const { limit, offset, entityType, since, kind } = params;
-
-  let entries: ChangelogEntry[] = [
-    ...(changelogJson.recentlyUpdated as ChangelogEntry[]),
-    ...(changelogJson.newlyAdded as ChangelogEntry[]),
-  ];
-
-  entries.sort((a, b) => new Date(b.isoTimestamp).getTime() - new Date(a.isoTimestamp).getTime());
-
-  if (entityType) {
-    entries = entries.filter((e) => e.entityType === entityType);
-  }
-  if (since) {
-    const sinceDate = new Date(since).getTime();
-    entries = entries.filter((e) => new Date(e.isoTimestamp).getTime() >= sinceDate);
-  }
-  if (kind) {
-    entries = entries.filter((e) => e.kind === kind);
-  }
-
-  const total = entries.length;
-  const paged = entries.slice(offset, offset + limit);
-  const hasMore = offset + limit < total;
-
-  return { entries: paged, total, hasMore, source: "static" as const };
+function buildEmptyResponse() {
+  return { entries: [] as ChangelogEntry[], total: 0, hasMore: false, source: "static" as const };
 }
 
 // ---------------------------------------------------------------------------
@@ -108,13 +87,13 @@ export async function fetchChangelogFeed(params: ChangelogQuery): Promise<Change
   const offset = Math.max(params.offset ?? 0, 0);
   const entityType = params.entityType ?? null;
   const since = params.since ?? null;
-  const kind = params.kind ?? null;
+  // Note: `params.kind` is accepted for API compatibility but is not used as a
+  // filter here — the DB feed derives kind from source_type/change_type per row.
 
   // Try the database first, but never require it. getDb() throws when
-  // DATABASE_URL is unset, and this function runs during `next build` while
-  // prerendering the changelog page — where CI has no database. A build with no
-  // database should render the static feed, not fail. The same path covers a
-  // database that is simply unreachable at runtime.
+  // DATABASE_URL is unset. The changelog page is `force-dynamic`, so this is a
+  // request-time path, not a build-time prerender. If the database is unset or
+  // unreachable we return an empty feed (no committed static snapshot).
   try {
     const db = getDb();
     // The feed is a union of two things: one row per change_batch, and one
@@ -214,8 +193,9 @@ export async function fetchChangelogFeed(params: ChangelogQuery): Promise<Change
     // No database configured, unreachable, or the query failed — fall through.
   }
 
-  // Fallback to static data
-  return buildStaticResponse({ limit, offset, entityType, since, kind });
+  // No database configured/reachable — return an empty feed rather than a
+  // committed static snapshot (CG-324).
+  return buildEmptyResponse();
 }
 
 // ---------------------------------------------------------------------------

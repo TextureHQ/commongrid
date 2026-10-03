@@ -10,7 +10,7 @@ interface GHRelease {
   assets: Array<{
     name: string;
     size: number;
-    download_url: string;
+    browser_download_url: string;
   }>;
 }
 
@@ -83,7 +83,7 @@ export default async function SnapshotsPage() {
     <ContentPage>
       <ContentPage.Header
         title="Database Snapshots"
-        subtitle="Download the complete CommonGrid dataset as a PostgreSQL dump."
+        subtitle="Download public data as SQL, GeoJSON map layers, and relational JSON."
       />
       <ContentPage.Body>
         {/* Error state */}
@@ -117,6 +117,9 @@ export default async function SnapshotsPage() {
               const { year, week } = parseWeekTag(release.tag_name);
               const sqlAsset = release.assets.find((a) => a.name.endsWith(".sql.gz"));
               const geoJsonAssets = release.assets.filter((a) => a.name.endsWith(".geojson.gz"));
+              const jsonAssets = release.assets.filter(
+                (a) => a.name.endsWith(".json.gz") && !a.name.endsWith(".geojson.gz")
+              );
               const totalSize = release.assets.reduce((sum, a) => sum + a.size, 0);
 
               return (
@@ -144,15 +147,13 @@ export default async function SnapshotsPage() {
                   <div className="space-y-3">
                     {/* SQL backup */}
                     {sqlAsset && (
-                      <div className="bg-background-muted rounded p-4 flex items-center justify-between">
+                      <div className="bg-background-muted rounded p-4 flex flex-wrap gap-3 items-center justify-between">
                         <div>
                           <p className="font-medium text-text-heading text-sm">💾 {sqlAsset.name}</p>
-                          <p className="text-xs text-text-muted">
-                            {formatBytes(sqlAsset.size)} • PostgreSQL custom format
-                          </p>
+                          <p className="text-xs text-text-muted">{formatBytes(sqlAsset.size)} • Gzipped plain SQL</p>
                         </div>
                         <a
-                          href={sqlAsset.download_url}
+                          href={sqlAsset.browser_download_url}
                           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-sm transition-colors"
                         >
                           Download
@@ -168,7 +169,7 @@ export default async function SnapshotsPage() {
                           {geoJsonAssets.map((asset) => (
                             <div
                               key={asset.name}
-                              className="bg-background-muted rounded p-3 flex items-center justify-between"
+                              className="bg-background-muted rounded p-3 flex flex-wrap gap-3 items-center justify-between"
                             >
                               <div>
                                 <p className="font-medium text-text-heading text-sm">
@@ -177,7 +178,35 @@ export default async function SnapshotsPage() {
                                 <p className="text-xs text-text-muted">{formatBytes(asset.size)}</p>
                               </div>
                               <a
-                                href={asset.download_url}
+                                href={asset.browser_download_url}
+                                className="px-3 py-1.5 bg-background-muted hover:bg-background-hover text-text-heading rounded font-medium text-xs transition-colors"
+                              >
+                                Download
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Relational JSON assets */}
+                    {jsonAssets.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-text-muted mb-2">JSON DATASETS</p>
+                        <div className="space-y-2">
+                          {jsonAssets.map((asset) => (
+                            <div
+                              key={asset.name}
+                              className="bg-background-muted rounded p-3 flex flex-wrap gap-3 items-center justify-between"
+                            >
+                              <div>
+                                <p className="font-medium text-text-heading text-sm">
+                                  📄 {asset.name.replace(".json.gz", "")}
+                                </p>
+                                <p className="text-xs text-text-muted">{formatBytes(asset.size)}</p>
+                              </div>
+                              <a
+                                href={asset.browser_download_url}
                                 className="px-3 py-1.5 bg-background-muted hover:bg-background-hover text-text-heading rounded font-medium text-xs transition-colors"
                               >
                                 Download
@@ -199,20 +228,23 @@ export default async function SnapshotsPage() {
           <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-3">About these snapshots</h3>
           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
             <li>
-              <strong>SQL backups:</strong> Full dump of all public tables &mdash; utilities, territories, programs,
-              power plants, substations, transmission lines, pricing nodes, ISOs/RTOs, balancing authorities, and more
-              (.sql.gz)
+              <strong>SQL backups:</strong> Allowlisted public reference tables &mdash; utilities, territories,
+              programs, power plants, substations, transmission lines, pricing nodes, ISOs/RTOs, balancing authorities,
+              and more (.sql.gz). Rates are supplied separately as JSON.
             </li>
             <li>
-              <strong>Programs:</strong> The hand-curated demand-response &amp; grid-services program dataset as a
-              standalone JSON file (programs.json.gz)
+              <strong>Relational JSON:</strong> Programs and rates retain their organization, utility, and region links.
+              They do not have intrinsic geometry; a utility boundary does not imply program or tariff eligibility.
             </li>
             <li>
-              <strong>GeoJSON layers:</strong> Spatial data for utilities, charging stations, power plants, and pricing
-              nodes
+              <strong>GeoJSON layers:</strong> Available spatial exports appear above for each release. New snapshots
+              include utilities, territories, charging stations, power plants, pricing nodes, transmission lines,
+              substations, and ISO/RTO/balancing-authority boundaries where stored geometry exists. Older releases may
+              have fewer layers.
             </li>
             <li>
-              <strong>Frequency:</strong> New snapshots every Sunday at 4:00 AM UTC
+              <strong>Frequency:</strong> Scheduled every Sunday at 4:00 AM UTC; the date above reflects the last
+              published snapshot
             </li>
             <li>
               <strong>Retention:</strong> All snapshots are permanent; none are deleted

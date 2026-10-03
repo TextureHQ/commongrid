@@ -27,8 +27,8 @@ export const VoltageBandLabel: Record<VoltageBand, string> = {
 };
 
 /**
- * Lightweight metadata record for list/search pages and seeding.
- * Serialized to `data/substations.json`.
+ * Lightweight metadata record for list/search pages.
+ * The app reads substations from Postgres; this shape is the public view model.
  */
 export interface SubstationRecord {
   id: string;

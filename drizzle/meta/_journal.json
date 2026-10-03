@@ -239,6 +239,27 @@
       "when": 1790362505232,
       "tag": "0037_reconcile_geometry_history_uniqueness",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790362505233,
+      "tag": "0038_add_transmission_lines_geometry",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1790362505234,
+      "tag": "0039_register_ba_cca_sync_sources",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1790796494261,
+      "tag": "0040_register_utility_logo",
+      "breakpoints": true
     }
   ]
 }
