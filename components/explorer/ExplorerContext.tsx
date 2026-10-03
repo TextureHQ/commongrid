@@ -1,26 +1,10 @@
 "use client";
 
 import type { ExploreRouteDescriptor } from "@texturehq/edges-explore";
-import {
-  createExploreRouteStackState,
-  popExploreRoute,
-  pushDeeperExploreRoute,
-  pushExploreRoute,
-  replaceExploreRoute,
-} from "@texturehq/edges-explore/routes";
+import { useExploreRouteStack } from "@texturehq/edges-explore/routes";
 import type { FeatureCollection } from "geojson";
 import { usePathname, useSearchParams } from "next/navigation";
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
 import { detailViewToTab } from "@/lib/explorer/detail-view-tab";
 import {
   EXPLORE_BASE_PATH,
@@ -212,10 +196,8 @@ function serializeUrl(routes: ExploreRoute[]): string {
 // ---------------------------------------------------------------------------
 // Path-backed route stack
 //
-// Mirrors the shape of `useUrlExploreRouteStack` from @texturehq/edges-explore
-// but persists the navigation structure in the URL *path* (via
-// history.replaceState) rather than in search params. The in-memory route
-// array is the working copy; the URL is the persisted form.
+// The shared controller owns route navigation. CommonGrid translates its URL
+// path and query into that stack and persists the result through replaceState.
 //
 // The sync discipline is inherited from CG-257: internal navigations write the
 // URL through raw `history.replaceState` (which does NOT update Next's
@@ -239,31 +221,19 @@ interface PathExploreStack {
 }
 
 function usePathExploreRouteStack(pathname: string | null, searchParams: URLSearchParams): PathExploreStack {
-  const [routes, setRoutes] = useState<ExploreRoute[]>(() => parseRoutes(pathname, searchParams));
+  const controller = useExploreRouteStack<ExploreRoute>({
+    initialRoutes: parseRoutes(pathname, searchParams),
+    getRouteKey,
+    getRouteType,
+  });
+  const close = useCallback(() => controller.reset([makeOverviewRoute()]), [controller.reset]);
+  const reset = useCallback(
+    (next: ExploreRoute[]) => controller.reset(next.length > 0 ? next : [makeOverviewRoute()]),
+    [controller.reset]
+  );
+  const serializedUrl = useMemo(() => serializeUrl(controller.routes), [controller.routes]);
 
-  const push = useCallback((route: ExploreRoute) => {
-    setRoutes((current) => pushExploreRoute(current, route, getRouteKey, getRouteType));
-  }, []);
-  const pushDeeper = useCallback((route: ExploreRoute) => {
-    setRoutes((current) => pushDeeperExploreRoute(current, route, getRouteKey));
-  }, []);
-  const replace = useCallback((route: ExploreRoute | null) => {
-    setRoutes((current) => replaceExploreRoute(current, route));
-  }, []);
-  const back = useCallback(() => {
-    setRoutes((current) => popExploreRoute(current));
-  }, []);
-  const close = useCallback(() => {
-    setRoutes([makeOverviewRoute()]);
-  }, []);
-  const reset = useCallback((next: ExploreRoute[]) => {
-    setRoutes(next.length > 0 ? next : [makeOverviewRoute()]);
-  }, []);
-
-  const state = useMemo(() => createExploreRouteStackState(routes), [routes]);
-  const serializedUrl = useMemo(() => serializeUrl(routes), [routes]);
-
-  return { ...state, push, pushDeeper, replace, back, close, reset, serializedUrl };
+  return { ...controller, close, reset, serializedUrl };
 }
 
 // ---------------------------------------------------------------------------

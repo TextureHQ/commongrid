@@ -1,12 +1,23 @@
-import { doublePrecision, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { customType, doublePrecision, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+
+/**
+ * Custom PostGIS geometry type (MultiLineString, SRID 4326).
+ * Source of truth for transmission-line geometry so tiles are rebuilt from
+ * Postgres instead of a committed GeoJSON artifact (CG-328).
+ */
+const geometryMultiLineString = customType<{ data: string }>({
+  dataType() {
+    return "geometry(MultiLineString, 4326)";
+  },
+});
 
 /**
  * Transmission Lines
  *
- * 52,244 records. Metadata for electric power transmission lines,
- * sourced from HIFLD. Geometry is stored in PMTiles for map rendering,
- * not in this table (individual line geometries are large LineStrings
- * with many coordinates, used only for tile generation).
+ * ~52k records. Metadata for electric power transmission lines, sourced from
+ * HIFLD. Geometry (large MultiLineStrings) is stored in the `geometry` column
+ * in PostGIS as the single source of truth for tile generation (CG-328). The
+ * previously-committed data/transmission-lines.geojson artifact is gone.
  */
 export const transmissionLines = pgTable(
   "transmission_lines",
@@ -23,6 +34,13 @@ export const transmissionLines = pgTable(
     sub2: text("sub2").notNull(),
     lengthMiles: doublePrecision("length_miles").notNull(),
     naicsCode: text("naics_code").notNull(),
+
+    /**
+     * GEOMETRY(MultiLineString, 4326) — source of truth for tile export.
+     * Populated by sync-transmission-lines.ts from HIFLD; read back by
+     * prepare-transmission-lines-geojson.mjs via ST_AsGeoJSON (CG-328).
+     */
+    geometry: geometryMultiLineString("geometry"),
 
     /** NULL | 'semi_locked' | 'fully_locked' — denormalized cache from entity_locks table */
     lockedStatus: text("locked_status"),

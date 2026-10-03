@@ -1,46 +1,92 @@
 /**
- * Prepares data/transmission-lines.geojson for tippecanoe tile generation.
+ * Queries the `transmission_lines` table from Postgres and writes a
+ * FeatureCollection to `.tmp-transmission-lines.geojson` for tippecanoe.
  *
- * Reads the full GeoJSON saved by sync-transmission-lines.ts and writes a
- * cleaned .tmp file that tippecanoe will consume directly.
+ * Geometry is stored in PostGIS (CG-328) and read back via ST_AsGeoJSON, so
+ * there is no committed data/transmission-lines.geojson artifact anymore.
  *
- * Voltage class is written as a numeric value so tippecanoe can use it for
- * zoom-level filtering (--filter-lowest-zoom won't work on strings, but we
- * rely on tippecanoe options rather than property filtering here).
+ * Voltage class is written as a numeric `voltageRank` so tippecanoe can use it
+ * for zoom-level filtering.
+ *
+ * Requires DATABASE_URL.
  */
-import { readFile, writeFile, access } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { neon } from "@neondatabase/serverless";
 
-const DATA_DIR = join(process.cwd(), "data");
-const INPUT = join(DATA_DIR, "transmission-lines.geojson");
 const OUTPUT = join(process.cwd(), ".tmp-transmission-lines.geojson");
 
+// Numeric voltageRank for zoom-based filtering:
+//   4 = extra-high (345kV+) → show at all zooms
+//   3 = high (230–344kV)     → tippecanoe drops some at low zoom
+//   2 = medium (115–229kV)   → drop more at low zoom
+//   1 = sub-trans (69–114kV) → drop most at low zoom
+//   0 = unknown
+const rankMap = { "extra-high": 4, high: 3, medium: 2, "sub-trans": 1, unknown: 0 };
+
 async function main() {
-  try {
-    await access(INPUT);
-  } catch {
-    console.warn("⚠️  data/transmission-lines.geojson not found — skipping. Run npm run sync:transmission-lines first.");
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    // Exit 0, not 1. This is one optional layer in a multi-layer tile build;
+    // a missing DB credential must not discard the other layers that were just
+    // generated successfully. build-tiles.sh already handles a missing
+    // .tmp-transmission-lines.geojson by skipping tile generation for this
+    // layer (mirrors prepare-substations-geojson.mjs — CIR-1271).
+    console.warn(
+      "⚠️  DATABASE_URL is not set — skipping transmission-line GeoJSON. Transmission tiles will not be rebuilt."
+    );
     process.exit(0);
   }
 
-  const raw = await readFile(INPUT, "utf-8");
-  const fc = JSON.parse(raw);
+  const sql = neon(url);
 
-  // Add a numeric voltageRank property for zoom-based filtering:
-  //   4 = extra-high (345kV+) → show at all zooms
-  //   3 = high (230–344kV)     → tippecanoe will drop some at low zoom
-  //   2 = medium (115–229kV)   → drop more at low zoom
-  //   1 = sub-trans (69–114kV) → drop most at low zoom
-  //   0 = unknown
-  const rankMap = { "extra-high": 4, high: 3, medium: 2, "sub-trans": 1, unknown: 0 };
+  const rows = await sql`
+    SELECT
+      id,
+      object_id,
+      voltage,
+      voltage_class,
+      owner,
+      status,
+      type,
+      length_miles,
+      ST_AsGeoJSON(geometry) AS geometry
+    FROM transmission_lines
+    WHERE deleted_at IS NULL
+      AND geometry IS NOT NULL
+  `;
 
-  for (const feature of fc.features) {
-    const vc = feature.properties.voltageClass ?? "unknown";
-    feature.properties.voltageRank = rankMap[vc] ?? 0;
+  const features = [];
+  for (const row of rows) {
+    let geometry;
+    try {
+      geometry = JSON.parse(row.geometry);
+    } catch {
+      continue;
+    }
+    if (!geometry) continue;
+
+    const vc = row.voltage_class ?? "unknown";
+    features.push({
+      type: "Feature",
+      geometry,
+      properties: {
+        objectId: row.object_id,
+        id: row.id,
+        voltage: row.voltage === null ? null : Number(row.voltage),
+        voltageClass: vc,
+        voltageRank: rankMap[vc] ?? 0,
+        owner: row.owner,
+        status: row.status,
+        type: row.type,
+        lengthMiles: row.length_miles === null ? null : Number(row.length_miles),
+      },
+    });
   }
 
+  const fc = { type: "FeatureCollection", features };
   await writeFile(OUTPUT, JSON.stringify(fc));
-  console.log(`✅ ${fc.features.length} transmission line features → ${OUTPUT}`);
+  console.log(`✅ ${features.length} transmission line features → ${OUTPUT}`);
 }
 
 main().catch((err) => {

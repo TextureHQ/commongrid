@@ -11,23 +11,29 @@
  *   cd apps/commongrid
  *   yarn sync:ba
  *
- * Outputs:
- *   - data/balancing-authorities.json — Complete BA records with EIA codes
- *   - data/regions.json — Updated with BA_TERRITORY region records
- *   - data/utilities.json — Updated with balancingAuthorityId references
- *   - public/data/territories/ba-{slug}.json — Individual GeoJSON per BA
+ * Publishes to Postgres via applySync (source of truth):
+ *   - balancing_authorities table
+ *   - regions table (BALANCING_AUTHORITY region records)
+ *   - territories table (BA boundary geometry)
+ *   - utilities table (balancingAuthorityId reference updates only)
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { Feature, FeatureCollection, Geometry } from "geojson";
+import type { Feature, Geometry } from "geojson";
 import * as XLSX from "xlsx";
-import { readJSON, slugify, TERRITORIES_DIR, writeJSON, writeTerritory } from "./lib";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { applySync, type SyncRecord } from "@/lib/sync/apply-sync";
+import { readJSON, slugify } from "./lib";
 
 const HIFLD_CONTROL_AREAS_URL =
   "https://services5.arcgis.com/HDRa0B57OVrv2E1q/arcgis/rest/services/Control_Areas/FeatureServer/0/query";
 
 const EIA_DATA_DIR = path.resolve(process.env.HOME ?? "", "Workspace/Context data/f8612024");
+
+const EIA_861_SOURCE_ID = "eia-861";
+const HIFLD_CONTROL_AREAS_SOURCE_ID = "hifld-control-areas";
+const RUNNER_ACTOR = "sync:ba";
 
 interface HifldProperties {
   OBJECTID_1: number;
@@ -352,10 +358,121 @@ function buildHifldToCodeMap(eiaBAs: Map<string, EiaBa>): Map<string, string> {
   return idToCode;
 }
 
+function dedupeByEntityId(records: SyncRecord[]): SyncRecord[] {
+  const seen = new Set<string>();
+  return records.filter((r) => {
+    if (seen.has(r.entityId)) return false;
+    seen.add(r.entityId);
+    return true;
+  });
+}
+
+function toBalancingAuthoritySyncRecords(bas: BaRecord[]): SyncRecord[] {
+  return dedupeByEntityId(
+    bas.map((ba) => ({
+      sourceId: EIA_861_SOURCE_ID,
+      asOf: null,
+      entityId: ba.id,
+      slug: ba.slug,
+      fields: {
+        name: ba.name,
+        shortName: ba.shortName,
+        eiaCode: ba.eiaCode,
+        eiaId: ba.eiaId,
+        website: ba.website,
+        states: ba.states,
+        isoId: ba.isoId,
+        regionId: ba.regionId,
+      },
+    }))
+  );
+}
+
+function toRegionSyncRecords(regions: RegionRecord[]): SyncRecord[] {
+  return dedupeByEntityId(
+    regions.map((r) => {
+      const asOf = r.sourceDate ? new Date(r.sourceDate) : null;
+      return {
+        sourceId: HIFLD_CONTROL_AREAS_SOURCE_ID,
+        asOf: asOf && !Number.isNaN(asOf.getTime()) ? asOf : null,
+        entityId: r.id,
+        slug: r.slug,
+        fields: {
+          name: r.name,
+          type: r.type,
+          eiaId: r.eiaId,
+          state: r.state,
+          customers: r.customers,
+          source: r.source,
+          sourceDate: r.sourceDate,
+        },
+      };
+    })
+  );
+}
+
+function toTerritorySyncRecords(
+  bas: BaRecord[],
+  hifldFeatures: Feature<Geometry, HifldProperties>[],
+  hifldIdToCode: Map<string, string>
+): SyncRecord[] {
+  const baByCode = new Map(bas.map((ba) => [ba.eiaCode, ba]));
+  const records: SyncRecord[] = [];
+
+  for (const feature of hifldFeatures) {
+    const props = feature.properties;
+    if (!props?.ID) continue;
+
+    const code = hifldIdToCode.get(props.ID);
+    if (!code) continue;
+
+    const ba = baByCode.get(code);
+    if (!ba?.regionId) continue;
+
+    const geometry = feature.geometry;
+    if (geometry.type !== "Polygon" && geometry.type !== "MultiPolygon") {
+      console.warn(`  Skipping non-polygon BA territory: ${ba.slug}`);
+      continue;
+    }
+
+    records.push({
+      entityId: `territory-ba-${ba.slug}`,
+      sourceId: HIFLD_CONTROL_AREAS_SOURCE_ID,
+      asOf: null,
+      fields: {
+        regionId: ba.regionId,
+        source: "HIFLD Control Areas",
+        sourceUrl: HIFLD_CONTROL_AREAS_URL,
+      },
+      geography: geometry,
+    });
+  }
+
+  return dedupeByEntityId(records);
+}
+
+function toUtilitySyncRecords(utilities: UtilityRecord[], baByEiaCode: Map<string, BaRecord>): SyncRecord[] {
+  const records: SyncRecord[] = [];
+  for (const utility of utilities) {
+    if (!utility.baCode) continue;
+    const ba = baByEiaCode.get(utility.baCode);
+    if (!ba) continue;
+    records.push({
+      sourceId: EIA_861_SOURCE_ID,
+      asOf: null,
+      entityId: utility.id,
+      slug: utility.slug,
+      fields: {
+        balancingAuthorityId: ba.id,
+      },
+    });
+  }
+  return dedupeByEntityId(records);
+}
+
 async function main() {
   console.log("Syncing Balancing Authority data\n");
 
-  fs.mkdirSync(TERRITORIES_DIR, { recursive: true });
   const today = new Date().toISOString().split("T")[0];
 
   // ── 1. Load EIA BA data ────────────────────────────────────────────
@@ -373,10 +490,6 @@ async function main() {
   const isoBySlug = new Map(isos.map((i) => [i.slug, i]));
 
   const utilities: UtilityRecord[] = readJSON("utilities.json");
-  const regions: RegionRecord[] = readJSON("regions.json");
-
-  // Remove existing BA regions (idempotent)
-  const filteredRegions = regions.filter((r) => r.type !== "BALANCING_AUTHORITY");
 
   // ── 4. Build ID→Code mapping ───────────────────────────────────────
   const hifldIdToCode = buildHifldToCodeMap(eiaBAs);
@@ -386,7 +499,6 @@ async function main() {
   const newBAs: BaRecord[] = [];
   const newRegions: RegionRecord[] = [];
   const baByCode = new Map<string, BaRecord>();
-  let geoWritten = 0;
 
   // First, create records for structural EIA BAs only
   let skippedCount = 0;
@@ -423,7 +535,7 @@ async function main() {
 
   console.log(`  Created ${newBAs.length} structural BA records (skipped ${skippedCount} utility-level BAs)\n`);
 
-  // Match HIFLD features to BAs and write GeoJSON
+  // Match HIFLD features to BAs and build region/territory records
   for (const feature of hifldFeatures) {
     const props = feature.properties;
     if (!props?.ID) continue;
@@ -446,25 +558,6 @@ async function main() {
       }
     }
 
-    // Write territory GeoJSON
-    const geoJson: FeatureCollection = {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          properties: {
-            id: ba.regionId,
-            name: ba.name,
-            code: ba.eiaCode,
-          },
-          geometry: feature.geometry,
-        },
-      ],
-    };
-
-    writeTerritory(`ba-${ba.slug}.json`, geoJson);
-    geoWritten++;
-
     if (!ba.regionId) continue;
     // Create region record
     newRegions.push({
@@ -480,26 +573,15 @@ async function main() {
     });
   }
 
-  // Clean up stale BA territory files (from BAs we no longer keep)
-  const validBaSlugs = new Set(newBAs.map((ba) => `ba-${ba.slug}.json`));
-  const existingFiles = fs.readdirSync(TERRITORIES_DIR).filter((f) => f.startsWith("ba-") && f.endsWith(".json"));
-  let cleaned = 0;
-  for (const file of existingFiles) {
-    if (!validBaSlugs.has(file)) {
-      fs.unlinkSync(path.join(TERRITORIES_DIR, file));
-      cleaned++;
-    }
-  }
-  if (cleaned > 0) {
-    console.log(`  Removed ${cleaned} stale BA territory files`);
-  }
-
   // Sort BAs by name
   newBAs.sort((a, b) => a.name.localeCompare(b.name));
 
   // ── 6. Link utilities to BAs ───────────────────────────────────────
   console.log("\n4. Linking utilities to BAs...");
-  const baByEiaCode = new Map(newBAs.map((ba) => [ba.eiaCode, ba]));
+  const baByEiaCode = new Map<string, BaRecord>();
+  for (const ba of newBAs) {
+    if (ba.eiaCode) baByEiaCode.set(ba.eiaCode, ba);
+  }
   let linked = 0;
   for (const utility of utilities) {
     if (!utility.baCode) continue;
@@ -511,14 +593,80 @@ async function main() {
   }
   console.log(`  Linked ${linked} utilities to BAs\n`);
 
-  // ── 7. Write all data ──────────────────────────────────────────────
-  writeJSON("balancing-authorities.json", newBAs);
+  // ── 7. Publish to Postgres ─────────────────────────────────────────
+  console.log("5. Publishing to Postgres via applySync...");
 
-  const allRegions = [...filteredRegions, ...newRegions];
-  allRegions.sort((a, b) => a.name.localeCompare(b.name));
-  writeJSON("regions.json", allRegions);
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required — the BA sync publishes directly to Postgres");
+  }
 
-  writeJSON("utilities.json", utilities);
+  const baRecords = toBalancingAuthoritySyncRecords(newBAs);
+  const regionRecords = toRegionSyncRecords(newRegions);
+  const territoryRecords = toTerritorySyncRecords(newBAs, hifldFeatures, hifldIdToCode);
+  const utilityRecords = toUtilitySyncRecords(utilities, baByEiaCode);
+
+  const db = getPooledDb();
+  const reports = await db.transaction(async (tx) => {
+    // Order matters for FKs: regions → balancing_authorities → utilities → territories
+    const regionReport = await applySync(regionRecords, {
+      entityType: "region",
+      initiatedBy: RUNNER_ACTOR,
+      batchTitle: "HIFLD Control Areas — BA region sync",
+      tx,
+    });
+
+    const baReport = await applySync(baRecords, {
+      entityType: "balancing_authority",
+      initiatedBy: RUNNER_ACTOR,
+      batchTitle: "EIA-861 — balancing authority sync",
+      tx,
+    });
+
+    const utilityReport = await applySync(utilityRecords, {
+      entityType: "utility",
+      initiatedBy: RUNNER_ACTOR,
+      batchTitle: "EIA-861 — utility BA reference sync",
+      tx,
+    });
+
+    const territoryReport = await applySync(territoryRecords, {
+      entityType: "territory",
+      initiatedBy: RUNNER_ACTOR,
+      batchTitle: "HIFLD Control Areas — BA territory sync",
+      tx,
+    });
+
+    return { regionReport, baReport, utilityReport, territoryReport };
+  });
+
+  const totalCreated =
+    reports.baReport.created +
+    reports.regionReport.created +
+    reports.territoryReport.created +
+    reports.utilityReport.created;
+  const totalUpdated =
+    reports.baReport.updated +
+    reports.regionReport.updated +
+    reports.territoryReport.updated +
+    reports.utilityReport.updated;
+  const totalUnchanged =
+    reports.baReport.unchanged +
+    reports.regionReport.unchanged +
+    reports.territoryReport.unchanged +
+    reports.utilityReport.unchanged;
+  const totalDeferrals =
+    reports.baReport.deferrals.length +
+    reports.regionReport.deferrals.length +
+    reports.territoryReport.deferrals.length +
+    reports.utilityReport.deferrals.length;
+
+  console.log("  Registry publication complete:");
+  console.log(`    Created: ${totalCreated.toLocaleString()}`);
+  console.log(`    Updated: ${totalUpdated.toLocaleString()}`);
+  console.log(`    Unchanged: ${totalUnchanged.toLocaleString()}`);
+  if (totalDeferrals > 0) {
+    console.log(`    Deferrals (human-edited fields preserved): ${totalDeferrals.toLocaleString()}`);
+  }
 
   // ── Summary ────────────────────────────────────────────────────────
   const withGeo = newBAs.filter((ba) => newRegions.some((r) => r.id === ba.regionId)).length;
@@ -530,7 +678,7 @@ async function main() {
   console.log(`  With territory GeoJSON: ${withGeo}`);
   console.log(`  With website: ${withWebsite}`);
   console.log(`  With ISO linkage: ${withIso}`);
-  console.log(`  Territory files written: ${geoWritten}`);
+  console.log(`  Territory records applied: ${territoryRecords.length}`);
   console.log(`  Utilities linked: ${linked}`);
 }
 

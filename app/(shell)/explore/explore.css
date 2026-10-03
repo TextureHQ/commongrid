@@ -116,14 +116,6 @@
 }
 
 /* ── Filter bar rows ── */
-.cg-explore-filter-bar {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-background-surface);
-  border-bottom: 1px solid var(--color-border-default);
-  flex-shrink: 0;
-}
-
 .cg-explore-filter-row {
   display: flex;
   align-items: center;

@@ -139,7 +139,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         shell: bash -euo pipefail {0}
         run: |
-          psql "$DATABASE_URL" -t -A -c "
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -t -A -c "
             SELECT json_build_object(
               'type', 'FeatureCollection',
               'features', COALESCE(json_agg(
@@ -152,7 +152,10 @@ jobs:
                     'eia_id', u.eia_id,
                     'segment', u.segment,
                     'state', r.state,
-                    'customers', r.customers
+                    'customers', r.customers,
+                    'region_id', r.id,
+                    'source', u.source, 'source_url', u.source_url,
+                    'geometry_source', t.source, 'geometry_source_url', t.source_url
                   ),
                   'geometry', ST_AsGeoJSON(t.geography::geometry)::json
                 )
@@ -161,7 +164,7 @@ jobs:
             FROM utilities u
             JOIN regions r ON u.service_territory_id = r.id
             JOIN territories t ON t.region_id = r.id AND t.deleted_at IS NULL
-            WHERE u.deleted_at IS NULL
+            WHERE u.deleted_at IS NULL AND r.deleted_at IS NULL
           " | gzip -9 > "$SNAPSHOT_DIR/utilities.geojson.gz"
           echo "Utilities GeoJSON size: $(du -h "$SNAPSHOT_DIR/utilities.geojson.gz" | cut -f1)"
 
@@ -170,7 +173,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         shell: bash -euo pipefail {0}
         run: |
-          psql "$DATABASE_URL" -t -A -c "
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -t -A -c "
             SELECT json_build_object(
               'type', 'FeatureCollection',
               'features', COALESCE(json_agg(
@@ -186,7 +189,8 @@ jobs:
                     'city', city,
                     'state', state,
                     'zip', zip,
-                    'status', status_code
+                    'status', status_code,
+                    'source', source, 'source_url', source_url
                   ),
                   'geometry', json_build_object(
                     'type', 'Point',
@@ -197,6 +201,7 @@ jobs:
             )
             FROM ev_stations
             WHERE deleted_at IS NULL
+              AND longitude BETWEEN -180 AND 180 AND latitude BETWEEN -90 AND 90
           " | gzip -9 > "$SNAPSHOT_DIR/ev-stations.geojson.gz"
           echo "EV stations GeoJSON size: $(du -h "$SNAPSHOT_DIR/ev-stations.geojson.gz" | cut -f1)"
 
@@ -205,7 +210,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         shell: bash -euo pipefail {0}
         run: |
-          psql "$DATABASE_URL" -t -A -c "
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -t -A -c "
             SELECT json_build_object(
               'type', 'FeatureCollection',
               'features', COALESCE(json_agg(
@@ -219,7 +224,8 @@ jobs:
                     'state', state,
                     'primary_fuel', primary_fuel,
                     'total_capacity_mw', total_capacity_mw,
-                    'status', status
+                    'status', status,
+                    'source', source, 'source_url', source_url
                   ),
                   'geometry', json_build_object(
                     'type', 'Point',
@@ -230,23 +236,16 @@ jobs:
             )
             FROM power_plants
             WHERE deleted_at IS NULL
+              AND longitude BETWEEN -180 AND 180 AND latitude BETWEEN -90 AND 90
           " | gzip -9 > "$SNAPSHOT_DIR/power-plants.geojson.gz"
           echo "Power plants GeoJSON size: $(du -h "$SNAPSHOT_DIR/power-plants.geojson.gz" | cut -f1)"
-
-      # NOTE: There is intentionally NO transmission-lines GeoJSON export.
-      # `transmission_lines` stores only line METADATA (owner, voltage, class,
-      # endpoints) — the actual LineString geometry is not in Postgres; it lives
-      # in PMTiles for map rendering (see lib/db/schema/transmission-lines.ts).
-      # The metadata still ships in the allowlisted SQL dump above. A GeoJSON
-      # export here is impossible and previously referenced a nonexistent `geom`
-      # column, which is one of the errors that broke every run since W33.
 
       - name: Export GeoJSON — Pricing Nodes
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         shell: bash -euo pipefail {0}
         run: |
-          psql "$DATABASE_URL" -t -A -c "
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -t -A -c "
             SELECT json_build_object(
               'type', 'FeatureCollection',
               'features', COALESCE(json_agg(
@@ -259,7 +258,8 @@ jobs:
                     'iso', iso,
                     'node_type', node_type,
                     'zone', zone,
-                    'state', state
+                    'state', state,
+                    'source', source, 'source_url', source_url
                   ),
                   'geometry', json_build_object(
                     'type', 'Point',
@@ -270,6 +270,7 @@ jobs:
             )
             FROM pricing_nodes
             WHERE deleted_at IS NULL
+              AND longitude BETWEEN -180 AND 180 AND latitude BETWEEN -90 AND 90
           " | gzip -9 > "$SNAPSHOT_DIR/pricing-nodes.geojson.gz"
           echo "Pricing nodes GeoJSON size: $(du -h "$SNAPSHOT_DIR/pricing-nodes.geojson.gz" | cut -f1)"
 
@@ -283,7 +284,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         shell: bash -euo pipefail {0}
         run: |
-          psql "$DATABASE_URL" -t -A -c "
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -t -A -c "
             SELECT COALESCE(json_agg(row_to_json(p) ORDER BY p.name), '[]'::json)
             FROM (
               SELECT
@@ -301,32 +302,17 @@ jobs:
           " | gzip -9 > "$SNAPSHOT_DIR/programs.json.gz"
           echo "Programs JSON size: $(du -h "$SNAPSHOT_DIR/programs.json.gz" | cut -f1)"
 
-      # Guard against publishing empty/garbage data to the public. An empty gzip
-      # stream is 20 bytes, and every asset in every release from W17–W32 was
-      # exactly that. Validate decompressed content, not just file presence.
-      - name: Validate snapshot artifacts are non-empty
-        shell: bash -euo pipefail {0}
-        run: |
-          cd "$SNAPSHOT_DIR"
-          FAILED=0
-          for f in *.gz; do
-            BYTES=$(gunzip -c "$f" | wc -c)
-            if [ "$BYTES" -lt 100 ]; then
-              echo "::error::$f decompresses to ${BYTES} bytes — refusing to publish an empty snapshot."
-              FAILED=1
-            else
-              echo "OK  $f — ${BYTES} bytes decompressed"
-            fi
-          done
-          # GeoJSON exports must contain at least one feature, not just an empty
-          # FeatureCollection shell.
-          for f in *.geojson.gz; do
-            if gunzip -c "$f" | grep -q '"features":\[\]'; then
-              echo "::error::$f contains zero features — refusing to publish."
-              FAILED=1
-            fi
-          done
-          exit $FAILED
+      - name: Export remaining spatial layers and relational rates
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: bash scripts/export-snapshot-layers.sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate snapshot artifacts
+        run: node scripts/validate-snapshot.mjs "$SNAPSHOT_DIR"
 
       # Defense-in-depth guard: the SQL dump should only contain the public
       # allowlist above. If a private table ever appears here, the workflow
@@ -359,6 +345,7 @@ jobs:
           echo "Released under [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/)." >> MANIFEST.md
           echo "" >> MANIFEST.md
           echo "Generated automatically by [CommonGrid](https://commongrid.info) weekly snapshot workflow." >> MANIFEST.md
+          cat "$GITHUB_WORKSPACE/docs/public-snapshot.md" >> MANIFEST.md
           cat MANIFEST.md
 
       - name: Create GitHub Release
@@ -387,6 +374,13 @@ jobs:
           | \`power-plants.geojson.gz\` | Power plants (point locations) |
           | \`pricing-nodes.geojson.gz\` | ISO/RTO pricing nodes (point locations) |
 
+          Additional exports: \`rates.json.gz\` (relational tariffs with utility/region IDs),
+          \`transmission-lines.geojson.gz\`, \`substations.geojson.gz\`, \`territories.geojson.gz\`,
+          \`balancing-authorities.geojson.gz\`, \`isos.geojson.gz\`, and \`rtos.geojson.gz\`.
+          Geographic exports include only records with stored geometry or valid coordinates.
+          Programs and rates do not imply eligibility throughout a utility boundary.
+          See MANIFEST.md for coverage, provenance and attribution.
+
           ### Public tables in the SQL dump
 
           The \`.sql.gz\` dump contains these public tables (no user/PII/operational data):
@@ -409,12 +403,17 @@ jobs:
           ---
           Generated automatically by CommonGrid. Browse the data at https://commongrid.info"
 
-          gh release create "$TAG" \
-            --title "Weekly Snapshot — ${DATE}" \
-            --notes "$NOTES" \
-            "$SNAPSHOT_DIR"/commongrid-*.sql.gz \
-            "$SNAPSHOT_DIR"/programs.json.gz \
-            "$SNAPSHOT_DIR"/utilities.geojson.gz \
-            "$SNAPSHOT_DIR"/ev-stations.geojson.gz \
-            "$SNAPSHOT_DIR"/power-plants.geojson.gz \
-            "$SNAPSHOT_DIR"/pricing-nodes.geojson.gz
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --title "Weekly Snapshot — ${DATE}" \
+              --notes "$NOTES"
+
+            gh release upload "$TAG" \
+              "$SNAPSHOT_DIR"/*.gz "$SNAPSHOT_DIR"/MANIFEST.md \
+              --clobber
+          else
+            gh release create "$TAG" \
+              --title "Weekly Snapshot — ${DATE}" \
+              --notes "$NOTES" \
+              "$SNAPSHOT_DIR"/*.gz "$SNAPSHOT_DIR"/MANIFEST.md
+          fi

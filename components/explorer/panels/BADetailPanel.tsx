@@ -1,6 +1,5 @@
 "use client";
 
-import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { useEffect } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
@@ -9,6 +8,7 @@ import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
+import { fetchBalancingAuthorityGeometry } from "@/lib/explorer/geometry";
 import {
   formatCapacity,
   formatCustomerCount,
@@ -44,16 +44,15 @@ export function BADetailPanel({ slug }: { slug: string }) {
   const { iso } = useIso(ba?.isoId ?? null);
 
   useEffect(() => {
-    if (!ba?.regionId) {
+    if (!ba?.slug) {
       setHighlight(null);
       return;
     }
-    fetch(`/data/territories/ba-${ba.slug}.json`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setHighlight(data as FeatureCollection | null))
+    fetchBalancingAuthorityGeometry(ba.slug)
+      .then((data) => setHighlight(data))
       .catch(() => setHighlight(null));
     return () => setHighlight(null);
-  }, [ba?.slug, ba?.regionId, setHighlight]);
+  }, [ba?.slug, setHighlight]);
 
   const { utilities } = useUtilityList({ ba: ba?.slug, limit: 200 });
   const { powerPlants: baPowerPlants } = usePowerPlantList({ baId: ba?.id, limit: 200 });

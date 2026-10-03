@@ -1,0 +1,58 @@
+name: Approved Fork Preview
+
+on:
+  # Vercel posts an authorization URL for an untrusted fork first. Once a team
+  # member approves it, the same context becomes pending with a deployment URL.
+  status:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+  statuses: write
+
+concurrency:
+  group: approved-fork-preview-${{ github.event.sha || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  mirror-approved-fork:
+    if: >-
+      github.event_name == 'status' &&
+      github.event.context == 'Vercel' &&
+      (github.event.state == 'pending' || github.event.state == 'success' || github.event.state == 'failure' || github.event.state == 'error') &&
+      startsWith(github.event.target_url, 'https://vercel.com/texture/commongrid/')
+    runs-on: ubuntu-latest
+    steps:
+      # status workflows run from the default branch. Never check out or execute
+      # fork-controlled code in this job because it has contents:write.
+      - name: Check out trusted workflow code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Mirror the exact approved fork SHA
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const workflow = require("./.github/scripts/approved-fork-preview.cjs");
+            await workflow.mirrorApprovedFork({ github, context, core });
+
+  clean-up-closed-fork:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    steps:
+      # pull_request_target also uses the trusted default branch. The fork is
+      # referenced only as event data and is never checked out or executed.
+      - name: Check out trusted workflow code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Delete the trusted mirror branch
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const workflow = require("./.github/scripts/approved-fork-preview.cjs");
+            await workflow.deleteMirrorForClosedPullRequest({ github, context, core });

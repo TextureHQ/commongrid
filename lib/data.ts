@@ -1,6 +1,3 @@
-import changelogData from "@/data/changelog.json";
-import type { Changelog } from "@/types/changelog";
-
 // Entities are read from the DB, not static JSON:
 //   - utilities: lib/data/utilities.ts (server) + useUtility* hooks (client)
 //   - isos/rtos/balancing-authorities: useIsoList/useRtoList/useBalancingAuthorityList
@@ -10,8 +7,9 @@ import type { Changelog } from "@/types/changelog";
 // components, and re-exporting DB-backed loaders would pull the Postgres
 // client (fs/dns/net/tls) into the client bundle. The ~950 KB regions.json
 // and ~500 KB programs.json static imports are gone.
-
-const changelog: Changelog = changelogData as Changelog;
+//
+// The changelog is served from Postgres via lib/data/changelog-feed.ts
+// (fetchChangelogFeed); there is no committed data/changelog.json (CG-324).
 
 export function searchEntities<T extends { name: string; slug: string }>(entities: T[], query: string): T[] {
   const lower = query.toLowerCase();
@@ -23,10 +21,6 @@ export function sortByName<T extends { name: string }>(entities: T[], direction:
     const cmp = a.name.localeCompare(b.name);
     return direction === "asc" ? cmp : -cmp;
   });
-}
-
-export function getChangelog(): Changelog {
-  return changelog;
 }
 
 // Power plant data is loaded client-side via lib/power-plants.ts

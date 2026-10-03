@@ -325,21 +325,7 @@ export function ChangelogView({ changelog }: { changelog: Changelog }) {
       {/* Feed */}
       {allEntries.length === 0 ? (
         <div style={{ textAlign: "center", padding: "48px 0", color: "var(--color-text-muted)", fontSize: "14px" }}>
-          <p>
-            No changes recorded yet. Run{" "}
-            <code
-              style={{
-                fontFamily: "var(--font-family-mono)",
-                fontSize: "12px",
-                background: "var(--color-border-default)",
-                padding: "2px 6px",
-                borderRadius: "3px",
-              }}
-            >
-              npm run generate:changelog
-            </code>{" "}
-            after a sync to populate this feed.
-          </p>
+          <p>No changes recorded yet. This feed populates automatically as data syncs run.</p>
         </div>
       ) : (
         <>

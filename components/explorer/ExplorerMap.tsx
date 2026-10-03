@@ -16,6 +16,7 @@ import {
   utilityColor,
   voltageColor,
 } from "@/lib/categorical-colors";
+import { fetchBalancingAuthorityGeometry, fetchIsoGeometry, fetchTerritoryGeometry } from "@/lib/explorer/geometry";
 import { formatGridOperatorStates, gridOperatorKey } from "@/lib/explorer/grid-operators";
 import { buildHoverLayerConfigs, type HoverLayerConfig, hoverFilter } from "@/lib/explorer/map-hover-layers";
 import type { MapRegion } from "@/lib/explorer/region-navigation";
@@ -173,13 +174,13 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
           colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
           colorIdx++;
           return {
-            key: `iso-${iso.shortName.toLowerCase()}`,
+            key: colorKey,
+            slug: iso.slug,
             name: iso.shortName,
-            type: "ISO",
+            type: "ISO" as const,
             colorKey,
             fullName: iso.name,
             statesLabel: formatGridOperatorStates(iso.states),
-            slug: iso.slug,
             hoverKey: gridOperatorKey("iso", iso.slug),
           };
         });
@@ -191,13 +192,13 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
           colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
           colorIdx++;
           return {
-            key: `ba-${ba.slug}`,
+            key: colorKey,
+            slug: ba.slug,
             name: ba.shortName,
-            type: "BA",
+            type: "BA" as const,
             colorKey,
             fullName: ba.name,
             statesLabel: formatGridOperatorStates(ba.states),
-            slug: ba.slug,
             hoverKey: gridOperatorKey("ba", ba.slug),
           };
         });
@@ -207,9 +208,11 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
 
       const results = await Promise.allSettled(
         allFiles.map(async (entry) => {
-          const res = await fetch(`/data/territories/${entry.key}.json`);
-          if (!res.ok) return null;
-          const geojson = (await res.json()) as FeatureCollection;
+          const geojson =
+            entry.type === "ISO"
+              ? await fetchIsoGeometry(entry.slug)
+              : await fetchBalancingAuthorityGeometry(entry.slug);
+          if (!geojson) return null;
           return { geojson, ...entry };
         })
       );
@@ -345,67 +348,60 @@ function useProgramBoundaries(
       let colorIdx = 0;
       const colorMapping: Record<string, { hex: string }> = {};
 
-      // Map each program to its color and territory file keys
+      // Map each program to its color and territory slugs
       const programEntries: {
         programSlug: string;
         programName: string;
         programStatus: string;
         colorKey: string;
-        fileKeys: string[];
+        territorySlugs: string[];
       }[] = [];
-      const uniqueFileKeys = new Set<string>();
+      const uniqueTerritorySlugs = new Set<string>();
 
       for (const prog of programs) {
         const colorKey = `prog-${prog.slug}`;
         colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
         colorIdx++;
 
-        const fileKeys: string[] = [];
+        const territorySlugs: string[] = [];
         for (const regionId of prog.regions) {
           const region = regionById.get(regionId);
-          if (!region) continue;
-
-          const fileKey =
-            region.type === "CCA_TERRITORY" || region.type === "ISO" || region.type === "CUSTOM"
-              ? region.slug
-              : region.eiaId;
-          if (!fileKey) continue;
-          fileKeys.push(fileKey);
-          uniqueFileKeys.add(fileKey);
+          if (!region?.slug) continue;
+          if (uniqueTerritorySlugs.has(region.slug)) continue;
+          territorySlugs.push(region.slug);
+          uniqueTerritorySlugs.add(region.slug);
         }
 
-        if (fileKeys.length > 0) {
+        if (territorySlugs.length > 0) {
           programEntries.push({
             programSlug: prog.slug,
             programName: prog.name,
             programStatus: prog.status,
             colorKey,
-            fileKeys,
+            territorySlugs,
           });
         }
       }
 
-      // Fetch each unique territory file once
+      // Fetch each unique territory once
       const territoryCache = new Map<string, FeatureCollection>();
       const results = await Promise.allSettled(
-        [...uniqueFileKeys].map(async (key) => {
-          const res = await fetch(`/data/territories/${key}.json`);
-          if (!res.ok) return null;
-          const geojson = (await res.json()) as FeatureCollection;
-          return { key, geojson };
+        [...uniqueTerritorySlugs].map(async (slug) => {
+          const geojson = await fetchTerritoryGeometry(slug);
+          return { slug, geojson };
         })
       );
 
       for (const result of results) {
-        if (result.status !== "fulfilled" || !result.value) continue;
-        territoryCache.set(result.value.key, result.value.geojson);
+        if (result.status !== "fulfilled" || !result.value?.geojson) continue;
+        territoryCache.set(result.value.slug, result.value.geojson);
       }
 
       // Stamp features for every program (same territory can appear under multiple programs)
       const allFeatures: Feature[] = [];
       for (const entry of programEntries) {
-        for (const fileKey of entry.fileKeys) {
-          const geojson = territoryCache.get(fileKey);
+        for (const territorySlug of entry.territorySlugs) {
+          const geojson = territoryCache.get(territorySlug);
           if (!geojson) continue;
           for (const feature of geojson.features) {
             allFeatures.push({
@@ -957,9 +953,9 @@ export function ExplorerMap({
         id: "transmission-lines",
         tileset: getTransmissionTileUrl(),
         sourceLayer: "transmission-lines",
-        // Tile features carry no ids, and the Edges hover tooltip only
-        // re-renders when the feature id changes — without this it sticks on
-        // the first feature hovered. Also keys the transmission-lines-hover layer.
+          // Tile features carry no ids, and the Edges hover tooltip only
+          // re-renders when the feature id changes — without this it sticks on
+          // the first feature hovered. Also keys the transmission-lines-hover layer.
         promoteId: "id",
         ...(transmissionLinesFilter ? { filter: transmissionLinesFilter as unknown } : {}),
         renderAs: "line",
@@ -1006,9 +1002,9 @@ export function ExplorerMap({
         id: "substations",
         tileset: getSubstationsTileUrl(),
         sourceLayer: "substations",
-        // Tile features carry no ids, and the Edges hover tooltip only
-        // re-renders when the feature id changes — without this it sticks on
-        // the first feature hovered. Also keys the substations-hover layer.
+          // Tile features carry no ids, and the Edges hover tooltip only
+          // re-renders when the feature id changes — without this it sticks on
+          // the first feature hovered. Also keys the substations-hover layer.
         promoteId: "slug",
         ...(substationsFilter ? { filter: substationsFilter as unknown } : {}),
         renderAs: "circle",
@@ -1059,9 +1055,9 @@ export function ExplorerMap({
         id: "ev-charging",
         tileset: getEvChargingTileUrl(),
         sourceLayer: "ev-charging",
-        // Tile features carry no ids, and the Edges hover tooltip only
-        // re-renders when the feature id changes — without this it sticks on
-        // the first feature hovered. Also keys the ev-charging-hover layer.
+          // Tile features carry no ids, and the Edges hover tooltip only
+          // re-renders when the feature id changes — without this it sticks on
+          // the first feature hovered. Also keys the ev-charging-hover layer.
         promoteId: "slug",
         ...(evChargingFilter ? { filter: evChargingFilter as unknown } : {}),
         renderAs: "circle",
@@ -1111,9 +1107,9 @@ export function ExplorerMap({
         id: "pricing-nodes",
         tileset: getPricingNodesTileUrl(),
         sourceLayer: "pricing-nodes",
-        // Tile features carry no ids, and the Edges hover tooltip only
-        // re-renders when the feature id changes — without this it sticks on
-        // the first feature hovered. Also keys the pricing-nodes-hover layer.
+          // Tile features carry no ids, and the Edges hover tooltip only
+          // re-renders when the feature id changes — without this it sticks on
+          // the first feature hovered. Also keys the pricing-nodes-hover layer.
         promoteId: "slug",
         ...(pricingNodesFilter ? { filter: pricingNodesFilter as unknown } : {}),
         renderAs: "circle",
@@ -1162,9 +1158,9 @@ export function ExplorerMap({
         id: "power-plants",
         tileset: getPowerPlantTileUrl(),
         sourceLayer: "power-plants",
-        // Tile features carry no ids, and the Edges hover tooltip only
-        // re-renders when the feature id changes — without this it sticks on
-        // the first feature hovered. Also keys the power-plants-hover layer.
+          // Tile features carry no ids, and the Edges hover tooltip only
+          // re-renders when the feature id changes — without this it sticks on
+          // the first feature hovered. Also keys the power-plants-hover layer.
         promoteId: "slug",
         ...(powerPlantsFilter ? { filter: powerPlantsFilter as unknown } : {}),
         renderAs: "circle",

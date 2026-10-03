@@ -9,18 +9,22 @@
  *   cd apps/commongrid
  *   yarn sync:cca
  *
- * Outputs:
- *   - public/data/territories/cca-{slug}.json — Individual GeoJSON files per CCA
- *   - data/regions.json — Updated with CCA region records
- *   - data/utilities.json — Updated with serviceTerritoryId references for matched CCAs
+ * Publishes to Postgres via applySync (source of truth):
+ *   - regions table (CCA_TERRITORY region records)
+ *   - territories table (CCA boundary geometry)
+ *   - utilities table (serviceTerritoryId reference updates only)
  */
 
-import * as fs from "node:fs";
-import type { Feature, FeatureCollection, Geometry } from "geojson";
-import { readJSON, slugify, TERRITORIES_DIR, writeJSON, writeTerritory } from "./lib";
+import type { Feature, Geometry } from "geojson";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { applySync, type SyncRecord } from "@/lib/sync/apply-sync";
+import { readJSON, slugify } from "./lib";
 
 const CCA_FEATURE_SERVER_URL =
   "https://services3.arcgis.com/bWPjFyq029ChCGur/arcgis/rest/services/ElectricLoadServingEntities_Other/FeatureServer/0/query";
+
+const CEC_EL_OTHER_SOURCE_ID = "cec-el-other";
+const RUNNER_ACTOR = "sync:cca";
 
 interface CCAProperties {
   OBJECTID: number;
@@ -93,7 +97,7 @@ async function fetchCCAFeatures(): Promise<Feature<Geometry, CCAProperties>[]> {
     throw new Error(`CEC ArcGIS request failed: ${response.status} ${response.statusText}`);
   }
 
-  const data = (await response.json()) as FeatureCollection<Geometry, CCAProperties>;
+  const data = (await response.json()) as { features?: Feature<Geometry, CCAProperties>[] };
   return data.features ?? [];
 }
 
@@ -154,10 +158,119 @@ function matchCCAToUtility(cecName: string, utilities: UtilityRecord[]): Utility
   return bestMatch;
 }
 
+function dedupeByEntityId(records: SyncRecord[]): SyncRecord[] {
+  const seen = new Set<string>();
+  return records.filter((r) => {
+    if (seen.has(r.entityId)) return false;
+    seen.add(r.entityId);
+    return true;
+  });
+}
+
+function toRegionSyncRecords(regions: RegionRecord[]): SyncRecord[] {
+  return dedupeByEntityId(
+    regions.map((r) => {
+      const asOf = r.sourceDate ? new Date(r.sourceDate) : null;
+      return {
+        sourceId: CEC_EL_OTHER_SOURCE_ID,
+        asOf: asOf && !Number.isNaN(asOf.getTime()) ? asOf : null,
+        entityId: r.id,
+        slug: r.slug,
+        fields: {
+          name: r.name,
+          type: r.type,
+          eiaId: r.eiaId,
+          state: r.state,
+          customers: r.customers,
+          source: r.source,
+          sourceDate: r.sourceDate,
+        },
+      };
+    })
+  );
+}
+
+function toTerritorySyncRecords(ccaFeatures: Feature<Geometry, CCAProperties>[]): SyncRecord[] {
+  const records: SyncRecord[] = [];
+
+  for (const feature of ccaFeatures) {
+    const props = feature.properties;
+    if (!props?.Utility) continue;
+
+    const cecName = props.Utility;
+    const slug = `cca-${ccaSlugify(cecName)}`;
+    const regionId = `region-${slug}`;
+
+    const geometry = feature.geometry;
+    if (geometry.type !== "Polygon" && geometry.type !== "MultiPolygon") {
+      console.warn(`  Skipping non-polygon CCA territory: ${slug}`);
+      continue;
+    }
+
+    records.push({
+      entityId: `territory-${slug}`,
+      sourceId: CEC_EL_OTHER_SOURCE_ID,
+      asOf: null,
+      fields: {
+        regionId,
+        source: "CEC Electric Load Serving Entities (Other)",
+        sourceUrl: CCA_FEATURE_SERVER_URL,
+      },
+      geography: geometry,
+    });
+  }
+
+  return dedupeByEntityId(records);
+}
+
+function toUtilitySyncRecords(
+  utilities: UtilityRecord[],
+  ccaFeatures: Feature<Geometry, CCAProperties>[],
+  existingCCARegionIds: Set<string>
+): SyncRecord[] {
+  const matched = new Map<string, string>();
+
+  for (const feature of ccaFeatures) {
+    const props = feature.properties;
+    if (!props?.Utility) continue;
+
+    const cecName = props.Utility;
+    const utility = matchCCAToUtility(cecName, utilities);
+    if (!utility) continue;
+
+    const slug = `cca-${ccaSlugify(cecName)}`;
+    const regionId = `region-${slug}`;
+    matched.set(utility.id, regionId);
+  }
+
+  const records: SyncRecord[] = [];
+  for (const utility of utilities) {
+    const originalServiceTerritoryId = utility.serviceTerritoryId;
+    const newServiceTerritoryId = matched.get(utility.id) ?? null;
+
+    // Preserve current behavior: only touch utilities whose CCA reference
+    // changed. A previously matched CCA that no longer matches is cleared;
+    // non-CCA serviceTerritoryIds are left untouched.
+    const wasCCA = originalServiceTerritoryId !== null && existingCCARegionIds.has(originalServiceTerritoryId);
+    if (!wasCCA && newServiceTerritoryId === null) continue;
+    if (originalServiceTerritoryId === newServiceTerritoryId) continue;
+
+    records.push({
+      sourceId: CEC_EL_OTHER_SOURCE_ID,
+      asOf: null,
+      entityId: utility.id,
+      slug: utility.slug,
+      fields: {
+        serviceTerritoryId: newServiceTerritoryId,
+      },
+    });
+  }
+
+  return dedupeByEntityId(records);
+}
+
 async function main() {
   console.log("Syncing CCA territories from CEC ArcGIS\n");
-
-  fs.mkdirSync(TERRITORIES_DIR, { recursive: true });
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -170,16 +283,9 @@ async function main() {
   const utilities: UtilityRecord[] = readJSON("utilities.json");
   const regions: RegionRecord[] = readJSON("regions.json");
 
-  // Remove any existing CCA regions (for idempotency)
+  // Track existing CCA region ids so we can clear stale references without
+  // touching non-CCA serviceTerritoryIds.
   const existingCCARegionIds = new Set(regions.filter((r) => r.type === "CCA_TERRITORY").map((r) => r.id));
-  const filteredRegions = regions.filter((r) => r.type !== "CCA_TERRITORY");
-
-  // Clear existing CCA serviceTerritoryIds
-  for (const utility of utilities) {
-    if (utility.serviceTerritoryId && existingCCARegionIds.has(utility.serviceTerritoryId)) {
-      utility.serviceTerritoryId = null;
-    }
-  }
 
   // ── 3. Process each CCA feature ────────────────────────────────────
   console.log("2. Matching CCA territories to utilities...");
@@ -211,28 +317,7 @@ async function main() {
       sourceDate: today,
     });
 
-    // Write GeoJSON file
-    const geoJson: FeatureCollection = {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          properties: {
-            id: regionId,
-            name: displayName,
-            acronym: props.Acronym,
-            eiaId: utility?.eiaId ?? null,
-          },
-          geometry: feature.geometry,
-        },
-      ],
-    };
-
-    writeTerritory(`${slug}.json`, geoJson);
-
-    // Link utility to region
     if (utility) {
-      utility.serviceTerritoryId = regionId;
       matched++;
       console.log(`  ✓ ${cecName} → ${utility.name} (EIA ${utility.eiaId})`);
     } else {
@@ -241,21 +326,69 @@ async function main() {
     }
   }
 
-  // ── 4. Write updated data ──────────────────────────────────────────
-  const allRegions = [...filteredRegions, ...newRegions];
-  allRegions.sort((a, b) => a.name.localeCompare(b.name));
-  writeJSON("regions.json", allRegions);
-  console.log(`  ${allRegions.length} regions (+${newRegions.length} CCA)`);
+  // ── 4. Publish to Postgres ─────────────────────────────────────────
+  console.log("\n3. Publishing to Postgres via applySync...");
 
-  writeJSON("utilities.json", utilities);
-  console.log(`  Updated utilities — ${matched} CCA territories linked`);
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required — the CCA sync publishes directly to Postgres");
+  }
+
+  const regionRecords = toRegionSyncRecords(newRegions);
+  const territoryRecords = toTerritorySyncRecords(ccaFeatures);
+  const utilityRecords = toUtilitySyncRecords(utilities, ccaFeatures, existingCCARegionIds);
+
+  const db = getPooledDb();
+  const reports = await db.transaction(async (tx) => {
+    // Order matters for FKs: regions → utilities → territories
+    const regionReport = await applySync(regionRecords, {
+      entityType: "region",
+      initiatedBy: RUNNER_ACTOR,
+      batchTitle: "CEC Electric Load Serving Entities — CCA region sync",
+      tx,
+    });
+
+    const utilityReport = await applySync(utilityRecords, {
+      entityType: "utility",
+      initiatedBy: RUNNER_ACTOR,
+      batchTitle: "CEC Electric Load Serving Entities — CCA utility reference sync",
+      tx,
+    });
+
+    const territoryReport = await applySync(territoryRecords, {
+      entityType: "territory",
+      initiatedBy: RUNNER_ACTOR,
+      batchTitle: "CEC Electric Load Serving Entities — CCA territory sync",
+      tx,
+    });
+
+    return { regionReport, utilityReport, territoryReport };
+  });
+
+  const totalCreated = reports.regionReport.created + reports.utilityReport.created + reports.territoryReport.created;
+  const totalUpdated = reports.regionReport.updated + reports.utilityReport.updated + reports.territoryReport.updated;
+  const totalUnchanged =
+    reports.regionReport.unchanged + reports.utilityReport.unchanged + reports.territoryReport.unchanged;
+  const totalDeferrals =
+    reports.regionReport.deferrals.length +
+    reports.utilityReport.deferrals.length +
+    reports.territoryReport.deferrals.length;
+
+  console.log("  Registry publication complete:");
+  console.log(`    Created: ${totalCreated.toLocaleString()}`);
+  console.log(`    Updated: ${totalUpdated.toLocaleString()}`);
+  console.log(`    Unchanged: ${totalUnchanged.toLocaleString()}`);
+  if (totalDeferrals > 0) {
+    console.log(`    Deferrals (human-edited fields preserved): ${totalDeferrals.toLocaleString()}`);
+  }
 
   // ── Summary ────────────────────────────────────────────────────────
   console.log("\nSync complete:");
   console.log(`  CCA territories fetched: ${ccaFeatures.length}`);
   console.log(`  Matched to utilities: ${matched}`);
   console.log(`  Unmatched: ${unmatched}`);
-  console.log(`  Total regions: ${allRegions.length}`);
+  console.log(`  Region records applied: ${regionRecords.length}`);
+  console.log(`  Territory records applied: ${territoryRecords.length}`);
+  console.log(`  Utility reference updates applied: ${utilityRecords.length}`);
 }
 
 main().catch((err) => {

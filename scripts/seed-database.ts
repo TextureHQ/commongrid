@@ -24,15 +24,11 @@ import { drizzle } from "drizzle-orm/neon-serverless";
 import {
   balancingAuthorities,
   entityVersions,
-  evStations,
   isos,
-  powerPlants,
   pricingNodes,
   programs,
   regions,
   rtos,
-  substations,
-  transmissionLines,
   utilities,
 } from "../lib/db/schema";
 
@@ -293,107 +289,34 @@ async function seedPrograms(db: DrizzleDb): Promise<number> {
   return inserted;
 }
 
-async function seedPowerPlants(db: DrizzleDb): Promise<number> {
-  const data = loadJson<Array<Record<string, unknown>>>("power-plants.json");
-  let inserted = 0;
-
-  for (const batch of chunk(data, BATCH_SIZE)) {
-    const rows = batch.map((r) => ({
-      id: r.id as string,
-      slug: r.slug as string,
-      name: r.name as string,
-      plantCode: r.plantCode as string,
-      utilityId: (r.utilityId as string) ?? null,
-      utilityName: r.utilityName as string,
-      balancingAuthorityId: (r.balancingAuthorityId as string) ?? null,
-      baCode: (r.baCode as string) ?? null,
-      state: r.state as string,
-      county: (r.county as string) ?? null,
-      latitude: r.latitude as number,
-      longitude: r.longitude as number,
-      nercRegion: (r.nercRegion as string) ?? null,
-      sector: r.sector as string,
-      primaryFuel: (r.primaryFuel as string) ?? null,
-      fuelCategory: r.fuelCategory as string,
-      technologies: r.technologies ?? [],
-      energySources: r.energySources ?? [],
-      totalCapacityMw: r.totalCapacityMw as number,
-      generatorCount: r.generatorCount as number,
-      operatingYear: (r.operatingYear as number) ?? null,
-      gridVoltageKv: (r.gridVoltageKv as number) ?? null,
-      status: r.status as string,
-      proposedCapacityMw: (r.proposedCapacityMw as number) ?? null,
-      proposedOnlineYear: (r.proposedOnlineYear as number) ?? null,
-    }));
-
-    await db.insert(powerPlants).values(rows).onConflictDoNothing();
-    inserted += batch.length;
-  }
-
-  return inserted;
+async function seedPowerPlants(_db: DrizzleDb): Promise<number> {
+  // power_plants is no longer seeded from a committed JSON file. It is owned
+  // by the `sync:eia-860-annual` job, which publishes EIA-860 data to Postgres
+  // via applySync (CG-329). Keeping this function as a no-op preserves the
+  // seed-script structure and validation expectations while avoiding a
+  // ~15k-record static import.
+  console.log("  ℹ️  power_plants are populated by the sync:eia-860 job; skipping JSON seed");
+  return 0;
 }
 
-async function seedEvStations(db: DrizzleDb): Promise<number> {
-  const data = loadJson<Array<Record<string, unknown>>>("ev-charging.json");
-  let inserted = 0;
-
-  for (const batch of chunk(data, BATCH_SIZE)) {
-    const rows = batch.map((r) => ({
-      id: r.id as string,
-      slug: r.slug as string,
-      stationName: r.stationName as string,
-      streetAddress: r.streetAddress as string,
-      city: r.city as string,
-      state: r.state as string,
-      zip: r.zip as string,
-      latitude: r.latitude as number,
-      longitude: r.longitude as number,
-      evNetwork: (r.evNetwork as string) ?? null,
-      evLevel1EvseNum: (r.evLevel1EvseNum as number) ?? 0,
-      evLevel2EvseNum: (r.evLevel2EvseNum as number) ?? 0,
-      evDcFastNum: (r.evDcFastNum as number) ?? 0,
-      evConnectorTypes: r.evConnectorTypes ?? [],
-      accessCode: r.accessCode as string,
-      statusCode: r.statusCode as string,
-      openDate: (r.openDate as string) ?? null,
-      facilityType: (r.facilityType as string) ?? null,
-      ownerTypeCode: (r.ownerTypeCode as string) ?? null,
-      evPricing: (r.evPricing as string) ?? null,
-    }));
-
-    await db.insert(evStations).values(rows).onConflictDoNothing();
-    inserted += batch.length;
-  }
-
-  return inserted;
+async function seedEvStations(_db: DrizzleDb): Promise<number> {
+  // ev_stations is no longer seeded from a committed JSON file. It is owned
+  // by the `sync:ev-charging` job, which upserts directly from the DOE AFDC
+  // API into Postgres (CG-326). Keeping this function as a no-op preserves
+  // the seed-script structure and validation expectations while avoiding a
+  // ~90k-record live API call during every seed run.
+  console.log("  ℹ️  ev_stations are populated by the sync:ev-charging job; skipping JSON seed");
+  return 0;
 }
 
-async function seedTransmissionLines(db: DrizzleDb): Promise<number> {
-  const data = loadJson<Array<Record<string, unknown>>>("transmission-lines.json");
-  let inserted = 0;
-
-  for (const batch of chunk(data, BATCH_SIZE)) {
-    const rows = batch.map((r) => ({
-      id: r.id as string,
-      objectId: r.objectId as number,
-      type: r.type as string,
-      status: r.status as string,
-      owner: r.owner as string,
-      voltage: (r.voltage as number) ?? null,
-      voltClass: r.voltClass as string,
-      voltageClass: r.voltageClass as string,
-      sub1: r.sub1 as string,
-      sub2: r.sub2 as string,
-      lengthMiles: r.lengthMiles as number,
-      naicsCode: r.naicsCode as string,
-      source: (r.source as string) ?? "HIFLD",
-    }));
-
-    await db.insert(transmissionLines).values(rows).onConflictDoNothing();
-    inserted += batch.length;
-  }
-
-  return inserted;
+async function seedTransmissionLines(_db: DrizzleDb): Promise<number> {
+  // transmission_lines is no longer seeded from a committed JSON file. It is
+  // owned by the `sync:transmission-lines` job, which upserts metadata AND
+  // PostGIS geometry directly from HIFLD into Postgres (CG-328). Geometry is
+  // the single source of truth for tile generation, so there is no committed
+  // data/transmission-lines.json or .geojson to seed from.
+  console.log("  ℹ️  transmission_lines are populated by the sync:transmission-lines job; skipping JSON seed");
+  return 0;
 }
 
 async function seedPricingNodes(db: DrizzleDb): Promise<number> {
@@ -423,100 +346,14 @@ async function seedPricingNodes(db: DrizzleDb): Promise<number> {
   return inserted;
 }
 
-async function seedSubstations(db: DrizzleDb): Promise<number> {
-  const data = loadJson<Array<Record<string, unknown>>>("substations.json");
-  let inserted = 0;
-
-  // US states + DC + territories. The EIA/HIFLD feed includes a small number of
-  // cross-border rows (BC, SK, AB, etc.) — filter them out to stay scoped to US.
-  const US_STATES = new Set([
-    "AL",
-    "AK",
-    "AZ",
-    "AR",
-    "CA",
-    "CO",
-    "CT",
-    "DE",
-    "FL",
-    "GA",
-    "HI",
-    "ID",
-    "IL",
-    "IN",
-    "IA",
-    "KS",
-    "KY",
-    "LA",
-    "ME",
-    "MD",
-    "MA",
-    "MI",
-    "MN",
-    "MS",
-    "MO",
-    "MT",
-    "NE",
-    "NV",
-    "NH",
-    "NJ",
-    "NM",
-    "NY",
-    "NC",
-    "ND",
-    "OH",
-    "OK",
-    "OR",
-    "PA",
-    "RI",
-    "SC",
-    "SD",
-    "TN",
-    "TX",
-    "UT",
-    "VT",
-    "VA",
-    "WA",
-    "WV",
-    "WI",
-    "WY",
-    "DC",
-    "PR",
-    "GU",
-    "VI",
-    "AS",
-    "MP",
-  ]);
-
-  const usData = data.filter((r) => US_STATES.has(String(r.state ?? "").toUpperCase()));
-
-  for (const batch of chunk(usData, BATCH_SIZE)) {
-    const rows = batch.map((r) => ({
-      id: r.id as string,
-      slug: r.slug as string,
-      name: r.name as string,
-      ownerName: (r.ownerName as string) ?? null,
-      ownerUtilityId: null, // Not reconciled at sync time; future PR wires this up.
-      state: String(r.state as string).toUpperCase(),
-      county: (r.county as string) ?? null,
-      latitude: r.latitude as number,
-      longitude: r.longitude as number,
-      minVoltageKv: (r.minVoltageKv as number) ?? null,
-      maxVoltageKv: (r.maxVoltageKv as number) ?? null,
-      substationType: (r.substationType as string) ?? "unknown",
-      status: (r.status as string) ?? "unknown",
-      source: (r.source as string) ?? "manual",
-      sourceUrl: (r.sourceUrl as string) ?? null,
-      eiaId: (r.eiaId as string) ?? null,
-      osmId: (r.osmId as string) ?? null,
-      hifldLegacyId: (r.hifldLegacyId as string) ?? null,
-    }));
-
-    await db.insert(substations).values(rows).onConflictDoNothing();
-    inserted += batch.length;
-  }
-
-  return inserted;
+async function seedSubstations(_db: DrizzleDb): Promise<number> {
+  // substations is no longer seeded from a committed JSON file. It is owned
+  // by the `sync:substations` job, which upserts directly from OSM + optional
+  // EIA into Postgres (CG-327). Keeping this function as a no-op preserves
+  // the seed-script structure and validation expectations while avoiding a
+  // ~70k-record live Overpass crawl during every seed run.
+  console.log("  ℹ️  substations are populated by the sync:substations job; skipping JSON seed");
+  return 0;
 }
 
 async function seedTerritories(db: DrizzleDb): Promise<number> {
@@ -893,7 +730,6 @@ async function main(): Promise<void> {
     // --- Substations ---
     start = Date.now();
     const subCount = await seedSubstations(db);
-    expectedCounts.substations = subCount;
     console.log(`✅ substations: ${subCount}/${subCount} seeded (${elapsed(start)})`);
 
     // --- Territories ---
@@ -914,9 +750,9 @@ async function main(): Promise<void> {
       { type: "balancing_authority", file: "balancing-authorities.json" },
       { type: "utility", file: "utilities.json" },
       { type: "program", file: "programs.json" },
-      { type: "power_plant", file: "power-plants.json" },
-      { type: "ev_station", file: "ev-charging.json" },
-      { type: "transmission_line", file: "transmission-lines.json" },
+      // power_plant is sync-owned (CG-329) and no longer JSON-seeded, so it is
+      // excluded here. Version history for sync-owned entities is the applySync
+      // follow-up tracked in CG-279.
       { type: "pricing_node", file: "pricing-nodes.json" },
     ];
 

@@ -27,6 +27,9 @@ jobs:
               - 'scripts/lib.ts'
               - 'scripts/lib/**'
               - 'scripts/__tests__/state-boundaries-postgis.test.ts'
+              - 'scripts/__tests__/snapshot-postgis.test.ts'
+              - 'scripts/export-snapshot-layers.sh'
+              - 'scripts/validate-snapshot.mjs'
               - 'scripts/__tests__/sync-state-boundaries.test.ts'
               - 'scripts/__tests__/fixtures/**'
               - 'lib/sync/**'
@@ -89,6 +92,12 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Install snapshot SQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Verify snapshot exports against current PostGIS schema
+        env:
+          SNAPSHOT_TEST_DATABASE_URL: postgresql://postgres:boundary_test@localhost:5432/boundary_test
+        run: npx vitest run scripts/__tests__/snapshot-postgis.test.ts
       - name: Verify atomic boundary publication and spatial history
         env:
           STATE_BOUNDARIES_TEST_DATABASE_URL: postgresql://postgres:boundary_test@localhost:5432/boundary_test

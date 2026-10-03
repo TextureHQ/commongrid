@@ -3,22 +3,27 @@
  *
  * This script:
  * 1. Fetches CAISO pricing node names from OASIS ATL_PNODE
- * 2. Cross-references with EIA-860 power plant data for coordinates
+ * 2. Cross-references with EIA-860 power plant data from Postgres for coordinates
  * 3. Defines well-known trading hubs, load zones, and SUBLAPs for all 7 ISOs
- * 4. Outputs data/pricing-nodes.json
+ * 4. Publishes pricing nodes to Postgres via applySync (source of truth).
  *
  * Usage:
  *   cd commongrid
- *   npx tsx scripts/sync-pricing-nodes.ts
+ *   DATABASE_URL=postgres://... npx tsx scripts/sync-pricing-nodes.ts
  *
  * Data sources:
  *   - CAISO OASIS API (free, no key)
- *   - EIA-860 power plant data (already in data/power-plants.json)
+ *   - EIA-860 power plant data in Postgres (synchronized by scripts/sync-power-plants.ts)
  *   - Manually curated hub/zone/SUBLAP coordinates
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { isNull } from "drizzle-orm";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { powerPlants, pricingNodes } from "@/lib/db/schema";
+import { applySync } from "@/lib/sync/apply-sync";
+import { PRICING_NODE_ENTITY_TYPE, toSyncRecords } from "@/lib/sync/pricing-nodes";
 
 // ───── Types ────────────────────────────────────────────────────────────────
 
@@ -57,6 +62,29 @@ function slugify(str: string): string {
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+async function loadPowerPlants(): Promise<PowerPlant[]> {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required — pricing nodes read power-plant coordinates from Postgres");
+  }
+  const db = getPooledDb();
+  const rows = await db
+    .select({
+      id: powerPlants.id,
+      slug: powerPlants.slug,
+      name: powerPlants.name,
+      plantCode: powerPlants.plantCode,
+      state: powerPlants.state,
+      latitude: powerPlants.latitude,
+      longitude: powerPlants.longitude,
+      primaryFuel: powerPlants.primaryFuel,
+      totalCapacityMw: powerPlants.totalCapacityMw,
+      baCode: powerPlants.baCode,
+    })
+    .from(powerPlants)
+    .where(isNull(powerPlants.deletedAt));
+  return rows as PowerPlant[];
 }
 
 function buildSlug(name: string, iso: string, nodeType: string): string {
@@ -1372,9 +1400,7 @@ async function main() {
 
   // ── 1. Load power plant data ────────────────────────────────────────────
   console.log("1. Loading power plant data...");
-  const plantsPath = path.join(process.cwd(), "data", "power-plants.json");
-  const plantsRaw = fs.readFileSync(plantsPath, "utf-8");
-  const plants: PowerPlant[] = JSON.parse(plantsRaw);
+  const plants = await loadPowerPlants();
   console.log(`   Loaded ${plants.length} power plants`);
 
   // ── 2. Collect all curated nodes ────────────────────────────────────────
@@ -1478,13 +1504,50 @@ async function main() {
     console.log(`     ${type}: ${count}`);
   }
 
-  // ── 6. Write output ───────────────────────────────────────────────────
-  const outPath = path.join(process.cwd(), "data", "pricing-nodes.json");
-  fs.writeFileSync(outPath, JSON.stringify(finalNodes, null, 2));
-  console.log(`\n✅ Wrote ${finalNodes.length} pricing nodes → ${outPath}`);
+  // ── 6. Publish to Postgres ───────────────────────────────────────────
+  console.log("\n6. Publishing to Postgres...");
+
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required — pricing nodes publish directly to Postgres");
+  }
+
+  const db = getPooledDb();
+  const existingRows = await db.select({ id: pricingNodes.id }).from(pricingNodes);
+  const existingIds = new Set(existingRows.map((row) => row.id));
+
+  const asOf = new Date();
+  const records = toSyncRecords(finalNodes, existingIds, asOf);
+  const report = await applySync(records, {
+    entityType: PRICING_NODE_ENTITY_TYPE,
+    initiatedBy: "sync:pricing-nodes",
+    batchTitle: "Pricing nodes sync",
+    batchDescription: "Wholesale electricity pricing nodes across all 7 ISOs/RTOs",
+  });
+
+  console.log("  Registry publication complete:");
+  console.log(`    Batch id: ${report.batchId}`);
+  console.log(`    Created: ${report.created.toLocaleString()}`);
+  console.log(`    Updated: ${report.updated.toLocaleString()}`);
+  console.log(`    Unchanged: ${report.unchanged.toLocaleString()}`);
+  console.log(`    Fields written: ${report.fieldsWritten.toLocaleString()}`);
+
+  if (report.deferrals.length > 0) {
+    console.log(
+      `    ⚠️  Deferred ${report.deferrals.length.toLocaleString()} field(s) that a human last edited (policy B — not overwritten):`
+    );
+    const sample = report.deferrals.slice(0, 20);
+    for (const d of sample) {
+      console.log(
+        `      - ${d.entityId} field '${d.field}': kept ${JSON.stringify(d.keptValue)}, sync wanted ${JSON.stringify(d.skippedValue)}`
+      );
+    }
+    if (report.deferrals.length > sample.length) {
+      console.log(`      … and ${(report.deferrals.length - sample.length).toLocaleString()} more`);
+    }
+  }
 
   // ── 7. Update homepage count ──────────────────────────────────────────
-  // The homepage uses a hardcoded count to avoid importing large JSON
+  // The homepage uses a hardcoded count to avoid importing the full dataset.
   const homepagePath = path.join(process.cwd(), "app", "(shell)", "page.tsx");
   if (fs.existsSync(homepagePath)) {
     let homepage = fs.readFileSync(homepagePath, "utf-8");
@@ -1494,9 +1557,11 @@ async function main() {
     if (pattern.test(homepage)) {
       homepage = homepage.replace(pattern, replacement);
       fs.writeFileSync(homepagePath, homepage);
-      console.log(`   Updated homepage count → ${finalNodes.length}`);
+      console.log(`\n   Updated homepage count → ${finalNodes.length}`);
     }
   }
+
+  console.log(`\n✅ Published ${finalNodes.length} pricing nodes via applySync`);
 }
 
 main().catch((err) => {
