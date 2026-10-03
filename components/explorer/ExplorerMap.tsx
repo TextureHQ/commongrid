@@ -19,6 +19,7 @@ import {
 import { fetchBalancingAuthorityGeometry, fetchIsoGeometry, fetchTerritoryGeometry } from "@/lib/explorer/geometry";
 import { formatGridOperatorStates, gridOperatorKey } from "@/lib/explorer/grid-operators";
 import { buildHoverLayerConfigs, type HoverLayerConfig, hoverFilter } from "@/lib/explorer/map-hover-layers";
+import { collectProgramTerritorySlugs } from "@/lib/explorer/program-boundaries";
 import type { MapRegion } from "@/lib/explorer/region-navigation";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
 import { resolveColorMapping, resolveCSSColor } from "@/lib/resolve-css-colors";
@@ -363,14 +364,8 @@ function useProgramBoundaries(
         colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
         colorIdx++;
 
-        const territorySlugs: string[] = [];
-        for (const regionId of prog.regions) {
-          const region = regionById.get(regionId);
-          if (!region?.slug) continue;
-          if (uniqueTerritorySlugs.has(region.slug)) continue;
-          territorySlugs.push(region.slug);
-          uniqueTerritorySlugs.add(region.slug);
-        }
+        const territorySlugs = collectProgramTerritorySlugs(prog.regions, regionById);
+        for (const slug of territorySlugs) uniqueTerritorySlugs.add(slug);
 
         if (territorySlugs.length > 0) {
           programEntries.push({
@@ -951,10 +946,9 @@ export function ExplorerMap({
         id: "transmission-lines",
         tileset: getTransmissionTileUrl(),
         sourceLayer: "transmission-lines",
-        // Tile features carry no ids, and the Edges hover tooltip only re-renders
-        // when the feature id changes — without this it sticks on the first
-        // feature hovered. Also keys the
-        // transmission-lines-hover layer.
+        // Tile features carry no ids, and the Edges hover tooltip only
+        // re-renders when the feature id changes — without this it sticks on
+        // the first feature hovered. Also keys the transmission-lines-hover layer.
         promoteId: "id",
         ...(transmissionLinesFilter ? { filter: transmissionLinesFilter as unknown } : {}),
         renderAs: "line",
@@ -1001,10 +995,9 @@ export function ExplorerMap({
         id: "substations",
         tileset: getSubstationsTileUrl(),
         sourceLayer: "substations",
-        // Tile features carry no ids, and the Edges hover tooltip only re-renders
-        // when the feature id changes — without this it sticks on the first
-        // feature hovered. Also keys the
-        // substations-hover layer.
+        // Tile features carry no ids, and the Edges hover tooltip only
+        // re-renders when the feature id changes — without this it sticks on
+        // the first feature hovered. Also keys the transmission-lines-hover layer.
         promoteId: "slug",
         ...(substationsFilter ? { filter: substationsFilter as unknown } : {}),
         renderAs: "circle",
@@ -1055,10 +1048,9 @@ export function ExplorerMap({
         id: "ev-charging",
         tileset: getEvChargingTileUrl(),
         sourceLayer: "ev-charging",
-        // Tile features carry no ids, and the Edges hover tooltip only re-renders
-        // when the feature id changes — without this it sticks on the first
-        // feature hovered. Also keys the
-        // ev-charging-hover layer.
+        // Tile features carry no ids, and the Edges hover tooltip only
+        // re-renders when the feature id changes — without this it sticks on
+        // the first feature hovered. Also keys the transmission-lines-hover layer.
         promoteId: "slug",
         ...(evChargingFilter ? { filter: evChargingFilter as unknown } : {}),
         renderAs: "circle",
@@ -1108,10 +1100,9 @@ export function ExplorerMap({
         id: "pricing-nodes",
         tileset: getPricingNodesTileUrl(),
         sourceLayer: "pricing-nodes",
-        // Tile features carry no ids, and the Edges hover tooltip only re-renders
-        // when the feature id changes — without this it sticks on the first
-        // feature hovered. Also keys the
-        // pricing-nodes-hover layer.
+        // Tile features carry no ids, and the Edges hover tooltip only
+        // re-renders when the feature id changes — without this it sticks on
+        // the first feature hovered. Also keys the transmission-lines-hover layer.
         promoteId: "slug",
         ...(pricingNodesFilter ? { filter: pricingNodesFilter as unknown } : {}),
         renderAs: "circle",
@@ -1160,9 +1151,9 @@ export function ExplorerMap({
         id: "power-plants",
         tileset: getPowerPlantTileUrl(),
         sourceLayer: "power-plants",
-        // Tile features carry no ids, and the Edges hover tooltip only re-renders
-        // when the feature id changes — without this it sticks on the first
-        // feature hovered. Also keys the power-plants-hover layer.
+        // Tile features carry no ids, and the Edges hover tooltip only
+        // re-renders when the feature id changes — without this it sticks on
+        // the first feature hovered. Also keys the transmission-lines-hover layer.
         promoteId: "slug",
         ...(powerPlantsFilter ? { filter: powerPlantsFilter as unknown } : {}),
         renderAs: "circle",
