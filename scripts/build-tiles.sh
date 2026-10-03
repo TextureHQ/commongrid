@@ -19,20 +19,20 @@ node "$SCRIPT_DIR/prepare-power-plants-geojson.mjs"
 
 echo ""
 echo "=== Step 3: Generate territory tiles with tippecanoe ==="
-tippecanoe \
-  --output="$OUT_DIR/territories.pmtiles" \
-  --force \
-  --name="CommonGrid Territories" \
-  --layer=territories \
-  --minimum-zoom=0 \
-  --maximum-zoom=12 \
-  --simplification=10 \
-  --simplify-only-low-zooms \
-  --detect-shared-borders \
-  --coalesce-densest-as-needed \
-  --extend-zooms-if-still-dropping \
-  --no-tile-size-limit \
-  "$ROOT_DIR/.tmp-territories.geojson"
+if [ -f "$ROOT_DIR/.tmp-territories.geojson" ]; then
+  tippecanoe \
+    --output="$OUT_DIR/territories.pmtiles" \
+    --force \
+    --name="CommonGrid Retail Territories" \
+    --layer=territories \
+    --minimum-zoom=0 \
+    --maximum-zoom=12 \
+    --no-tiny-polygon-reduction \
+    --no-simplification-of-shared-nodes \
+    "$ROOT_DIR/.tmp-territories.geojson"
+else
+  echo "No territory GeoJSON found — skipping tile generation."
+fi
 
 echo ""
 echo "=== Step 4: Generate power plant tiles with tippecanoe ==="
