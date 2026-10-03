@@ -15,7 +15,7 @@
  *   • Forgetting to scope queries to `deleted_at IS NULL`.
  *   • Forgetting to parameterize the user-supplied query value.
  *   • Regressing the entity-type list — `/search` must fan out to all
- *     9 supported entity types.
+ *     13 supported entity types.
  */
 
 import type { SQL } from "drizzle-orm";
@@ -28,6 +28,34 @@ interface CapturedQuery {
 }
 const captured: CapturedQuery[] = [];
 let failNextExecute = false;
+
+const loadRateStructuresMock = vi.fn(async () => {
+  if (failNextExecute) {
+    throw new Error("simulated rate loader failure");
+  }
+
+  return {
+    items: [
+      {
+        slug: "rate-structure-1",
+        name: "Rate Structure 1",
+      },
+    ],
+  };
+});
+
+const loadSubstationsMock = vi.fn(async () => {
+  if (failNextExecute) {
+    throw new Error("simulated substation loader failure");
+  }
+
+  return [
+    {
+      slug: "substation-1",
+      name: "Substation 1",
+    },
+  ];
+});
 
 const dialect = new PgDialect();
 
@@ -47,23 +75,35 @@ vi.mock("@/lib/db/client", () => {
   };
 });
 
+vi.mock("@/lib/data/rate-structures", () => ({
+  loadRateStructures: loadRateStructuresMock,
+}));
+
+vi.mock("@/lib/data/substations-api", () => ({
+  loadSubstations: loadSubstationsMock,
+}));
+
 describe("search", () => {
   beforeEach(() => {
     captured.length = 0;
     failNextExecute = false;
+    loadRateStructuresMock.mockClear();
+    loadSubstationsMock.mockClear();
   });
 
   describe("searchAll", () => {
-    it("fans out to all 9 entity types by default", async () => {
+    it("fans out to all 13 entity types by default", async () => {
       const { searchAll, ALL_ENTITY_TYPES } = await import("@/lib/data/search");
       const result = await searchAll("tri-state");
 
-      expect(ALL_ENTITY_TYPES).toHaveLength(9);
+      expect(ALL_ENTITY_TYPES).toHaveLength(13);
       expect(result.source).toBe("db");
-      expect(result.results.size).toBe(9);
+      expect(result.results.size).toBe(13);
 
-      // One SQL statement per entity type.
-      expect(captured).toHaveLength(9);
+      // 11 DB-backed entity types + 2 dedicated loader-backed types.
+      expect(captured).toHaveLength(11);
+      expect(loadRateStructuresMock).toHaveBeenCalledTimes(1);
+      expect(loadSubstationsMock).toHaveBeenCalledTimes(1);
     });
 
     it("respects the `types` filter (subset of entity types)", async () => {
@@ -84,7 +124,7 @@ describe("search", () => {
         types: ["bogus-type", "also-bogus"],
       });
 
-      expect(result.results.size).toBe(9);
+      expect(result.results.size).toBe(13);
     });
 
     it("degrades gracefully: per-type DB failures return [] (not throw)", async () => {
@@ -92,7 +132,7 @@ describe("search", () => {
       const { searchAll } = await import("@/lib/data/search");
       const result = await searchAll("tri-state");
 
-      expect(result.results.size).toBe(9);
+      expect(result.results.size).toBe(13);
       for (const rows of result.results.values()) {
         expect(rows).toEqual([]);
       }
@@ -134,6 +174,40 @@ describe("search", () => {
       expect(sqlText).toMatch(/deleted_at IS NULL/);
     });
 
+    it("routes rate structures through the dedicated loader", async () => {
+      const { searchAll } = await import("@/lib/data/search");
+      const result = await searchAll("rate", { types: ["rates"] });
+
+      expect(loadRateStructuresMock).toHaveBeenCalledTimes(1);
+      expect(loadRateStructuresMock).toHaveBeenCalledWith({ search: "rate", limit: 5 });
+      expect(result.results.get("rate")).toEqual([
+        {
+          slug: "rate-structure-1",
+          name: "Rate Structure 1",
+          entityType: "rate",
+          matchField: "name",
+        },
+      ]);
+      expect(captured).toHaveLength(0);
+    });
+
+    it("routes substations through the dedicated loader", async () => {
+      const { searchAll } = await import("@/lib/data/search");
+      const result = await searchAll("station", { types: ["substations"] });
+
+      expect(loadSubstationsMock).toHaveBeenCalledTimes(1);
+      expect(loadSubstationsMock).toHaveBeenCalledWith({ filters: { search: "station" }, limit: 5 });
+      expect(result.results.get("substation")).toEqual([
+        {
+          slug: "substation-1",
+          name: "Substation 1",
+          entityType: "substation",
+          matchField: "name",
+        },
+      ]);
+      expect(captured).toHaveLength(0);
+    });
+
     it("parameterizes user input (no SQL injection via query string)", async () => {
       const { searchAll } = await import("@/lib/data/search");
       const nastyQuery = "tri-state'; DROP TABLE utilities; --";
@@ -167,6 +241,8 @@ describe("search", () => {
       expect(tableNames.some((s) => /from\s+isos/i.test(s))).toBe(true);
       expect(tableNames.some((s) => /from\s+rtos/i.test(s))).toBe(true);
       expect(tableNames.some((s) => /from\s+balancing_authorities/i.test(s))).toBe(true);
+      expect(tableNames.some((s) => /from\s+regions/i.test(s))).toBe(true);
+      expect(tableNames.some((s) => /from\s+territories/i.test(s))).toBe(true);
     });
   });
 
@@ -194,6 +270,10 @@ describe("search", () => {
       expect(ENTITY_CONFIG.iso.hasSearchVector).toBe(false);
       expect(ENTITY_CONFIG.rto.hasSearchVector).toBe(false);
       expect(ENTITY_CONFIG["balancing-authority"].hasSearchVector).toBe(false);
+      expect(ENTITY_CONFIG.rate.hasSearchVector).toBe(false);
+      expect(ENTITY_CONFIG.substation.hasSearchVector).toBe(false);
+      expect(ENTITY_CONFIG.region.hasSearchVector).toBe(false);
+      expect(ENTITY_CONFIG.territory.hasSearchVector).toBe(false);
     });
   });
 });
