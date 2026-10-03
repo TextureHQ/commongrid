@@ -34,7 +34,10 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isNull } from "drizzle-orm";
 import { IOU_DR_REGISTRY, type RegistryEntry } from "@/data/iou-dr-programs/registry";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { utilities } from "@/lib/db/schema";
 import { applySync } from "@/lib/sync/apply-sync";
 import {
   IOU_DR_SYNC_ACTOR,
@@ -49,7 +52,6 @@ const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 const DATA_DIR = path.join(REPO_ROOT, "data");
 const OUT_DIR = path.join(DATA_DIR, "iou-dr-programs");
 const MANIFEST_PATH = path.join(OUT_DIR, "manifest.json");
-const UTILITIES_PATH = path.join(DATA_DIR, "utilities.json");
 
 /** Only these utility columns feed the resolver; keep the shape narrow + typed. */
 interface UtilityRecord extends ResolverUtility {
@@ -190,9 +192,29 @@ export function toResolverUtilities(raw: unknown): UtilityRecord[] {
 // I/O
 // ---------------------------------------------------------------------------
 
-function loadUtilities(): UtilityRecord[] {
-  const raw = JSON.parse(fs.readFileSync(UTILITIES_PATH, "utf-8"));
-  return toResolverUtilities(raw);
+/**
+ * Load the resolver-relevant utility columns from Postgres.
+ *
+ * Previously read the committed data/utilities.json. Postgres is now the source
+ * of truth for utilities (CG-329), so the resolver reads the live rows rather
+ * than a static artifact. This removes the last scheduled-sync dependency on
+ * committed data/*.json (CG-348), unblocking the CG-332 final sweep.
+ */
+async function loadUtilities(): Promise<UtilityRecord[]> {
+  const db = getPooledDb();
+  const rows = await db
+    .select({
+      id: utilities.id,
+      slug: utilities.slug,
+      name: utilities.name,
+      eiaId: utilities.eiaId,
+      baCode: utilities.baCode,
+      state: utilities.jurisdiction,
+    })
+    .from(utilities)
+    .where(isNull(utilities.deletedAt));
+  // Reuse the pure mapper so DB and fixture paths share identical normalization.
+  return toResolverUtilities(rows);
 }
 
 /**
@@ -286,8 +308,8 @@ async function main() {
   console.log("Syncing curated IOU demand-response programs\n");
   console.log(`  Registry entries: ${IOU_DR_REGISTRY.length}`);
 
-  const utilities = loadUtilities();
-  console.log(`  Utilities loaded: ${utilities.length.toLocaleString()}`);
+  const resolverUtilities = await loadUtilities();
+  console.log(`  Utilities loaded: ${resolverUtilities.length.toLocaleString()}`);
 
   // URL health + optional description enrichment. Only fetch a page when we'd
   // actually use the description (entry has none) or to prove the link is live.
@@ -311,7 +333,7 @@ async function main() {
     registryEntryToScraped(entry, descriptions.get(`${entry.name}|${entry.programWebsite}`))
   );
 
-  const { records, unresolved, methodCounts } = toProgramSyncRecords(scraped, utilities);
+  const { records, unresolved, methodCounts } = toProgramSyncRecords(scraped, resolverUtilities);
 
   console.log("\n  Mapping result:");
   console.log(`    Mapped (resolved to a utility): ${records.length}`);
