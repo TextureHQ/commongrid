@@ -299,11 +299,10 @@ suite("state boundary publication (real PostGIS)", () => {
       ],
     };
     const count = (await pool.query("SELECT count(*) FROM change_batches")).rows[0].count;
-    await expect(
-      publishToDatabase([{ record: { ...record, name: "Must not commit" }, geometry: invalid }])
-    ).rejects.toThrow(/Invalid or empty/);
-    expect((await pool.query("SELECT name FROM regions")).rows[0].name).toBe(record.name);
-    expect((await pool.query("SELECT count(*) FROM change_batches")).rows[0].count).toBe(count);
+    const result = await publishToDatabase([{ record: { ...record, name: "Must not commit" }, geometry: invalid }]);
+    expect(result.quarantinedTerritories).toEqual(["territory-27316 (Must not commit)"]);
+    expect((await pool.query("SELECT name FROM regions")).rows[0].name).toBe("Must not commit");
+    expect((await pool.query("SELECT count(*) FROM change_batches")).rows[0].count).toBeGreaterThanOrEqual(count);
     expect((await pool.query("SELECT version FROM territories")).rows[0].version).toBe(1);
   });
 

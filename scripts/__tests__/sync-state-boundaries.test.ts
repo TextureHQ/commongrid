@@ -8,11 +8,11 @@ import {
   buildRegionSyncRecords,
   buildRegionsFromFeatures,
   buildTerritorySyncRecords,
-  quarantineInvalidTerritoryEntries,
   type Fetcher,
   fetchJsonWithFallback,
   normalizeUtilityName,
   parseStateBoundaryArgs,
+  quarantineInvalidTerritoryEntries,
   type SourceConfig,
   STATE_BOUNDARY_SOURCES,
   selectBoundarySources,
@@ -345,7 +345,10 @@ describe("Vermont PSD", () => {
         makeFeature({ COMPANYNAM, OBJECTID: 16, Customer_Num: 3386 })
       )
     );
-    const record = buildRegionSyncRecords(entries).find((r) => r.entityId === "region-st-27316")!;
+    const record = buildRegionSyncRecords(entries).find((r) => r.entityId === "region-st-27316");
+    if (!record) {
+      throw new Error("expected region-st-27316 sync record");
+    }
     expect(record.entityId).toBe("region-st-27316");
     expect(record.sourceId).toBe("vt-psd");
     expect(record.asOf).toBeNull();
@@ -356,8 +359,14 @@ describe("Vermont PSD", () => {
 
 describe("territory sync records", () => {
   it("carries full polygon and provenance through the versioned publisher", () => {
-    const config = STATE_BOUNDARY_SOURCES.find((s) => s.state === "VT")!;
-    const record = buildRegionRecord(config, makeFeature({ COMPANYNAM: "Village of Stowe Electric Dept." }), 0)!;
+    const config = STATE_BOUNDARY_SOURCES.find((s) => s.state === "VT");
+    if (!config) {
+      throw new Error("expected VT source");
+    }
+    const record = buildRegionRecord(config, makeFeature({ COMPANYNAM: "Village of Stowe Electric Dept." }), 0);
+    if (!record) {
+      throw new Error("expected VT territory record");
+    }
     const [territory] = buildTerritorySyncRecords([{ record, geometry: mockPolygon }]);
     expect(territory).toMatchObject({
       entityId: "territory-27316",
