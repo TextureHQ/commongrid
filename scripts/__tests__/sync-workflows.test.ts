@@ -163,6 +163,13 @@ describe("build-tiles.sh", () => {
     const guardIndex = code.indexOf('.tmp-power-plants.geojson" ]');
     expect(guardIndex, "expected an `if [ -f ...tmp-power-plants.geojson ]` guard").toBeGreaterThan(-1);
   });
+
+  it("treats empty transmission-line GeoJSON as an optional layer", () => {
+    const script = path.join(REPO_ROOT, "scripts/prepare-transmission-lines-geojson.mjs");
+    const text = fs.readFileSync(script, "utf-8");
+    expect(text).toMatch(/No transmission line features found — skipping transmission line GeoJSON/);
+    expect(text).toMatch(/process\.exit\(0\)/);
+  });
 });
 
 describe("sync-monthly.yml", () => {
