@@ -286,11 +286,16 @@ function useProgramBoundaries(
         colorIdx++;
 
         const territorySlugs: string[] = [];
+        const seenInProgram = new Set<string>();
         for (const regionId of prog.regions) {
           const region = regionById.get(regionId);
           if (!region?.slug) continue;
-          if (uniqueTerritorySlugs.has(region.slug)) continue;
+          // Dedup within this program only; a territory shared across programs
+          // must still be stamped under each program that references it.
+          if (seenInProgram.has(region.slug)) continue;
+          seenInProgram.add(region.slug);
           territorySlugs.push(region.slug);
+          // Global set is used solely to fetch each territory once.
           uniqueTerritorySlugs.add(region.slug);
         }
 
