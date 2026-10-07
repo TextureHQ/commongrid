@@ -103,8 +103,17 @@ suite("snapshot SQL against current schema (PostGIS)", () => {
     }
     execFileSync("bash", ["scripts/export-snapshot-layers.sh"], { env });
     const read = (name: string) => JSON.parse(gunzipSync(readFileSync(join(directory, name))).toString());
-    for (const layer of spatialLayers) expect(validateGeoJSON(read(`${layer}.geojson.gz`))).toBe(1);
-    expect(read("transmission-lines.geojson.gz").features[0].geometry.type).toBe("MultiLineString");
+    for (const layer of spatialLayers) {
+      expect(validateGeoJSON(read(`${layer}.geojson.gz`), { allowNullGeometry: layer === "transmission-lines" })).toBe(
+        layer === "transmission-lines" ? 2 : 1
+      );
+    }
+    expect(
+      read("transmission-lines.geojson.gz").features.find((f: { id: string }) => f.id === "line").geometry.type
+    ).toBe("MultiLineString");
+    expect(
+      read("transmission-lines.geojson.gz").features.find((f: { id: string }) => f.id === "missing-geometry").geometry
+    ).toBeNull();
     expect(read("utilities.geojson.gz").features[0].properties).toMatchObject({
       region_id: "region",
       geometry_source: "fixture",

@@ -21,16 +21,7 @@ import { Pool } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 
-import {
-  balancingAuthorities,
-  entityVersions,
-  isos,
-  pricingNodes,
-  programs,
-  regions,
-  rtos,
-  utilities,
-} from "../lib/db/schema";
+import { balancingAuthorities, entityVersions, isos, pricingNodes, regions, rtos, utilities } from "../lib/db/schema";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -248,45 +239,11 @@ async function seedUtilities(
   return { inserted, warnings };
 }
 
-async function seedPrograms(db: DrizzleDb): Promise<number> {
-  const data = loadJson<Array<Record<string, unknown>>>("programs.json");
-  let inserted = 0;
-
-  for (const batch of chunk(data, BATCH_SIZE)) {
-    const rows = batch.map((r) => ({
-      id: r.id as string,
-      slug: r.slug as string,
-      name: r.name as string,
-      description: (r.description as string) ?? null,
-      organizations: r.organizations ?? [],
-      assetTypes: r.assetTypes ?? [],
-      deviceTypes: r.deviceTypes ?? [],
-      marketSegments: r.marketSegments ?? [],
-      participationModels: r.participationModels ?? [],
-      incentiveStructures: r.incentiveStructures ?? [],
-      gridServices: r.gridServices ?? [],
-      regions: r.regions ?? [],
-      compensationTiers: r.compensationTiers ?? [],
-      capacityTarget: (r.capacityTarget as number) ?? null,
-      maxEnrollments: (r.maxEnrollments as number) ?? null,
-      programSeason: r.programSeason ?? null,
-      launchedAt: (r.launchedAt as string) ?? null,
-      enrollmentOpens: (r.enrollmentOpens as string) ?? null,
-      enrollmentCloses: (r.enrollmentCloses as string) ?? null,
-      endsAt: (r.endsAt as string) ?? null,
-      status: r.status as string,
-      programWebsite: (r.programWebsite as string) ?? null,
-      faqUrl: (r.faqUrl as string) ?? null,
-      termsUrl: (r.termsUrl as string) ?? null,
-      contactUrl: (r.contactUrl as string) ?? null,
-      variants: r.variants ?? [],
-    }));
-
-    await db.insert(programs).values(rows).onConflictDoNothing();
-    inserted += batch.length;
-  }
-
-  return inserted;
+async function seedPrograms(_db: DrizzleDb): Promise<number> {
+  // Postgres is authoritative. Restore the public SQL snapshot for a full local
+  // dataset; a stale JSON seed must never masquerade as the current catalog.
+  console.log("  ℹ️  programs are restored from public snapshots; skipping legacy JSON seed");
+  return 0;
 }
 
 async function seedPowerPlants(_db: DrizzleDb): Promise<number> {
@@ -749,7 +706,6 @@ async function main(): Promise<void> {
       { type: "rto", file: "rtos.json" },
       { type: "balancing_authority", file: "balancing-authorities.json" },
       { type: "utility", file: "utilities.json" },
-      { type: "program", file: "programs.json" },
       // power_plant is sync-owned (CG-329) and no longer JSON-seeded, so it is
       // excluded here. Version history for sync-owned entities is the applySync
       // follow-up tracked in CG-279.
