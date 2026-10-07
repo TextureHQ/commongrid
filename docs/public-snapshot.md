@@ -93,3 +93,17 @@ JSON projections explicitly exclude moderation identities and internal audit dat
 
 The compilation's ODbL license does not replace upstream attribution obligations.
 Retain source fields and consult the linked source terms when redistributing.
+
+
+## Coverage and program freshness
+
+`MANIFEST.md` records total and located feature counts for every spatial file.
+Transmission exports retain metadata-only records with RFC 7946 `geometry: null`
+rather than failing the entire snapshot when the geometry backfill is incomplete.
+This is not a claim that transmission geometry coverage is complete. All non-null
+geometry remains strictly validated. Empty collections still fail validation.
+
+Programs are exported directly from Postgres (including source URLs) in the same
+snapshot. The obsolete repository program seed and one-off importer are retired.
+Use the public API for live counts and the release date for download freshness;
+weekly downloads may legitimately lag the API between successful runs.
