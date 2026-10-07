@@ -42,7 +42,7 @@ function dbRowToTransmissionLine(row: Record<string, unknown>): TransmissionLine
     voltageClass: row.voltageClass as VoltageClass,
     sub1: row.sub1 as string,
     sub2: row.sub2 as string,
-    lengthMiles: row.lengthMiles as number,
+    lengthMiles: (row.lengthMiles as number | null) ?? null,
     naicsCode: row.naicsCode as string,
     source: row.source as string,
   };

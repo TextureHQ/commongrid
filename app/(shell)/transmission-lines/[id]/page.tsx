@@ -59,7 +59,7 @@ async function TransmissionLineDetailContent({ id }: { id: string }) {
     return notFound();
   }
 
-  const lengthStr = line.lengthMiles > 0 ? `${line.lengthMiles.toFixed(1)} mi` : "—";
+  const lengthStr = line.lengthMiles != null && line.lengthMiles > 0 ? `${line.lengthMiles.toFixed(1)} mi` : "—";
 
   return (
     <div className="max-w-[900px] mx-auto p-6">

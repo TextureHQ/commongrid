@@ -1,0 +1,37 @@
+name: Repair transmission ground miles
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [scripts/repair-transmission-lengths.sql]
+permissions:
+  contents: read
+concurrency:
+  group: data-sync-commit
+  cancel-in-progress: false
+jobs:
+  repair:
+    if: github.ref == 'refs/heads/main'
+    environment: commongrid-data-sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Wait for deployment migration and repair stored distances
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          : "${DATABASE_URL:?DATABASE_URL is required}"
+          for attempt in $(seq 1 60); do
+            ready=$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -t -A -c "SELECT to_regclass('public.transmission_length_repair_0041') IS NOT NULL")
+            if [ "$ready" = t ]; then
+              psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f scripts/repair-transmission-lengths.sql
+              exit 0
+            fi
+            sleep 20
+          done
+          echo 'Migration 0041 is not deployed; rerun after deployment succeeds.' >&2
+          exit 1

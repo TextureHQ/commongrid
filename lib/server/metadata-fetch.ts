@@ -215,7 +215,7 @@ export interface TransmissionLineMetadata {
   id: string;
   owner: string;
   voltageClass: string;
-  lengthMiles: number;
+  lengthMiles: number | null;
   sub1: string;
   sub2: string;
 }

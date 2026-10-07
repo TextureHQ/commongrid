@@ -110,7 +110,7 @@ export function TransmissionListPanel() {
           }`}
           trailing={
             <span style={{ fontSize: 11, fontFamily: "var(--font-family-mono)" }}>
-              {row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
+              {row.lengthMiles != null && row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
             </span>
           }
           trailingShape="metric"
