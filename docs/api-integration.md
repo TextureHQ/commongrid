@@ -406,6 +406,14 @@ curl "https://commongrid.info/api/v1/utilities/by-eia-id/3046?include=iso"
 
 #### `GET /utilities/{slug}/geometry`
 
+**Download a utility boundary:** the map utility pane and grid-operator detail page offer
+“Download territory GeoJSON”. They fetch this endpoint on demand, without `simplify`,
+and save the complete response as `<utility-slug>-territory.geojson` with media type
+`application/geo+json`. The file includes all polygon parts of the linked service
+territory and the existing source/provenance metadata, not the simplified map layer.
+A utility with no available geometry displays a message rather than downloading an
+empty file. These downloads use the same public API and rate limits as other reads.
+
 Returns the utility's service-territory polygon as a GeoJSON `FeatureCollection`.
 The endpoint resolves `utilities.slug` → `regions` (`SERVICE_TERRITORY`) →
 `territories` server-side, so consumers only need a utility slug (no need to
