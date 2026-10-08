@@ -26,7 +26,7 @@ const networkFilterOptions = [
 ];
 
 export function EVChargingListPanel() {
-  const { state, setSearch, setTypeFilter } = useExplorer();
+  const { state, setSearch, setTypeFilter, navigateToDetail } = useExplorer();
   const router = useRouter();
   const { user } = useCurrentUser();
 
@@ -47,9 +47,9 @@ export function EVChargingListPanel() {
 
   const handleRowClick = useCallback(
     (slug: string) => {
-      router.push(`/ev-charging/${slug}`);
+      navigateToDetail("ev-station", slug);
     },
-    [router]
+    [navigateToDetail]
   );
 
   return (
