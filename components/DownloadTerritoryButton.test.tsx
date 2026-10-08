@@ -146,8 +146,12 @@ describe("DownloadTerritoryButton", () => {
 
   it("is wired into both utility surfaces with the resolved canonical slug", () => {
     for (const path of ["./explorer/panels/UtilityDetailPanel.tsx", "../app/(shell)/grid-operators/[slug]/page.tsx"]) {
-      expect(readFileSync(new URL(path, import.meta.url), "utf8")).toContain(
-        "<DownloadTerritoryButton key={utility.slug} slug={utility.slug} />"
+      const source = readFileSync(new URL(path, import.meta.url), "utf8");
+      const button = "<DownloadTerritoryButton key={utility.slug} slug={utility.slug} />";
+      expect(source.split(button)).toHaveLength(2);
+      // The download is the final content, after every section and the panel's full-page link.
+      expect(source.slice(source.indexOf(button) + button.length).trim()).toMatch(
+        /^(?:<\/div>\s*)+(?:<\/>\s*)?\);\s*}\s*$/
       );
     }
   });
