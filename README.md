@@ -290,18 +290,3 @@ The underlying data is sourced from US government agencies and public sources. T
 ---
 
 Built with ❤️ by [Texture](https://texturehq.com) — the energy operating system.
-
-
-### Current program data
-
-Postgres is the source of truth for programs. Use the paginated
-[public Programs API](https://commongrid.info/api/v1/programs) for current coverage,
-or download `programs.json.gz` / the SQL dump from the dated
-[public snapshots](https://commongrid.info/snapshots). Check the snapshot date:
-weekly exports are point-in-time, not live mirrors. Each program retains its
-source and source URL; these exports do not replace upstream provenance.
-
-The former `data/programs.json` was an obsolete 607-record seed, not the current
-catalog. It and its one-off legacy importer have been retired rather than
-presenting stale data as a maintained export. For a complete local dataset,
-restore a public SQL snapshot; `npm run seed` no longer seeds programs.
