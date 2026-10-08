@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { IOU_DR_REGISTRY } from "@/data/iou-dr-programs/registry";
 import { toProgramSyncRecords } from "@/lib/sync/iou-dr-programs";
 import type { ResolverUtility } from "@/lib/sync/resolve-entity";
@@ -13,7 +13,13 @@ import {
   ParticipationModel,
   ProgramStatus,
 } from "@/types/programs";
-import { htmlToText, isValidHttpUrl, registryEntryToScraped, toResolverUtilities } from "../sync-iou-dr-programs";
+import {
+  checkUrl,
+  htmlToText,
+  isValidHttpUrl,
+  registryEntryToScraped,
+  toResolverUtilities,
+} from "../sync-iou-dr-programs";
 
 const REPO_ROOT = path.resolve(__dirname, "../..");
 
@@ -179,4 +185,25 @@ describe("toResolverUtilities", () => {
     expect(toResolverUtilities(null)).toEqual([]);
     expect(toResolverUtilities({})).toEqual([]);
   });
+});
+
+describe("error-page rejection", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it.each([
+    '<title>Page not found</title><meta name="description" content="Normal site boilerplate">',
+    "<p>Apologies, but we were unable to find what you were looking for. Perhaps searching will help.Read more</p>",
+    "<h1>404 Not Found</h1>",
+    "<h1>Access denied</h1>",
+  ])("never extracts error content: %s", (html) => {
+    expect(htmlToText(html)).toBe("");
+  });
+  it.each([true, false])(
+    "reports a soft 404 as unhealthy even with curated description (%s)",
+    async (wantDescription) => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<title>Page not found</title>", { status: 200 })));
+      const result = await checkUrl("test", "https://example.org/program", wantDescription);
+      expect(result.health).toMatchObject({ ok: false, status: 200, error: "error-page content" });
+      expect(result.description).toBeUndefined();
+    }
+  );
 });
