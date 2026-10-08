@@ -23,8 +23,7 @@ import { communityEditableFields, contributions, entityLocks } from "@/lib/db/sc
 import { users } from "@/lib/db/schema/users";
 import { isKnockConfigured } from "@/lib/knock/client";
 import { triggerContributionSubmitted, triggerModNewContribution } from "@/lib/knock/workflows";
-import { type ChangeType, EDIT_SUMMARY_MIN_LENGTH, getEntityTable } from "@/lib/mod/apply-contribution";
-import { type AutoApproveResult, tryAutoApprove } from "@/lib/mod/auto-approve";
+import { EDIT_SUMMARY_MIN_LENGTH, getEntityTable } from "@/lib/mod/apply-contribution";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -107,7 +106,6 @@ async function handlePost(req: Request, ctx: RouteContext) {
   } = body;
 
   const isCreate = change_type === "create";
-  const isDelete = change_type === "delete";
 
   // --- Validation ---
 
@@ -159,7 +157,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
   // Enum values must be members of the field's declared domain. Without this,
   // a stale option list (cached response, client open across a deploy, or an
   // out-of-date row in community_editable_fields) can persist a value no code
-  // path recognizes — and auto-approval writes it straight onto the entity.
+  // path recognizes. Validate before it enters the review queue.
   // See CIR-1506: one program reached production with status 'active' while the
   // other 607 held 'ACTIVE', breaking ?status= filtering in both directions.
   const invalidEnums = findInvalidEnumValues(entity_type, changes as Record<string, unknown>);
@@ -285,7 +283,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
   // multi_enum fields are JSONB enum arrays (e.g. program grid_services). Their
   // values must be an array whose members are all in community_editable_fields
   // validation_rules.enum, so invalid members cannot slip in via any approval
-  // path (a non-critical multi_enum can auto-approve for trusted contributors).
+  // path. All submissions still require independent human review.
   const multiEnumMeta = await db
     .select({
       fieldName: communityEditableFields.fieldName,
@@ -343,29 +341,9 @@ async function handlePost(req: Request, ctx: RouteContext) {
     })
     .returning();
 
-  // --- Try auto-approval ---
-  // tryAutoApprove now applies the edit itself, through the same
-  // applyContribution path a moderator approval uses — entity write, version
-  // row, status and stats in one transaction. It previously only flipped the
-  // status, so auto-approved edits were accepted and then discarded.
-  let autoApproveResult: AutoApproveResult & { newSlug?: string } = { autoApproved: false };
-  if (!geometry_change_type) {
-    // Geometry changes always require manual review
-    const changeType: ChangeType = isCreate ? "create" : isDelete ? "delete" : "update";
-    autoApproveResult = await tryAutoApprove(user, contribution, changeType);
-
-    if (isCreate && autoApproveResult.autoApproved) {
-      autoApproveResult.newSlug = entitySlug;
-    }
-  }
-
-  // If auto-approved, re-fetch to get the updated status
-  const responseData = autoApproveResult.autoApproved
-    ? ((await db.select().from(contributions).where(eq(contributions.id, contribution.id)).limit(1))[0] ?? contribution)
-    : contribution;
-
-  // Notify moderators of new contribution (if not auto-approved)
-  if (isKnockConfigured() && !autoApproveResult.autoApproved) {
+  // Every submission requires independent human review, regardless of role,
+  // change type, field criticality, or geometry. Never apply edits on submit.
+  if (isKnockConfigured()) {
     const moderators = await db
       .select({ id: users.id })
       .from(users)
@@ -405,8 +383,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
 
   return jsonResponse(
     {
-      data: responseData,
-      ...(autoApproveResult.autoApproved ? { auto_approved: true } : {}),
+      data: contribution,
     },
     201,
     { ...corsHeaders(), "X-Request-Id": ctx.requestId }

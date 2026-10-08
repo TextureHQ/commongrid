@@ -11,10 +11,8 @@ import { editableFieldDefinitions } from "../definitions";
  *    (column existence itself is covered by column-mapping.test.ts);
  *  - it is a `url` field, so it is validated and rendered like other link
  *    fields (website, program_website, ...);
- *  - it is `isCritical: true`, which is what forces every logo edit through
- *    moderator review — `lib/mod/auto-approve.ts` refuses to auto-approve any
- *    critical field. If someone flips this to non-critical, a trusted
- *    contributor could silently change a utility's logo, so guard it here.
+ *  - it is `isCritical: true`, flagging a high-visibility field for reviewer
+ *    attention. All contributions now require independent human review.
  */
 describe("utility.logo editable field (CG-323)", () => {
   const logo = editableFieldDefinitions.find((d) => d.entityType === "utility" && d.fieldName === "logo");
@@ -27,7 +25,7 @@ describe("utility.logo editable field (CG-323)", () => {
     expect(logo?.fieldType).toBe("url");
   });
 
-  it("is critical so it always requires moderator review", () => {
+  it("is critical to flag it for reviewer attention", () => {
     expect(logo?.isCritical).toBe(true);
   });
 

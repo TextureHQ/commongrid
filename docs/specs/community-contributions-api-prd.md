@@ -47,9 +47,9 @@ Together, these features transform CommonGrid from a read-only reference dataset
 |------|-------------|--------------|
 | **Anonymous Visitor** | Not logged in | Browse, search, view data and edit history. Cannot contribute. |
 | **Contributor** | Logged in via GitHub or email | Propose edits, add new entities, comment on discussions, follow entities, view own contribution dashboard |
-| **Trusted Contributor** | Promoted by moderator after proven track record | Edits to non-critical fields auto-approved. New entities and geometry still require review. |
+| **Trusted Contributor** | Promoted by moderator after proven track record | All edits require approval by another moderator or admin. |
 | **Moderator** | Appointed by admin | Review queue, approve/return/request changes, revert edits, lock entities, manage contributors, internal notes |
-| **Admin** | Texture team | All moderator powers + manage moderators, configure auto-approval rules, view audit logs, manage system settings |
+| **Admin** | Texture team | All moderator powers + manage moderators, view audit logs, manage system settings |
 
 ### 3.2 Authentication
 
@@ -422,28 +422,13 @@ Lock indicators:
 
 **First 5 contributions** from any new account always require moderator review, regardless of field type.
 
-#### 3.8.7 Auto-Approval Rules (Trusted Contributors)
+#### 3.8.7 Mandatory Independent Review
 
-**Promotion criteria (all must be met):**
-- 25+ approved contributions
-- 0 returned contributions in last 20 edits
-- Contributions span at least 3 different entity types
-- Account age ≥ 30 days
-- No active warnings or bans
+Every community contribution requires human approval by a moderator or admin other than its author. There are no role-based exceptions: contributors, trusted contributors, moderators, and admins all submit into the pending queue. This applies to creates, updates, deletes, geometry, and non-critical fields.
 
-**Auto-approved edits (Trusted Contributors only):**
-- Contact info changes: website, phone, address
-- Freeform tags
-- Minor corrections: typos, formatting
+Submission never writes the proposed entity change or an entity version. The review endpoint rejects self-approval with HTTP 403 before any writes. A different moderator or admin must explicitly approve before the change is applied, versioned, and recorded in the audit log.
 
-**Always requires review (even for Trusted):**
-- Numeric data: capacity, customer counts, revenue
-- New entities
-- Geometry changes
-- Relationship changes (parent company, ISO/RTO assignment)
-- Changes to "critical fields" as defined per entity type
-
-Auto-approved changes appear in the moderation log for auditability, with a filter to view only auto-approved edits.
+Historical `auto_approved` contributions remain visible for auditability; new submissions cannot receive that status. This policy supersedes the initial trusted-contributor auto-approval design and any older examples below.
 
 #### 3.8.8 Moderator Audit Log
 
@@ -500,7 +485,7 @@ After approved edits, entity pages show:
 |------|---------------|------------|-------|--------------|
 | **Anonymous** | None (IP-based) | 60 requests/hour | 10 req/min | Casual browsing, trying the API |
 | **Registered** | API key (header) | 5,000 requests/hour | 100 req/min | Active development, integrations |
-| **Bulk** | API key + auto-approval | 50,000 requests/hour | 500 req/min | Data pipelines, research |
+| **Bulk** | API key + moderator review | 50,000 requests/hour | 500 req/min | Data pipelines, research |
 
 **Rate limit headers on every response:**
 ```
@@ -750,7 +735,7 @@ Accessible after sign-in for users with at least one API key.
 3. **Contribution returned:** "Your edit to [entity] was not applied. [Moderator's detailed reason]. Here's how to improve it: [guidance]. [View & revise →]"
 4. **Changes requested:** "A moderator has requested changes to your edit to [entity]. [Comment]. [Update your submission →]"
 5. **Entity followed — updated:** "An entity you follow was updated: [entity] — [change summary]. [View →]"
-6. **Trusted status earned:** "Congratulations! You've earned Trusted Contributor status on CommonGrid. Some of your edits will now be auto-approved. [Learn more →]"
+6. **Trusted status earned:** "Congratulations! You've earned Trusted Contributor status on CommonGrid. Your edits will continue to require independent moderator review. [Learn more →]"
 7. **Appeal resolved:** "Your appeal for [entity] has been [upheld — original decision stands / overturned — your edit has been applied]. [Details →]"
 
 ### For Developers:
@@ -850,7 +835,7 @@ Accessible after sign-in for users with at least one API key.
 - First-time contributor guided tour
 
 ### Phase 2: Depth (4 weeks)
-- Trusted contributor system (auto-promotion + auto-approval)
+- Trusted contributor system (independent review required for every edit)
 - Add new entities (full-page form with duplicate detection)
 - Geometry editing (full-screen split-view for points)
 - Entity discussion threads
@@ -858,7 +843,7 @@ Accessible after sign-in for users with at least one API key.
 - Multi-entity changesets
 - Appeal mechanism for returned contributions
 - Detailed usage analytics for developers
-- Bulk tier auto-approval flow
+- Bulk tier contribution review flow
 - Anti-spam: behavioral signals, deviation from authoritative baseline
 - Entity locking (semi-locked, fully locked)
 

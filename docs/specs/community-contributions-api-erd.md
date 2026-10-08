@@ -643,7 +643,7 @@ CREATE TABLE community_editable_fields (
 
 **Usage:**
 - Write-time validation: Zod schema generated from this table validates `contributions.changes` field names
-- Auto-approval: Only non-critical fields from trusted contributors can be auto-approved
+- Independent review: Every contribution requires approval by a moderator or admin other than its author, regardless of role or field criticality. Historical auto-approval fields are retained for auditability.
 - Moderation UI: Shows field validation rules and labels to moderators
 
 ---
