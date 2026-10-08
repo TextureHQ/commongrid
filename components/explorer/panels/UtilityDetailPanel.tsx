@@ -150,10 +150,6 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           <EntityVersionHistory entityType="utility" entitySlug={slug} />
         </div>
 
-        <div className="mt-3">
-          <DownloadTerritoryButton key={utility.slug} slug={utility.slug} />
-        </div>
-
         <div className="cg-explore-kv-table">
           {utility.jurisdiction && (
             <div className="cg-explore-kv-row">
@@ -493,6 +489,10 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           >
             Full page →
           </Link>
+        </div>
+
+        <div className="mt-3">
+          <DownloadTerritoryButton key={utility.slug} slug={utility.slug} />
         </div>
       </div>
     </div>

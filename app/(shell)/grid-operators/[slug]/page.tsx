@@ -728,7 +728,6 @@ export default function UtilityDetailPage() {
         )}
 
         <EntitySection id="territory" title="Service Territory">
-          <DownloadTerritoryButton key={utility.slug} slug={utility.slug} />
           <EntityMap loading={territoryLoading}>
             {!territoryLoading && (
               <InteractiveMap
@@ -912,6 +911,10 @@ export default function UtilityDetailPage() {
             />
           </EntitySection>
         )}
+
+        <div className="mt-6">
+          <DownloadTerritoryButton key={utility.slug} slug={utility.slug} />
+        </div>
       </div>
     </>
   );
