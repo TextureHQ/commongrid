@@ -1,0 +1,73 @@
+name: Rebuild retail territory tiles
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/derive-retail-territories.sql
+      - scripts/audit-territory-overlap.sql
+      - scripts/prepare-territory-geojson.mjs
+      - scripts/build-tiles.sh
+      - .github/workflows/rebuild-territories.yml
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: retail-territory-artifacts
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: commongrid-data-sync
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install tippecanoe
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libsqlite3-dev zlib1g-dev
+          git clone --depth 1 --branch 2.79.0 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
+          make -C /tmp/tippecanoe -j2
+          sudo make -C /tmp/tippecanoe install
+      - name: Derive display polygons and build tiles
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          test -n "$DATABASE_URL" || { echo "DATABASE_URL is required"; exit 1; }
+          node scripts/prepare-territory-geojson.mjs
+          tippecanoe --output=public/tiles/territories.pmtiles --force \
+            --name="CommonGrid Retail Territories" --layer=territories \
+            --minimum-zoom=0 --maximum-zoom=12 --no-tiny-polygon-reduction \
+            --no-simplification-of-shared-nodes .tmp-territories.geojson
+      - uses: actions/upload-artifact@v4
+        with:
+          name: retail-territory-audit
+          path: .tmp-territories-audit.json
+      - name: Propose artifact refresh (human review required)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          branch="meridian/retail-territory-artifacts-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          if [ -n "$(gh pr list --state open --search 'in:title Refresh retail territory tiles' --json number --jq '.[].number')" ]; then
+            echo 'An artifact PR is already open; review it before rebuilding.'
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$branch"
+          git add public/tiles/territories.pmtiles
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Refresh retail territory tiles'
+          git push -u origin "$branch"
+          gh pr create --base main --head "$branch" --reviewer victorquinn --title 'Refresh retail territory tiles' \
+            --body 'CI-derived retail display polygons. Source records unchanged. Review the retail-territory-audit artifact from this workflow run before merging. No auto-merge. The map changes only after this artifact PR deploys.'

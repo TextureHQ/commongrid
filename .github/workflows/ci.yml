@@ -28,6 +28,9 @@ jobs:
               - 'scripts/lib/**'
               - 'scripts/__tests__/state-boundaries-postgis.test.ts'
               - 'scripts/__tests__/snapshot-postgis.test.ts'
+              - 'scripts/__tests__/retail-territories-postgis.test.ts'
+              - 'scripts/*territor*.sql'
+              - 'scripts/prepare-territory-geojson.mjs'
               - 'scripts/export-snapshot-layers.sh'
               - 'scripts/validate-snapshot.mjs'
               - 'scripts/__tests__/sync-state-boundaries.test.ts'
@@ -97,7 +100,7 @@ jobs:
       - name: Verify snapshot exports against current PostGIS schema
         env:
           SNAPSHOT_TEST_DATABASE_URL: postgresql://postgres:boundary_test@localhost:5432/boundary_test
-        run: npx vitest run scripts/__tests__/snapshot-postgis.test.ts
+        run: npx vitest run scripts/__tests__/snapshot-postgis.test.ts scripts/__tests__/retail-territories-postgis.test.ts
       - name: Verify atomic boundary publication and spatial history
         env:
           STATE_BOUNDARIES_TEST_DATABASE_URL: postgresql://postgres:boundary_test@localhost:5432/boundary_test

@@ -402,6 +402,8 @@ export function ExplorerMap({
   const { state, navigateToDetail } = useExplorer();
   const router = useRouter();
   const mapRef = useRef<{ getMap: () => mapboxgl.Map | null } | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [hoveredTerritory, setHoveredTerritory] = useState<string | number | null>(null);
   const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
 
   // Resolved color mappings (CSS variables resolved to actual colors)
@@ -745,6 +747,30 @@ export function ExplorerMap({
     });
   }, [state.type, state.q, isProgramView, hasHighlight, filteredProgramBoundaryData]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: clear hover when the visible map context changes
+  useEffect(() => {
+    setHoveredTerritory(null);
+  }, [isGridOperatorView, isProgramView, hasHighlight, state.segment, state.q, mapType]);
+
+  useEffect(() => {
+    const map = mapRef.current?.getMap?.();
+    if (!mapLoaded || !map) return;
+    // Edges onMouseEnter fires on entering the interactive layer, not each
+    // adjacent feature. Track every move so outlines follow tooltip changes.
+    const move = (event: mapboxgl.MapMouseEvent) => {
+      if (!map.getLayer("territories")) return;
+      const feature = map.queryRenderedFeatures(event.point, { layers: ["territories"] })[0];
+      setHoveredTerritory(feature?.id ?? null);
+    };
+    const leave = () => setHoveredTerritory(null);
+    map.on("mousemove", move);
+    map.getCanvas().addEventListener("mouseleave", leave);
+    return () => {
+      map.off("mousemove", move);
+      map.getCanvas().removeEventListener("mouseleave", leave);
+    };
+  }, [mapLoaded]);
+
   const layers = useMemo(() => {
     const visible = layerVisibility;
     const result: LayerSpec[] = [];
@@ -782,8 +808,28 @@ export function ExplorerMap({
               />
             ),
           },
-          events: { onClick: handleClick },
+          events: {
+            onClick: handleClick,
+            onMouseEnter: (feature: LayerFeature) => setHoveredTerritory(feature.id ?? null),
+            onMouseLeave: () => setHoveredTerritory(null),
+          },
           ...(territoryFilter ? { filter: territoryFilter } : {}),
+        })
+      );
+      // Edges' fill border has fixed width; use its line primitive for a
+      // distinct hover outline, including every tile fragment of this utility.
+      result.push(
+        layer.vector({
+          id: "territory-hover-outline",
+          tileset: getTileUrl(),
+          sourceLayer: "territories",
+          renderAs: "line",
+          style: { color: resolvedHighlightColor, width: 3, opacity: 1 },
+          filter: [
+            "all",
+            ["==", ["get", "slug"], hoveredTerritory ?? ""],
+            ...(territoryFilter ? [territoryFilter] : []),
+          ],
         })
       );
     } else if (filteredProgramBoundaryData && !hasHighlight) {
@@ -1115,6 +1161,7 @@ export function ExplorerMap({
     return result;
   }, [
     handleClick,
+    hoveredTerritory,
     navigateToDetail,
     router,
     state.highlightGeoJSON,
@@ -1173,6 +1220,7 @@ export function ExplorerMap({
             },
           },
         ]}
+        onLoad={() => setMapLoaded(true)}
         layers={layers}
       />
     </div>
