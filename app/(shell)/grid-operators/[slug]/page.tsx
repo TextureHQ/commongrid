@@ -21,6 +21,7 @@ import { notFound, useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
+import { DownloadTerritoryButton } from "@/components/DownloadTerritoryButton";
 import {
   EntityList,
   EntityMap,
@@ -727,6 +728,7 @@ export default function UtilityDetailPage() {
         )}
 
         <EntitySection id="territory" title="Service Territory">
+          <DownloadTerritoryButton key={utility.slug} slug={utility.slug} />
           <EntityMap loading={territoryLoading}>
             {!territoryLoading && (
               <InteractiveMap
