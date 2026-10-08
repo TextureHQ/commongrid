@@ -90,6 +90,23 @@ suite("state boundary publication (real PostGIS)", () => {
     );
   });
 
+  it("isolates a PostGIS parse error and still publishes the next valid territory", async () => {
+    const malformed: Polygon = { type: "Polygon", coordinates: [[[0]]] };
+    const badRecord = {
+      ...record,
+      id: "region-st-bad",
+      eiaId: "27316",
+      slug: "bad",
+      name: "Malformed",
+      state: "WI",
+    };
+    const result = await publishToDatabase([{ record: badRecord, geometry: malformed }, ...entries()]);
+    expect(result.quarantinedTerritories).toEqual(["territory-27316 (Malformed)"]);
+    expect(result.territoriesUpserted).toBe(1);
+    expect((await pool.query("SELECT id FROM territories")).rows).toEqual([{ id: "territory-27316" }]);
+    expect((await pool.query("SELECT count(*) FROM entity_geometry_versions")).rows[0].count).toBe("1");
+  });
+
   it("publishes only Vermont's 17 utilities and reruns idempotently without fetching other states", async () => {
     for (const eiaId of Object.values(VERMONT_UTILITY_EIA_IDS)) {
       if (eiaId === "27316") continue;
@@ -284,7 +301,7 @@ suite("state boundary publication (real PostGIS)", () => {
     expect((await pool.query("SELECT deleted_at FROM regions WHERE id = 'unmatched'")).rows[0].deleted_at).toBeNull();
   });
 
-  it("rolls back region metadata, batches, and geometry together for invalid polygons", async () => {
+  it("quarantines invalid polygons while retaining existing geometry and publishing metadata", async () => {
     await publishToDatabase(entries());
     const invalid: Polygon = {
       type: "Polygon",
