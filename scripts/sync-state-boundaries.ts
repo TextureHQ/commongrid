@@ -20,7 +20,7 @@ import { parseArgs } from "node:util";
 import { sql } from "drizzle-orm";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { getPooledDb } from "@/lib/db/client-pooled";
-import { applySync, type SyncRecord } from "@/lib/sync/apply-sync";
+import { applySync, type DbTransaction, type SyncRecord } from "@/lib/sync/apply-sync";
 import { DATA_DIR, slugify } from "./lib";
 import { VERMONT_UTILITY_EIA_IDS } from "./lib/vermont-utility-crosswalk";
 
@@ -120,6 +120,7 @@ export interface SyncReport {
   deferralsCount: number;
   territoriesUpserted: number;
   hifldSuperseded: number;
+  quarantinedTerritories: string[];
   errors: string[];
 }
 
@@ -557,6 +558,7 @@ interface PublishResult {
   deferrals: Array<{ entityId: string; field: string; keptValue: unknown; skippedValue: unknown }>;
   territoriesUpserted: number;
   hifldSuperseded: number;
+  quarantinedTerritories: string[];
 }
 
 export function buildTerritorySyncRecords(entries: RegionEntry[]): SyncRecord[] {
@@ -574,9 +576,54 @@ export function buildTerritorySyncRecords(entries: RegionEntry[]): SyncRecord[] 
   });
 }
 
+function territoryEntityId(entry: RegionEntry): string {
+  return entry.record.eiaId ? `territory-${entry.record.eiaId}` : entry.record.id.replace(/^region-/, "territory-");
+}
+
+export async function quarantineInvalidTerritoryEntries(
+  tx: DbTransaction,
+  entries: RegionEntry[]
+): Promise<{ validEntries: RegionEntry[]; quarantined: string[] }> {
+  const validEntries: RegionEntry[] = [];
+  const quarantined: string[] = [];
+
+  for (const entry of entries) {
+    const entityId = territoryEntityId(entry);
+    if (entry.geometry.type !== "Polygon" && entry.geometry.type !== "MultiPolygon") {
+      quarantined.push(`${entityId} (${entry.record.name})`);
+      console.warn(`    ⚠️ Quarantining non-polygon territory ${entityId} (${entry.record.name})`);
+      continue;
+    }
+
+    try {
+      const value = sql`ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(entry.geometry)}), 4326))::geography`;
+      const result = await tx.execute(sql`
+        SELECT ST_IsValid(geography::geometry) AND NOT ST_IsEmpty(geography::geometry) AS valid
+        FROM (SELECT ${value} AS geography) incoming
+      `);
+      if (!result.rows[0]?.valid) {
+        quarantined.push(`${entityId} (${entry.record.name})`);
+        console.warn(`    ⚠️ Quarantining invalid territory geometry ${entityId} (${entry.record.name})`);
+        continue;
+      }
+      validEntries.push(entry);
+    } catch (error) {
+      quarantined.push(`${entityId} (${entry.record.name})`);
+      console.warn(
+        `    ⚠️ Quarantining territory geometry ${entityId} (${entry.record.name}) after validation error: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  return { validEntries, quarantined };
+}
+
 export async function publishToDatabase(entries: RegionEntry[]): Promise<PublishResult> {
   const db = getPooledDb();
   return db.transaction(async (tx) => {
+    const { validEntries, quarantined } = await quarantineInvalidTerritoryEntries(tx, entries);
     // Serialize publishers, including concurrent creates where FOR UPDATE has no row.
     await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('sync:state-boundaries'))`);
     const vtIds = [
@@ -605,7 +652,7 @@ export async function publishToDatabase(entries: RegionEntry[]): Promise<Publish
       batchTitle: "State service territory metadata sync",
       tx,
     });
-    const spatial = await applySync(buildTerritorySyncRecords(entries), {
+    const spatial = await applySync(buildTerritorySyncRecords(validEntries), {
       entityType: "territory",
       initiatedBy: RUNNER_ACTOR,
       batchTitle: "State service territory boundary sync",
@@ -624,6 +671,7 @@ export async function publishToDatabase(entries: RegionEntry[]): Promise<Publish
       territoriesUpserted: spatial.created + spatial.updated,
       // Absence is not evidence of replacement. Preserve unmatched HIFLD coverage.
       hifldSuperseded: 0,
+      quarantinedTerritories: quarantined,
     };
   });
 }
@@ -656,6 +704,7 @@ function writeManifest(report: SyncReport, sourceResults: SourceResult[], source
     },
     territories_upserted: report.territoriesUpserted,
     hifld_superseded: report.hifldSuperseded,
+    quarantined_territories: report.quarantinedTerritories,
     deferrals_count: report.deferralsCount,
     needs_open_source: needsOpenSource,
     errors: report.errors,
@@ -730,6 +779,7 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
     deferralsCount: 0,
     territoriesUpserted: 0,
     hifldSuperseded: 0,
+    quarantinedTerritories: [],
     errors: [],
   };
 
@@ -788,6 +838,7 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
   report.deferralsCount = publishResult.deferrals.length;
   report.territoriesUpserted = publishResult.territoriesUpserted;
   report.hifldSuperseded = publishResult.hifldSuperseded;
+  report.quarantinedTerritories = publishResult.quarantinedTerritories;
 
   if (options.writeManifest !== false) {
     writeManifest(report, sourceResults, sources);
@@ -820,6 +871,7 @@ async function main() {
   console.log(`  Deferrals: ${report.deferralsCount}`);
   console.log(`  Territories upserted: ${report.territoriesUpserted}`);
   console.log(`  HIFLD records superseded: ${report.hifldSuperseded}`);
+  console.log(`  Quarantined territories: ${report.quarantinedTerritories.length}`);
 
   if (report.errors.length > 0) {
     console.log("\n  Errors:");

@@ -19,7 +19,10 @@ function contributionSection() {
   container.innerHTML = renderToStaticMarkup(<LandingPage />);
   const section = container.querySelector("#contribute");
   expect(section).not.toBeNull();
-  return section!;
+  if (!section) {
+    throw new Error("expected contribution section to render");
+  }
+  return section;
 }
 
 describe("homepage contribution copy", () => {
