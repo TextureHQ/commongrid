@@ -167,7 +167,7 @@ export function useEditEntityFlow({
       }
 
       onSubmitted();
-      // Pick up the new value when the edit was auto-approved.
+      // Refresh contribution-related state after submission; the edit remains pending review.
       router.refresh();
     } catch (error) {
       console.error("Error submitting contribution:", error);

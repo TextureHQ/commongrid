@@ -1212,7 +1212,10 @@ export function ExplorerMap({
         // biome-ignore lint/style/noNonNullAssertion: effectiveToken is guaranteed non-null when map renders (checked in parent)
         mapboxAccessToken={effectiveToken!}
         initialViewState={US_CENTER}
-        onLoad={focusSelection}
+        onLoad={() => {
+          focusSelection();
+          setMapLoaded(true);
+        }}
         mapType={mapType}
         controls={[
           { type: "navigation", position: "bottom-right", showResetZoom: true },
@@ -1228,7 +1231,6 @@ export function ExplorerMap({
             },
           },
         ]}
-        onLoad={() => setMapLoaded(true)}
         layers={layers}
       />
     </section>

@@ -535,8 +535,8 @@ export default function LandingPage() {
               </h2>
             </div>
             <p className="text-[length:var(--text-body-md-size)] font-[var(--text-body-md-weight)] leading-[var(--text-body-md-line-height)] tracking-[var(--text-body-md-letter-spacing)] text-text-muted max-w-[50ch] m-0 [text-wrap:pretty]">
-              Low-friction for small fixes, structured for big changes. Anyone can propose; trusted contributors are
-              auto-approved on non-critical fields; approved edits are recorded in the changelog.
+              Anyone can propose a change. Every contribution, including those from moderators and admins, requires
+              approval by another moderator. Approved edits are recorded in the changelog.
             </p>
           </div>
 

@@ -75,9 +75,9 @@ export const editableFieldDefinitions: EditableFieldDefinition[] = [
   },
   {
     // Logo is served as a URL string from utilities.logo and rendered by the
-    // utility detail/list surfaces. Kept critical so a logo edit always goes
-    // through moderator review rather than trusted-contributor auto-approval —
-    // a wrong or off-brand logo is a visible-quality issue, not a silent one.
+    // utility detail/list surfaces. Kept critical to flag it for reviewer
+    // attention — a wrong or off-brand logo is a visible-quality issue.
+    // All contributions require independent human review.
     entityType: "utility",
     fieldName: "logo",
     fieldType: "url",

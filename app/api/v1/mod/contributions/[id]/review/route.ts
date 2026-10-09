@@ -92,21 +92,17 @@ async function handlePost(req: Request, ctx: RouteContext) {
   const newStatus = ACTION_TO_STATUS[action as ReviewAction];
   const now = new Date();
 
-  // Detect self-approval: the reviewing moderator is also the contributor.
-  // Policy is allow-but-mark rather than block — a moderator fixing their own
-  // typo should not need a second pair of eyes, but the fact that nobody else
-  // looked must be recoverable from the audit trail. The flag lands in the
-  // moderation_actions metadata so review history can surface it later.
-  const isSelfApproval = action === "approve" && moderator.id === contribution.userId;
+  // Approval must come from another person, including for admins. Checking
+  // before opening a transaction prevents self-review from mutating anything.
+  if (action === "approve" && moderator.id === contribution.userId) {
+    throw new ApiError("FORBIDDEN", "You cannot approve your own contribution. Another moderator must review it.");
+  }
   const moderationActionMetadata: Record<string, unknown> = {
     previous_status: contribution.status,
     new_status: newStatus,
     entity_type: contribution.entityType,
     entity_id: contribution.entityId,
   };
-  if (isSelfApproval) {
-    moderationActionMetadata.self_approved = true;
-  }
 
   // --- Apply the review ---
 
@@ -124,8 +120,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
     // this route previously issued them as independent statements and could
     // leave an entity mutated with no corresponding version row.
     //
-    // applyContribution is shared with the auto-approval path, so an accepted
-    // edit is applied and versioned identically regardless of who accepted it.
+    // The accepted edit and its version history are written together.
     const pooled = getPooledDb();
     const outcome = await pooled.transaction(async (tx) => {
       const applied = await applyContribution(tx, contribution, {

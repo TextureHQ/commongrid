@@ -1,24 +1,16 @@
 /**
  * applyContribution — the single write path for accepted contributions.
  *
- * Both the moderator approve route and the auto-approval path funnel through
- * here, so an accepted edit is applied and versioned identically no matter who
- * (or what) accepted it.
- *
- * Before this existed, `lib/mod/auto-approve.ts` marked contributions
- * `auto_approved` and incremented the contributor's stats without ever writing
- * to the entity table or `entity_versions` — accepted edits were silently
- * discarded. See the PR that introduced this file for the confirmed instance.
+ * Community submissions stay pending until a different moderator approves
+ * them. The review route applies the accepted edit and its history here.
  *
  * Callers MUST invoke this inside a transaction (see `getPooledDb()` — the
  * neon-http client used elsewhere cannot do transactions). The entity write and
  * its `entity_versions` row must land together or not at all; a partial apply
  * leaves an unversioned change that reconstruction can never account for.
  *
- * Returns an outcome rather than throwing on conflicts, because the two callers
- * want different behaviour: a moderator gets a 409 and a `version_conflict`
- * record, while auto-approval simply declines and leaves the contribution
- * pending for a human.
+ * Returns an outcome rather than throwing on conflicts so the review route
+ * can return a 409 and record a `version_conflict` without a partial write.
  */
 
 import { and, eq, sql } from "drizzle-orm";
