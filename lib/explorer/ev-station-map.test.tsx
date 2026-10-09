@@ -19,7 +19,19 @@ vi.mock("@texturehq/edges", () => ({
   layer: { geojson: (spec: object) => spec, vector: (spec: object) => spec },
   InteractiveMap: (props: InteractiveMapProps & { ref: React.Ref<unknown> }) => {
     mapProps = props;
-    useImperativeHandle(props.ref, () => ({ getMap: () => (mocks.ready ? { flyTo: mocks.flyTo } : null) }));
+    useImperativeHandle(props.ref, () => ({
+      getMap: () =>
+        mocks.ready
+          ? {
+              flyTo: mocks.flyTo,
+              on: vi.fn(),
+              off: vi.fn(),
+              getLayer: vi.fn(),
+              queryRenderedFeatures: vi.fn(() => []),
+              getCanvas: () => ({ addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+            }
+          : null,
+    }));
     return null;
   },
 }));
