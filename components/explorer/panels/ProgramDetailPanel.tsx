@@ -4,6 +4,7 @@ import type { Feature } from "geojson";
 import { useEffect, useMemo, useState } from "react";
 import { DeleteEntityDialog } from "@/components/contributions/DeleteEntityDialog";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
+import { DelayedEntityDetailSkeleton } from "@/components/skeletons";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useProgram } from "@/hooks/useProgram";
 import { useRegionList } from "@/hooks/useRegionList";
@@ -78,7 +79,7 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const { program } = useProgram(slug);
+  const { program, isLoading: programLoading } = useProgram(slug);
 
   // Resolve the program's organization slugs directly instead of scanning the
   // first N utilities alphabetically. The old `useUtilityList({ limit: 200 })`
@@ -137,6 +138,10 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
       setHighlight(null);
     };
   }, [territorySlugs, setHighlight]);
+
+  if (programLoading) {
+    return <DelayedEntityDetailSkeleton />;
+  }
 
   if (!program) {
     return (
