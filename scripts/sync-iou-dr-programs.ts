@@ -127,7 +127,18 @@ export function registryEntryToScraped(entry: RegistryEntry, description?: strin
  * description, never to drive schema-shaped facts (those come from the curated
  * registry). Returns "" when nothing useful is found.
  */
+/** Reject HTTP-200 error pages before extracting any description. */
+export function isErrorPage(html: string): boolean {
+  const text = decodeEntities(
+    html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<[^>]+>/g, " ")
+  ).replace(/\s+/g, " ");
+  return /page (?:not found|does not exist)|404(?: error| not found)|unable to find what you were looking for|access denied|just a moment\.{0,3}|verify (?:that )?you are human/i.test(
+    text
+  );
+}
+
 export function htmlToText(html: string, maxLen = 400): string {
+  if (isErrorPage(html)) return "";
   const withoutBlocks = html
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
@@ -223,7 +234,7 @@ async function loadUtilities(): Promise<UtilityRecord[]> {
  * reported as unhealthy so a dead link surfaces in the manifest without failing
  * the sync. Returns the captured description (if any) alongside health.
  */
-async function checkUrl(
+export async function checkUrl(
   name: string,
   url: string,
   wantDescription: boolean
@@ -242,10 +253,13 @@ async function checkUrl(
     clearTimeout(timeout);
 
     let description: string | undefined;
-    if (wantDescription && response.ok) {
+    if (response.ok) {
       const html = await response.text();
+      if (isErrorPage(html)) {
+        return { health: { name, url, ok: false, status: response.status, error: "error-page content" } };
+      }
       const text = htmlToText(html);
-      if (text) description = text;
+      if (wantDescription && text) description = text;
     }
     return {
       health: { name, url, ok: response.ok, status: response.status },
