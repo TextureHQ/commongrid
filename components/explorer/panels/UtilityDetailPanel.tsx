@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { DownloadTerritoryButton } from "@/components/DownloadTerritoryButton";
+import { DelayedEntityDetailSkeleton } from "@/components/skeletons";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
@@ -52,8 +53,8 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
   const { user } = useCurrentUser();
 
-  const { utility } = useUtility(slug);
-  const { utilities, isLoading: utilitiesLoading } = useUtilityList({ limit: 500 });
+  const { utility, isLoading: utilityLoading } = useUtility(slug);
+  const { utilities } = useUtilityList({ limit: 500 });
 
   const { iso } = useIso(utility?.isoId ?? null);
   const { rto } = useRto(utility?.rtoId ?? null);
@@ -117,8 +118,8 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   });
   const programTotals = useMemo(() => summarizePrograms(utilityPrograms), [utilityPrograms]);
 
-  if (utilitiesLoading) {
-    return <div className="cg-explore-loading">Loading…</div>;
+  if (utilityLoading) {
+    return <DelayedEntityDetailSkeleton />;
   }
 
   if (!utility) {
