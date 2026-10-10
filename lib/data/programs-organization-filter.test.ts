@@ -154,3 +154,18 @@ describe("loadPrograms organization filter", () => {
     expect(result.map((p) => p.slug)).not.toContain("vec-extended");
   });
 });
+
+describe("loadPrograms vehicle-to-grid service", () => {
+  it("filters V2G separately from ordinary EV demand response and preserves other selections", async () => {
+    rows = [
+      { ...row("v2g", "V2G", []), assetTypes: ["EV_CHARGER"], gridServices: ["VEHICLE_TO_GRID"] },
+      { ...row("both", "Both", []), assetTypes: ["EV_CHARGER"], gridServices: ["DEMAND_RESPONSE", "VEHICLE_TO_GRID"] },
+      { ...row("managed", "Managed charging", []), assetTypes: ["EV_CHARGER"], gridServices: ["DEMAND_RESPONSE"] },
+    ];
+    const v2g = await loadPrograms({ gridService: "VEHICLE_TO_GRID", assetType: "EV_CHARGER" });
+    expect(v2g.map((program) => program.slug)).toEqual(["v2g", "both"]);
+    expect(v2g[1].gridServices).toEqual(["DEMAND_RESPONSE", "VEHICLE_TO_GRID"]);
+    const dr = await loadPrograms({ gridService: "DEMAND_RESPONSE" });
+    expect(dr.map((program) => program.slug)).toEqual(["both", "managed"]);
+  });
+});
