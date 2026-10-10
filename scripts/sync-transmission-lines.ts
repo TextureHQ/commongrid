@@ -15,7 +15,6 @@
  *   Upserts into the `transmission_lines` Postgres table.
  */
 
-import * as path from "node:path";
 import { Pool } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
@@ -24,7 +23,6 @@ import type { TransmissionLine, VoltageClass } from "../types/transmission-lines
 const BASE_URL =
   "https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services/Electric_Power_Transmission_Lines/FeatureServer/0/query";
 
-const _DATA_DIR = path.join(process.cwd(), "data");
 const BATCH_SIZE = 1000;
 /** DB upsert batch size (rows per INSERT ... ON CONFLICT statement). */
 const DB_BATCH_SIZE = 500;
