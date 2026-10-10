@@ -46,9 +46,11 @@ vi.mock("@/lib/knock/workflows", () => ({
 }));
 
 import { requireCurrentUser } from "@/lib/auth";
+import { editableFieldDefinitions } from "@/lib/community-editable-fields/definitions";
 import { getPooledDb } from "@/lib/db/client-pooled";
 import { isKnockConfigured } from "@/lib/knock/client";
 import { triggerContributionSubmitted, triggerModNewContribution } from "@/lib/knock/workflows";
+import { GridService } from "@/types/programs";
 import { POST } from "./route";
 
 const PROGRAM_ROW = {
@@ -272,5 +274,48 @@ describe("GET /api/v1/contributions — summary", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).not.toHaveProperty("summary");
     expect(mockSelect).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("POST /api/v1/contributions — vehicle-to-grid", () => {
+  it.each(["create", "update"])("accepts V2G independently of demand response on %s", async (kind) => {
+    vi.clearAllMocks();
+    vi.mocked(isKnockConfigured).mockReturnValue(false);
+    vi.mocked(requireCurrentUser).mockResolvedValue({ id: "author-1", role: "contributor", bannedAt: null } as never);
+    const selectResult = (rows: unknown[]) => ({
+      from: () => ({ where: () => Object.assign(Promise.resolve(rows), { limit: () => Promise.resolve(rows) }) }),
+    });
+    mockSelect.mockReset();
+    if (kind === "update") {
+      mockSelect.mockReturnValueOnce(selectResult([PROGRAM_ROW]));
+      mockSelect.mockReturnValueOnce(selectResult([]));
+    }
+    mockSelect.mockReturnValueOnce(
+      selectResult(
+        editableFieldDefinitions.filter((field) => field.entityType === "program" && field.fieldType === "multi_enum")
+      )
+    );
+    const values = vi.fn((v) => ({ returning: () => Promise.resolve([{ id: "contrib-v2g", ...v }]) }));
+    mockInsert.mockReturnValue({ values });
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          change_type: kind,
+          changes: {
+            ...(kind === "create" ? { name: { new: "Bidirectional EV charging program" } } : {}),
+            asset_types: ["EV_CHARGER"],
+            grid_services: [GridService.VEHICLE_TO_GRID],
+          },
+        })
+      ) as never
+    );
+    expect(res.status).toBe(201);
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "pending",
+        changes: expect.objectContaining({ grid_services: { old: null, new: ["VEHICLE_TO_GRID"] } }),
+      })
+    );
+    expect(getPooledDb).not.toHaveBeenCalled();
   });
 });

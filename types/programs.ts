@@ -127,6 +127,8 @@ export const IncentiveStructureLabel: Record<IncentiveStructure, string> = {
 
 export enum GridService {
   DEMAND_RESPONSE = "DEMAND_RESPONSE",
+  /** Bidirectional EV charging that exports energy from a vehicle to the grid. */
+  VEHICLE_TO_GRID = "VEHICLE_TO_GRID",
   PEAK_SHAVING = "PEAK_SHAVING",
   LOAD_SHIFTING = "LOAD_SHIFTING",
   FREQUENCY_REGULATION = "FREQUENCY_REGULATION",
@@ -142,6 +144,7 @@ export enum GridService {
 
 export const GridServiceLabel: Record<GridService, string> = {
   [GridService.DEMAND_RESPONSE]: "Demand Response",
+  [GridService.VEHICLE_TO_GRID]: "Vehicle-to-Grid",
   [GridService.PEAK_SHAVING]: "Peak Shaving",
   [GridService.LOAD_SHIFTING]: "Load Shifting",
   [GridService.FREQUENCY_REGULATION]: "Frequency Regulation",
