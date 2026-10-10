@@ -7,7 +7,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ExplorerMap } from "@/components/explorer/ExplorerMap";
 import { getEVStationHighlightGeoJSON } from "./ev-station-highlight";
 
-const mocks = vi.hoisted(() => ({ flyTo: vi.fn(), navigateToDetail: vi.fn(), ready: true }));
+const mocks = vi.hoisted(() => ({
+  flyTo: vi.fn(),
+  navigateToDetail: vi.fn(),
+  ready: true,
+  on: vi.fn(),
+  off: vi.fn(),
+  getLayer: vi.fn(() => null),
+  queryRenderedFeatures: vi.fn(() => []),
+  getCanvas: vi.fn(() => ({ addEventListener: vi.fn(), removeEventListener: vi.fn() })),
+}));
 const highlight = getEVStationHighlightGeoJSON({
   slug: "hudson-yards",
   stationName: "Hudson Yards",
@@ -24,11 +33,11 @@ vi.mock("@texturehq/edges", () => ({
         mocks.ready
           ? {
               flyTo: mocks.flyTo,
-              on: vi.fn(),
-              off: vi.fn(),
-              getLayer: vi.fn(),
-              queryRenderedFeatures: vi.fn(() => []),
-              getCanvas: () => ({ addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+              on: mocks.on,
+              off: mocks.off,
+              getLayer: mocks.getLayer,
+              queryRenderedFeatures: mocks.queryRenderedFeatures,
+              getCanvas: mocks.getCanvas,
             }
           : null,
     }));
