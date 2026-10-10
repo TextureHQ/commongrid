@@ -49,6 +49,7 @@ import {
   isKnownEntityType,
   toVersionableSnapshot,
 } from "@/lib/mod/apply-contribution";
+import { getModerationLockedFields } from "@/lib/mod/field-moderation-state";
 import { getHumanLockedFields } from "./field-provenance";
 import { prepareTerritoryGeography, snapshotTerritoryGeography } from "./territory-geography";
 
@@ -301,7 +302,13 @@ async function applyOneRecord(
   if (geometry && existing.deletedAt) throw new Error(`Retired territory requires review: ${record.entityId}`);
 
   // Policy (B): never overwrite a field a human most-recently authored.
-  const locked = await getHumanLockedFields(tx, entityType, record.entityId);
+  // The durable moderation-state ledger is authoritative on top of the
+  // last-writer inference in entity_versions.
+  const [humanLocked, moderationLocked] = await Promise.all([
+    getHumanLockedFields(tx, entityType, record.entityId),
+    getModerationLockedFields(tx, entityType, record.entityId),
+  ]);
+  const locked = new Set([...humanLocked, ...moderationLocked]);
 
   // Spatial versions authored by humans may predate attribute geometry markers.
   if (geometry) {

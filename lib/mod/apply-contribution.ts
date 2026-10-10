@@ -27,11 +27,13 @@ import {
   rateStructures,
   regions,
   rtos,
+  sourceCitations,
   territories,
   transmissionLines,
   utilities,
 } from "@/lib/db/schema";
 import { buildVersionRecord, entityLabel } from "@/lib/db/versioning";
+import { upsertFieldModerationState, type VerificationType } from "./field-moderation-state";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -281,10 +283,17 @@ export async function applyContribution(
     actorId: string;
     sourceType: VersionSourceType;
     changeType: ChangeType;
+    /**
+     * When true, the contribution was applied without independent human review
+     * (trusted-contributor auto-approval). Records verification_type
+     * 'auto_approved' and leaves reviewedBy NULL.
+     */
+    autoApproved?: boolean;
     now?: Date;
   }
 ): Promise<ApplyOutcome> {
   const { actorId, sourceType, changeType } = opts;
+  const autoApproved = opts.autoApproved ?? false;
   const now = opts.now ?? new Date();
 
   const entityTable = getEntityTable(contribution.entityType);
@@ -293,6 +302,21 @@ export async function applyContribution(
   }
   const entityType = contribution.entityType as EntityType;
   const changes = normalizeChanges(contribution.changes);
+  const verificationType: VerificationType = autoApproved ? "auto_approved" : "moderator";
+
+  // Per-field source citation overrides, if any, are linked to the ledger row
+  // for the same field. Query once per contribution rather than per field.
+  const citationRows = await tx
+    .select({ fieldName: sourceCitations.fieldName, id: sourceCitations.id })
+    .from(sourceCitations)
+    .where(eq(sourceCitations.contributionId, contribution.id));
+  // Citation field names may arrive as snake_case or camelCase depending on
+  // the caller; index both so the ledger lookup is robust.
+  const citationByField = new Map<string, string>();
+  for (const row of citationRows) {
+    citationByField.set(row.fieldName, row.id);
+    citationByField.set(snakeToCamel(row.fieldName), row.id);
+  }
 
   // Drizzle silently DROPS keys that are not columns, from both .set() and
   // .values() — it does not error. Without this check, approving an edit to a
@@ -353,6 +377,17 @@ export async function applyContribution(
       sourceId: sourceType === "admin" ? "manual" : "community",
       asOf: null,
     });
+
+    await upsertLedgerRows(
+      tx,
+      entityType,
+      contribution,
+      changes,
+      verificationType,
+      autoApproved ? null : actorId,
+      citationByField,
+      now
+    );
 
     return { status: "applied", appliedVersion: 1, changeType: "create" };
   }
@@ -431,7 +466,51 @@ export async function applyContribution(
     asOf: null,
   });
 
+  if (changeType !== "delete") {
+    await upsertLedgerRows(
+      tx,
+      entityType,
+      contribution,
+      changes,
+      verificationType,
+      autoApproved ? null : actorId,
+      citationByField,
+      now
+    );
+  }
+
   return { status: "applied", appliedVersion: newVersion, changeType };
+}
+
+/**
+ * Write or refresh a field_moderation_state row for every field the
+ * contribution asserts. Deletion metadata is skipped; deletes remove the
+ * entity rather than establishing field-level protection.
+ */
+async function upsertLedgerRows(
+  tx: DbTransaction,
+  entityType: EntityType,
+  contribution: ApplicableContribution,
+  changes: Record<string, { old: unknown; new: unknown }>,
+  verificationType: VerificationType,
+  reviewedBy: string | null,
+  citationByField: Map<string, string>,
+  now: Date
+): Promise<void> {
+  for (const [field, change] of Object.entries(changes)) {
+    if (field === "_deletion") continue;
+    await upsertFieldModerationState(tx, {
+      entityType,
+      entityId: contribution.entityId,
+      fieldName: snakeToCamel(field),
+      approvedValue: change.new,
+      verificationType,
+      contributionId: contribution.id,
+      reviewedBy,
+      sourceCitationId: citationByField.get(field) ?? null,
+      now,
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------

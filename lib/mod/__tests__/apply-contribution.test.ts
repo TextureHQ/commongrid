@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { entityVersions } from "@/lib/db/schema";
+import { entityVersions, fieldModerationState, sourceCitations } from "@/lib/db/schema";
 import { type ApplicableContribution, applyContribution, normalizeChanges } from "../apply-contribution";
 
 // ---------------------------------------------------------------------------
@@ -13,12 +13,15 @@ interface FakeState {
   hasVersionHistory: boolean;
   /** Highest existing version_number, when hasVersionHistory. Defaults to 1. */
   highestVersion?: number;
+  /** Per-field source citation overrides returned for source_citations queries. */
+  sourceCitations?: { fieldName: string; id: string }[];
 }
 
 interface Recorded {
   entityInserts: Record<string, unknown>[];
   entityUpdates: Record<string, unknown>[];
   versionInserts: Record<string, unknown>[];
+  fieldModerationInserts: Record<string, unknown>[];
   lockedRows: number;
 }
 
@@ -32,18 +35,24 @@ function makeTx(state: FakeState) {
     entityInserts: [],
     entityUpdates: [],
     versionInserts: [],
+    fieldModerationInserts: [],
     lockedRows: 0,
   };
 
   // Reads and writes are routed by table identity rather than call order, so
   // the fake keeps working if applyContribution reorders its queries.
   const isVersionsTable = (table: unknown) => table === entityVersions;
+  const isFieldModerationTable = (table: unknown) => table === fieldModerationState;
 
   /** `.values()` is awaited directly in some places and chained with
-   *  `.onConflictDoNothing()` in others, so it must be both. */
+   *  `.onConflictDoNothing()` or `.onConflictDoUpdate()` in others, so it
+   *  must be both a promise and a chainable builder. */
   const valuesResult = () => {
     const promise = Promise.resolve(undefined);
-    return Object.assign(promise, { onConflictDoNothing: () => Promise.resolve(undefined) });
+    return Object.assign(promise, {
+      onConflictDoNothing: () => Promise.resolve(undefined),
+      onConflictDoUpdate: () => Promise.resolve(undefined),
+    });
   };
 
   const tx = {
@@ -62,6 +71,9 @@ function makeTx(state: FakeState) {
               // max(version_number) over existing rows.
               return state.hasVersionHistory ? [{ maxVersion: state.highestVersion ?? 1 }] : [{ maxVersion: null }];
             }
+            if (table === sourceCitations) {
+              return state.sourceCitations ?? [];
+            }
             return state.entity ? [state.entity] : [];
           };
           return Object.assign(Promise.resolve(rows()), { limit: async () => rows() });
@@ -71,6 +83,7 @@ function makeTx(state: FakeState) {
     insert: vi.fn((table: unknown) => ({
       values: (v: Record<string, unknown>) => {
         if (isVersionsTable(table)) recorded.versionInserts.push(v);
+        else if (isFieldModerationTable(table)) recorded.fieldModerationInserts.push(v);
         else recorded.entityInserts.push(v);
         return valuesResult();
       },
@@ -243,6 +256,94 @@ describe("applyContribution", () => {
     });
     expect(version?.snapshot).toBeNull();
     expect(version?.delta).toMatchObject({ amiMeterCount: { old: 100, new: 200 } });
+  });
+
+  it("writes active field_moderation_state rows for changed and unchanged approved fields", async () => {
+    // Weakness #2: approving an unchanged value must still establish protection.
+    const { tx, recorded } = makeTx({
+      entity: { id: "entity-1", version: 3, amiMeterCount: 100, name: "Same Name" },
+      hasVersionHistory: true,
+    });
+
+    await applyContribution(
+      tx,
+      contribution({
+        changes: {
+          ami_meter_count: { old: 100, new: 200 },
+          name: { old: "Same Name", new: "Same Name" },
+        },
+      }),
+      { ...opts, changeType: "update" }
+    );
+
+    expect(recorded.fieldModerationInserts).toHaveLength(2);
+    const byField = new Map(recorded.fieldModerationInserts.map((r) => [r.fieldName, r]));
+
+    expect(byField.get("amiMeterCount")).toMatchObject({
+      entityType: "utility",
+      entityId: "entity-1",
+      approvedValue: 200,
+      status: "active",
+      verificationType: "moderator",
+      contributionId: "contrib-1",
+      reviewedBy: "moderator-1",
+    });
+
+    expect(byField.get("name")).toMatchObject({
+      fieldName: "name",
+      approvedValue: "Same Name",
+      status: "active",
+      verificationType: "moderator",
+    });
+  });
+
+  it("records auto_approved verification type when autoApproved is true", async () => {
+    const { tx, recorded } = makeTx({
+      entity: { id: "entity-1", version: 3, amiMeterCount: 100 },
+      hasVersionHistory: true,
+    });
+
+    await applyContribution(tx, contribution(), { ...opts, changeType: "update", autoApproved: true });
+
+    expect(recorded.fieldModerationInserts).toHaveLength(1);
+    expect(recorded.fieldModerationInserts[0]).toMatchObject({
+      verificationType: "auto_approved",
+      reviewedBy: null,
+    });
+  });
+
+  it("does not write ledger rows for deletions", async () => {
+    const { tx, recorded } = makeTx({
+      entity: { id: "entity-1", version: 3, amiMeterCount: 100 },
+      hasVersionHistory: true,
+    });
+
+    await applyContribution(tx, contribution({ changeType: "delete" }), { ...opts, changeType: "delete" });
+
+    expect(recorded.fieldModerationInserts).toHaveLength(0);
+  });
+
+  it("links per-field source citations to ledger rows", async () => {
+    const { tx, recorded } = makeTx({
+      entity: { id: "entity-1", version: 3, amiMeterCount: 100, website: "https://old.test" },
+      hasVersionHistory: true,
+      sourceCitations: [{ fieldName: "website", id: "citation-website" }],
+    });
+
+    await applyContribution(
+      tx,
+      contribution({
+        changes: {
+          website: { old: "https://old.test", new: "https://new.test" },
+        },
+      }),
+      { ...opts, changeType: "update" }
+    );
+
+    expect(recorded.fieldModerationInserts[0]).toMatchObject({
+      fieldName: "website",
+      sourceCitationId: "citation-website",
+    });
   });
 
   it("locks the entity row before reading its version", async () => {
