@@ -1,7 +1,7 @@
 {
   "source": "OpenEI Utility Rate Database (URDB)",
   "generated_by": "sync:urdb-rates",
-  "generated_at": "2026-09-27T07:25:20.237Z",
+  "generated_at": "2026-10-04T09:15:28.475Z",
   "sectors": [
     "Residential",
     "Commercial"
@@ -27,14 +27,14 @@
   },
   "registry_counts": {
     "created": 0,
-    "updated": 19322,
-    "unchanged": 0,
-    "fields_written": 96613
+    "updated": 19061,
+    "unchanged": 261,
+    "fields_written": 19518
   },
   "source_url_status": {
     "checked": 19061,
-    "ok": 3770,
-    "dead": 15291
+    "ok": 3653,
+    "dead": 15408
   },
   "deferrals_count": 0,
   "errors": [],
