@@ -79,17 +79,27 @@ vi.mock("@/lib/data/transmission-lines", () => ({
           if (iv == null) return true;
           if (cursorValue == null) return false;
           const diff = iv - Number(cursorValue);
-          return order === "asc" ? diff > 0 || (diff === 0 && item.id > cursor.id) : diff < 0 || (diff === 0 && item.id > cursor.id);
+          return order === "asc"
+            ? diff > 0 || (diff === 0 && item.id > cursor.id)
+            : diff < 0 || (diff === 0 && item.id > cursor.id);
         }
         const diff = String(item[sort as keyof typeof item]).localeCompare(String(cursorValue ?? ""));
-        return order === "asc" ? diff > 0 || (diff === 0 && item.id > cursor.id) : diff < 0 || (diff === 0 && item.id > cursor.id);
+        return order === "asc"
+          ? diff > 0 || (diff === 0 && item.id > cursor.id)
+          : diff < 0 || (diff === 0 && item.id > cursor.id);
       });
       if (start === -1) start = sorted.length;
     }
     const page = sorted.slice(start, start + limit + 1);
     const hasMore = page.length > limit;
     const items = hasMore ? page.slice(0, limit) : page;
-    captured.push({ sort, order, limit, cursor: cursor ? JSON.stringify(cursor) : undefined, result: items.map((i) => i.id) });
+    captured.push({
+      sort,
+      order,
+      limit,
+      cursor: cursor ? JSON.stringify(cursor) : undefined,
+      result: items.map((i) => i.id),
+    });
     return items;
   }),
 }));

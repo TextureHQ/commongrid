@@ -18,7 +18,10 @@ describe.skipIf(!databaseUrl)("transmission ground miles migration (PostGIS)", (
       /^(BEGIN;|COMMIT;)$/gm,
       ""
     );
-    const result = execFileSync("psql", [databaseUrl!, "-X", "-v", "ON_ERROR_STOP=1", "-t", "-A"], {
+    if (!databaseUrl) {
+      throw new Error("SNAPSHOT_TEST_DATABASE_URL is required");
+    }
+    const result = execFileSync("psql", [databaseUrl, "-X", "-v", "ON_ERROR_STOP=1", "-t", "-A"], {
       input: `BEGIN;
         CREATE SCHEMA length_test;
         SET search_path TO length_test, public;
@@ -41,7 +44,9 @@ describe.skipIf(!databaseUrl)("transmission ground miles migration (PostGIS)", (
         ROLLBACK;`,
       encoding: "utf8",
     });
-    const values = JSON.parse(result.split("\n").find((line) => line.startsWith("{"))!);
+    const valuesLine = result.split("\n").find((line) => line.startsWith("{"));
+    if (!valuesLine) throw new Error("Expected JSON output from repair script");
+    const values = JSON.parse(valuesLine);
     expect(values.equator).toBeCloseTo(69.093, 2);
     expect(values.north).toBeCloseTo(34.546, 2);
     expect(values.multi).toBeCloseTo(values.equator * 2, 5);
