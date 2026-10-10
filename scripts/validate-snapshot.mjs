@@ -26,14 +26,15 @@ function polygon(value) {
   value.forEach((ring) => line(ring, true));
 }
 
-export function validateGeoJSON(value) {
+export function validateGeoJSON(value, { allowNullGeometry = false } = {}) {
   if (value?.type !== "FeatureCollection" || !Array.isArray(value.features) || !value.features.length) {
     throw new Error("Expected a non-empty FeatureCollection");
   }
   for (const feature of value.features) {
-    if (feature?.type !== "Feature" || !feature.properties?.id || !feature.geometry) {
+    if (feature?.type !== "Feature" || !feature.properties?.id || (!feature.geometry && !(allowNullGeometry && feature.geometry === null))) {
       throw new Error("Feature requires a public ID, properties and geometry");
     }
+    if (feature.geometry === null) continue;
     const { type, coordinates } = feature.geometry;
     switch (type) {
       case "Point": position(coordinates); break;
@@ -57,7 +58,11 @@ export function validateSnapshot(directory) {
     if (!files.includes(name)) throw new Error(`Missing artifact: ${name}`);
     const value = JSON.parse(gunzipSync(readFileSync(join(directory, name))).toString("utf8"));
     if (name.endsWith(".geojson.gz")) {
-      console.log(`${name}: ${validateGeoJSON(value)} features`);
+      // Transmission metadata remains useful before the geometry backfill completes.
+      // Null is valid RFC 7946 geometry; never accept malformed non-null geometry.
+      const count = validateGeoJSON(value, { allowNullGeometry: name === "transmission-lines.geojson.gz" });
+      const spatial = value.features.filter((feature) => feature.geometry !== null).length;
+      console.log(`${name}: ${count} records; ${spatial} with geometry; ${count - spatial} without geometry`);
     } else {
       if (!Array.isArray(value) || !value.length || value.some((row) => !row?.id)) {
         throw new Error(`${name}: expected non-empty records with public IDs`);
