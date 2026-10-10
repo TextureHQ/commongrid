@@ -15,18 +15,16 @@
  *   Upserts into the `transmission_lines` Postgres table.
  */
 
-import * as fs from "node:fs";
 import * as path from "node:path";
 import { Pool } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { transmissionLines } from "../lib/db/schema";
 import type { TransmissionLine, VoltageClass } from "../types/transmission-lines";
 
 const BASE_URL =
   "https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services/Electric_Power_Transmission_Lines/FeatureServer/0/query";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const _DATA_DIR = path.join(process.cwd(), "data");
 const BATCH_SIZE = 1000;
 /** DB upsert batch size (rows per INSERT ... ON CONFLICT statement). */
 const DB_BATCH_SIZE = 500;
@@ -124,16 +122,6 @@ async function fetchBatch(offset: number): Promise<ArcGISResponse> {
 
 // ── Conversion helpers ──────────────────────────────────────────────────────
 
-/** Convert Shape__Length (degrees, roughly) to miles. Very rough approximation. */
-function shapelenToMiles(shapeLen: number | undefined): number {
-  if (!shapeLen) return 0;
-  // Shape__Length is in the coordinate reference system units.
-  // For GCS (lat/lon), it's in decimal degrees — 1 degree ≈ 69 miles.
-  // For projected (meters), divide by 1609.34.
-  // HIFLD data uses geographic coords (degrees), so multiply by 69.
-  return Math.round(shapeLen * 69 * 100) / 100;
-}
-
 // ── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -167,7 +155,7 @@ async function main() {
       const objectId = p.OBJECTID_1 ?? p.OBJECTID ?? f.id ?? 0;
       const voltage = typeof p.VOLTAGE === "number" ? p.VOLTAGE : null;
       const voltageClass = classifyVoltage(voltage);
-      const lengthMiles = shapelenToMiles(p.Shape__Length ?? p.SHAPE__Len);
+      const lengthMiles = null; // Computed from WGS84 geometry in the SQL below.
 
       // Metadata for list page
       const meta: TransmissionLine = {
@@ -261,7 +249,7 @@ async function main() {
               g
             )}), 4326)), 2))`;
       if (g == null) skippedGeom++;
-      return sql`(${m.id}, ${m.objectId}, ${m.type}, ${m.status}, ${m.owner}, ${m.voltage}, ${m.voltClass}, ${m.voltageClass}, ${m.sub1}, ${m.sub2}, ${m.lengthMiles}, ${m.naicsCode}, ${m.source || "HIFLD"}, ${geomExpr})`;
+      return sql`(${m.id}, ${m.objectId}, ${m.type}, ${m.status}, ${m.owner}, ${m.voltage}, ${m.voltClass}, ${m.voltageClass}, ${m.sub1}, ${m.sub2}, ${sql`CASE WHEN ${geomExpr} IS NULL OR ST_IsEmpty(${geomExpr}) THEN NULL ELSE ST_Length(${geomExpr}::geography, false) / 1609.344 END`}, ${m.naicsCode}, ${m.source || "HIFLD"}, ${geomExpr})`;
     });
 
     await db.execute(sql`

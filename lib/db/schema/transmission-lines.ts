@@ -32,7 +32,7 @@ export const transmissionLines = pgTable(
     voltageClass: text("voltage_class").notNull(), // VoltageClass enum
     sub1: text("sub1").notNull(),
     sub2: text("sub2").notNull(),
-    lengthMiles: doublePrecision("length_miles").notNull(),
+    lengthMiles: doublePrecision("length_miles"),
     naicsCode: text("naics_code").notNull(),
 
     /**

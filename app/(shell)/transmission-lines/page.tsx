@@ -25,7 +25,7 @@ interface TransmissionLineRow extends Record<string, unknown> {
   voltageClass: VoltageClass;
   status: string;
   type: string;
-  lengthMiles: number;
+  lengthMiles: number | null;
   sub1: string;
   sub2: string;
 }
@@ -213,7 +213,9 @@ export default function TransmissionLinesPage() {
         label: "Length",
         accessor: "lengthMiles",
         render: (_value: unknown, row: TransmissionLineRow) => (
-          <span className="text-text-body">{row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}</span>
+          <span className="text-text-body">
+            {row.lengthMiles != null && row.lengthMiles > 0 ? `${row.lengthMiles.toFixed(1)} mi` : "—"}
+          </span>
         ),
         mobile: false,
       },
