@@ -260,6 +260,13 @@
       "when": 1790796494261,
       "tag": "0040_register_utility_logo",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1790796494262,
+      "tag": "0041_add_field_moderation_state",
+      "breakpoints": true
     }
   ]
 }

@@ -72,6 +72,11 @@ export type {
 export { entityVersions } from "./entity-versions";
 export type { EvStationInsert, EvStationSelect } from "./ev-stations";
 export { evStations } from "./ev-stations";
+export type {
+  FieldModerationStateInsert,
+  FieldModerationStateSelect,
+} from "./field-moderation-state";
+export { fieldModerationState } from "./field-moderation-state";
 export type { IsoInsert, IsoSelect } from "./isos";
 // Core Entity Tables
 export { isos } from "./isos";

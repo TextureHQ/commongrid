@@ -127,6 +127,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
         actorId: moderator.id,
         sourceType: "community",
         changeType,
+        autoApproved: false,
         now,
       });
 

@@ -1,5 +1,6 @@
 -- Disposable integration fixture: only columns exercised by the publisher,
 -- modeling the missing spatial-history constraint seen in older databases.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE ROLE commongrid_sync NOLOGIN;
 CREATE TABLE data_sources (id text PRIMARY KEY, display_name text NOT NULL, authority_tier text NOT NULL, cadence text NOT NULL, homepage_url text, license text, is_active boolean NOT NULL DEFAULT true);
@@ -42,8 +43,31 @@ CREATE TABLE entity_geometry_versions (
  contribution_id text, source_id text REFERENCES data_sources(id), as_of timestamptz,
  changed_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE TABLE field_moderation_state (
+ id text PRIMARY KEY DEFAULT gen_random_uuid(),
+ entity_type text NOT NULL,
+ entity_id text NOT NULL,
+ field_name text NOT NULL,
+ approved_value jsonb,
+ status text NOT NULL DEFAULT 'active',
+ verification_type text NOT NULL,
+ contribution_id text,
+ reviewed_by text,
+ source_citation_id text,
+ verified_at timestamptz NOT NULL DEFAULT now(),
+ released_at timestamptz,
+ released_by text,
+ release_reason text,
+ created_at timestamptz NOT NULL DEFAULT now(),
+ updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX field_moderation_state_entity_field_unique ON field_moderation_state (entity_type, entity_id, field_name);
+CREATE INDEX idx_field_moderation_state_entity ON field_moderation_state (entity_type, entity_id);
+CREATE INDEX idx_field_moderation_state_status ON field_moderation_state (status);
 GRANT USAGE ON SCHEMA public TO commongrid_sync;
 GRANT SELECT ON data_sources, utilities TO commongrid_sync;
+GRANT SELECT ON field_moderation_state TO commongrid_sync;
 GRANT SELECT, INSERT, UPDATE ON regions, territories, entity_versions, change_batches TO commongrid_sync;
 GRANT USAGE, SELECT ON SEQUENCE entity_versions_id_seq TO commongrid_sync;
+GRANT USAGE, SELECT ON SEQUENCE entity_geometry_versions_id_seq TO commongrid_sync;
 -- Spatial grants intentionally omitted: migration 0036 must supply them.

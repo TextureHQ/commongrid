@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { getPooledDb } from "@/lib/db/client-pooled";
 import { changeBatches, entityVersions } from "@/lib/db/schema";
+import { getModerationLockedFields } from "@/lib/mod/field-moderation-state";
 import type { SyncRecord } from "../apply-sync";
 import { applySync } from "../apply-sync";
 import * as fieldProvenance from "../field-provenance";
@@ -15,6 +16,11 @@ vi.mock("../field-provenance", async () => {
   const actual = await vi.importActual<typeof import("../field-provenance")>("../field-provenance");
   return { ...actual, getHumanLockedFields: vi.fn() };
 });
+
+vi.mock("@/lib/mod/field-moderation-state", () => ({ getModerationLockedFields: vi.fn() }));
+
+// Default: no durable ledger locks. Tests that need ledger protection override this.
+vi.mocked(getModerationLockedFields).mockResolvedValue(new Set());
 
 interface FakeState {
   /** The entity row currently in the table, or null for a create. */
@@ -622,5 +628,103 @@ describe("territory geometry history", () => {
     await expect(applySync([input], { ...opts, tx })).rejects.toThrow("Invalid polygon");
     expect(recorded.entityInserts).toHaveLength(0);
     expect(recorded.versionInserts).toHaveLength(0);
+  });
+});
+
+describe("field moderation state ledger enforcement", () => {
+  it("defers a field with an active ledger row even when last writer was machine", async () => {
+    // Simulates weakness #1: entity_versions says the newest touch to fieldA
+    // was a sync, but the durable ledger still protects it.
+    vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set());
+    vi.mocked(getModerationLockedFields).mockResolvedValue(new Set(["name"]));
+
+    const { tx, recorded } = makeTx({
+      entity: {
+        id: "u-1",
+        version: 2,
+        name: "Human Name",
+        customerCount: 100,
+      },
+      hasVersionHistory: true,
+      highestVersion: 2,
+    });
+    vi.mocked(getPooledDb).mockReturnValue({
+      transaction: (async (fn: (tx: unknown) => Promise<unknown>) => fn(tx)) as unknown,
+    } as unknown as ReturnType<typeof getPooledDb>);
+
+    const report = await applySync([record({ fields: { name: "Sync Name", customerCount: 200 } })], baseOpts);
+
+    expect(report).toMatchObject({
+      created: 0,
+      updated: 1,
+      unchanged: 0,
+      fieldsWritten: 1,
+    });
+
+    expect(report.deferrals).toHaveLength(1);
+    expect(report.deferrals[0]).toEqual({
+      entityId: "u-1",
+      field: "name",
+      keptValue: "Human Name",
+      skippedValue: "Sync Name",
+    });
+
+    expect(recorded.entityUpdates).toHaveLength(1);
+    expect(recorded.entityUpdates[0]).toMatchObject({ customerCount: 200 });
+    expect(recorded.entityUpdates[0]).not.toHaveProperty("name");
+
+    expect(recorded.versionInserts).toHaveLength(1);
+    expect(recorded.versionInserts[0]?.delta).toMatchObject({
+      customerCount: { old: 100, new: 200 },
+    });
+    expect(recorded.versionInserts[0]?.delta).not.toHaveProperty("name");
+  });
+
+  it("does not defer a field with a released ledger row", async () => {
+    vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set());
+    vi.mocked(getModerationLockedFields).mockResolvedValue(new Set());
+
+    const { tx, recorded } = makeTx({
+      entity: {
+        id: "u-1",
+        version: 2,
+        name: "Old Name",
+        customerCount: 100,
+      },
+      hasVersionHistory: true,
+      highestVersion: 2,
+    });
+    vi.mocked(getPooledDb).mockReturnValue({
+      transaction: (async (fn: (tx: unknown) => Promise<unknown>) => fn(tx)) as unknown,
+    } as unknown as ReturnType<typeof getPooledDb>);
+
+    const report = await applySync([record({ fields: { name: "New Name" } })], baseOpts);
+
+    expect(report).toMatchObject({ updated: 1, deferrals: [] });
+    expect(recorded.entityUpdates[0]).toMatchObject({ name: "New Name" });
+  });
+
+  it("unions ledger locks with provenance-inferred locks", async () => {
+    vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set(["customerCount"]));
+    vi.mocked(getModerationLockedFields).mockResolvedValue(new Set(["name"]));
+
+    const { tx, recorded } = makeTx({
+      entity: {
+        id: "u-1",
+        version: 2,
+        name: "Human Name",
+        customerCount: 100,
+      },
+      hasVersionHistory: true,
+      highestVersion: 2,
+    });
+    vi.mocked(getPooledDb).mockReturnValue({
+      transaction: (async (fn: (tx: unknown) => Promise<unknown>) => fn(tx)) as unknown,
+    } as unknown as ReturnType<typeof getPooledDb>);
+
+    const report = await applySync([record({ fields: { name: "Sync Name", customerCount: 200 } })], baseOpts);
+
+    expect(report.deferrals).toHaveLength(2);
+    expect(recorded.entityUpdates).toHaveLength(0);
   });
 });
