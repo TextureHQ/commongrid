@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as reviewRoute from "./route";
 
@@ -82,7 +83,7 @@ const mockContribution = (overrides: Record<string, unknown> = {}) => ({
 });
 
 function makeRequest(body: Record<string, unknown>) {
-  return new Request("http://localhost/api/v1/mod/contributions/contrib-1/review", {
+  return new NextRequest("http://localhost/api/v1/mod/contributions/contrib-1/review", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -90,7 +91,7 @@ function makeRequest(body: Record<string, unknown>) {
 }
 
 function makeContext() {
-  return { requestId: "req-1", params: { id: "contrib-1" } };
+  return { params: Promise.resolve({ id: "contrib-1" }) };
 }
 
 describe("POST /api/v1/mod/contributions/:id/review", () => {
@@ -139,30 +140,22 @@ describe("POST /api/v1/mod/contributions/:id/review", () => {
     (markContributionApplied as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
   });
 
-  describe("self-approval detection", () => {
-    it("does not block when the moderator approves their own contribution", async () => {
-      (requireCurrentUser as ReturnType<typeof vi.fn>).mockResolvedValue({
-        id: "user-1",
-        role: "moderator",
-      });
-
-      const capturedValues: { metadata?: Record<string, unknown>; targetType?: string }[] = [];
-      mockInsert.mockReturnValue({
-        values: (v: { metadata?: Record<string, unknown>; targetType?: string }) => {
-          capturedValues.push(v);
-          return Promise.resolve(undefined);
-        },
-      });
+  describe("independent human approval", () => {
+    it.each(["moderator", "admin"])("blocks %s self-approval without any writes", async (role) => {
+      (requireCurrentUser as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1", role });
 
       const res = await reviewRoute.POST(makeRequest({ action: "approve" }), makeContext());
-      expect(res.status).toBe(200);
-
-      const actionRecord = capturedValues.find((v) => v.targetType === "contribution");
-      expect(actionRecord).toBeDefined();
-      expect(actionRecord?.metadata).toMatchObject({ self_approved: true });
+      expect(res.status).toBe(403);
+      expect((await res.json()).error.message).toContain("Another moderator must review");
+      expect(mockTransaction).not.toHaveBeenCalled();
+      expect(applyContribution).not.toHaveBeenCalled();
+      expect(markContributionApplied).not.toHaveBeenCalled();
+      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(mockInsert).not.toHaveBeenCalled();
     });
 
-    it("does not mark self_approved when the reviewer is a different user", async () => {
+    it.each(["moderator", "admin"])("allows independent approval by a %s", async (role) => {
+      (requireCurrentUser as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "moderator-1", role });
       const capturedValues: { metadata?: Record<string, unknown>; targetType?: string }[] = [];
       mockInsert.mockReturnValue({
         values: (v: { metadata?: Record<string, unknown>; targetType?: string }) => {
@@ -176,6 +169,12 @@ describe("POST /api/v1/mod/contributions/:id/review", () => {
 
       const actionRecord = capturedValues.find((v) => v.targetType === "contribution");
       expect(actionRecord?.metadata).not.toHaveProperty("self_approved");
+      expect(applyContribution).toHaveBeenCalledTimes(1);
+      expect(markContributionApplied).toHaveBeenCalledWith(
+        expect.anything(),
+        "contrib-1",
+        expect.objectContaining({ status: "approved", reviewedBy: "moderator-1" })
+      );
     });
 
     it("does not mark self_approved for return/request_changes even when ids match", async () => {
@@ -201,12 +200,7 @@ describe("POST /api/v1/mod/contributions/:id/review", () => {
   });
 
   describe("version_conflict path", () => {
-    it("does not mark self_approved when approval fails with version conflict", async () => {
-      (requireCurrentUser as ReturnType<typeof vi.fn>).mockResolvedValue({
-        id: "user-1",
-        role: "moderator",
-      });
-
+    it("preserves version conflict handling for independent approval", async () => {
       (applyContribution as ReturnType<typeof vi.fn>).mockResolvedValue({
         status: "version_conflict",
         entityVersion: 3,

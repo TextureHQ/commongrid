@@ -68,3 +68,43 @@ describe("CommonGrid path adapter over the shared route controller", () => {
     expect(explorer.state.viewMode).toBe("table");
   });
 });
+
+describe("EV station selection", () => {
+  it("opens station details on the map from a filtered table and restores that table on Back", async () => {
+    navigation.pathname = "/explore/ev-charging";
+    navigation.search = "mode=table&q=Hudson&type=Tesla";
+    await act(async () =>
+      root.render(
+        <ExplorerProvider>
+          <Capture />
+        </ExplorerProvider>
+      )
+    );
+    await act(async () => explorer.navigateToDetail("ev-station", "10-hudson-yards"));
+    expect(window.location.pathname).toBe("/explore/ev-charging/10-hudson-yards");
+    expect(explorer.state.viewMode).toBe("map");
+    expect(explorer.state.detailKind).toBe("ev-charging");
+    await act(async () => explorer.goBack());
+    expect(window.location.pathname).toBe("/explore/ev-charging");
+    expect(explorer.state.viewMode).toBe("table");
+    expect(explorer.state.q).toBe("Hudson");
+    expect(explorer.state.type).toBe("Tesla");
+  });
+
+  it("seeds a station deep link and switches to another selected station", async () => {
+    navigation.pathname = "/explore/ev-charging/10-hudson-yards-tesla-destination-new-york-ny";
+    navigation.search = "";
+    await act(async () =>
+      root.render(
+        <ExplorerProvider>
+          <Capture />
+        </ExplorerProvider>
+      )
+    );
+    expect(explorer.state.viewMode).toBe("map");
+    expect(explorer.state.slug).toBe("10-hudson-yards-tesla-destination-new-york-ny");
+    await act(async () => explorer.navigateToDetail("ev-station", "x-gizmo-hayward-ca"));
+    expect(window.location.pathname).toBe("/explore/ev-charging/x-gizmo-hayward-ca");
+    expect(explorer.state.detailKind).toBe("ev-charging");
+  });
+});

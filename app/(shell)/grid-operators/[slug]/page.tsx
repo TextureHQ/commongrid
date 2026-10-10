@@ -21,6 +21,7 @@ import { notFound, useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
+import { DownloadTerritoryButton } from "@/components/DownloadTerritoryButton";
 import {
   EntityList,
   EntityMap,
@@ -910,6 +911,10 @@ export default function UtilityDetailPage() {
             />
           </EntitySection>
         )}
+
+        <div className="mt-6">
+          <DownloadTerritoryButton key={utility.slug} slug={utility.slug} />
+        </div>
       </div>
     </>
   );

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
+import { DownloadTerritoryButton } from "@/components/DownloadTerritoryButton";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
@@ -488,6 +489,10 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
           >
             Full page →
           </Link>
+        </div>
+
+        <div className="mt-3">
+          <DownloadTerritoryButton key={utility.slug} slug={utility.slug} />
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { DbTransaction } from "@/lib/sync/apply-sync";
 import utilities from "../../data/utilities.json";
 import { VERMONT_UTILITY_EIA_IDS } from "../lib/vermont-utility-crosswalk";
 import {
@@ -11,6 +12,7 @@ import {
   fetchJsonWithFallback,
   normalizeUtilityName,
   parseStateBoundaryArgs,
+  quarantineInvalidTerritoryEntries,
   type SourceConfig,
   STATE_BOUNDARY_SOURCES,
   selectBoundarySources,
@@ -343,7 +345,10 @@ describe("Vermont PSD", () => {
         makeFeature({ COMPANYNAM, OBJECTID: 16, Customer_Num: 3386 })
       )
     );
-    const record = buildRegionSyncRecords(entries).find((r) => r.entityId === "region-st-27316")!;
+    const record = buildRegionSyncRecords(entries).find((r) => r.entityId === "region-st-27316");
+    if (!record) {
+      throw new Error("expected region-st-27316 sync record");
+    }
     expect(record.entityId).toBe("region-st-27316");
     expect(record.sourceId).toBe("vt-psd");
     expect(record.asOf).toBeNull();
@@ -354,8 +359,14 @@ describe("Vermont PSD", () => {
 
 describe("territory sync records", () => {
   it("carries full polygon and provenance through the versioned publisher", () => {
-    const config = STATE_BOUNDARY_SOURCES.find((s) => s.state === "VT")!;
-    const record = buildRegionRecord(config, makeFeature({ COMPANYNAM: "Village of Stowe Electric Dept." }), 0)!;
+    const config = STATE_BOUNDARY_SOURCES.find((s) => s.state === "VT");
+    if (!config) {
+      throw new Error("expected VT source");
+    }
+    const record = buildRegionRecord(config, makeFeature({ COMPANYNAM: "Village of Stowe Electric Dept." }), 0);
+    if (!record) {
+      throw new Error("expected VT territory record");
+    }
     const [territory] = buildTerritorySyncRecords([{ record, geometry: mockPolygon }]);
     expect(territory).toMatchObject({
       entityId: "territory-27316",
@@ -367,6 +378,45 @@ describe("territory sync records", () => {
     expect(() => buildTerritorySyncRecords([{ record, geometry: { type: "Point", coordinates: [0, 0] } }])).toThrow(
       /Non-polygon/
     );
+  });
+
+  it("quarantines invalid or non-polygon territories before publication", async () => {
+    const tx = {
+      execute: vi
+        .fn()
+        .mockResolvedValueOnce({ rows: [{ valid: true }] })
+        .mockResolvedValueOnce({ rows: [{ valid: false }] }),
+    } as unknown as DbTransaction;
+
+    const validRecord = { id: "region-st-1", eiaId: "1", name: "Valid", dataSourceId: "test", source: "src" };
+    const invalidRecord = {
+      id: "region-st-2",
+      eiaId: "2",
+      name: "Invalid",
+      dataSourceId: "test",
+      source: "src",
+    };
+    const nonPolygonRecord = {
+      id: "region-st-3",
+      eiaId: "3",
+      name: "Point",
+      dataSourceId: "test",
+      source: "src",
+    };
+    const validGeometry: Geometry = mockPolygon;
+    const invalidGeometry: Geometry = mockPolygon;
+    const pointGeometry: Geometry = { type: "Point", coordinates: [0, 0] };
+
+    const { validEntries, quarantined } = await quarantineInvalidTerritoryEntries(tx, [
+      { record: validRecord, geometry: validGeometry },
+      { record: invalidRecord, geometry: invalidGeometry },
+      { record: nonPolygonRecord, geometry: pointGeometry },
+    ]);
+
+    expect(tx.execute).toHaveBeenCalledTimes(2);
+    expect(validEntries).toHaveLength(1);
+    expect(validEntries[0]?.record.id).toBe("region-st-1");
+    expect(quarantined).toEqual(["territory-2 (Invalid)", "territory-3 (Point)"]);
   });
 });
 

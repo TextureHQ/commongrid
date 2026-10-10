@@ -29,12 +29,15 @@ vi.mock("@/lib/mod/apply-contribution", async (importOriginal) => {
   };
 });
 
-vi.mock("@/lib/mod/auto-approve", () => ({
-  tryAutoApprove: vi.fn(async () => ({ autoApproved: false })),
+// Submitting must never obtain a transactional writer to apply an edit.
+vi.mock("@/lib/db/client-pooled", () => ({
+  getPooledDb: vi.fn(() => {
+    throw new Error("Submission must not apply contributions");
+  }),
 }));
 
 vi.mock("@/lib/knock/client", () => ({
-  isKnockConfigured: () => false,
+  isKnockConfigured: vi.fn(() => false),
 }));
 
 vi.mock("@/lib/knock/workflows", () => ({
@@ -43,6 +46,9 @@ vi.mock("@/lib/knock/workflows", () => ({
 }));
 
 import { requireCurrentUser } from "@/lib/auth";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { isKnockConfigured } from "@/lib/knock/client";
+import { triggerContributionSubmitted, triggerModNewContribution } from "@/lib/knock/workflows";
 import { POST } from "./route";
 
 const PROGRAM_ROW = {
@@ -135,6 +141,73 @@ describe("POST /api/v1/contributions — entity resolution", () => {
     expect(res.status).toBe(400);
     const json = (await res.json()) as { error?: { message?: string } };
     expect(json.error?.message).toContain("25 characters");
+  });
+});
+
+describe("POST /api/v1/contributions — mandatory review", () => {
+  const cases = ["contributor", "trusted_contributor", "moderator", "admin"].flatMap((role) =>
+    ["create", "update", "delete", "geometry"].map((kind) => ({ role, kind }))
+  );
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(isKnockConfigured).mockReturnValue(true);
+  });
+
+  it.each(cases)("queues $kind from $role without applying it", async ({ role, kind }) => {
+    vi.mocked(requireCurrentUser).mockResolvedValue({
+      id: "author-1",
+      role,
+      displayName: "Author",
+      bannedAt: null,
+    } as never);
+    const selectResult = (rows: unknown[]) => ({
+      from: () => ({ where: () => Object.assign(Promise.resolve(rows), { limit: () => Promise.resolve(rows) }) }),
+    });
+    mockSelect.mockReset();
+    if (kind !== "create") {
+      mockSelect.mockReturnValueOnce(selectResult([PROGRAM_ROW]));
+      mockSelect.mockReturnValueOnce(selectResult([])); // locks
+    }
+    mockSelect.mockReturnValueOnce(selectResult([])); // enum metadata
+    mockSelect.mockReturnValueOnce(selectResult([{ id: "reviewer-1" }]));
+    const values = vi.fn((v) => ({
+      returning: () =>
+        Promise.resolve([{ id: "contrib-1", autoApproved: false, reviewedBy: null, appliedVersion: null, ...v }]),
+    }));
+    mockInsert.mockReturnValue({ values });
+
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          change_type: kind === "geometry" ? "update" : kind,
+          changes:
+            kind === "create"
+              ? { name: { new: "New program" } }
+              : kind === "delete"
+                ? { _deletion: { reason: "duplicate" } }
+                : { website: { new: "https://example.com/corrected" } },
+          ...(kind === "geometry" ? { geometry_change_type: "replace" } : {}),
+          // Client-supplied approval fields must never override server policy.
+          status: "approved",
+          auto_approved: true,
+          reviewed_by: "author-1",
+        })
+      ) as never
+    );
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.data).toMatchObject({ status: "pending", autoApproved: false, reviewedBy: null, appliedVersion: null });
+    expect(body).not.toHaveProperty("auto_approved");
+    expect(values).toHaveBeenCalledWith(expect.objectContaining({ status: "pending", userId: "author-1" }));
+    expect(mockInsert).toHaveBeenCalledTimes(1);
+    expect(getPooledDb).not.toHaveBeenCalled();
+    expect(triggerModNewContribution).toHaveBeenCalledWith(
+      ["reviewer-1"],
+      expect.objectContaining({ contributionId: "contrib-1" }),
+      "contrib-1"
+    );
+    expect(triggerContributionSubmitted).toHaveBeenCalledTimes(1);
   });
 });
 

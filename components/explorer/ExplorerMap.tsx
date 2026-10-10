@@ -686,8 +686,8 @@ export function ExplorerMap({
     };
   }, [programBoundaryData, state.type, state.q, allPrograms]);
 
-  // FlyTo when highlight GeoJSON changes (entity selected), reset on back
-  useEffect(() => {
+  // Reuse on load: a cached station may resolve before the map is ready.
+  const focusSelection = useCallback(() => {
     const map = mapRef.current?.getMap?.();
     if (!map) return;
 
@@ -696,7 +696,7 @@ export function ExplorerMap({
       if (viewState) {
         map.flyTo({
           center: [viewState.longitude, viewState.latitude],
-          zoom: viewState.zoom,
+          zoom: state.detailKind === "ev-charging" ? 16 : viewState.zoom,
           duration: 1200,
         });
       }
@@ -708,7 +708,9 @@ export function ExplorerMap({
         duration: 1200,
       });
     }
-  }, [state.highlightGeoJSON, state.segment, state.q]);
+  }, [state.highlightGeoJSON, state.detailKind, state.segment, state.q]);
+
+  useEffect(focusSelection, [focusSelection]);
 
   // Fit map bounds when filters change (utility territories)
   const hasActiveFilter =
@@ -842,6 +844,30 @@ export function ExplorerMap({
     });
   }, [state.type, state.q, isProgramView, hasHighlight, filteredProgramBoundaryData]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: clear hover when the visible map context changes
+  useEffect(() => {
+    setHoveredTerritory(null);
+  }, [isGridOperatorView, isProgramView, hasHighlight, state.segment, state.q, mapType]);
+
+  useEffect(() => {
+    const map = mapRef.current?.getMap?.();
+    if (!mapLoaded || !map) return;
+    // Edges onMouseEnter fires on entering the interactive layer, not each
+    // adjacent feature. Track every move so outlines follow tooltip changes.
+    const move = (event: mapboxgl.MapMouseEvent) => {
+      if (!map.getLayer("territories")) return;
+      const feature = map.queryRenderedFeatures(event.point, { layers: ["territories"] })[0];
+      setHoveredTerritory(feature?.id ?? null);
+    };
+    const leave = () => setHoveredTerritory(null);
+    map.on("mousemove", move);
+    map.getCanvas().addEventListener("mouseleave", leave);
+    return () => {
+      map.off("mousemove", move);
+      map.getCanvas().removeEventListener("mouseleave", leave);
+    };
+  }, [mapLoaded]);
+
   const layers = useMemo(() => {
     const visible = layerVisibility;
     const result: LayerSpec[] = [];
@@ -879,8 +905,28 @@ export function ExplorerMap({
               />
             ),
           },
-          events: { onClick: handleClick },
+          events: {
+            onClick: handleClick,
+            onMouseEnter: (feature: LayerFeature) => setHoveredTerritory(feature.id ?? null),
+            onMouseLeave: () => setHoveredTerritory(null),
+          },
           ...(territoryFilter ? { filter: territoryFilter } : {}),
+        })
+      );
+      // Edges' fill border has fixed width; use its line primitive for a
+      // distinct hover outline, including every tile fragment of this utility.
+      result.push(
+        layer.vector({
+          id: "territory-hover-outline",
+          tileset: getTileUrl(),
+          sourceLayer: "territories",
+          renderAs: "line",
+          style: { color: resolvedHighlightColor, width: 3, opacity: 1 },
+          filter: [
+            "all",
+            ["==", ["get", "slug"], hoveredTerritory ?? ""],
+            ...(territoryFilter ? [territoryFilter] : []),
+          ],
         })
       );
     } else if (filteredProgramBoundaryData && !hasHighlight) {
@@ -1087,7 +1133,7 @@ export function ExplorerMap({
         events: {
           onClick: (feature: LayerFeature) => {
             const slug = feature.properties.slug;
-            if (slug) router.push(`/ev-charging/${slug}`);
+            if (slug) navigateToDetail("ev-station", slug);
           },
         },
       })
@@ -1200,8 +1246,9 @@ export function ExplorerMap({
         layer.geojson({
           id: "highlight",
           data: state.highlightGeoJSON,
-          renderAs: "fill",
+          renderAs: state.detailKind === "ev-charging" ? "circle" : "fill",
           style: {
+            radius: 10,
             color: { hex: resolvedHighlightColor },
             fillOpacity: 0.35,
             borderWidth: 2.5,
@@ -1214,9 +1261,11 @@ export function ExplorerMap({
     return result;
   }, [
     handleClick,
+    hoveredTerritory,
     navigateToDetail,
     router,
     state.highlightGeoJSON,
+    state.detailKind,
     isGridOperatorView,
     isProgramView,
     filteredGridBoundaryData,
@@ -1337,23 +1386,30 @@ export function ExplorerMap({
 
   if (!hasMapboxToken) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-background-surface">
+      <section
+        aria-label="Explore map"
+        className="h-full w-full flex items-center justify-center bg-background-surface"
+      >
         <div className="text-center px-6">
           <div className="text-lg font-semibold text-text-heading mb-2">Map Unavailable</div>
           <p className="text-sm text-text-muted">Set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to enable the map.</p>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="h-full w-full relative">
+    <section aria-label="Explore map" className="h-full w-full relative">
       <InteractiveMap
         // biome-ignore lint/suspicious/noExplicitAny: InteractiveMap ref type is opaque from @texturehq/edges
         ref={mapRef as React.Ref<any>}
         // biome-ignore lint/style/noNonNullAssertion: effectiveToken is guaranteed non-null when map renders (checked in parent)
         mapboxAccessToken={effectiveToken!}
         initialViewState={US_CENTER}
+        onLoad={() => {
+          focusSelection();
+          setMapLoaded(true);
+        }}
         mapType={mapType}
         controls={[
           { type: "navigation", position: "bottom-right", showResetZoom: true },
@@ -1371,6 +1427,6 @@ export function ExplorerMap({
         ]}
         layers={layers}
       />
-    </div>
+    </section>
   );
 }

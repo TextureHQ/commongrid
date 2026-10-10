@@ -84,6 +84,11 @@ async function main() {
     });
   }
 
+  if (features.length === 0) {
+    console.warn("⚠️  No transmission line features found — skipping transmission line GeoJSON.");
+    process.exit(0);
+  }
+
   const fc = { type: "FeatureCollection", features };
   await writeFile(OUTPUT, JSON.stringify(fc));
   console.log(`✅ ${features.length} transmission line features → ${OUTPUT}`);

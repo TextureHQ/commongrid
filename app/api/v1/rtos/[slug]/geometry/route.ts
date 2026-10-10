@@ -15,7 +15,7 @@ import { getDb } from "@/lib/db/client";
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await params;
 
-  const wrapped = withApiMiddleware(async (r: Request, _ctx: RouteContext) => {
+  const wrapped = withApiMiddleware(async (_r: Request, _ctx: RouteContext) => {
     const db = getDb();
 
     const result = await db.execute(sql`
