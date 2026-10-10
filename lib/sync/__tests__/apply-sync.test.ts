@@ -446,6 +446,72 @@ describe("applySync", () => {
   });
 });
 
+describe("ev_station human-field precedence", () => {
+  const evOpts = {
+    ...baseOpts,
+    entityType: "ev_station" as const,
+    initiatedBy: "sync:afdc",
+    batchTitle: "AFDC EV charging sync",
+  };
+
+  it("applies only unlocked fields when a record mixes locked and unlocked changes", async () => {
+    const { tx, recorded } = makeTx({
+      entity: {
+        id: "ev-1",
+        version: 2,
+        slug: "station-austin-tx",
+        stationName: "Human Station Name",
+        evDcFastNum: 4,
+        latitude: 30.2672,
+        longitude: -97.7431,
+      },
+      hasVersionHistory: true,
+      highestVersion: 2,
+    });
+    vi.mocked(getPooledDb).mockReturnValue({
+      transaction: (async (fn: (tx: unknown) => Promise<unknown>) => fn(tx)) as unknown,
+    } as unknown as ReturnType<typeof getPooledDb>);
+    vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set(["stationName"]));
+
+    const report = await applySync(
+      [
+        record({
+          entityId: "ev-1",
+          slug: "station-austin-tx",
+          sourceId: "afdc",
+          asOf: null,
+          fields: { stationName: "AFDC Station Name", evDcFastNum: 8 },
+        }),
+      ],
+      evOpts
+    );
+
+    expect(report).toMatchObject({
+      created: 0,
+      updated: 1,
+      unchanged: 0,
+      fieldsWritten: 1,
+    });
+
+    expect(report.deferrals).toHaveLength(1);
+    expect(report.deferrals[0]).toEqual({
+      entityId: "ev-1",
+      field: "stationName",
+      keptValue: "Human Station Name",
+      skippedValue: "AFDC Station Name",
+    });
+
+    expect(recorded.entityUpdates).toHaveLength(1);
+    expect(recorded.entityUpdates[0]).toMatchObject({ evDcFastNum: 8 });
+    expect(recorded.entityUpdates[0]).not.toHaveProperty("stationName");
+
+    expect(recorded.versionInserts).toHaveLength(1);
+    expect(recorded.versionInserts[0]?.delta).toMatchObject({
+      evDcFastNum: { old: 4, new: 8 },
+    });
+    expect(recorded.versionInserts[0]?.delta).not.toHaveProperty("stationName");
+  });
+});
 describe("rate structure JSONB stability", () => {
   it.each([false, true])("ignores object key order but detects changed arrays (%s)", async (changed) => {
     const { tx, recorded } = makeTx({

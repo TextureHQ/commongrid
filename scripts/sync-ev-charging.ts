@@ -9,8 +9,8 @@
  *   DATABASE_URL=postgres://... npx tsx scripts/sync-ev-charging.ts
  *
  * Output:
- *   Upserts directly into the ev_stations Postgres table. The committed JSON
- *   artifact is no longer produced (CG-326).
+ *   Publishes EV stations to Postgres via applySync (source of truth). The
+ *   committed JSON artifact is no longer produced (CG-326).
  *
  * API docs: https://developer.nlr.gov/docs/transportation/alt-fuel-stations-v1/
  *
@@ -22,15 +22,15 @@
  */
 
 import { pathToFileURL } from "node:url";
-import { Pool } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { evStations } from "../lib/db/schema";
+import { getPooledDb } from "@/lib/db/client-pooled";
+import { evStations } from "@/lib/db/schema";
+import { applySync } from "@/lib/sync/apply-sync";
+import { toSyncRecords } from "@/lib/sync/ev-charging";
 
 const API_KEY = process.env.NREL_API_KEY ?? "DEMO_KEY";
 export const DEFAULT_BASE_URL = "https://developer.nlr.gov/api/alt-fuel-stations/v1.json";
 const BASE_URL = process.env.AFDC_API_BASE_URL ?? DEFAULT_BASE_URL;
-const BATCH_SIZE = 500;
 
 function slugify(str: string): string {
   return str
@@ -140,8 +140,7 @@ async function main() {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is required — the EV sync writes directly to Postgres");
   }
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const db = drizzle(pool);
+  const db = getPooledDb();
 
   // ── 1. Fetch all stations in a single request ───────────────────────────
   // The AFDC API supports limit=all to return every station at once.
@@ -207,78 +206,41 @@ async function main() {
   // stations in Postgres (CIR-1271).
   assertPlausibleStationCount(stations.length, "", () => existingCount);
 
-  // ── 5. Sync to Postgres ───────────────────────────────────────────────
-  console.log("\n4. Syncing to Postgres...");
+  // ── 5. Publish to Postgres via the protected sync writer ────────────────
+  console.log("\n4. Publishing to Postgres...");
 
-  let upserted = 0;
-  const batches = [];
-  for (let i = 0; i < stations.length; i += BATCH_SIZE) {
-    batches.push(stations.slice(i, i + BATCH_SIZE));
-  }
+  const existingRows = await db.select({ id: evStations.id }).from(evStations);
+  const existingIds = new Set(existingRows.map((row) => row.id));
 
-  for (let i = 0; i < batches.length; i++) {
-    const batch = batches[i];
-    const rows = batch.map((s) => ({
-      id: s.id,
-      slug: s.slug,
-      stationName: s.stationName,
-      streetAddress: s.streetAddress,
-      city: s.city,
-      state: s.state,
-      zip: s.zip,
-      latitude: s.latitude,
-      longitude: s.longitude,
-      evNetwork: s.evNetwork,
-      evLevel1EvseNum: s.evLevel1EvseNum,
-      evLevel2EvseNum: s.evLevel2EvseNum,
-      evDcFastNum: s.evDcFastNum,
-      evConnectorTypes: s.evConnectorTypes,
-      accessCode: s.accessCode,
-      statusCode: s.statusCode,
-      openDate: s.openDate,
-      facilityType: s.facilityType,
-      ownerTypeCode: s.ownerTypeCode,
-      evPricing: s.evPricing,
-    }));
+  const records = toSyncRecords(stations, existingIds, null);
+  const report = await applySync(records, {
+    entityType: "ev_station",
+    initiatedBy: "sync:afdc",
+    batchTitle: "AFDC EV charging sync",
+    batchDescription: "DOE Alternative Fuel Station Locator (AFDC) EV charging sync",
+  });
 
-    await db
-      .insert(evStations)
-      .values(rows)
-      .onConflictDoUpdate({
-        target: evStations.id,
-        set: {
-          slug: sql`EXCLUDED.slug`,
-          stationName: sql`EXCLUDED.station_name`,
-          streetAddress: sql`EXCLUDED.street_address`,
-          city: sql`EXCLUDED.city`,
-          state: sql`EXCLUDED.state`,
-          zip: sql`EXCLUDED.zip`,
-          latitude: sql`EXCLUDED.latitude`,
-          longitude: sql`EXCLUDED.longitude`,
-          evNetwork: sql`EXCLUDED.ev_network`,
-          evLevel1EvseNum: sql`EXCLUDED.ev_level1_evse_num`,
-          evLevel2EvseNum: sql`EXCLUDED.ev_level2_evse_num`,
-          evDcFastNum: sql`EXCLUDED.ev_dc_fast_num`,
-          evConnectorTypes: sql`EXCLUDED.ev_connector_types`,
-          accessCode: sql`EXCLUDED.access_code`,
-          statusCode: sql`EXCLUDED.status_code`,
-          openDate: sql`EXCLUDED.open_date`,
-          facilityType: sql`EXCLUDED.facility_type`,
-          ownerTypeCode: sql`EXCLUDED.owner_type_code`,
-          evPricing: sql`EXCLUDED.ev_pricing`,
-          updatedAt: sql`NOW()`,
-        },
-      });
+  console.log("  Registry publication complete:");
+  console.log(`    Batch id: ${report.batchId}`);
+  console.log(`    Created: ${report.created.toLocaleString()}`);
+  console.log(`    Updated: ${report.updated.toLocaleString()}`);
+  console.log(`    Unchanged: ${report.unchanged.toLocaleString()}`);
+  console.log(`    Fields written: ${report.fieldsWritten.toLocaleString()}`);
 
-    upserted += batch.length;
-    if ((i + 1) % 10 === 0 || i === batches.length - 1) {
-      console.log(`   Processed ${upserted.toLocaleString()} / ${stations.length.toLocaleString()} stations...`);
+  if (report.deferrals.length > 0) {
+    console.log(
+      `    ⚠️  Deferred ${report.deferrals.length.toLocaleString()} field(s) that a human last edited (policy B — not overwritten):`
+    );
+    const sample = report.deferrals.slice(0, 20);
+    for (const d of sample) {
+      console.log(
+        `      - ${d.entityId} field '${d.field}': kept ${JSON.stringify(d.keptValue)}, sync wanted ${JSON.stringify(d.skippedValue)}`
+      );
+    }
+    if (report.deferrals.length > sample.length) {
+      console.log(`      … and ${(report.deferrals.length - sample.length).toLocaleString()} more`);
     }
   }
-
-  console.log(`   ✓ Upserted ${upserted.toLocaleString()} stations to Postgres`);
-
-  await pool.end();
 
   // ── Summary ────────────────────────────────────────────────────────────
   const networkCounts = new Map<string, number>();
@@ -314,7 +276,7 @@ async function main() {
   }
 }
 
-// Only run when invoked directly, so tests can import the guard helpers above
+// Only run when invoked directly, so tests can import the helpers above
 // without triggering a live 90k-station sync.
 const isDirectRun = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
