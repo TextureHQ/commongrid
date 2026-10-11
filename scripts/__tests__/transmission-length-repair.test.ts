@@ -13,7 +13,7 @@ describe.skipIf(!databaseUrl)("transmission ground miles migration (PostGIS)", (
     ) {
       throw new Error("Use a disposable local test database");
     }
-    const migration = readFileSync(resolve("drizzle/0041_repair_transmission_ground_miles.sql"), "utf8");
+    const migration = readFileSync(resolve("drizzle/0042_repair_transmission_ground_miles.sql"), "utf8");
     const repair = readFileSync(resolve("scripts/repair-transmission-lengths.sql"), "utf8").replace(
       /^(BEGIN;|COMMIT;)$/gm,
       ""
