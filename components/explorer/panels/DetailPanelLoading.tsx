@@ -15,6 +15,7 @@ const layouts = {
   program: { label: "program", logo: false, rows: 8, related: [] },
   "power-plant": { label: "power plant", logo: false, rows: 10, related: [] },
   rate: { label: "rate", logo: false, rows: 12, related: [] },
+  "ev-station": { label: "EV charging station", logo: false, rows: 9, related: [] },
 } satisfies Record<DetailView, { label: string; logo: boolean; rows: number; related: string[] }>;
 
 function FieldRows({ count }: { count: number }) {

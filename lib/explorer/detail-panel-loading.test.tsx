@@ -40,6 +40,7 @@ describe("entity-specific delayed skeletons", () => {
     ["program", 13, false],
     ["power-plant", 10, false],
     ["rate", 12, false],
+    ["ev-station", 9, false],
   ])("matches the %s layout after 200 ms", (entity, rows, logo) => {
     act(() => root.render(<DetailPanelLoading entity={entity} />));
     act(() => vi.advanceTimersByTime(199));
