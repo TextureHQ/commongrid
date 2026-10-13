@@ -564,11 +564,10 @@ export function ExplorerMap({
 
   // Region under the cursor for each region layer, used to redraw the
   // hovered region with more contrast (see the *-hover layers below).
-  const showTerritories = !isGridOperatorView && !isProgramView && !hasHighlight;
+  // Utility territories are deliberately absent: #535 already outlines the
+  // hovered utility, and two treatments on one layer would fight.
   const hoveredGridKey = useMapLayerHover(map, "grid-boundaries", "hoverKey", isGridOperatorView && !hasHighlight);
   const hoveredProgramSlug = useMapLayerHover(map, "program-boundaries", "programSlug", isProgramView && !hasHighlight);
-  const hoveredTerritorySlug = useMapLayerHover(map, "territories", "slug", showTerritories);
-  const hoveredUtilitySlug = hoveredTerritorySlug === "UNKNOWN" ? null : hoveredTerritorySlug;
 
   // Overlay layers (lines/points). Mapbox skips hidden layers when hit-testing,
   // so an overlay that is toggled off never reports a hover.
@@ -1296,7 +1295,6 @@ export function ExplorerMap({
     () =>
       buildHoverLayerConfigs(
         {
-          territory: hoveredUtilitySlug,
           transmission: hoveredTransmissionId,
           powerPlant: hoveredPowerPlantSlug,
           substation: hoveredSubstationSlug,
@@ -1306,7 +1304,6 @@ export function ExplorerMap({
           program: hoveredProgramSlug,
         },
         {
-          segment: resolvedSegmentColorMapping,
           voltageClass: resolvedVoltageClassColorMapping,
           fuelCategory: resolvedFuelCategoryColorMapping,
           voltageBand: resolvedSubstationVoltageBandColorMapping,
@@ -1317,7 +1314,6 @@ export function ExplorerMap({
         }
       ),
     [
-      hoveredUtilitySlug,
       hoveredTransmissionId,
       hoveredPowerPlantSlug,
       hoveredSubstationSlug,
@@ -1325,7 +1321,6 @@ export function ExplorerMap({
       hoveredPricingNodeSlug,
       hoveredGridKey,
       hoveredProgramSlug,
-      resolvedSegmentColorMapping,
       resolvedVoltageClassColorMapping,
       resolvedFuelCategoryColorMapping,
       resolvedSubstationVoltageBandColorMapping,
