@@ -478,6 +478,8 @@ export function ExplorerMap({
   // Re-resolved when Edges replaces the map (theme change) so hover listeners
   // and highlight layers re-attach instead of pointing at a dead map.
   const map = useMapInstance(mapRef);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [hoveredTerritory, setHoveredTerritory] = useState<string | number | null>(null);
   const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
 
   // Resolved color mappings (CSS variables resolved to actual colors)
