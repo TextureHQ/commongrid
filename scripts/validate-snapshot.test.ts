@@ -108,3 +108,28 @@ describe("snapshot validation", () => {
     expect(exports).not.toMatch(/\b(submitted_by|reviewed_by)\b/);
   });
 });
+
+describe("incomplete transmission geometry coverage", () => {
+  it("publishes metadata-only transmission records without accepting empty collections", () => {
+    const feature = { type: "Feature", properties: { id: "line" }, geometry: null };
+    const value = { type: "FeatureCollection", features: [feature] };
+    expect(() => validateGeoJSON(value)).toThrow(/geometry/);
+    expect(validateGeoJSON(value, { allowNullGeometry: true })).toBe(1);
+    const directory = snapshot();
+    writeFileSync(join(directory, "transmission-lines.geojson.gz"), gzipSync(JSON.stringify(value)));
+    expect(() => validateSnapshot(directory)).not.toThrow();
+    writeFileSync(join(directory, "utilities.geojson.gz"), gzipSync(JSON.stringify(value)));
+    expect(() => validateSnapshot(directory)).toThrow(/geometry/);
+    expect(() => validateGeoJSON({ type: "FeatureCollection", features: [] }, { allowNullGeometry: true })).toThrow(
+      /non-empty/
+    );
+    feature.geometry = {
+      type: "LineString",
+      coordinates: [
+        [0, 95],
+        [1, 0],
+      ],
+    } as never;
+    expect(() => validateGeoJSON(value, { allowNullGeometry: true })).toThrow(/WGS84/);
+  });
+});

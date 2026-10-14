@@ -20,7 +20,7 @@ export_layer() {
 }
 
 export_layer transmission-lines "
-  SELECT id, owner, voltage, volt_class, voltage_class, type, status, sub1, sub2, length_miles, source, source_url, ST_AsGeoJSON(geometry)::json AS geometry FROM transmission_lines WHERE deleted_at IS NULL AND geometry IS NOT NULL
+  SELECT id, owner, voltage, volt_class, voltage_class, type, status, sub1, sub2, length_miles, source, source_url, ST_AsGeoJSON(geometry)::json AS geometry FROM transmission_lines WHERE deleted_at IS NULL
 "
 
 export_layer substations "

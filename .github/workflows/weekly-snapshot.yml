@@ -312,7 +312,7 @@ jobs:
           node-version: 22
 
       - name: Validate snapshot artifacts
-        run: node scripts/validate-snapshot.mjs "$SNAPSHOT_DIR"
+        run: node scripts/validate-snapshot.mjs "$SNAPSHOT_DIR" | tee "$SNAPSHOT_DIR/COVERAGE.txt"
 
       # Defense-in-depth guard: the SQL dump should only contain the public
       # allowlist above. If a private table ever appears here, the workflow
@@ -333,6 +333,13 @@ jobs:
           cd "$SNAPSHOT_DIR"
           echo "# CommonGrid Snapshot — ${{ steps.tag.outputs.date }} (W${{ steps.tag.outputs.week }})" > MANIFEST.md
           echo "" >> MANIFEST.md
+          echo "## Geometry coverage" >> MANIFEST.md
+          echo '' >> MANIFEST.md
+          echo 'Transmission metadata can have null geometry. Counts below distinguish located records.' >> MANIFEST.md
+          echo '```text' >> MANIFEST.md
+          cat COVERAGE.txt >> MANIFEST.md
+          echo '```' >> MANIFEST.md
+          echo '' >> MANIFEST.md
           echo "## Files" >> MANIFEST.md
           echo "" >> MANIFEST.md
           for f in *.gz; do
