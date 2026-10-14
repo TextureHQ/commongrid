@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
+import { DelayedEntityDetailSkeleton } from "@/components/skeletons";
 import { useRto } from "@/hooks/useRto";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
@@ -31,7 +32,7 @@ const ArrowIcon = () => (
 export function RtoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
 
-  const { rto } = useRto(slug);
+  const { rto, isLoading: rtoLoading } = useRto(slug);
 
   useEffect(() => {
     if (!rto?.slug) {
@@ -45,6 +46,10 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
   }, [rto?.slug, setHighlight]);
 
   const { utilities } = useUtilityList({ rto: rto?.slug, limit: 200 });
+
+  if (rtoLoading) {
+    return <DelayedEntityDetailSkeleton />;
+  }
 
   if (!rto) {
     return (

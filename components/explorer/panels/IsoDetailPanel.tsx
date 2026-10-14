@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
+import { DelayedEntityDetailSkeleton } from "@/components/skeletons";
 import { useBalancingAuthorityList } from "@/hooks/useBalancingAuthorityList";
 import { useIso } from "@/hooks/useIso";
 import { useUtilityList } from "@/hooks/useUtilityList";
@@ -32,7 +33,7 @@ const ArrowIcon = () => (
 export function IsoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
 
-  const { iso } = useIso(slug);
+  const { iso, isLoading: isoLoading } = useIso(slug);
 
   useEffect(() => {
     if (!iso?.slug) {
@@ -47,6 +48,10 @@ export function IsoDetailPanel({ slug }: { slug: string }) {
 
   const { utilities } = useUtilityList({ iso: iso?.slug, limit: 200 });
   const { balancingAuthorities } = useBalancingAuthorityList({ isoId: iso?.id });
+
+  if (isoLoading) {
+    return <DelayedEntityDetailSkeleton />;
+  }
 
   if (!iso) {
     return (

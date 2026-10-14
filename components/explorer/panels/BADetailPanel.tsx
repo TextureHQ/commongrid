@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
+import { DelayedEntityDetailSkeleton } from "@/components/skeletons";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
@@ -40,7 +41,7 @@ const ArrowIcon = () => (
 export function BADetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
 
-  const { balancingAuthority: ba } = useBalancingAuthority(slug);
+  const { balancingAuthority: ba, isLoading: baLoading } = useBalancingAuthority(slug);
   const { iso } = useIso(ba?.isoId ?? null);
 
   useEffect(() => {
@@ -56,6 +57,10 @@ export function BADetailPanel({ slug }: { slug: string }) {
 
   const { utilities } = useUtilityList({ ba: ba?.slug, limit: 200 });
   const { powerPlants: baPowerPlants } = usePowerPlantList({ baId: ba?.id, limit: 200 });
+
+  if (baLoading) {
+    return <DelayedEntityDetailSkeleton />;
+  }
 
   if (!ba) {
     return (
