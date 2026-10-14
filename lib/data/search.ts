@@ -16,7 +16,10 @@
  *      catches both stemmed / weighted matches ("tri-state" ~ "Tri-State G&T")
  *      and literal substring matches that may not survive tsvector stemming.
  *   2. If the table has no search_vector (pricing_nodes, transmission_lines,
- *      isos, rtos, balancing_authorities), fall back to name ILIKE.
+ *      isos, rtos, balancing_authorities, regions, territories), fall back to
+ *      a multi-column ILIKE search.
+ *   3. For rate structures and substations, reuse the entity-specific data
+ *      loaders so the global search matches the list endpoints' search fields.
  *
  * `websearch_to_tsquery` is used instead of `plainto_tsquery` because it
  * gracefully handles punctuation like hyphens ("tri-state") without throwing
@@ -26,7 +29,8 @@
  */
 
 import { sql } from "drizzle-orm";
-
+import { loadRateStructures } from "@/lib/data/rate-structures";
+import { loadSubstations } from "@/lib/data/substations-api";
 import { getDb } from "@/lib/db/client";
 
 // ---------------------------------------------------------------------------
@@ -42,7 +46,11 @@ export type EntityType =
   | "transmission-line"
   | "iso"
   | "rto"
-  | "balancing-authority";
+  | "balancing-authority"
+  | "rate"
+  | "substation"
+  | "region"
+  | "territory";
 
 /** All supported entity types in search order. */
 export const ALL_ENTITY_TYPES: EntityType[] = [
@@ -55,6 +63,10 @@ export const ALL_ENTITY_TYPES: EntityType[] = [
   "iso",
   "rto",
   "balancing-authority",
+  "rate",
+  "substation",
+  "region",
+  "territory",
 ];
 
 /**
@@ -71,6 +83,10 @@ export const TYPE_SLUG_MAP: Record<string, EntityType> = {
   isos: "iso",
   rtos: "rto",
   "balancing-authorities": "balancing-authority",
+  rates: "rate",
+  substations: "substation",
+  regions: "region",
+  territories: "territory",
 };
 
 export interface SearchResult {
@@ -114,6 +130,8 @@ interface EntityConfig {
   slugColumn: string;
   /** Column expression used for the display name. */
   nameColumn: string;
+  /** Extra columns to substring-search when there is no tsvector. */
+  searchColumns: string[];
   /** Whether the table has a `search_vector` tsvector column. */
   hasSearchVector: boolean;
   /**
@@ -128,6 +146,7 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     table: "utilities",
     slugColumn: "slug",
     nameColumn: "name",
+    searchColumns: ["name", "slug"],
     hasSearchVector: true,
     matchField: "name",
   },
@@ -135,6 +154,7 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     table: "programs",
     slugColumn: "slug",
     nameColumn: "name",
+    searchColumns: ["name", "slug"],
     hasSearchVector: true,
     matchField: "name",
   },
@@ -142,6 +162,7 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     table: "power_plants",
     slugColumn: "slug",
     nameColumn: "name",
+    searchColumns: ["name", "slug"],
     hasSearchVector: true,
     matchField: "name",
   },
@@ -149,6 +170,7 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     table: "ev_stations",
     slugColumn: "slug",
     nameColumn: "station_name",
+    searchColumns: ["station_name", "slug"],
     hasSearchVector: true,
     matchField: "station_name",
   },
@@ -156,6 +178,7 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     table: "pricing_nodes",
     slugColumn: "slug",
     nameColumn: "name",
+    searchColumns: ["name", "slug"],
     hasSearchVector: false,
     matchField: "name",
   },
@@ -164,6 +187,7 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     table: "transmission_lines",
     slugColumn: "id",
     nameColumn: "owner",
+    searchColumns: ["owner", "id"],
     hasSearchVector: false,
     matchField: "owner",
   },
@@ -171,6 +195,7 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     table: "isos",
     slugColumn: "slug",
     nameColumn: "name",
+    searchColumns: ["name", "short_name", "slug"],
     hasSearchVector: false,
     matchField: "name",
   },
@@ -178,6 +203,7 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     table: "rtos",
     slugColumn: "slug",
     nameColumn: "name",
+    searchColumns: ["name", "short_name", "slug"],
     hasSearchVector: false,
     matchField: "name",
   },
@@ -185,6 +211,40 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     table: "balancing_authorities",
     slugColumn: "slug",
     nameColumn: "name",
+    searchColumns: ["name", "slug"],
+    hasSearchVector: false,
+    matchField: "name",
+  },
+  rate: {
+    table: "rate_structures",
+    slugColumn: "slug",
+    nameColumn: "name",
+    searchColumns: ["name", "slug"],
+    hasSearchVector: false,
+    matchField: "name",
+  },
+  substation: {
+    table: "substations",
+    slugColumn: "slug",
+    nameColumn: "name",
+    searchColumns: ["name", "slug"],
+    hasSearchVector: false,
+    matchField: "name",
+  },
+  region: {
+    table: "regions",
+    slugColumn: "slug",
+    nameColumn: "name",
+    searchColumns: ["name", "slug", "state", "type"],
+    hasSearchVector: false,
+    matchField: "name",
+  },
+  territory: {
+    table:
+      "(SELECT territories.id, territories.deleted_at, regions.slug AS slug, regions.name AS name, regions.state AS state FROM territories INNER JOIN regions ON territories.region_id = regions.id) AS territory_search",
+    slugColumn: "slug",
+    nameColumn: "name",
+    searchColumns: ["name", "slug", "state"],
     hasSearchVector: false,
     matchField: "name",
   },
@@ -236,6 +296,7 @@ async function searchFromDb(entityType: EntityType, query: string, limit: number
   const tableRef = sql.raw(config.table);
   const slugRef = sql.raw(config.slugColumn);
   const nameRef = sql.raw(config.nameColumn);
+  const searchColumnRefs = config.searchColumns.map((column) => sql.raw(column));
 
   try {
     let result: DbExecuteResult<DbSearchRow>;
@@ -272,13 +333,14 @@ async function searchFromDb(entityType: EntityType, query: string, limit: number
         LIMIT ${limit}
       `)) as unknown as DbExecuteResult<DbSearchRow>;
     } else {
+      const searchConditions = searchColumnRefs.map((columnRef) => sql`${columnRef} ILIKE ${ilikePattern}`);
       result = (await db.execute(sql`
         SELECT
           ${slugRef} AS slug,
           ${nameRef} AS name
         FROM ${tableRef}
         WHERE deleted_at IS NULL
-          AND ${nameRef} ILIKE ${ilikePattern}
+          AND (${searchConditions.reduce((acc, condition, index) => (index === 0 ? condition : sql`${acc} OR ${condition}`))})
         ORDER BY ${nameRef} ASC
         LIMIT ${limit}
       `)) as unknown as DbExecuteResult<DbSearchRow>;
@@ -302,6 +364,47 @@ async function searchFromDb(entityType: EntityType, query: string, limit: number
   }
 }
 
+async function searchFromRateStructures(query: string, limit: number): Promise<SearchResult[]> {
+  try {
+    const rows = await loadRateStructures({ search: query, limit });
+    return rows.items.map((row) => ({
+      slug: row.slug,
+      name: row.name,
+      entityType: "rate",
+      matchField: "name",
+    }));
+  } catch (err) {
+    console.error("[search] rate query failed:", err);
+    return [];
+  }
+}
+
+async function searchFromSubstations(query: string, limit: number): Promise<SearchResult[]> {
+  try {
+    const rows = await loadSubstations({ filters: { search: query }, limit });
+    return rows.map((row) => ({
+      slug: row.slug,
+      name: row.name,
+      entityType: "substation",
+      matchField: "name",
+    }));
+  } catch (err) {
+    console.error("[search] substation query failed:", err);
+    return [];
+  }
+}
+
+async function searchByEntityType(entityType: EntityType, query: string, limit: number): Promise<SearchResult[]> {
+  switch (entityType) {
+    case "rate":
+      return searchFromRateStructures(query, limit);
+    case "substation":
+      return searchFromSubstations(query, limit);
+    default:
+      return searchFromDb(entityType, query, limit);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -314,6 +417,9 @@ async function searchFromDb(entityType: EntityType, query: string, limit: number
  */
 export async function searchAll(query: string, options: SearchOptions = {}): Promise<SearchAllResult> {
   const limit = options.limit ?? 5;
+  const trimmedQuery = query.trim();
+
+  const results = new Map<EntityType, SearchResult[]>();
 
   // Resolve which entity types to search
   let entityTypes: EntityType[];
@@ -327,12 +433,24 @@ export async function searchAll(query: string, options: SearchOptions = {}): Pro
     entityTypes = ALL_ENTITY_TYPES;
   }
 
-  // Fan out per-type queries in parallel. Each hits a different table so
-  // there's no contention, and the full 9-type sweep comfortably returns
-  // in <500 ms against Neon HTTP.
-  const settled = await Promise.all(entityTypes.map(async (t) => [t, await searchFromDb(t, query, limit)] as const));
+  if (trimmedQuery.length === 0) {
+    for (const entityType of entityTypes) {
+      results.set(entityType, []);
+    }
 
-  const results = new Map<EntityType, SearchResult[]>();
+    return {
+      results,
+      source: "db",
+    };
+  }
+
+  // Fan out per-type queries in parallel. Each hits a different table so
+  // there's no contention, and the full 13-type sweep comfortably returns
+  // in <500 ms against Neon HTTP.
+  const settled = await Promise.all(
+    entityTypes.map(async (t) => [t, await searchByEntityType(t, trimmedQuery, limit)] as const)
+  );
+
   for (const [entityType, rows] of settled) {
     results.set(entityType, rows);
   }
