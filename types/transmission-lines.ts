@@ -22,7 +22,7 @@ export const VOLTAGE_CLASSES: VoltageClass[] = ["extra-high", "high", "medium", 
 
 /**
  * Lightweight metadata record for list/search pages.
- * Stored in data/transmission-lines.json.
+ * Read from Postgres; lengths are ground miles or null when geometry is unavailable.
  */
 export interface TransmissionLine {
   objectId: number;
@@ -35,7 +35,7 @@ export interface TransmissionLine {
   voltageClass: VoltageClass;
   sub1: string;
   sub2: string;
-  lengthMiles: number;
+  lengthMiles: number | null;
   naicsCode: string;
   source: string;
 }
@@ -51,5 +51,5 @@ export interface TransmissionLineGeoProperties {
   owner: string;
   status: string;
   type: string;
-  lengthMiles: number;
+  lengthMiles: number | null;
 }

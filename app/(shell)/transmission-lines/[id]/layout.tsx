@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const route = line.sub1 && line.sub2 ? ` ${line.sub1} → ${line.sub2}.` : "";
   const voltageClass = line.voltageClass ? ` ${line.voltageClass} voltage class.` : "";
-  const length = line.lengthMiles > 0 ? ` ${line.lengthMiles.toFixed(1)} miles.` : "";
+  const length = line.lengthMiles != null && line.lengthMiles > 0 ? ` ${line.lengthMiles.toFixed(1)} miles.` : "";
 
   return buildMetadata({
     title: `Line ${line.id}`,

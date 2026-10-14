@@ -38,6 +38,13 @@ const querySchema = z.object({
 
 type SortField = "owner" | "voltageClass" | "lengthMiles";
 
+function compareLengthMiles(a: number | null | undefined, b: number | null | undefined): number {
+  if (a === b) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  return a - b;
+}
+
 // ---------------------------------------------------------------------------
 // Sorting
 // ---------------------------------------------------------------------------
@@ -47,7 +54,7 @@ function sortLines(lines: TransmissionLine[], sortField: SortField, order: "asc"
     let cmp: number;
 
     if (sortField === "lengthMiles") {
-      cmp = (a.lengthMiles ?? 0) - (b.lengthMiles ?? 0);
+      cmp = compareLengthMiles(a.lengthMiles, b.lengthMiles);
     } else {
       cmp = (a[sortField] as string).localeCompare(b[sortField] as string);
     }
@@ -91,9 +98,7 @@ function applyCursor(
 
   const startIdx = sorted.findIndex((item) => {
     if (sortField === "lengthMiles") {
-      const itemValue = item.lengthMiles ?? 0;
-      const cmpVal = (cursorSortValue as number) ?? 0;
-      const diff = itemValue - cmpVal;
+      const diff = compareLengthMiles(item.lengthMiles, cursorSortValue as number | null | undefined);
       if (order === "asc") {
         return diff > 0 || (diff === 0 && item.id > cursorId);
       } else {

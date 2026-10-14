@@ -2007,6 +2007,7 @@
           },
           "lengthMiles": {
             "type": "number",
+            "nullable": true,
             "description": "Line length in miles"
           },
           "naicsCode": {
@@ -2053,7 +2054,6 @@
           "voltageClass",
           "sub1",
           "sub2",
-          "lengthMiles",
           "naicsCode",
           "source",
           "createdAt",
