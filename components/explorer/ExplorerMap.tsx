@@ -1213,8 +1213,8 @@ export function ExplorerMap({
         mapboxAccessToken={effectiveToken!}
         initialViewState={US_CENTER}
         onLoad={() => {
-          focusSelection();
           setMapLoaded(true);
+          focusSelection();
         }}
         mapType={mapType}
         controls={[
