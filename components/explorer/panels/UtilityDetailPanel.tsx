@@ -50,7 +50,7 @@ const ArrowIcon = () => (
 );
 
 export function UtilityDetailPanel({ slug }: { slug: string }) {
-  const { navigateToDetail, setHighlight } = useExplorer();
+  const { navigateToDetail, setHighlight, setSelectedUtilityId } = useExplorer();
   const { user } = useCurrentUser();
 
   const { utility, isLoading: utilityLoading } = useUtility(slug);
@@ -75,6 +75,11 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   );
 
   const territoryFileKey = useMemo(() => region?.slug ?? null, [region]);
+
+  useEffect(() => {
+    setSelectedUtilityId(utility?.id ?? null);
+    return () => setSelectedUtilityId(null);
+  }, [setSelectedUtilityId, utility?.id]);
 
   // Load territory GeoJSON and send to map for highlighting
   useEffect(() => {
