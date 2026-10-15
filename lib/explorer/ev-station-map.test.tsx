@@ -15,7 +15,9 @@ const mocks = vi.hoisted(() => ({
   off: vi.fn(),
   getLayer: vi.fn(() => null),
   queryRenderedFeatures: vi.fn(() => []),
-  getCanvas: vi.fn(() => ({ addEventListener: vi.fn(), removeEventListener: vi.fn() })),
+  getCanvas: vi.fn<
+    () => { addEventListener: ReturnType<typeof vi.fn>; removeEventListener: ReturnType<typeof vi.fn> } | undefined
+  >(() => ({ addEventListener: vi.fn(), removeEventListener: vi.fn() })),
 }));
 const highlight = getEVStationHighlightGeoJSON({
   slug: "hudson-yards",
@@ -109,5 +111,12 @@ describe("EV station map selection", () => {
       })
     );
     expect(mocks.navigateToDetail).toHaveBeenCalledWith("ev-station", "x-gizmo-hayward-ca");
+  });
+
+  it("tolerates the Mapbox canvas being removed before hover cleanup", async () => {
+    await render();
+    mocks.getCanvas.mockReturnValueOnce(undefined);
+
+    expect(() => act(() => root.unmount())).not.toThrow();
   });
 });

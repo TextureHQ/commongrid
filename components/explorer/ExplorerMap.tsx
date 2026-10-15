@@ -769,7 +769,9 @@ export function ExplorerMap({
     map.getCanvas().addEventListener("mouseleave", leave);
     return () => {
       map.off("mousemove", move);
-      map.getCanvas().removeEventListener("mouseleave", leave);
+      // View-mode navigation can remove the Mapbox canvas before this effect
+      // cleans up. Avoid dereferencing the detached map during unmount.
+      map.getCanvas?.()?.removeEventListener("mouseleave", leave);
     };
   }, [mapLoaded]);
 
