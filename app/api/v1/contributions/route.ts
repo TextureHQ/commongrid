@@ -360,7 +360,7 @@ async function handlePost(req: Request, ctx: RouteContext) {
           contributorName: user.displayName,
           entityType: entity_type,
           entitySlug: entitySlug,
-          contributionUrl: absoluteUrl(`/contributions/${contribution.id}`),
+          contributionUrl: absoluteUrl(`/mod/contributions/${contribution.id}`),
           changeType: change_type ?? "update",
           fieldSummary: edit_summary.substring(0, 100),
         },
