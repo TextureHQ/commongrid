@@ -59,7 +59,19 @@ describe("TileJSON archive metadata matches hardcoded reality", () => {
       // baCode has been emitted there since #170 (April), but the committed
       // archives were not rebuilt between February and #342, so this list was
       // written against six-month-old tiles rather than against the generator.
-      territories: ["baCode", "customerCount", "eiaId", "name", "segment", "slug", "state"],
+      territories: [
+        "baCode",
+        "customerCount",
+        "derivation",
+        "eiaId",
+        "name",
+        "segment",
+        "slug",
+        "source",
+        "sourceUrl",
+        "state",
+        "territoryId",
+      ],
       "power-plants": ["capacityMw", "fuelCategory", "name", "slug", "status"],
       substations: [
         "county",
