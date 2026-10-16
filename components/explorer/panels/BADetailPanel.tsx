@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
-import { DelayedEntityDetailSkeleton } from "@/components/skeletons";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useIso } from "@/hooks/useIso";
 import { usePowerPlantList } from "@/hooks/usePowerPlantList";
@@ -20,6 +19,7 @@ import {
 } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 
 const ArrowIcon = () => (
   <svg
@@ -41,7 +41,7 @@ const ArrowIcon = () => (
 export function BADetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
 
-  const { balancingAuthority: ba, isLoading: baLoading } = useBalancingAuthority(slug);
+  const { balancingAuthority: ba, isLoading } = useBalancingAuthority(slug);
   const { iso } = useIso(ba?.isoId ?? null);
 
   useEffect(() => {
@@ -58,8 +58,8 @@ export function BADetailPanel({ slug }: { slug: string }) {
   const { utilities } = useUtilityList({ ba: ba?.slug, limit: 200 });
   const { powerPlants: baPowerPlants } = usePowerPlantList({ baId: ba?.id, limit: 200 });
 
-  if (baLoading) {
-    return <DelayedEntityDetailSkeleton />;
+  if (isLoading) {
+    return <DetailPanelLoading key={`ba:${slug}`} entity="ba" />;
   }
 
   if (!ba) {

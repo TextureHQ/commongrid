@@ -5,6 +5,7 @@ import { useRate } from "@/hooks/useRate";
 import { useUtilityTerritoryHighlight } from "@/hooks/useUtilityTerritoryHighlight";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 
 const linkButtonStyle = {
   background: "none",
@@ -70,8 +71,12 @@ function formatFixedCharge(rate: NonNullable<ReturnType<typeof useRate>["rate"]>
 
 export function RateDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
-  const { rate } = useRate(slug);
+  const { rate, isLoading } = useRate(slug);
   useUtilityTerritoryHighlight(rate?.utilityId, setHighlight);
+
+  if (isLoading) {
+    return <DetailPanelLoading key={`rate:${slug}`} entity="rate" />;
+  }
 
   if (!rate) {
     return (

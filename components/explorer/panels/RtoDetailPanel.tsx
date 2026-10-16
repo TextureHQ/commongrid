@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
-import { DelayedEntityDetailSkeleton } from "@/components/skeletons";
 import { useRto } from "@/hooks/useRto";
 import { useUtilityList } from "@/hooks/useUtilityList";
 import { entityKindColor } from "@/lib/categorical-colors";
@@ -11,6 +10,7 @@ import { fetchRtoGeometry } from "@/lib/explorer/geometry";
 import { formatCustomerCount, formatStates, getSegmentLabel } from "@/lib/formatting";
 import { safeHostname } from "@/lib/geo";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 
 const ArrowIcon = () => (
   <svg
@@ -32,7 +32,7 @@ const ArrowIcon = () => (
 export function RtoDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
 
-  const { rto, isLoading: rtoLoading } = useRto(slug);
+  const { rto, isLoading } = useRto(slug);
 
   useEffect(() => {
     if (!rto?.slug) {
@@ -47,8 +47,8 @@ export function RtoDetailPanel({ slug }: { slug: string }) {
 
   const { utilities } = useUtilityList({ rto: rto?.slug, limit: 200 });
 
-  if (rtoLoading) {
-    return <DelayedEntityDetailSkeleton />;
+  if (isLoading) {
+    return <DetailPanelLoading key={`rto:${slug}`} entity="rto" />;
   }
 
   if (!rto) {

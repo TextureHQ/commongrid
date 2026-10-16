@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { EntityVersionHistory } from "@/components/contributions/EntityVersionHistory";
 import { DownloadTerritoryButton } from "@/components/DownloadTerritoryButton";
-import { DelayedEntityDetailSkeleton } from "@/components/skeletons";
 import { useBalancingAuthority } from "@/hooks/useBalancingAuthority";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useIso } from "@/hooks/useIso";
@@ -31,6 +30,7 @@ import { safeHostname } from "@/lib/geo";
 import { buildNewProgramHref } from "@/lib/programs/new-program-link";
 import { getProgramMapCategoryLabel, summarizePrograms } from "@/lib/programs/program-category";
 import { useExplorer } from "../ExplorerContext";
+import { DetailPanelLoading } from "./DetailPanelLoading";
 
 const ArrowIcon = () => (
   <svg
@@ -53,7 +53,7 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   const { navigateToDetail, setHighlight } = useExplorer();
   const { user } = useCurrentUser();
 
-  const { utility, isLoading: utilityLoading } = useUtility(slug);
+  const { utility, isLoading } = useUtility(slug);
   const { utilities } = useUtilityList({ limit: 500 });
 
   const { iso } = useIso(utility?.isoId ?? null);
@@ -118,8 +118,8 @@ export function UtilityDetailPanel({ slug }: { slug: string }) {
   });
   const programTotals = useMemo(() => summarizePrograms(utilityPrograms), [utilityPrograms]);
 
-  if (utilityLoading) {
-    return <DelayedEntityDetailSkeleton />;
+  if (isLoading) {
+    return <DetailPanelLoading key={`utility:${slug}`} entity="utility" />;
   }
 
   if (!utility) {
