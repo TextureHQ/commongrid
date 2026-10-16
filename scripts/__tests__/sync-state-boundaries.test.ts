@@ -380,12 +380,26 @@ describe("territory sync records", () => {
     );
   });
 
+  it("does not quarantine operational database failures", async () => {
+    const error = Object.assign(new Error("permission denied"), { code: "42501" });
+    const tx = { transaction: vi.fn().mockRejectedValue(error) } as unknown as DbTransaction;
+    await expect(
+      quarantineInvalidTerritoryEntries(tx, [
+        {
+          record: { id: "region-st-1", eiaId: "1", name: "Valid", dataSourceId: "test", source: "src" },
+          geometry: mockPolygon,
+        },
+      ])
+    ).rejects.toBe(error);
+  });
+
   it("quarantines invalid or non-polygon territories before publication", async () => {
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ valid: true }] })
+      .mockResolvedValueOnce({ rows: [{ valid: false }] });
     const tx = {
-      execute: vi
-        .fn()
-        .mockResolvedValueOnce({ rows: [{ valid: true }] })
-        .mockResolvedValueOnce({ rows: [{ valid: false }] }),
+      transaction: vi.fn(async (validate) => validate({ execute })),
     } as unknown as DbTransaction;
 
     const validRecord = { id: "region-st-1", eiaId: "1", name: "Valid", dataSourceId: "test", source: "src" };
@@ -413,7 +427,7 @@ describe("territory sync records", () => {
       { record: nonPolygonRecord, geometry: pointGeometry },
     ]);
 
-    expect(tx.execute).toHaveBeenCalledTimes(2);
+    expect(tx.transaction).toHaveBeenCalledTimes(2);
     expect(validEntries).toHaveLength(1);
     expect(validEntries[0]?.record.id).toBe("region-st-1");
     expect(quarantined).toEqual(["territory-2 (Invalid)", "territory-3 (Point)"]);

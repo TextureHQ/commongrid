@@ -597,10 +597,14 @@ export async function quarantineInvalidTerritoryEntries(
 
     try {
       const value = sql`ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(entry.geometry)}), 4326))::geography`;
-      const result = await tx.execute(sql`
-        SELECT ST_IsValid(geography::geometry) AND NOT ST_IsEmpty(geography::geometry) AS valid
-        FROM (SELECT ${value} AS geography) incoming
-      `);
+      // A nested transaction creates a savepoint: PostGIS parse errors must not
+      // leave the shared publication transaction aborted.
+      const result = await tx.transaction(async (validationTx) =>
+        validationTx.execute(sql`
+          SELECT ST_IsValid(geography::geometry) AND NOT ST_IsEmpty(geography::geometry) AS valid
+          FROM (SELECT ${value} AS geography) incoming
+        `)
+      );
       if (!result.rows[0]?.valid) {
         quarantined.push(`${entityId} (${entry.record.name})`);
         console.warn(`    ⚠️ Quarantining invalid territory geometry ${entityId} (${entry.record.name})`);
@@ -608,6 +612,11 @@ export async function quarantineInvalidTerritoryEntries(
       }
       validEntries.push(entry);
     } catch (error) {
+      // Drizzle wraps PostgreSQL errors in a cause. Quarantine malformed input,
+      // but let connection, permission and other operational failures abort.
+      const cause = error instanceof Error && error.cause ? error.cause : error;
+      const code = cause && typeof cause === "object" && "code" in cause ? String(cause.code) : "";
+      if (code !== "XX000" && !code.startsWith("22")) throw error;
       quarantined.push(`${entityId} (${entry.record.name})`);
       console.warn(
         `    ⚠️ Quarantining territory geometry ${entityId} (${entry.record.name}) after validation error: ${
