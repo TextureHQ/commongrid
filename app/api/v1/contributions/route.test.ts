@@ -204,7 +204,10 @@ describe("POST /api/v1/contributions — mandatory review", () => {
     expect(getPooledDb).not.toHaveBeenCalled();
     expect(triggerModNewContribution).toHaveBeenCalledWith(
       ["reviewer-1"],
-      expect.objectContaining({ contributionId: "contrib-1" }),
+      expect.objectContaining({
+        contributionId: "contrib-1",
+        contributionUrl: "https://commongrid.info/mod/contributions/contrib-1",
+      }),
       "contrib-1"
     );
     expect(triggerContributionSubmitted).toHaveBeenCalledTimes(1);
