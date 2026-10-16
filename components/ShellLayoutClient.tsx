@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo } from "react";
 import { GlobalSearchModal, GlobalSearchProvider, useGlobalSearch } from "@/components/GlobalSearch";
 import { LegalNoticeBar } from "@/components/LegalNoticeBar";
+import { TermsAcceptanceGate } from "@/components/TermsAcceptanceGate";
 import { type NavigationItem, TopBar } from "@/components/TopBar";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -78,7 +79,9 @@ function ShellInner({ children, navigation }: ShellLayoutClientProps) {
 export function ShellLayoutClient({ children, navigation }: ShellLayoutClientProps) {
   return (
     <GlobalSearchProvider>
-      <ShellInner navigation={navigation}>{children}</ShellInner>
+      <TermsAcceptanceGate>
+        <ShellInner navigation={navigation}>{children}</ShellInner>
+      </TermsAcceptanceGate>
     </GlobalSearchProvider>
   );
 }
