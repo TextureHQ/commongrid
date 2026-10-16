@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import type { ReactNode } from "react";
 import { useEffect, useMemo } from "react";
 import { GlobalSearchModal, GlobalSearchProvider, useGlobalSearch } from "@/components/GlobalSearch";
+import { LegalNoticeBar } from "@/components/LegalNoticeBar";
 import { type NavigationItem, TopBar } from "@/components/TopBar";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -68,6 +69,7 @@ function ShellInner({ children, navigation }: ShellLayoutClientProps) {
     <div className="flex flex-col h-dvh">
       <TopBar navigation={enhancedNavigation} navigationReady={isNavSettled} />
       <main className="flex-1 min-h-0">{children}</main>
+      <LegalNoticeBar />
       <GlobalSearchModal />
     </div>
   );
