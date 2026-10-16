@@ -148,6 +148,16 @@ interface GridBoundaryData {
   colorMapping: Record<string, { hex: string }>;
 }
 
+const selectedUtilityFilter = (selectedUtilityId: string) => [
+  "any",
+  ["==", ["get", "utilityId"], selectedUtilityId],
+  ["==", ["get", "ownerUtilityId"], selectedUtilityId],
+  ["==", ["get", "transmissionProviderId"], selectedUtilityId],
+  ["==", ["get", "utility_id"], selectedUtilityId],
+  ["==", ["get", "owner_utility_id"], selectedUtilityId],
+  ["==", ["get", "transmission_provider_id"], selectedUtilityId],
+];
+
 function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[]) {
   const [data, setData] = useState<GridBoundaryData | null>(null);
   const { isos } = useIsoList({ limit: 200 });
@@ -450,16 +460,34 @@ export function ExplorerMap({
 
   // Build type filters for vector overlays when they are the active tab
   const typeFilter = state.type && state.type !== "all" ? state.type : null;
-  const powerPlantsFilter =
-    state.listSource === "power-plants" && typeFilter ? ["==", ["get", "fuelCategory"], typeFilter] : undefined;
-  const transmissionLinesFilter =
-    state.listSource === "transmission-lines" && typeFilter ? ["==", ["get", "voltageClass"], typeFilter] : undefined;
-  const substationsFilter =
-    state.listSource === "substations" && typeFilter ? ["==", ["get", "voltageBand"], typeFilter] : undefined;
-  const evChargingFilter =
-    state.listSource === "ev-charging" && typeFilter ? ["==", ["get", "network"], typeFilter] : undefined;
-  const pricingNodesFilter =
-    state.listSource === "pricing-nodes" && typeFilter ? ["==", ["get", "iso"], typeFilter] : undefined;
+  const selectedUtilityId = state.selectedUtilityId;
+  const utilityFilter = selectedUtilityId ? selectedUtilityFilter(selectedUtilityId) : undefined;
+  const combineFilters = (...filters: unknown[]) => {
+    const active = filters.filter(Boolean);
+    if (active.length === 0) return undefined;
+    if (active.length === 1) return active[0];
+    return ["all", ...active];
+  };
+  const powerPlantsFilter = combineFilters(
+    utilityFilter,
+    state.listSource === "power-plants" && typeFilter ? ["==", ["get", "fuelCategory"], typeFilter] : undefined
+  );
+  const transmissionLinesFilter = combineFilters(
+    utilityFilter,
+    state.listSource === "transmission-lines" && typeFilter ? ["==", ["get", "voltageClass"], typeFilter] : undefined
+  );
+  const substationsFilter = combineFilters(
+    utilityFilter,
+    state.listSource === "substations" && typeFilter ? ["==", ["get", "voltageBand"], typeFilter] : undefined
+  );
+  const evChargingFilter = combineFilters(
+    utilityFilter,
+    state.listSource === "ev-charging" && typeFilter ? ["==", ["get", "network"], typeFilter] : undefined
+  );
+  const pricingNodesFilter = combineFilters(
+    utilityFilter,
+    state.listSource === "pricing-nodes" && typeFilter ? ["==", ["get", "iso"], typeFilter] : undefined
+  );
 
   // Full program set + region lookup for the boundary layers (replaces the old
   // static getAllPrograms()/getRegionById() from lib/data.ts). The map needs

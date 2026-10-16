@@ -245,19 +245,22 @@ interface ViewState {
   highlightGeoJSON: FeatureCollection | null;
   hoveredSlug: string | null;
   filteredUtilitySlugs: string[] | null;
+  selectedUtilityId: string | null;
 }
 
 type ViewAction =
   | { type: "SET_LIST_SOURCE"; listSource: EntityTab }
   | { type: "SET_HIGHLIGHT"; geoJSON: FeatureCollection | null }
   | { type: "SET_HOVERED_SLUG"; slug: string | null }
-  | { type: "SET_FILTERED_UTILITY_SLUGS"; slugs: string[] | null };
+  | { type: "SET_FILTERED_UTILITY_SLUGS"; slugs: string[] | null }
+  | { type: "SET_SELECTED_UTILITY_ID"; utilityId: string | null };
 
 const INITIAL_VIEW_STATE: ViewState = {
   listSource: DEFAULT_TAB,
   highlightGeoJSON: null,
   hoveredSlug: null,
   filteredUtilitySlugs: null,
+  selectedUtilityId: null,
 };
 
 function viewReducer(state: ViewState, action: ViewAction): ViewState {
@@ -270,6 +273,8 @@ function viewReducer(state: ViewState, action: ViewAction): ViewState {
       return { ...state, hoveredSlug: action.slug };
     case "SET_FILTERED_UTILITY_SLUGS":
       return { ...state, filteredUtilitySlugs: action.slugs };
+    case "SET_SELECTED_UTILITY_ID":
+      return { ...state, selectedUtilityId: action.utilityId };
     default:
       return state;
   }
@@ -300,6 +305,7 @@ export interface ExplorerState {
   highlightGeoJSON: FeatureCollection | null;
   hoveredSlug: string | null;
   filteredUtilitySlugs: string[] | null;
+  selectedUtilityId: string | null;
 }
 
 interface ExplorerContextValue {
@@ -317,6 +323,7 @@ interface ExplorerContextValue {
   setHighlight: (geoJSON: FeatureCollection | null) => void;
   setHoveredSlug: (slug: string | null) => void;
   setFilteredUtilitySlugs: (slugs: string[] | null) => void;
+  setSelectedUtilityId: (utilityId: string | null) => void;
   goBack: () => void;
   setViewMode: (mode: ExploreViewMode) => void;
 }
@@ -443,6 +450,7 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       highlightGeoJSON: view.highlightGeoJSON,
       hoveredSlug: view.hoveredSlug,
       filteredUtilitySlugs: view.filteredUtilitySlugs,
+      selectedUtilityId: view.selectedUtilityId,
     };
   }, [stack.routes, stack.current, view]);
 
@@ -580,6 +588,10 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
     (slugs: string[] | null) => dispatch({ type: "SET_FILTERED_UTILITY_SLUGS", slugs }),
     []
   );
+  const setSelectedUtilityId = useCallback(
+    (utilityId: string | null) => dispatch({ type: "SET_SELECTED_UTILITY_ID", utilityId }),
+    []
+  );
 
   const goBack = useCallback(() => {
     if (stack.canGoBack) stack.back();
@@ -601,6 +613,7 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       setHighlight,
       setHoveredSlug,
       setFilteredUtilitySlugs,
+      setSelectedUtilityId,
       goBack,
       setViewMode,
     }),
@@ -619,6 +632,7 @@ export function ExplorerProvider({ children }: ExplorerProviderProps) {
       setHighlight,
       setHoveredSlug,
       setFilteredUtilitySlugs,
+      setSelectedUtilityId,
       goBack,
       setViewMode,
     ]
