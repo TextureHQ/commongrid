@@ -1,9 +1,6 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { POLICY_EFFECTIVE_DATE } from "@/lib/legal/policies";
 import "../legal.css";
-
-export const metadata: Metadata = { title: "Terms of Use" };
 
 export default function TermsPage() {
   return (

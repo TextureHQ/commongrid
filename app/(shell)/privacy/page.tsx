@@ -1,8 +1,5 @@
-import type { Metadata } from "next";
 import { POLICY_EFFECTIVE_DATE } from "@/lib/legal/policies";
 import "../legal.css";
-
-export const metadata: Metadata = { title: "Privacy Notice" };
 
 export default function PrivacyPage() {
   return (
