@@ -19,7 +19,7 @@ import {
 import { fetchBalancingAuthorityGeometry, fetchIsoGeometry, fetchTerritoryGeometry } from "@/lib/explorer/geometry";
 import { formatGridOperatorStates, gridOperatorKey } from "@/lib/explorer/grid-operators";
 import { buildHoverLayerConfigs, type HoverLayerConfig, hoverFilter } from "@/lib/explorer/map-hover-layers";
-import { collectProgramTerritorySlugs } from "@/lib/explorer/program-boundaries";
+import { collectProgramBoundaryPrep } from "@/lib/explorer/program-boundaries";
 import type { MapRegion } from "@/lib/explorer/region-navigation";
 import { computeViewStateFromGeoJSON } from "@/lib/geo";
 import { resolveColorMapping, resolveCSSColor } from "@/lib/resolve-css-colors";
@@ -233,9 +233,9 @@ function useGridOperatorBoundaries(isActive: boolean, operatorPalette: string[])
               colorKey,
               slug,
               hoverKey,
-              // Unique per operator: the tooltip only re-renders when the
-              // feature id changes, and the territory files' own ids repeat.
-              id: colorKey,
+              // Unique per operator so the Edges hover tooltip (which re-renders
+              // only when the feature id changes) updates between regions.
+              id: hoverKey,
             },
           });
         }
@@ -346,42 +346,16 @@ function useProgramBoundaries(
     let cancelled = false;
 
     async function load() {
-      let colorIdx = 0;
-      const colorMapping: Record<string, { hex: string }> = {};
-
-      // Map each program to its color and territory slugs
-      const programEntries: {
-        programSlug: string;
-        programName: string;
-        programStatus: string;
-        colorKey: string;
-        territorySlugs: string[];
-      }[] = [];
-      const uniqueTerritorySlugs = new Set<string>();
-
-      for (const prog of programs) {
-        const colorKey = `prog-${prog.slug}`;
-        colorMapping[colorKey] = { hex: operatorPalette[colorIdx % operatorPalette.length] };
-        colorIdx++;
-
-        const territorySlugs = collectProgramTerritorySlugs(prog.regions, regionById);
-        for (const slug of territorySlugs) uniqueTerritorySlugs.add(slug);
-
-        if (territorySlugs.length > 0) {
-          programEntries.push({
-            programSlug: prog.slug,
-            programName: prog.name,
-            programStatus: prog.status,
-            colorKey,
-            territorySlugs,
-          });
-        }
-      }
+      const { colorMapping, programEntries, territorySlugs } = collectProgramBoundaryPrep(
+        programs,
+        regionById,
+        operatorPalette
+      );
 
       // Fetch each unique territory once
       const territoryCache = new Map<string, FeatureCollection>();
       const results = await Promise.allSettled(
-        [...uniqueTerritorySlugs].map(async (slug) => {
+        territorySlugs.map(async (slug) => {
           const geojson = await fetchTerritoryGeometry(slug);
           return { slug, geojson };
         })
@@ -408,8 +382,10 @@ function useProgramBoundaries(
                 programStatus: entry.programStatus,
                 utilityName: (feature.properties?.name as string | undefined) || "Unknown Utility",
                 colorKey: entry.colorKey,
-                // The territory file's own id is shared by every program on that
-                // territory, so key the tooltip by program instead.
+                // The Edges hover tooltip only re-renders when the feature id
+                // changes (falling back to properties.id). The territory file's
+                // own id is shared by every program on that territory, so key
+                // it by program instead.
                 id: entry.programSlug,
               },
             });
@@ -478,8 +454,6 @@ export function ExplorerMap({
   // Re-resolved when Edges replaces the map (theme change) so hover listeners
   // and highlight layers re-attach instead of pointing at a dead map.
   const map = useMapInstance(mapRef);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [hoveredTerritory, setHoveredTerritory] = useState<string | number | null>(null);
   const [mapType, setMapType] = useState<"streets" | "satellite" | "neutral">("neutral");
 
   // Resolved color mappings (CSS variables resolved to actual colors)
@@ -564,10 +538,11 @@ export function ExplorerMap({
 
   // Region under the cursor for each region layer, used to redraw the
   // hovered region with more contrast (see the *-hover layers below).
-  // Utility territories are deliberately absent: #535 already outlines the
-  // hovered utility, and two treatments on one layer would fight.
+  const showTerritories = !isGridOperatorView && !isProgramView && !hasHighlight;
   const hoveredGridKey = useMapLayerHover(map, "grid-boundaries", "hoverKey", isGridOperatorView && !hasHighlight);
   const hoveredProgramSlug = useMapLayerHover(map, "program-boundaries", "programSlug", isProgramView && !hasHighlight);
+  const hoveredTerritorySlug = useMapLayerHover(map, "territories", "slug", showTerritories);
+  const hoveredUtilitySlug = hoveredTerritorySlug === "UNKNOWN" ? null : hoveredTerritorySlug;
 
   // Overlay layers (lines/points). Mapbox skips hidden layers when hit-testing,
   // so an overlay that is toggled off never reports a hover.
@@ -687,8 +662,8 @@ export function ExplorerMap({
     };
   }, [programBoundaryData, state.type, state.q, allPrograms]);
 
-  // Reuse on load: a cached station may resolve before the map is ready.
-  const focusSelection = useCallback(() => {
+  // FlyTo when highlight GeoJSON changes (entity selected), reset on back
+  useEffect(() => {
     const map = mapRef.current?.getMap?.();
     if (!map) return;
 
@@ -697,7 +672,7 @@ export function ExplorerMap({
       if (viewState) {
         map.flyTo({
           center: [viewState.longitude, viewState.latitude],
-          zoom: state.detailKind === "ev-charging" ? 16 : viewState.zoom,
+          zoom: viewState.zoom,
           duration: 1200,
         });
       }
@@ -709,9 +684,7 @@ export function ExplorerMap({
         duration: 1200,
       });
     }
-  }, [state.highlightGeoJSON, state.detailKind, state.segment, state.q]);
-
-  useEffect(focusSelection, [focusSelection]);
+  }, [state.highlightGeoJSON, state.segment, state.q]);
 
   // Fit map bounds when filters change (utility territories)
   const hasActiveFilter =
@@ -845,30 +818,6 @@ export function ExplorerMap({
     });
   }, [state.type, state.q, isProgramView, hasHighlight, filteredProgramBoundaryData]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: clear hover when the visible map context changes
-  useEffect(() => {
-    setHoveredTerritory(null);
-  }, [isGridOperatorView, isProgramView, hasHighlight, state.segment, state.q, mapType]);
-
-  useEffect(() => {
-    const map = mapRef.current?.getMap?.();
-    if (!mapLoaded || !map) return;
-    // Edges onMouseEnter fires on entering the interactive layer, not each
-    // adjacent feature. Track every move so outlines follow tooltip changes.
-    const move = (event: mapboxgl.MapMouseEvent) => {
-      if (!map.getLayer("territories")) return;
-      const feature = map.queryRenderedFeatures(event.point, { layers: ["territories"] })[0];
-      setHoveredTerritory(feature?.id ?? null);
-    };
-    const leave = () => setHoveredTerritory(null);
-    map.on("mousemove", move);
-    map.getCanvas().addEventListener("mouseleave", leave);
-    return () => {
-      map.off("mousemove", move);
-      map.getCanvas().removeEventListener("mouseleave", leave);
-    };
-  }, [mapLoaded]);
-
   const layers = useMemo(() => {
     const visible = layerVisibility;
     const result: LayerSpec[] = [];
@@ -884,9 +833,9 @@ export function ExplorerMap({
           id: "territories",
           tileset: getTileUrl(),
           sourceLayer: "territories",
-          // Tile features carry no ids, and the Edges hover tooltip only re-renders
-          // when the feature id changes — without this it sticks on the first
-          // feature hovered. Also keys the territories-hover layer.
+          // Territory tiles have no feature ids, and the Edges hover tooltip
+          // only re-renders when the feature id changes — without this it
+          // sticks on the first utility hovered.
           promoteId: "slug",
           renderAs: "fill",
           minZoom: 0,
@@ -906,28 +855,8 @@ export function ExplorerMap({
               />
             ),
           },
-          events: {
-            onClick: handleClick,
-            onMouseEnter: (feature: LayerFeature) => setHoveredTerritory(feature.id ?? null),
-            onMouseLeave: () => setHoveredTerritory(null),
-          },
+          events: { onClick: handleClick },
           ...(territoryFilter ? { filter: territoryFilter } : {}),
-        })
-      );
-      // Edges' fill border has fixed width; use its line primitive for a
-      // distinct hover outline, including every tile fragment of this utility.
-      result.push(
-        layer.vector({
-          id: "territory-hover-outline",
-          tileset: getTileUrl(),
-          sourceLayer: "territories",
-          renderAs: "line",
-          style: { color: resolvedHighlightColor, width: 3, opacity: 1 },
-          filter: [
-            "all",
-            ["==", ["get", "slug"], hoveredTerritory ?? ""],
-            ...(territoryFilter ? [territoryFilter] : []),
-          ],
         })
       );
     } else if (filteredProgramBoundaryData && !hasHighlight) {
@@ -993,9 +922,9 @@ export function ExplorerMap({
         id: "transmission-lines",
         tileset: getTransmissionTileUrl(),
         sourceLayer: "transmission-lines",
-        // Tile features carry no ids, and the Edges hover tooltip only
-        // re-renders when the feature id changes — without this it sticks on
-        // the first feature hovered. Also keys the transmission-lines-hover layer.
+          // Tile features carry no ids, and the Edges hover tooltip only
+          // re-renders when the feature id changes — without this it sticks on
+          // the first feature hovered. Also keys the transmission-lines-hover layer.
         promoteId: "id",
         ...(transmissionLinesFilter ? { filter: transmissionLinesFilter as unknown } : {}),
         renderAs: "line",
@@ -1042,9 +971,9 @@ export function ExplorerMap({
         id: "substations",
         tileset: getSubstationsTileUrl(),
         sourceLayer: "substations",
-        // Tile features carry no ids, and the Edges hover tooltip only
-        // re-renders when the feature id changes — without this it sticks on
-        // the first feature hovered. Also keys the substations-hover layer.
+          // Tile features carry no ids, and the Edges hover tooltip only
+          // re-renders when the feature id changes — without this it sticks on
+          // the first feature hovered. Also keys the substations-hover layer.
         promoteId: "slug",
         ...(substationsFilter ? { filter: substationsFilter as unknown } : {}),
         renderAs: "circle",
@@ -1095,9 +1024,9 @@ export function ExplorerMap({
         id: "ev-charging",
         tileset: getEvChargingTileUrl(),
         sourceLayer: "ev-charging",
-        // Tile features carry no ids, and the Edges hover tooltip only
-        // re-renders when the feature id changes — without this it sticks on
-        // the first feature hovered. Also keys the ev-charging-hover layer.
+          // Tile features carry no ids, and the Edges hover tooltip only
+          // re-renders when the feature id changes — without this it sticks on
+          // the first feature hovered. Also keys the ev-charging-hover layer.
         promoteId: "slug",
         ...(evChargingFilter ? { filter: evChargingFilter as unknown } : {}),
         renderAs: "circle",
@@ -1134,7 +1063,7 @@ export function ExplorerMap({
         events: {
           onClick: (feature: LayerFeature) => {
             const slug = feature.properties.slug;
-            if (slug) navigateToDetail("ev-station", slug);
+            if (slug) router.push(`/ev-charging/${slug}`);
           },
         },
       })
@@ -1147,9 +1076,9 @@ export function ExplorerMap({
         id: "pricing-nodes",
         tileset: getPricingNodesTileUrl(),
         sourceLayer: "pricing-nodes",
-        // Tile features carry no ids, and the Edges hover tooltip only
-        // re-renders when the feature id changes — without this it sticks on
-        // the first feature hovered. Also keys the pricing-nodes-hover layer.
+          // Tile features carry no ids, and the Edges hover tooltip only
+          // re-renders when the feature id changes — without this it sticks on
+          // the first feature hovered. Also keys the pricing-nodes-hover layer.
         promoteId: "slug",
         ...(pricingNodesFilter ? { filter: pricingNodesFilter as unknown } : {}),
         renderAs: "circle",
@@ -1198,9 +1127,9 @@ export function ExplorerMap({
         id: "power-plants",
         tileset: getPowerPlantTileUrl(),
         sourceLayer: "power-plants",
-        // Tile features carry no ids, and the Edges hover tooltip only
-        // re-renders when the feature id changes — without this it sticks on
-        // the first feature hovered. Also keys the power-plants-hover layer.
+          // Tile features carry no ids, and the Edges hover tooltip only
+          // re-renders when the feature id changes — without this it sticks on
+          // the first feature hovered. Also keys the power-plants-hover layer.
         promoteId: "slug",
         ...(powerPlantsFilter ? { filter: powerPlantsFilter as unknown } : {}),
         renderAs: "circle",
@@ -1247,9 +1176,8 @@ export function ExplorerMap({
         layer.geojson({
           id: "highlight",
           data: state.highlightGeoJSON,
-          renderAs: state.detailKind === "ev-charging" ? "circle" : "fill",
+          renderAs: "fill",
           style: {
-            radius: 10,
             color: { hex: resolvedHighlightColor },
             fillOpacity: 0.35,
             borderWidth: 2.5,
@@ -1262,11 +1190,9 @@ export function ExplorerMap({
     return result;
   }, [
     handleClick,
-    hoveredTerritory,
     navigateToDetail,
     router,
     state.highlightGeoJSON,
-    state.detailKind,
     isGridOperatorView,
     isProgramView,
     filteredGridBoundaryData,
@@ -1295,6 +1221,7 @@ export function ExplorerMap({
     () =>
       buildHoverLayerConfigs(
         {
+          territory: hoveredUtilitySlug,
           transmission: hoveredTransmissionId,
           powerPlant: hoveredPowerPlantSlug,
           substation: hoveredSubstationSlug,
@@ -1304,6 +1231,7 @@ export function ExplorerMap({
           program: hoveredProgramSlug,
         },
         {
+          segment: resolvedSegmentColorMapping,
           voltageClass: resolvedVoltageClassColorMapping,
           fuelCategory: resolvedFuelCategoryColorMapping,
           voltageBand: resolvedSubstationVoltageBandColorMapping,
@@ -1314,6 +1242,7 @@ export function ExplorerMap({
         }
       ),
     [
+      hoveredUtilitySlug,
       hoveredTransmissionId,
       hoveredPowerPlantSlug,
       hoveredSubstationSlug,
@@ -1321,6 +1250,7 @@ export function ExplorerMap({
       hoveredPricingNodeSlug,
       hoveredGridKey,
       hoveredProgramSlug,
+      resolvedSegmentColorMapping,
       resolvedVoltageClassColorMapping,
       resolvedFuelCategoryColorMapping,
       resolvedSubstationVoltageBandColorMapping,
@@ -1383,30 +1313,23 @@ export function ExplorerMap({
 
   if (!hasMapboxToken) {
     return (
-      <section
-        aria-label="Explore map"
-        className="h-full w-full flex items-center justify-center bg-background-surface"
-      >
+      <div className="h-full w-full flex items-center justify-center bg-background-surface">
         <div className="text-center px-6">
           <div className="text-lg font-semibold text-text-heading mb-2">Map Unavailable</div>
           <p className="text-sm text-text-muted">Set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN to enable the map.</p>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section aria-label="Explore map" className="h-full w-full relative">
+    <div className="h-full w-full relative">
       <InteractiveMap
         // biome-ignore lint/suspicious/noExplicitAny: InteractiveMap ref type is opaque from @texturehq/edges
         ref={mapRef as React.Ref<any>}
         // biome-ignore lint/style/noNonNullAssertion: effectiveToken is guaranteed non-null when map renders (checked in parent)
         mapboxAccessToken={effectiveToken!}
         initialViewState={US_CENTER}
-        onLoad={() => {
-          focusSelection();
-          setMapLoaded(true);
-        }}
         mapType={mapType}
         controls={[
           { type: "navigation", position: "bottom-right", showResetZoom: true },
@@ -1424,6 +1347,6 @@ export function ExplorerMap({
         ]}
         layers={layers}
       />
-    </section>
+    </div>
   );
 }
