@@ -1044,6 +1044,7 @@ export function ExplorerMap({
         sourceLayer: "substations",
         // Tile features carry no ids, and the Edges hover tooltip only
         // re-renders when the feature id changes — without this it sticks on
+<<<<<<< HEAD
         // the first feature hovered. Also keys the substations-hover layer.
         promoteId: "slug",
         ...(substationsFilter ? { filter: substationsFilter as unknown } : {}),
@@ -1097,6 +1098,7 @@ export function ExplorerMap({
         sourceLayer: "ev-charging",
         // Tile features carry no ids, and the Edges hover tooltip only
         // re-renders when the feature id changes — without this it sticks on
+<<<<<<< HEAD
         // the first feature hovered. Also keys the ev-charging-hover layer.
         promoteId: "slug",
         ...(evChargingFilter ? { filter: evChargingFilter as unknown } : {}),
@@ -1149,6 +1151,7 @@ export function ExplorerMap({
         sourceLayer: "pricing-nodes",
         // Tile features carry no ids, and the Edges hover tooltip only
         // re-renders when the feature id changes — without this it sticks on
+<<<<<<< HEAD
         // the first feature hovered. Also keys the pricing-nodes-hover layer.
         promoteId: "slug",
         ...(pricingNodesFilter ? { filter: pricingNodesFilter as unknown } : {}),
@@ -1200,6 +1203,7 @@ export function ExplorerMap({
         sourceLayer: "power-plants",
         // Tile features carry no ids, and the Edges hover tooltip only
         // re-renders when the feature id changes — without this it sticks on
+<<<<<<< HEAD
         // the first feature hovered. Also keys the power-plants-hover layer.
         promoteId: "slug",
         ...(powerPlantsFilter ? { filter: powerPlantsFilter as unknown } : {}),
