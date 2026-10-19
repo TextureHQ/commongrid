@@ -562,10 +562,9 @@ export function ExplorerMap({
 
   const hasHighlight = !!state.highlightGeoJSON;
 
-  // Region under the cursor for each region layer, used to redraw the
-  // hovered region with more contrast (see the *-hover layers below).
-  // Utility territories are deliberately absent: #535 already outlines the
-  // hovered utility, and two treatments on one layer would fight.
+  // Region under the cursor for each region layer, used to outline the
+  // hovered region (see the *-hover layers below). Utility territories are
+  // tracked by #535's own hover handler further down.
   const hoveredGridKey = useMapLayerHover(map, "grid-boundaries", "hoverKey", isGridOperatorView && !hasHighlight);
   const hoveredProgramSlug = useMapLayerHover(map, "program-boundaries", "programSlug", isProgramView && !hasHighlight);
 
@@ -1287,23 +1286,10 @@ export function ExplorerMap({
           gridOperator: hoveredGridKey,
           program: hoveredProgramSlug,
         },
-        {
-          voltageClass: resolvedVoltageClassColorMapping,
-          fuelCategory: resolvedFuelCategoryColorMapping,
-          voltageBand: resolvedSubstationVoltageBandColorMapping,
-          evNetwork: resolvedEvNetworkColorMapping,
-          pricingNodeIso: resolvedPricingNodeIsoColorMapping,
-          gridOperator: filteredGridBoundaryData?.colorMapping ?? null,
-          program: filteredProgramBoundaryData?.colorMapping ?? null,
-        },
-        // Edges' fill border has a fixed width, so the outline is its own line
-        // layer — on the territories source, covering every tile fragment.
-        { color: resolvedHighlightColor, filter: territoryFilter }
+        { color: resolvedHighlightColor, territoryFilter }
       ),
     [
       hoveredTerritory,
-      resolvedHighlightColor,
-      territoryFilter,
       hoveredTransmissionId,
       hoveredPowerPlantSlug,
       hoveredSubstationSlug,
@@ -1311,13 +1297,8 @@ export function ExplorerMap({
       hoveredPricingNodeSlug,
       hoveredGridKey,
       hoveredProgramSlug,
-      resolvedVoltageClassColorMapping,
-      resolvedFuelCategoryColorMapping,
-      resolvedSubstationVoltageBandColorMapping,
-      resolvedEvNetworkColorMapping,
-      resolvedPricingNodeIsoColorMapping,
-      filteredGridBoundaryData,
-      filteredProgramBoundaryData,
+      resolvedHighlightColor,
+      territoryFilter,
     ]
   );
 

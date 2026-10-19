@@ -1,9 +1,9 @@
 /**
  * Hover highlight layers for the explore map.
  *
- * A highlight redraws the hovered feature above its base layer — heavier fill,
- * thicker line, larger dot — in the base layer's own colors, so it reads as the
- * same entity, just emphasized.
+ * A highlight outlines the hovered feature in the map's highlight color, the
+ * same treatment #535 (CG-219) gave utility territories: a 3px line around a
+ * region, the line itself for a transmission line, a ring around a dot.
  *
  * These are plain descriptions, added to the map imperatively by ExplorerMap
  * rather than as Edges layer specs, because every Edges spec declares its own
@@ -11,43 +11,19 @@
  * /explore. A highlight must therefore reuse the source Edges already created
  * for its base layer, and mirror that layer's minZoom so no tiles load any
  * earlier than they did before. Both are covered by tests.
- *
- * The utility territory outline from #535 (CG-219) lives here too, so it
- * shares the territories source instead of fetching those tiles a second time.
  */
 
 import { resolveCSSColor } from "@/lib/resolve-css-colors";
 
-export type ColorMapping = Record<string, { hex: string }>;
-
-/**
- * How much a hovered feature is emphasized. Tuned against the live map in both
- * themes (see the values' notes); adjust here rather than per layer.
- *
- * Emphasis is carried by fill and weight, never by a different color: the
- * highlight keeps the feature's own color so it still reads as a utility
- * segment, a voltage class, a fuel type. A heavy outline was tried and
- * dropped — on a map already covered in transmission lines, an outline reads
- * as one more line.
- */
+/** How a hovered feature is drawn. Adjust here rather than per layer. */
 export const HOVER_EMPHASIS = {
-  /** Region fill. Base layers draw regions at 0.18–0.2. */
-  regionFillOpacity: 0.65,
-  /** Hovered transmission line. Normal lines are 1.5px. */
-  lineWidth: 5,
+  /** Matches #535's territory outline. Base transmission lines are 1.5px. */
+  outlineWidth: 3,
   /**
-   * Hovered point. Normal radii are 3–4px, so a hovered dot is ~26px across
-   * including its ring, against ~10px for its neighbours. Points are usually
-   * sparse, so there is often no neighbour in view to compare against — the
-   * dot has to read as deliberate on its own, unlike a hovered line, which
-   * always has other lines beside it for scale.
+   * Ring around a hovered point. Base dots are radius 3–4 with a 1px white
+   * ring, so a radius of 7 keeps the 3px ring clear of the dot inside it.
    */
-  pointRadius: { powerPlants: 9, substations: 8, evCharging: 9, pricingNodes: 8 },
-  /** Ring around a hovered point — normal points already carry a 1px white ring. */
-  pointRingWidth: 4,
-  pointRingColor: "#ffffff",
-  /** Shown only if a feature's category is missing from its color mapping. */
-  unmappedColor: "#888888",
+  pointRingRadius: 7,
 } as const;
 
 export interface HoverLayerConfig {
@@ -57,7 +33,7 @@ export interface HoverLayerConfig {
   /** Source Edges created for the base layer — never a source of its own. */
   source: string;
   sourceLayer?: string;
-  type: "fill" | "line" | "circle";
+  type: "line" | "circle";
   /** Feature property identifying the hovered feature. */
   keyProp: string;
   /** Key of the hovered feature, or null when nothing is hovered. */
@@ -80,22 +56,11 @@ export interface HoveredKeys {
   program: string | null;
 }
 
-export interface HoverColorMappings {
-  voltageClass: ColorMapping;
-  fuelCategory: ColorMapping;
-  voltageBand: ColorMapping;
-  evNetwork: ColorMapping;
-  pricingNodeIso: ColorMapping;
-  /** Built from loaded boundary data — absent until it arrives. */
-  gridOperator?: ColorMapping | null;
-  program?: ColorMapping | null;
-}
-
-/** #535's outline around the hovered utility territory. */
-export interface TerritoryOutline {
+export interface HoverStyle {
+  /** The map's highlight color; a CSS variable is resolved before use. */
   color: string;
   /** The territories layer's own filter (segment, program results). */
-  filter?: unknown[] | null;
+  territoryFilter?: unknown[] | null;
 }
 
 /** The source Edges creates for a layer. */
@@ -103,14 +68,8 @@ export function baseSourceId(base: string): string {
   return `${base}-source`;
 }
 
-/** Filter selecting only the hovered feature — matches nothing when nothing is hovered. */
-export function hoverFilter(keyProp: string, hovered: string | null, baseFilter?: unknown[]): unknown[] {
-  const match = ["==", ["get", keyProp], hovered ?? ""];
-  return baseFilter ? ["all", match, baseFilter] : match;
-}
-
 /**
- * A color Mapbox can parse. Some colors here are still CSS variables (Edges
+ * A color Mapbox can parse. The highlight color is a CSS variable (Edges
  * resolves those itself; Mapbox rejects them). Resolving needs `document`, so
  * outside the browser the value passes through untouched — highlights are only
  * ever added to a real map.
@@ -119,46 +78,37 @@ export function resolveColor(color: string): string {
   return typeof document === "undefined" ? color : resolveCSSColor(color);
 }
 
-/** Mapbox `match` expression mirroring an Edges color mapping. */
-export function matchColor(by: string, mapping: ColorMapping): (string | string[])[] {
-  const expr: (string | string[])[] = ["match", ["get", by]];
-  for (const [value, color] of Object.entries(mapping)) expr.push(value, resolveColor(color.hex));
-  expr.push(HOVER_EMPHASIS.unmappedColor);
-  return expr;
+/** Filter selecting only the hovered feature — matches nothing when nothing is hovered. */
+export function hoverFilter(keyProp: string, hovered: string | null, baseFilter?: unknown[]): unknown[] {
+  const match = ["==", ["get", keyProp], hovered ?? ""];
+  return baseFilter ? ["all", match, baseFilter] : match;
 }
 
-/** Fill highlight: heavier fill plus a hairline border, both in the feature's own color. */
-export function fillHoverPaint(by: string, mapping: ColorMapping): Record<string, unknown> {
-  return {
-    "fill-color": matchColor(by, mapping),
-    "fill-opacity": HOVER_EMPHASIS.regionFillOpacity,
-    // Same color as the fill: an edge, not a competing line.
-    "fill-outline-color": matchColor(by, mapping),
-  };
+/** Outline for a region or line. */
+export function lineHoverPaint(color: string): Record<string, unknown> {
+  return { "line-color": color, "line-width": HOVER_EMPHASIS.outlineWidth, "line-opacity": 1 };
 }
 
-/** Circle highlight: larger, opaque, with a white ring. */
-export function circleHoverPaint(by: string, mapping: ColorMapping, radius: number): Record<string, unknown> {
+/** Ring around a point, leaving the dot itself as it was. */
+export function ringHoverPaint(color: string): Record<string, unknown> {
   return {
-    "circle-color": matchColor(by, mapping),
-    "circle-radius": radius,
-    "circle-opacity": 1,
-    "circle-stroke-width": HOVER_EMPHASIS.pointRingWidth,
-    "circle-stroke-color": HOVER_EMPHASIS.pointRingColor,
+    "circle-radius": HOVER_EMPHASIS.pointRingRadius,
+    "circle-opacity": 0,
+    "circle-stroke-width": HOVER_EMPHASIS.outlineWidth,
+    "circle-stroke-color": color,
+    "circle-stroke-opacity": 1,
   };
 }
 
 /**
  * Highlight layers for every hoverable layer on the map. Configs whose base
- * layer isn't currently on the map are skipped by the caller; the two boundary
- * layers are omitted entirely until their color mapping has loaded.
+ * layer isn't currently on the map are skipped by the caller.
  */
-export function buildHoverLayerConfigs(
-  hovered: HoveredKeys,
-  mappings: HoverColorMappings,
-  territoryOutline: TerritoryOutline
-): HoverLayerConfig[] {
-  const configs: HoverLayerConfig[] = [
+export function buildHoverLayerConfigs(hovered: HoveredKeys, style: HoverStyle): HoverLayerConfig[] {
+  const color = resolveColor(style.color);
+  const line = lineHoverPaint(color);
+  const ring = ringHoverPaint(color);
+  return [
     {
       id: "territory-hover-outline",
       base: "territories",
@@ -168,8 +118,26 @@ export function buildHoverLayerConfigs(
       keyProp: "slug",
       hovered: hovered.territory,
       minZoom: 0,
-      ...(territoryOutline.filter ? { baseFilter: territoryOutline.filter } : {}),
-      paint: { "line-color": resolveColor(territoryOutline.color), "line-width": 3, "line-opacity": 1 },
+      ...(style.territoryFilter ? { baseFilter: style.territoryFilter } : {}),
+      paint: line,
+    },
+    {
+      id: "grid-hover",
+      base: "grid-boundaries",
+      source: baseSourceId("grid-boundaries"),
+      type: "line",
+      keyProp: "hoverKey",
+      hovered: hovered.gridOperator,
+      paint: line,
+    },
+    {
+      id: "program-hover",
+      base: "program-boundaries",
+      source: baseSourceId("program-boundaries"),
+      type: "line",
+      keyProp: "programSlug",
+      hovered: hovered.program,
+      paint: line,
     },
     {
       id: "transmission-hover",
@@ -180,11 +148,7 @@ export function buildHoverLayerConfigs(
       keyProp: "id",
       hovered: hovered.transmission,
       minZoom: 3,
-      paint: {
-        "line-color": matchColor("voltageClass", mappings.voltageClass),
-        "line-width": HOVER_EMPHASIS.lineWidth,
-        "line-opacity": 1,
-      },
+      paint: line,
     },
     {
       id: "power-plants-hover",
@@ -195,7 +159,7 @@ export function buildHoverLayerConfigs(
       keyProp: "slug",
       hovered: hovered.powerPlant,
       minZoom: 5,
-      paint: circleHoverPaint("fuelCategory", mappings.fuelCategory, HOVER_EMPHASIS.pointRadius.powerPlants),
+      paint: ring,
     },
     {
       id: "substations-hover",
@@ -206,7 +170,7 @@ export function buildHoverLayerConfigs(
       keyProp: "slug",
       hovered: hovered.substation,
       minZoom: 5,
-      paint: circleHoverPaint("voltageBand", mappings.voltageBand, HOVER_EMPHASIS.pointRadius.substations),
+      paint: ring,
     },
     {
       id: "ev-charging-hover",
@@ -217,7 +181,7 @@ export function buildHoverLayerConfigs(
       keyProp: "slug",
       hovered: hovered.evCharging,
       minZoom: 5,
-      paint: circleHoverPaint("network", mappings.evNetwork, HOVER_EMPHASIS.pointRadius.evCharging),
+      paint: ring,
     },
     {
       id: "pricing-nodes-hover",
@@ -228,33 +192,7 @@ export function buildHoverLayerConfigs(
       keyProp: "slug",
       hovered: hovered.pricingNode,
       minZoom: 3,
-      paint: circleHoverPaint("iso", mappings.pricingNodeIso, HOVER_EMPHASIS.pointRadius.pricingNodes),
+      paint: ring,
     },
   ];
-
-  if (mappings.gridOperator) {
-    configs.push({
-      id: "grid-hover",
-      base: "grid-boundaries",
-      source: baseSourceId("grid-boundaries"),
-      type: "fill",
-      keyProp: "hoverKey",
-      hovered: hovered.gridOperator,
-      paint: fillHoverPaint("colorKey", mappings.gridOperator),
-    });
-  }
-
-  if (mappings.program) {
-    configs.push({
-      id: "program-hover",
-      base: "program-boundaries",
-      source: baseSourceId("program-boundaries"),
-      type: "fill",
-      keyProp: "programSlug",
-      hovered: hovered.program,
-      paint: fillHoverPaint("colorKey", mappings.program),
-    });
-  }
-
-  return configs;
 }

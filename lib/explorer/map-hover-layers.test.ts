@@ -2,17 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   baseSourceId,
   buildHoverLayerConfigs,
-  type ColorMapping,
   HOVER_EMPHASIS,
-  type HoverColorMappings,
   type HoveredKeys,
+  type HoverStyle,
   hoverFilter,
-  matchColor,
-  type TerritoryOutline,
 } from "./map-hover-layers";
-
-const mapping = (...keys: string[]): ColorMapping =>
-  Object.fromEntries(keys.map((k, i) => [k, { hex: `#00000${i}` }])) as ColorMapping;
 
 const NOTHING_HOVERED: HoveredKeys = {
   territory: null,
@@ -25,23 +19,16 @@ const NOTHING_HOVERED: HoveredKeys = {
   program: null,
 };
 
-const MAPPINGS: HoverColorMappings = {
-  voltageClass: mapping("extra-high", "high"),
-  fuelCategory: mapping("Solar", "Coal"),
-  voltageBand: mapping("medium", "high"),
-  evNetwork: mapping("Tesla", "Blink Network"),
-  pricingNodeIso: mapping("CAISO", "PJM"),
-  gridOperator: mapping("iso-caiso", "ba-miso"),
-  program: mapping("prog-demand-response"),
-};
+const STYLE: HoverStyle = { color: "#ff00aa" };
 
-const OUTLINE: TerritoryOutline = { color: "#ff00aa" };
+const byId = (hovered: HoveredKeys = NOTHING_HOVERED, style: HoverStyle = STYLE) =>
+  Object.fromEntries(buildHoverLayerConfigs(hovered, style).map((c) => [c.id, c]));
 
 describe("buildHoverLayerConfigs", () => {
   it("reuses each base layer's source instead of declaring its own", () => {
     // Regression guard: highlights built as Edges layer specs declared a second
     // copy of the same tileset, which tripled tile requests on /explore.
-    for (const cfg of buildHoverLayerConfigs(NOTHING_HOVERED, MAPPINGS, OUTLINE)) {
+    for (const cfg of buildHoverLayerConfigs(NOTHING_HOVERED, STYLE)) {
       expect(cfg.source).toBe(baseSourceId(cfg.base));
       expect(cfg).not.toHaveProperty("tileset");
     }
@@ -50,17 +37,17 @@ describe("buildHoverLayerConfigs", () => {
   it("mirrors each base layer's minimum zoom so no tiles load earlier", () => {
     // A highlight with a lower minZoom than its base pulled tiles at zoom
     // levels where that layer isn't even shown.
-    const byId = Object.fromEntries(buildHoverLayerConfigs(NOTHING_HOVERED, MAPPINGS, OUTLINE).map((c) => [c.id, c]));
-    expect(byId["territory-hover-outline"].minZoom).toBe(0);
-    expect(byId["transmission-hover"].minZoom).toBe(3);
-    expect(byId["power-plants-hover"].minZoom).toBe(5);
-    expect(byId["substations-hover"].minZoom).toBe(5);
-    expect(byId["ev-charging-hover"].minZoom).toBe(5);
-    expect(byId["pricing-nodes-hover"].minZoom).toBe(3);
+    const layers = byId();
+    expect(layers["territory-hover-outline"].minZoom).toBe(0);
+    expect(layers["transmission-hover"].minZoom).toBe(3);
+    expect(layers["power-plants-hover"].minZoom).toBe(5);
+    expect(layers["substations-hover"].minZoom).toBe(5);
+    expect(layers["ev-charging-hover"].minZoom).toBe(5);
+    expect(layers["pricing-nodes-hover"].minZoom).toBe(3);
   });
 
   it("covers every hoverable layer, with unique ids that don't collide with base layers", () => {
-    const configs = buildHoverLayerConfigs(NOTHING_HOVERED, MAPPINGS, OUTLINE);
+    const configs = buildHoverLayerConfigs(NOTHING_HOVERED, STYLE);
     expect(configs.map((c) => c.base).sort()).toEqual([
       "ev-charging",
       "grid-boundaries",
@@ -77,10 +64,9 @@ describe("buildHoverLayerConfigs", () => {
   });
 
   it("carries the hovered key through to its layer", () => {
-    const configs = buildHoverLayerConfigs({ ...NOTHING_HOVERED, gridOperator: "ba:miso" }, MAPPINGS, OUTLINE);
-    const byId = Object.fromEntries(configs.map((c) => [c.id, c]));
-    expect(byId["grid-hover"].hovered).toBe("ba:miso");
-    expect(byId["transmission-hover"].hovered).toBeNull();
+    const layers = byId({ ...NOTHING_HOVERED, gridOperator: "ba:miso" });
+    expect(layers["grid-hover"].hovered).toBe("ba:miso");
+    expect(layers["transmission-hover"].hovered).toBeNull();
   });
 
   it("outlines the hovered territory only where the territories layer shows it", () => {
@@ -88,59 +74,41 @@ describe("buildHoverLayerConfigs", () => {
     // tiles a second time. It must also respect the base layer's filter
     // (segment, program results), or it would outline a hidden utility.
     const segmentOnly = ["==", ["get", "segment"], "COOPERATIVE"];
-    const configs = buildHoverLayerConfigs({ ...NOTHING_HOVERED, territory: "pacificorp" }, MAPPINGS, {
-      color: "#ff00aa",
-      filter: segmentOnly,
-    });
-    const outline = configs.find((c) => c.id === "territory-hover-outline");
-    expect(outline?.source).toBe("territories-source");
-    expect(outline?.hovered).toBe("pacificorp");
-    expect(outline?.baseFilter).toEqual(segmentOnly);
-    expect(outline?.paint["line-color"]).toBe("#ff00aa");
-    expect(outline?.paint["line-width"]).toBe(3);
+    const outline = byId({ ...NOTHING_HOVERED, territory: "pacificorp" }, { ...STYLE, territoryFilter: segmentOnly })[
+      "territory-hover-outline"
+    ];
+    expect(outline.source).toBe("territories-source");
+    expect(outline.hovered).toBe("pacificorp");
+    expect(outline.baseFilter).toEqual(segmentOnly);
   });
 
   it("keys grid operators by kind + slug, not slug alone", () => {
     // Five ISOs share a slug with their balancing authority (caiso, ercot, …).
-    const byId = Object.fromEntries(buildHoverLayerConfigs(NOTHING_HOVERED, MAPPINGS, OUTLINE).map((c) => [c.id, c]));
-    expect(byId["grid-hover"].keyProp).toBe("hoverKey");
+    expect(byId()["grid-hover"].keyProp).toBe("hoverKey");
   });
 
-  it("omits boundary highlights until their color mapping has loaded", () => {
-    const configs = buildHoverLayerConfigs(
-      NOTHING_HOVERED,
-      { ...MAPPINGS, gridOperator: null, program: null },
-      OUTLINE
-    );
-    expect(configs.map((c) => c.id)).not.toContain("grid-hover");
-    expect(configs.map((c) => c.id)).not.toContain("program-hover");
-    expect(configs).toHaveLength(6);
-  });
-
-  it("paints each highlight from its base layer's own colors", () => {
-    // Emphasis comes from weight, never from a different color — the feature
-    // keeps its segment/voltage/fuel color while hovered.
-    const byId = Object.fromEntries(buildHoverLayerConfigs(NOTHING_HOVERED, MAPPINGS, OUTLINE).map((c) => [c.id, c]));
-    expect(byId["transmission-hover"].paint["line-color"]).toEqual(matchColor("voltageClass", MAPPINGS.voltageClass));
-    expect(byId["power-plants-hover"].paint["circle-color"]).toEqual(matchColor("fuelCategory", MAPPINGS.fuelCategory));
-    // The region's edge is the fill color, not a contrasting outline: a bold
-    // outline competes with the transmission lines drawn across the map.
-    expect(byId["grid-hover"].paint["fill-outline-color"]).toEqual(byId["grid-hover"].paint["fill-color"]);
-  });
-
-  it("emphasizes each highlight well past its base layer's weight", () => {
-    const byId = Object.fromEntries(buildHoverLayerConfigs(NOTHING_HOVERED, MAPPINGS, OUTLINE).map((c) => [c.id, c]));
-    // Base layers: regions 0.18–0.2 fill, lines 1.5px, points radius 3–4 with
-    // a 1px ring. A highlight has to clear those to read as highlighted.
-    expect(byId["grid-hover"].paint["fill-opacity"]).toBe(HOVER_EMPHASIS.regionFillOpacity);
-    expect(HOVER_EMPHASIS.regionFillOpacity).toBeGreaterThan(0.3);
-    expect(byId["transmission-hover"].paint["line-width"]).toBe(HOVER_EMPHASIS.lineWidth);
-    expect(HOVER_EMPHASIS.lineWidth).toBeGreaterThan(1.5 * 2);
-    for (const id of ["power-plants-hover", "substations-hover", "ev-charging-hover", "pricing-nodes-hover"]) {
-      expect(byId[id].paint["circle-radius"] as number).toBeGreaterThan(4);
-      expect(byId[id].paint["circle-opacity"]).toBe(1);
-      expect(byId[id].paint["circle-stroke-width"]).toBe(HOVER_EMPHASIS.pointRingWidth);
+  it("outlines regions and lines in the highlight color, matching #535", () => {
+    const layers = byId();
+    for (const id of ["territory-hover-outline", "grid-hover", "program-hover", "transmission-hover"]) {
+      expect(layers[id].type).toBe("line");
+      expect(layers[id].paint["line-color"]).toBe(STYLE.color);
+      expect(layers[id].paint["line-width"]).toBe(HOVER_EMPHASIS.outlineWidth);
     }
+    expect(HOVER_EMPHASIS.outlineWidth).toBe(3);
+    // Thicker than a base transmission line, so a hovered line still stands out.
+    expect(HOVER_EMPHASIS.outlineWidth).toBeGreaterThan(1.5);
+  });
+
+  it("rings points without covering the dot inside", () => {
+    const layers = byId();
+    for (const id of ["power-plants-hover", "substations-hover", "ev-charging-hover", "pricing-nodes-hover"]) {
+      expect(layers[id].type).toBe("circle");
+      expect(layers[id].paint["circle-opacity"]).toBe(0);
+      expect(layers[id].paint["circle-stroke-color"]).toBe(STYLE.color);
+      expect(layers[id].paint["circle-stroke-width"]).toBe(HOVER_EMPHASIS.outlineWidth);
+    }
+    // Base dots are radius 3–4 plus a 1px ring: the ring's inner edge must clear 5.
+    expect(HOVER_EMPHASIS.pointRingRadius - HOVER_EMPHASIS.outlineWidth / 2).toBeGreaterThan(5);
   });
 });
 
@@ -158,19 +126,5 @@ describe("hoverFilter", () => {
     // An empty string rather than null: slugs are never empty, so the layer
     // renders nothing — the layer itself stays mounted.
     expect(hoverFilter("slug", null)).toEqual(["==", ["get", "slug"], ""]);
-  });
-});
-
-describe("matchColor", () => {
-  it("builds a Mapbox match expression over the mapping, with a fallback", () => {
-    expect(matchColor("segment", mapping("A", "B"))).toEqual([
-      "match",
-      ["get", "segment"],
-      "A",
-      "#000000",
-      "B",
-      "#000001",
-      HOVER_EMPHASIS.unmappedColor,
-    ]);
   });
 });
