@@ -12,8 +12,8 @@
  * for its base layer, and mirror that layer's minZoom so no tiles load any
  * earlier than they did before. Both are covered by tests.
  *
- * Utility territories are not here: ExplorerMap already outlines the hovered
- * utility (#535, CG-219). These cover the layers that treatment doesn't.
+ * The utility territory outline from #535 (CG-219) lives here too, so it
+ * shares the territories source instead of fetching those tiles a second time.
  */
 
 import { resolveCSSColor } from "@/lib/resolve-css-colors";
@@ -64,10 +64,13 @@ export interface HoverLayerConfig {
   hovered: string | null;
   /** Mirrors the base layer's minZoom so no tiles load earlier than before. */
   minZoom?: number;
+  /** The base layer's own filter, so a highlight never shows a feature the base hides. */
+  baseFilter?: unknown[];
   paint: Record<string, unknown>;
 }
 
 export interface HoveredKeys {
+  territory: string | null;
   transmission: string | null;
   powerPlant: string | null;
   substation: string | null;
@@ -88,27 +91,38 @@ export interface HoverColorMappings {
   program?: ColorMapping | null;
 }
 
+/** #535's outline around the hovered utility territory. */
+export interface TerritoryOutline {
+  color: string;
+  /** The territories layer's own filter (segment, program results). */
+  filter?: unknown[] | null;
+}
+
 /** The source Edges creates for a layer. */
 export function baseSourceId(base: string): string {
   return `${base}-source`;
 }
 
 /** Filter selecting only the hovered feature — matches nothing when nothing is hovered. */
-export function hoverFilter(keyProp: string, hovered: string | null): unknown[] {
-  return ["==", ["get", keyProp], hovered ?? ""];
+export function hoverFilter(keyProp: string, hovered: string | null, baseFilter?: unknown[]): unknown[] {
+  const match = ["==", ["get", keyProp], hovered ?? ""];
+  return baseFilter ? ["all", match, baseFilter] : match;
 }
 
 /**
- * Mapbox `match` expression mirroring an Edges color mapping. Colors are run
- * through resolveCSSColor because some mappings still hold CSS variables
- * (Edges resolves those itself; Mapbox can't parse them). That needs
- * `document`, so outside the browser the value passes through untouched —
- * highlights are only ever added to a real map.
+ * A color Mapbox can parse. Some colors here are still CSS variables (Edges
+ * resolves those itself; Mapbox rejects them). Resolving needs `document`, so
+ * outside the browser the value passes through untouched — highlights are only
+ * ever added to a real map.
  */
+export function resolveColor(color: string): string {
+  return typeof document === "undefined" ? color : resolveCSSColor(color);
+}
+
+/** Mapbox `match` expression mirroring an Edges color mapping. */
 export function matchColor(by: string, mapping: ColorMapping): (string | string[])[] {
   const expr: (string | string[])[] = ["match", ["get", by]];
-  const resolve = (hex: string) => (typeof document === "undefined" ? hex : resolveCSSColor(hex));
-  for (const [value, color] of Object.entries(mapping)) expr.push(value, resolve(color.hex));
+  for (const [value, color] of Object.entries(mapping)) expr.push(value, resolveColor(color.hex));
   expr.push(HOVER_EMPHASIS.unmappedColor);
   return expr;
 }
@@ -139,8 +153,24 @@ export function circleHoverPaint(by: string, mapping: ColorMapping, radius: numb
  * layer isn't currently on the map are skipped by the caller; the two boundary
  * layers are omitted entirely until their color mapping has loaded.
  */
-export function buildHoverLayerConfigs(hovered: HoveredKeys, mappings: HoverColorMappings): HoverLayerConfig[] {
+export function buildHoverLayerConfigs(
+  hovered: HoveredKeys,
+  mappings: HoverColorMappings,
+  territoryOutline: TerritoryOutline
+): HoverLayerConfig[] {
   const configs: HoverLayerConfig[] = [
+    {
+      id: "territory-hover-outline",
+      base: "territories",
+      source: baseSourceId("territories"),
+      sourceLayer: "territories",
+      type: "line",
+      keyProp: "slug",
+      hovered: hovered.territory,
+      minZoom: 0,
+      ...(territoryOutline.filter ? { baseFilter: territoryOutline.filter } : {}),
+      paint: { "line-color": resolveColor(territoryOutline.color), "line-width": 3, "line-opacity": 1 },
+    },
     {
       id: "transmission-hover",
       base: "transmission-lines",

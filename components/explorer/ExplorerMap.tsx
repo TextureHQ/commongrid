@@ -886,7 +886,7 @@ export function ExplorerMap({
           sourceLayer: "territories",
           // Tile features carry no ids, and the Edges hover tooltip only re-renders
           // when the feature id changes — without this it sticks on the first
-          // feature hovered. Also keys the territories-hover layer.
+          // feature hovered. Also keys the territory-hover-outline layer.
           promoteId: "slug",
           renderAs: "fill",
           minZoom: 0,
@@ -912,22 +912,6 @@ export function ExplorerMap({
             onMouseLeave: () => setHoveredTerritory(null),
           },
           ...(territoryFilter ? { filter: territoryFilter } : {}),
-        })
-      );
-      // Edges' fill border has fixed width; use its line primitive for a
-      // distinct hover outline, including every tile fragment of this utility.
-      result.push(
-        layer.vector({
-          id: "territory-hover-outline",
-          tileset: getTileUrl(),
-          sourceLayer: "territories",
-          renderAs: "line",
-          style: { color: resolvedHighlightColor, width: 3, opacity: 1 },
-          filter: [
-            "all",
-            ["==", ["get", "slug"], hoveredTerritory ?? ""],
-            ...(territoryFilter ? [territoryFilter] : []),
-          ],
         })
       );
     } else if (filteredProgramBoundaryData && !hasHighlight) {
@@ -1262,7 +1246,6 @@ export function ExplorerMap({
     return result;
   }, [
     handleClick,
-    hoveredTerritory,
     navigateToDetail,
     router,
     state.highlightGeoJSON,
@@ -1295,6 +1278,7 @@ export function ExplorerMap({
     () =>
       buildHoverLayerConfigs(
         {
+          territory: hoveredTerritory == null ? null : String(hoveredTerritory),
           transmission: hoveredTransmissionId,
           powerPlant: hoveredPowerPlantSlug,
           substation: hoveredSubstationSlug,
@@ -1311,9 +1295,15 @@ export function ExplorerMap({
           pricingNodeIso: resolvedPricingNodeIsoColorMapping,
           gridOperator: filteredGridBoundaryData?.colorMapping ?? null,
           program: filteredProgramBoundaryData?.colorMapping ?? null,
-        }
+        },
+        // Edges' fill border has a fixed width, so the outline is its own line
+        // layer — on the territories source, covering every tile fragment.
+        { color: resolvedHighlightColor, filter: territoryFilter }
       ),
     [
+      hoveredTerritory,
+      resolvedHighlightColor,
+      territoryFilter,
       hoveredTransmissionId,
       hoveredPowerPlantSlug,
       hoveredSubstationSlug,
@@ -1363,7 +1353,7 @@ export function ExplorerMap({
           }
         }
         if (!map.getLayer(cfg.id)) continue;
-        map.setFilter(cfg.id, hoverFilter(cfg.keyProp, cfg.hovered) as never);
+        map.setFilter(cfg.id, hoverFilter(cfg.keyProp, cfg.hovered, cfg.baseFilter) as never);
         // Edges re-adds its own layers on top as views change, so re-seat this
         // one directly above its base each time.
         const ordered = map.getStyle()?.layers ?? [];
