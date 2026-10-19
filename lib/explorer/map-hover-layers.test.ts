@@ -14,7 +14,6 @@ const mapping = (...keys: string[]): ColorMapping =>
   Object.fromEntries(keys.map((k, i) => [k, { hex: `#00000${i}` }])) as ColorMapping;
 
 const NOTHING_HOVERED: HoveredKeys = {
-  territory: null,
   transmission: null,
   powerPlant: null,
   substation: null,
@@ -25,7 +24,6 @@ const NOTHING_HOVERED: HoveredKeys = {
 };
 
 const MAPPINGS: HoverColorMappings = {
-  segment: mapping("INVESTOR_OWNED_UTILITY", "MUNICIPAL_UTILITY"),
   voltageClass: mapping("extra-high", "high"),
   fuelCategory: mapping("Solar", "Coal"),
   voltageBand: mapping("medium", "high"),
@@ -49,7 +47,6 @@ describe("buildHoverLayerConfigs", () => {
     // A highlight with a lower minZoom than its base pulled tiles at zoom
     // levels where that layer isn't even shown.
     const byId = Object.fromEntries(buildHoverLayerConfigs(NOTHING_HOVERED, MAPPINGS).map((c) => [c.id, c]));
-    expect(byId["territories-hover"].minZoom).toBe(0);
     expect(byId["transmission-hover"].minZoom).toBe(3);
     expect(byId["power-plants-hover"].minZoom).toBe(5);
     expect(byId["substations-hover"].minZoom).toBe(5);
@@ -66,7 +63,6 @@ describe("buildHoverLayerConfigs", () => {
       "pricing-nodes",
       "program-boundaries",
       "substations",
-      "territories",
       "transmission-lines",
     ]);
     const ids = configs.map((c) => c.id);
@@ -75,12 +71,8 @@ describe("buildHoverLayerConfigs", () => {
   });
 
   it("carries the hovered key through to its layer", () => {
-    const configs = buildHoverLayerConfigs(
-      { ...NOTHING_HOVERED, territory: "pacificorp", gridOperator: "ba:miso" },
-      MAPPINGS
-    );
+    const configs = buildHoverLayerConfigs({ ...NOTHING_HOVERED, gridOperator: "ba:miso" }, MAPPINGS);
     const byId = Object.fromEntries(configs.map((c) => [c.id, c]));
-    expect(byId["territories-hover"].hovered).toBe("pacificorp");
     expect(byId["grid-hover"].hovered).toBe("ba:miso");
     expect(byId["transmission-hover"].hovered).toBeNull();
   });
@@ -95,28 +87,25 @@ describe("buildHoverLayerConfigs", () => {
     const configs = buildHoverLayerConfigs(NOTHING_HOVERED, { ...MAPPINGS, gridOperator: null, program: null });
     expect(configs.map((c) => c.id)).not.toContain("grid-hover");
     expect(configs.map((c) => c.id)).not.toContain("program-hover");
-    expect(configs).toHaveLength(6);
+    expect(configs).toHaveLength(5);
   });
 
   it("paints each highlight from its base layer's own colors", () => {
     // Emphasis comes from weight, never from a different color — the feature
     // keeps its segment/voltage/fuel color while hovered.
     const byId = Object.fromEntries(buildHoverLayerConfigs(NOTHING_HOVERED, MAPPINGS).map((c) => [c.id, c]));
-    expect(byId["territories-hover"].paint["fill-color"]).toEqual(matchColor("segment", MAPPINGS.segment));
     expect(byId["transmission-hover"].paint["line-color"]).toEqual(matchColor("voltageClass", MAPPINGS.voltageClass));
     expect(byId["power-plants-hover"].paint["circle-color"]).toEqual(matchColor("fuelCategory", MAPPINGS.fuelCategory));
     // The region's edge is the fill color, not a contrasting outline: a bold
     // outline competes with the transmission lines drawn across the map.
-    expect(byId["territories-hover"].paint["fill-outline-color"]).toEqual(
-      byId["territories-hover"].paint["fill-color"]
-    );
+    expect(byId["grid-hover"].paint["fill-outline-color"]).toEqual(byId["grid-hover"].paint["fill-color"]);
   });
 
   it("emphasizes each highlight well past its base layer's weight", () => {
     const byId = Object.fromEntries(buildHoverLayerConfigs(NOTHING_HOVERED, MAPPINGS).map((c) => [c.id, c]));
     // Base layers: regions 0.18–0.2 fill, lines 1.5px, points radius 3–4 with
     // a 1px ring. A highlight has to clear those to read as highlighted.
-    expect(byId["territories-hover"].paint["fill-opacity"]).toBe(HOVER_EMPHASIS.regionFillOpacity);
+    expect(byId["grid-hover"].paint["fill-opacity"]).toBe(HOVER_EMPHASIS.regionFillOpacity);
     expect(HOVER_EMPHASIS.regionFillOpacity).toBeGreaterThan(0.3);
     expect(byId["transmission-hover"].paint["line-width"]).toBe(HOVER_EMPHASIS.lineWidth);
     expect(HOVER_EMPHASIS.lineWidth).toBeGreaterThan(1.5 * 2);

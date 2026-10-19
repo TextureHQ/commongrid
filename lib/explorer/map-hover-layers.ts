@@ -11,6 +11,9 @@
  * /explore. A highlight must therefore reuse the source Edges already created
  * for its base layer, and mirror that layer's minZoom so no tiles load any
  * earlier than they did before. Both are covered by tests.
+ *
+ * Utility territories are not here: ExplorerMap already outlines the hovered
+ * utility (#535, CG-219). These cover the layers that treatment doesn't.
  */
 
 import { resolveCSSColor } from "@/lib/resolve-css-colors";
@@ -65,7 +68,6 @@ export interface HoverLayerConfig {
 }
 
 export interface HoveredKeys {
-  territory: string | null;
   transmission: string | null;
   powerPlant: string | null;
   substation: string | null;
@@ -76,7 +78,6 @@ export interface HoveredKeys {
 }
 
 export interface HoverColorMappings {
-  segment: ColorMapping;
   voltageClass: ColorMapping;
   fuelCategory: ColorMapping;
   voltageBand: ColorMapping;
@@ -140,17 +141,6 @@ export function circleHoverPaint(by: string, mapping: ColorMapping, radius: numb
  */
 export function buildHoverLayerConfigs(hovered: HoveredKeys, mappings: HoverColorMappings): HoverLayerConfig[] {
   const configs: HoverLayerConfig[] = [
-    {
-      id: "territories-hover",
-      base: "territories",
-      source: baseSourceId("territories"),
-      sourceLayer: "territories",
-      type: "fill",
-      keyProp: "slug",
-      hovered: hovered.territory,
-      minZoom: 0,
-      paint: fillHoverPaint("segment", mappings.segment),
-    },
     {
       id: "transmission-hover",
       base: "transmission-lines",
