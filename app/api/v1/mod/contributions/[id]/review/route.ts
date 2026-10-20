@@ -182,6 +182,14 @@ async function handlePost(req: Request, ctx: RouteContext) {
       throw new ApiError("NOT_FOUND", `Entity ${contribution.entityType}/${contribution.entityId} no longer exists.`);
     }
 
+    if (outcome.status === "create_conflict") {
+      const identifier = outcome.entitySlug ?? outcome.entityId;
+      throw new ApiError(
+        "CONFLICT",
+        `Cannot approve: a ${contribution.entityType} with identifier '${identifier}' already exists.`
+      );
+    }
+
     if (outcome.status === "version_conflict") {
       const conflictMessage = `Version conflict: entity was at version ${outcome.entityVersion}, contribution was based on version ${outcome.contributionVersion}.`;
 
