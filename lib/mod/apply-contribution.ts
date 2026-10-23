@@ -65,6 +65,7 @@ export type VersionSourceType = "community" | "admin";
 
 export type ApplyOutcome =
   | { status: "applied"; appliedVersion: number; changeType: ChangeType }
+  | { status: "create_conflict"; entityId: string; entitySlug: string | null }
   | { status: "version_conflict"; entityVersion: number; contributionVersion: number }
   | { status: "entity_missing" }
   | { status: "unknown_fields"; fields: string[] };
@@ -357,7 +358,22 @@ export async function applyContribution(
       insertValues[snakeToCamel(field)] = change.new;
     }
 
-    await tx.insert(entityTable).values(insertValues);
+    // A moderator can approve two pending creates for the same entity in
+    // parallel. Let Postgres arbitrate the unique constraints rather than
+    // surfacing a raw 500 from the insert; a zero-row result leaves the
+    // contribution pending for the moderator to resolve as a duplicate.
+    const inserted = await tx
+      .insert(entityTable)
+      .values(insertValues)
+      .onConflictDoNothing()
+      .returning({ id: entityTable.id });
+    if (inserted.length === 0) {
+      return {
+        status: "create_conflict",
+        entityId: contribution.entityId,
+        entitySlug: contribution.entitySlug,
+      };
+    }
 
     const record = buildVersionRecord(
       entityType,
