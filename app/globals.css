@@ -760,12 +760,14 @@ html.theme-dark {
 /* Persistent legal/data-quality notice. Kept intentionally compact so map
    exploration retains nearly the full viewport. */
 .cg-legal-notice {
+  flex-shrink: 0;
   min-height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
   padding: 5px 16px;
+  padding-bottom: max(5px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--border-default, #d8dde3);
   background: var(--surface-primary, #fff);
   color: var(--text-secondary, #59636e);
@@ -791,7 +793,6 @@ html.theme-dark {
     align-items: flex-start;
     flex-direction: column;
     gap: 2px;
-    padding-block: 5px;
     text-align: left;
   }
 }
