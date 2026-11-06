@@ -68,7 +68,8 @@ function ShellInner({ children, navigation }: ShellLayoutClientProps) {
   return (
     <div className="flex flex-col h-dvh">
       <TopBar navigation={enhancedNavigation} navigationReady={isNavSettled} />
-      <main className="flex-1 min-h-0">{children}</main>
+      {/* Contain long pages so they scroll above, not behind, the legal notice. */}
+      <main className="flex-1 min-h-0 overflow-y-auto">{children}</main>
       <LegalNoticeBar />
       <GlobalSearchModal />
     </div>
