@@ -26,6 +26,7 @@ import { jsonResponse } from "@/lib/api/response";
 import type { RouteContext } from "@/lib/api/types";
 import { getDb } from "@/lib/db/client";
 import { contributions, users } from "@/lib/db/schema";
+import { addContributionContext } from "@/lib/mod/contribution-context";
 import { requireModerator } from "@/lib/mod/require-moderator";
 
 // ---------------------------------------------------------------------------
@@ -151,17 +152,19 @@ async function handleGet(req: Request, ctx: RouteContext) {
   const nextCursor = hasMore && pageRows.length > 0 ? pageRows[pageRows.length - 1].contribution.id : null;
 
   // Shape the response
-  const data = pageRows.map((row) => ({
-    ...row.contribution,
-    contributor: row.contributor
-      ? {
-          display_name: row.contributor.displayName,
-          contribution_count: row.contributor.contributionCount,
-          role: row.contributor.role,
-          avatar_url: row.contributor.avatarUrl,
-        }
-      : null,
-  }));
+  const data = await addContributionContext(
+    pageRows.map((row) => ({
+      ...row.contribution,
+      contributor: row.contributor
+        ? {
+            display_name: row.contributor.displayName,
+            contribution_count: row.contributor.contributionCount,
+            role: row.contributor.role,
+            avatar_url: row.contributor.avatarUrl,
+          }
+        : null,
+    }))
+  );
 
   return jsonResponse(
     {

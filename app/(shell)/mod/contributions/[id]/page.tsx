@@ -4,14 +4,17 @@ import { SignInButton } from "@clerk/nextjs";
 import { Badge, Button, Card, Icon, Loader, PageLayout, TextArea } from "@texturehq/edges";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ContributionEntityContext } from "@/components/contributions/ContributionEntityContext";
 import { ContributionValue } from "@/components/contributions/ContributionValue";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import type { ContributionEntityContext as EntityContext } from "@/lib/mod/contribution-context";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 interface Contribution {
+  entityContext?: EntityContext;
   id: string;
   entityType: string;
   entitySlug: string;
@@ -244,6 +247,8 @@ export default function ModerationReviewPage() {
             </div>
           </div>
         </div>
+
+        <ContributionEntityContext context={contribution.entityContext} />
 
         {/* Summary */}
         <Card>

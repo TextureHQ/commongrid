@@ -6,7 +6,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { ContentPage } from "@/components/ContentPage";
+import { ContributionEntityContext } from "@/components/contributions/ContributionEntityContext";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import type { ContributionEntityContext as EntityContext } from "@/lib/mod/contribution-context";
 import { parseStatusParam, type QueueStatus, STATUS_OPTIONS } from "./queue-utils";
 
 // ---------------------------------------------------------------------------
@@ -20,6 +22,7 @@ interface Contributor {
 }
 
 interface Contribution {
+  entityContext?: EntityContext;
   id: string;
   entityType: string;
   entitySlug: string;
@@ -301,9 +304,8 @@ function ModerationContributionsPageInner() {
           {!error && contributions.length > 0 && (
             <div className="space-y-3">
               {contributions.map((contrib) => (
-                <Link
+                <div
                   key={contrib.id}
-                  href={`/mod/contributions/${contrib.id}`}
                   className="block p-4 rounded-lg border border-border-default hover:border-border-strong transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -316,7 +318,10 @@ function ModerationContributionsPageInner() {
                         <span className="text-sm text-text-muted">#{contrib.id.slice(0, 8)}</span>
                       </div>
                       <div className="text-base font-medium text-text-heading">
-                        {contrib.editSummary || "No summary provided"}
+                        <ContributionEntityContext context={contrib.entityContext} />
+                        <Link href={`/mod/contributions/${contrib.id}`} className="underline">
+                          {contrib.editSummary || "Review contribution"}
+                        </Link>
                       </div>
                       {contrib.contributor && (
                         <div className="text-sm text-text-muted">
@@ -337,7 +342,7 @@ function ModerationContributionsPageInner() {
                     </div>
                     <div className="text-sm text-text-muted shrink-0">{formatRelativeTime(contrib.createdAt)}</div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}
