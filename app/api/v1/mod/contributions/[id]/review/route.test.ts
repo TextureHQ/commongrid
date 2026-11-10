@@ -228,4 +228,18 @@ describe("POST /api/v1/mod/contributions/:id/review", () => {
       expect(actionRecord?.metadata).not.toHaveProperty("self_approved");
     });
   });
+
+  it("returns conflict without approving when a create collides with an existing entity", async () => {
+    (applyContribution as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "create_conflict",
+      entityId: "program-1",
+      entitySlug: "peak-time-rebates",
+    });
+
+    const res = await reviewRoute.POST(makeRequest({ action: "approve" }), makeContext());
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).error.message).toContain("peak-time-rebates");
+    expect(markContributionApplied).not.toHaveBeenCalled();
+  });
 });

@@ -15,6 +15,8 @@ interface FakeState {
   highestVersion?: number;
   /** Per-field source citation overrides returned for source_citations queries. */
   sourceCitations?: { fieldName: string; id: string }[];
+  /** Whether a create hits an entity-table unique constraint. */
+  createConflict?: boolean;
 }
 
 interface Recorded {
@@ -50,7 +52,10 @@ function makeTx(state: FakeState) {
   const valuesResult = () => {
     const promise = Promise.resolve(undefined);
     return Object.assign(promise, {
-      onConflictDoNothing: () => Promise.resolve(undefined),
+      onConflictDoNothing: () =>
+        Object.assign(Promise.resolve(undefined), {
+          returning: async () => (state.createConflict ? [] : [{ id: "entity-1" }]),
+        }),
       onConflictDoUpdate: () => Promise.resolve(undefined),
     });
   };
@@ -461,6 +466,21 @@ describe("applyContribution", () => {
     });
     expect(recorded.versionInserts[0]?.delta).toBeNull();
     // Nothing exists yet, so there is no row to lock.
+    expect(recorded.lockedRows).toBe(0);
+  });
+
+  it("reports a duplicate create without writing version or moderation records", async () => {
+    const { tx, recorded } = makeTx({ entity: null, hasVersionHistory: false, createConflict: true });
+
+    const outcome = await applyContribution(
+      tx,
+      contribution({ changeType: "create", changes: { name: { old: null, new: "Acme Electric" } } }),
+      { ...opts, changeType: "create" }
+    );
+
+    expect(outcome).toEqual({ status: "create_conflict", entityId: "entity-1", entitySlug: "acme-electric" });
+    expect(recorded.versionInserts).toHaveLength(0);
+    expect(recorded.fieldModerationInserts).toHaveLength(0);
     expect(recorded.lockedRows).toBe(0);
   });
 
