@@ -114,10 +114,17 @@ export interface CronMonitorOptions {
 export async function withCronMonitor<T>(options: CronMonitorOptions, job: () => Promise<T>): Promise<T> {
   const { slug, schedule, checkinMarginMinutes = 30, maxRuntimeMinutes = 30 } = options;
 
-  return Sentry.withMonitor(slug, job, {
-    schedule: { type: "crontab", value: schedule },
-    checkinMargin: checkinMarginMinutes,
-    maxRuntime: maxRuntimeMinutes,
-    timezone: "Etc/UTC",
-  });
+  try {
+    return await Sentry.withMonitor(slug, job, {
+      schedule: { type: "crontab", value: schedule },
+      checkinMargin: checkinMarginMinutes,
+      maxRuntime: maxRuntimeMinutes,
+      timezone: "Etc/UTC",
+    });
+  } finally {
+    // withMonitor queues its terminal check-in only after the job settles.
+    // A flush inside the job is too early: the serverless runtime can freeze
+    // before that final check-in is sent, leaving a successful run to time out.
+    await flushTelemetry();
+  }
 }
