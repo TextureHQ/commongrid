@@ -128,6 +128,19 @@ async function main() {
   const databaseUrl = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
   const clerkSecret = process.env.CLERK_SECRET_KEY;
 
+  // Neon↔Vercel first-build race: on a brand-new branch the first preview build
+  // starts before the Neon integration forks the database and injects the
+  // branch-scoped DATABASE_URL. Skip cleanly during the build so the deployment
+  // goes green; the env-injected redeploy seconds later runs the real seed.
+  // Mirrors scripts/preview-safe-migrate.ts. Only tolerated on preview builds.
+  if (!databaseUrl && process.argv.includes("--only-preview") && process.env.VERCEL_ENV === "preview") {
+    console.log(
+      "db:seed:clerk:dev — skipped: no DATABASE_URL yet on this preview build. " +
+        "The Neon integration injects the branch-scoped database env and triggers a redeploy that runs the real seed."
+    );
+    return;
+  }
+
   if (!databaseUrl) {
     console.error("DATABASE_URL is not set.");
     process.exit(1);
