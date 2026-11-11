@@ -49,6 +49,8 @@ export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSugges
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmedAt, setConfirmedAt] = useState<string | null>(null);
+  const [savedCount, setSavedCount] = useState(0);
+  const [changedNotice, setChangedNotice] = useState(false);
 
   const load = useCallback(() => {
     setLoadError(null);
@@ -93,8 +95,18 @@ export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSugges
         }),
       });
       const json = await res.json().catch(() => null);
+      if (res.status === 409) {
+        // Something changed since the drawer opened: show the latest values and let them check again.
+        setChangedNotice(true);
+        setData(null);
+        load();
+        setStep("rows");
+        return;
+      }
       if (!res.ok) throw new Error(json?.error?.message ?? "That didn't go through. Try again.");
       setConfirmedAt(json.data.confirmedAt);
+      setSavedCount(json.data.saved);
+      setChangedNotice(false);
       setStep("done");
     } catch (err) {
       setSubmitError((err as Error).message);
@@ -173,7 +185,8 @@ export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSugges
     body = (
       <DoneStep
         data={data}
-        confirmedCount={toConfirm.length}
+        requestedCount={toConfirm.length}
+        savedCount={savedCount}
         confirmedAt={confirmedAt}
         flagged={flagged}
         onSuggestEdit={onSuggestEdit}
@@ -190,6 +203,11 @@ export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSugges
     const canConfirm = data.viewer.canConfirm;
     body = (
       <div className="space-y-4">
+        {changedNotice && (
+          <div className="rounded-lg border border-feedback-warning bg-feedback-warning/10 p-3 text-sm text-text-body">
+            Some of this record changed while you were looking. Here's the latest. Check it again, then confirm.
+          </div>
+        )}
         {canConfirm ? (
           <p className="text-sm text-text-body">
             Here's what CommonGrid lists for {data.utility.name}. Mark anything that's wrong, then confirm the rest.
@@ -330,26 +348,39 @@ function RowItem({
   );
 }
 
+function details(n: number): string {
+  return n === 1 ? "1 detail" : `${n} details`;
+}
+
+/** Counts what the server actually saved, so a repeat doesn't read as new. */
+export function thanksLine(requested: number, saved: number): string {
+  if (saved === 0) return "Thanks. You'd already confirmed this today.";
+  if (saved < requested) return `Thanks. ${details(saved)} confirmed; the rest you'd already confirmed today.`;
+  return `Thanks. ${details(saved)} confirmed.`;
+}
+
 function DoneStep({
   data,
-  confirmedCount,
+  requestedCount,
+  savedCount,
   confirmedAt,
   flagged,
   onSuggestEdit,
 }: {
   data: ConfirmData;
-  confirmedCount: number;
+  /** Details the person confirmed. */
+  requestedCount: number;
+  /** Rows the server saved; repeats within 24 hours aren't saved again. */
+  savedCount: number;
   confirmedAt: string | null;
   flagged: ConfirmRow[];
   onSuggestEdit: () => void;
 }) {
   return (
     <div className="space-y-5 text-sm text-text-body">
-      {confirmedCount > 0 && confirmedAt && (
+      {requestedCount > 0 && confirmedAt && (
         <div className="rounded-lg border border-feedback-success bg-feedback-success/10 p-3 text-feedback-success">
-          <p className="font-medium">
-            Thanks. {confirmedCount === 1 ? "1 detail" : `${confirmedCount} details`} confirmed.
-          </p>
+          <p className="font-medium">{thanksLine(requestedCount, savedCount)}</p>
           <p className="mt-1">{confirmedLine(data.utility.confirmerName, confirmedAt)}</p>
         </div>
       )}
