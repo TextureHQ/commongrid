@@ -3,6 +3,7 @@ import {
   buildRows,
   checkAgainstRows,
   confirmerName,
+  displayUrl,
   parseConfirmRequest,
   type RecordInput,
   rowKey,
@@ -25,6 +26,13 @@ const coop: RecordInput = {
   ],
   confirmations: [],
 };
+
+describe("displayUrl", () => {
+  it("drops the scheme and trailing slash but keeps the path", () => {
+    expect(displayUrl("http://www.4county.org/")).toBe("www.4county.org");
+    expect(displayUrl("https://4county.org/old-outage-page")).toBe("4county.org/old-outage-page");
+  });
+});
 
 describe("buildRows", () => {
   it("lists website, power supplier, then programs by name", () => {

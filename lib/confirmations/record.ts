@@ -7,8 +7,6 @@
  * utility knows first-hand; EIA figures are already cited to EIA.
  */
 
-import { safeHostname } from "@/lib/geo";
-
 export type ConfirmEntityType = "utility" | "program";
 export type ConfirmFieldName = "website" | "generationProviderId" | "status";
 
@@ -62,6 +60,15 @@ function blankToNull(value: string | null | undefined): string | null {
   return v ? v : null;
 }
 
+/**
+ * "http://www.4county.org/" -> "www.4county.org", "https://x.org/outages" -> "x.org/outages".
+ * Drops only the scheme and a trailing slash, so any path stays visible: the
+ * whole stored URL is what gets confirmed.
+ */
+export function displayUrl(url: string): string {
+  return url.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+}
+
 /** "ACTIVE" -> "Active", "COMING_SOON" -> "Coming soon". */
 export function statusLabel(status: string): string {
   const s = status.toLowerCase().replace(/_/g, " ");
@@ -92,8 +99,7 @@ export function buildRows(input: RecordInput): ConfirmRow[] {
     fieldName: "website",
     label: "Website",
     value: website,
-    // Shown as the utility page shows it (www.4county.org); the stored URL is what's confirmed.
-    displayValue: website ? safeHostname(website) : null,
+    displayValue: website ? displayUrl(website) : null,
     handoff: { kind: "suggest_edit" },
   });
 
