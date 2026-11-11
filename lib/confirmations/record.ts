@@ -7,6 +7,8 @@
  * utility knows first-hand; EIA figures are already cited to EIA.
  */
 
+import { safeHostname } from "@/lib/geo";
+
 export type ConfirmEntityType = "utility" | "program";
 export type ConfirmFieldName = "website" | "generationProviderId" | "status";
 
@@ -90,7 +92,8 @@ export function buildRows(input: RecordInput): ConfirmRow[] {
     fieldName: "website",
     label: "Website",
     value: website,
-    displayValue: website,
+    // Shown as the utility page shows it (www.4county.org); the stored URL is what's confirmed.
+    displayValue: website ? safeHostname(website) : null,
     handoff: { kind: "suggest_edit" },
   });
 

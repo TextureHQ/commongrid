@@ -24,8 +24,6 @@ interface ConfirmRecordPanelProps {
   onSuggestEdit: () => void;
 }
 
-const DISCUSSION_MIN_LENGTH = 10;
-
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
@@ -418,7 +416,8 @@ function FollowUp({
           entity_type: "utility",
           entity_id: utilityId,
           title: row.value ? "Power supplier needs correcting" : "Power supplier is missing",
-          body: text.trim(),
+          // Prefixed so a short answer like "TVA" still meets the discussions API's 10-character minimum.
+          body: `From the confirm-record form: ${text.trim()}`,
         }),
       });
       setState(res.ok ? "sent" : "error");
@@ -437,7 +436,13 @@ function FollowUp({
       ) : (
         <>
           <div className="mt-2">
-            <TextArea id={`followup-${row.key}`} value={text} onChange={(e) => setText(e.target.value)} rows={2} />
+            <TextArea
+              id={`followup-${row.key}`}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={2}
+              reserveErrorSpace={false}
+            />
           </div>
           <p className="mt-1 text-xs text-text-muted">This power supplier link can't be edited directly yet.</p>
           <Button
@@ -445,7 +450,7 @@ function FollowUp({
             size="sm"
             className="mt-2"
             onPress={send}
-            isDisabled={text.trim().length < DISCUSSION_MIN_LENGTH || state === "sending"}
+            isDisabled={!text.trim() || state === "sending"}
           >
             Send
           </Button>

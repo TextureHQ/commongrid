@@ -30,6 +30,7 @@ describe("buildRows", () => {
   it("lists website, power supplier, then programs by name", () => {
     const rows = buildRows(coop);
     expect(rows.map((r) => r.label)).toEqual(["Website", "Power supplier", "Beat the Peak Alerts", "Zap Rebate"]);
+    expect(rows[0]).toMatchObject({ value: "https://4county.org", displayValue: "4county.org" });
     expect(rows[1]).toMatchObject({
       value: "tva",
       displayValue: "Tennessee Valley Authority",
