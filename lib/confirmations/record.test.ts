@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   buildRows,
   checkAgainstRows,
+  confirmationFor,
+  confirmedLine,
   confirmerName,
   displayUrl,
   parseConfirmRequest,
+  publicConfirmations,
   type RecordInput,
   rowKey,
   statusLabel,
@@ -150,5 +153,70 @@ describe("checkAgainstRows", () => {
       unknown: [rowKey("program", "elsewhere", "status")],
       stale: [rowKey("utility", "u1", "website")],
     });
+  });
+});
+
+describe("public display", () => {
+  const at = new Date("2026-11-10T18:00:00Z");
+  const rows = buildRows({
+    ...coop,
+    confirmations: [
+      {
+        entityType: "utility",
+        entityId: "u1",
+        fieldName: "website",
+        confirmedValue: "https://4county.org",
+        createdAt: at,
+      },
+      // Confirmed when the supplier was someone else: no longer applies.
+      {
+        entityType: "utility",
+        entityId: "u1",
+        fieldName: "generationProviderId",
+        confirmedValue: "other",
+        createdAt: at,
+      },
+      { entityType: "program", entityId: "p2", fieldName: "status", confirmedValue: "ACTIVE", createdAt: at },
+    ],
+  });
+  const list = publicConfirmations(rows);
+
+  it("lists only fields whose current value was confirmed, with nothing about the person", () => {
+    expect(list).toEqual([
+      {
+        entityType: "utility",
+        entityId: "u1",
+        fieldName: "website",
+        value: "https://4county.org",
+        confirmedAt: at.toISOString(),
+      },
+      {
+        entityType: "program",
+        entityId: "p2",
+        fieldName: "status",
+        value: "ACTIVE",
+        confirmedAt: at.toISOString(),
+        programSlug: "zap",
+      },
+    ]);
+  });
+
+  it("finds a field's confirmation only while the page shows the confirmed value", () => {
+    expect(confirmationFor(list, { fieldName: "website" }, "https://4county.org")?.confirmedAt).toBe(at.toISOString());
+    expect(confirmationFor(list, { fieldName: "website" }, "https://new.example")).toBeNull();
+    expect(confirmationFor(list, { fieldName: "website" }, null)).toBeNull();
+    expect(confirmationFor(list, { fieldName: "generationProviderId" }, "tva")).toBeNull();
+    expect(confirmationFor(list, { fieldName: "status", programSlug: "zap" }, "ACTIVE")).not.toBeNull();
+    expect(confirmationFor(list, { fieldName: "status", programSlug: "zap" }, "PAUSED")).toBeNull();
+    expect(confirmationFor(list, { fieldName: "status", programSlug: "beat-the-peak" }, "COMING_SOON")).toBeNull();
+  });
+
+  it("says staff, and names the field where the line isn't directly under it", () => {
+    expect(confirmedLine("4-County Electric", at.toISOString())).toBe(
+      "Confirmed by 4-County Electric staff · Nov 10, 2026"
+    );
+    expect(confirmedLine("4-County Electric", at.toISOString(), "status")).toBe(
+      "Status confirmed by 4-County Electric staff · Nov 10, 2026"
+    );
   });
 });

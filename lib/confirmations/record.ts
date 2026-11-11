@@ -148,6 +148,76 @@ export function sameValue(a: unknown, b: unknown): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Public display
+// ---------------------------------------------------------------------------
+
+/**
+ * A confirmation as shown on public pages: one field, the value that was
+ * confirmed, and when. Never who: no user id, name, email or email domain.
+ */
+export interface PublicConfirmation {
+  entityType: ConfirmEntityType;
+  entityId: string;
+  fieldName: ConfirmFieldName;
+  /** The value confirmed. The line is only shown beside this exact value. */
+  value: string;
+  confirmedAt: string;
+  /** For a program's status: the program's slug. */
+  programSlug?: string;
+}
+
+/** The rows whose current value has been confirmed. Unconfirmed and changed fields are left out. */
+export function publicConfirmations(rows: ConfirmRow[]): PublicConfirmation[] {
+  const out: PublicConfirmation[] = [];
+  for (const r of rows) {
+    if (r.value === null || r.lastConfirmedAt === null) continue;
+    out.push({
+      entityType: r.entityType,
+      entityId: r.entityId,
+      fieldName: r.fieldName,
+      value: r.value,
+      confirmedAt: r.lastConfirmedAt,
+      ...(r.handoff.kind === "program_page" ? { programSlug: r.handoff.programSlug } : {}),
+    });
+  }
+  return out;
+}
+
+/**
+ * The confirmation for one field, but only if `shownValue` (what the page is
+ * displaying) is still the value that was confirmed. Guards against a cached
+ * confirmation sitting beside a value that has since changed.
+ */
+export function confirmationFor(
+  confirmations: PublicConfirmation[],
+  field: { fieldName: "website" | "generationProviderId" } | { fieldName: "status"; programSlug: string },
+  shownValue: string | null | undefined
+): PublicConfirmation | null {
+  const shown = blankToNull(shownValue);
+  if (shown === null) return null;
+  const match = confirmations.find((c) =>
+    field.fieldName === "status"
+      ? c.entityType === "program" && c.fieldName === "status" && c.programSlug === field.programSlug
+      : c.entityType === "utility" && c.fieldName === field.fieldName
+  );
+  return match && sameValue(match.value, shown) ? match : null;
+}
+
+function formatConfirmedDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+/**
+ * "Confirmed by 4-County Electric staff · Nov 10, 2026". "staff" because the
+ * email check shows someone works there, not that the utility said it
+ * officially. Use scope "status" where the line isn't directly under its
+ * field, so it can't read as covering a whole program.
+ */
+export function confirmedLine(name: string, iso: string, scope?: "status"): string {
+  return `${scope === "status" ? "Status confirmed" : "Confirmed"} by ${name} staff · ${formatConfirmedDate(iso)}`;
+}
+
+// ---------------------------------------------------------------------------
 // Request parsing
 // ---------------------------------------------------------------------------
 
