@@ -530,6 +530,7 @@ dashboards and the public REST API surface only a subset of them.
 | `notifications` | In-app notifications (fed by `user.created` / contribution state changes / etc.). |
 | `knock_delivery_log` | Delivery records for outbound notifications (email / in-app). |
 | `source_citations` | Free-form citation blocks attached to contributions. |
+| `record_confirmations` | Append-only "this is still right" events from someone at a utility, one row per field (utility website, co-op power supplier, program still running). Only written when the verified sign-in email matches the utility's domains; never changes the record. Applies while the field still equals `confirmed_value`. Kept separate from `field_moderation_state` because a row there locks the field against sync. |
 | `bulk_operations` | Idempotency records for bulk write operations (`Idempotency-Key` header). |
 | `power_plant_interconnections` | Interconnection/queue snapshots where available. |
 
