@@ -19,6 +19,7 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ConfirmRecordAction } from "@/components/confirmations/ConfirmRecordAction";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
 import { DownloadTerritoryButton } from "@/components/DownloadTerritoryButton";
@@ -658,6 +659,9 @@ export default function UtilityDetailPage() {
       />
 
       <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        <div className="pb-4">
+          <ConfirmRecordAction utilitySlug={utility.slug} utilityName={utility.name} />
+        </div>
         <EntityStatsRow
           stats={[
             {
