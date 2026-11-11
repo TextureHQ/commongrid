@@ -19,8 +19,8 @@ there is no way to say "this is still correct."
 
 This RFC proposes **record confirmations**: someone at a utility, signed in with a verified work email at that
 utility's domain, can confirm in under a minute, on a phone, that what CommonGrid lists for them is still right. A
-confirmation never changes the record. It adds a dated, attributed event shown as
-**"Confirmed by 4-County Electric Power Association · Nov 10, 2026."**
+confirmation never changes the record. It adds a dated, attributed event, shown publicly beside the field it
+covers as **"Confirmed by 4-County Electric Power Association staff · Nov 10, 2026."**
 
 It ships in three independent cuts. Cut 1 is a small PR; cuts 2 and 3 are described here and built only if cut 1 is
 welcome.
@@ -42,7 +42,8 @@ welcome.
 
 - Anonymous confirmations. Like contributions, confirming needs sign-in.
 - Confirming EIA-sourced figures (customers, revenue, sales, peak demand). EIA is already their citation.
-- A public freshness indicator in cut 1 (see §6).
+- A record-level freshness indicator, or anything shown on unconfirmed fields, in cut 1 (see §6).
+- Withdrawing a confirmation (a question for maintainers, §9).
 - Making the G&T link community-editable (a question for maintainers, §9).
 
 ---
@@ -95,27 +96,64 @@ These are the things a utility knows first-hand. A blank value can't be confirme
 1. **Drawer:** "Here's what CommonGrid lists for {utility}. Mark anything that's wrong, then confirm the rest." Each
    row shows its value, or "Missing," and when it was last confirmed. Rows have a "Something's wrong" link; marking
    a row leaves it out of the confirmation.
-2. **Dialog (replaces the drawer):** the rows being confirmed, and exactly what will appear publicly: "Confirmed by
-   {utility} · {date}. Your name and email won't be shown."
+2. **Dialog (replaces the drawer):** the rows being confirmed, and exactly what will appear publicly beside each:
+   "Confirmed by {utility} staff · {date}. Your name and email won't be shown."
 3. **Drawer again:** a thank-you, then a follow-up for each wrong or missing row:
    - **Website** → opens Suggest Edit.
    - **Program** → links to the program, where Suggest Edit lives.
    - **Power supplier** → a short text box that starts a discussion thread on the utility, because the field isn't
      community-editable (§9).
 
-### 4.5 What is shown
+### 4.5 What is shown, and where
 
-"Confirmed by {utility short name, else name} · {date}." The utility, not the person, because the email check
-establishes affiliation, not identity, and the site doesn't show contributor names elsewhere. Who confirmed it is
-stored for maintainers.
+"Confirmed by {utility short name, else name} staff · {date}." The utility, not the person, because the email check
+establishes affiliation, not identity, and the site doesn't show contributor names elsewhere. "Staff," because someone
+who works there said it; the utility did not issue it. Who confirmed it is stored for maintainers.
 
-In cut 1 this appears only inside the drawer. A confirmation applies while the field still holds the value that was
-confirmed; once the value changes, it no longer shows.
+The line appears on public pages, beside the one field it covers:
+
+| Field | Where | Wording |
+|---|---|---|
+| Website | Utility page, directly under the WEBSITE row in Overview | Confirmed by {utility} staff · {date} |
+| Power supplier | Utility page, in the "Generation Provider" card | Confirmed by {utility} staff · {date} |
+| Program status | Utility page, under the program's row in Programs | Status confirmed by {utility} staff · {date} |
+| Program status | Explore, program panel, under the status | Status confirmed by {utility} staff · {date} |
+
+Program rows say "Status confirmed" because the line sits beside a whole program, and only its status was confirmed.
+
+Rules:
+
+- **Per field.** A confirmation covers one field. It never speaks for the whole record or for EIA-sourced figures,
+  and nothing is added to the page header.
+- **Only where there is one.** A field with no confirmation shows nothing: no "unconfirmed" or "never checked."
+- **Only while it's still true.** A confirmation applies while the field holds the value that was confirmed. Once
+  the value changes, the line is gone. The page also checks the confirmed value against the value it is displaying,
+  so a cached response can't put the line beside a different value.
+- **Read-only.** The lines come from a public endpoint (`GET /api/v1/utilities/{slug}/confirmations`). Displaying them
+  changes nothing in editing, moderation, or sync.
+- **Beside the existing badge, not instead of it.** The header's "Needs verification" badge is about the whole
+  record and is left alone (§5, §9).
 
 ### 4.6 Moderator load
 
 Zero. Confirmations only come from matching emails and never change data. Corrections go through Suggest Edit, into
 the existing queue, where they would have gone anyway.
+
+### 4.7 Risk
+
+Showing the line publicly changes what a confirmation is. Before, only the person confirming saw it. Now:
+
+- **One employee makes a public statement in the utility's name.** Anyone with a verified mailbox at the utility's
+  domain can put "Confirmed by {utility} staff" on a public page. The utility as an organisation has not approved
+  it, and the person may be wrong.
+- **Nobody reviews it.** There is no moderator step. That is the point of the feature, and also its risk.
+- **It can't be taken back.** There is no way for the person, the utility, or a moderator to withdraw a
+  confirmation in the product. Today that takes a maintainer deleting the row. The line does disappear by itself
+  when the field's value changes.
+
+What limits the damage: a confirmation can't change any data; it only vouches for a value CommonGrid already
+shows; it covers one field; it is dated; and the wording says "staff." A wrong confirmation makes one existing
+value look more trustworthy than it is, until someone corrects the value.
 
 ---
 
@@ -126,20 +164,26 @@ the existing queue, where they would have gone anyway.
 | Staff who only use a personal email | Can't confirm; can suggest edits. Outreach should ask for a work email. |
 | Parent-company or association domains shared by several utilities (e.g. one holding company's subsidiaries) | Staff at that domain can confirm each. Acceptable: they speak for the group. |
 | Malformed website (e.g. `www.snopud-com`) and no `domains` | Nobody matches until the website is fixed. |
-| Value edited after confirmation | The confirmation stops applying. Nothing needs updating. |
+| Value edited after confirmation | The confirmation stops applying and the public line disappears. Nothing needs updating. |
+| Record shows "Needs verification" in the header and "Confirmed by" beside a field | Both are true: the badge is about the whole record, the line about one field. Left as is in cut 1 (§9). |
+| Someone confirms by mistake, or leaves the utility | No way to withdraw it in cut 1 (§4.7, §9). |
+| A new confirmation, or a changed value | Public pages can lag by a couple of minutes (the endpoint is cached for 60 seconds). A stale line is never shown beside a changed value. |
+| Website confirmed with a path (`4county.org/outages`) | The drawer shows the full address. The utility page's Overview shows only the hostname, as it does today, with the line under it; the link still goes to the full address. |
+| Power supplier confirmed, but the utility page shows no "Generation Provider" card | The page looks the supplier up in a list of the first 200 utilities, so the card is missing for most co-ops today. With no card there is nowhere to show the line. An existing bug, not fixed here. |
 | Value changed while the drawer was open | The confirm is refused (409) and the person is asked to reload. |
 | Same person confirms the same value again within 24 hours | Skipped. |
 | Banned user | Refused, as for contributions. |
-| An employee confirms but isn't speaking officially for the utility | The wording says "Confirmed by {utility}"; the RFC accepts this as the same trust level as a utility's own website. |
+| An employee confirms but isn't speaking officially for the utility | The wording says "{utility} staff," not the utility. See §4.7. |
 
 ---
 
-## 6. Cut 2 — Freshness on the record (described, not built)
+## 6. Cut 2 — Freshness of the whole record (described, not built)
 
-Show on utility and program pages when a person last verified the record (confirmation or approved edit) and which
-fields are missing. Build it for moderators and the contributor queue first. Keep it off public pages until outreach
-has produced real confirmations, so most pages don't say "never checked." It would naturally replace the current
-"Needs verification" badge, and should lead with the positive ("Confirmed by … · date").
+Cut 1 shows a line only on fields that have been confirmed. Cut 2 is the record-level view: when a person last
+verified anything on the record (a confirmation or an approved edit), and which fields are missing or have never
+been checked. Build it for moderators and the contributor queue first. Keep the "never checked" half off public
+pages until outreach has produced real confirmations, so most pages don't lead with a negative. This is also where
+the existing "Needs verification" badge would be replaced or reworded (§9).
 
 ---
 
@@ -166,5 +210,11 @@ co-ops. It gives contributors and outreach a worklist.
 2. **Show discussion threads somewhere?** The API exists, but no page displays threads yet, so those reports are only
    visible through the API.
 3. **Let Suggest Edit open on one field** (e.g. `?edit=website`), so a handoff lands on the field that's wrong.
-4. **Is "Confirmed by {utility}" the right public wording**, and is the domain check enough trust for it?
-5. **Should cut 2 replace `EntityProvenanceBadges`**, or sit beside it?
+4. **Is "Confirmed by {utility} staff" acceptable on public pages**, with only the domain check behind it and no
+   review (§4.7)? If not, cut 1 can go back to showing it only inside the drawer.
+5. **What should happen to `EntityProvenanceBadges`?** Cut 1 leaves it alone, so a page can say "Needs
+   verification" in the header and "Confirmed by" beside a field. Cut 2 could replace it.
+6. **Should people be able to withdraw their own confirmation?** Not built: it needs a second write path, a
+   "you confirmed this" state in the drawer, and a decision between deleting the row and marking it withdrawn
+   (the table is append-only so that earlier confirmers are kept). Roughly 150 lines. Until then, removal is a
+   maintainer deleting the row.

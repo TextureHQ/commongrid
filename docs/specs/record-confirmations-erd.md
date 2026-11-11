@@ -12,17 +12,21 @@
 
 ## 1. Executive Summary
 
-One new append-only table, `record_confirmations`, one app API (`/api/v1/confirmations/{slug}`), and a drawer on
-utility pages. No changes to existing tables, the contribution or moderation flow, or sync.
+One new append-only table, `record_confirmations`; one signed-in app API to confirm
+(`/api/v1/confirmations/{slug}`); one public read-only endpoint (`/api/v1/utilities/{slug}/confirmations`); a drawer
+on utility pages; and a "Confirmed by {utility} staff · {date}" line beside each confirmed field on public pages. No
+changes to existing tables, the contribution or moderation flow, or sync.
 
 ### Design Principles
 
-1. **Additive only.** One new table; the only edits to existing files are an import and entry point on the utility
-   page, one middleware path, and one OpenAPI-check exclusion.
+1. **Additive only.** One new table. Edits to existing files: the utility page (the entry point and three places the
+   line is shown), the Explore program panel (one place), `EntityList` (an optional second line), one middleware path,
+   one OpenAPI-check exclusion, and one new entry in the public OpenAPI spec.
 2. **A confirmation never changes the record.** It writes nothing to entity tables, `entity_versions`, or
    `field_moderation_state`.
 3. **The confirmer is the citation.** Each row records which utility domain matched, who, and when.
 4. **No new review states.** Rows are only written for a verified, matching email.
+5. **Display is per field and read-only.** A line appears only beside a field whose current value was confirmed.
 
 ---
 
@@ -80,8 +84,9 @@ Considered first, and rejected for three reasons in the existing code:
 
 ## 4. API
 
-Both routes are app surface (like `/api/v1/contributions`): listed in `isClerkProtectedApiPath` in `middleware.ts`,
-and excluded from the public OpenAPI coverage check.
+The two `/api/v1/confirmations` routes are app surface (like `/api/v1/contributions`): listed in
+`isClerkProtectedApiPath` in `middleware.ts`, and excluded from the public OpenAPI coverage check. The third route is
+public data and is in the OpenAPI spec.
 
 ### `GET /api/v1/confirmations/{slug}`
 
@@ -101,6 +106,22 @@ Body: `{ fields: [{ entityType, entityId, fieldName, value }] }`, at most 50, wh
 | `409` | A value changed since the person loaded it |
 | `400` | Malformed body, blank value, or a field this utility can't confirm |
 
+### `GET /api/v1/utilities/{slug}/confirmations` (public)
+
+No sign-in. What public pages read to show the line. Returns
+`{ confirmedBy, confirmations: [{ entityType, entityId, fieldName, value, confirmedAt, programSlug? }] }`.
+
+- Lists only fields whose **current** value was confirmed (the same `buildRows` rule as the drawer). A field never
+  confirmed, or changed since, is absent.
+- `confirmedBy` is the utility's short name, else its name. Nothing about the person: no user id, name, email, or
+  `email_domain`.
+- `value` is returned so the page can refuse to show the line beside any other value (`confirmationFor` in
+  `lib/confirmations/record.ts`).
+- `Cache-Control: public, s-maxage=60, stale-while-revalidate=120`. `404` for an unknown utility.
+
+A program's line is read from the utility that runs it, so the Explore panel calls this once per administering
+utility.
+
 ---
 
 ## 5. Clerk Integration
@@ -116,10 +137,29 @@ domain; personal email providers and shared website hosts never match.
 
 ## 6. Security Considerations
 
+### The risk of showing it publicly
+
+A confirmation is now a public statement, not a private acknowledgement:
+
+- **One employee speaks in the utility's name.** Any verified mailbox at the utility's domain can put "Confirmed by
+  {utility} staff" on a public page. The utility has not approved it, and the person may be wrong.
+- **There is no review.** Nothing sits between the click and the public page.
+- **There is no retraction.** The table is append-only and has no withdraw path; neither the person, the utility,
+  nor a moderator can remove a confirmation in the product. Removal is a maintainer deleting the row. Letting people
+  withdraw their own was sized at roughly 150 lines plus a delete-or-mark decision, and is left as PRD §9 question 6.
+
+What bounds it: a confirmation cannot change data; it vouches only for a value already shown; it covers one field;
+it is dated; the wording says "staff"; and it stops showing as soon as the value changes.
+
+### Controls
+
 - **Spoofing affiliation** requires controlling a mailbox at the utility's domain that Clerk has verified.
 - **Stale or forged values:** the server compares each submitted value with the stored one; mismatches get a 409.
-- **Scope:** only fields in §3.1 for this utility and its programs; anything else is a 400.
-- **Privacy:** names and emails are not shown. `email_domain` is the matched utility domain, not the full address.
+- **Stale display:** the public endpoint omits confirmations of a previous value, and the page compares the
+  confirmed value with the one it displays, so caching can't pair the line with a changed value.
+- **Scope:** only fields in §3.1 for this utility and its programs; anything else is a 400. The line is shown per
+  field and never in the page header, so it can't read as covering the whole record or EIA figures.
+- **Privacy:** names and emails are not shown, and the public endpoint does not return `user_id` or `email_domain`.
 - **Flooding:** at most 50 fields per request; repeats within 24 hours are skipped. If needed, the existing Upstash
   rate limiter used for contributions can be applied.
 
@@ -138,5 +178,5 @@ rate, roughly 250 utilities × ~4 fields × a few confirmations each: under 5,00
 |---|---|
 | Schema | `lib/db/schema/record-confirmations.ts`, `drizzle/0043_add_record_confirmations.sql`, `DB-SCHEMA.md` |
 | Logic | `lib/confirmations/email-match.ts`, `record.ts`, `store.ts` (+ tests) |
-| API | `app/api/v1/confirmations/[slug]/route.ts`, `middleware.ts` |
-| UI | `components/confirmations/ConfirmRecordAction.tsx`, `ConfirmRecordPanel.tsx`, utility page |
+| API | `app/api/v1/confirmations/[slug]/route.ts`, `app/api/v1/utilities/[slug]/confirmations/route.ts`, `middleware.ts`, `scripts/openapi/endpoints.ts` |
+| UI | `components/confirmations/ConfirmRecordAction.tsx`, `ConfirmRecordPanel.tsx`, `ConfirmedBy.tsx`, utility page, `components/explorer/panels/ProgramDetailPanel.tsx`, `components/entity/EntityList.tsx` |
