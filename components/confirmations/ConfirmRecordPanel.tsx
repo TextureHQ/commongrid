@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EDIT_ENTITY_DRAWER_CLASSNAME } from "@/components/contributions/editEntityPanelLayout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import type { ConfirmRow } from "@/lib/confirmations/record";
+import { type ConfirmRow, confirmedLine } from "@/lib/confirmations/record";
 
 interface ConfirmData {
   utility: { id: string; slug: string; name: string; confirmerName: string };
@@ -22,14 +22,6 @@ interface ConfirmRecordPanelProps {
   onClose: () => void;
   /** Hand off to Suggest Edit for this utility. */
   onSuggestEdit: () => void;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
-export function confirmedLine(name: string, iso: string): string {
-  return `Confirmed by ${name} · ${formatDate(iso)}`;
 }
 
 /**
@@ -142,7 +134,7 @@ export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSugges
             </ul>
           </div>
           <div className="text-sm text-text-body">
-            <p>On CommonGrid this will show as:</p>
+            <p>This will show publicly on CommonGrid, beside each detail you confirm:</p>
             <p className="mt-1 font-medium text-text-heading">{preview}</p>
             <p className="mt-2 text-text-muted">Your name and email won't be shown.</p>
           </div>

@@ -11,8 +11,8 @@ import { users } from "./users";
  *
  * Only written when the person's verified sign-in email matches one of the
  * utility's domains, so there is nothing to review. Shown publicly as
- * "Confirmed by <utility name> · <date>"; who confirmed it is kept here for
- * maintainers, not displayed.
+ * "Confirmed by <utility name> staff · <date>" beside that field; who confirmed
+ * it is kept here for maintainers, not displayed.
  *
  * Append-only. A confirmation applies while the field still holds
  * `confirmed_value`; once the value changes, it stops applying. That is worked
