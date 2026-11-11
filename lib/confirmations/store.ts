@@ -62,7 +62,8 @@ export async function loadRecord(slug: string): Promise<LoadedRecord | null> {
       .where(
         and(
           isNull(programs.deletedAt),
-          sql`${programs.organizations} @> ${JSON.stringify([{ entityId: u.slug }])}::jsonb`
+          // Programs the utility runs, not ones it only funds or regulates.
+          sql`${programs.organizations} @> ${JSON.stringify([{ entityId: u.slug, role: "ADMINISTRATOR" }])}::jsonb`
         )
       ),
     db
