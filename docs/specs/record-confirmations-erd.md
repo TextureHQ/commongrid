@@ -29,11 +29,13 @@ utility pages. No changes to existing tables, the contribution or moderation flo
 ## 2. Entity Relationship Diagram (Textual)
 
 ```
-utilities 1 ──< record_confirmations >── 0..1 users
-               (utility_id)            (user_id, ON DELETE SET NULL)
+record_confirmations >── 0..1 users   (user_id: foreign key, ON DELETE SET NULL)
 
-record_confirmations.(entity_type, entity_id) → utilities.id | programs.id   (polymorphic, as entity_versions)
+record_confirmations.utility_id                 → utilities.id                  (no foreign key)
+record_confirmations.(entity_type, entity_id)   → utilities.id | programs.id    (polymorphic, as entity_versions)
 ```
+
+Only `user_id` is a foreign key. Like `entity_versions.entity_id`, `utility_id` and `entity_id` carry no constraint.
 
 ---
 
