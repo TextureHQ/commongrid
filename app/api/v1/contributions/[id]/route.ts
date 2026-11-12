@@ -15,6 +15,7 @@ import type { RouteContext } from "@/lib/api/types";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import { communityEditableFields, contributions } from "@/lib/db/schema";
+import { addContributionContext } from "@/lib/mod/contribution-context";
 
 // ---------------------------------------------------------------------------
 // Allowed source types (same as in the main route)
@@ -95,7 +96,8 @@ async function handleGet(_req: Request, ctx: RouteContext) {
     throw new ApiError("NOT_FOUND", `Contribution ${id} not found.`);
   }
 
-  return jsonResponse({ data: contribution }, 200, { ...corsHeaders(), "X-Request-Id": ctx.requestId });
+  const [data] = await addContributionContext([contribution]);
+  return jsonResponse({ data }, 200, { ...corsHeaders(), "X-Request-Id": ctx.requestId });
 }
 
 // ---------------------------------------------------------------------------
