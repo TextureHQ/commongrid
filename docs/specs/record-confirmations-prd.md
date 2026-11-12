@@ -169,7 +169,7 @@ value look more trustworthy than it is, until someone corrects the value.
 | Someone confirms by mistake, or leaves the utility | No way to withdraw it in cut 1 (§4.7, §9). |
 | A new confirmation, or a changed value | Public pages can lag by a couple of minutes (the endpoint is cached for 60 seconds). A stale line is never shown beside a changed value. |
 | Website confirmed with a path (`4county.org/outages`) | The drawer shows the full address. The utility page's Overview shows only the hostname, as it does today, with the line under it; the link still goes to the full address. |
-| Power supplier confirmed, but the utility page shows no "Generation Provider" card | The page looks the supplier up in a list of the first 200 utilities, so the card is missing for most co-ops today. With no card there is nowhere to show the line. An existing bug, not fixed here. |
+| The utility page showed no "Generation Provider" card for most co-ops | An existing bug: the page looked the supplier up in a list of the first 200 utilities. With no card there was nowhere to show the line, so this change fetches the supplier by id. The parent, transmission provider and successor cards still use the list and have the same gap; left alone here. |
 | Value changed while the drawer was open | The confirm is refused (409) and the person is asked to reload. |
 | Same person confirms the same value again within 24 hours | Skipped. |
 | Banned user | Refused, as for contributions. |
