@@ -66,8 +66,6 @@ jobs:
           BRANCH: meridian/sync-annual-data
           PR_TITLE: "data: update power plants (EIA-860 annual)"
           PR_BODY: |
-            Automated annual data sync. The workflow commits generated data on a dedicated branch and opens or updates a pull request so branch protection can review and merge it safely.
-          PR_BODY: |
             Automated annual data sync. The workflow publishes EIA-860 power-plant data to Postgres via applySync and rebuilds tile archives. Generated artifacts land on a dedicated branch and open or update a pull request so branch protection can review and merge them safely.
         run: |
           set -euo pipefail
