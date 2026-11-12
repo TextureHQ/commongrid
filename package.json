@@ -32,6 +32,7 @@
     "seed": "tsx scripts/seed-database.ts",
     "test:api": "tsx scripts/test-api-endpoints.ts",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:build": "tsx scripts/preview-safe-migrate.ts",
     "db:seed:clerk:dev": "tsx scripts/seed-clerk-ids.ts",
     "db:backfill:versions": "tsx scripts/backfill-entity-versions.ts",
     "db:replay-contribution": "tsx scripts/replay-contribution.ts",
