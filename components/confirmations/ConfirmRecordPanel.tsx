@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInButton } from "@clerk/nextjs";
-import { Button, Dialog, Drawer, Icon, Loader, TextArea } from "@texturehq/edges";
+import { Badge, Banner, Button, Dialog, Drawer, Icon, Loader, TextArea } from "@texturehq/edges";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EDIT_ENTITY_DRAWER_CLASSNAME } from "@/components/contributions/editEntityPanelLayout";
@@ -138,11 +138,7 @@ export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSugges
             <p className="mt-1 font-medium text-text-heading">{preview}</p>
             <p className="mt-2 text-text-muted">Your name and email won't be shown.</p>
           </div>
-          {submitError && (
-            <div className="rounded-lg border border-feedback-error bg-feedback-error/10 p-3 text-sm text-feedback-error">
-              {submitError}
-            </div>
-          )}
+          {submitError && <Banner variant="error">{submitError}</Banner>}
         </div>
       </Dialog>
     );
@@ -166,7 +162,7 @@ export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSugges
       </div>
     );
   } else if (loadError) {
-    body = <p className="text-sm text-feedback-error">{loadError}</p>;
+    body = <Banner variant="error">{loadError}</Banner>;
   } else if (!data) {
     body = (
       <div className="flex justify-center py-12">
@@ -196,16 +192,16 @@ export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSugges
     body = (
       <div className="space-y-4">
         {changedNotice && (
-          <div className="rounded-lg border border-feedback-warning bg-feedback-warning/10 p-3 text-sm text-text-body">
+          <Banner variant="warning">
             Some of this record changed while you were looking. Here's the latest. Check it again, then confirm.
-          </div>
+          </Banner>
         )}
         {canConfirm ? (
           <p className="text-sm text-text-body">
             Here's what CommonGrid lists for {data.utility.name}. Mark anything that's wrong, then confirm the rest.
           </p>
         ) : (
-          <div className="rounded-lg border border-border-default bg-background-muted p-3 text-sm text-text-body">
+          <Banner variant="info">
             <p>
               Only someone signed in with a verified {data.utility.name} email can confirm this record
               {data.viewer.emailDomain ? `. You're signed in with a ${data.viewer.emailDomain} address.` : "."}
@@ -217,7 +213,7 @@ export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSugges
               </button>
               .
             </p>
-          </div>
+          </Banner>
         )}
         <ul className="divide-y divide-border-muted rounded-lg border border-border-default">
           {data.rows.map((row) => (
@@ -324,7 +320,9 @@ function RowItem({
             <span className="text-xs text-text-muted">Add it next</span>
           ) : isWrong ? (
             <div className="flex flex-col items-end gap-1">
-              <span className="text-xs font-medium text-feedback-warning">Marked wrong</span>
+              <Badge variant="warning" size="sm" shape="pill">
+                Marked wrong
+              </Badge>
               <button type="button" className="text-xs text-text-muted underline" onClick={onToggleWrong}>
                 Undo
               </button>
@@ -371,10 +369,9 @@ function DoneStep({
   return (
     <div className="space-y-5 text-sm text-text-body">
       {requestedCount > 0 && confirmedAt && (
-        <div className="rounded-lg border border-feedback-success bg-feedback-success/10 p-3 text-feedback-success">
-          <p className="font-medium">{thanksLine(requestedCount, savedCount)}</p>
-          <p className="mt-1">{confirmedLine(data.utility.confirmerName, confirmedAt)}</p>
-        </div>
+        <Banner variant="success" title={thanksLine(requestedCount, savedCount)}>
+          {confirmedLine(data.utility.confirmerName, confirmedAt)}
+        </Banner>
       )}
       {flagged.length > 0 && (
         <div className="space-y-3">
