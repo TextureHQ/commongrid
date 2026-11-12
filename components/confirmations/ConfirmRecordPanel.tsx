@@ -22,6 +22,8 @@ interface ConfirmRecordPanelProps {
   onClose: () => void;
   /** Hand off to Suggest Edit for this utility. */
   onSuggestEdit: () => void;
+  /** Called once a confirmation is saved, so the page can show its line. */
+  onSaved?: () => void;
 }
 
 /**
@@ -32,7 +34,13 @@ interface ConfirmRecordPanelProps {
  * Opens for signed-out visitors too, with a sign-in prompt, because the usual
  * way in is a shared `?confirm=true` link.
  */
-export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSuggestEdit }: ConfirmRecordPanelProps) {
+export function ConfirmRecordPanel({
+  utilitySlug,
+  utilityName,
+  onClose,
+  onSuggestEdit,
+  onSaved,
+}: ConfirmRecordPanelProps) {
   const { user, isLoading: userLoading } = useCurrentUser();
   const [data, setData] = useState<ConfirmData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -98,6 +106,7 @@ export function ConfirmRecordPanel({ utilitySlug, utilityName, onClose, onSugges
       if (!res.ok) throw new Error(json?.error?.message ?? "That didn't go through. Try again.");
       setConfirmedAt(json.data.confirmedAt);
       setSavedCount(json.data.saved);
+      onSaved?.();
       setChangedNotice(false);
       setStep("done");
     } catch (err) {

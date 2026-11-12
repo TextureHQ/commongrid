@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { confirmationFor, confirmedLine, type PublicConfirmation } from "@/lib/confirmations/record";
 
 export interface UtilityConfirmations {
@@ -14,15 +14,26 @@ type Field = Parameters<typeof confirmationFor>[1];
  * The public confirmations for one utility and the programs it runs. Null
  * until loaded, and on any failure: the line is an extra, so the page simply
  * shows nothing rather than an error.
+ *
+ * Change `refreshKey` to load again, past the browser's cached copy: used
+ * right after someone confirms, so their own line shows without a reload.
  */
-export function useUtilityConfirmations(utilitySlug: string | null | undefined): UtilityConfirmations | null {
+export function useUtilityConfirmations(
+  utilitySlug: string | null | undefined,
+  refreshKey = 0
+): UtilityConfirmations | null {
   const [data, setData] = useState<UtilityConfirmations | null>(null);
+  const loadedSlug = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
-    setData(null);
+    const isRefresh = loadedSlug.current === utilitySlug && refreshKey > 0;
+    loadedSlug.current = utilitySlug;
+    if (!isRefresh) setData(null);
     if (!utilitySlug) return;
     let cancelled = false;
-    fetch(`/api/v1/utilities/${encodeURIComponent(utilitySlug)}/confirmations`)
+    fetch(`/api/v1/utilities/${encodeURIComponent(utilitySlug)}/confirmations`, {
+      cache: isRefresh ? "reload" : "default",
+    })
       .then((res) => (res.ok ? res.json() : null))
       .then((json: { data?: UtilityConfirmations } | null) => {
         if (!cancelled && json?.data?.confirmations?.length) setData(json.data);
@@ -31,7 +42,7 @@ export function useUtilityConfirmations(utilitySlug: string | null | undefined):
     return () => {
       cancelled = true;
     };
-  }, [utilitySlug]);
+  }, [utilitySlug, refreshKey]);
 
   return data;
 }

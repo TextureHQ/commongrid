@@ -8,6 +8,8 @@ import { ConfirmRecordPanel } from "./ConfirmRecordPanel";
 interface ConfirmRecordActionProps {
   utilitySlug: string;
   utilityName: string;
+  /** Called once a confirmation is saved. */
+  onConfirmed?: () => void;
 }
 
 /**
@@ -18,7 +20,7 @@ interface ConfirmRecordActionProps {
  * so outreach can send one plain link per utility. Unlike Suggest Edit it
  * opens for signed-out visitors too: the drawer asks them to sign in.
  */
-export function ConfirmRecordAction({ utilitySlug, utilityName }: ConfirmRecordActionProps) {
+export function ConfirmRecordAction({ utilitySlug, utilityName, onConfirmed }: ConfirmRecordActionProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -56,6 +58,7 @@ export function ConfirmRecordAction({ utilitySlug, utilityName }: ConfirmRecordA
           utilityName={utilityName}
           onClose={() => setIsOpen(false)}
           onSuggestEdit={handOffToSuggestEdit}
+          onSaved={onConfirmed}
         />
       )}
     </>

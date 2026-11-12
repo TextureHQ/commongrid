@@ -429,7 +429,9 @@ export default function UtilityDetailPage() {
   const { utility: transmissionProvider } = useUtility(utility?.transmissionProviderId);
   const { utility: successor } = useUtility(utility?.successorId);
   // Per-field "Confirmed by … staff" lines. Null until loaded or when nothing is confirmed.
-  const confirmations = useUtilityConfirmations(utility?.slug);
+  // Bumped when someone confirms in the drawer, so their line shows straight away.
+  const [confirmationsRefresh, setConfirmationsRefresh] = useState(0);
+  const confirmations = useUtilityConfirmations(utility?.slug, confirmationsRefresh);
   const { regionById } = useRegionList();
   const region = useMemo(
     () => (utility?.serviceTerritoryId ? (regionById.get(utility.serviceTerritoryId) ?? null) : null),
@@ -665,7 +667,11 @@ export default function UtilityDetailPage() {
 
       <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
         <div className="pb-4">
-          <ConfirmRecordAction utilitySlug={utility.slug} utilityName={utility.name} />
+          <ConfirmRecordAction
+            utilitySlug={utility.slug}
+            utilityName={utility.name}
+            onConfirmed={() => setConfirmationsRefresh((n) => n + 1)}
+          />
         </div>
         <EntityStatsRow
           stats={[
