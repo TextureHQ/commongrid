@@ -118,6 +118,8 @@ No sign-in. What public pages read to show the line. Returns
 - `value` is returned so the page can refuse to show the line beside any other value (`confirmationFor` in
   `lib/confirmations/record.ts`).
 - `Cache-Control: public, s-maxage=60, stale-while-revalidate=120`. `404` for an unknown utility.
+- When the drawer saves, the utility page fetches this again with `cache: "reload"`. Without that, the browser
+  serves its earlier "nothing confirmed" copy and the person doesn't see their own line until a second reload.
 
 A program's line is read from the utility that runs it, so the Explore panel calls this once per administering
 utility.

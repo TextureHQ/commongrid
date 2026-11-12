@@ -98,11 +98,15 @@ These are the things a utility knows first-hand. A blank value can't be confirme
    a row leaves it out of the confirmation.
 2. **Dialog (replaces the drawer):** the rows being confirmed, and exactly what will appear publicly beside each:
    "Confirmed by {utility} staff · {date}. Your name and email won't be shown."
-3. **Drawer again:** a thank-you, then a follow-up for each wrong or missing row:
+3. **Drawer again:** a thank-you, then a follow-up for each wrong or missing row. The page behind the drawer shows
+   the new "Confirmed by" lines straight away, without a reload.
    - **Website** → opens Suggest Edit.
    - **Program** → links to the program, where Suggest Edit lives.
    - **Power supplier** → a short text box that starts a discussion thread on the utility, because the field isn't
      community-editable (§9).
+
+The drawer is built from Edges components: `Drawer`, `Dialog`, `Button`, `Banner` for status messages, and `Badge`
+for "Marked wrong". The rows themselves are plain markup, as in Suggest Edit.
 
 ### 4.5 What is shown, and where
 
@@ -167,10 +171,10 @@ value look more trustworthy than it is, until someone corrects the value.
 | Value edited after confirmation | The confirmation stops applying and the public line disappears. Nothing needs updating. |
 | Record shows "Needs verification" in the header and "Confirmed by" beside a field | Both are true: the badge is about the whole record, the line about one field. Left as is in cut 1 (§9). |
 | Someone confirms by mistake, or leaves the utility | No way to withdraw it in cut 1 (§4.7, §9). |
-| A new confirmation, or a changed value | Public pages can lag by a couple of minutes (the endpoint is cached for 60 seconds). A stale line is never shown beside a changed value. |
+| A new confirmation, or a changed value | The person who confirmed sees their lines at once: the page reloads them when the drawer saves. For other visitors, public pages can lag by a couple of minutes (the endpoint is cached for 60 seconds). A stale line is never shown beside a changed value. |
 | Website confirmed with a path (`4county.org/outages`) | The drawer shows the full address. The utility page's Overview shows only the hostname, as it does today, with the line under it; the link still goes to the full address. |
 | The utility page showed no "Generation Provider" card for most co-ops | An existing bug: the page looked the supplier up in a list of the first 200 utilities. With no card there was nowhere to show the line, so this change fetches the supplier by id. The parent, transmission provider and successor cards had the same gap and get the same fix. The lists of utilities a supplier serves still come from that list; left alone here. |
-| Value changed while the drawer was open | The confirm is refused (409) and the person is asked to reload. |
+| Value changed while the drawer was open | The confirm is refused (409); the drawer loads the latest values and asks the person to check again. |
 | Same person confirms the same value again within 24 hours | Skipped. |
 | Banned user | Refused, as for contributions. |
 | An employee confirms but isn't speaking officially for the utility | The wording says "{utility} staff," not the utility. See §4.7. |
