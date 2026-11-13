@@ -126,8 +126,6 @@ export function ConfirmRecordPanel({
         isOpen
         onClose={() => setStep("rows")}
         title="Confirm these details"
-        hasBackArrow
-        onBack={() => setStep("rows")}
         secondaryAction={{ label: "Back", onPress: () => setStep("rows"), isDisabled: isSubmitting }}
         primaryAction={{ label: "Confirm", onPress: submit, isDisabled: isSubmitting, isLoading: isSubmitting }}
       >
