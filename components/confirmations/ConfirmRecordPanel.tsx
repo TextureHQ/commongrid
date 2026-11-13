@@ -299,46 +299,49 @@ function RowItem({
 }) {
   const missing = !row.value;
   return (
-    <li className="flex items-start justify-between gap-3 p-3">
-      <div className="min-w-0 flex-1">
-        <div className="text-xs text-text-muted">{row.entityType === "program" ? "Program" : row.label}</div>
-        <div className="break-words text-sm font-medium text-text-heading">
-          {row.entityType === "program" ? (
-            row.label
-          ) : missing ? (
-            <span className="italic text-text-muted">Missing</span>
-          ) : (
-            row.displayValue
+    <li className="p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="text-xs text-text-muted">{row.entityType === "program" ? "Program" : row.label}</div>
+          <div className="break-words text-sm font-medium text-text-heading">
+            {row.entityType === "program" ? (
+              row.label
+            ) : missing ? (
+              <span className="italic text-text-muted">Missing</span>
+            ) : (
+              row.displayValue
+            )}
+          </div>
+          {row.entityType === "program" && (
+            <div className="text-sm text-text-body">{row.displayValue ?? "No status"}</div>
           )}
         </div>
-        {row.entityType === "program" && (
-          <div className="text-sm text-text-body">{row.displayValue ?? "No status"}</div>
-        )}
-        {row.lastConfirmedAt && !isWrong && (
-          <div className="mt-1 flex items-center gap-1 text-xs text-text-muted">
-            <Icon name="SealCheck" size={12} />
-            {confirmedLine(confirmerName, row.lastConfirmedAt)}
+        {canConfirm && (
+          <div className="flex-shrink-0 text-right">
+            {missing ? (
+              <span className="text-xs text-text-muted">Add it next</span>
+            ) : isWrong ? (
+              <div className="flex flex-col items-end gap-1">
+                <Badge variant="warning" size="sm" shape="pill">
+                  Marked wrong
+                </Badge>
+                <button type="button" className="text-xs text-text-muted underline" onClick={onToggleWrong}>
+                  Undo
+                </button>
+              </div>
+            ) : (
+              <button type="button" className="text-sm text-brand-primary underline" onClick={onToggleWrong}>
+                Something's wrong
+              </button>
+            )}
           </div>
         )}
       </div>
-      {canConfirm && (
-        <div className="flex-shrink-0 text-right">
-          {missing ? (
-            <span className="text-xs text-text-muted">Add it next</span>
-          ) : isWrong ? (
-            <div className="flex flex-col items-end gap-1">
-              <Badge variant="warning" size="sm" shape="pill">
-                Marked wrong
-              </Badge>
-              <button type="button" className="text-xs text-text-muted underline" onClick={onToggleWrong}>
-                Undo
-              </button>
-            </div>
-          ) : (
-            <button type="button" className="text-sm text-brand-primary underline" onClick={onToggleWrong}>
-              Something's wrong
-            </button>
-          )}
+      {/* Below the row, at full width: beside the link it wrapped to four lines on phones. */}
+      {row.lastConfirmedAt && !isWrong && (
+        <div className="mt-1 flex items-start gap-1 text-xs text-text-muted">
+          <Icon name="SealCheck" size={12} className="mt-0.5 flex-shrink-0" />
+          <span>{confirmedLine(confirmerName, row.lastConfirmedAt)}</span>
         </div>
       )}
     </li>
