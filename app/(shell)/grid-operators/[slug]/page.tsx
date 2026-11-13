@@ -19,6 +19,8 @@ import type { FeatureCollection } from "geojson";
 import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { confirmedText, useUtilityConfirmations } from "@/components/confirmations/ConfirmedBy";
+import { ConfirmRecordAction } from "@/components/confirmations/ConfirmRecordAction";
 import { EntityActions } from "@/components/contributions/EntityActions";
 import { InlineFieldEdit } from "@/components/contributions/InlineFieldEdit";
 import { DownloadTerritoryButton } from "@/components/DownloadTerritoryButton";
@@ -208,7 +210,7 @@ function useEditableStatItems({
 }
 
 // Overview section component
-function OverviewStatList({ utility }: { utility: Utility }) {
+function OverviewStatList({ utility, websiteConfirmed }: { utility: Utility; websiteConfirmed: string | null }) {
   const items: StatItem[] = [
     {
       id: "segment",
@@ -266,6 +268,8 @@ function OverviewStatList({ utility }: { utility: Utility }) {
   return (
     <>
       <StatList items={enriched} layout="one-column" showDividers />
+      {/* Website is the last row above, so this sits directly under it. */}
+      {websiteConfirmed && <p className="mt-2 text-right text-body-sm text-text-muted">{websiteConfirmed}</p>}
       {chrome}
     </>
   );
@@ -417,24 +421,17 @@ export default function UtilityDetailPage() {
   const { iso } = useIso(utility?.isoId ?? null);
   const { rto } = useRto(utility?.rtoId ?? null);
   const { balancingAuthority: ba } = useBalancingAuthority(utility?.balancingAuthorityId ?? null);
-  const parent = useMemo(
-    () => (utility?.parentId ? (utilities.find((u) => u.id === utility.parentId) ?? null) : null),
-    [utility, utilities]
-  );
-  const generationProvider = useMemo(
-    () =>
-      utility?.generationProviderId ? (utilities.find((u) => u.id === utility.generationProviderId) ?? null) : null,
-    [utility, utilities]
-  );
-  const transmissionProvider = useMemo(
-    () =>
-      utility?.transmissionProviderId ? (utilities.find((u) => u.id === utility.transmissionProviderId) ?? null) : null,
-    [utility, utilities]
-  );
-  const successor = useMemo(
-    () => (utility?.successorId ? (utilities.find((u) => u.id === utility.successorId) ?? null) : null),
-    [utility, utilities]
-  );
+  // Related utilities are fetched by id: the utilities list above is capped at
+  // 200 rows, so looking them up in it missed most of them. The endpoint
+  // accepts an id.
+  const { utility: parent } = useUtility(utility?.parentId);
+  const { utility: generationProvider } = useUtility(utility?.generationProviderId);
+  const { utility: transmissionProvider } = useUtility(utility?.transmissionProviderId);
+  const { utility: successor } = useUtility(utility?.successorId);
+  // Per-field "Confirmed by … staff" lines. Null until loaded or when nothing is confirmed.
+  // Set to the time someone confirms in the drawer, so their line shows straight away.
+  const [confirmationsRefresh, setConfirmationsRefresh] = useState(0);
+  const confirmations = useUtilityConfirmations(utility?.slug, confirmationsRefresh);
   const { regionById } = useRegionList();
   const region = useMemo(
     () => (utility?.serviceTerritoryId ? (regionById.get(utility.serviceTerritoryId) ?? null) : null),
@@ -669,6 +666,13 @@ export default function UtilityDetailPage() {
       />
 
       <div className="max-w-[960px] mx-auto px-4 md:px-8 lg:px-12">
+        <div className="pb-4">
+          <ConfirmRecordAction
+            utilitySlug={utility.slug}
+            utilityName={utility.name}
+            onConfirmed={() => setConfirmationsRefresh(Date.now())}
+          />
+        </div>
         <EntityStatsRow
           stats={[
             {
@@ -695,7 +699,10 @@ export default function UtilityDetailPage() {
         />
 
         <EntitySection id="overview" title="Overview">
-          <OverviewStatList utility={utility} />
+          <OverviewStatList
+            utility={utility}
+            websiteConfirmed={confirmedText(confirmations, { fieldName: "website" }, utility.website)}
+          />
         </EntitySection>
 
         {hasOperationsData && (
@@ -784,6 +791,12 @@ export default function UtilityDetailPage() {
                         label: "Generation Provider",
                         name: generationProvider.name,
                         href: `/grid-operators/${generationProvider.slug}`,
+                        meta:
+                          confirmedText(
+                            confirmations,
+                            { fieldName: "generationProviderId" },
+                            utility.generationProviderId
+                          ) ?? undefined,
                       },
                     ]
                   : []),
@@ -881,6 +894,9 @@ export default function UtilityDetailPage() {
                     </Badge>
                   ),
                   meta: prog.assetTypes.join(", "),
+                  note:
+                    confirmedText(confirmations, { fieldName: "status", programSlug: prog.slug }, prog.status) ??
+                    undefined,
                 }))}
               />
             )}

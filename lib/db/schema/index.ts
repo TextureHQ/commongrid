@@ -108,6 +108,7 @@ export type { ProgramInsert, ProgramSelect } from "./programs";
 export { programs } from "./programs";
 export type { RateStructureInsert, RateStructureSelect } from "./rate-structures";
 export { rateStructures } from "./rate-structures";
+export { recordConfirmations } from "./record-confirmations";
 export type { RegionInsert, RegionSelect } from "./regions";
 export { regions } from "./regions";
 export type { RtoInsert, RtoSelect } from "./rtos";

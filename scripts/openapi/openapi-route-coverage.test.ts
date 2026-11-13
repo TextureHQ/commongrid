@@ -13,6 +13,8 @@ const spec = JSON.parse(readFileSync(join(__dirname, "../../public/openapi.json"
 // A new root must be documented or explicitly classified here.
 const excludedRoots = new Set([
   "bulk",
+  // Record confirmations: app surface for signed-in utility staff, like contributions.
+  "confirmations",
   "contributions",
   "dataset-suggestions",
   "developer",

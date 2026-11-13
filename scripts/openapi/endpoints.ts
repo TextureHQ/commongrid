@@ -1074,6 +1074,46 @@ export const ENDPOINTS: EndpointDef[] = [
     },
   },
   {
+    path: "/utilities/{slug}/confirmations",
+    method: "get",
+    operationId: "getUtilityConfirmations",
+    summary: "Get fields confirmed by utility staff",
+    description:
+      "Fields that someone signed in with a verified email at the utility's own domain has confirmed are still right: the utility's website, a distribution co-op's power supplier, and the status of programs it runs. Only fields whose current value was confirmed are listed; a field that was never confirmed, or has changed since, is absent. A confirmation covers that one field, not the whole record or any EIA-sourced figure. Names the utility, never the person.",
+    tag: "Utilities",
+    parameters: [SLUG_REF],
+    response: {
+      kind: "raw",
+      schema: {
+        type: "object",
+        properties: {
+          data: {
+            type: "object",
+            properties: {
+              confirmedBy: { type: "string", description: "The utility's short name, or its name." },
+              confirmations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    entityType: { type: "string", enum: ["utility", "program"] },
+                    entityId: { type: "string" },
+                    fieldName: { type: "string", enum: ["website", "generationProviderId", "status"] },
+                    value: { type: "string", description: "The value that was confirmed, and is still current." },
+                    confirmedAt: { type: "string", format: "date-time" },
+                    programSlug: { type: "string", description: "Present when entityType is program." },
+                  },
+                  required: ["entityType", "entityId", "fieldName", "value", "confirmedAt"],
+                },
+              },
+            },
+            required: ["confirmedBy", "confirmations"],
+          },
+        },
+      },
+    },
+  },
+  {
     path: "/power-plants/{slug}/versions",
     method: "get",
     operationId: "getPowerPlantVersions",
