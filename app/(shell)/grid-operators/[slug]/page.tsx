@@ -417,24 +417,13 @@ export default function UtilityDetailPage() {
   const { iso } = useIso(utility?.isoId ?? null);
   const { rto } = useRto(utility?.rtoId ?? null);
   const { balancingAuthority: ba } = useBalancingAuthority(utility?.balancingAuthorityId ?? null);
-  const parent = useMemo(
-    () => (utility?.parentId ? (utilities.find((u) => u.id === utility.parentId) ?? null) : null),
-    [utility, utilities]
-  );
-  const generationProvider = useMemo(
-    () =>
-      utility?.generationProviderId ? (utilities.find((u) => u.id === utility.generationProviderId) ?? null) : null,
-    [utility, utilities]
-  );
-  const transmissionProvider = useMemo(
-    () =>
-      utility?.transmissionProviderId ? (utilities.find((u) => u.id === utility.transmissionProviderId) ?? null) : null,
-    [utility, utilities]
-  );
-  const successor = useMemo(
-    () => (utility?.successorId ? (utilities.find((u) => u.id === utility.successorId) ?? null) : null),
-    [utility, utilities]
-  );
+  // Related utilities are fetched by id: the utilities list above is capped at
+  // 200 rows, so looking them up in it missed most of them. The endpoint
+  // accepts an id.
+  const { utility: parent } = useUtility(utility?.parentId);
+  const { utility: generationProvider } = useUtility(utility?.generationProviderId);
+  const { utility: transmissionProvider } = useUtility(utility?.transmissionProviderId);
+  const { utility: successor } = useUtility(utility?.successorId);
   const { regionById } = useRegionList();
   const region = useMemo(
     () => (utility?.serviceTerritoryId ? (regionById.get(utility.serviceTerritoryId) ?? null) : null),
