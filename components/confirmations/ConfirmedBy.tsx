@@ -15,8 +15,10 @@ type Field = Parameters<typeof confirmationFor>[1];
  * until loaded, and on any failure: the line is an extra, so the page simply
  * shows nothing rather than an error.
  *
- * Change `refreshKey` to load again, past the browser's cached copy: used
- * right after someone confirms, so their own line shows without a reload.
+ * Change `refreshKey` to load again, past cached copies: used right after
+ * someone confirms, so their own line shows without a reload. The key goes in
+ * the query string because the endpoint is cached at the edge as well as in
+ * the browser, and only a new address gets past the edge.
  */
 export function useUtilityConfirmations(
   utilitySlug: string | null | undefined,
@@ -31,9 +33,8 @@ export function useUtilityConfirmations(
     if (!isRefresh) setData(null);
     if (!utilitySlug) return;
     let cancelled = false;
-    fetch(`/api/v1/utilities/${encodeURIComponent(utilitySlug)}/confirmations`, {
-      cache: isRefresh ? "reload" : "default",
-    })
+    const url = `/api/v1/utilities/${encodeURIComponent(utilitySlug)}/confirmations`;
+    fetch(isRefresh ? `${url}?after=${refreshKey}` : url, { cache: isRefresh ? "reload" : "default" })
       .then((res) => (res.ok ? res.json() : null))
       .then((json: { data?: UtilityConfirmations } | null) => {
         if (!cancelled && json?.data?.confirmations?.length) setData(json.data);

@@ -194,16 +194,16 @@ export function ProgramDetailPanel({ slug }: { slug: string }) {
             {program.description &&
               ` · ${program.description.slice(0, 100)}${program.description.length > 100 ? "…" : ""}`}
           </div>
-          {adminOrganizations
-            .filter((o) => o.resolved)
-            .map((o) => (
-              <ProgramStatusConfirmed
-                key={o.entityId}
-                utilitySlug={o.entityId}
-                programSlug={program.slug}
-                status={program.status}
-              />
-            ))}
+          {/* Every administrator, resolved or not: the slug is all this lookup needs, so
+              the line doesn't depend on the separate lookup of utility names. */}
+          {adminOrganizations.map((o) => (
+            <ProgramStatusConfirmed
+              key={o.entityId}
+              utilitySlug={o.entityId}
+              programSlug={program.slug}
+              status={program.status}
+            />
+          ))}
 
           <div className="mt-3">
             <EntityVersionHistory entityType="program" entitySlug={slug} />

@@ -1,11 +1,10 @@
 "use client";
 
-import { SignInButton } from "@clerk/nextjs";
+import { SignInButton, useAuth } from "@clerk/nextjs";
 import { Badge, Banner, Button, Dialog, Drawer, Icon, Loader, TextArea } from "@texturehq/edges";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EDIT_ENTITY_DRAWER_CLASSNAME } from "@/components/contributions/editEntityPanelLayout";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { type ConfirmRow, confirmedLine } from "@/lib/confirmations/record";
 
 interface ConfirmData {
@@ -41,7 +40,9 @@ export function ConfirmRecordPanel({
   onSuggestEdit,
   onSaved,
 }: ConfirmRecordPanelProps) {
-  const { user, isLoading: userLoading } = useCurrentUser();
+  // Straight from Clerk: until it has loaded we don't know whether to ask for a
+  // sign-in, so the drawer shows a loader instead of flashing the prompt.
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const [data, setData] = useState<ConfirmData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [wrong, setWrong] = useState<Set<string>>(new Set());
@@ -64,8 +65,8 @@ export function ConfirmRecordPanel({
   }, [utilitySlug]);
 
   useEffect(() => {
-    if (user) load();
-  }, [user, load]);
+    if (isSignedIn) load();
+  }, [isSignedIn, load]);
 
   const toConfirm = useMemo(() => (data?.rows ?? []).filter((r) => r.value && !wrong.has(r.key)), [data, wrong]);
   const flagged = useMemo(() => (data?.rows ?? []).filter((r) => wrong.has(r.key) || !r.value), [data, wrong]);
@@ -154,7 +155,7 @@ export function ConfirmRecordPanel({
   let body: React.ReactNode;
   let footer: React.ReactNode = null;
 
-  if (!user && !userLoading) {
+  if (authLoaded && !isSignedIn) {
     body = (
       <div className="space-y-4 text-sm text-text-body">
         <p>
@@ -211,7 +212,7 @@ export function ConfirmRecordPanel({
           <Banner variant="info">
             <p>
               Only someone signed in with a verified {data.utility.name} email can confirm this record
-              {data.viewer.emailDomain ? `. You're signed in with a ${data.viewer.emailDomain} address.` : "."}
+              {data.viewer.emailDomain ? `. Your sign-in email is at ${data.viewer.emailDomain}.` : "."}
             </p>
             <p className="mt-2">
               You can still{" "}
