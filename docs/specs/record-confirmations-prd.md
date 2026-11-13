@@ -3,7 +3,7 @@
 ## Product Requirements Document (PRD)
 
 **Version:** 0.1
-**Author:** _TBD_
+**Author:** Blake Loomis (@internetblake)
 **Date:** November 10, 2026
 **Status:** Draft RFC
 **ERD:** `docs/specs/record-confirmations-erd.md`
@@ -171,7 +171,7 @@ value look more trustworthy than it is, until someone corrects the value.
 | Value edited after confirmation | The confirmation stops applying and the public line disappears. Nothing needs updating. |
 | Record shows "Needs verification" in the header and "Confirmed by" beside a field | Both are true: the badge is about the whole record, the line about one field. Left as is in cut 1 (§9). |
 | Someone confirms by mistake, or leaves the utility | No way to withdraw it in cut 1 (§4.7, §9). |
-| A new confirmation, or a changed value | The person who confirmed sees their lines at once: the page reloads them when the drawer saves. For other visitors, public pages can lag by a couple of minutes (the endpoint is cached for 60 seconds). A stale line is never shown beside a changed value. |
+| A new confirmation, or a changed value | The person who confirmed sees their lines at once: the page loads them again when the drawer saves, at a new address so no cached copy is served. For other visitors, public pages can lag by a couple of minutes (the endpoint is cached for 60 seconds). A stale line is never shown beside a changed value. |
 | Website confirmed with a path (`4county.org/outages`) | The drawer shows the full address. The utility page's Overview shows only the hostname, as it does today, with the line under it; the link still goes to the full address. |
 | The utility page showed no "Generation Provider" card for most co-ops | An existing bug: the page looked the supplier up in a list of the first 200 utilities. With no card there was nowhere to show the line, so this change fetches the supplier by id. The parent, transmission provider and successor cards had the same gap and get the same fix. The lists of utilities a supplier serves still come from that list; left alone here. |
 | Value changed while the drawer was open | The confirm is refused (409); the drawer loads the latest values and asks the person to check again. |

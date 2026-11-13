@@ -3,7 +3,7 @@
 ## Technical Specification — Entity Relationship Design
 
 **Version:** 0.1
-**Author:** _TBD_
+**Author:** Blake Loomis (@internetblake)
 **Date:** November 10, 2026
 **Status:** Draft RFC
 **PRD Reference:** `docs/specs/record-confirmations-prd.md`
@@ -118,11 +118,12 @@ No sign-in. What public pages read to show the line. Returns
 - `value` is returned so the page can refuse to show the line beside any other value (`confirmationFor` in
   `lib/confirmations/record.ts`).
 - `Cache-Control: public, s-maxage=60, stale-while-revalidate=120`. `404` for an unknown utility.
-- When the drawer saves, the utility page fetches this again with `cache: "reload"`. Without that, the browser
-  serves its earlier "nothing confirmed" copy and the person doesn't see their own line until a second reload.
+- When the drawer saves, the utility page fetches this again with `cache: "reload"` and a one-off `?after=`
+  query. Without the first, the browser serves its earlier "nothing confirmed" copy; without the second, the edge
+  cache would. The endpoint ignores the query. Not observed against a real edge cache.
 
 A program's line is read from the utility that runs it, so the Explore panel calls this once per administering
-utility.
+utility, whether or not the panel has resolved that utility's name.
 
 ---
 
