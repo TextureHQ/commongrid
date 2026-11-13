@@ -163,8 +163,8 @@ it is dated; the wording says "staff"; and it stops showing as soon as the value
 - **Scope:** only fields in §3.1 for this utility and its programs; anything else is a 400. The line is shown per
   field and never in the page header, so it can't read as covering the whole record or EIA figures.
 - **Privacy:** names and emails are not shown, and the public endpoint does not return `user_id` or `email_domain`.
-- **Flooding:** at most 50 fields per request; repeats within 24 hours are skipped. If needed, the existing Upstash
-  rate limiter used for contributions can be applied.
+- **Flooding:** at most 50 fields per request; repeats within 24 hours are skipped. Not rate limited in this
+  PR: the routes don't go through `withApiMiddleware`, whose limiter is the obvious one to add if wanted.
 
 ---
 

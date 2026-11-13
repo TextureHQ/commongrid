@@ -18,12 +18,12 @@ websites. Nothing keeps it true. Today a field only gets a human timestamp as a 
 there is no way to say "this is still correct."
 
 This RFC proposes **record confirmations**: someone at a utility, signed in with a verified work email at that
-utility's domain, can confirm in under a minute, on a phone, that what CommonGrid lists for them is still right. A
-confirmation never changes the record. It adds a dated, attributed event, shown publicly beside the field it
-covers as **"Confirmed by 4-County Electric Power Association staff · Nov 10, 2026."**
+utility's domain, can confirm in about a minute once signed in, on a phone, that what CommonGrid lists for them is
+still right. A confirmation never changes the record. It adds a dated, attributed event, shown publicly beside the
+field it covers as **"Confirmed by 4-County Electric Power Association staff · Nov 10, 2026."**
 
-It ships in three independent cuts. Cut 1 is a small PR; cuts 2 and 3 are described here and built only if cut 1 is
-welcome.
+It ships in three independent cuts. Cut 1 is a self-contained PR (about 1,500 lines of code, plus tests and these
+documents); cuts 2 and 3 are described here and built only if cut 1 is welcome.
 
 ---
 
@@ -34,7 +34,7 @@ welcome.
 - Let utility staff confirm their record without editing it.
 - Make the confirmer the citation: a confirmation has no source URL, so who confirmed it (which utility) and when is
   the provenance.
-- Create **no new moderator work**.
+- Create **no new review queue**.
 - Work on a phone, from one plain link per utility that outreach can send.
 - Stay additive: no changes to the contribution, moderation, or sync systems.
 
@@ -57,8 +57,10 @@ welcome.
 | Community submissions ever, all entity types | 40 (Aug 17 – Oct 27) |
 | Co-ops with `utilities.domains` filled in (sample of 100) | 97 |
 
+Source: the public API at commongrid.info, read on November 9, 2026.
+
 Records already carry a public badge (`EntityProvenanceBadges`): "Community-verified" when the latest version came from
-a person, otherwise "Needs verification / help us fill this in." Most records show the second.
+a person; "Sourced: {source}" when a source is known; otherwise "Needs verification / help us fill this in."
 
 ---
 
@@ -101,7 +103,7 @@ These are the things a utility knows first-hand. A blank value can't be confirme
 3. **Drawer again:** a thank-you, then a follow-up for each wrong or missing row. The page behind the drawer shows
    the new "Confirmed by" lines straight away, without a reload.
    - **Website** → opens Suggest Edit.
-   - **Program** → links to the program, where Suggest Edit lives.
+   - **Program** → opens the program in Explore, where its Suggest Edit lives. Programs have no page of their own.
    - **Power supplier** → a short text box that starts a discussion thread on the utility, because the field isn't
      community-editable (§9).
 
@@ -133,6 +135,7 @@ Rules:
 - **Only while it's still true.** A confirmation applies while the field holds the value that was confirmed. Once
   the value changes, the line is gone. The page also checks the confirmed value against the value it is displaying,
   so a cached response can't put the line beside a different value.
+- **No expiry.** A confirmation does not expire. The date is the only signal of age; aging is left to cut 2.
 - **Read-only.** The lines come from a public endpoint (`GET /api/v1/utilities/{slug}/confirmations`). Displaying them
   changes nothing in editing, moderation, or sync.
 - **Beside the existing badge, not instead of it.** The header's "Needs verification" badge is about the whole
@@ -140,8 +143,9 @@ Rules:
 
 ### 4.6 Moderator load
 
-Zero. Confirmations only come from matching emails and never change data. Corrections go through Suggest Edit, into
-the existing queue, where they would have gone anyway.
+No new review queue. Two things do land on maintainers: supplier reports arrive as discussion threads that no page
+displays yet, and removing a confirmation means deleting a row. Confirmations only come from matching emails and never
+change data. Corrections go through Suggest Edit, into the existing queue, where they would have gone anyway.
 
 ### 4.7 Risk
 
@@ -166,7 +170,7 @@ value look more trustworthy than it is, until someone corrects the value.
 | Case | Behaviour |
 |---|---|
 | Staff who only use a personal email | Can't confirm; can suggest edits. Outreach should ask for a work email. |
-| Parent-company or association domains shared by several utilities (e.g. one holding company's subsidiaries) | Staff at that domain can confirm each. Acceptable: they speak for the group. |
+| Parent-company or association domains shared by several utilities (e.g. one holding company's subsidiaries) | Staff at that domain can confirm each. A known limit: the line would name the subsidiary, though the person works for the parent. |
 | Malformed website (e.g. `www.snopud-com`) and no `domains` | Nobody matches until the website is fixed. |
 | Value edited after confirmation | The confirmation stops applying and the public line disappears. Nothing needs updating. |
 | Record shows "Needs verification" in the header and "Confirmed by" beside a field | Both are true: the badge is about the whole record, the line about one field. Left as is in cut 1 (§9). |
@@ -201,7 +205,8 @@ co-ops. It gives contributors and outreach a worklist.
 ## 8. Success Metrics
 
 - Share of outreach links that end in at least one confirmation.
-- Median time from opening the drawer to confirming (target: under a minute).
+- Median time from opening the drawer to confirming (target: about a minute; needs an event that cut 1 doesn't
+  record).
 - Co-ops with a confirmed power supplier.
 - Corrections handed off to Suggest Edit that are approved.
 
