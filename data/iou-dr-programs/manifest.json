@@ -1,7 +1,7 @@
 {
   "source": "Curated from utility public program pages (see data/iou-dr-programs/registry.ts)",
   "generated_by": "sync:iou-dr-programs",
-  "generated_at": "2026-10-15T12:27:01.940Z",
+  "generated_at": "2026-11-15T12:16:13.001Z",
   "registry_program_count": 66,
   "resolved_program_count": 66,
   "unresolved_program_count": 0,
@@ -12,12 +12,23 @@
   "unresolved": [],
   "url_health": {
     "checked": 66,
-    "ok": 28,
+    "ok": 23,
     "broken": [
       {
         "name": "Renewable Battery Connect",
         "url": "https://co.my.xcelenergy.com/s/business/renewable-battery-connect",
         "status": 404
+      },
+      {
+        "name": "ConnectedSolutions",
+        "url": "https://www.nationalgridus.com/MA-Home/Energy-Saving-Programs/ConnectedSolutions",
+        "status": 403
+      },
+      {
+        "name": "ConnectedSolutions",
+        "url": "https://www.eversource.com/content/residential/save-money-energy/manage-energy-costs-usage/connectedsolutions",
+        "status": 200,
+        "error": "error-page content"
       },
       {
         "name": "Emergency Load Reduction Program",
@@ -70,6 +81,12 @@
         "name": "EnergyWise Home",
         "url": "https://www.duke-energy.com/home/products/energywise-home",
         "status": 403
+      },
+      {
+        "name": "Smart Cooling Rewards",
+        "url": "https://www.fpl.com/save/programs/on-call.html",
+        "status": 200,
+        "error": "error-page content"
       },
       {
         "name": "Smart Cooling Rewards",
@@ -165,6 +182,18 @@
         "name": "Cool Rewards",
         "url": "https://www.aps.com/en/Residential/Save-Money-and-Energy/Rebates-and-Discounts/Cool-Rewards",
         "status": 404
+      },
+      {
+        "name": "AC Cool Credit",
+        "url": "https://www.idahopower.com/energy-environment/save-energy-and-money/save-with-programs/a-c-cool-credit/",
+        "status": 200,
+        "error": "error-page content"
+      },
+      {
+        "name": "Flex Peak Program",
+        "url": "https://www.idahopower.com/energy-environment/save-energy-and-money/save-with-programs/flex-peak-program/",
+        "status": 200,
+        "error": "error-page content"
       },
       {
         "name": "Smart Thermostat Program",
