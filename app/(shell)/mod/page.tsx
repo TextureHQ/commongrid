@@ -250,6 +250,9 @@ export default function ModerationDashboardPage() {
                 Manage Users
               </Button>
             )}
+            <Button variant="secondary" size="sm" href="/mod/bulk-review">
+              Bulk Review
+            </Button>
             <Button variant="secondary" size="sm" href="/contributions">
               View All Contributions
             </Button>

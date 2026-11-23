@@ -728,3 +728,29 @@ describe("field moderation state ledger enforcement", () => {
     expect(recorded.entityUpdates).toHaveLength(0);
   });
 });
+
+it("guards reviewed website writes under the row lock and versions only the approved delta", async () => {
+  const old = "http://www.example-com/";
+  const next = "https://example.com/";
+  const input = record({ fields: { website: next }, expectedCurrent: { website: old, slug: "acme" } });
+  vi.mocked(fieldProvenance.getHumanLockedFields).mockResolvedValue(new Set());
+  vi.mocked(getModerationLockedFields).mockResolvedValue(new Set());
+  const present = makeTx({ entity: { id: "u-1", slug: "acme", website: old, version: 2 }, hasVersionHistory: true });
+  expect(await applySync([input], { ...baseOpts, tx: present.tx })).toMatchObject({ updated: 1, fieldsWritten: 1 });
+  expect(present.recorded.lockedRows).toBe(1);
+  expect(present.recorded.versionInserts[0]).toMatchObject({
+    batchId: "batch-1",
+    delta: { website: { old, new: next } },
+  });
+  for (const entity of [
+    null,
+    { slug: "acme", website: "https://newer.example.com/" },
+    { slug: "acme", website: old, lockedStatus: "fully_locked" },
+  ]) {
+    const { tx, recorded } = makeTx({ entity, hasVersionHistory: true });
+    expect((await applySync([input], { ...baseOpts, tx })).skips).toHaveLength(1);
+    expect(recorded.entityUpdates).toHaveLength(0);
+    expect(recorded.entityInserts).toHaveLength(0);
+    expect(recorded.versionInserts).toHaveLength(0);
+  }
+});
