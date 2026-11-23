@@ -78,6 +78,7 @@ export interface SyncRecord {
   fields: Record<string, unknown>;
   /** Territory-only polygon; participates in history and human-edit protection. */
   geography?: Polygon | MultiPolygon;
+  expectedCurrent?: Record<string, unknown>;
 }
 
 export interface ApplySyncOptions {
@@ -119,6 +120,7 @@ export interface ApplySyncReport {
   unchanged: number;
   /** Per-field deferrals under policy (B). */
   deferrals: FieldDeferral[];
+  skips: { entityId: string; reason: string }[];
   /** Total field writes actually applied across all updated records. */
   fieldsWritten: number;
 }
@@ -145,6 +147,14 @@ export async function applySync(records: SyncRecord[], opts: ApplySyncOptions): 
   for (const record of records) {
     if (record.geography && opts.entityType !== "territory") throw new Error("Only territories support geography sync");
     if ("geography" in record.fields) throw new Error("Use the typed geography property, not fields.geography");
+    const expected = record.expectedCurrent;
+    if (
+      expected &&
+      (record.geography ||
+        Object.keys(record.fields).some((key) => !Object.keys(expected).includes(key) || !columnExists(table, key)))
+    ) {
+      throw new Error(`Missing reviewed precondition for ${record.entityId}`);
+    }
     if (typeof record.sourceId !== "string" || !record.sourceId.trim()) {
       throw new Error(`Missing sourceId for ${record.entityId}`);
     }
@@ -163,6 +173,7 @@ export async function applySync(records: SyncRecord[], opts: ApplySyncOptions): 
     unchanged: 0,
     deferrals: [],
     fieldsWritten: 0,
+    skips: [],
   };
 
   const run = async (tx: DbTransaction) => {
@@ -202,6 +213,8 @@ export async function applySync(records: SyncRecord[], opts: ApplySyncOptions): 
         report.updated += 1;
         versionCount += 1;
         report.fieldsWritten += outcome.fieldsWritten;
+      } else if (outcome.kind === "skipped") {
+        report.skips.push({ entityId: record.entityId, reason: outcome.reason });
       } else {
         report.unchanged += 1;
       }
@@ -224,7 +237,8 @@ export async function applySync(records: SyncRecord[], opts: ApplySyncOptions): 
 type RecordOutcome =
   | { kind: "created"; fieldsWritten: number; deferrals: FieldDeferral[] }
   | { kind: "updated"; fieldsWritten: number; deferrals: FieldDeferral[] }
-  | { kind: "unchanged"; deferrals: FieldDeferral[] };
+  | { kind: "unchanged"; deferrals: FieldDeferral[] }
+  | { kind: "skipped"; reason: string; deferrals: [] };
 
 // biome-ignore lint/suspicious/noExplicitAny: Drizzle table types vary per table.
 type AnyTable = any;
@@ -251,6 +265,18 @@ async function applyOneRecord(
 
   const [existing] = await tx.select().from(table).where(eq(table.id, record.entityId)).limit(1);
 
+  if (record.expectedCurrent) {
+    if (!existing) return { kind: "skipped", reason: "Missing utility", deferrals: [] };
+    if (existing.deletedAt || existing.lockedStatus)
+      return { kind: "skipped", reason: "Retired or locked utility", deferrals: [] };
+    const row = existing as Record<string, unknown>;
+    const stale = Object.entries(record.expectedCurrent).some(
+      ([key, value]) =>
+        !jsonEqual(row[key], value) &&
+        !(Object.keys(record.fields).includes(key) && jsonEqual(row[key], record.fields[key]))
+    );
+    if (stale) return { kind: "skipped", reason: "Value changed since proposal", deferrals: [] };
+  }
   const geometry = record.geography ? await prepareTerritoryGeography(tx, record.entityId, record.geography) : null;
 
   // --- create ---------------------------------------------------------------
