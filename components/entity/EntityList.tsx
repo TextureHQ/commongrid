@@ -12,6 +12,8 @@ export interface EntityListItem {
   badge?: React.ReactNode;
   /** Optional meta text (right side) */
   meta?: string;
+  /** Optional full-width line under the row */
+  note?: string;
 }
 
 /**
@@ -44,23 +46,26 @@ export function EntityList({ items, maxItems, headerMeta }: EntityListProps) {
         <Link
           key={item.href}
           href={item.href}
-          className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg border border-border-muted hover:border-border-default transition-colors"
+          className="block px-4 py-3 rounded-lg border border-border-muted hover:border-border-default transition-colors"
         >
-          <div className="flex items-center gap-3 min-w-0">
-            {item.dotColor && (
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: item.dotColor }}
-                aria-hidden="true"
-              />
-            )}
-            <span className="text-body-md font-medium text-text-body truncate">{item.name}</span>
-          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              {item.dotColor && (
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: item.dotColor }}
+                  aria-hidden="true"
+                />
+              )}
+              <span className="text-body-md font-medium text-text-body truncate">{item.name}</span>
+            </div>
 
-          <div className="flex items-center gap-3 flex-shrink-0">
-            {item.badge}
-            {item.meta && <span className="text-label-sm font-mono text-text-caption">{item.meta}</span>}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {item.badge}
+              {item.meta && <span className="text-label-sm font-mono text-text-caption">{item.meta}</span>}
+            </div>
           </div>
+          {item.note && <div className="mt-1 text-body-sm text-text-muted">{item.note}</div>}
         </Link>
       ))}
 

@@ -8735,6 +8735,183 @@
         }
       }
     },
+    "/utilities/{slug}/confirmations": {
+      "get": {
+        "operationId": "getUtilityConfirmations",
+        "summary": "Get fields confirmed by utility staff",
+        "description": "Fields that someone signed in with a verified email at the utility's own domain has confirmed are still right: the utility's website, a distribution co-op's power supplier, and the status of programs it runs. Only fields whose current value was confirmed are listed; a field that was never confirmed, or has changed since, is absent. A confirmation covers that one field, not the whole record or any EIA-sourced figure. Names the utility, never the person.",
+        "tags": [
+          "Utilities"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "confirmedBy": {
+                          "type": "string",
+                          "description": "The utility's short name, or its name."
+                        },
+                        "confirmations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "entityType": {
+                                "type": "string",
+                                "enum": [
+                                  "utility",
+                                  "program"
+                                ]
+                              },
+                              "entityId": {
+                                "type": "string"
+                              },
+                              "fieldName": {
+                                "type": "string",
+                                "enum": [
+                                  "website",
+                                  "generationProviderId",
+                                  "status"
+                                ]
+                              },
+                              "value": {
+                                "type": "string",
+                                "description": "The value that was confirmed, and is still current."
+                              },
+                              "confirmedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "programSlug": {
+                                "type": "string",
+                                "description": "Present when entityType is program."
+                              }
+                            },
+                            "required": [
+                              "entityType",
+                              "entityId",
+                              "fieldName",
+                              "value",
+                              "confirmedAt"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "confirmedBy",
+                        "confirmations"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Hourly or burst rate-limit window exceeded. `Retry-After` and `X-RateLimit-*` describe the window that tripped.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Budget of the window that applied for this response (hourly or burst). Examples: 60, 100, 5000."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in that same window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the applied window resets."
+              },
+              "X-RateLimit-Tier": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "anonymous",
+                    "registered",
+                    "bulk",
+                    "write"
+                  ]
+                },
+                "description": "Rate-limit tier that was applied for this request."
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying. Matches X-RateLimit-Reset for the window that returned 429 (burst or hourly)."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitedError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/power-plants/{slug}/versions": {
       "get": {
         "operationId": "getPowerPlantVersions",

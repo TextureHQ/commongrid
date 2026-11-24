@@ -38,6 +38,7 @@ const isProtectedRoute = createRouteMatcher(["/settings(.*)", "/mod/(.*)", "/dev
 function isClerkProtectedApiPath(pathname: string): boolean {
   return (
     pathname.startsWith("/api/v1/contributions") ||
+    pathname.startsWith("/api/v1/confirmations") ||
     pathname.startsWith("/api/v1/developer") ||
     pathname.startsWith("/api/v1/discussions") ||
     pathname.startsWith("/api/v1/follows") ||

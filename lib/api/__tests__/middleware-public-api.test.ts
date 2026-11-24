@@ -36,6 +36,10 @@ describe("root middleware public API bypass", () => {
     expect(response).toBeNull();
   });
 
+  it("routes record confirmations through Clerk so they can read the session", () => {
+    expect(publicApiResponse(request("/api/v1/confirmations/4-county-electric-power-association"))).toBeNull();
+  });
+
   it("does not bypass Clerk for non-v1 API routes", () => {
     const response = publicApiResponse(request("/api/webhooks/clerk"));
 
