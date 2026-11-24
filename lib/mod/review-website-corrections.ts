@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import input from "@/data/utility-website-corrections/2026-11.json";
+import input from "@/data/utility-website-corrections/2026-11-batch-2.json";
 import { getPooledDb } from "@/lib/db/client-pooled";
 import { bulkOperations } from "@/lib/db/schema";
 import { type ApplySyncReport, applySync } from "@/lib/sync/apply-sync";
@@ -40,8 +40,8 @@ export function parseWebsiteDiff(input: unknown) {
 export function getWebsiteBatch() {
   const rows = parseWebsiteDiff(input);
   return {
-    id: "review:utility-websites:2026-11",
-    title: "Utility website corrections — November 2026",
+    id: "review:utility-websites:2026-11-batch-2",
+    title: "Utility website corrections — November 2026 (Batch 2)",
     rows,
     digest: createHash("sha256").update(JSON.stringify(rows)).digest("hex"),
   };
@@ -82,7 +82,7 @@ export async function decideWebsiteBatch(reviewerId: string, digest: string, dec
               entityType: "utility",
               initiatedBy: "sync:utility-website-corrections",
               batchTitle: batch.title,
-              batchDescription: `Reviewed sources: https://github.com/TextureHQ/commongrid/blob/${ref}/data/utility-website-corrections/2026-11.json (SHA-256: ${batch.digest})`,
+              batchDescription: `Reviewed sources: https://github.com/TextureHQ/commongrid/blob/${ref}/data/utility-website-corrections/2026-11-batch-2.json (SHA-256: ${batch.digest})`,
             }
           )
         : null;
