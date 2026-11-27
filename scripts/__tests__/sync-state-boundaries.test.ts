@@ -189,7 +189,26 @@ describe("fetchJsonWithFallback", () => {
     const result = await fetchJsonWithFallback("https://example.com", undefined, fetchImpl);
     expect(result).toEqual({ ok: true });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(fetchImpl).toHaveBeenCalledWith("https://example.com", undefined);
+    expect(fetchImpl.mock.calls[0][0]).toBe("https://example.com");
+  });
+
+  it("identifies itself on direct fetches so sources that block the default agent respond", async () => {
+    const fetchImpl = vi.fn<Fetcher>().mockResolvedValue(makeResponse({ ok: true }));
+    await fetchJsonWithFallback("https://example.com", undefined, fetchImpl);
+    const headers = new Headers(fetchImpl.mock.calls[0][1]?.headers);
+    expect(headers.get("User-Agent")).toBe("commongrid-sync/1.0 (+https://commongrid.info)");
+  });
+
+  it("keeps caller headers and a caller-supplied User-Agent", async () => {
+    const fetchImpl = vi.fn<Fetcher>().mockResolvedValue(makeResponse({ ok: true }));
+    await fetchJsonWithFallback(
+      "https://example.com",
+      { headers: { "User-Agent": "custom-agent", Accept: "application/geo+json" } },
+      fetchImpl
+    );
+    const headers = new Headers(fetchImpl.mock.calls[0][1]?.headers);
+    expect(headers.get("User-Agent")).toBe("custom-agent");
+    expect(headers.get("Accept")).toBe("application/geo+json");
   });
 
   it("falls back to Firecrawl on a 403 and parses rawHtml JSON", async () => {
@@ -284,6 +303,19 @@ describe("syncStateBoundaries", () => {
     expect(report.regionsCreated).toBe(0);
     expect(report.territoriesUpserted).toBe(0);
     expect(report.errors).toEqual([]);
+  });
+
+  it("reports a failed source and skips publication without a partial report", async () => {
+    delete process.env.FIRECRAWL_API_KEY;
+    const mockFetch = vi.fn<Fetcher>().mockResolvedValue(makeResponse("Forbidden", 403, "text/html"));
+
+    const report = await syncStateBoundaries({ fetchImpl: mockFetch, writeManifest: false, states: ["WI"] });
+
+    expect(report.fetchedSources).toBe(0);
+    expect(report.errors).toHaveLength(3);
+    expect(report.errors[0]).toMatch(/WI PSC Electric Service Territories — Municipal.*403/);
+    expect(report.territoriesUpserted).toBe(0);
+    expect(report.quarantinedTerritories).toEqual([]);
   });
 });
 
