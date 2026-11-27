@@ -31,6 +31,8 @@ const PAGE_SIZE = 2000;
 const MANIFEST_DIR = path.join(DATA_DIR, "state-boundaries");
 const MANIFEST_PATH = path.join(MANIFEST_DIR, "manifest.json");
 const RUNNER_ACTOR = "sync:state-boundaries";
+// Some state map servers (WI PSC) answer Node's default fetch agent with a 403.
+const SYNC_USER_AGENT = "commongrid-sync/1.0 (+https://commongrid.info)";
 
 // Inlined 2-letter state-code format check to keep this sync script free of the
 // un-vendored @texturehq/geography-config dependency (not in package.json; imported only
@@ -168,7 +170,7 @@ export const STATE_BOUNDARY_SOURCES: SourceConfig[] = [
     isStateSource: true,
   },
   // Wisconsin PSC — three separate MapServer layers (muni, IOU, co-op).
-  // Direct requests 403; configured to flow through the Firecrawl fallback.
+  // Direct requests need an identifying User-Agent; Firecrawl remains the fallback.
   {
     sourceId: "wi-psc-municipal",
     dataSourceId: "wi-psc",
@@ -416,7 +418,9 @@ export async function fetchJsonWithFallback(
   let directError: Error | undefined;
 
   try {
-    const direct = await fetchImpl(url, init);
+    const headers = new Headers(init?.headers);
+    if (!headers.has("User-Agent")) headers.set("User-Agent", SYNC_USER_AGENT);
+    const direct = await fetchImpl(url, { ...init, headers });
     if (direct.ok) {
       const text = await direct.text();
       return JSON.parse(text);
@@ -834,6 +838,7 @@ export async function syncStateBoundaries(options: RunOptions = {}): Promise<Syn
     deferrals: [],
     territoriesUpserted: 0,
     hifldSuperseded: 0,
+    quarantinedTerritories: [],
   };
 
   if (options.publish !== false && report.errors.length === 0) {
